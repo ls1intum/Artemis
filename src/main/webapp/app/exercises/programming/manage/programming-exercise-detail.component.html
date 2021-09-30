@@ -228,7 +228,7 @@
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
                 <dd>
-                    <span jhiTranslate="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + (programmingExercise.submissionPolicy == undefined ? 'none' : programmingExercise.submissionPolicy.type)}}">{{ programmingExercise.programmingLanguage }}</span>
+                    <span jhiTranslate="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + (programmingExercise.submissionPolicy == undefined ? 'none' : programmingExercise.submissionPolicy.type)}}"></span>
                 </dd>
                 <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission Limit</span></dt>

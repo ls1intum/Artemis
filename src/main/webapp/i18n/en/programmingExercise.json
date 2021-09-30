@@ -292,6 +292,7 @@
             "submissionPolicy": {
                 "title": "Submission Policy",
                 "update": "Update",
+                "add": "Add",
                 "delete": "Delete",
                 "activate": "Activate",
                 "deactivate": "Deactivate",

@@ -87,6 +87,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     categoryColors = {};
 
     submissionPolicy?: SubmissionPolicy;
+    hadPolicyBefore: boolean;
 
     /**
      * Returns the value of testcases
@@ -162,6 +163,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         } else if (this.activeTab !== 'test-cases') {
                             this.selectTab('test-cases');
                         }
+                        this.hadPolicyBefore = !this.programmingExercise.submissionPolicy;
                         this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
                     }),
                     catchError(() => of(null)),
@@ -477,14 +479,65 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     /**
+     * Adds the submission policy of the programming exercise.
+     */
+    addSubmissionPolicy() {
+        this.isSaving = true;
+        this.programmingExerciseSubmissionPolicyService
+            .addSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
+            .pipe(
+                tap(() => {
+                    this.alertService.success(`artemisApp.programmingExercise.submissionPolicy.addSuccessful`);
+                }),
+                catchError(() => {
+                    this.alertService.error(`artemisApp.programmingExercise.submissionPolicy.addUnsuccessful`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+            });
+    }
+
+    /**
      * Updates the submission policy of the programming exercise.
      */
-    updateSubmissionPolicy() {}
+    updateSubmissionPolicy() {
+        if (this.hadPolicyBefore) {
+            this.addSubmissionPolicy();
+            return;
+        }
+        this.isSaving = true;
+        this.programmingExerciseSubmissionPolicyService
+            .updateSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
+            .pipe(
+                tap(() => {
+                    this.alertService.success(`artemisApp.programmingExercise.submissionPolicy.updateSuccessful`);
+                }),
+                catchError(() => {
+                    this.alertService.error(`artemisApp.programmingExercise.submissionPolicy.updateUnsuccessful`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+            });
+    }
 
     /**
      * Enable/Disable the submission policy of the programming exercise.
      */
-    toggleSubmissionPolicy() {}
+    toggleSubmissionPolicy() {
+        this.isSaving = true;
+        const deactivateSaving = () => {
+            this.isSaving = false;
+        };
+        if (this.submissionPolicy?.active) {
+            this.programmingExerciseSubmissionPolicyService.disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!).subscribe(deactivateSaving);
+        } else {
+            this.programmingExerciseSubmissionPolicyService.enableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!).subscribe(deactivateSaving);
+        }
+    }
 
     /**
      * Executes filtering on all available test cases with the specified params.

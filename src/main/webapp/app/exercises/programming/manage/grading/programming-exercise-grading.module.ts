@@ -15,6 +15,7 @@ import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/g
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
+import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent
         ArtemisTableModule,
         // programming exercise sub modules.
         ArtemisProgrammingExerciseActionsModule,
+        SubmissionPolicyUpdateModule,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,

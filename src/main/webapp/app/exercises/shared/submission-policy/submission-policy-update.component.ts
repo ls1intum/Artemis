@@ -100,7 +100,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             </div>
         </div>
     `,
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
@@ -113,12 +112,16 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     isLockRepositoryPolicy: boolean;
     isNonePolicy: boolean;
 
+    hadSubmissionPolicyBefore: boolean;
+
     ngOnInit(): void {
-        this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
+        this.submissionPolicy = this.programmingExercise!.submissionPolicy;
+        this.hadSubmissionPolicyBefore = this.submissionPolicy != undefined;
+        this.onSubmissionPolicyTypeChanged(this.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.isNonePolicy) {
-            this.updateSubmissionLimit(this.programmingExercise.submissionPolicy?.submissionLimit ?? 0);
+            this.updateSubmissionLimit(this.submissionPolicy?.submissionLimit ?? 0);
             if (this.isSubmissionPenaltyPolicy) {
-                this.updateExceedingPenalty((this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 0);
+                this.updateExceedingPenalty((this.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 0);
             }
         }
         console.log('SubmissionPolicy: ' + this.programmingExercise + ', ' + this.editable);

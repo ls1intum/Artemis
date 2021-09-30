@@ -39,10 +39,15 @@
                     [exercise]="programmingExercise"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
                     [isSaving]="isSaving"
+                    (onAdd)="addSubmissionPolicy()"
                     (onUpdate)="updateSubmissionPolicy()"
                     (onToggle)="toggleSubmissionPolicy()"
                     (onRemove)="removeSubmissionPolicy()"
                 ></jhi-programming-exercise-grading-submission-policy-configuration-actions>
+                <jhi-submission-policy-update
+                    [programmingExercise]="programmingExercise"
+                    [editable]="true"
+                ></jhi-submission-policy-update>
             </div>
         </div>
 

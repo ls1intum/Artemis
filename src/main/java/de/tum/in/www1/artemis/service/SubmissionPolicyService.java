@@ -43,6 +43,7 @@ public class SubmissionPolicyService {
     }
 
     public SubmissionPolicy addSubmissionPolicyToProgrammingExercise(SubmissionPolicy submissionPolicy, ProgrammingExercise programmingExercise) {
+        submissionPolicy.setActive(true);
         submissionPolicy.setProgrammingExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
@@ -111,9 +112,9 @@ public class SubmissionPolicyService {
     }
 
     private void enableLockRepositoryPolicy(LockRepositoryPolicy policy) {
-        ProgrammingExercise exercise = policy.getProgrammingExercise();
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(policy.getProgrammingExercise().getId());
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-            if (studentParticipation.getResults().size() >= policy.getSubmissionLimit()) {
+            if (getParticipationSubmissionCount(studentParticipation) >= policy.getSubmissionLimit()) {
                 programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
             }
         }
@@ -137,7 +138,7 @@ public class SubmissionPolicyService {
     private void disableLockRepositoryPolicy(LockRepositoryPolicy policy) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(policy.getProgrammingExercise().getId());
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-            if (studentParticipation.getSubmissions().size() >= policy.getSubmissionLimit()) {
+            if (getParticipationSubmissionCount(studentParticipation) >= policy.getSubmissionLimit()) {
                 programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
             }
         }
@@ -163,14 +164,14 @@ public class SubmissionPolicyService {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(originalPolicy.getProgrammingExercise().getId());
         if (originalPolicy.getSubmissionLimit() < newPolicy.getSubmissionLimit()) {
             for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                if (studentParticipation.getResults().size() >= originalPolicy.getSubmissionLimit()) {
+                if (getParticipationSubmissionCount(studentParticipation) >= originalPolicy.getSubmissionLimit()) {
                     programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
                 }
             }
         }
         else if (originalPolicy.getSubmissionLimit() > newPolicy.getSubmissionLimit()) {
             for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                if (studentParticipation.getResults().size() >= newPolicy.getSubmissionLimit()) {
+                if (getParticipationSubmissionCount(studentParticipation) >= newPolicy.getSubmissionLimit()) {
                     programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
                 }
             }
