@@ -13,6 +13,7 @@ cp_code()
 OUTPUT_FILE="test-reports/results.xml"
 BUILD_TIMEOUT="1m"
 TEST_TIMEOUT="10m"
+PROBE_TIMEOUT="10s"
 SAFE=false
 BUILD_ROOT=$(realpath ..)
 
@@ -57,6 +58,17 @@ echo "let runHidden = $RUN_HIDDEN" > test/runHidden.ml
 # shellcheck disable=SC2046
 eval $(opam env)
 
+# build the limitation checker
+if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build checker >&3 2>&3; then
+    echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
+    exit 0
+fi
+# and run it
+# this will report syntax errors in the submission
+if ! timeout -s SIGTERM $BUILD_TIMEOUT checker/checker.exe; then
+    echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
+    exit 0
+fi
 # build the sudent submission
 # don't reference the tests or solution, so that we can show the build output to the sudent and not leak test / solution code
 if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force assignment; then
@@ -81,6 +93,19 @@ if $SAFE; then
     rm -rf solution
     rm -rf tests
 fi;
+
+# running the test executable without arguments to cause them to exit without actually running any tests
+# if it doesnt, there is most likely a infinite loop in the students top level code.
+# in that case there is no point of actually attempting to run the tests
+# as the test code will never be reached and the significantly longer fallback timeout would kill it instead
+# due to the way ocaml works it is not possible to prevent students from running top level code
+# unless we would require students use function expression in top level bindings
+# but that would prevent things like `let foo = impl 0`
+timeout -s SIGTERM $PROBE_TIMEOUT ./test.exe
+if [ $? = 124 ]; then # timeout exits with 124 if it had to kill the tests.
+    echo -e "Testing your submission resulted in a timeout." 1>&2
+    exit 0
+fi
 
 # Run the test
 mkdir "$BUILD_ROOT"/test-reports

@@ -1,4 +1,5 @@
 (library
  (name solution)
+ (libraries overrides)
  (flags
-   (:standard -warn-error -A)))
+  (:standard -warn-error -A -open Overrides -nopervasives)))

@@ -9,8 +9,5 @@ Implement the function `add` that takes two values of type `int` and returns the
 Implement the generic and recursive function `filter` that that takes a predicate of type `'a -> bool` and a list of type `'a list`. The function should return the list of elements contained in the input list that fulfill the predicate. The elements in the returned list must appear in the same order as in the input list.
 
 3. [task][starts_with](2:starts_with tests:0:true case,2:starts_with tests:1:false case)
-Implement the function `starts_with` that takes two `string`s and returns `true` if, and only if, the second string is a prefix of the first. Use the appropriate library function provided by the `BatString` module from the "batteries" library.
-
-3. [task][starts_with2](3:starts_with2 tests:0:true case,3:starts_with2 tests:1:false case)
-Implement the function `starts_with2` which has the same specification as `starts_with`, but now, use the appropriate library function provided by the `Base.String` module from the "core" library.
+Implement the function `starts_with` that takes two `string`s and returns `true` if, and only if, the second string is a prefix of the first.
 
