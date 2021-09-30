@@ -135,7 +135,7 @@ let string_of_tuple string_of_a string_of_b (a,b) = "(" ^ string_of_a a ^ ", " ^
    as otherwise tests will take forever and interesting collisions unlikely *)
 let add_arb = QCheck.(pair small_int small_int)
 let filter_arb = QCheck.(pair (fun1_unsafe small_int bool) (small_list small_int))
-let filter_arb_even = QCheck.(pair (fun1_unsafe small_int bool |> QCheck.set_print (Fun.const "even") (small_list small_int)) (* can't print non-generated functions *)
+let filter_arb_even = QCheck.(pair (fun1_unsafe small_int bool |> QCheck.set_print (Fun.const "even")) (small_list small_int)) (* can't print non-generated functions *)
 let starts_with_arb = QCheck.(pair small_string small_string)
 
 
