@@ -29,7 +29,7 @@ describe('ComplaintsComponent', () => {
     let complaintService: ComplaintService;
     let alertService: AlertService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
@@ -61,7 +61,7 @@ describe('ComplaintsComponent', () => {
                 component = fixture.componentInstance;
                 component.exercise = exercise;
             });
-    }));
+    });
 
     it('should initialize with correct values for exam complaints', fakeAsync(() => {
         component.exercise = exercise;
