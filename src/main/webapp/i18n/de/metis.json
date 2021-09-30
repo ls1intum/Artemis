@@ -35,7 +35,7 @@
             },
             "overview": {
                 "title": "Beiträge",
-                "searchBarDefault": "Suche nach Beiträgen...",
+                "searchBarDefault": "Suche nach Beiträgen, verwende #, um einem bestimmten Beitrag zu suchen (z.B. #1)",
                 "postContextFilter": "Zeige Beiträge in:",
                 "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
@@ -71,7 +71,8 @@
                 "votes": "Votes",
                 "answers": "Antworten",
                 "approvedAnswerPosts": "Bestätigte Antworten",
-                "exerciseOrLecture": "Übung / Vorlesung"
+                "exerciseOrLecture": "Übung / Vorlesung",
+                "showAllPosts": "Zeige alle Beiträge"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
