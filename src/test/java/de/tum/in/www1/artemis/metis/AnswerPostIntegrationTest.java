@@ -204,6 +204,56 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(updatedAnswerPostServer).isNull();
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testToggleResolvesPost() throws Exception {
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+
+        // confirm that answer post resolves the original post
+        answerPost.setResolvesPost(true);
+        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
+        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+
+        // revoke that answer post resolves the original post
+        answerPost.setResolvesPost(false);
+        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
+        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testToggleResolvesPost_asPostAuthor() throws Exception {
+        // author of the associated original post is student1
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+
+        // confirm that answer post resolves the original post
+        answerPost.setResolvesPost(true);
+        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
+        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+
+        // revoke that answer post resolves the original post
+        answerPost.setResolvesPost(false);
+        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
+        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testToggleResolvesPost_notAuthor_forbidden() throws Exception {
+        // author of the associated original post is student1, author of answer post is also student1
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+
+        // confirm that answer post resolves the original post
+        answerPost.setResolvesPost(true);
+        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.FORBIDDEN);
+        assertThat(resolvingAnswerPost).isNull();
+
+        // revoke that answer post resolves the original post
+        answerPost.setResolvesPost(false);
+        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.FORBIDDEN);
+        assertThat(notResolvingAnswerPost).isNull();
+    }
+
     // DELETE
 
     @Test
@@ -241,56 +291,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
         request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testToggleResolvesPost() throws Exception {
-        AnswerPost answerPost = existingAnswerPosts.get(0);
-
-        // confirm that answer post resolves the original post
-        answerPost.setResolvesPost(true);
-        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
-        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
-
-        // revoke that answer post resolves the original post
-        answerPost.setResolvesPost(false);
-        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
-        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testToggleResolvesPost_asPostAuthor() throws Exception {
-        // author of the post this answer post is associated with is student 1
-        AnswerPost answerPost = existingAnswerPosts.get(0);
-
-        // confirm that answer post resolves the original post
-        answerPost.setResolvesPost(true);
-        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
-        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
-
-        // revoke that answer post resolves the original post
-        answerPost.setResolvesPost(false);
-        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.OK);
-        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
-    }
-
-    @Test
-    @WithMockUser(username = "student2", roles = "USER")
-    public void testToggleResolvesPost_noAuthor_forbidden() throws Exception {
-        // author of the post this answer post is associated with is student 1
-        AnswerPost answerPost = existingAnswerPosts.get(0);
-
-        // confirm that answer post resolves the original post
-        answerPost.setResolvesPost(true);
-        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.FORBIDDEN);
-        assertThat(resolvingAnswerPost).isNull();
-
-        // revoke that answer post resolves the original post
-        answerPost.setResolvesPost(false);
-        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.FORBIDDEN);
-        assertThat(notResolvingAnswerPost).isNull();
     }
 
     // HELPER METHODS
