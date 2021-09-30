@@ -14,7 +14,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.participantLogin">
+                    <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.participantIdentifier">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentLogin">Student login</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>

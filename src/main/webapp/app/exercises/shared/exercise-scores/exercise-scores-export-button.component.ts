@@ -54,7 +54,7 @@ export class ExerciseScoresExportButtonComponent {
                         rows.push(`${participantName},${participantLogin},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                     } else {
                         const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-                        rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
+                        rows.push(`${participantName},${participantLogin},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
                     }
                 });
                 this.resultService.triggerDownloadCSV(rows, `${exercise.shortName}-results-scores.csv`);
