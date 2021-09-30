@@ -13,6 +13,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ComplaintsComponent', () => {
     const teamComplaints = 42;
@@ -29,12 +32,23 @@ describe('ComplaintsComponent', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ComplaintsFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertComponent), MockComponent(FaIconComponent), MockDirective(NgModel)],
+            declarations: [
+                ComplaintsFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(AlertComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(NgModel),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 MockProvider(AlertService),
                 {
                     provide: ComplaintService,
                     useClass: MockComplaintService,
+                },
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
                 },
             ],
         })

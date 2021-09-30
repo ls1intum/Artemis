@@ -1,7 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
