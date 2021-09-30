@@ -217,9 +217,6 @@ export class ParticipationService {
         if (participations[0].participantName) {
             combinedParticipation.participantName = participations[0].participantName;
         }
-        if (participations[0].participantLogin) {
-            combinedParticipation.participantLogin = participations[0].participantLogin;
-        }
 
         participations.forEach((participation) => {
             if (participation.results) {

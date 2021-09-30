@@ -43,7 +43,7 @@ export class ExerciseScoresExportButtonComponent {
                 }
                 results.forEach((result, index) => {
                     const studentParticipation = result.participation! as StudentParticipation;
-                    const { participantName, participantIdentifier, participantLogin } = studentParticipation;
+                    const { participantName, participantIdentifier } = studentParticipation;
                     const score = round(result.score);
 
                     if (index === 0) {
@@ -51,10 +51,10 @@ export class ExerciseScoresExportButtonComponent {
                     }
                     const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team?.students?.map((s) => s.name).join(', ')}"` : '';
                     if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                        rows.push(`${participantName},${participantLogin},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
+                        rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                     } else {
                         const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-                        rows.push(`${participantName},${participantLogin},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
+                        rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
                     }
                 });
                 this.resultService.triggerDownloadCSV(rows, `${exercise.shortName}-results-scores.csv`);
