@@ -75,7 +75,6 @@ Instructors can still use those templates to generate programming exercises and 
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
 
-.. _exercise-creation:
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
 
