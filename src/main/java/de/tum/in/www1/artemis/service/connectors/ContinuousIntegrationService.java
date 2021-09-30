@@ -301,7 +301,7 @@ public interface ContinuousIntegrationService {
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
             case SWIFT -> "norionomura/swiftlint:latest";
-            case OCAML -> "ghcr.io/bottbenj/docker-test:73a17360c260fd77fb293794f0c36c05fd9dae24";
+            case OCAML -> "ghcr.io/bottbenj/docker-test:76adb4491d5a29e33d7fbe9c40a1dd7abf2d4886";
         };
     }
 }
