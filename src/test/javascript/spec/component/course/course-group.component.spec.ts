@@ -30,6 +30,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,6 +55,7 @@ describe('Course Management Detail Component', () => {
             declarations: [
                 CourseGroupComponent,
                 MockComponent(DataTableComponent),
+                MockComponent(StudentsImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
