@@ -30,7 +30,7 @@ let test_case (f : test_fun) : test = TestCase (default_timeout, f)
 (** Create test case with default timeout and the specified description *)
 let test_case_d (descr : string) (f : test_fun) = descr >: test_case f
 
-let hiddenFail = test_case (fun _ -> assert_failure "This Test is hidden")
+let hiddenFail = test_case (fun _ -> Printexc.record_backtrace false; assert_failure "This Test is hidden")
 
 (** Mark a test as hidden and ensure it only runs after  *)
 let rec hidden = function
