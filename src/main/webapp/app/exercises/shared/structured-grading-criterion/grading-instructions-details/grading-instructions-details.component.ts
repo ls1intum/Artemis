@@ -451,7 +451,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
         criterion.structuredGradingInstructions.push(new GradingInstruction());
-        this.exercise.gradingCriteria!.push(criterion);
+        if (this.exercise.gradingCriteria == undefined) {
+            this.exercise.gradingCriteria = [criterion];
+        } else {
+            this.exercise.gradingCriteria!.push(criterion);
+        }
     }
 
     /**
