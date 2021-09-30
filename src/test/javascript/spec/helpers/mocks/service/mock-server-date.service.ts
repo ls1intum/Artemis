@@ -1,15 +1,15 @@
 import { ServerDateService } from 'app/shared/server-date.service';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { HttpClient } from '@angular/common/http';
 
 export class MockArtemisServerDateService implements ServerDateService {
-    recentClientDates: Array<moment.Moment>;
+    recentClientDates: Array<dayjs.Dayjs>;
     recentOffsets: Array<number>;
     resourceUrl: string;
     http: HttpClient;
 
-    now(): moment.Moment {
-        return moment();
+    now(): dayjs.Dayjs {
+        return dayjs();
     }
 
     setServerDate(date: string): void {}

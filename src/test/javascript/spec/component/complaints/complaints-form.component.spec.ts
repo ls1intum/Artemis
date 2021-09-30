@@ -1,17 +1,18 @@
 import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-
-import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgModel } from '@angular/forms';
 
 describe('ComplaintsComponent', () => {
     const teamComplaints = 42;
@@ -27,8 +28,8 @@ describe('ComplaintsComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [ComplaintsFormComponent],
+            imports: [ArtemisTestModule],
+            declarations: [ComplaintsFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertComponent), MockComponent(FaIconComponent), MockDirective(NgModel)],
             providers: [
                 MockProvider(AlertService),
                 {

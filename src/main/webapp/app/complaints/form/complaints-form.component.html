@@ -5,7 +5,7 @@
             <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
             <p *ngIf="complaintType === ComplaintType.COMPLAINT; else moreFeedbackDescription">
                 <span
-                    *ngIf="!examId && allowedComplaints === undefined"
+                    *ngIf="!examId && allowedComplaints == undefined"
                     [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
                     [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
                 ></span>
