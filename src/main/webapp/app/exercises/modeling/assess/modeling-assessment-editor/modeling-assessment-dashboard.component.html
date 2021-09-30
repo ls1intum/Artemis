@@ -73,6 +73,9 @@
                     <td *ngIf="exercise.isAtLeastInstructor">
                         {{ submission.participation?.participantName || '' }}
                     </td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation?.participantIdentifier || '' }}
+                    </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
                         <jhi-result [participation]="submission.participation!"></jhi-result>
