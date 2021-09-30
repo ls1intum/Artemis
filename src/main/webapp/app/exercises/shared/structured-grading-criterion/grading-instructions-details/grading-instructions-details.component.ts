@@ -436,7 +436,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
-        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions = [...this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions];
     }
 
     addGradingCriterion() {
