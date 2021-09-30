@@ -2,5 +2,5 @@
  (name test)
  (flags
   (:standard -warn-error -A))
- (libraries ounit2 qcheck batteries core assignment solution)
+ (libraries ounit2 qcheck assignment solution)
  (promote))

@@ -1,8 +1,4 @@
-(env
- (dev
-  (flags
-   (:standard -warn-error -27))))
-
 (library
  (name assignment)
- (libraries batteries core))
+ (flags
+   (:standard -warn-error -27)))
