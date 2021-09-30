@@ -233,7 +233,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
-                const { participantName } = studentParticipation;
+                const { participantName, participantLogin } = studentParticipation;
                 if (studentParticipation.team) {
                     if (index === 0) {
                         rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
@@ -242,6 +242,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     rows.push(`${name},${shortName},"${students?.map((s) => s.name).join(', ')}"`);
                 } else {
                     rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
+                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantLogin}` : participantLogin!);
                 }
             });
             this.resultService.triggerDownloadCSV(rows, 'results-names.csv');

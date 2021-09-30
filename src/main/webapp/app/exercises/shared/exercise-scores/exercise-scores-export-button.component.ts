@@ -43,7 +43,7 @@ export class ExerciseScoresExportButtonComponent {
                 }
                 results.forEach((result, index) => {
                     const studentParticipation = result.participation! as StudentParticipation;
-                    const { participantName, participantIdentifier } = studentParticipation;
+                    const { participantName, participantIdentifier, participantLogin } = studentParticipation;
                     const score = round(result.score);
 
                     if (index === 0) {
@@ -51,7 +51,7 @@ export class ExerciseScoresExportButtonComponent {
                     }
                     const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team?.students?.map((s) => s.name).join(', ')}"` : '';
                     if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                        rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
+                        rows.push(`${participantName},${participantLogin},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                     } else {
                         const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
                         rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
