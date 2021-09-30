@@ -69,7 +69,7 @@
                     </td>
                     <td>
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            {{ submission.participation?.student.login }}
+                            {{ submission.participation?.participantIdentifier }}
                         </span>
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
