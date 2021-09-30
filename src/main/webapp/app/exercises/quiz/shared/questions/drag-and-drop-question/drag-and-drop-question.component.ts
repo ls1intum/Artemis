@@ -86,6 +86,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     incorrectLocationMappings: number;
     mappedLocations: number;
 
+    readonly MappingResult = MappingResult;
+
     loadingState = 'loading';
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}

@@ -111,7 +111,11 @@
                             <div
                                 class="drop-location results"
                                 [ngClass]="{
-                                    incorrect: isLocationCorrect(dropLocation) === 1 && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
+                                    incorrect:
+                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                        !dropLocation.invalid &&
+                                        !invalidDragItemForDropLocation(dropLocation) &&
+                                        !question.invalid
                                 }"
                                 [ngStyle]="{
                                     top: dropLocation.posY! / 2 + '%',
@@ -122,7 +126,12 @@
                             >
                                 <div
                                     class="result-symbol"
-                                    *ngIf="isLocationCorrect(dropLocation) === 1 && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid"
+                                    *ngIf="
+                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                        !dropLocation.invalid &&
+                                        !invalidDragItemForDropLocation(dropLocation) &&
+                                        !question.invalid
+                                    "
                                 >
                                     <fa-icon [icon]="'exclamation-triangle'" size="2x" class="warning"></fa-icon>
                                 </div>
@@ -165,7 +174,11 @@
                             <div
                                 class="drop-location sampleSolution"
                                 [ngClass]="{
-                                    incorrect: isLocationCorrect(dropLocation) === 1 && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
+                                    incorrect:
+                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                        !dropLocation.invalid &&
+                                        !invalidDragItemForDropLocation(dropLocation) &&
+                                        !question.invalid
                                 }"
                                 [ngStyle]="{
                                     top: dropLocation.posY! / 2 + '%',
@@ -177,7 +190,7 @@
                                 <div
                                     class="result-symbol"
                                     *ngIf="
-                                        isLocationCorrect(dropLocation) === 1 &&
+                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
                                         !dropLocation.invalid &&
                                         !invalidDragItemForDropLocation(dropLocation) &&
                                         !question.invalid &&
