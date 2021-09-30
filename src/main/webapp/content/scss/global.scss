@@ -804,6 +804,14 @@ Course Info Bar
     img {
         max-width: 100%;
     }
+
+    // this class is required for rendering post references in between of post content without having linebreaks
+    &.manipulate-p {
+        p {
+            margin-bottom: 0 !important;
+            display: inline;
+        }
+    }
 }
 
 .ngb-tooltip-window {
