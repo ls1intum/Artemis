@@ -712,7 +712,7 @@ export class GradingSystemComponent implements OnInit {
                 lowerBoundPercentage: Number(gradeStepStrArr[1]),
                 upperBoundPercentage: Number(gradeStepStrArr[2]),
                 // false if not provided
-                isPassingGrade: gradeStepStrArr[3] === 'true' ? true : false,
+                isPassingGrade: gradeStepStrArr[3] === 'true',
             });
         }
 
