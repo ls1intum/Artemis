@@ -195,12 +195,18 @@ export class TransformationModelingExerciseUpdateComponent implements OnInit {
                 this.solutionCouldNotBeGenerated = false;
                 this.setExampleSolutionModel(model);
                 this.exampleSolution = model;
-                this.transformationModelingExercise.maxPoints =
-                    model.elements.length * this.correctionScheme[CORRECTION_SCHEME_CORRECT_MARKING] +
-                    model.relationships.length * this.correctionScheme[CORRECTION_SCHEME_CORRECT_ARC] +
-                    this.correctionScheme[CORRECTION_SCHEME_CORRECT_INITIAL_MARKING];
+                this.updateMaxPoints();
             },
             () => (this.solutionCouldNotBeGenerated = true),
         );
+    }
+
+    updateMaxPoints(): void {
+        const model = this.getExampleSolutionModel();
+
+        this.transformationModelingExercise.maxPoints =
+            model.elements.length * this.correctionScheme[CORRECTION_SCHEME_CORRECT_MARKING] +
+            model.relationships.length * this.correctionScheme[CORRECTION_SCHEME_CORRECT_ARC] +
+            this.correctionScheme[CORRECTION_SCHEME_CORRECT_INITIAL_MARKING];
     }
 }

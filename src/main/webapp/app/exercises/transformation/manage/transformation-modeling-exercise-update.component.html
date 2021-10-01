@@ -90,6 +90,7 @@
                         name="{{ key }}"
                         id="field_{{ key }}"
                         [(ngModel)]="this.correctionScheme[key]"
+                        (change)="updateMaxPoints()"
                     />
                 </div>
             </div>
