@@ -451,10 +451,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 r.assessor.id,
                 count(r),
-                sum(e.maxPoints)
+                sum(e.maxPoints),
+                avg(r.score),
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
                 )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
+                LEFT JOIN FETCH Rating rating on rating.result = r.id
             WHERE
                 r.completionDate is not null
                 and e.id IN :exerciseIds
@@ -469,10 +472,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 a.id,
                 count(r),
-                sum(e.maxPoints)
+                sum(e.maxPoints),
+                avg(r.score),
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
             )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
+                LEFT JOIN FETCH Rating rating on rating.result = r.id
             WHERE
                 r.completionDate is not null
                 and e.id = :#{#exerciseId}
@@ -485,10 +491,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 a.id,
                 count(r),
-                sum(e.maxPoints)
+                sum(e.maxPoints),
+                avg(r.score),
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
             )
             FROM
                 Result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a
+                LEFT JOIN FETCH Rating rating on rating.result = r.id
             WHERE
                 r.completionDate is not null
                 and ex.id = :#{#examId}

@@ -4,7 +4,7 @@
         <span class="col-auto p-0">{{ 'artemisApp.metis.approveAnswer' | artemisTranslate }}</span>
     </div>
 </ng-template>
-<div class="my-1 me-0 row justify-content-between align-items-center">
+<div class="mt-3 me-0 row justify-content-between">
     <div id="toggleElement" class="col-auto" [ngClass]="isAtLeastTutorInCourse ? 'clickable' : ''" (click)="toggleApprove()">
         <div *ngIf="posting.tutorApproved; else notApproved" class="row ms-0 approved-badge text-white badge">
             <fa-icon class="col-auto m-0 p-0" [icon]="'check-double'"></fa-icon>
