@@ -710,9 +710,9 @@ export class GradingSystemComponent implements OnInit {
             unmodifiedGradeSteps.push({
                 gradeName: gradeStepStrArr[0],
                 lowerBoundPercentage: Number(gradeStepStrArr[1]),
-                upperBoundPercentage: Number(gradeStepStrArr[1]),
-                // undefined if not provided
-                isPassingGrade: Boolean(gradeStepStrArr[2]),
+                upperBoundPercentage: Number(gradeStepStrArr[2]),
+                // false if not provided
+                isPassingGrade: gradeStepStrArr[3] === 'true' ? true : false,
             });
         }
 
@@ -811,7 +811,7 @@ export class GradingSystemComponent implements OnInit {
         result += settingsRowStrArr.join(',') + '\n';
 
         for (const gradeStep of this.gradingScale.gradeSteps) {
-            const rowStr = [gradeStep.gradeName, gradeStep.lowerBoundPercentage, gradeStep.upperBoundPercentage];
+            const rowStr = [gradeStep.gradeName, gradeStep.lowerBoundPercentage, gradeStep.upperBoundPercentage, gradeStep.isPassingGrade];
             result += rowStr.join(',') + '\n';
         }
 
