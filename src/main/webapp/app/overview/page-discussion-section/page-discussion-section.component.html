@@ -1,5 +1,5 @@
 <!-- uncollapsed posts -->
-<div *ngIf="course">
+<div *ngIf="course" class="h-100">
     <div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
         <div class="draggable-left">
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
@@ -18,6 +18,11 @@
             </div>
             <!-- body -->
             <div class="card-body pt-0">
+                <div class="my-2" *ngIf="currentPost !== undefined; else threadView">
+                    <fa-icon [icon]="'arrow-left'" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
+                    <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
+                    <jhi-postings-thread [post]="currentPost" [showAnswers]="true"></jhi-postings-thread>
+                </div>
                 <!-- loading posts -->
                 <div class="post-result-information row mt-2" *ngIf="isLoading">
                     <div class="col-12">{{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}</div>
@@ -26,8 +31,6 @@
                 <div class="post-result-information row mt-2" *ngIf="!isLoading && posts.length === 0">
                     <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
                 </div>
-                <!-- list of posts -->
-                <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
                 <!-- new post button -->
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
@@ -38,6 +41,9 @@
                         <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
                     </div>
                 </div>
+                <ng-template #threadView>
+                    <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-postings-thread>
+                </ng-template>
             </div>
         </div>
     </div>

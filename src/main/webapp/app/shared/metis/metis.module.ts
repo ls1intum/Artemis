@@ -26,6 +26,8 @@ import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-b
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { PostingContentComponent } from './posting-content/posting-content.components';
+import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 
 @NgModule({
     imports: [
@@ -57,6 +59,8 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
         PostingsMarkdownEditorComponent,
         PostComponent,
         AnswerPostComponent,
+        PostingContentComponent,
+        PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
     ],
@@ -73,6 +77,8 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
         PostingsMarkdownEditorComponent,
         PostComponent,
         AnswerPostComponent,
+        PostingContentComponent,
+        PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
     ],
