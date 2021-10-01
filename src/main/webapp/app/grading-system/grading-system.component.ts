@@ -185,7 +185,7 @@ export class GradingSystemComponent implements OnInit {
         // check if any of the fields have invalid points
         if (this.maxPointsValid()) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.upperBoundPoints! > this.maxPoints! || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
+                if (gradeStep.lowerBoundPoints! < 0) {
                     this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPoints');
                     return false;
                 }
