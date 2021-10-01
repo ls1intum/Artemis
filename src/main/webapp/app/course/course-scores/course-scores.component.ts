@@ -437,7 +437,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
                         let exerciseScoresPerType = 0;
                         if (this.maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
-                            exerciseScoresPerType = round((student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
+                            exerciseScoresPerType = round(
+                                (student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100,
+                                1,
+                            );
                         }
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
@@ -508,7 +511,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         rowDataAverage[title] = this.localeConversionService.toLocaleString(round(exerciseAveragePoints[index], 1));
                     });
 
-                    const averageScore = round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
+                    const averageScore = round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100, 1);
 
                     rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
                         this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
