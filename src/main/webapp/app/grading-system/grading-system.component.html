@@ -14,11 +14,16 @@
         </div>
         <div class="d-flex">
             <label class="btn btn-primary me-1 mb-1">
-                <span jhiTranslate="artemisApp.gradingSystem.importButton">Import (.json)</span>
-                <input type="file" accept=".json" style="display: none" (change)="importGradeSchemaFile($event)" />
+                <span jhiTranslate="artemisApp.gradingSystem.importButton">Import</span>
+                <input type="file" accept=".json,.csv" style="display: none" (change)="importGradeSchemaFile($event)" />
             </label>
+        </div>
+        <div class="d-flex">
+            <button (click)="downloadGradingKeyCsv()" class="btn btn-primary me-1 mb-1" type="button">
+                <span jhiTranslate="artemisApp.gradingSystem.exportCsvButton">Export (.csv)</span>
+            </button>
             <button (click)="downloadGradingKeyJson()" class="btn btn-primary me-1 mb-1" type="button">
-                <span jhiTranslate="artemisApp.gradingSystem.exportButton">Export (.json)</span>
+                <span jhiTranslate="artemisApp.gradingSystem.exportJsonButton">Export (.json)</span>
             </button>
         </div>
         <div class="dropdown-container">

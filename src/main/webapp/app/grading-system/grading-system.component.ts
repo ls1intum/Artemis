@@ -13,6 +13,13 @@ import { Exam } from 'app/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
+export interface UnmodifiedGradeStep {
+    gradeName: string;
+    lowerBoundPercentage: number;
+    upperBoundPercentage: number;
+    isPassingGrade: boolean | undefined;
+}
+
 @Component({
     selector: 'jhi-grading-system',
     templateUrl: './grading-system.component.html',
@@ -623,7 +630,7 @@ export class GradingSystemComponent implements OnInit {
 
     /**
      * Import grade key schema file (*.json) from local computer
-     * @param event the file read event
+     * @param event the file read event (type any, because unnecessary many type casts required)
      */
     importGradeSchemaFile(event: any) {
         // no file chosen
@@ -633,15 +640,27 @@ export class GradingSystemComponent implements OnInit {
 
         const reader = new FileReader();
 
-        reader.onloadend = () => this.loadGradeSchema(reader.result);
+        reader.onloadend = () => {
+            if (reader.result == undefined) {
+                return;
+            }
+
+            const fileType: string = event.target.files[0].name.split('.').pop().toLowerCase();
+
+            if (fileType === 'json') {
+                this.loadGradeSchemaJson(reader.result.toString());
+            } else if (fileType === 'csv') {
+                this.loadGradeSchemaCsv(reader.result.toString());
+            }
+        };
         reader.readAsText(event.target.files[0]);
     }
 
     /**
-     * Parse and load grade key schema
+     * Parse and load grade key schema from json
      * @param jsonStr the json representation as a string
      */
-    loadGradeSchema(jsonStr: any) {
+    loadGradeSchemaJson(jsonStr: string): void {
         let jsonObject;
         try {
             jsonObject = JSON.parse(jsonStr);
@@ -652,8 +671,63 @@ export class GradingSystemComponent implements OnInit {
         const gradeType = this.parseGradeType(jsonObject.gradeType);
         const lowerBoundInclusive: boolean = jsonObject.lowerBoundInclusive;
 
-        const gradeSteps = this.modifyGradeStepsByGeneralSettings(gradeType, lowerBoundInclusive, jsonObject.gradeSteps);
+        this.saveImportedGradingScheme(gradeType, jsonObject.maxPoints, lowerBoundInclusive, jsonObject.gradeSteps);
+    }
 
+    /**
+     * Parse and load grade key schema from csv
+     * @param csvStr the csv representation as a string
+     */
+    loadGradeSchemaCsv(csvStr: string): void {
+        const rows = csvStr.split('\n');
+
+        // parse general settings from first line
+        const generalSettingsRow = rows.first();
+
+        if (generalSettingsRow === undefined) {
+            return;
+        }
+
+        const generalSettingsStrArr = generalSettingsRow.split(',');
+
+        if (generalSettingsStrArr.length !== 3) {
+            return;
+        }
+
+        const gradeType = this.parseGradeType(generalSettingsStrArr[0]);
+        let lowerBoundInclusive: boolean;
+
+        lowerBoundInclusive = generalSettingsStrArr[1] === 'true';
+        const maxPoints: number = Number(generalSettingsStrArr[2]);
+
+        // parse grade row steps
+        const gradeStepsStrArr: string[] = rows.slice(1);
+
+        const unmodifiedGradeSteps: UnmodifiedGradeStep[] = [];
+        for (const gradeStepStr of gradeStepsStrArr) {
+            const gradeStepStrArr: string[] = gradeStepStr.split(',');
+
+            unmodifiedGradeSteps.push({
+                gradeName: gradeStepStrArr[0],
+                lowerBoundPercentage: Number(gradeStepStrArr[1]),
+                upperBoundPercentage: Number(gradeStepStrArr[1]),
+                // undefined if not provided
+                isPassingGrade: Boolean(gradeStepStrArr[2]),
+            });
+        }
+
+        this.saveImportedGradingScheme(gradeType, maxPoints, lowerBoundInclusive, unmodifiedGradeSteps);
+    }
+
+    /**
+     * Save imported grading scheme
+     * @param gradeType
+     * @param maxPoints
+     * @param lowerBoundInclusive
+     * @param unmodifiedGradeSteps grade steps without attributes describing general settings
+     */
+    saveImportedGradingScheme(gradeType: GradeType, maxPoints: number, lowerBoundInclusive: boolean, unmodifiedGradeSteps: UnmodifiedGradeStep[]): void {
+        const gradeSteps = this.modifyGradeStepsByGeneralSettings(gradeType, lowerBoundInclusive, unmodifiedGradeSteps);
         this.gradingScale = {
             gradeSteps,
             gradeType,
@@ -661,9 +735,9 @@ export class GradingSystemComponent implements OnInit {
 
         // max points need to updated, initial value set does not trigger
         // this.maxPoints = 0;
-        if (jsonObject.maxPoints) {
-            this.maxPoints = jsonObject.maxPoints;
-            this.onChangeMaxPoints(jsonObject.maxPoints);
+        if (maxPoints) {
+            this.maxPoints = maxPoints;
+            this.onChangeMaxPoints(maxPoints);
         }
 
         // sort grade steps by percentage
@@ -694,18 +768,21 @@ export class GradingSystemComponent implements OnInit {
      * Modify the single grade steps depending on general settings of the grade key schema
      * @param gradeType grade type of grade key schema
      * @param lowerBoundInclusive bool whether lower bound points/percentage is included in the grade step
-     * @param gradeStepsUnparsed
+     * @param unmodifiedGradeSteps grade steps without attributes describing general settings
      * @return gradeSteps adjusted grade steps
      */
-    modifyGradeStepsByGeneralSettings(gradeType: GradeType, lowerBoundInclusive: boolean, gradeStepsUnparsed: any): GradeStep[] {
-        return gradeStepsUnparsed.map((gradeStep: GradeStep) => ({
-            gradeName: gradeStep.gradeName,
-            lowerBoundPercentage: gradeStep.lowerBoundPercentage,
-            upperBoundPercentage: gradeStep.upperBoundPercentage,
-            lowerBoundInclusive,
-            upperBoundInclusive: !lowerBoundInclusive,
-            isPassingGrade: gradeType === GradeType.GRADE ? gradeStep.isPassingGrade : null,
-        }));
+    modifyGradeStepsByGeneralSettings(gradeType: GradeType, lowerBoundInclusive: boolean, unmodifiedGradeSteps: UnmodifiedGradeStep[]): GradeStep[] {
+        return unmodifiedGradeSteps.map(
+            (gradeStep: UnmodifiedGradeStep) =>
+                ({
+                    gradeName: gradeStep.gradeName,
+                    lowerBoundPercentage: gradeStep.lowerBoundPercentage,
+                    upperBoundPercentage: gradeStep.upperBoundPercentage,
+                    lowerBoundInclusive,
+                    upperBoundInclusive: !lowerBoundInclusive,
+                    isPassingGrade: gradeType === GradeType.GRADE ? gradeStep.isPassingGrade : null,
+                } as GradeStep),
+        );
     }
 
     /**
@@ -714,10 +791,34 @@ export class GradingSystemComponent implements OnInit {
     gradeSchemeToJsonStr(): string {
         return JSON.stringify({
             gradeType: 'GradeType.' + this.gradingScale.gradeType,
-            lowerBoundInclusive: this.gradingScale.gradeSteps[0].lowerBoundInclusive,
-            maxPoints: (<GradeStep>this.gradingScale.gradeSteps.last()).upperBoundPoints,
-            gradeSteps: this.gradingScale.gradeSteps,
+            lowerBoundInclusive: this.lowerBoundInclusivity,
+            maxPoints: this.maxPoints,
+            gradeSteps: this.gradingScale.gradeSteps.map((gradeStep) => ({
+                gradeName: gradeStep.gradeName,
+                lowerBoundPercentage: gradeStep.lowerBoundPercentage,
+                upperBoundPercentage: gradeStep.upperBoundPercentage,
+            })),
         });
+    }
+
+    /**
+     * Grade key scheme to CSV string
+     */
+    gradeSchemeToCsvStr(): string {
+        let result = '';
+
+        const settingsRowStrArr = ['GradeType.' + this.gradingScale.gradeType, this.lowerBoundInclusivity, this.maxPoints];
+        result += settingsRowStrArr.join(',') + '\n';
+
+        for (const gradeStep of this.gradingScale.gradeSteps) {
+            const rowStr = [gradeStep.gradeName, gradeStep.lowerBoundPercentage, gradeStep.upperBoundPercentage];
+            result += rowStr.join(',') + '\n';
+        }
+
+        // remove last line
+        result = result.replace(/\n$/, '');
+
+        return result;
     }
 
     /**
@@ -731,6 +832,16 @@ export class GradingSystemComponent implements OnInit {
     }
 
     /**
+     * Download grading key schema to csv file
+     */
+    downloadGradingKeyCsv(): void {
+        this.downloadByHtmlTag({
+            fileName: 'grading_key_' + this.gradingScale.course?.shortName + '.csv',
+            text: this.gradeSchemeToCsvStr(),
+        });
+    }
+
+    /**
      * Create a <a>-tag for file to be downloaded an programmatically click
      * @param arg: type with filename and content string
      * @private
@@ -740,7 +851,7 @@ export class GradingSystemComponent implements OnInit {
             this.setting.element.dynamicDownload = document.createElement('a');
         }
         const element = this.setting.element.dynamicDownload;
-        const fileType = arg.fileName.indexOf('.json') > -1 ? 'text/json' : 'text/plain';
+        const fileType = arg.fileName.indexOf('.json') > -1 ? 'text/json' : 'text/csv';
         element.setAttribute('href', `data:${fileType};charset=utf-8,${encodeURIComponent(arg.text)}`);
         element.setAttribute('download', arg.fileName);
 

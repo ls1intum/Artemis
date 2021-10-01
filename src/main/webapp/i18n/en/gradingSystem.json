@@ -5,8 +5,9 @@
             "titleCourse": "Grading Key for Course",
             "titleExam": "Grading Key for Exam",
             "defaultButton": "Generate Default Grading Key",
-            "importButton": "Import (.json)",
-            "exportButton": "Export (.json)",
+            "importButton": "Import",
+            "exportCsvButton": "Export (.csv)",
+            "exportJsonButton": "Export (.json)",
             "gradeType": {
                 "title": "Grade Type",
                 "grade": "Grade",
