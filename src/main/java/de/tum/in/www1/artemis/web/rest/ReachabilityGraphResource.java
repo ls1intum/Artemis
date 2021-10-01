@@ -47,7 +47,7 @@ public class ReachabilityGraphResource {
 
     @PostMapping("/reachability-graph")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<UMLModelDTO> getTest(@RequestBody String model) throws IOException {
+    public ResponseEntity<UMLModelDTO> getReachabilityGraph(@RequestBody String model) throws IOException {
         UMLDiagram diagram = UMLModelParser.buildModelFromJSON(parseString(model).getAsJsonObject(), 0);
         CoverabilityGraphService.CoverabilityGraph coverabilityGraph = coverabilityGraphService.coverabilityGraph((PetriNet) diagram);
 
