@@ -23,7 +23,6 @@
             "action": "Aktion",
             "exerciseDashboard": "Übungs-Dashboard",
             "rating": "Ratings",
-            "discussion": "Diskussion",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor:innen-Bestenliste",
                 "examTitle": "Tutor:innen-Klausur Bestenliste",
@@ -34,7 +33,9 @@
                 "numberOfNotAnsweredMoreFeedbackRequests": "Offene Feedbackanfragen",
                 "numberOfComplaintResponses": "Beschwerdeantworten",
                 "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Feedbackanfragen",
-                "points": "Punkte"
+                "points": "Punkte",
+                "averageScore": "Durchschnittliche Punktzahl",
+                "averageRating": "Durchschnittliches Rating"
             }
         }
     }

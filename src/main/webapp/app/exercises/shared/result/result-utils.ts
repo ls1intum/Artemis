@@ -1,5 +1,5 @@
 import { Result } from 'app/entities/result.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 

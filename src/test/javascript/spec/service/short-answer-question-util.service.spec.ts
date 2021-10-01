@@ -1,14 +1,14 @@
 import { TestBed, getTestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisTestModule } from '../test.module';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 chai.use(sinonChai);

@@ -6,7 +6,6 @@ import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-c
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
-import { MomentModule } from 'ngx-moment';
 import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
@@ -37,7 +36,6 @@ import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exerci
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisCoursePostsModule } from 'app/course/course-posts/course-posts.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
@@ -61,7 +59,6 @@ import { ArtemisTransformationModelingExerciseModule } from 'app/exercises/trans
         ReactiveFormsModule,
         ImageCropperModule,
         OrionModule,
-        MomentModule,
         TagInputModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
@@ -88,7 +85,6 @@ import { ArtemisTransformationModelingExerciseModule } from 'app/exercises/trans
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
-        ArtemisCoursePostsModule,
         ArtemisSharedPipesModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,

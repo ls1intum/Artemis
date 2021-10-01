@@ -13,7 +13,7 @@ const users = artemis.users;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
-const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
+const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 
 // Common primitives
 const uid = generateUUID();
@@ -93,8 +93,6 @@ describe('Exam management', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately
-            cy.wait(1000);
             courseManagementRequests.deleteCourse(course.id);
         }
     });

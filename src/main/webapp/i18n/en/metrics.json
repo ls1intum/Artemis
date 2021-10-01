@@ -2,6 +2,8 @@
     "metrics": {
         "title": "Application Metrics",
         "refresh.button": "Refresh",
+        "filter": "Filter",
+        "matches": "Match(es)",
         "updating": "Updating...",
         "jvm": {
             "title": "JVM Metrics",

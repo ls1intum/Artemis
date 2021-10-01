@@ -7,12 +7,12 @@ import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-impo
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import * as chai from 'chai';
-import { NgJhipsterModule } from 'ng-jhipster';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { restore, SinonStub, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -29,8 +29,8 @@ describe('TeamsExportButtonComponent', () => {
     beforeEach(
         waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(NgJhipsterModule), MockModule(FeatureToggleModule)],
-                declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe)],
+                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
+                declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 providers: [MockProvider(TeamService)],
             }).compileComponents();
         }),

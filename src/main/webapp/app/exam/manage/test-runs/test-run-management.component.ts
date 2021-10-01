@@ -5,7 +5,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -32,7 +32,7 @@ export class TestRunManagementComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private accountService: AccountService,
         private sortService: SortService,
@@ -53,10 +53,10 @@ export class TestRunManagementComponent implements OnInit {
                     (res: HttpResponse<StudentExam[]>) => {
                         this.testRuns = res.body!;
                     },
-                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                    (error: HttpErrorResponse) => onError(this.alertService, error),
                 );
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
         this.accountService.fetch().subscribe((res) => {
             if (res.body != undefined) {
@@ -80,7 +80,7 @@ export class TestRunManagementComponent implements OnInit {
                         }
                     },
                     (error: HttpErrorResponse) => {
-                        onError(this.jhiAlertService, error);
+                        onError(this.alertService, error);
                     },
                 );
             })

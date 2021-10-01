@@ -1,7 +1,6 @@
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { MomentModule } from 'ngx-moment';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { NgModule } from '@angular/core';
@@ -24,7 +23,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../discussion/discussion.module').then((m) => m.DiscussionModule),
+                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
             },
         ],
     },
@@ -34,7 +33,6 @@ const routes: Routes = [
         RouterModule.forChild(routes),
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        MomentModule,
         ArtemisSharedPipesModule,
         ArtemisLectureUnitsModule,
         ArtemisLearningGoalsModule,

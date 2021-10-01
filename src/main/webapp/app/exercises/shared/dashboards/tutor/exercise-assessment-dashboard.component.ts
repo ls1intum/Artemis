@@ -2,7 +2,7 @@ import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -151,7 +151,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     constructor(
         private exerciseService: ExerciseService,
         private courseManagementService: CourseManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
         private route: ActivatedRoute,
@@ -268,12 +268,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
                 },
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
             this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
@@ -324,7 +324,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
     }
@@ -528,7 +528,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body!;
             this.tutorParticipationStatus = this.tutorParticipation.status!;
-            this.jhiAlertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+            this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
 
@@ -541,7 +541,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 
     calculateComplaintStatus(complaint: Complaint) {

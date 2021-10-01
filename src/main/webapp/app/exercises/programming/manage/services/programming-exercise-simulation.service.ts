@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from 'app/app.constants';
 import { EntityResponseType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HttpClient } from '@angular/common/http';

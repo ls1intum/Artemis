@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -15,10 +14,11 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
@@ -66,8 +66,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        private alertService: AlertService,
+        private eventManager: EventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
@@ -130,9 +130,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    formatDate(date: Moment | Date | undefined) {
+    formatDate(date: dayjs.Dayjs | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
+        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
     }
 
     hasAccessRights() {
@@ -196,7 +196,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
+                this.alertService.error('artemisApp.participation.addPresentation.error');
             },
         );
     }
@@ -209,7 +209,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('artemisApp.participation.removePresentation.error');
+                this.alertService.error('artemisApp.participation.removePresentation.error');
             },
         );
     }
@@ -291,7 +291,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation Student participation
      * @param repoUrl original repository url
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUrl: String) => {
+    getRepositoryLink = (participation: StudentParticipation, repoUrl: string) => {
         if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
             return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
         }

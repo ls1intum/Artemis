@@ -29,7 +29,8 @@
                 "exercises": "Exercises",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
-                "exams": "Exams"
+                "exams": "Exams",
+                "discussion": "Discussion"
             },
             "exerciseList": {
                 "releaseDate": "Release Date",
@@ -45,6 +46,7 @@
                 "newFirst": "Newest",
                 "oldFirst": "Oldest",
                 "noExercises": "No exercises available for the course.",
+                "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
                 "noDueDate": "No due date",

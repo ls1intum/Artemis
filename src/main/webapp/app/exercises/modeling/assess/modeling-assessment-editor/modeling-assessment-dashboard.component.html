@@ -14,7 +14,7 @@
     <div class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr [(ascending)]="reverse" [(predicate)]="predicate" [callback]="sortRows.bind(this)" jhiSort>
+                <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>
                     <th>
                         <a class="th-link">#</a>
                     </th>

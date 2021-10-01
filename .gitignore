@@ -89,11 +89,12 @@ out/
 ######################
 # NPM
 ######################
-package-lock.json
 .npm/
 .cache/
 .config/
 .yarnrc
+yarn.lock
+yarn-error.log
 
 ######################
 # Package Files

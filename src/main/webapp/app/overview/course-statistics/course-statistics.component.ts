@@ -2,11 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { sortBy } from 'lodash';
+import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import {
     ABSOLUTE_SCORE,
@@ -254,9 +254,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
-        exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || moment().add(5, 'year')).valueOf()]);
+        exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
-            if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
+            if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || exercise.type === ExerciseType.PROGRAMMING) {
                 let index = exerciseTypes.indexOf(exercise.type!);
                 if (index === -1) {
                     index = exerciseTypes.length;

@@ -1,55 +1,82 @@
 import { TestBed } from '@angular/core/testing';
-
-import { JhiMetricsService } from 'app/admin/metrics/metrics.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { MetricsService } from 'app/admin/metrics/metrics.service';
+import { ThreadDump, ThreadState } from 'app/admin/metrics/metrics.model';
 
-describe('Logs Service', () => {
-    let service: JhiMetricsService;
-    let httpMock: HttpTestingController;
+describe('Service Tests', () => {
+    describe('Logs Service', () => {
+        let service: MetricsService;
+        let httpMock: HttpTestingController;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [HttpClientTestingModule],
+            });
+            service = TestBed.inject(MetricsService);
+            httpMock = TestBed.inject(HttpTestingController);
         });
 
-        service = TestBed.inject(JhiMetricsService);
-        httpMock = TestBed.inject(HttpTestingController);
-    });
-
-    afterEach(() => {
-        httpMock.verify();
-    });
-
-    describe('Service methods', () => {
-        it('should call correct URL', () => {
-            service.getMetrics().subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = SERVER_API_URL + 'management/jhimetrics';
-            expect(req.request.url).toEqual(resourceUrl);
+        afterEach(() => {
+            httpMock.verify();
         });
 
-        it('should return Metrics', () => {
-            const metrics: any[] = [];
+        describe('Service methods', () => {
+            it('should return Metrics', () => {
+                let expectedResult;
+                const metrics = {
+                    jvm: {},
+                    'http.server.requests': {},
+                    cache: {},
+                    services: {},
+                    databases: {},
+                    garbageCollector: {},
+                    processMetrics: {},
+                };
 
-            service.getMetrics().subscribe((received) => {
-                expect(received.body[0]).toEqual(metrics);
+                service.getMetrics().subscribe((received) => {
+                    expectedResult = received;
+                });
+
+                const req = httpMock.expectOne({ method: 'GET' });
+                req.flush(metrics);
+                expect(expectedResult).toEqual(metrics);
             });
 
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush([metrics]);
-        });
+            it('should return Thread Dump', () => {
+                let expectedResult: ThreadDump | undefined = undefined;
+                const dump: ThreadDump = {
+                    threads: [
+                        {
+                            threadName: 'Reference Handler',
+                            threadId: 2,
+                            blockedTime: -1,
+                            blockedCount: 7,
+                            waitedTime: -1,
+                            waitedCount: 0,
+                            lockName: null,
+                            lockOwnerId: -1,
+                            lockOwnerName: null,
+                            daemon: true,
+                            inNative: false,
+                            suspended: false,
+                            threadState: ThreadState.Runnable,
+                            priority: 10,
+                            stackTrace: [],
+                            lockedMonitors: [],
+                            lockedSynchronizers: [],
+                            lockInfo: null,
+                        },
+                    ],
+                };
 
-        it('should return Thread Dump', () => {
-            const dump = [{ name: 'test1', threadState: 'RUNNABLE' }];
+                service.threadDump().subscribe((received) => {
+                    expectedResult = received;
+                });
 
-            service.threadDump().subscribe((received) => {
-                expect(received.body[0]).toEqual(dump);
+                const req = httpMock.expectOne({ method: 'GET' });
+                req.flush(dump);
+                expect(expectedResult).toEqual(dump);
             });
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush([dump]);
         });
     });
 });

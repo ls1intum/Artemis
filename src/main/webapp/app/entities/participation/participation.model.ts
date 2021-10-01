@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -31,7 +31,7 @@ export abstract class Participation implements BaseEntity {
     public id?: number;
 
     public initializationState?: InitializationState;
-    public initializationDate?: Moment;
+    public initializationDate?: dayjs.Dayjs;
     public presentationScore?: number;
     public results?: Result[];
     public submissions?: Submission[];
@@ -49,6 +49,11 @@ export abstract class Participation implements BaseEntity {
     }
 }
 
+/**
+ * Gets the exercise of a given participation, if possible.
+ *
+ * This is needed as different participation types may use different exercise attributes (e.g. not 'exercise' but 'programmingExercise').
+ */
 export const getExercise = (participation: Participation): Exercise | undefined => {
     if (participation) {
         switch (participation.type) {

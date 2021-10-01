@@ -722,7 +722,7 @@ code.password:hover {
     background-color: whitesmoke;
 }
 
-displaycolor {
+.displaycolor {
     background: #f8f9fa;
 }
 
@@ -801,9 +801,17 @@ Course Info Bar
     img {
         max-width: 100%;
     }
+
+    // this class is required for rendering post references in between of post content without having linebreaks
+    &.manipulate-p {
+        p {
+            margin-bottom: 0 !important;
+            display: inline;
+        }
+    }
 }
 
-ngb-tooltip-window {
+.ngb-tooltip-window {
     padding: 0;
     width: 200px !important;
 
