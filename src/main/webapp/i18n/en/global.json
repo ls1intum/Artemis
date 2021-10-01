@@ -283,7 +283,8 @@
             "datetimelocal": "This field must be a date and time.",
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern."
-        }
+        },
+        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone. This might differ from the target time zone."
     },
     "error": {
         "internalServerError": "Internal server error",
