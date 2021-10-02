@@ -15,13 +15,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 @RestController
-@RequestMapping(SubmissionPolicyResource.Endpoints.ROOT)
+@RequestMapping(SubmissionPolicyResource.ROOT)
 public class SubmissionPolicyResource {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);
 
     public static final String ENTITY_NAME = "programmingExercise.submissionPolicy";
+
+    public static final String ROOT = "/api";
+
+    public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = "/programming-exercises/{exerciseId}/submission-policy";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -47,7 +54,7 @@ public class SubmissionPolicyResource {
      *         the programming exercise does not exist and status 403 when the requester is not at least a student
      *         in the course the programming exercise belongs to.
      */
-    @GetMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @GetMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<SubmissionPolicy> getSubmissionPolicyOfExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get submission policy of programming exercise {}", exerciseId);
@@ -58,11 +65,6 @@ public class SubmissionPolicyResource {
         return ResponseEntity.ok().body(programmingExercise.getSubmissionPolicy());
     }
 
-    /*
-     * Tests: 1. Auth Check (Student, Tutor, Editor) 2. Programming Exercise does not exist 3. Programming Exercise already has submission policy 4. Submission Policy already has
-     * an id 5. LRP: Null submission limit 6. LRP: Negative submission limit / 0 submission limit 7. SPP: Null submission limit 8. SPP: Negative submission limit / 0 submission
-     * limit 9. SPP: Null penalty 10. SPP: Negative penalty / 0 penalty
-     */
     /**
      * POST /programming-exercises/:exerciseId/submission-policy
      * <br><br>
@@ -77,9 +79,9 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to and 400 when the submission policy has an id or
      *         is invalid. More information on submission policy validation can be found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
-    @PostMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @PostMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy) {
+    public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy) throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
         HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, submissionPolicy.getId() + "");
 
@@ -101,7 +103,7 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
-        return ResponseEntity.ok().headers(responseHeaders).body(addedSubmissionPolicy);
+        return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", "" + exerciseId))).headers(responseHeaders).body(addedSubmissionPolicy);
     }
 
     /**
@@ -116,7 +118,7 @@ public class SubmissionPolicyResource {
      *         the programming exercise does not exist, status 403 when the requester is not at least an instructor
      *         in the course the programming exercise belongs to and 400 when the programming exercise does not have a submission policy.
      */
-    @DeleteMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @DeleteMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeSubmissionPolicyFromProgrammingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to remove submission policy from programming exercise {}", exerciseId);
@@ -152,7 +154,7 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to and 400 when activate matches the current status of
      *         the submission policy or the programming exercise has no submission policy.
      */
-    @PutMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @PutMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam Boolean activate) {
         log.debug("REST request to toggle the submission policy for programming exercise {}", exerciseId);
@@ -199,7 +201,7 @@ public class SubmissionPolicyResource {
      *         than the previous submission policy or is invalid. More information on submission policy validation can be
      *         found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
-    @PatchMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @PatchMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy updatedSubmissionPolicy) {
         log.debug("REST request to update the submission policy of programming exercise {}", exerciseId);
@@ -209,6 +211,14 @@ public class SubmissionPolicyResource {
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
+        if (submissionPolicy == null) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyUpdateFailedPolicyNotExist",
+                "The submission policy could not be updated, because the programming exercise does not have a submission policy.");
+            return ResponseEntity.badRequest().headers(responseHeaders).build();
+        }
+
+        // We only care about type equality and not id equality, since the id of the incoming submission policy
+        // is omitted anyway.
         if (!submissionPolicy.getClass().getTypeName().equals(updatedSubmissionPolicy.getClass().getTypeName())) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "updatedSubmissionPolicyIncorrectType",
                     "The submission policy could not be updated, because the new type is different from the old type.");
@@ -221,13 +231,5 @@ public class SubmissionPolicyResource {
 
         responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId + "");
         return ResponseEntity.ok().headers(responseHeaders).body(submissionPolicy);
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "/api";
-
-        public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = "/programming-exercises/{exerciseId}/submission-policy";
-
     }
 }

@@ -43,12 +43,10 @@ public class SubmissionPolicyService {
     }
 
     public SubmissionPolicy addSubmissionPolicyToProgrammingExercise(SubmissionPolicy submissionPolicy, ProgrammingExercise programmingExercise) {
-        submissionPolicy.setActive(true);
         submissionPolicy.setProgrammingExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
         programmingExercise.setSubmissionPolicy(addedSubmissionPolicy);
-        enableSubmissionPolicy(addedSubmissionPolicy);
         programmingExerciseRepository.save(programmingExercise);
         return addedSubmissionPolicy;
     }
@@ -58,14 +56,23 @@ public class SubmissionPolicyService {
         if (submissionPolicy == null) {
             return;
         }
-        validateSubmissionPolicy(submissionPolicy);
         submissionPolicy.setActive(true);
+        validateSubmissionPolicy(submissionPolicy);
         submissionPolicy = submissionPolicyRepository.save(submissionPolicy);
         submissionPolicy.setProgrammingExercise(programmingExercise);
         programmingExercise.setSubmissionPolicy(submissionPolicy);
     }
 
     public void validateSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        Integer submissionLimit = submissionPolicy.getSubmissionLimit();
+        if (submissionPolicy.isActive() == null) {
+            throw new BadRequestAlertException("Submission policies must be activated or deactivated. Activation cannot be null.", SubmissionPolicyResource.ENTITY_NAME,
+                "submissionPolicyActiveNull");
+        }
+        if (submissionLimit == null || submissionLimit < 1) {
+            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
+                "submissionPolicyIllegalSubmissionLimit");
+        }
         if (submissionPolicy instanceof LockRepositoryPolicy policy) {
             validateLockRepositoryPolicy(policy);
         }
@@ -75,21 +82,12 @@ public class SubmissionPolicyService {
     }
 
     private void validateLockRepositoryPolicy(LockRepositoryPolicy lockRepositoryPolicy) {
-        Integer submissionLimit = lockRepositoryPolicy.getSubmissionLimit();
-        if (submissionLimit == null || submissionLimit < 1) {
-            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
-                    "submissionPolicyIllegalSubmissionLimit");
-        }
+        // This method is intentionally blank and might be used for further validation of
+        // Lock Repository Policies
     }
 
     private void validateSubmissionPenaltyPolicy(SubmissionPenaltyPolicy submissionPenaltyPolicy) {
-        Integer submissionLimit = submissionPenaltyPolicy.getSubmissionLimit();
         Double penalty = submissionPenaltyPolicy.getExceedingPenalty();
-        if (submissionLimit == null || submissionLimit < 1) {
-            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
-                    "submissionPolicyIllegalSubmissionLimit");
-        }
-
         if (penalty == null || penalty <= 0) {
             throw new BadRequestAlertException("The penalty of submission penalty policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
                     "submissionPenaltyPolicyIllegalPenalty");

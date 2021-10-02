@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -239,6 +240,9 @@ public class DatabaseUtilService {
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
     private RatingRepository ratingRepo;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -368,11 +372,25 @@ public class DatabaseUtilService {
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
+    public void addEditor(final String editorGroup, final String editorName) {
+        var instructor = ModelFactory.generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
+        instructor = userRepo.save(instructor);
+
+        assertThat(instructor.getId()).as("Editor has been created").isNotNull();
+    }
+
     public void addTeachingAssistant(final String taGroup, final String taName) {
         var ta = ModelFactory.generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
         ta = userRepo.save(ta);
 
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+    }
+
+    public void addStudent(final String studentGroup, final String studentName) {
+        var instructor = ModelFactory.generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
+        instructor = userRepo.save(instructor);
+
+        assertThat(instructor.getId()).as("Student has been created").isNotNull();
     }
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
@@ -2100,6 +2118,13 @@ public class DatabaseUtilService {
         repository.setExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
         return repository;
+    }
+
+    public SubmissionPolicy addSubmissionPolicyToExercise(SubmissionPolicy policy, ProgrammingExercise programmingExercise) {
+        policy = submissionPolicyRepository.save(policy);
+        programmingExercise.setSubmissionPolicy(policy);
+        programmingExerciseRepository.save(programmingExercise);
+        return policy;
     }
 
     public Course addCourseWithModelingAndTextExercise() {

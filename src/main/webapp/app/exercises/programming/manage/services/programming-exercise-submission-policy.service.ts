@@ -23,6 +23,7 @@ export class ProgrammingExerciseSubmissionPolicyService implements IProgrammingE
     }
 
     addSubmissionPolicyToProgrammingExercise(submissionPolicy: SubmissionPolicy, exerciseId: number): Observable<SubmissionPolicy> {
+        submissionPolicy.active = false;
         return this.http.post<SubmissionPolicy>(this.requestUrl(exerciseId), submissionPolicy);
     }
 
