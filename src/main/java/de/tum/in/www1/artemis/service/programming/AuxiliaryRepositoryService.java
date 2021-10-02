@@ -129,9 +129,8 @@ public class AuxiliaryRepositoryService {
     }
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryValid(AuxiliaryRepository auxiliaryRepository) {
-        String checkoutDirectory = auxiliaryRepository.getCheckoutDirectory();
-        Matcher ciCheckoutDirectoryMatcher = ALLOWED_BAMBOO_CHECKOUT_DIRECTORY.matcher(checkoutDirectory);
-        if (!ciCheckoutDirectoryMatcher.matches() || checkoutDirectory.equals(ASSIGNMENT_CHECKOUT_PATH)) {
+        Matcher ciCheckoutDirectoryMatcher = ALLOWED_BAMBOO_CHECKOUT_DIRECTORY.matcher(auxiliaryRepository.getCheckoutDirectory());
+        if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(ASSIGNMENT_CHECKOUT_PATH)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
                     ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
@@ -179,7 +178,7 @@ public class AuxiliaryRepositoryService {
 
         // The name must not match any of the names of the already present repositories, otherwise
         // we get an undefined state.
-        // Currently, the names "exercise", "solution", and "tests" are restricted.
+        // Currently, the names "exercise", "solution", "tests" and "auxiliary" as specified in RepositoryType are restricted.
         validateAuxiliaryRepositoryNameRestricted(auxiliaryRepository);
 
         if (auxiliaryRepository.getCheckoutDirectory() != null) {
