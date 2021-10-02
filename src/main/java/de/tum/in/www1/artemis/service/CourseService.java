@@ -298,7 +298,8 @@ public class CourseService {
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
      * @param courseId      the id of the course
-     * @param studentDTOs   the list of students (with at least registration number) who should get access to the exam
+     * @param studentDTOs   the list of students (with at least registration number)
+     * @param courseGroup   the group the students should be added to
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
