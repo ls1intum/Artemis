@@ -2,7 +2,7 @@
 <div class="edit-sqi" *ngIf="!exercise.gradingInstructionFeedbackUsed">
     <div class="col-12 col-sm-auto d-flex me-1 mb-1">
         <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode, 'btn-default': !showEditMode }">
-            <span jhiTranslate="global.generic.edit"></span>
+            <span jhiTranslate="entity.action.edit"></span>
         </button>
         <button id="edit-text-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': !showEditMode, 'btn-default': showEditMode }">
             <span jhiTranslate="artemisApp.exercise.editText"></span>
