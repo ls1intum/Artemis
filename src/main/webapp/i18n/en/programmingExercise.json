@@ -319,6 +319,7 @@
                 "programmingExercisePolicyNotPresent": "The submission policy could not be removed from the programming exercise, because it does not have a submission policy.",
                 "submissionPolicyAlreadyEnabled": "The submission policy could not be enabled, because it is already active.",
                 "submissionPolicyAlreadyDisabled": "The submission policy could not be disabled, because it is already inactive.",
+                "submissionPolicyToggleFailedPolicyNotExist": "The submission policy could not be toggled, because the programming exercise does not have a submission policy.",
                 "updatedSubmissionPolicyIncorrectType": "The submission policy could not be updated, because the new type is different from the old type.",
                 "none": {
                     "optionLabel": "None"

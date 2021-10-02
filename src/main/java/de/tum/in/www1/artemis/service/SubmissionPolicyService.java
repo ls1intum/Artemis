@@ -150,7 +150,7 @@ public class SubmissionPolicyService {
         toggleSubmissionPolicy(policy, false);
     }
 
-    public void updateSubmissionPolicy(ProgrammingExercise exercise, SubmissionPolicy newPolicy) {
+    public SubmissionPolicy updateSubmissionPolicy(ProgrammingExercise exercise, SubmissionPolicy newPolicy) {
         SubmissionPolicy originalPolicy = exercise.getSubmissionPolicy();
         if (originalPolicy instanceof LockRepositoryPolicy) {
             updateLockRepositoryPolicy(originalPolicy, newPolicy);
@@ -158,7 +158,7 @@ public class SubmissionPolicyService {
         else if (originalPolicy instanceof SubmissionPenaltyPolicy) {
             updateSubmissionPenaltyPolicy((SubmissionPenaltyPolicy) originalPolicy, (SubmissionPenaltyPolicy) newPolicy);
         }
-        submissionPolicyRepository.save(originalPolicy);
+        return submissionPolicyRepository.save(originalPolicy);
     }
 
     private void updateLockRepositoryPolicy(SubmissionPolicy originalPolicy, SubmissionPolicy newPolicy) {
