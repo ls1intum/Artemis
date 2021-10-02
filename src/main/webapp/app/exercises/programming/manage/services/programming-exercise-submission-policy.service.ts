@@ -31,12 +31,12 @@ export class ProgrammingExerciseSubmissionPolicyService implements IProgrammingE
     }
 
     enableSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<HttpResponse<void>> {
-        let params = new HttpParams().set('activate', 'true');
+        const params = new HttpParams().set('activate', 'true');
         return this.http.put<void>(this.requestUrl(exerciseId), null, { observe: 'response', params });
     }
 
     disableSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<HttpResponse<void>> {
-        let params = new HttpParams().set('activate', 'false');
+        const params = new HttpParams().set('activate', 'false');
         return this.http.put<void>(this.requestUrl(exerciseId), null, { observe: 'response', params });
     }
 
