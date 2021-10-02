@@ -4,6 +4,10 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment:
+        name: artemistest5-e2e-tests
+        url: https://artemistest5.ase.in.tum.de
+    concurrency: cypress-tests
 
     steps:
       - name: Checkout
@@ -14,4 +18,6 @@ jobs:
         with:
           working-directory: src/test/cypress
           browser: chrome
-          install-command: yarn install #--frozen-lockfile
+          install-command: yarn install --frozen-lockfile
+          config: baseUrl=https://artemistest5.ase.in.tum.de
+          env: username=${{ secrets.BAMBOO_TEST_USER }},password=${{ secrets.BAMBOO_TEST_PASSWORD }},adminUsername=${{ secrets.BAMBOO_ADMIN_USER }},adminPassword=${{ secrets.BAMBOO_ADMIN_PASSWORD }}
