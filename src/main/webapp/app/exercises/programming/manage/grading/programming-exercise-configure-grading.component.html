@@ -47,6 +47,7 @@
                 <jhi-submission-policy-update
                     [programmingExercise]="programmingExercise"
                     [editable]="true"
+                    [updateExistingPolicy]="programmingExercise.submissionPolicy?.id != undefined"
                 ></jhi-submission-policy-update>
             </div>
         </div>

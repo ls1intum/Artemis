@@ -296,8 +296,15 @@
                 "delete": "Delete",
                 "activate": "Activate",
                 "deactivate": "Deactivate",
-                "removeSuccessful": "The Submission Policy was removed successfully!",
-                "removeUnsuccessful": "The Submission Policy was not removed successfully!",
+                "created": "The submission policy was created successfully!",
+                "updated": "The submission policy was updated successfully!",
+                "deleted": "The submission policy was deleted successfully!",
+                "programmingExercisePolicyPresent": "The submission policy could not be added to the programming exercise, because it already has a submission policy.",
+                "submissionPolicyHasId": "The submission policy could not be added to the programming exercise, because it already has an id.",
+                "programmingExercisePolicyNotPresent": "The submission policy could not be removed from the programming exercise, because it does not have a submission policy.",
+                "submissionPolicyAlreadyEnabled": "The submission policy could not be enabled, because it is already active.",
+                "submissionPolicyAlreadyDisabled": "The submission policy could not be disabled, because it is already inactive.",
+                "updatedSubmissionPolicyIncorrectType": "The submission policy could not be updated, because the new type is different from the old type.",
                 "none": {
                     "optionLabel": "None"
                 },

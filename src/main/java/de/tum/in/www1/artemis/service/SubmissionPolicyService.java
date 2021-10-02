@@ -49,6 +49,7 @@ public class SubmissionPolicyService {
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
         programmingExercise.setSubmissionPolicy(addedSubmissionPolicy);
         enableSubmissionPolicy(addedSubmissionPolicy);
+        programmingExerciseRepository.save(programmingExercise);
         return addedSubmissionPolicy;
     }
 

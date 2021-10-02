@@ -466,10 +466,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap(() => {
                     this.programmingExercise.submissionPolicy = undefined;
-                    this.alertService.success(`artemisApp.programmingExercise.submissionPolicy.removeSuccessful`);
                 }),
                 catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.submissionPolicy.removeUnsuccessful`);
                     return of(null);
                 }),
             )
@@ -486,11 +484,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.programmingExerciseSubmissionPolicyService
             .addSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
             .pipe(
-                tap(() => {
-                    this.alertService.success(`artemisApp.programmingExercise.submissionPolicy.addSuccessful`);
+                tap((submissionPolicy: SubmissionPolicy) => {
+                    this.programmingExercise.submissionPolicy = submissionPolicy;
                 }),
                 catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.submissionPolicy.addUnsuccessful`);
                     return of(null);
                 }),
             )
@@ -511,11 +508,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.programmingExerciseSubmissionPolicyService
             .updateSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
             .pipe(
-                tap(() => {
-                    this.alertService.success(`artemisApp.programmingExercise.submissionPolicy.updateSuccessful`);
-                }),
                 catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.submissionPolicy.updateUnsuccessful`);
                     return of(null);
                 }),
             )
@@ -532,10 +525,25 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const deactivateSaving = () => {
             this.isSaving = false;
         };
-        if (this.submissionPolicy?.active) {
-            this.programmingExerciseSubmissionPolicyService.disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!).subscribe(deactivateSaving);
+        console.log(this.programmingExercise.id + ' ' + this.programmingExercise.submissionPolicy + ' ' + this.programmingExercise.submissionPolicy?.active);
+        if (this.programmingExercise.submissionPolicy!.active) {
+            this.programmingExerciseSubmissionPolicyService
+                .disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
+                .pipe(
+                    tap(() => {
+                        this.programmingExercise!.submissionPolicy!.active = false;
+                    }),
+                )
+                .subscribe(deactivateSaving);
         } else {
-            this.programmingExerciseSubmissionPolicyService.enableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!).subscribe(deactivateSaving);
+            this.programmingExerciseSubmissionPolicyService
+                .enableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
+                .pipe(
+                    tap(() => {
+                        this.programmingExercise!.submissionPolicy!.active = true;
+                    }),
+                )
+                .subscribe(deactivateSaving);
         }
     }
 

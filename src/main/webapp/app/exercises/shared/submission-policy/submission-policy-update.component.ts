@@ -15,7 +15,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                 (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
                 id="field_submissionPolicy"
-                [disabled]="!editable"
+                [disabled]="!editable || updateExistingPolicy"
             >
                 <option value="none">{{ 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate }}</option>
                 <option value="lock_repository">{{ 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate }}</option>
@@ -104,6 +104,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() editable: boolean;
+    @Input() updateExistingPolicy: boolean;
 
     submissionPolicy?: SubmissionPolicy;
     selectedSubmissionPolicyType: SubmissionPolicyType;
@@ -156,13 +157,14 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     }
 
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
-        const previousSubmissionPolicyType = this.programmingExercise?.submissionPolicy ?? SubmissionPolicyType.NONE;
+        const previousSubmissionPolicyType = this.programmingExercise?.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
         if (submissionPolicyType === SubmissionPolicyType.NONE) {
             this.submissionPolicy = undefined;
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
             const newPolicy = new LockRepositoryPolicy();
             if (this.submissionPolicy) {
                 newPolicy.id = this.submissionPolicy.id;
+                newPolicy.active = this.submissionPolicy.active;
                 newPolicy.submissionLimit = this.submissionPolicy.submissionLimit;
             }
             this.submissionPolicy = newPolicy;
@@ -170,6 +172,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             const newPolicy = new SubmissionPenaltyPolicy();
             if (this.submissionPolicy) {
                 newPolicy.id = this.submissionPolicy.id;
+                newPolicy.active = this.submissionPolicy.active;
                 newPolicy.submissionLimit = this.submissionPolicy.submissionLimit;
                 if (previousSubmissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
                     newPolicy.exceedingPenalty = this.submissionPolicy.exceedingPenalty;

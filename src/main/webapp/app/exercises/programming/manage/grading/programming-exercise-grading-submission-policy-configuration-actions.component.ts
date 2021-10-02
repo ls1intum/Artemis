@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     template: `
         <div align="right">
             <button
-                *ngIf="exercise.submissionPolicy"
+                *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined"
                 id="update-submission-policy-button"
                 class="btn btn-primary ms-3 my-1"
                 jhiTranslate="artemisApp.programmingExercise.submissionPolicy.update"
@@ -20,7 +20,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                 [disabled]="isSaving"
             ></button>
             <button
-                *ngIf="exercise.submissionPolicy == undefined"
+                *ngIf="exercise.submissionPolicy == undefined || exercise.submissionPolicy.id == undefined"
                 id="update-submission-policy-button"
                 class="btn btn-success ms-3 my-1"
                 jhiTranslate="artemisApp.programmingExercise.submissionPolicy.add"
@@ -28,7 +28,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                 [disabled]="isSaving"
             ></button>
             <button
-                *ngIf="exercise.submissionPolicy && !exercise.submissionPolicy!.active"
+                *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined && exercise.submissionPolicy!.active"
                 id="deactivate-submission-policy-button"
                 class="btn btn-danger ms-3 my-1"
                 jhiTranslate="artemisApp.programmingExercise.submissionPolicy.deactivate"
@@ -36,7 +36,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                 [disabled]="isSaving"
             ></button>
             <button
-                *ngIf="exercise.submissionPolicy && exercise.submissionPolicy!.active"
+                *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined && !exercise.submissionPolicy!.active"
                 id="activate-submission-policy-button"
                 class="btn btn-success ms-3 my-1"
                 jhiTranslate="artemisApp.programmingExercise.submissionPolicy.activate"
@@ -44,7 +44,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                 [disabled]="isSaving"
             ></button>
             <button
-                *ngIf="exercise.submissionPolicy"
+                *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined"
                 id="delete-submission-policy-button"
                 class="btn btn-danger ms-3 my-1"
                 jhiTranslate="artemisApp.programmingExercise.submissionPolicy.delete"

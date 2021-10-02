@@ -25,7 +25,7 @@ public class SubmissionPolicyResource {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);
 
-    public static final String ENTITY_NAME = "submissionPolicy";
+    public static final String ENTITY_NAME = "programmingExercise.submissionPolicy";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -141,7 +141,7 @@ public class SubmissionPolicyResource {
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
-        if (submissionPolicy.isActive()) {
+        if (!submissionPolicy.isActive()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyAlreadyDisabled",
                     "The submission policy could not be disabled, because it is already inactive.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
