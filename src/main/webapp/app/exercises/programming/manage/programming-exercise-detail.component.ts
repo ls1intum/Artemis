@@ -144,7 +144,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
                 }
             });
-            console.log(programmingExercise.submissionPolicy);
         });
     }
 

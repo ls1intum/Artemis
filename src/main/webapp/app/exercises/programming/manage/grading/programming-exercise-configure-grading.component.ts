@@ -525,7 +525,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const deactivateSaving = () => {
             this.isSaving = false;
         };
-        console.log(this.programmingExercise.id + ' ' + this.programmingExercise.submissionPolicy + ' ' + this.programmingExercise.submissionPolicy?.active);
         if (this.programmingExercise.submissionPolicy!.active) {
             this.programmingExerciseSubmissionPolicyService
                 .disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
