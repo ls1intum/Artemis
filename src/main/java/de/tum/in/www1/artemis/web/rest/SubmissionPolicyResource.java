@@ -33,16 +33,13 @@ public class SubmissionPolicyResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final SubmissionPolicyRepository submissionPolicyRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final SubmissionPolicyService submissionPolicyService;
 
-    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
+    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository,
+                                    AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.submissionPolicyRepository = submissionPolicyRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.submissionPolicyService = submissionPolicyService;
     }
