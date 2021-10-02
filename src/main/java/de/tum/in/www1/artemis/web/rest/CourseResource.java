@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
@@ -1435,7 +1435,7 @@ public class CourseResource {
         setAssessments(dto, exerciseIdsOfCourse);
         setComplaints(dto, courseId);
         setMoreFeedbackRequests(dto, courseId);
-        setAverageScore(dto, reachablePoints, averageScoreForCourse);
+        setAverageScore(dto, reachablePoints, averageScoreForCourse, course);
 
         return ResponseEntity.ok(dto);
     }
@@ -1485,11 +1485,11 @@ public class CourseResource {
     /**
      *  Helper method for setting the average score in the CourseManagementDetailViewDTO
      */
-    private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse) {
+    private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse, Course course) {
         dto.setCurrentMaxAverageScore(reachablePoints);
-        dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * reachablePoints));
+        dto.setCurrentAbsoluteAverageScore(roundScore((averageScoreForCourse / 100.0) * reachablePoints, course));
         if (reachablePoints > 0.0) {
-            dto.setCurrentPercentageAverageScore(round(averageScoreForCourse));
+            dto.setCurrentPercentageAverageScore(roundScore(averageScoreForCourse, course));
         }
         else {
             dto.setCurrentPercentageAverageScore(0.0);

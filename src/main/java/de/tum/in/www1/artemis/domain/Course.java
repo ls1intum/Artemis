@@ -136,6 +136,10 @@ public class Course extends DomainObject {
     @Column(name = "max_points")
     private Integer maxPoints;
 
+    // This attribute could be set in the course settings in the future to allow different accuracies
+    @Column(name = "accuracy_of_scores")
+    private Integer accuracyOfScores;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -585,5 +589,13 @@ public class Course extends DomainObject {
 
     public void setMaxPoints(Integer maxPoints) {
         this.maxPoints = maxPoints;
+    }
+
+    public Integer getAccuracyOfScores() {
+        return accuracyOfScores;
+    }
+
+    public void setAccuracyOfScores(Integer accuracyOfScores) {
+        this.accuracyOfScores = accuracyOfScores;
     }
 }

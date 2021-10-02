@@ -136,7 +136,7 @@ public class Result extends DomainObject {
      * @return String with result string in this format "2 of 13 points"
      */
     public String createResultString(double totalPoints, double maxPoints) {
-        double pointsRounded = round(totalPoints);
+        double pointsRounded = roundScore(totalPoints, participation.getExercise().getCourseViaExerciseGroupOrCourseMember());
         DecimalFormat formatter = new DecimalFormat("#.#");
         return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
     }
@@ -220,7 +220,7 @@ public class Result extends DomainObject {
     public void setScore(Double score) {
         if (score != null) {
             // We need to round the score to four decimal places to have a score of 99.999999 to be rounded to 100.0.
-            // Otherwise a result would not be successful.
+            // Otherwise, a result would not be successful.
             this.score = roundToNDecimalPlaces(score, 4);
             this.successful = this.score >= 100.0;
         }

@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.service.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import de.tum.in.www1.artemis.domain.Course;
+
 public class RoundingUtil {
 
     /**
-     * Rounds a double to one decimal place after the comma
+     * Rounds a double to one decimal place after the decimal symbol
      * <p>
      * 1.26 -> 1.3
      * 1.25 -> 1.3
@@ -16,7 +18,19 @@ public class RoundingUtil {
      * @return number rounded to one decimal place
      */
     public static double round(double number) {
+        roundScore(1, null);
         return roundToNDecimalPlaces(number, 1);
+    }
+
+    /**
+     * Rounds a score to the specified amount of decimal places after the decimal symbol
+     *
+     * @param score The score to round
+     * @param course The course that specifies the amount of decimal places in the attribute {@link Course#getAccuracyOfScores()}
+     * @return The rounded number
+     */
+    public static double roundScore(double score, Course course) {
+        return roundToNDecimalPlaces(score, course.getAccuracyOfScores());
     }
 
     /**

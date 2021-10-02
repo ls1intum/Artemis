@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -118,8 +120,7 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param countChange the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
-
-        Double points = (double) Math.round(quiz.getOverallQuizPoints() * (score / 100));
+        Double points = roundScore(quiz.getOverallQuizPoints() * (score / 100), quiz.getCourseViaExerciseGroupOrCourseMember());
 
         if (Boolean.TRUE.equals(rated)) {
             // change rated participants
