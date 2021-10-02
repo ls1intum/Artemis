@@ -383,24 +383,20 @@ export class GradingSystemComponent implements OnInit {
      * @param gradeSteps the grade steps which will be adjusted
      */
     setInclusivity(gradeSteps: GradeStep[]): GradeStep[] {
-        gradeSteps.forEach((gradeStep) => {
-            if (this.lowerBoundInclusivity) {
-                gradeStep.lowerBoundInclusive = true;
-            } else {
-                gradeStep.upperBoundInclusive = true;
-            }
-        });
-
         // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
         let sortedGradeSteps: GradeStep[] = [];
         this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
         sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
 
-        if (this.lowerBoundInclusivity) {
-            sortedGradeSteps.last()!.upperBoundInclusive = true;
-        } else {
-            sortedGradeSteps.first()!.lowerBoundInclusive = true;
-        }
+        gradeSteps.forEach((gradeStep) => {
+            if (this.lowerBoundInclusivity) {
+                gradeStep.lowerBoundInclusive = true;
+                gradeStep.upperBoundInclusive = sortedGradeSteps.last()!.upperBoundPercentage === gradeStep.upperBoundPercentage;
+            } else {
+                gradeStep.lowerBoundInclusive = sortedGradeSteps.first()!.lowerBoundPercentage === gradeStep.lowerBoundPercentage;
+                gradeStep.upperBoundInclusive = true;
+            }
+        });
 
         return gradeSteps;
     }
