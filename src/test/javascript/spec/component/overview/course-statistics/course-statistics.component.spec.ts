@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -38,15 +38,15 @@ describe('CourseStatisticsComponent', () => {
             type: 'modeling',
             id: 192,
             title: 'test 17.06. 1',
-            dueDate: moment('2019-06-17T09:47:12+02:00'),
-            assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
+            dueDate: dayjs('2019-06-17T09:47:12+02:00'),
+            assessmentDueDate: dayjs('2019-06-17T09:55:17+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 248,
                     initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-17T09:29:34.908+02:00'),
+                    initializationDate: dayjs('2019-06-17T09:29:34.908+02:00'),
                     presentationScore: 2,
                     student: {
                         id: 9,
@@ -68,15 +68,15 @@ describe('CourseStatisticsComponent', () => {
             type: 'modeling',
             id: 193,
             title: 'test 17.06. 2',
-            dueDate: moment('2019-06-17T17:50:08+02:00'),
-            assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
+            dueDate: dayjs('2019-06-17T17:50:08+02:00'),
+            assessmentDueDate: dayjs('2019-06-17T17:51:13+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 249,
                     initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-18T10:53:27.997+02:00'),
+                    initializationDate: dayjs('2019-06-18T10:53:27.997+02:00'),
                     student: {
                         id: 9,
                         login: 'artemis_test_user_1',
@@ -96,7 +96,7 @@ describe('CourseStatisticsComponent', () => {
             type: 'modeling',
             id: 194,
             title: 'test 18.06. 1',
-            dueDate: moment('2019-06-18T07:56:41+02:00'),
+            dueDate: dayjs('2019-06-18T07:56:41+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxPoints: 12.0,
             studentParticipations: [],
@@ -109,20 +109,20 @@ describe('CourseStatisticsComponent', () => {
             type: 'modeling',
             id: 191,
             title: 'Until 18:20',
-            dueDate: moment('2019-06-16T18:15:03+02:00'),
+            dueDate: dayjs('2019-06-16T18:15:03+02:00'),
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
+            assessmentDueDate: dayjs('2019-06-16T18:30:57+02:00'),
             maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 246,
                     initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                    initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
                     results: [
                         {
                             id: 231,
                             resultString: '11 of 12 points',
-                            completionDate: moment('2019-06-17T09:30:17.761+02:00'),
+                            completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                             successful: false,
                             score: 92,
                             rated: true,
@@ -151,19 +151,19 @@ describe('CourseStatisticsComponent', () => {
             id: 195,
             title: 'Until 18:20 too',
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            dueDate: moment('2019-06-16T18:15:03+02:00'),
-            assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
+            dueDate: dayjs('2019-06-16T18:15:03+02:00'),
+            assessmentDueDate: dayjs('2019-06-16T18:30:57+02:00'),
             maxPoints: 12.0,
             studentParticipations: [
                 {
                     id: 249,
                     initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                    initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
                     results: [
                         {
                             id: 230,
                             resultString: '9 of 12 points',
-                            completionDate: moment('2019-06-17T09:30:17.761+02:00'),
+                            completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                             successful: false,
                             score: 75,
                             rated: true,
@@ -238,14 +238,14 @@ describe('CourseStatisticsComponent', () => {
 
     afterEach(function () {
         // has to be done so the component can cleanup properly
-        spyOn(comp, 'ngOnDestroy').and.callFake(() => {});
+        jest.spyOn(comp, 'ngOnDestroy').mockImplementation();
         fixture.destroy();
     });
 
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        spyOn(courseScoreCalculationService, 'getCourse').and.returnValue(courseToAdd);
+        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
@@ -268,7 +268,7 @@ describe('CourseStatisticsComponent', () => {
     it('should calculate scores correctly', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        spyOn(courseScoreCalculationService, 'getCourse').and.returnValue(courseToAdd);
+        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
@@ -283,20 +283,20 @@ describe('CourseStatisticsComponent', () => {
                 type: 'text',
                 id: 200,
                 title: 'Until 18:20 too',
-                dueDate: moment('2019-06-16T18:15:03+02:00'),
-                assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
+                dueDate: dayjs('2019-06-16T18:15:03+02:00'),
+                assessmentDueDate: dayjs('2019-06-16T18:30:57+02:00'),
                 maxPoints: 10.0,
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 studentParticipations: [
                     {
                         id: 289,
                         initializationState: 'FINISHED',
-                        initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                        initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
                         results: [
                             {
                                 id: 222,
                                 resultString: '5.5 of 10 points',
-                                completionDate: moment('2019-06-17T09:30:17.761+02:00'),
+                                completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                                 successful: false,
                                 score: 55,
                                 rated: true,
@@ -324,15 +324,15 @@ describe('CourseStatisticsComponent', () => {
                 type: 'text',
                 id: 999,
                 title: 'Until 18:20 tooo',
-                dueDate: moment('2019-06-16T18:15:03+02:00'),
-                assessmentDueDate: moment().add(1, 'days'),
+                dueDate: dayjs('2019-06-16T18:15:03+02:00'),
+                assessmentDueDate: dayjs().add(1, 'days'),
                 maxPoints: 10.0,
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 studentParticipations: [
                     {
                         id: 888,
                         initializationState: 'FINISHED',
-                        initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                        initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
                         student: {
                             id: 9,
                             login: 'artemis_test_user_1',

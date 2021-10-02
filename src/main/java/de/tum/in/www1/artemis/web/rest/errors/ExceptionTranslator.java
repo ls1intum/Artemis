@@ -30,7 +30,7 @@ import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
-import io.github.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.HeaderUtil;
 
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows RFC7807 - Problem Details for HTTP APIs

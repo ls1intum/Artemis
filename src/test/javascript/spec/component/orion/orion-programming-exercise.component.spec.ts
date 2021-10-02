@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { spy, stub } from 'sinon';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';

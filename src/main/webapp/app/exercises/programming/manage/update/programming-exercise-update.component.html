@@ -200,7 +200,7 @@
             </select>
         </div>
 
-        <div class="form-group" *ngIf="programmingExercise.programmingLanguage && packageNameRequired">
+        <div class="form-group" *ngIf="programmingExercise.programmingLanguage && packageNameRequired && programmingExercise.projectType != ProjectType.XCODE">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
             <input
                 required
@@ -212,6 +212,7 @@
                 [(ngModel)]="programmingExercise.packageName"
                 [readonly]="programmingExercise.id"
                 #packageName="ngModel"
+                [disabled]="isImport || !!programmingExercise.id"
             />
             <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
                 <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
@@ -219,6 +220,28 @@
                 </div>
             </ng-container>
         </div>
+
+        <div class="form-group" *ngIf="programmingExercise.programmingLanguage == ProgrammingLanguage.SWIFT && programmingExercise.projectType == ProjectType.XCODE">
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName">App Name</label>
+            <input
+                required
+                type="text"
+                [pattern]="appNamePatternForSwift"
+                class="form-control"
+                name="packageName"
+                id="field_appName"
+                [(ngModel)]="programmingExercise.packageName"
+                [readonly]="programmingExercise.id"
+                #packageName="ngModel"
+                [disabled]="isImport || !!programmingExercise.id"
+            />
+            <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
+                <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
+                    <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+                </div>
+            </ng-container>
+        </div>
+
         <div class="form-group mt-2">
             <div>
                 <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>

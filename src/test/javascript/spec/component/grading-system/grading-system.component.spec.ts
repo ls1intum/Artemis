@@ -4,7 +4,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -16,7 +16,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { FormsModule } from '@angular/forms';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
