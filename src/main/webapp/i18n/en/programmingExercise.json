@@ -291,11 +291,26 @@
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
-                "update": "Update",
-                "add": "Add",
-                "delete": "Delete",
-                "activate": "Activate",
-                "deactivate": "Deactivate",
+                "updateButton":  {
+                    "title": "Update",
+                    "tooltip": "Saves the changes to the submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might (un)lock a lot of affected participation repositories!"
+                },
+                "addButton":  {
+                    "title": "Add",
+                    "tooltip": "Adds the configured submission policy to this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
+                },
+                "deleteButton": {
+                    "title": "Delete",
+                    "tooltip": "Deletes the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might unlock a lot of affected participation repositories!"
+                },
+                "activateButton": {
+                    "title": "Activate",
+                    "tooltip": "Activates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
+                },
+                "deactivateButton": {
+                    "title": "Deactivate",
+                    "tooltip": "Deactivates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might unlock a lot of affected participation repositories!"
+                },
                 "created": "The submission policy was created successfully!",
                 "updated": "The submission policy was updated successfully!",
                 "deleted": "The submission policy was deleted successfully!",

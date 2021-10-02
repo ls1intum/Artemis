@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 /**
  * The actions of the submission policy configuration:
@@ -11,50 +12,55 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     selector: 'jhi-programming-exercise-grading-submission-policy-configuration-actions',
     template: `
         <div align="right">
-            <button
+            <jhi-button
                 *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined"
-                id="update-submission-policy-button"
-                class="btn btn-primary ms-3 my-1"
-                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.update"
-                (click)="onUpdate.emit()"
+                [btnType]="ButtonType.PRIMARY"
+                [title]="'artemisApp.programmingExercise.submissionPolicy.updateButton.title'"
+                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.updateButton.tooltip'"
+                (onClick)="onUpdate.emit()"
+                [icon]="'save'"
                 [disabled]="isSaving"
-            ></button>
-            <button
+            ></jhi-button>
+            <jhi-button
                 *ngIf="exercise.submissionPolicy == undefined || exercise.submissionPolicy.id == undefined"
-                id="update-submission-policy-button"
-                class="btn btn-success ms-3 my-1"
-                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.add"
-                (click)="onAdd.emit()"
+                [btnType]="ButtonType.SUCCESS"
+                [title]="'artemisApp.programmingExercise.submissionPolicy.addButton.title'"
+                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.addButton.tooltip'"
+                (onClick)="onAdd.emit()"
+                [icon]="'plus'"
                 [disabled]="isSaving"
-            ></button>
-            <button
+            ></jhi-button>
+            <jhi-button
                 *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined && exercise.submissionPolicy!.active"
-                id="deactivate-submission-policy-button"
-                class="btn btn-danger ms-3 my-1"
-                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.deactivate"
-                (click)="onToggle.emit()"
+                [btnType]="ButtonType.ERROR"
+                [title]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.title'"
+                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.tooltip'"
+                (onClick)="onToggle.emit()"
                 [disabled]="isSaving"
-            ></button>
-            <button
+            ></jhi-button>
+            <jhi-button
                 *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined && !exercise.submissionPolicy!.active"
-                id="activate-submission-policy-button"
-                class="btn btn-success ms-3 my-1"
-                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.activate"
-                (click)="onToggle.emit()"
+                [btnType]="ButtonType.SUCCESS"
+                [title]="'artemisApp.programmingExercise.submissionPolicy.activateButton.title'"
+                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.activateButton.tooltip'"
+                (onClick)="onToggle.emit()"
                 [disabled]="isSaving"
-            ></button>
-            <button
+            ></jhi-button>
+            <jhi-button
                 *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined"
-                id="delete-submission-policy-button"
-                class="btn btn-danger ms-3 my-1"
-                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.delete"
-                (click)="onRemove.emit()"
+                [btnType]="ButtonType.ERROR"
+                [title]="'artemisApp.programmingExercise.submissionPolicy.deleteButton.title'"
+                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.deleteButton.tooltip'"
+                (onClick)="onRemove.emit()"
+                [icon]="'trash'"
                 [disabled]="isSaving"
-            ></button>
+            ></jhi-button>
         </div>
     `,
 })
 export class ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent {
+    readonly ButtonType = ButtonType;
+
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
     @Input() isSaving: boolean;
