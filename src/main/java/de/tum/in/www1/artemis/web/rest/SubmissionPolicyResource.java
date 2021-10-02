@@ -1,6 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,17 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping(SubmissionPolicyResource.Endpoints.ROOT)
