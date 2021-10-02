@@ -6,10 +6,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { round } from 'app/shared/util/utils';
+import { roundScore } from 'app/shared/util/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 const BAR_HEIGHT = 15;
 
@@ -22,6 +24,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
 
     height = BAR_HEIGHT;
     courseId: number;
+    course?: Course;
     examId: number;
     exerciseIds: number[] = [];
     exerciseTypes: ExerciseType[] = [];
@@ -48,6 +51,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
         private service: StatisticsService,
         private translateService: TranslateService,
         private localeConversionService: LocaleConversionService,
+        private courseService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
@@ -56,6 +60,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
+        this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
         this.initializeChart();
         this.createCharts();
     }
@@ -93,8 +98,8 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
         ];
     }
 
-    roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
-        return this.localeConversionService.toLocaleString(round(points, exp), fractions);
+    roundAndPerformLocalConversion(points: number | undefined, fractions = 1) {
+        return this.localeConversionService.toLocaleString(roundScore(points, this.course), fractions);
     }
 
     private createCharts() {
@@ -157,9 +162,9 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
                         if (!self.absolutePoints && !self.chartData[0].data) {
                             return ' -';
                         }
-                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index], 2, 2)} (${round(
+                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index], 2)} (${roundScore(
                             self.chartData[0].data![tooltipItem.index],
-                            2,
+                            self.course,
                         )}%)`;
                     },
                 },

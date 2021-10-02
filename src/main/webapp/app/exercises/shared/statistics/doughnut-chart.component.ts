@@ -3,8 +3,9 @@ import { Router } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { ChartType } from 'chart.js';
-import { round } from 'app/shared/util/utils';
+import { roundScore } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-doughnut-chart',
@@ -12,7 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
     styleUrls: ['./doughnut-chart.component.scss'],
 })
 export class DoughnutChartComponent implements OnChanges, OnInit {
-    @Input() courseId: number;
+    @Input() course: Course;
     @Input() contentType: DoughnutChartType;
     @Input() exerciseId: number;
     @Input() exerciseType: ExerciseType;
@@ -62,7 +63,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
             this.doughnutChartData[0].data = [-1, 0];
         } else {
             this.receivedStats = true;
-            const remaining = round(this.currentMax! - this.currentAbsolute!, 1);
+            const remaining = roundScore(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
             this.doughnutChartData[0].data = this.currentMax === 0 ? [-1, 0] : this.stats;
         }
@@ -75,15 +76,15 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
         switch (this.contentType) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
                 this.doughnutChartTitle = 'averageScore';
-                this.titleLink = [`/course-management/${this.courseId}/${this.exerciseType}-exercises/${this.exerciseId}/scores`];
+                this.titleLink = [`/course-management/${this.course.id}/${this.exerciseType}-exercises/${this.exerciseId}/scores`];
                 break;
             case DoughnutChartType.PARTICIPATIONS:
                 this.doughnutChartTitle = 'participationRate';
-                this.titleLink = [`/course-management/${this.courseId}/${this.exerciseType}-exercises/${this.exerciseId}/participations`];
+                this.titleLink = [`/course-management/${this.course.id}/${this.exerciseType}-exercises/${this.exerciseId}/participations`];
                 break;
             case DoughnutChartType.QUESTIONS:
                 this.doughnutChartTitle = 'answered_posts';
-                this.titleLink = [`/courses/${this.courseId}/exercises/${this.exerciseId}`];
+                this.titleLink = [`/courses/${this.course.id}/exercises/${this.exerciseId}`];
                 break;
             default:
                 this.doughnutChartTitle = '';
@@ -96,7 +97,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
      * e.g. participations to the participations page
      */
     openCorrespondingPage() {
-        if (this.courseId && this.exerciseId && this.titleLink) {
+        if (this.course.id && this.exerciseId && this.titleLink) {
             this.router.navigate(this.titleLink);
         }
     }

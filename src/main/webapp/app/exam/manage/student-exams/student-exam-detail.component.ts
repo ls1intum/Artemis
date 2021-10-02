@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { round } from 'app/shared/util/utils';
+import { roundScore } from 'app/shared/util/utils';
 import dayjs from 'dayjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -134,7 +134,7 @@ export class StudentExamDetailComponent implements OnInit {
                     setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
                 }
 
-                this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
+                this.achievedTotalPoints += roundScore((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
             }
         });
     }
@@ -180,10 +180,6 @@ export class StudentExamDetailComponent implements OnInit {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
             : 'You can change the individual working time of the student here.';
-    }
-
-    rounding(number: number) {
-        return round(number, 1);
     }
 
     /**

@@ -58,7 +58,13 @@
                             ></span>
                         </ng-template>
                     </div>
-                    <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="rightTotalScore"></jhi-score-display>
+                    <jhi-score-display
+                        [maxPoints]="exercise?.maxPoints || 0"
+                        [maxBonusPoints]="exercise?.bonusPoints || 0"
+                        [score]="rightTotalScore"
+                        [course]="getCourseFromExercise(exercise!)"
+                    >
+                    </jhi-score-display>
                 </div>
                 <div class="right-body card-body">
                     <jhi-text-assessment-area

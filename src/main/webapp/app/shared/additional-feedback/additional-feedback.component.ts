@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { round } from '../util/utils';
+import { roundScore } from '../util/utils';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-additional-feedback',
@@ -14,5 +15,6 @@ export class AdditionalFeedbackComponent {
     additional: boolean;
 
     // Expose the function to the template
-    readonly round = round;
+    readonly roundScore = roundScore;
+    readonly getCourseFromExercise = getCourseFromExercise;
 }

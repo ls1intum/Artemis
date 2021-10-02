@@ -5,7 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercent } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -14,7 +15,7 @@ import { round } from 'app/shared/util/utils';
 })
 export class CourseDetailLineChartComponent implements OnChanges {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     numberOfStudentsInCourse: number;
     @Input()
@@ -62,7 +63,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private reloadChart() {
         this.loading = true;
         this.createLabels();
-        this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
+        this.service.getStatisticsData(this.course.id!, this.currentPeriod).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
         });
     }
@@ -75,7 +76,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
             this.absoluteData = array;
             this.data = [];
             for (const value of array) {
-                this.data.push(round((value / this.numberOfStudentsInCourse) * 100));
+                this.data.push(roundScorePercent(value / this.numberOfStudentsInCourse, this.course));
             }
         } else {
             this.absoluteData = array;

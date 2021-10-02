@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercent, roundScore } from 'app/shared/util/utils';
 import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -43,8 +43,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
 
-    // Expose the function to the template
-    readonly round = round;
+    // Expose the functions to the template
+    readonly roundScorePercent = roundScorePercent;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
@@ -198,8 +198,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
         }
         for (const student of this.students) {
-            const overAllPoints = round(student.overallPoints, 1);
-            const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+            const overAllPoints = roundScore(student.overallPoints, this.course);
+            const overallScore = roundScorePercent(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
             const regularCalculation = {
                 scoreAchieved: overallScore,
                 pointsAchieved: overAllPoints,
@@ -213,8 +213,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
-                courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
+                courseScoreDTO.scoreAchieved = roundScore(courseScoreDTO.scoreAchieved, this.course);
+                courseScoreDTO.pointsAchieved = roundScore(courseScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -319,7 +319,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     // In the client, these are now displayed rounded as 1.1 points.
                     // If the student adds up the displayed points, he gets a total of 5.5 points.
                     // In order to get the same total result as the student, we have to round before summing.
-                    const pointsAchievedByStudentInExercise = round((result.score! * relevantMaxPoints) / 100, 1);
+                    const pointsAchievedByStudentInExercise = roundScore((result.score! * relevantMaxPoints) / 100, this.course);
                     student.overallPoints += pointsAchievedByStudentInExercise;
                     student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
                     student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
@@ -437,22 +437,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
                         let exerciseScoresPerType = 0;
                         if (this.maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
-                            exerciseScoresPerType = round(
-                                (student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100,
-                                1,
+                            exerciseScoresPerType = roundScorePercent(
+                                student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                                this.course,
                             );
                         }
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.localeConversionService.toLocaleString(round(exercisePointValues[index], 1));
+                            rowData[title] = this.localeConversionService.toLocaleString(roundScore(exercisePointValues[index], this.course));
                         });
                         rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
                         rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
                     }
                 }
 
-                const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+                const overallScore = roundScorePercent(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
                 rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
                 rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
@@ -508,10 +508,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.localeConversionService.toLocaleString(round(exerciseAveragePoints[index], 1));
+                        rowDataAverage[title] = this.localeConversionService.toLocaleString(roundScore(exerciseAveragePoints[index], this.course));
                     });
 
-                    const averageScore = round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100, 1);
+                    const averageScore = roundScorePercent(
+                        this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                        this.course,
+                    );
 
                     rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
                         this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
@@ -520,7 +523,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
 
-            const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+            const averageOverallScore = roundScorePercent(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
             rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
             rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.gradingScaleExists) {

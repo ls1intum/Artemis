@@ -53,6 +53,9 @@ export class Course implements BaseEntity {
     public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];
 
+    // This attribute could be set in the course settings in the future to allow different accuracies
+    public accuracyOfScores?: number;
+
     // helper attributes
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
@@ -78,6 +81,8 @@ export class Course implements BaseEntity {
         this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
+
+        this.accuracyOfScores = 1; // default value
     }
 
     /**

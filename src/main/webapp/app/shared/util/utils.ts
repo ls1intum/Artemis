@@ -2,6 +2,7 @@ import { omit } from 'lodash-es';
 import { captureException } from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
 import { Alert } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
@@ -76,6 +77,26 @@ export const round = (value: any, exp?: number) => {
     // Shift back
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
+};
+
+/**
+ * Rounds the score to the specified amount in the course object
+ * @param relativeScore The score of the student in the value range [0;1]
+ * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
+ * @returns The rounded percent of the score in the range [0;100]
+ */
+export const roundScorePercent = (relativeScore: any, course?: Course) => {
+    return round(relativeScore * 100, course ? course!.accuracyOfScores : 1);
+};
+
+/**
+ * Rounds the points to the specified amount in the course object
+ * @param points The points of the student
+ * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
+ * @returns The rounded points of the student
+ */
+export const roundScore = (points: any, course?: Course) => {
+    return round(points, course ? course!.accuracyOfScores : 1);
 };
 
 /**

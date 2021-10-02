@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -24,7 +24,6 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -34,7 +33,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
-import { round } from 'app/shared/util/utils';
+import { roundScore } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Observable } from 'rxjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
@@ -53,6 +52,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     readonly diffMatchPatch = new DiffMatchPatch();
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
@@ -84,10 +84,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
-
-    private get course(): Course | undefined {
-        return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
-    }
 
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
@@ -499,7 +495,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isAssessor = true;
         }
         if (this.exercise) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(this.exercise));
         }
     }
 
@@ -538,8 +534,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
-    private static createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${round(totalScore, 1)} of ${round(maxScore, 1)} points`;
+    private createResultString(totalScore: number, maxScore: number | undefined): string {
+        return `${roundScore(totalScore, getCourseFromExercise(this.exercise))} of ${roundScore(maxScore, getCourseFromExercise(this.exercise))} points`;
     }
 
     private setAttributesForManualResult(totalScore: number) {
@@ -549,7 +545,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
-        const resultStringExtension = CodeEditorTutorAssessmentContainerComponent.createResultString(totalScore, this.exercise.maxPoints);
+        const resultStringExtension = this.createResultString(totalScore, this.exercise.maxPoints);
         if (this.isFirstAssessment) {
             if (this.manualResult!.resultString) {
                 this.manualResult!.resultString += ', ' + resultStringExtension;

@@ -13,11 +13,11 @@ import { getExercise, Participation, ParticipationType } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { round } from 'app/shared/util/utils';
+import { roundScore } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 /**
@@ -87,7 +87,8 @@ export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInfo;
-    readonly round = round;
+    readonly roundScore = roundScore;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;

@@ -28,10 +28,11 @@ import {
 } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -75,6 +76,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
     courseId: number;
+    course?: Course;
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
@@ -171,6 +173,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
+        this.course = getCourseFromExercise(this.exercise);
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
         if (this.resultId > 0) {

@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
-import { round } from 'app/shared/util/utils';
+import { roundScore } from 'app/shared/util/utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -70,7 +70,7 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     calculateAchievedPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return round(exercise.maxPoints! * (exercise.studentParticipations![0].results![0].score! / 100), 1);
+            return roundScore(exercise.maxPoints! * (exercise.studentParticipations![0].results![0].score! / 100), this.exam.course);
         }
         return 0;
     }
@@ -81,9 +81,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     calculatePointsSum(): number {
         if (this.exercises) {
             const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
-            return round(
+            return roundScore(
                 exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0),
-                1,
+                this.exam.course,
             );
         }
         return 0;
@@ -95,9 +95,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     calculateMaxPointsSum(): number {
         if (this.exercises) {
             const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
-            return round(
+            return roundScore(
                 exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getMaxScore(nextExercise), 0),
-                1,
+                this.exam.course,
             );
         }
         return 0;
@@ -109,9 +109,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     calculateMaxBonusPointsSum(): number {
         if (this.exercises) {
             const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
-            return round(
+            return roundScore(
                 exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getBonusPoints(nextExercise), 0),
-                1,
+                this.exam.course,
             );
         }
         return 0;
