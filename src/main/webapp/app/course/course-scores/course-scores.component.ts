@@ -399,6 +399,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Localizes a number, e.g. switching the decimal separator
+     */
+    localize(numberToLocalize: number): string {
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course.accuracyOfScores!);
+    }
+
+    /**
+     * Localizes a percent number, e.g. switching the decimal separator
+     */
+    localizePercent(numberToLocalize: number): string {
+        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course.accuracyOfScores!);
+    }
+
+    /**
      * Method for exporting the csv with the needed data
      */
     exportResults() {
@@ -445,18 +459,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.localeConversionService.toLocaleString(roundScore(exercisePointValues[index], this.course));
+                            console.log(this.course);
+                            rowData[title] = this.localize(roundScore(exercisePointValues[index], this.course));
                         });
-                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
-                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
+                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localize(exercisePointsPerType);
+                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localizePercent(exerciseScoresPerType);
                     }
                 }
 
                 const overallScore = roundScorePercent(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
-                rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
-                rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
+                rowData[OVERALL_COURSE_POINTS_KEY] = this.localize(student.overallPoints);
+                rowData[OVERALL_COURSE_SCORE_KEY] = this.localizePercent(overallScore);
                 if (this.course.presentationScore) {
-                    rowData[PRESENTATION_SCORE_KEY] = this.localeConversionService.toLocaleString(student.presentationScore);
+                    rowData[PRESENTATION_SCORE_KEY] = this.localize(student.presentationScore);
                 }
                 if (this.gradingScaleExists) {
                     if (this.isBonus) {
@@ -479,14 +494,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseMaxPoints = this.exerciseMaxPointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataMax[title] = this.localeConversionService.toLocaleString(exerciseMaxPoints[index]);
+                        rowDataMax[title] = this.localize(exerciseMaxPoints[index]);
                     });
-                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
-                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
+                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.localize(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
+                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localizePercent(100);
                 }
             }
-            rowDataMax[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfOverallPoints);
-            rowDataMax[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
+            rowDataMax[OVERALL_COURSE_POINTS_KEY] = this.localize(this.maxNumberOfOverallPoints);
+            rowDataMax[OVERALL_COURSE_SCORE_KEY] = this.localizePercent(100);
             if (this.course.presentationScore) {
                 rowDataMax[PRESENTATION_SCORE_KEY] = '';
             }
@@ -508,7 +523,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.localeConversionService.toLocaleString(roundScore(exerciseAveragePoints[index], this.course));
+                        rowDataAverage[title] = this.localize(roundScore(exerciseAveragePoints[index], this.course));
                     });
 
                     const averageScore = roundScorePercent(
@@ -516,16 +531,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         this.course,
                     );
 
-                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
-                        this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
-                    );
-                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageScore);
+                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localize(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!);
+                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.localizePercent(averageScore);
                 }
             }
 
             const averageOverallScore = roundScorePercent(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
-            rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
-            rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
+            rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localize(this.averageNumberOfOverallPoints);
+            rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localizePercent(averageOverallScore);
             if (this.gradingScaleExists) {
                 if (this.isBonus) {
                     rowDataAverage[BONUS_KEY] = this.averageGrade || '';
@@ -547,7 +560,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipations = this.exerciseParticipationsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipation[title] = this.localeConversionService.toLocaleString(exerciseParticipations[index]);
+                        rowDataParticipation[title] = this.localize(exerciseParticipations[index]);
                     });
                     rowDataParticipation[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipation[exerciseTypeName + ' ' + SCORE_KEY] = '';
@@ -565,7 +578,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipationsSuccessful = this.exerciseSuccessfulPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipationSuccuessful[title] = this.localeConversionService.toLocaleString(exerciseParticipationsSuccessful[index]);
+                        rowDataParticipationSuccuessful[title] = this.localize(exerciseParticipationsSuccessful[index]);
                     });
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + SCORE_KEY] = '';

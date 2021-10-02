@@ -98,8 +98,8 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
         ];
     }
 
-    roundAndPerformLocalConversion(points: number | undefined, fractions = 1) {
-        return this.localeConversionService.toLocaleString(roundScore(points, this.course), fractions);
+    roundAndPerformLocalConversion(points: number | undefined) {
+        return this.localeConversionService.toLocaleString(roundScore(points, this.course), this.course!.accuracyOfScores!);
     }
 
     private createCharts() {
@@ -162,7 +162,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
                         if (!self.absolutePoints && !self.chartData[0].data) {
                             return ' -';
                         }
-                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index], 2)} (${roundScore(
+                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index])} (${roundScore(
                             self.chartData[0].data![tooltipItem.index],
                             self.course,
                         )}%)`;

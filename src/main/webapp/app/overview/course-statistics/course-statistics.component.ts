@@ -562,7 +562,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (filterFunction) {
             courseExercises = courseExercises.filter(filterFunction);
         }
-        return this.courseCalculationService.calculateTotalScores(courseExercises);
+        return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
     }
 
     calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
@@ -576,7 +576,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     calculateTotalScoreForTheCourse(scoreType: string): number {
-        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
         return scores.get(scoreType)!;
     }
 }

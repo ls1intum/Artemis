@@ -21,13 +21,12 @@ export class CourseScoreCalculationService {
 
     constructor() {}
 
-    calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
+    calculateTotalScores(courseExercises: Exercise[], course: Course): Map<string, number> {
         const scores = new Map<string, number>();
         let pointsAchievedByStudentInCourse = 0.0;
         let maxPointsInCourse = 0;
         let reachableMaxPointsInCourse = 0;
         let presentationScore = 0;
-        const course = courseExercises.first()?.course;
         for (const exercise of courseExercises) {
             const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
             const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(dayjs());

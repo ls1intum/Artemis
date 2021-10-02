@@ -253,7 +253,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
                             ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2)}%)`, bar._model.x, bar._model.y - 5);
+                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered)}%)`, bar._model.x, bar._model.y - 5);
                         });
                     });
                 },
@@ -663,6 +663,20 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         csvExporter.generateCsv(rows);
     }
 
+    /**
+     * Localizes a number, e.g. switching the decimal separator
+     */
+    localize(numberToLocalize: number): string {
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
+    }
+
+    /**
+     * Localizes a percent number, e.g. switching the decimal separator
+     */
+    localizePercent(numberToLocalize: number): string {
+        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course!.accuracyOfScores!);
+    }
+
     private convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
@@ -676,9 +690,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localeConversionService.toLocaleString(roundScore(exerciseResult.achievedPoints, this.course));
+                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScore(exerciseResult.achievedPoints, this.course));
                 csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localeConversionService.toLocaleString(roundScore(exerciseResult.achievedScore, this.course), 2);
+                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScore(exerciseResult.achievedScore, this.course));
             } else {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] = '';
@@ -686,10 +700,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        csvRow.overAllPoints =
-            studentResult.overallPointsAchieved == undefined ? '' : this.localeConversionService.toLocaleString(roundScore(studentResult.overallPointsAchieved, this.course));
-        csvRow.overAllScore =
-            studentResult.overallScoreAchieved == undefined ? '' : this.localeConversionService.toLocaleString(roundScore(studentResult.overallScoreAchieved, this.course), 2);
+        csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScore(studentResult.overallPointsAchieved, this.course));
+        csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScore(studentResult.overallScoreAchieved, this.course));
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow['Overall Bonus Points'] = studentResult.overallGrade;
@@ -704,12 +716,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return csvRow;
     }
 
-    toLocaleString(points: number) {
-        return this.localeConversionService.toLocaleString(points);
-    }
-
-    roundAndPerformLocalConversion(points: number | undefined, fractions = 1) {
-        return this.localeConversionService.toLocaleString(roundScore(points, this.course), fractions);
+    roundAndPerformLocalConversion(points: number | undefined) {
+        return this.localize(roundScore(points, this.course));
     }
 
     /**

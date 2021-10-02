@@ -68,34 +68,24 @@
                     <th><span jhiTranslate="instructorDashboard.average">Average</span></th>
                     <th></th>
                     <th>
-                        {{ getLocaleConversionService().toLocaleString(averageNumberOfParticipatedExercises) }} ({{
-                            getLocaleConversionService().toLocaleString(
-                                roundScorePercent(averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
-                            )
-                        }}%)
+                        {{ localize(averageNumberOfParticipatedExercises) }}
+                        ({{ localize(roundScorePercent(averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
                     </th>
                     <th>
-                        {{ getLocaleConversionService().toLocaleString(averageNumberOfSuccessfulExercises) }} ({{
-                            getLocaleConversionService().toLocaleString(
-                                roundScorePercent(averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
-                            )
-                        }}
-                        %)
+                        {{ localize(averageNumberOfSuccessfulExercises) }}
+                        ({{ localize(roundScorePercent(averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
-                            {{ getLocaleConversionService().toLocaleString(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }}
+                            {{ localize(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }}
                             ({{
-                                getLocaleConversionService().toLocaleString(
-                                    roundScorePercent(averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!, course)
-                                )
+                                localize(roundScorePercent(averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!, course))
                             }}%)
                         </th>
                     </ng-container>
                     <th>
-                        {{ getLocaleConversionService().toLocaleString(averageNumberOfOverallPoints) }} ({{
-                            getLocaleConversionService().toLocaleString(roundScorePercent(averageNumberOfOverallPoints / maxNumberOfOverallPoints, course))
-                        }}%)
+                        {{ localize(averageNumberOfOverallPoints) }}
+                        ({{ localize(roundScorePercent(averageNumberOfOverallPoints / maxNumberOfOverallPoints, course)) }}%)
                     </th>
                     <th *ngIf="gradingScaleExists">
                         {{ averageGrade }}
@@ -107,34 +97,22 @@
                     <td>{{ student.user.name }}</td>
                     <td>{{ student.user.login }}</td>
                     <td>
-                        {{ student.numberOfParticipatedExercises }} ({{
-                            getLocaleConversionService().toLocaleString(
-                                roundScorePercent(student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
-                            )
-                        }}%)
+                        {{ student.numberOfParticipatedExercises }}
+                        ({{ localize(roundScorePercent(student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
                     </td>
                     <td>
                         {{ student.numberOfSuccessfulExercises }}
-                        ({{
-                            getLocaleConversionService().toLocaleString(
-                                roundScorePercent(student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
-                            )
-                        }}%)
+                        ({{ localize(roundScorePercent(student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
                     </td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
-                            {{ getLocaleConversionService().toLocaleString(student.sumPointsPerExerciseType.get(exerciseType)!) }}
-                            ({{
-                                getLocaleConversionService().toLocaleString(
-                                    roundScorePercent(student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!, course)
-                                )
-                            }}%)
+                            {{ localize(student.sumPointsPerExerciseType.get(exerciseType)!) }}
+                            ({{ localize(roundScorePercent(student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!, course)) }}%)
                         </td>
                     </ng-container>
                     <td>
-                        {{ getLocaleConversionService().toLocaleString(student.overallPoints) }} ({{
-                            getLocaleConversionService().toLocaleString(roundScorePercent(student.overallPoints / maxNumberOfOverallPoints, course))
-                        }}%)
+                        {{ localize(student.overallPoints) }}
+                        ({{ localize(roundScorePercent(student.overallPoints / maxNumberOfOverallPoints, course)) }}%)
                     </td>
                     <td *ngIf="gradingScaleExists">
                         {{ student.gradeStep?.gradeName }}
