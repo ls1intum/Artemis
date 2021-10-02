@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
@@ -15,33 +15,36 @@ export interface IProgrammingExerciseSubmissionPolicyService {
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSubmissionPolicyService implements IProgrammingExerciseSubmissionPolicyService {
     public baseResourceUrl = SERVER_API_URL + '/api/programming-exercises/{exerciseId}/submission-policy';
-    public enableResourceUrl = this.baseResourceUrl + '/enable';
-    public disableResourceUrl = this.baseResourceUrl + '/disable';
-    public updateResourceUrl = this.baseResourceUrl + '/update';
 
     constructor(private http: HttpClient) {}
 
     getSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<SubmissionPolicy> {
-        return this.http.get<SubmissionPolicy>(this.baseResourceUrl.replace('{exerciseId}', exerciseId + ''));
+        return this.http.get<SubmissionPolicy>(this.requestUrl(exerciseId));
     }
 
     addSubmissionPolicyToProgrammingExercise(submissionPolicy: SubmissionPolicy, exerciseId: number): Observable<SubmissionPolicy> {
-        return this.http.post<SubmissionPolicy>(this.baseResourceUrl.replace('{exerciseId}', exerciseId + ''), submissionPolicy);
+        return this.http.post<SubmissionPolicy>(this.requestUrl(exerciseId), submissionPolicy);
     }
 
     removeSubmissionPolicyFromProgrammingExercise(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(this.baseResourceUrl.replace('{exerciseId}', exerciseId + ''), { observe: 'response' });
+        return this.http.delete<void>(this.requestUrl(exerciseId), { observe: 'response' });
     }
 
     enableSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.put<void>(this.enableResourceUrl.replace('{exerciseId}', exerciseId + ''), null, { observe: 'response' });
+        let params = new HttpParams().set('activate', 'true');
+        return this.http.put<void>(this.requestUrl(exerciseId), null, { observe: 'response', params });
     }
 
     disableSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.put<void>(this.disableResourceUrl.replace('{exerciseId}', exerciseId + ''), null, { observe: 'response' });
+        let params = new HttpParams().set('activate', 'false');
+        return this.http.put<void>(this.requestUrl(exerciseId), null, { observe: 'response', params });
     }
 
     updateSubmissionPolicyToProgrammingExercise(submissionPolicy: SubmissionPolicy, exerciseId: number): Observable<SubmissionPolicy> {
-        return this.http.patch<SubmissionPolicy>(this.updateResourceUrl.replace('{exerciseId}', exerciseId + ''), submissionPolicy);
+        return this.http.patch<SubmissionPolicy>(this.requestUrl(exerciseId), submissionPolicy);
+    }
+
+    private requestUrl(exerciseId: number): string {
+        return this.baseResourceUrl.replace('{exerciseId}', exerciseId + '');
     }
 }
