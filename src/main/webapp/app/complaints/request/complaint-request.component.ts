@@ -7,5 +7,5 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 })
 export class ComplaintRequestComponent {
     @Input() complaint: Complaint;
-    ComplaintType = ComplaintType;
+    readonly ComplaintType = ComplaintType;
 }

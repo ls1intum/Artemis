@@ -12,6 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/entities/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -61,7 +62,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (this.participation.submissions && this.participation.submissions.length > 0) {
             this.submission = this.participation.submissions[0];
         }
-        // for normal exercises we track the number of allowed complaints
+        // for course exercises we track the number of allowed complaints
         if (this.course?.complaintsEnabled) {
             this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
                 this.numberOfAllowedComplaints = allowedComplaints;
@@ -74,8 +75,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
             }
         });
 
-        this.timeOfFeedbackRequestValid = this.isTimeOfFeedbackRequestValid();
-        this.timeOfComplaintValid = this.isTimeOfComplaintValid();
+        this.timeOfFeedbackRequestValid = this.isFeedbackRequestAllowed();
+        this.timeOfComplaintValid = this.isComplaintAllowed();
         this.showComplaintsSection = this.isShowComplaintsSection();
     }
 
@@ -87,7 +88,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             this.complaintService
                 .findBySubmissionId(this.submission.id!)
                 .pipe(filter((res) => !!res.body))
-                .subscribe((res) => {
+                .subscribe((res: HttpResponse<Complaint>) => {
                     this.complaint = res.body!;
                 });
         }
@@ -97,11 +98,11 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * This function is used to check whether the student is allowed to submit a complaint or not.
      * For exams, submitting a complaint is allowed within the Student Review Period, see {@link isWithinExamReviewPeriod}.
      *
-     * For normal course exercises, submitting a complaint is allowed within one week after the student received the
+     * For course exercises, submitting a complaint is allowed within one week after the student received the
      * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
-    private isTimeOfComplaintValid(): boolean {
+    private isComplaintAllowed(): boolean {
         if (this.result?.completionDate) {
             if (this.isExamMode) {
                 return this.isWithinExamReviewPeriod();
@@ -112,9 +113,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Analogous to isTimeOfComplaintValid but exams cannot have more feedback requests.
+     * Analogous to isComplaintAllowed but exams cannot have more feedback requests.
      */
-    private isTimeOfFeedbackRequestValid(): boolean {
+    private isFeedbackRequestAllowed(): boolean {
         if (!this.isExamMode && this.result?.completionDate) {
             return this.isCompletionDateWithinCourseReviewPeriod(this.result.completionDate);
         }
@@ -126,7 +127,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isShowComplaintsSection(): boolean {
         if (this.isExamMode) {
-            return this.isTimeOfComplaintValid() || !!this.complaint;
+            return this.isComplaintAllowed() || !!this.complaint;
         } else {
             return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
         }

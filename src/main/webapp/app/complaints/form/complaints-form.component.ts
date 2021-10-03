@@ -10,17 +10,17 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
-    styleUrls: ['complaints-form.component.scss'],
+    styleUrls: ['./complaints-form.component.scss'],
 })
 export class ComplaintsFormComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
     @Input() examId?: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
-    maxComplaintsPerCourse: number;
     @Input() complaintType: ComplaintType;
     @Input() isCurrentUserSubmissionAuthor = false;
     @Output() submit: EventEmitter<void> = new EventEmitter();
+    maxComplaintsPerCourse: number;
     complaintText?: string;
     ComplaintType = ComplaintType;
 
@@ -49,7 +49,7 @@ export class ComplaintsFormComponent implements OnInit {
                 this.submit.emit();
             },
             (err: HttpErrorResponse) => {
-                if (err?.error?.errorKey === 'toomanycomplaints') {
+                if (err?.error?.errorKey === 'tooManyComplaints') {
                     this.alertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
                     onError(this.alertService, err);

@@ -11,7 +11,7 @@
             "descriptionExtended": "Alle Studierenden dürfen jeweils insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Du hast noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
             "descriptionTeam": "Ihr könnt insgesamt bis zu {{ maxComplaintNumber }} Beschwerden als Team in diesem Kurs einreichen.",
             "descriptionTeamExtended": "Jedes Team darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Ihr habt noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
-            "exclusivityDisclaimer": "Beschwerden und Anfragen für weiteres Feedback sind exklusiv zueinander. Du kannst nur entweder die eine oder die andere einreichen.",
+            "exclusivityDisclaimer": "Du kannst entweder eine Beschwerde oder eine Anfrage für weiteres Feedback einreichen.",
             "beDescriptive": "Bitte beschreibe ausführlich, warum die Bewertung falsch ist. Deine Beschwerde wird dann von einem zweiten Reviewer überprüft.",
             "beDescriptiveTeam": "Bitte beschreibt ausführlich, warum die Bewertung falsch ist. Eure Einreichung wird dann von euren Tutor:innen noch einmal neu bewertet.",
             "alreadySubmittedSubmissionAuthor": "Du hast eine Beschwerde eingereicht",

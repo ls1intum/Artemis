@@ -1,4 +1,4 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
@@ -104,7 +104,7 @@ describe('ComplaintsComponent', () => {
     });
 
     it('should throw known error after complaint creation', () => {
-        const error = { error: { errorKey: 'toomanycomplaints' } } as HttpErrorResponse;
+        const error = { error: { errorKey: 'tooManyComplaints' } } as HttpErrorResponse;
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(error));
         const submitSpy = jest.spyOn(component.submit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
