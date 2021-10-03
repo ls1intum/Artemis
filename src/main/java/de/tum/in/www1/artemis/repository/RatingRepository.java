@@ -32,6 +32,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     /**
      * Count all ratings given to submissions for the given course.
+     * @return number of total ratings given for the course
      */
     long countByResult_Participation_Exercise_Course_Id(Long courseId);
 }
