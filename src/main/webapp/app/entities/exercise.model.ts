@@ -134,6 +134,7 @@ export abstract class Exercise implements BaseEntity {
         this.assessmentDueDateError = false;
         this.dueDateError = false;
         this.presentationScoreEnabled = false; // default value;
+        this.allowComplaintsForAutomaticAssessments = false; // default value;
     }
 
     /**
