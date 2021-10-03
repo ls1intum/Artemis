@@ -77,7 +77,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
         this.timeOfFeedbackRequestValid = this.isFeedbackRequestAllowed();
         this.timeOfComplaintValid = this.isComplaintAllowed();
-        this.showComplaintsSection = this.isShowComplaintsSection();
+        this.showComplaintsSection = this.getComplaintsSectionVisibility();
     }
 
     /**
@@ -107,7 +107,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             if (this.isExamMode) {
                 return this.isWithinExamReviewPeriod();
             }
-            return this.isCompletionDateWithinCourseReviewPeriod(this.result.completionDate);
+            return this.canFileComplaintWithCompletionDate(this.result.completionDate);
         }
         return false;
     }
@@ -117,7 +117,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isFeedbackRequestAllowed(): boolean {
         if (!this.isExamMode && this.result?.completionDate) {
-            return this.isCompletionDateWithinCourseReviewPeriod(this.result.completionDate);
+            return this.canFileComplaintWithCompletionDate(this.result.completionDate);
         }
         return false;
     }
@@ -125,7 +125,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     /**
      * Determines whether or not to show the complaint section
      */
-    private isShowComplaintsSection(): boolean {
+    private getComplaintsSectionVisibility(): boolean {
         if (this.isExamMode) {
             return this.isComplaintAllowed() || !!this.complaint;
         } else {
@@ -135,8 +135,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     /**
      * Checks if a complaint (either actual complaint or more feedback request) can be filed
+     * The result's completionDate specifies the date when the assessment was submitted
      */
-    private isCompletionDateWithinCourseReviewPeriod(completionDate: dayjs.Dayjs): boolean {
+    private canFileComplaintWithCompletionDate(completionDate: dayjs.Dayjs): boolean {
         if (!this.course?.maxRequestMoreFeedbackTimeDays) {
             return false;
         }

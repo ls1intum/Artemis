@@ -20,7 +20,7 @@ export class ComplaintsFormComponent implements OnInit {
     @Input() complaintType: ComplaintType;
     @Input() isCurrentUserSubmissionAuthor = false;
     @Output() submit: EventEmitter<void> = new EventEmitter();
-    maxComplaintsPerCourse: number;
+    maxComplaintsPerCourse = 1;
     complaintText?: string;
     ComplaintType = ComplaintType;
 
@@ -29,8 +29,6 @@ export class ComplaintsFormComponent implements OnInit {
     ngOnInit(): void {
         if (this.exercise.course) {
             this.maxComplaintsPerCourse = this.exercise.teamMode ? this.exercise.course.maxTeamComplaints! : this.exercise.course.maxComplaints!;
-        } else {
-            this.maxComplaintsPerCourse = 1;
         }
     }
 
