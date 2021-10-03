@@ -360,9 +360,11 @@ export class ResultDetailComponent implements OnInit {
             }
         }
 
-        const appliedNegativePoints = codeIssueCredits + negativeCredits;
-        const receivedNegativePoints = codeIssuePenalties + negativeCredits;
-        const positivePoints = testCaseCredits + positiveCredits;
+        const course = getCourseFromExercise(this.exercise!);
+
+        const appliedNegativePoints = roundScore(codeIssueCredits + negativeCredits, course);
+        const receivedNegativePoints = roundScore(codeIssuePenalties + negativeCredits, course);
+        const positivePoints = roundScore(testCaseCredits + positiveCredits, course);
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;

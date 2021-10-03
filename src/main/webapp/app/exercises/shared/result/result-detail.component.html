@@ -39,7 +39,7 @@
             <div class="feedback-list">
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
                     <span>{{ feedback.category }}</span>
-                    <span class="feedback-points" *ngIf="feedback.credits">{{ feedback.credits.toFixed(1) }}P</span>
+                    <span class="feedback-points" *ngIf="feedback.credits">{{ roundScore(feedback.credits, getCourseFromExercise(exercise!)) }}P</span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
                     <jhi-feedback-collapse *ngIf="feedback.text" [text]="feedback.text!"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>
