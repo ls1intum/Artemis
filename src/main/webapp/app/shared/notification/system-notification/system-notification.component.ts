@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -21,7 +21,7 @@ export class SystemNotificationComponent implements OnInit {
     alertIcon: IconProp;
     websocketChannel: string;
 
-    systemNotificationTimers: Map<SystemNotification, ReturnType<typeof setTimeout>> = new Map<SystemNotification, ReturnType<typeof setTimeout>>();
+    systemNotificationTimer: ReturnType<typeof setTimeout>;
 
     constructor(
         private route: ActivatedRoute,
@@ -42,35 +42,22 @@ export class SystemNotificationComponent implements OnInit {
                 }, 500);
             }
         });
-        this.systemNotificationService.currentSystemNotificationUpdate.subscribe((event) => {
-            if (event) {
-                if (this.notification) {
-                    this.setTimedCheck(this.notification);
-                } else {
-                    this.loadActiveNotification();
-                }
+        this.systemNotificationService.currentSystemNotificationUpdate.subscribe((triggerTime) => {
+            if (triggerTime) {
+                this.setTimedCheck(triggerTime);
             }
         });
     }
 
     /**
      * set asynchronous timeout to update/check/hide current system notification
-     * @param notification which expiration date is used as the update time
+     * @param triggerTime which time is used for the timeout
      */
-    private setTimedCheck(notification: SystemNotification) {
-        // check if this notification already has a timer
-        // if true then remove this timer -> it is outdated
-        if (this.systemNotificationTimers.has(notification)) {
-            clearTimeout(this.systemNotificationTimers.get(notification)!);
-        }
-        if (notification.expireDate) {
-            const timeoutReference = setTimeout(() => {
-                // remove timer from timer map
-                this.systemNotificationTimers.delete(notification);
-                this.loadActiveNotification();
-            }, 1000 + notification.expireDate.diff(dayjs(), 'ms'));
-            this.systemNotificationTimers.set(notification, timeoutReference);
-        }
+    setTimedCheck(triggerTime: Dayjs) {
+        clearTimeout(this.systemNotificationTimer);
+        this.systemNotificationTimer = setTimeout(() => {
+            this.loadActiveNotification();
+        }, triggerTime.diff(dayjs(), 'ms'));
     }
 
     private loadActiveNotification() {
@@ -79,7 +66,7 @@ export class SystemNotificationComponent implements OnInit {
                 this.notification = notification;
                 this.setAlertClass();
                 this.setAlertIcon();
-                this.setTimedCheck(notification);
+                this.setTimedCheck(notification.expireDate!);
             } else {
                 this.notification = undefined;
             }

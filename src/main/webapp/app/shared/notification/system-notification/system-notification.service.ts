@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
+import dayjs, { Dayjs } from 'dayjs';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 export class SystemNotificationService {
     public resourceUrl = SERVER_API_URL + 'api/system-notifications';
 
-    private systemNotificationUpdateSource = new Subject<boolean>();
+    private systemNotificationUpdateSource = new Subject<Dayjs>();
     currentSystemNotificationUpdate = this.systemNotificationUpdateSource.asObservable();
 
     constructor(private router: Router, private http: HttpClient) {}
@@ -22,8 +22,8 @@ export class SystemNotificationService {
     /**
      * tells other components (e.g. the one that displays the notification in the browser) to check for changes
      */
-    sendSystemNotificationUpdateEvent() {
-        this.systemNotificationUpdateSource.next(true);
+    sendSystemNotificationUpdateEvent(triggerTime: Dayjs) {
+        this.systemNotificationUpdateSource.next(triggerTime);
     }
 
     /**
@@ -33,8 +33,9 @@ export class SystemNotificationService {
     create(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
         const result = this.http.post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-        // updates the timeout/timer for the visible system notification
-        this.sendSystemNotificationUpdateEvent();
+        if (notification.expireDate) {
+            this.sendSystemNotificationUpdateEvent(notification.expireDate);
+        }
         return result;
     }
 
@@ -45,8 +46,9 @@ export class SystemNotificationService {
     update(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
         const result = this.http.put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-        // updates the timeout/timer for the visible system notification
-        this.sendSystemNotificationUpdateEvent();
+        if (notification.expireDate) {
+            this.sendSystemNotificationUpdateEvent(notification.expireDate);
+        }
         return result;
     }
 
@@ -60,13 +62,9 @@ export class SystemNotificationService {
 
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        const result = this.http
+        return this.http
             .get<SystemNotification[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
-
-        // updates the timeout/timer for the visible system notification
-        this.sendSystemNotificationUpdateEvent();
-        return result;
     }
 
     /**
@@ -75,8 +73,7 @@ export class SystemNotificationService {
      */
     delete(id: number): Observable<HttpResponse<any>> {
         const result = this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
-        // updates the timeout/timer for the visible system notification
-        this.sendSystemNotificationUpdateEvent();
+        this.sendSystemNotificationUpdateEvent(dayjs());
         return result;
     }
 

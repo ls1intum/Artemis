@@ -9,11 +9,12 @@ import { SystemNotificationComponent } from 'app/shared/notification/system-noti
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,8 +38,8 @@ describe('System Notification Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
-            declarations: [SystemNotificationComponent],
+            imports: [ArtemisTestModule],
+            declarations: [SystemNotificationComponent, MockComponent(FaIconComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -53,6 +54,7 @@ describe('System Notification Component', () => {
                 systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
                 systemNotificationService = TestBed.inject(SystemNotificationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
+                sinon.stub(systemNotificationComponent, 'setTimedCheck');
             });
     });
 
@@ -61,9 +63,11 @@ describe('System Notification Component', () => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
             const fake = sinon.fake.returns(of(notification));
             sinon.replace(systemNotificationService, 'getActiveNotification', fake);
+            sinon.spy(systemNotificationService, 'sendSystemNotificationUpdateEvent');
             systemNotificationComponent.ngOnInit();
             tick(500);
             expect(systemNotificationService.getActiveNotification).to.have.been.calledOnce;
+            expect(systemNotificationComponent.setTimedCheck).to.have.been.calledOnce;
             expect(systemNotificationComponent.notification).to.equal(notification);
             expect(systemNotificationComponent.alertClass).to.equal('alert-warning');
             expect(systemNotificationComponent.alertIcon).to.equal('exclamation-triangle');
