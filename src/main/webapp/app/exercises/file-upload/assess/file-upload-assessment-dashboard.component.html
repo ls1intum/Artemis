@@ -14,6 +14,10 @@
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+                    <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.participantIdentifier">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentId">Student login</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="submissionDate">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -48,6 +52,9 @@
                     <td>{{ i + 1 }}</td>
                     <td *ngIf="exercise.isAtLeastInstructor">
                         {{ submission.participation!.participantName! }}
+                    </td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation!.participantIdentifier! }}
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
