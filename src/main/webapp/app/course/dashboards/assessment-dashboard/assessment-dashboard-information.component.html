@@ -57,8 +57,9 @@
                 <div class="row mb-1">
                     <div class="col-7">{{ 'artemisApp.exerciseAssessmentDashboard.ratings' | artemisTranslate }}</div>
                     <div class="col-5">
-                        {{ ratings.total }} |
-                        <a [routerLink]="['/course-management', courseId, 'ratings']" [queryParams]="{ tutorId: tutorId }"> {{ ratings.tutor }} </a>
+                        <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', courseId, 'ratings']"> {{ ratings.total }} </a>
+                        <span *ngIf="!isAtLeastInstructor"> {{ ratings.total }} </span> |
+                        {{ ratings.tutor }}
                     </div>
                 </div>
             </div>
