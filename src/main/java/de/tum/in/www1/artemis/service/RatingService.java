@@ -48,6 +48,10 @@ public class RatingService {
         return ratingRepository.findAllByResult_Participation_Exercise_Course_Id(courseId);
     }
 
+    public long countRatingsByCourse(long courseId) {
+        return ratingRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
     /**
      * Persist a new Rating
      *
