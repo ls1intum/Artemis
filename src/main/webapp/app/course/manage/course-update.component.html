@@ -99,10 +99,18 @@
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
-                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}" formControlName="startDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
+                            formControlName="startDate"
+                            [timeZoneWarning]="true"
+                        ></jhi-date-time-picker>
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
-                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}" formControlName="endDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
+                            formControlName="endDate"
+                            [timeZoneWarning]="true"
+                        ></jhi-date-time-picker>
                     </div>
                 </div>
                 <div class="form-check">

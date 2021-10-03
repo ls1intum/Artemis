@@ -37,6 +37,7 @@
                     [(ngModel)]="textExercise.releaseDate"
                     (valueChange)="validateDate()"
                     [error]="false"
+                    [timeZoneWarning]="true"
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
@@ -48,6 +49,7 @@
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
                     [(ngModel)]="textExercise.dueDate"
+                    [timeZoneWarning]="true"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
             </div>
@@ -60,6 +62,7 @@
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                 (valueChange)="validateDate()"
                 [(ngModel)]="textExercise.assessmentDueDate"
+                [timeZoneWarning]="true"
             ></jhi-date-time-picker>
             <span *ngIf="textExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
         </div>

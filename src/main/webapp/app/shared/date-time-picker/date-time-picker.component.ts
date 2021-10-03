@@ -111,6 +111,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this.valueChanged();
     }
 
+    /**
+     * Get the current time zone of the user / browser
+     */
     get currentTimeZone(): string {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
