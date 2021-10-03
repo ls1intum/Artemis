@@ -48,6 +48,12 @@ export class SystemNotificationComponent implements OnInit {
                 this.notification = notification;
                 this.setAlertClass();
                 this.setAlertIcon();
+                // set asynchronous timeout to update/check/hide current system notification
+                if (notification.expireDate) {
+                    setTimeout(() => {
+                        this.loadActiveNotification();
+                    }, 1000 + notification.expireDate.diff(dayjs(), 'ms'));
+                }
             } else {
                 this.notification = undefined;
             }
