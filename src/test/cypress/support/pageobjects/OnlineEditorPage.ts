@@ -87,7 +87,7 @@ export class OnlineEditorPage {
         cy.get('#submit_button').click();
         this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should('be.visible');
         this.getBuildOutput().contains(buildingAndTesting).should('be.visible');
-        this.getResultPanel().contains('GRADED', { timeout: 100000 }).should('be.visible');
+        this.getResultPanel().contains('GRADED', { timeout: 140000 }).should('be.visible');
     }
 
     /**
