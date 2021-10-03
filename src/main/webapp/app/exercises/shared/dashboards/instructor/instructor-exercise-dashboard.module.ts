@@ -8,7 +8,6 @@ import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module'
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisInstructorCourseStatsDashboardModule } from 'app/course/dashboards/instructor-course-dashboard/instructor-course-dashboard.module';
 
 const ENTITY_STATES = instructorExerciseDashboardRoute;
 
@@ -18,7 +17,6 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ChartsModule,
-        ArtemisInstructorCourseStatsDashboardModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSidePanelModule,
         ArtemisTutorLeaderboardModule,

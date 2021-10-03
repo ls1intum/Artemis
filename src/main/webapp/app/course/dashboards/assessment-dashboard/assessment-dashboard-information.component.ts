@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 
 @Component({
     selector: 'jhi-assessment-dashboard-information',

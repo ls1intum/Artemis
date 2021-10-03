@@ -178,8 +178,8 @@
     </div>
 
     <div class="container-fluid" style="padding-top: 25px">
-        <h4 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
-        <h4 *ngIf="isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
+        <h4 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
+        <h4 *ngIf="isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
 
         <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
     </div>

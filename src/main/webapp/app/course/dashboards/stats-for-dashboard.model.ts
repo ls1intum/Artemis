@@ -1,5 +1,5 @@
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 
 export class StatsForDashboard {
     public numberOfStudents = 0;
@@ -16,6 +16,7 @@ export class StatsForDashboard {
     public feedbackRequestEnabled = true;
     public numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()]; // Array with number of assessments for each correction round
     public numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()]; // Array with number of locked assessments for each correction round
+    public numberOfRatings = 0;
 
     public tutorLeaderboardEntries: TutorLeaderboardElement[] = [];
 

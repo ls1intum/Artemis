@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
