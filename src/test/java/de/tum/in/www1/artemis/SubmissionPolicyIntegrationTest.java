@@ -1,18 +1,31 @@
 package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,14 +34,20 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ProgrammingExerciseGradingService gradingService;
+
     private Long programmingExerciseId;
 
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void init() {
-        database.addUsers(1, 1, 1, 1);
-        database.addCourseWithOneProgrammingExercise();
+        database.addUsers(2, 1, 1, 1);
+        database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addInstructor("other-instructor-group", "other-instructor");
         database.addEditor("other-editor-group", "other-editor");
         database.addStudent("other-student-group", "other-student");
@@ -195,10 +214,52 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void test_updateSubmissionPolicy_ok() throws Exception {
+    public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(15).policy(), HttpStatus.OK);
         assertThat(updatedExercise().getSubmissionPolicy().getSubmissionLimit()).isEqualTo(15);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitGreater() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy());
+        ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        ProgrammingExerciseStudentParticipation participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student2";
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.mockGiveWritePermission(programmingExercise, repositoryName, "student2", HttpStatus.OK);
+        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
+        request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitSmaller() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy());
+        ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        ProgrammingExerciseStudentParticipation participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student2";
+        User student2 = userRepository.getUserByLoginElseThrow("student2");
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), Set.of(student2));
+        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
+        request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void test_updateSubmissionPolicy_ok_submissionPenaltyPolicy() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(10.0).policy());
+        request.patch(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(true).limit(15).penalty(10.0).policy(), HttpStatus.OK);
+        assertThat(updatedExercise().getSubmissionPolicy().getSubmissionLimit()).isEqualTo(15);
+        assertThat(((SubmissionPenaltyPolicy) updatedExercise().getSubmissionPolicy()).getExceedingPenalty()).isEqualTo(10.0);
     }
 
     // Beginning of toggleSubmissionPolicy tests
@@ -250,8 +311,17 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void test_toggleSubmissionPolicy_ok(boolean activate) throws Exception {
+    public void test_toggleSubmissionPolicy_ok_lockRepositoryPolicy(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(activate).limit(10).policy());
+        request.put(requestUrl() + activate(!activate), SubmissionPolicyBuilder.any(), HttpStatus.OK);
+        assertThat(updatedExercise().getSubmissionPolicy().isActive()).isEqualTo(!activate);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void test_toggleSubmissionPolicy_ok_submissionPenaltyPolicy(boolean activate) throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(activate).penalty(10.0).limit(10).policy());
         request.put(requestUrl() + activate(!activate), SubmissionPolicyBuilder.any(), HttpStatus.OK);
         assertThat(updatedExercise().getSubmissionPolicy().isActive()).isEqualTo(!activate);
     }
@@ -299,6 +369,77 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     public void test_removeSubmissionPolicyFromProgrammingExercise_ok() throws Exception {
         addAnySubmissionPolicyToExercise();
         request.delete(requestUrl(), HttpStatus.OK);
+    }
+
+    // Beginning of other tests
+
+    private enum EnforcePolicyTestType {
+        POLICY_NULL, POLICY_ACTIVE, POLICY_INACTIVE
+    }
+
+    @ParameterizedTest
+    @EnumSource(EnforcePolicyTestType.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void test_enforceLockRepositoryPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {
+        if (type != EnforcePolicyTestType.POLICY_NULL) {
+            addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(1).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
+        }
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student1";
+        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, List.of("test1"), List.of("test2", "test3"));
+        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
+            mockBitbucketRequests(participation);
+        }
+        Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
+        assertThat(result).isPresent();
+        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
+            assertThat(result.get().getResultString()).contains("1 of 1 Submissions");
+        } else {
+            assertThat(result.get().getResultString()).doesNotContain("1 of 1 Submissions");
+        }
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
+        result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
+        assertThat(result).isPresent();
+        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
+            assertThat(result.get().isRated()).isFalse();
+        } else {
+            assertThat(result.get().isRated()).isTrue();
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(EnforcePolicyTestType.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void test_enforceSubmissionPenaltyPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {
+        if (type != EnforcePolicyTestType.POLICY_NULL) {
+            addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().limit(1).penalty(90.0).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
+        }
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student1";
+        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, List.of("test1", "test2", "test3"), List.of());
+        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
+            mockBitbucketRequests(participation);
+        }
+        Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
+        assertThat(result).isPresent();
+        assertThat(result.get().getScore()).isEqualTo(25);
+        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
+        result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
+        assertThat(result).isPresent();
+        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
+            assertThat(result.get().getScore()).isEqualTo(10);
+            assertThat(result.get().getResultString()).contains("90% Submission Penalty");
+        } else {
+            assertThat(result.get().getScore()).isEqualTo(25);
+            assertThat(result.get().getResultString()).doesNotContain("90% Submission Penalty");
+        }
+    }
+
+    private void mockBitbucketRequests(ProgrammingExerciseParticipation participation) throws Exception {
+        User student = userRepository.getUserByLoginElseThrow("student1");
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), Set.of(student));
+        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, programmingExercise.getProjectKey().toLowerCase() + "-student1");
     }
 
     private void test_getSubmissionPolicyOfProgrammingExercise_forbidden() throws Exception {

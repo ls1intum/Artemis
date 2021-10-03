@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -879,6 +881,21 @@ public class ModelFactory {
         apollonDiagram.setDiagramType(diagramType);
         apollonDiagram.setTitle(title);
         return apollonDiagram;
+    }
+
+    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
+        LockRepositoryPolicy policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(submissionLimit);
+        policy.setActive(active);
+        return policy;
+    }
+
+    public static SubmissionPenaltyPolicy generateSubmissionPenaltyPolicy(int submissionLimit, double penalty, boolean active) {
+        SubmissionPenaltyPolicy policy = new SubmissionPenaltyPolicy();
+        policy.setSubmissionLimit(submissionLimit);
+        policy.setExceedingPenalty(penalty);
+        policy.setActive(active);
+        return policy;
     }
 
     /**

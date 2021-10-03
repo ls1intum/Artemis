@@ -53,6 +53,9 @@ import { TestCaseDistributionChartComponent } from 'app/exercises/programming/ma
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import {ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent} from "app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component";
+import {SubmissionPolicyUpdateComponent} from "app/exercises/shared/submission-policy/submission-policy-update.component";
+import {ButtonComponent} from "app/shared/components/button.component";
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -205,6 +208,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseConfigureGradingActionsComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
+                MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
+                MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
                 MockComponent(ProgrammingExerciseTriggerAllButtonComponent),
                 MockComponent(AlertComponent),
@@ -223,6 +228,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
+                { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
