@@ -21,6 +21,8 @@ export class SystemNotificationComponent implements OnInit {
     alertIcon: IconProp;
     websocketChannel: string;
 
+    systemNotificationTimers: Map<SystemNotification, ReturnType<typeof setTimeout>> = new Map<SystemNotification, ReturnType<typeof setTimeout>>();
+
     constructor(
         private route: ActivatedRoute,
         private accountService: AccountService,
@@ -40,6 +42,35 @@ export class SystemNotificationComponent implements OnInit {
                 }, 500);
             }
         });
+        this.systemNotificationService.currentSystemNotificationUpdate.subscribe((event) => {
+            if (event) {
+                if (this.notification) {
+                    this.setTimedCheck(this.notification);
+                } else {
+                    this.loadActiveNotification();
+                }
+            }
+        });
+    }
+
+    /**
+     * set asynchronous timeout to update/check/hide current system notification
+     * @param notification which expiration date is used as the update time
+     */
+    private setTimedCheck(notification: SystemNotification) {
+        // check if this notification already has a timer
+        // if true then remove this timer -> it is outdated
+        if (this.systemNotificationTimers.has(notification)) {
+            clearTimeout(this.systemNotificationTimers.get(notification)!);
+        }
+        if (notification.expireDate) {
+            const timeoutReference = setTimeout(() => {
+                // remove timer from timer map
+                this.systemNotificationTimers.delete(notification);
+                this.loadActiveNotification();
+            }, 1000 + notification.expireDate.diff(dayjs(), 'ms'));
+            this.systemNotificationTimers.set(notification, timeoutReference);
+        }
     }
 
     private loadActiveNotification() {
@@ -48,12 +79,7 @@ export class SystemNotificationComponent implements OnInit {
                 this.notification = notification;
                 this.setAlertClass();
                 this.setAlertIcon();
-                // set asynchronous timeout to update/check/hide current system notification
-                if (notification.expireDate) {
-                    setTimeout(() => {
-                        this.loadActiveNotification();
-                    }, 1000 + notification.expireDate.diff(dayjs(), 'ms'));
-                }
+                this.setTimedCheck(notification);
             } else {
                 this.notification = undefined;
             }
