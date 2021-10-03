@@ -184,7 +184,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.OK,
                 params);
         assertThat(returnedModelingExercise.getGradingCriteria().size()).isEqualTo(gradingCriteria.size());
-        verify(groupNotificationService).notifyStudentGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
