@@ -1,12 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping(SubmissionPolicyResource.ROOT)
@@ -39,8 +40,8 @@ public class SubmissionPolicyResource {
 
     private final SubmissionPolicyService submissionPolicyService;
 
-    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository,
-                                    AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
+    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
+            SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.submissionPolicyService = submissionPolicyService;
@@ -81,7 +82,8 @@ public class SubmissionPolicyResource {
      */
     @PostMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy) throws URISyntaxException {
+    public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
+            throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
         HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, submissionPolicy.getId() + "");
 
@@ -103,7 +105,8 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
-        return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", "" + exerciseId))).headers(responseHeaders).body(addedSubmissionPolicy);
+        return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", "" + exerciseId))).headers(responseHeaders)
+                .body(addedSubmissionPolicy);
     }
 
     /**
@@ -166,20 +169,20 @@ public class SubmissionPolicyResource {
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyToggleFailedPolicyNotExist",
-                "The submission policy could not be toggled, because the programming exercise does not have a submission policy.");
+                    "The submission policy could not be toggled, because the programming exercise does not have a submission policy.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
         if (activate == submissionPolicy.isActive()) {
             String errorKey = activate ? "submissionPolicyAlreadyEnabled" : "submissionPolicyAlreadyDisabled";
-            String defaultMessage = activate ? "The submission policy could not be enabled, because it is already active." :
-                "The submission policy could not be disabled, because it is not active.";
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, errorKey,
-                    defaultMessage);
+            String defaultMessage = activate ? "The submission policy could not be enabled, because it is already active."
+                    : "The submission policy could not be disabled, because it is not active.";
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, errorKey, defaultMessage);
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
         if (activate) {
             submissionPolicyService.enableSubmissionPolicy(submissionPolicy);
-        } else {
+        }
+        else {
             submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
         }
         responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId + "");
@@ -213,7 +216,7 @@ public class SubmissionPolicyResource {
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyUpdateFailedPolicyNotExist",
-                "The submission policy could not be updated, because the programming exercise does not have a submission policy.");
+                    "The submission policy could not be updated, because the programming exercise does not have a submission policy.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
 

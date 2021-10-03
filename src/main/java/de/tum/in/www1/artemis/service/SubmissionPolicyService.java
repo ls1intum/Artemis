@@ -92,11 +92,11 @@ public class SubmissionPolicyService {
         Integer submissionLimit = submissionPolicy.getSubmissionLimit();
         if (submissionPolicy.isActive() == null) {
             throw new BadRequestAlertException("Submission policies must be activated or deactivated. Activation cannot be null.", SubmissionPolicyResource.ENTITY_NAME,
-                "submissionPolicyActiveNull");
+                    "submissionPolicyActiveNull");
         }
         if (submissionLimit == null || submissionLimit < 1) {
             throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
-                "submissionPolicyIllegalSubmissionLimit");
+                    "submissionPolicyIllegalSubmissionLimit");
         }
         if (submissionPolicy instanceof LockRepositoryPolicy policy) {
             validateLockRepositoryPolicy(policy);
@@ -275,7 +275,8 @@ public class SubmissionPolicyService {
         int submissions = getParticipationSubmissionCount(result);
         int allowedSubmissions = lockRepositoryPolicy.getSubmissionLimit();
         if (submissions == allowedSubmissions) {
-            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
+            ProgrammingExercise programmingExercise = programmingExerciseRepository
+                    .findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
             programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) result.getParticipation());
         }
         // This is the fallback behavior in case the VCS does not lock the repository for whatever reason when the
@@ -306,12 +307,12 @@ public class SubmissionPolicyService {
         int allowedSubmissions = policy.getSubmissionLimit();
         if (submissions <= allowedSubmissions) {
             return ", %d of %d Submissions".formatted(submissions, allowedSubmissions);
-        } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+        }
+        else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             return ", %d%% Submission Penalty".formatted((int) Math.min(submissionPenaltyPolicy.getExceedingPenalty() * (submissions - allowedSubmissions), 100));
         }
         return "";
     }
-
 
     private int getParticipationSubmissionCount(Result result) {
         return getParticipationSubmissionCount(result.getParticipation());
@@ -319,7 +320,7 @@ public class SubmissionPolicyService {
 
     private int getParticipationSubmissionCount(Participation participation) {
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()).stream()
-            .filter(submission -> submission.getType() == SubmissionType.MANUAL).map(ProgrammingSubmission::getCommitHash).distinct().count();
+                .filter(submission -> submission.getType() == SubmissionType.MANUAL).map(ProgrammingSubmission::getCommitHash).distinct().count();
     }
 
     private void toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {

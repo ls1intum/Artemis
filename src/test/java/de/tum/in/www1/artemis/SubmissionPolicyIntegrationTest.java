@@ -1,5 +1,21 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -12,22 +28,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -301,7 +301,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_toggleSubmissionPolicy_badRequest_policyActiveStatusMatchesRequest(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(activate).limit(10).policy());
@@ -309,7 +309,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_toggleSubmissionPolicy_ok_lockRepositoryPolicy(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(activate).limit(10).policy());
@@ -318,7 +318,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_toggleSubmissionPolicy_ok_submissionPenaltyPolicy(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(activate).penalty(10.0).limit(10).policy());
@@ -394,7 +394,8 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().getResultString()).contains("1 of 1 Submissions");
-        } else {
+        }
+        else {
             assertThat(result.get().getResultString()).doesNotContain("1 of 1 Submissions");
         }
         database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
@@ -402,7 +403,8 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().isRated()).isFalse();
-        } else {
+        }
+        else {
             assertThat(result.get().isRated()).isTrue();
         }
     }
@@ -429,7 +431,8 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().getScore()).isEqualTo(10);
             assertThat(result.get().getResultString()).contains("90% Submission Penalty");
-        } else {
+        }
+        else {
             assertThat(result.get().getScore()).isEqualTo(25);
             assertThat(result.get().getResultString()).doesNotContain("90% Submission Penalty");
         }
@@ -475,7 +478,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     private String activate(boolean activate) {
-        return "?activate="+activate;
+        return "?activate=" + activate;
     }
 
     private void addSubmissionPolicyToExercise(SubmissionPolicy policy) {
