@@ -18,4 +18,4 @@ export const USER_ID_SELECTOR = 'USERID';
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
 // Time until a programming exercise can be created for a new course
-export const GROUP_SYNCHRONIZATION = 65000;
+export const GROUP_SYNCHRONIZATION = 120000;
