@@ -111,7 +111,7 @@ public class GroupNotificationFactory {
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
-            if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
+            if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
                 notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
                 notification.setPriority(NotificationPriority.HIGH);
             }
