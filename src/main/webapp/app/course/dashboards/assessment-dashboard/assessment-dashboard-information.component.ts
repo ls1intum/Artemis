@@ -75,11 +75,15 @@ export class AssessmentDashboardInformationComponent implements OnInit {
             },
         ];
     }
+    shouldShowTheGraph = false;
 
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
         this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
+
+        // Do not show the graph if both data points are zero
+        this.shouldShowTheGraph = this.totalNumberOfAssessments.total !== 0 || this.numberOfSubmissions.total !== 0;
     }
 }

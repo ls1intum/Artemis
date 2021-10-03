@@ -167,7 +167,7 @@ public class StatsForDashboardDTO {
     }
 
     public long getNumberOfRatings() {
-        return numberOfRatings;
+        return numberOfRatings == null ? 0L : numberOfRatings;
     }
 
     public void setNumberOfRatings(long numberOfRatings) {
