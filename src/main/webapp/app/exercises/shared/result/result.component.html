@@ -16,7 +16,7 @@
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="score">
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
-                    {{ roundScore(result.score, getCourseFromExercise(result!.participation!.exercise!)) }}%,
+                    {{ roundScore(result.score, getCourseFromExercise((result?.participation || participation).exercise!)) }}%,
                 </span>
                 <span *ngIf="resultIsPreliminary(result)">
                     <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
@@ -55,7 +55,7 @@
             <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
             <span class="score">
                 &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span>
-                {{ roundScore(result!.score, getCourseFromExercise(result!.participation!.exercise!)) }} %,
+                {{ roundScore(result!.score, getCourseFromExercise((result?.participation || participation).exercise!)) }} %,
             </span>
             <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
         </span>
