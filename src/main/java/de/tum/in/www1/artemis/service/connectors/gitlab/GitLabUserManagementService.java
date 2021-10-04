@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
@@ -128,7 +129,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             return;
         }
 
-        final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
+        final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
+        log.info("Update Gitlab permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
 
         final List<User> allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
@@ -367,6 +369,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      */
     private void addUserToGroup(String groupName, int gitlabUserId, AccessLevel accessLevel) throws GitLabException {
         try {
+            log.info("Add member " + gitlabUserId + " to Gitlab group " + groupName);
             gitlabApi.getGroupApi().addMember(groupName, gitlabUserId, accessLevel);
         }
         catch (GitLabApiException e) {

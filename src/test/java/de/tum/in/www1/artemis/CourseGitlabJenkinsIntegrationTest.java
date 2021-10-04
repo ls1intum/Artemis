@@ -239,7 +239,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
         changeUserGroup("tutor1", Set.of(course.getTeachingAssistantGroupName()));
 
-        var exercise = programmingExerciseRepository.findAllByCourse(course).stream().findFirst();
+        var exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).stream().findFirst();
         assertThat(exercise).isPresent();
 
         var user = courseTestService.getUserRepo().findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().findFirst();
@@ -287,7 +287,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         Optional<User> user = courseTestService.getUserRepo().findOneWithGroupsByLogin("instructor1");
         assertThat(user).isPresent();
 
-        var exercise = programmingExerciseRepository.findAllByCourse(course).stream().findFirst();
+        var exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).stream().findFirst();
         assertThat(exercise).isPresent();
 
         gitlabRequestMockProvider.mockFailToRemoveOldMember(exercise.get(), user.get());
