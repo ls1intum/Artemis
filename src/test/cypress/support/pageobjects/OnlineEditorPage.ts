@@ -151,7 +151,7 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
  */
 export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
     cy.login(credentials, '/');
-    cy.url().should('include', '/courses').wait(500);
+    cy.url().should('include', '/courses').wait(1000);
     cy.log('Participating in the programming exercise as a student...');
     cy.contains(courseName).parents('.card-header').click().wait(1000);
     cy.url().should('include', '/exercises');
