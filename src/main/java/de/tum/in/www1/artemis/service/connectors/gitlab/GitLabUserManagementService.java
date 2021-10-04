@@ -131,6 +131,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
         log.info("Update Gitlab permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
 
         final List<User> allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
@@ -339,6 +340,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
+        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
         for (var exercise : exercises) {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, course);
@@ -399,7 +402,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         // Gitlab groups are identified by the project key of the programming exercise
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
+        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
         for (var exercise : exercises) {
+            // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(userGroups, course);
             // Do not remove the user from the group and only update it's access level
