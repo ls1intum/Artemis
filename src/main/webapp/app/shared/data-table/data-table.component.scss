@@ -1,8 +1,8 @@
+@import '~@swimlane/ngx-datatable/index.css';
+@import '~@swimlane/ngx-datatable/themes/bootstrap.scss';
+
 @import 'src/main/webapp/content/scss/artemis-variables';
 @import 'src/main/webapp/content/scss/data-table-icons';
-
-@import '~@swimlane/ngx-datatable/index.css';
-@import '~@swimlane/ngx-datatable/themes/bootstrap';
 
 .datatable-icon-right {
     color: white !important;
