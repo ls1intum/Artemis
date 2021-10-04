@@ -77,7 +77,7 @@ describe('Text exercise assessment', () => {
             const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title);
             exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
-            exerciseResult.shouldShowScore(percentage);
+            cy.contains(`Score ${percentage}%`).should('be.visible');
             exerciseResult.clickViewSubmission();
             textFeedback.shouldShowTextFeedback(tutorTextFeedback);
             textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
