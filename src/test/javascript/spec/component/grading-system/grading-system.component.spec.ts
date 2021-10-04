@@ -237,6 +237,30 @@ describe('Grading System Component', () => {
         });
     });
 
+    it('should set inclusivity correctly for grade step where lowerBound=upperBound', () => {
+        comp.lowerBoundInclusivity = false;
+
+        comp.gradingScale.gradeSteps.push({
+            gradeName: 'Super Excellent',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        });
+
+        comp.setInclusivity(comp.gradingScale.gradeSteps);
+
+        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
+            expect(gradeStep.upperBoundInclusive).to.be.equal(true);
+            if (gradeStep.lowerBoundPercentage === 0) {
+                expect(gradeStep.lowerBoundInclusive).to.be.equal(true);
+            } else {
+                expect(gradeStep.lowerBoundInclusive).to.be.equal(false);
+            }
+        });
+    });
+
     it('should determine lower bound inclusivity correctly', () => {
         comp.setBoundInclusivity();
 
