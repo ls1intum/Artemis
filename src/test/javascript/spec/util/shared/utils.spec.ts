@@ -1,11 +1,11 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
-import { round, stringifyIgnoringFields } from 'app/shared/util/utils';
+import { round, roundScore, roundScorePercent, stringifyIgnoringFields } from 'app/shared/util/utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Utilities', () => {
+describe('Round', () => {
     void it('Decimal length', () => {
         expect(round(14.821354, 4)).to.be.equal(14.8214);
         expect(round(14.821354, 3)).to.be.equal(14.821);
@@ -36,6 +36,24 @@ describe('Utilities', () => {
         expect(round(Number.NaN, 2)).to.be.NaN;
         expect(round(Number.NaN, 1)).to.be.NaN;
         expect(round(9.9999, 0.5)).to.NaN;
+    });
+});
+
+describe('Rounding of scores', () => {
+    void it('RoundScore', () => {
+        expect(roundScore(13.821354, { accuracyOfScores: 4 })).to.be.equal(13.8214);
+        expect(roundScore(54.821354, { accuracyOfScores: 3 })).to.be.equal(54.821);
+        expect(roundScore(0.821354, { accuracyOfScores: 2 })).to.be.equal(0.82);
+        expect(roundScore(1000.821354, { accuracyOfScores: 1 })).to.be.equal(1000.8);
+        expect(roundScore(4.821354, { accuracyOfScores: 0 })).to.be.equal(5);
+    });
+
+    void it('RoundScorePercent', () => {
+        expect(roundScorePercent(0, { accuracyOfScores: 4 })).to.be.equal(0);
+        expect(roundScorePercent(0.222222, { accuracyOfScores: 3 })).to.be.equal(22.222);
+        expect(roundScorePercent(0.5, { accuracyOfScores: 2 })).to.be.equal(50);
+        expect(roundScorePercent(0.7999999, { accuracyOfScores: 1 })).to.be.equal(80);
+        expect(roundScorePercent(1, { accuracyOfScores: 0 })).to.be.equal(100);
     });
 });
 

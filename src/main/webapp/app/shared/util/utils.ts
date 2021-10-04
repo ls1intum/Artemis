@@ -86,6 +86,9 @@ export const round = (value: any, exp?: number) => {
  * @returns The rounded percent of the score in the range [0;100]
  */
 export const roundScorePercent = (relativeScore: any, course?: Course) => {
+    if (!course) {
+        captureException(new Error('The course object used for determining the rounding of scores was undefined'));
+    }
     return round(relativeScore * 100, course ? course!.accuracyOfScores : 1);
 };
 
@@ -96,6 +99,9 @@ export const roundScorePercent = (relativeScore: any, course?: Course) => {
  * @returns The rounded points of the student
  */
 export const roundScore = (points: any, course?: Course) => {
+    if (!course) {
+        captureException(new Error('The course object used for determining the rounding of scores was undefined'));
+    }
     return round(points, course ? course!.accuracyOfScores : 1);
 };
 
