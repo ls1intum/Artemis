@@ -35,7 +35,7 @@ describe('Course management', () => {
 
         beforeEach(() => {
             artemisRequests.courseManagement
-                .createCourse(courseName, courseShortName)
+                .createCourse(false, courseName, courseShortName)
                 .its('body')
                 .then((body) => {
                     expect(body).property('id').to.be.a('number');
@@ -46,7 +46,7 @@ describe('Course management', () => {
         it('Adds a student manually to the course', function () {
             const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
-            courseManagementPage.openStudentOverviewOfCourse(courseName, courseShortName);
+            courseManagementPage.openStudentOverviewOfCourse(courseId);
             cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
             cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
             cy.get('#typeahead-basic').type(username);
@@ -96,7 +96,7 @@ describe('Course management', () => {
 
     describe('Course deletion', () => {
         beforeEach(() => {
-            artemisRequests.courseManagement.createCourse(courseName, courseShortName).its('status').should('eq', 201);
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).its('status').should('eq', 201);
         });
 
         it('Deletes an existing course', function () {

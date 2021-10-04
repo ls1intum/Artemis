@@ -1,7 +1,7 @@
-import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
-import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import { artemis } from '../support/ArtemisTesting';
-import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../support/pageobjects/OnlineEditorPage';
+import allSuccessful from '../../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
+import { artemis } from '../../../support/ArtemisTesting';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
@@ -47,7 +47,7 @@ describe('Programming exercise participations', () => {
      */
     function setupCourseAndProgrammingExercise() {
         cy.login(users.getAdmin(), '/');
-        courseManagement.createCourse().then((response) => {
+        courseManagement.createCourse(true).then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
             courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
