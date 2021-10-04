@@ -1,15 +1,21 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ChartsModule } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,6 +53,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
             declarations: [ExamScoresAverageScoresGraphComponent],
             providers: [
+                //MockProvider(CourseManagementService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -69,9 +76,18 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
     });
 
     it('should create tooltip', () => {
+        const courseManagementService = TestBed.inject(CourseManagementService);
+
+        const course = new Course();
+        course.accuracyOfScores = 1;
+        sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ body: course })));
+
         const result = {
             index: 2,
         };
+
+        component.ngOnInit();
+
         // @ts-ignore
         expect(component.barChartOptions.tooltips.callbacks.label(result, {})).to.deep.equal('artemisApp.examScores.averagePointsTooltip: 4 (40%)');
     });
