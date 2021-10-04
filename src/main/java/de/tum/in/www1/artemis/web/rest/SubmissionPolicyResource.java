@@ -85,7 +85,7 @@ public class SubmissionPolicyResource {
     public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
-        HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, submissionPolicy.getId() + "");
+        HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
 
         SubmissionPolicy addedSubmissionPolicy;
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
@@ -105,7 +105,7 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
-        return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", "" + exerciseId))).headers(responseHeaders)
+        return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", Long.toString(exerciseId)))).headers(responseHeaders)
                 .body(addedSubmissionPolicy);
     }
 
@@ -138,7 +138,7 @@ public class SubmissionPolicyResource {
         }
 
         submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
-        responseHeaders = HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, submissionPolicy.getId() + "");
+        responseHeaders = HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
@@ -185,7 +185,7 @@ public class SubmissionPolicyResource {
         else {
             submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
         }
-        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId + "");
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(exerciseId));
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
@@ -232,7 +232,7 @@ public class SubmissionPolicyResource {
 
         submissionPolicy = submissionPolicyService.updateSubmissionPolicy(exercise, updatedSubmissionPolicy);
 
-        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId + "");
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(exerciseId));
         return ResponseEntity.ok().headers(responseHeaders).body(submissionPolicy);
     }
 }
