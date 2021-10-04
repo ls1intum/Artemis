@@ -96,8 +96,8 @@ export class OnlineEditorPage {
      */
     createFileInRootPackage(fileName: string) {
         cy.intercept(POST, BASE_API + 'repository/*/**').as('createFile');
-        cy.get('.file-icons').children('button').first().click();
-        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).type('{enter}');
+        cy.get('.file-icons').children('button').first().click().wait(500);
+        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@createFile');
         this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
     }
