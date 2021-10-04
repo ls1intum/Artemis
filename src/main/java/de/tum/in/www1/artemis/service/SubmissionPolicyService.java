@@ -98,17 +98,11 @@ public class SubmissionPolicyService {
             throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
                     "submissionPolicyIllegalSubmissionLimit");
         }
-        if (submissionPolicy instanceof LockRepositoryPolicy policy) {
-            validateLockRepositoryPolicy(policy);
-        }
-        else if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
+        // Currently, only submission penalty policies must be validated further.
+        // A validateLockRepositoryPolicy method would be empty.
+        if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
             validateSubmissionPenaltyPolicy(policy);
         }
-    }
-
-    private void validateLockRepositoryPolicy(LockRepositoryPolicy lockRepositoryPolicy) {
-        // This method is intentionally blank and might be used for further validation of
-        // Lock Repository Policies
     }
 
     private void validateSubmissionPenaltyPolicy(SubmissionPenaltyPolicy submissionPenaltyPolicy) {
