@@ -1021,10 +1021,14 @@ public abstract class Exercise extends DomainObject {
         if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
             return;
         }
+        if (isExamExercise()) {
+            throw new BadRequestAlertException("An Exam Exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
+        }
         // at least one is set, so we have to check the two possible errors
-        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
-
-        if (!validDates) {
+        if (isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())) {
+            return;
+        }
+        else {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
     }
