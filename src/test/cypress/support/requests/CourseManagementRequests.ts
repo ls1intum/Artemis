@@ -109,14 +109,11 @@ export class CourseManagementRequests {
             programmingTemplate.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
 
-        // Sometimes starting a participation fails if it is started immediately after creating the programming exercise
-        return cy
-            .request({
-                url: PROGRAMMING_EXERCISE_BASE + 'setup',
-                method: POST,
-                body: programmingTemplate,
-            })
-            .wait(20000);
+        return cy.request({
+            url: PROGRAMMING_EXERCISE_BASE + 'setup',
+            method: POST,
+            body: programmingTemplate,
+        });
     }
 
     /**
