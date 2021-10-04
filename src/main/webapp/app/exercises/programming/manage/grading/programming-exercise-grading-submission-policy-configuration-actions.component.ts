@@ -28,7 +28,7 @@ import { ButtonType } from 'app/shared/components/button.component';
                 [tooltip]="'artemisApp.programmingExercise.submissionPolicy.addButton.tooltip'"
                 (onClick)="onAdd.emit()"
                 [icon]="'plus'"
-                [disabled]="isSaving"
+                [disabled]="isSaving || exercise.submissionPolicy == undefined"
             ></jhi-button>
             <jhi-button
                 *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.id != undefined && exercise.submissionPolicy!.active"
