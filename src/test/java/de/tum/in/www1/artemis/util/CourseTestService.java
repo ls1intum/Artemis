@@ -343,7 +343,7 @@ public class CourseTestService {
 
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
-                groupNotificationService.notifyStudentGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
+                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
             }
             request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
