@@ -34,7 +34,7 @@ Cypress.on('uncaught:exception', () => {
 describe('Exam assessment', () => {
     before('Create a course', () => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
             courseManagementRequests.addTutorToCourse(course, artemis.users.getTutor());

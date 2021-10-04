@@ -23,7 +23,7 @@ describe('Programming Exercise Management', () => {
     before(() => {
         cy.login(admin);
         artemisRequests.courseManagement
-            .createCourse()
+            .createCourse(true)
             .its('body')
             .then((body) => {
                 expect(body).property('id').to.be.a('number');

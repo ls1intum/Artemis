@@ -24,16 +24,12 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, users.getStudentOne().username);
             const exam = new CypressExamBuilder(course).title(examTitle).build();
             courseManagementRequests.createExam(exam);
         });
-        const runsOnBamboo: boolean = Cypress.env('isBamboo');
-        if (runsOnBamboo) {
-            cy.waitForGroupSynchronization();
-        }
     });
 
     beforeEach(() => {

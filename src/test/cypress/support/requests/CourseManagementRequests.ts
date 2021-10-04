@@ -37,14 +37,24 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
+     * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
      * @returns <Chainable> request response
      */
-    createCourse(courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
-        const course = courseTemplate;
-        course.title = courseName;
-        course.shortName = courseShortName;
+    createCourse(customizeGroups = false, courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
+        let course = { ...courseTemplate, title: courseName, shortName: courseShortName };
+        const runsOnBamboo: boolean = Cypress.env('isBamboo');
+        if (customizeGroups && runsOnBamboo) {
+            course = {
+                ...course,
+                customizeGroupNames: true,
+                studentGroupName: 'artemis-e2etest-students',
+                teachingAssistantGroupName: 'artemis-e2etest-tutors',
+                editorGroupName: 'artemis-e2etest-editors',
+                instructorGroupName: 'artemis-e2etest-instructors',
+            };
+        }
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,
@@ -97,10 +107,6 @@ export class CourseManagementRequests {
         if (scaMaxPenalty) {
             programmingTemplate.staticCodeAnalysisEnabled = true;
             programmingTemplate.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
-        }
-        const runsOnBamboo: boolean = Cypress.env('isBamboo');
-        if (runsOnBamboo) {
-            cy.waitForGroupSynchronization();
         }
 
         return cy.request({
@@ -296,13 +302,6 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
             method: PUT,
-        });
-    }
-
-    startExerciseParticipation(courseId: number, exerciseId: number) {
-        return cy.request({
-            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
-            method: POST,
         });
     }
 
