@@ -391,9 +391,9 @@ export class GradingSystemComponent implements OnInit {
         gradeSteps.forEach((gradeStep) => {
             if (this.lowerBoundInclusivity) {
                 gradeStep.lowerBoundInclusive = true;
-                gradeStep.upperBoundInclusive = sortedGradeSteps.last()!.upperBoundPercentage === gradeStep.upperBoundPercentage;
+                gradeStep.upperBoundInclusive = sortedGradeSteps.last()!.gradeName === gradeStep.gradeName;
             } else {
-                gradeStep.lowerBoundInclusive = sortedGradeSteps.first()!.lowerBoundPercentage === gradeStep.lowerBoundPercentage;
+                gradeStep.lowerBoundInclusive = sortedGradeSteps.first()!.gradeName === gradeStep.gradeName;
                 gradeStep.upperBoundInclusive = true;
             }
         });
