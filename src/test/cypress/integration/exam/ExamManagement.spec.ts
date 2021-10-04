@@ -13,7 +13,7 @@ const users = artemis.users;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
-const programmingCreation = artemis.pageobjects.programmingExercise.creation;
+const textCreation = artemis.pageobjects.textExercise.creation;
 
 // Common primitives
 const uid = generateUUID();
@@ -24,7 +24,7 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse(true).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, users.getStudentOne().username);
             const exam = new CypressExamBuilder(course).title(examTitle).build();
@@ -36,7 +36,7 @@ describe('Exam management', () => {
         cy.login(users.getAdmin());
     });
 
-    it('Adds an exercise group with a programming exercise', () => {
+    it('Adds an exercise group with a text exercise', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.title, course.shortName);
@@ -51,16 +51,13 @@ describe('Exam management', () => {
         cy.get('[jhitranslate="entity.action.save"]').click();
         cy.wait('@createExerciseGroup');
         cy.contains('Number of exercise groups: 1').should('be.visible');
-        // Add programming exercise
-        cy.contains('Add Programming Exercise').click();
-        const programmingExerciseTitle = 'programming' + uid;
-        programmingCreation.setTitle(programmingExerciseTitle);
-        programmingCreation.setShortName('short' + uid);
-        programmingCreation.setPackageName('de.test');
-        programmingCreation.setPoints(10);
-        programmingCreation.checkAllowOnlineEditor();
-        programmingCreation.generate().its('response.statusCode').should('eq', 201);
-        cy.contains(programmingExerciseTitle).should('be.visible');
+        // Add text exercise
+        cy.contains('Add Text Exercise').click();
+        const textExerciseTitle = 'text' + uid;
+        textCreation.typeTitle(textExerciseTitle);
+        textCreation.typeMaxPoints(10);
+        textCreation.create().its('response.statusCode').should('eq', 201);
+        cy.contains(textExerciseTitle).should('be.visible');
     });
 
     it('Registers the course students for the exam', () => {
