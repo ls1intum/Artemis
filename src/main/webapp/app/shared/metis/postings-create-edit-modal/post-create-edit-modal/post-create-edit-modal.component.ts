@@ -32,7 +32,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     pageType: PageType;
     isAtLeastTutorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
-    similarPosts: Post[];
+    similarPosts: Post[] = [];
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
@@ -44,28 +44,15 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     ngOnInit() {
         this.resetCurrentContextSelectorOption();
         super.ngOnInit();
-        this.similarPosts = [];
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
-        this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
-            this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
-                this.similarPosts = similarPosts;
-            });
-        });
     }
 
     ngOnChanges() {
         this.resetCurrentContextSelectorOption();
         super.ngOnChanges();
-        this.similarPosts = [];
-        this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
-            this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
-                this.similarPosts = similarPosts;
-                console.log(this.similarPosts);
-            });
-        });
     }
 
     /**
@@ -74,12 +61,14 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.tags = this.posting?.tags ?? [];
+        this.similarPosts = [];
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the title and content must include at least one non-whitespace character
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         });
+        this.triggerPostSimilarityCheck();
     }
 
     /**
@@ -100,6 +89,17 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             error: () => {
                 this.isLoading = false;
             },
+        });
+    }
+
+    /**
+     * invokes the metis service to get similar posts on title changes
+     */
+    triggerPostSimilarityCheck(): void {
+        this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
+            this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
+                this.similarPosts = similarPosts;
+            });
         });
     }
 
@@ -170,12 +170,5 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             exercise: this.posting.exercise,
             courseWideContext: this.posting.courseWideContext,
         };
-    }
-
-    routeToPost(post: Post) {
-        this.modalRef?.dismiss();
-        this.router.navigate(this.metisService.getLinkForPost(post), {
-            queryParams: this.metisService.getQueryParamsForPost(post),
-        });
     }
 }

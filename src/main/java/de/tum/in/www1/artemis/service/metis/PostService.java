@@ -413,19 +413,10 @@ public class PostService extends PostingService {
     /**
      * Wraps the resulting similarity score together with the post
      */
-    class SimilarityScore implements Comparable<SimilarityScore> {
-
-        private final Post post;
+    record SimilarityScore(Post post, Double score) implements Comparable<SimilarityScore> {
 
         public Post getPost() {
             return post;
-        }
-
-        private final Double score;
-
-        public SimilarityScore(Post post, Double score) {
-            this.post = post;
-            this.score = score;
         }
 
         @Override
