@@ -2,6 +2,8 @@
     "metrics": {
         "title": "Anwendungs-Metriken",
         "refresh.button": "Aktualisieren",
+        "filter": "Filter",
+        "matches": "Suchergebnis(se)",
         "updating": "Aktualisierung...",
         "jvm": {
             "title": "JVM Metriken",
