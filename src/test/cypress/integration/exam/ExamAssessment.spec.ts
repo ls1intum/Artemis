@@ -1,6 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import { GROUP_SYNCHRONIZATION } from '../../support/constants';
 import dayjs from 'dayjs';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
