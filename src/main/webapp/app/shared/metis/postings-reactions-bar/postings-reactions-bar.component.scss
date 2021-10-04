@@ -1,5 +1,6 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 $reaction-button-default-color: rgba(242, 242, 242);
-$reaction-button-accent-color: rgba(108, 115, 124);
 $reaction-button-hover-color: rgba(255, 255, 255);
 $reaction-button-reacted-color: rgba(237, 245, 250);
 $reaction-button-reacted-accent-color: #0f6ab4;
@@ -25,7 +26,7 @@ $reaction-button-reacted-accent-color: #0f6ab4;
     margin-bottom: 5px;
 
     &.open-selector {
-        box-shadow: inset 0 0 0 1px $reaction-button-accent-color;
+        box-shadow: inset 0 0 0 1px $metis-gray;
         background: $reaction-button-hover-color;
     }
 
@@ -39,7 +40,7 @@ $reaction-button-reacted-accent-color: #0f6ab4;
     }
 
     &:not(.reaction-button--not-hoverable):hover {
-        box-shadow: inset 0 0 0 1px $reaction-button-accent-color;
+        box-shadow: inset 0 0 0 1px $metis-gray;
         background: $reaction-button-hover-color;
     }
 
