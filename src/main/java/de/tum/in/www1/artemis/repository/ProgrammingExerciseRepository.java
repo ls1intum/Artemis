@@ -429,21 +429,23 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
+    // Note: we have to use left join here to avoid issues in the where clause
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
+            SELECT pe FROM ProgrammingExercise pe LEFT JOIN pe.exerciseGroup eg LEFT JOIN eg.exam ex
             WHERE pe.course.instructorGroupName IN :#{#groupNames}
                 OR pe.course.editorGroupName IN :#{#groupNames}
                 OR pe.course.teachingAssistantGroupName IN :#{#groupNames}
-                OR pe.exerciseGroup.exam.course.instructorGroupName IN :#{#groupNames}
-                OR pe.exerciseGroup.exam.course.editorGroupName IN :#{#groupNames}
-                OR pe.exerciseGroup.exam.course.teachingAssistantGroupName IN :#{#groupNames}
-                    """)
+                OR ex.course.instructorGroupName IN :#{#groupNames}
+                OR ex.course.editorGroupName IN :#{#groupNames}
+                OR ex.course.teachingAssistantGroupName IN :#{#groupNames}
+            """)
     List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
+    // Note: we have to use left join here to avoid issues in the where clause
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
+            SELECT pe FROM ProgrammingExercise pe LEFT JOIN pe.exerciseGroup eg LEFT JOIN eg.exam ex
             WHERE pe.course = :#{#course}
-                OR pe.exerciseGroup.exam.course = :#{#course}
+                OR ex.course = :#{#course}
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
