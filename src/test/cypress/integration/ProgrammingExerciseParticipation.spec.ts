@@ -57,7 +57,7 @@ describe('Programming exercise participations', () => {
             });
         });
         // Sometimes starting a participation fails if it is started immediately after creating the programming exercise
-        cy.wait(5000);
+        cy.wait(10000);
     }
 
     /**
