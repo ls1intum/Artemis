@@ -3428,6 +3428,11 @@ public class DatabaseUtilService {
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
 
+        Course course = new Course();
+        course.setAccuracyOfScores(1);
+        storedFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+        sentFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+
         double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
         double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
         storedFeedbackResult.setScore(totalPoints, 20.0);

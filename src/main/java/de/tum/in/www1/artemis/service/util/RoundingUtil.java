@@ -18,7 +18,6 @@ public class RoundingUtil {
      * @return number rounded to one decimal place
      */
     public static double round(double number) {
-        roundScore(1, null);
         return roundToNDecimalPlaces(number, 1);
     }
 

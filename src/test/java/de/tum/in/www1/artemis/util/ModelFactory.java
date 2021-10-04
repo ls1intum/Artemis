@@ -498,6 +498,7 @@ public class ModelFactory {
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
+        course.setAccuracyOfScores(1);
         return course;
     }
 
