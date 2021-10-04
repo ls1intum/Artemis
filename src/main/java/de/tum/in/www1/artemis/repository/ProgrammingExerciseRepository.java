@@ -434,6 +434,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE pe.course.instructorGroupName IN :#{#groupNames}
                 OR pe.course.editorGroupName IN :#{#groupNames}
                 OR pe.course.teachingAssistantGroupName IN :#{#groupNames}
+                OR pe.exerciseGroup.exam.course.instructorGroupName IN :#{#groupNames}
+                OR pe.exerciseGroup.exam.course.editorGroupName IN :#{#groupNames}
+                OR pe.exerciseGroup.exam.course.teachingAssistantGroupName IN :#{#groupNames}
                     """)
     List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
