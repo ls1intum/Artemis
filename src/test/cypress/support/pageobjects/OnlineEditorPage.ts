@@ -153,7 +153,7 @@ export function startParticipationInProgrammingExercise(courseName: string, prog
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
-    cy.contains(courseName).parents('.card-header').click();
+    cy.contains(courseName).parents('.card-header').click().wait(1000);
     cy.url().should('include', '/exercises');
     cy.intercept(POST, COURSE_BASE + '*/exercises/*/participations').as('participateInExerciseQuery');
     cy.get(exerciseRow).contains(programmingExerciseName).should('be.visible');
