@@ -187,13 +187,11 @@ export class StudentsImportDialogComponent implements OnDestroy {
     importStudents() {
         this.isImporting = true;
         if (this.courseGroup && !this.exam) {
-            console.log('studentsImport');
             this.courseManagementService.addStudentsToGroupInCourse(this.courseId, this.studentsToImport, this.courseGroup).subscribe(
                 (res) => this.onSaveSuccess(res),
                 () => this.onSaveError(),
             );
         } else if (!this.courseGroup && this.exam) {
-            console.log('examImport');
             this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.studentsToImport).subscribe(
                 (res) => this.onSaveSuccess(res),
                 () => this.onSaveError(),
