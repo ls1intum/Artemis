@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -51,7 +51,9 @@ import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.web.util.ResponseUtil;
@@ -257,7 +259,7 @@ public class CourseResource {
                 return createCourse(updatedCourse);
             }
             else {
-                return forbidden();
+                throw new AccessForbiddenException(NOT_ALLOWED);
             }
         }
 
@@ -1003,10 +1005,10 @@ public class CourseResource {
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (course == null) {
-            return notFound();
+            throw new EntityNotFoundException("Course", courseId);
         }
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
@@ -1059,7 +1061,7 @@ public class CourseResource {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (!course.hasCourseArchive()) {
-            return notFound();
+            throw new EntityNotFoundException("Archived course", courseId);
         }
 
         // The path is stored in the course table
@@ -1299,13 +1301,13 @@ public class CourseResource {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
-                return notFound();
+                throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
     }
 
@@ -1384,13 +1386,13 @@ public class CourseResource {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToRemoveFromGroup.isEmpty()) {
-                return notFound();
+                throw new EntityNotFoundException("User", userLogin);
             }
             courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
     }
 
