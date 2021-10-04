@@ -126,7 +126,7 @@ describe('Exam assessment', () => {
     });
 
     describe('Exam programming exercise assessment', () => {
-        const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0) + 115000;
+        const examEnd = 115000;
 
         before('Prepare exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));

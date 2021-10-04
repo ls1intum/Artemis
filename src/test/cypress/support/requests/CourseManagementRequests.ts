@@ -44,15 +44,15 @@ export class CourseManagementRequests {
      */
     createCourse(customizeGroups = false, courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
         let course = { ...courseTemplate, title: courseName, shortName: courseShortName };
-        const runsOnBamboo: boolean = Cypress.env('isBamboo');
-        if (customizeGroups && runsOnBamboo) {
+        const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
+        if (customizeGroups && allowGroupCustomization) {
             course = {
                 ...course,
                 customizeGroupNames: true,
-                studentGroupName: 'artemis-e2etest-students',
-                teachingAssistantGroupName: 'artemis-e2etest-tutors',
-                editorGroupName: 'artemis-e2etest-editors',
-                instructorGroupName: 'artemis-e2etest-instructors',
+                studentGroupName: Cypress.env('studentGroupName'),
+                teachingAssistantGroupName: Cypress.env('tutorGroupName'),
+                editorGroupName: Cypress.env('editorGroupName'),
+                instructorGroupName: Cypress.env('instructorGroupName'),
             };
         }
         return cy.request({
