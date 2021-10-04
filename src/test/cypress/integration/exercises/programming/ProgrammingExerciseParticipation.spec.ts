@@ -1,7 +1,7 @@
-import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
-import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import { artemis } from '../support/ArtemisTesting';
-import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../support/pageobjects/OnlineEditorPage';
+import allSuccessful from '../../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
+import { artemis } from '../../../support/ArtemisTesting';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
@@ -56,8 +56,6 @@ describe('Programming exercise participations', () => {
                 exercise = exerciseResponse.body;
             });
         });
-        // Sometimes starting a participation fails if it is started immediately after creating the programming exercise
-        cy.wait(10000);
     }
 
     /**

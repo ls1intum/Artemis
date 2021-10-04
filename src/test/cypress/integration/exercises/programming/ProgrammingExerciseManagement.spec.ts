@@ -1,7 +1,7 @@
-import { DELETE } from '../support/constants';
-import { artemis } from '../support/ArtemisTesting';
-import { generateUUID } from '../support/utils';
-import { PROGRAMMING_EXERCISE_BASE } from '../support/requests/CourseManagementRequests';
+import { DELETE } from '../../../support/constants';
+import { artemis } from '../../../support/ArtemisTesting';
+import { generateUUID } from '../../../support/utils';
+import { PROGRAMMING_EXERCISE_BASE } from '../../../support/requests/CourseManagementRequests';
 
 //  Admin account
 const admin = artemis.users.getAdmin();

@@ -1,6 +1,6 @@
-import scaSubmission from '../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
-import { artemis } from '../support/ArtemisTesting';
-import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../support/pageobjects/OnlineEditorPage';
+import scaSubmission from '../../../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
+import { artemis } from '../../../support/ArtemisTesting';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
