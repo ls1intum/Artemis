@@ -28,7 +28,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { PostingContentComponent } from './posting-content/posting-content.components';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { PostPreviewComponent } from 'app/shared/metis/post-preview/post-preview.compontent';
 
 @NgModule({
     imports: [
@@ -64,7 +63,6 @@ import { PostPreviewComponent } from 'app/shared/metis/post-preview/post-preview
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        PostPreviewComponent,
     ],
     exports: [
         PostingsThreadComponent,

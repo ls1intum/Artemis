@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postings-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -10,6 +10,7 @@ import { ContextInformation, PageType } from 'app/shared/metis/metis.util';
     styleUrls: ['./post-footer.component.scss'],
 })
 export class PostFooterComponent extends PostingsFooterDirective<Post> implements OnInit, OnChanges {
+    @Input() previewMode: boolean;
     tags: string[];
     pageType: PageType;
     contextInformation: ContextInformation;

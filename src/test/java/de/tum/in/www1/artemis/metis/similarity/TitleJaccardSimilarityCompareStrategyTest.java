@@ -18,19 +18,52 @@ public class TitleJaccardSimilarityCompareStrategyTest {
     }
 
     @Test
-    public void testSimilarTitle() {
-        // given
+    public void testSimilarTitle_equal() {
         Post post1 = new Post();
         post1.setTitle("Some title");
         Post post2 = new Post();
         post2.setTitle("Title some");
         Double expectedResult = 1.0;
 
-        // when
         Double actualResult = compareStrategy.performSimilarityCheck(post1, post2);
 
-        // then
         assertThat(actualResult).isEqualTo(expectedResult);
     }
 
+    @Test
+    public void testSimilarTitle_different() {
+        Post post1 = new Post();
+        post1.setTitle("Totally different");
+        Post post2 = new Post();
+        post2.setTitle("Something else");
+
+        Double actualResult = compareStrategy.performSimilarityCheck(post1, post2);
+
+        assertThat(actualResult).isLessThan(0.5);
+    }
+
+    @Test
+    public void testSimilarTitle_similar() {
+        Post post1 = new Post();
+        post1.setTitle("Totally different");
+        Post post2 = new Post();
+        post2.setTitle("Somewhat different");
+        Double expectedResult = 0.5;
+
+        Double actualResult = compareStrategy.performSimilarityCheck(post1, post2);
+
+        assertThat(actualResult).isGreaterThan(0.5);
+        assertThat(actualResult).isLessThan(1);
+    }
+
+    @Test
+    public void testSimilarTitle_missing() {
+        Post post1 = new Post();
+        Post post2 = new Post();
+        Double expectedResult = 0.0;
+
+        Double actualResult = compareStrategy.performSimilarityCheck(post1, post2);
+
+        assertThat(actualResult).isEqualTo(expectedResult);
+    }
 }

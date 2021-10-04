@@ -19,10 +19,13 @@ public class TitleJaccardSimilarityCompareStrategy implements PostContentCompare
     @Override
     public Double performSimilarityCheck(Post post1, Post post2) {
         JaccardSimilarity jaccardSimilarity = new JaccardSimilarity();
+        Double similarityScore = 0.0;
 
-        if (post1.getTitle() == null && post2.getTitle() == null) {
-            return 0.0;
+        // we only compute a similarity score if the title of both posts are defined
+        if (post1.getTitle() != null && post2.getTitle() != null) {
+
+            similarityScore = jaccardSimilarity.apply(post1.getTitle().toLowerCase(), post2.getTitle().toLowerCase());
         }
-        return jaccardSimilarity.apply(post1.getTitle().toLowerCase(), post2.getTitle().toLowerCase());
+        return similarityScore;
     }
 }

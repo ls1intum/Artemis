@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -10,6 +10,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 })
 export class PostComponent extends PostingDirective<Post> {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
+    @Input() previewMode: boolean;
 
     constructor(public metisService: MetisService) {
         super();

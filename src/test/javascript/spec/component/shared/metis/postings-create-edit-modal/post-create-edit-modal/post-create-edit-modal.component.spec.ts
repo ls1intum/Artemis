@@ -12,7 +12,6 @@ import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-
 import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
 import { metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
-import { PostPreviewComponent } from 'app/shared/metis/post-preview/post-preview.compontent';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 
@@ -31,7 +30,6 @@ describe('PostCreateEditModalComponent', () => {
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(PostPreviewComponent),
                 MockComponent(PostingsMarkdownEditorComponent),
                 MockComponent(PostingsButtonComponent),
                 MockComponent(HelpIconComponent),

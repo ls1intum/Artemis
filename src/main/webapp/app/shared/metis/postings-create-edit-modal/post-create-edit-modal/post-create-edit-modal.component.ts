@@ -23,6 +23,7 @@ export interface ContextSelectorOption {
 @Component({
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
+    styleUrls: ['../../metis.component.scss'],
 })
 export class PostCreateEditModalComponent extends PostingsCreateEditModalDirective<Post> implements OnInit, OnChanges {
     exercises?: Exercise[];
