@@ -388,7 +388,7 @@ public class ProgrammingExerciseService {
 
         // Only send notification for course exercises
         if (notificationText != null && programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
 
         return savedProgrammingExercise;
@@ -660,7 +660,7 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
         return savedProgrammingExercise;
     }
@@ -680,7 +680,7 @@ public class ProgrammingExerciseService {
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
         return updatedProgrammingExercise;
     }
