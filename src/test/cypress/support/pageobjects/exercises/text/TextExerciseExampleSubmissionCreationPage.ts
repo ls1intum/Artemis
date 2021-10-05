@@ -10,7 +10,7 @@ export class TextExerciseExampleSubmissionCreationPage {
     }
 
     clickCreateNewExampleSubmission() {
-        cy.intercept(POST, BASE_API + 'exercises/*/example-submissions/*/example-results').as('createExampleSubmission');
+        cy.intercept(POST, BASE_API + 'exercises/*/example-submissions').as('createExampleSubmission');
         cy.get('[data-icon="save"]').click();
         return cy.wait('@createExampleSubmission');
     }
