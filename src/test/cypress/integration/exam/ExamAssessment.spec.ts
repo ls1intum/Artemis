@@ -1,6 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import { GROUP_SYNCHRONIZATION } from '../../support/constants';
 import dayjs from 'dayjs';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
@@ -34,15 +33,11 @@ Cypress.on('uncaught:exception', () => {
 describe('Exam assessment', () => {
     before('Create a course', () => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
             courseManagementRequests.addTutorToCourse(course, artemis.users.getTutor());
         });
-    });
-
-    beforeEach('Generate new exam name', () => {
-        cy.login(admin);
     });
 
     afterEach('Delete exam', () => {
@@ -130,7 +125,7 @@ describe('Exam assessment', () => {
     });
 
     describe('Exam programming exercise assessment', () => {
-        const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0) + 115000;
+        const examEnd = 115000;
 
         before('Prepare exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));
