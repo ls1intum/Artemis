@@ -464,12 +464,11 @@ public class ExerciseService {
             Double lastPoints = null;
             Double lastRatedPoints = null;
             if (participantScore.getLastScore() != null) {
-                lastPoints = roundScore(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(),
-                        participantScore.getExercise().getCourseViaExerciseGroupOrCourseMember());
+                lastPoints = roundScore(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(), updatedExercise.getCourseViaExerciseGroupOrCourseMember());
             }
             if (participantScore.getLastRatedScore() != null) {
                 lastRatedPoints = roundScore(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(),
-                        participantScore.getExercise().getCourseViaExerciseGroupOrCourseMember());
+                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
             }
             participantScore.setLastPoints(lastPoints);
             participantScore.setLastRatedPoints(lastRatedPoints);
