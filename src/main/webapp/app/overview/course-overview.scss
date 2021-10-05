@@ -197,7 +197,7 @@ Course Info Bar
 .color-indicator {
     height: 25px;
     width: 25px;
-    background-color: $metis-blue;
+    background-color: #0f6ab4;
     position: relative;
     top: -3px;
     margin-right: 15px;
@@ -210,9 +210,9 @@ canvas#complete-chart {
 .dev-button {
     text-align: left;
     color: white;
-    background-color: $metis-blue;
+    background-color: #3e8acc;
     &:hover {
-        background-color: $metis-blue;
+        background-color: #0f6ab4;
     }
     &:active {
         box-shadow: 0 2px 0 $artemis-dark;
