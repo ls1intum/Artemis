@@ -12,7 +12,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 // PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
-const quizCreation = artemis.pageobjects.quizExerciseCreation;
+const quizCreation = artemis.pageobjects.quizExercise.creation;
 
 // Common primitives
 let uid: string;
@@ -28,7 +28,7 @@ describe('Quiz Exercise Management', () => {
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
             course = response.body;
         });
     });
@@ -74,8 +74,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            const mcQuestion: any = { ...multipleChoiceTemplate, title: 'Cypress MC' + uid };
-            courseManagementRequest.createQuizExercise({ course }, quizExerciseName, undefined, [mcQuestion]).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
@@ -88,7 +87,9 @@ describe('Quiz Exercise Management', () => {
             cy.get('.form-control').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
             cy.get('.modal-footer').find('.btn-danger').click();
-            cy.wait('@deleteQuizQuery');
+            cy.wait('@deleteQuizQuery').then((deleteResponse) => {
+                expect(deleteResponse?.response?.statusCode).to.eq(200);
+            });
         });
     });
 });

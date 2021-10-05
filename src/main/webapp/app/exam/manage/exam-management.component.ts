@@ -1,19 +1,19 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { Subject } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -32,9 +32,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
         private examManagementService: ExamManagementService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private sortService: SortService,
     ) {
         this.predicate = 'id';
@@ -53,7 +53,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
 
@@ -82,7 +82,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                         );
                 });
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
 
@@ -124,7 +124,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     examHasFinished(exam: Exam): boolean {
         if (exam.latestIndividualEndDate) {
-            return exam.latestIndividualEndDate.isBefore(moment());
+            return exam.latestIndividualEndDate.isBefore(dayjs());
         }
         return false;
     }

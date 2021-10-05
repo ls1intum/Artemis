@@ -25,9 +25,9 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { omit } from 'lodash';
-import * as moment from 'moment';
-import { JhiAlertService } from 'ng-jhipster';
+import { omit } from 'lodash-es';
+import dayjs from 'dayjs';
+import { AlertService } from 'app/core/util/alert.service';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
@@ -90,7 +90,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
         private translateService: TranslateService,
@@ -130,7 +130,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // Updates component with the given modeling submission
     private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
         if (!modelingSubmission) {
-            this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
+            this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
         }
 
         this.submission = modelingSubmission;
@@ -156,8 +156,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingExercise &&
             !!this.modelingExercise.dueDate &&
             !!this.participation.initializationDate &&
-            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
-        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
+            dayjs(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
+        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
@@ -216,7 +216,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.prepareAssessmentData();
                     });
                 }
-                this.jhiAlertService.info('artemisApp.modelingEditor.autoSubmit');
+                this.alertService.info('artemisApp.modelingEditor.autoSubmit');
             }
         });
     }
@@ -234,7 +234,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult = newResult;
                 this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
                 this.prepareAssessmentData();
-                this.jhiAlertService.info('artemisApp.modelingEditor.newAssessment');
+                this.alertService.info('artemisApp.modelingEditor.newAssessment');
             }
         });
     }
@@ -285,7 +285,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                     this.result = getLatestSubmissionResult(this.submission);
-                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                    this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.onSaveSuccess();
                 },
                 (error: HttpErrorResponse) => this.onSaveError(error),
@@ -295,7 +295,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 (submission) => {
                     this.submission = submission.body!;
                     this.result = getLatestSubmissionResult(this.submission);
-                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                    this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
@@ -311,7 +311,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         this.updateSubmissionWithCurrentValues();
         if (this.isModelEmpty(this.submission.model)) {
-            this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
+            this.alertService.warning('artemisApp.modelingEditor.empty');
             return;
         }
         this.isSaving = true;
@@ -336,9 +336,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.retryStarted = false;
 
                     if (this.isLate) {
-                        this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
+                        this.alertService.warning('entity.action.submitDeadlineMissedAlert');
                     } else {
-                        this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
+                        this.alertService.success('entity.action.submitSuccessfulAlert');
                     }
 
                     this.subscribeToWebsockets();
@@ -360,9 +360,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                     this.result = getLatestSubmissionResult(this.submission);
                     if (this.isLate) {
-                        this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                        this.alertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
                     } else {
-                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                        this.alertService.success('artemisApp.modelingEditor.submitSuccessful');
                     }
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
@@ -380,7 +380,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (error) {
             console.error(error.message);
         }
-        this.jhiAlertService.error('artemisApp.modelingEditor.error');
+        this.alertService.error('artemisApp.modelingEditor.error');
         this.isSaving = false;
     }
 
@@ -549,7 +549,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && !this.examMode && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+        return this.modelingExercise && !this.examMode && (!this.modelingExercise.dueDate || dayjs(this.modelingExercise.dueDate).isSameOrAfter(dayjs()));
     }
 
     get submitButtonTooltip(): string {

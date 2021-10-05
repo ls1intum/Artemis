@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
@@ -32,7 +32,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected constructor(
-        protected jhiAlertService: JhiAlertService,
+        protected alertService: AlertService,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -54,12 +54,12 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.jhiAlertService.success(translationKey);
+        this.alertService.success(translationKey);
     }
 
     protected handleError(error: HttpErrorResponse): void {
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
-        this.jhiAlertService.error(errorMessage, undefined, undefined);
+        this.alertService.error(errorMessage, undefined, undefined);
     }
 
     /**

@@ -19,10 +19,10 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import io.github.jhipster.config.JHipsterProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import tech.jhipster.config.JHipsterProperties;
 
 @Component
 public class TokenProvider {

@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 @Component({ selector: 'jhi-circular-progress-bar', template: '' })
 class CircularProgressBarStubComponent {

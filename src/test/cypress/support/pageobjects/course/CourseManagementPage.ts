@@ -1,4 +1,4 @@
-import { CypressCredentials } from 'src/test/cypress/support/users';
+import { CypressCredentials } from '../../users';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management page.
@@ -26,12 +26,10 @@ export class CourseManagementPage {
 
     /**
      * Opens the students overview page of a course.
-     * @param courseName
-     * @param courseShortName
+     * @param courseId the id of the course
      */
-    openStudentOverviewOfCourse(courseName: string, courseShortName: string) {
-        // TODO: Generify the selector
-        this.getCourseCard(courseName, courseShortName).contains('0 Students').click();
+    openStudentOverviewOfCourse(courseId: number) {
+        cy.get(`[href="/course-management/${courseId}/groups/students"]`).click();
     }
 
     /**
@@ -104,5 +102,10 @@ export class CourseManagementPage {
     openExamsOfCourse(courseName: string, courseShortName: string) {
         this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(1).click();
         cy.url().should('include', '/exams');
+    }
+
+    openAssessmentDashboardOfCourseWithId(courseId: number) {
+        cy.get(`[href="/course-management/${courseId}/assessment-dashboard"]`).click();
+        cy.url().should('contain', `/course-management/${courseId}/assessment-dashboard`);
     }
 }

@@ -3,6 +3,7 @@ import { CypressExamBuilder } from '../../support/requests/CourseManagementReque
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
 // Requests
 const courseRequests = artemis.requests.courseManagement;
@@ -16,7 +17,9 @@ const courses = artemis.pageobjects.courses;
 const courseOverview = artemis.pageobjects.courseOverview;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const examNavigation = artemis.pageobjects.examNavigationBar;
-const onlineEditor = artemis.pageobjects.onlineEditor;
+const onlineEditor = artemis.pageobjects.programmingExercise.editor;
+const modelingEditor = artemis.pageobjects.modelingExercise.editor;
+const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
 
 // Common primitives
 const textExerciseTitle = 'Cypress text exercise';
@@ -27,14 +30,14 @@ describe('Exam participation', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseRequests.createCourse().then((response) => {
+        courseRequests.createCourse(true).then((response) => {
             course = response.body;
             const examContent = new CypressExamBuilder(course)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
-                .maxPoints(20)
-                .numberOfExercises(2)
+                .maxPoints(40)
+                .numberOfExercises(4)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -44,6 +47,12 @@ describe('Exam participation', () => {
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body });
+                });
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body });
+                });
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]);
                 });
                 courseRequests.generateMissingIndividualExams(exam);
                 courseRequests.prepareExerciseStartForExam(exam);
@@ -56,6 +65,11 @@ describe('Exam participation', () => {
         openTextExercise();
         makeTextExerciseSubmission();
         makeProgrammingExerciseSubmission();
+        openModelingExercise();
+        makeModelingExerciseSubmission();
+        openQuizExercise();
+        makeQuizExerciseSubmission();
+
         handInEarly();
         verifyFinalPage();
     });
@@ -71,6 +85,14 @@ describe('Exam participation', () => {
 
     function openTextExercise() {
         examNavigation.openExerciseAtIndex(0);
+    }
+
+    function openModelingExercise() {
+        examNavigation.openExerciseAtIndex(2);
+    }
+
+    function openQuizExercise() {
+        examNavigation.openExerciseAtIndex(3);
     }
 
     function makeTextExerciseSubmission() {
@@ -97,6 +119,18 @@ describe('Exam participation', () => {
         onlineEditor.getInstructionSymbols().each(($el) => {
             cy.wrap($el).find('[data-icon="check"]').should('be.visible');
         });
+    }
+
+    function makeModelingExerciseSubmission() {
+        modelingEditor.addComponentToModel(1);
+        modelingEditor.addComponentToModel(2);
+        modelingEditor.addComponentToModel(3);
+        modelingEditor.submit();
+    }
+
+    function makeQuizExerciseSubmission() {
+        multipleChoiceQuiz.tickAnswerOption(0);
+        multipleChoiceQuiz.tickAnswerOption(2);
     }
 
     function handInEarly() {

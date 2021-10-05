@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Subscription } from 'rxjs';
@@ -20,6 +19,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -56,7 +57,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private router: Router,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
@@ -64,7 +65,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private modalService: NgbModal,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private accountService: AccountService,
         private translateService: TranslateService,
         private sortService: SortService,

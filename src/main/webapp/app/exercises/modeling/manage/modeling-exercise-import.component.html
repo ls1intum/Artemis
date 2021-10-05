@@ -10,7 +10,7 @@
         </div>
         <table class="table table-striped">
             <thead class="thead-dark">
-                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
                     <th jhiSortBy="{{ column.ID }}">
                         <span>#</span>
                         <fa-icon [icon]="'sort'"></fa-icon>

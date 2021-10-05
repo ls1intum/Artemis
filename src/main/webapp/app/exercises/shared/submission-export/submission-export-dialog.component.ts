@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -27,7 +27,7 @@ export class SubmissionExportDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private submissionExportService: SubmissionExportService,
         public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -46,7 +46,7 @@ export class SubmissionExportDialogComponent implements OnInit {
                     this.exercise = exercise!;
                 }),
                 catchError((err) => {
-                    this.jhiAlertService.error(err);
+                    this.alertService.error(err);
                     this.clear();
                     return of(null);
                 }),
@@ -68,7 +68,7 @@ export class SubmissionExportDialogComponent implements OnInit {
     }
 
     handleExportResponse = (response: HttpResponse<Blob>) => {
-        this.jhiAlertService.success('instructorDashboard.exportSubmissions.successMessage');
+        this.alertService.success('instructorDashboard.exportSubmissions.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
         downloadZipFileFromResponse(response);

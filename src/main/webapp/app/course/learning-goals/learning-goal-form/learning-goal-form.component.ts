@@ -6,8 +6,8 @@ import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
-import * as _ from 'lodash';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { intersection } from 'lodash-es';
 
 /**
  * Async Validator to make sure that a learning goal title is unique within a course
@@ -155,9 +155,9 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     getLectureTitleForDropdown(lecture: Lecture) {
-        const noOfSelectedUnitsInLecture = _.intersection(
-            this.selectedLectureUnitsInTable.map((u) => u.id),
-            lecture.lectureUnits?.map((u) => u.id),
+        const noOfSelectedUnitsInLecture = intersection(
+            this.selectedLectureUnitsInTable.map((unit) => unit.id),
+            lecture.lectureUnits?.map((unit) => unit.id),
         ).length;
         return this.translateService.instant('artemisApp.learningGoal.createLearningGoal.dropdown', {
             lectureTitle: lecture.title,

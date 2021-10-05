@@ -11,11 +11,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-public final class ResponseUtil implements io.github.jhipster.web.util.ResponseUtil {
+/**
+ * Deprecation: please throw exceptions instead of using the below methods,
+ * use e.g. AccessForbiddenException, EntityNotFoundException, BadRequestAlertException
+ */
+@Deprecated(forRemoval = true, since = "5.2.0")
+public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
 
-    // TODO: This is always null because spring does not allow static field injection
+    // NOTE: This would be null because spring does not allow static field injection
     @Value("${jhipster.clientApp.name}")
-    private static String applicationName;
+    private static String applicationName = "artemisApp";
 
     public static <X> ResponseEntity<X> ok() {
         return ResponseEntity.ok().build();

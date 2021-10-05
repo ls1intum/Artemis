@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { Exam } from 'app/entities/exam.model';
@@ -20,18 +20,19 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as moment from 'moment';
-import { JhiEventManager } from 'ng-jhipster';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -48,7 +49,7 @@ describe('Exercise Groups Component', () => {
 
     let exerciseGroupService: ExerciseGroupService;
     let examManagementService: ExamManagementService;
-    let jhiEventManager: JhiEventManager;
+    let eventManager: EventManager;
     let modalService: NgbModal;
     let router: Router;
 
@@ -57,7 +58,7 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, RouterModule],
+            imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
                 ExerciseGroupsComponent,
                 ExamExerciseRowButtonsComponent,
@@ -72,6 +73,7 @@ describe('Exercise Groups Component', () => {
                 MockComponent(ModelingExerciseGroupCellComponent),
                 MockComponent(ProgrammingExerciseGroupCellComponent),
                 MockComponent(QuizExerciseGroupCellComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -85,7 +87,7 @@ describe('Exercise Groups Component', () => {
 
         exerciseGroupService = TestBed.inject(ExerciseGroupService);
         examManagementService = TestBed.inject(ExamManagementService);
-        jhiEventManager = TestBed.inject(JhiEventManager);
+        eventManager = TestBed.inject(EventManager);
         modalService = TestBed.inject(NgbModal);
         router = TestBed.inject(Router);
 
@@ -111,7 +113,7 @@ describe('Exercise Groups Component', () => {
     it('loads the exercise groups', fakeAsync(() => {
         const mockResponse = new HttpResponse<Exam>({ body: exam });
 
-        spyOn(examManagementService, 'find').and.returnValue(of(mockResponse));
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
 
         comp.loadExerciseGroups().subscribe((response) => {
             expect(response.body).not.toBeNull();
@@ -122,10 +124,10 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('loads exam information', fakeAsync(() => {
-        const latestIndividualEndDate = moment();
+        const latestIndividualEndDate = dayjs();
         const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
 
-        spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').and.returnValue(of(mockResponse));
+        jest.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
 
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
@@ -147,8 +149,8 @@ describe('Exercise Groups Component', () => {
     it('deletes an exercise group', fakeAsync(() => {
         comp.exerciseGroups = groups;
 
-        spyOn(exerciseGroupService, 'delete').and.returnValue(of({}));
-        spyOn(jhiEventManager, 'broadcast');
+        jest.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        jest.spyOn(eventManager, 'broadcast');
 
         comp.deleteExerciseGroup(0, {});
         tick();
@@ -193,8 +195,9 @@ describe('Exercise Groups Component', () => {
     });
 
     it('opens the import modal for programming exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) };
-        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
         tick();
@@ -204,19 +207,21 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('opens the import modal for text exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) };
-        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const routerNavigateStub = jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.TEXT);
         tick();
 
         expect(modalService.open).toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(routerNavigateStub).toHaveBeenCalled();
     }));
 
     it('opens the import modal for modeling exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) };
-        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.MODELING);
         tick();

@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -239,7 +239,7 @@ describe('Exam Management Service Tests', () => {
     it('should get latest individual end date of exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockResponse: ExamInformationDTO = { latestIndividualEndDate: moment() };
+        const mockResponse: ExamInformationDTO = { latestIndividualEndDate: dayjs() };
         const expected = { ...mockResponse };
 
         // WHEN

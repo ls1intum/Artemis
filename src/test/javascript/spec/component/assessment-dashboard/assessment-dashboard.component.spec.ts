@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
@@ -34,17 +34,16 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { TimeAgoPipe } from 'ngx-moment';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { JhiSortDirective } from 'ng-jhipster';
 import { NgModel } from '@angular/forms';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -136,12 +135,11 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockComponent(AssessmentDashboardInformationComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockPipe(TimeAgoPipe),
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(FaIconComponent),
                 MockComponent(AlertComponent),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockDirective(NgModel),
                 MockDirective(NgbTooltip),
                 MockComponent(NotReleasedTagComponent),

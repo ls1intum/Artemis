@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,7 +21,7 @@ export class NotificationSidebarComponent implements OnInit {
     sortedNotifications: Notification[] = [];
     recentNotificationCount = 0;
     totalNotifications = 0;
-    lastNotificationRead?: Moment;
+    lastNotificationRead?: dayjs.Dayjs;
     page = 0;
     notificationsPerPage = 25;
     error?: string;
@@ -68,7 +67,7 @@ export class NotificationSidebarComponent implements OnInit {
      */
     updateLastNotificationRead(): void {
         this.userService.updateLastNotificationRead().subscribe(() => {
-            const lastNotificationReadNow = moment();
+            const lastNotificationReadNow = dayjs();
             setTimeout(() => {
                 this.lastNotificationRead = lastNotificationReadNow;
                 this.updateRecentNotificationCount();
@@ -146,7 +145,7 @@ export class NotificationSidebarComponent implements OnInit {
 
     private updateNotifications(): void {
         this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
-            return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
+            return dayjs(b.notificationDate!).valueOf() - dayjs(a.notificationDate!).valueOf();
         });
         this.updateRecentNotificationCount();
     }

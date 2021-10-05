@@ -3,7 +3,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { of } from 'rxjs';
@@ -15,7 +15,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Exercise Scores Component', () => {
+describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;

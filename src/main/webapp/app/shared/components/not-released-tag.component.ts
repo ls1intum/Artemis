@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -7,8 +7,6 @@ import { Exercise } from 'app/entities/exercise.model';
     templateUrl: './not-released-tag.component.html',
 })
 export class NotReleasedTagComponent {
-    readonly moment = moment;
-
     @Input() public exercise: Exercise;
-    public exerciseStatusBadge = 'bg-success';
+    readonly dayjs = dayjs;
 }

@@ -1,10 +1,9 @@
 import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -13,7 +12,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -117,7 +116,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private complaintService: ComplaintService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -218,7 +217,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.participation = submission.participation!;
         addUserIndependentRepositoryUrl(this.participation);
         this.exercise = this.participation.exercise as ProgrammingExercise;
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
 
         this.checkPermissions();
         this.handleFeedback();
@@ -387,14 +386,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe(
             (result: Result) => {
                 this.participation.results![0] = this.manualResult = result;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                this.alertService.clear();
+                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
             (httpErrorResponse: HttpErrorResponse) => {
-                this.jhiAlertService.clear();
+                this.alertService.clear();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.jhiAlertService.error(error.message, error.params);
+                    this.alertService.error(error.message, error.params);
                 } else {
                     this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
                 }
@@ -429,7 +428,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
@@ -453,7 +452,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
     }
 
@@ -480,8 +479,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.participation.results = [];
         }
         this.participation.results![0] = this.manualResult = response.body!;
-        this.jhiAlertService.clear();
-        this.jhiAlertService.success(translationKey);
+        this.alertService.clear();
+        this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
     }
 
