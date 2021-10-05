@@ -28,7 +28,7 @@ describe('Quiz Exercise Management', () => {
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
             course = response.body;
         });
     });

@@ -428,7 +428,7 @@ public class GitlabRequestMockProvider {
             return;
         }
 
-        final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
+        final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
 
         final var allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
