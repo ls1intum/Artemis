@@ -8,7 +8,6 @@ import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answ
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { metisAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
-import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;

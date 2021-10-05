@@ -10,10 +10,11 @@ import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postin
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
-import { metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
@@ -30,6 +31,7 @@ describe('PostCreateEditModalComponent', () => {
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostComponent),
                 MockComponent(PostingsMarkdownEditorComponent),
                 MockComponent(PostingsButtonComponent),
                 MockComponent(HelpIconComponent),

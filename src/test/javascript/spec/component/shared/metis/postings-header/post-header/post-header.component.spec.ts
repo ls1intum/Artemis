@@ -56,9 +56,9 @@ describe('PostHeaderComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should have information on answers after init', () => {
+    it('should have information on answers after init or changes', () => {
+        component.ngOnChanges();
         expect(component.numberOfAnswerPosts).toBeDefined();
-        expect(component.hasApprovedAnswers).toBeDefined();
     });
 
     it('should set date information correctly for post of today', () => {
@@ -82,13 +82,12 @@ describe('PostHeaderComponent', () => {
         expect(metisServiceDeletePostMock).toHaveBeenCalled();
     });
 
-    it('should only display non clickable answer-count icon for post without answers', () => {
+    it('should not show answer-count icon for post without answers', () => {
         component.ngOnChanges();
         fixture.detectChanges();
         expect(component.numberOfAnswerPosts).toEqual(0);
-        expect(getElement(debugElement, '.answer-count').innerHTML).toContain(String(0));
+        expect(getElement(debugElement, '.answer-count')).toBeNull();
         expect(getElement(debugElement, '.answer-count .icon')).toBeDefined();
-        expect(getElement(debugElement, '.toggle-answer-element.clickable')).toBeNull();
     });
 
     it('should only display non clickable icon for post with answers', () => {
