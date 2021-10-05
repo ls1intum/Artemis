@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
     <changeSet author="schlesinger" id="20210930113000">
         <addColumn tableName="answer_post">
-            <column name="resolves_post" type="BIT(1)" defaultValue="0">
+            <column name="resolves_post" type="BIT(1)" valueComputed="tutor_approved" defaultValue="0">
                     <constraints nullable="false"/>
             </column>
         </addColumn>
