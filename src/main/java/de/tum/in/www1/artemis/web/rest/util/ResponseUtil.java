@@ -12,7 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 /**
- * Deprecation: please throw exceptions instead of using the below methods
+ * Deprecation: please throw exceptions instead of using the below methods,
+ * use e.g. AccessForbiddenException, EntityNotFoundException, BadRequestAlertException
  */
 @Deprecated(forRemoval = true, since = "5.2.0")
 public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {

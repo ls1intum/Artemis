@@ -30,7 +30,7 @@ describe('Exam participation', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseRequests.createCourse().then((response) => {
+        courseRequests.createCourse(true).then((response) => {
             course = response.body;
             const examContent = new CypressExamBuilder(course)
                 .visibleDate(dayjs().subtract(3, 'days'))

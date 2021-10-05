@@ -31,6 +31,14 @@
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
+                <th jhiSortBy="averageScore">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.averageScore' | artemisTranslate }}</a>
+                    <fa-icon [icon]="'sort'"></fa-icon>
+                </th>
+                <th jhiSortBy="averageRating">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.averageRating' | artemisTranslate }}</a>
+                    <fa-icon [icon]="'sort'"></fa-icon>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -77,6 +85,8 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
+                <td>{{ averageScorePercentage(tutor.averageScore) }}%</td>
+                <td>{{ tutor.averageRating.toFixed(1) }} ⭐</td>
             </tr>
         </tbody>
     </table>

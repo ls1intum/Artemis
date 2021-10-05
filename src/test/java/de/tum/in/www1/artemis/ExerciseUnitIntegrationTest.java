@@ -66,7 +66,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
         this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
         this.fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
-        this.programmingExercise = programmingExerciseRepository.findAllByCourse(course1).stream().findFirst().get();
+        this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().get();
         this.quizExercise = quizExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
         this.modelingExercise = modelingExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
 
