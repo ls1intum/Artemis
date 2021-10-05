@@ -1,11 +1,11 @@
-import { Component, Input, OnChanges } from '@angular/core';
-import { ChartDataSets, ChartType } from 'chart.js';
-import { Label } from 'ng2-charts';
+import { Component, ContentChild, Input, OnChanges, TemplateRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { round } from 'app/shared/util/utils';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -22,6 +22,9 @@ export class CourseDetailLineChartComponent implements OnChanges {
     initialStatsReceived = false;
     loading = true;
 
+    @ContentChild('tooltipTemplate') tooltipTemplate: TemplateRef<any>;
+    @ContentChild('seriesTooltipTemplate') seriesTooltipTemplate: TemplateRef<any>;
+
     LEFT = false;
     RIGHT = true;
     displayedNumberOfWeeks = 16;
@@ -30,17 +33,51 @@ export class CourseDetailLineChartComponent implements OnChanges {
     chartTime: any;
     // Histogram related properties
     lineChartOptions: any = {};
-    lineChartType: ChartType = 'line';
     amountOfStudents: string;
-    lineChartLegend = false;
     // Data
-    lineChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [{ data: [] }];
     data: number[] = [];
     absoluteData: number[] = [];
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
+
+    // Start new NGX variables
+    view: [number, number] = [880, 450];
+    chartColor: Color = {
+        name: 'vivid',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['rgba(53,61,71,1)'],
+    };
+    legend = false;
+    xAxis = true;
+    yAxis = true;
+    showYAxisLabel = false;
+    showXAxisLabel = false;
+    xAxisLabel = '';
+    yAxisLabel = '';
+    timeline = true;
+    multi: any[];
+    multiCopy = [
+        {
+            name: '',
+            series: [{}],
+        },
+    ];
+
+    onSelect(data: any): void {
+        console.log('Item clicked', JSON.parse(JSON.stringify(data)));
+    }
+
+    onActivate(data: any): void {
+        console.log('Activate', JSON.parse(JSON.stringify(data)));
+    }
+
+    onDeactivate(data: any): void {
+        console.log('Deactivate', JSON.parse(JSON.stringify(data)));
+    }
+
+    // End new NGX variables
 
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
@@ -54,6 +91,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
         this.initialStatsReceived = true;
         this.createLabels();
         this.processDataAndCreateChart(this.initialStats);
+        this.multi = this.multiCopy;
     }
 
     /**
@@ -64,7 +102,16 @@ export class CourseDetailLineChartComponent implements OnChanges {
         this.createLabels();
         this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
+            this.multi = [...this.multiCopy];
         });
+    }
+
+    // Observable for update
+    update$: Subject<any> = new Subject();
+
+    // Update function
+    updateChart() {
+        this.update$.next(true);
     }
 
     /**
@@ -73,15 +120,16 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
             this.absoluteData = array;
-            this.data = [];
-            for (const value of array) {
-                this.data.push(round((value / this.numberOfStudentsInCourse) * 100));
+            for (let i = 0; i < array.length; i++) {
+                this.multiCopy[0].series[i]['value'] = round((array[i] / this.numberOfStudentsInCourse) * 100);
             }
         } else {
             this.absoluteData = array;
-            this.data = new Array(array.length).fill(0);
+            for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
+                this.multiCopy[0].series[i]['value'] = 0;
+            }
         }
-        this.chartData = [
+        /*this.chartData = [
             {
                 label: this.amountOfStudents,
                 data: this.data,
@@ -91,9 +139,9 @@ export class CourseDetailLineChartComponent implements OnChanges {
                 pointBackgroundColor: 'rgba(53,61,71,1)',
                 pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
-        ];
-        this.defineChartOptions();
+        ];*/
         this.loading = false;
+        // this.multi = this.multiCopy;
     }
 
     private createLabels() {
@@ -106,15 +154,21 @@ export class CourseDetailLineChartComponent implements OnChanges {
                 .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
-            this.lineChartLabels[i] = prefix + ' ' + currentWeek;
+            this.multiCopy[0].series[i] = {};
+            this.multiCopy[0].series[i]['name'] = prefix + ' ' + currentWeek;
         }
         this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
+        this.multiCopy[0].name = this.amountOfStudents;
     }
 
     switchTimeSpan(index: boolean): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
         this.reloadChart();
+    }
+
+    formatYAxis(value: any) {
+        return value.toLocaleString() + ' %';
     }
 
     private defineChartOptions() {

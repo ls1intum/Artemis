@@ -29,6 +29,7 @@
         "@ngx-translate/http-loader": "6.0.0",
         "@popperjs/core": "2.10.2",
         "@sentry/browser": "6.13.2",
+        "@swimlane/ngx-charts": "^19.0.1",
         "@swimlane/ngx-datatable": "20.0.0",
         "ace-builds": "1.4.13",
         "angular-fittext": "2.1.1",
