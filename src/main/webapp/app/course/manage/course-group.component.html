@@ -5,7 +5,7 @@
         {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
         <span class="text-muted">({{ courseGroupName }})</span>
         <jhi-students-import-button
-            *ngIf="course.isAtleastInstructor"
+            *ngIf="course?.isAtLeastInstructor"
             class="ms-4"
             [courseId]="course.id!"
             [courseGroup]="courseGroup!"
