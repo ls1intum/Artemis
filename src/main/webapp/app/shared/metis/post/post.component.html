@@ -4,7 +4,9 @@
         <div class="row">
             <p class="mb-2 post-title">
                 {{ posting.title }}
-                <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">#{{ posting.id }}</a>
+                <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)" (click)="closeRef()"
+                    >#{{ posting.id }}</a
+                >
             </p>
         </div>
         <jhi-posting-content *ngIf="!previewMode" [content]="posting.content"> </jhi-posting-content>

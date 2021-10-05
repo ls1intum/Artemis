@@ -78,7 +78,7 @@
                         </ng-template>
                         <ng-template ngbPanelContent class="overflow-auto">
                             <div class="row" *ngFor="let post of similarPosts; let i = index">
-                                <jhi-post [posting]="post" [previewMode]="true"></jhi-post>
+                                <jhi-post [posting]="post" [previewMode]="true" [modalRef]="modalRef"></jhi-post>
                                 <div *ngIf="i < similarPosts.length - 1" class="mb-2 post-separation-line"></div>
                             </div>
                         </ng-template>
