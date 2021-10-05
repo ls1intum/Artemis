@@ -279,7 +279,8 @@ export class MetisService {
             emptyPost.courseWideContext = courseWideContext;
             emptyPost.course = this.course;
         } else if (exercise) {
-            emptyPost.exercise = { ...this.exerciseService.convertExerciseForServer(exercise) };
+            const exercisePost = this.exerciseService.convertExerciseForServer(exercise);
+            emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
         } else if (lectureId) {
             emptyPost.lecture = { id: lectureId } as Lecture;
         } else {

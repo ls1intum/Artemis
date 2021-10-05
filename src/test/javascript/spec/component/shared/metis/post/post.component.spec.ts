@@ -33,6 +33,7 @@ describe('PostComponent', () => {
     let metisService: MetisService;
     let metisServiceGetLinkMock: jest.SpyInstance;
     let metisServiceGetQueryParamsMock: jest.SpyInstance;
+    let metisServiceIsPostResolvedMock: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -56,11 +57,29 @@ describe('PostComponent', () => {
                 metisService = TestBed.inject(MetisService);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                metisServiceIsPostResolvedMock = jest.spyOn(metisService, 'isPostResolved');
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should be initialized correctly', () => {
+        metisServiceIsPostResolvedMock.mockReturnValue(false);
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        expect(component.postIsResolved).toBeFalsy();
+    });
+
+    it('should be re-evaluated on changes', () => {
+        // per default not resolved
+        component.posting = metisPostExerciseUser1;
+        metisServiceIsPostResolvedMock.mockReturnValue(false);
+        component.ngOnInit();
+        metisServiceIsPostResolvedMock.mockReturnValue(true);
+        component.ngOnChanges();
+        expect(component.postIsResolved).toBeTruthy();
     });
 
     it('should contain a post header', () => {

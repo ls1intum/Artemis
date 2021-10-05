@@ -27,6 +27,7 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import dayjs from 'dayjs';
 import {
     metisAnswerPostUser1,
     metisCourse,
@@ -42,7 +43,6 @@ import {
     metisPostLectureUser2,
     metisUpVoteReactionUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import dayjs from 'dayjs';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -177,6 +177,39 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+    }));
+
+    it('should invoke metis service without and update filter setting when checkbox is ticked', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterResolved: true,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterResolved]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterResolved).toBeTruthy();
+        // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
+        expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
+    }));
+
+    it('should invoke metis service without and update filter setting when checkbox is unticked', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterResolved: false,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterResolved]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterResolved).toBeFalsy();
+        expect(component.posts).toHaveLength(metisCoursePosts.length);
     }));
 
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
