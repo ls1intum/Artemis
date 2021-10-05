@@ -48,7 +48,6 @@ public class TitleJaccardSimilarityCompareStrategyTest {
         post1.setTitle("Totally different");
         Post post2 = new Post();
         post2.setTitle("Somewhat different");
-        Double expectedResult = 0.5;
 
         Double actualResult = compareStrategy.performSimilarityCheck(post1, post2);
 
