@@ -448,7 +448,7 @@ public class JenkinsRequestMockProvider {
     }
 
     private void mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
-        var exercises = programmingExerciseRepository.findAllByCourse(course);
+        var exercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course);
         for (var exercise : exercises) {
             if (shouldFailToRemove) {
                 doThrow(IOException.class).when(jenkinsJobPermissionsService).removePermissionsFromUsersForFolder(any(), eq(exercise.getProjectKey()), any());
@@ -460,7 +460,7 @@ public class JenkinsRequestMockProvider {
     }
 
     private void mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
-        var exercises = programmingExerciseRepository.findAllByCourse(course);
+        var exercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course);
         for (var exercise : exercises) {
             var job = exercise.getProjectKey();
             mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
