@@ -97,6 +97,7 @@
                         name="examStudentReviewEnd"
                         id="examStudentReviewEnd"
                     ></jhi-date-time-picker>
+                    <span *ngIf="!isValidExamStudentReviewEnd" class="invalid-feedback"> {{ 'artemisApp.examManagement.reviewDatesInvalidWarning' | artemisTranslate }}</span>
                 </div>
             </div>
 
@@ -167,6 +168,12 @@
                 <button type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
                     <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
+                <ng-template #renderedWarning>
+                    <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>
+                </ng-template>
+                <span *ngIf="!isValidExamStudentReviewEnd" class="badge bg-warning" [ngbTooltip]="renderedWarning" tooltip-placement="right">
+                    <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                </span>
             </div>
         </form>
     </div>
