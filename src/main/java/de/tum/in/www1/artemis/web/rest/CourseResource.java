@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -52,10 +52,12 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.config.JHipsterConstants;
-import io.github.jhipster.web.util.ResponseUtil;
+import tech.jhipster.config.JHipsterConstants;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Course.
@@ -258,7 +260,7 @@ public class CourseResource {
                 return createCourse(updatedCourse);
             }
             else {
-                return forbidden();
+                throw new AccessForbiddenException(NOT_ALLOWED);
             }
         }
 
@@ -1004,10 +1006,10 @@ public class CourseResource {
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (course == null) {
-            return notFound();
+            throw new EntityNotFoundException("Course", courseId);
         }
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
@@ -1060,7 +1062,7 @@ public class CourseResource {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (!course.hasCourseArchive()) {
-            return notFound();
+            throw new EntityNotFoundException("Archived course", courseId);
         }
 
         // The path is stored in the course table
@@ -1213,7 +1215,7 @@ public class CourseResource {
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return addUserToCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName(), Role.STUDENT);
     }
 
     /**
@@ -1228,7 +1230,7 @@ public class CourseResource {
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return addUserToCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName(), Role.TEACHING_ASSISTANT);
     }
 
     /**
@@ -1267,7 +1269,7 @@ public class CourseResource {
             courseRepository.save(course);
         }
 
-        return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+        return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName(), Role.EDITOR);
     }
 
     /**
@@ -1282,7 +1284,7 @@ public class CourseResource {
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return addUserToCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName(), Role.INSTRUCTOR);
     }
 
     /**
@@ -1292,20 +1294,21 @@ public class CourseResource {
      * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
      * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
      * @param group             the group to which the userLogin should be added
+     * @param role              the role which should be added
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull
-    public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group, Role role) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
-                return notFound();
+                throw new EntityNotFoundException("User", userLogin);
             }
-            courseService.addUserToGroup(userToAddToGroup.get(), group);
+            courseService.addUserToGroup(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
     }
 
@@ -1321,7 +1324,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName(), Role.STUDENT);
     }
 
     /**
@@ -1336,7 +1339,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName(), Role.TEACHING_ASSISTANT);
     }
 
     /**
@@ -1351,7 +1354,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName(), Role.EDITOR);
     }
 
     /**
@@ -1366,7 +1369,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName(), Role.INSTRUCTOR);
     }
 
     /**
@@ -1376,20 +1379,21 @@ public class CourseResource {
      * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
      * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
      * @param group             the group from which the userLogin should be removed
+     * @param role              the role which should be removed
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull
-    public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group, Role role) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToRemoveFromGroup.isEmpty()) {
-                return notFound();
+                throw new EntityNotFoundException("User", userLogin);
             }
-            courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+            courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
     }
 

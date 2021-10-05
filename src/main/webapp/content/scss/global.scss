@@ -722,7 +722,7 @@ code.password:hover {
     background-color: whitesmoke;
 }
 
-displaycolor {
+.displaycolor {
     background: #f8f9fa;
 }
 
@@ -801,9 +801,17 @@ Course Info Bar
     img {
         max-width: 100%;
     }
+
+    // this class is required for rendering post references in between of post content without having linebreaks
+    &.manipulate-p {
+        p {
+            margin-bottom: 0 !important;
+            display: inline;
+        }
+    }
 }
 
-ngb-tooltip-window {
+.ngb-tooltip-window {
     padding: 0;
     width: 200px !important;
 
@@ -855,23 +863,223 @@ ngb-tooltip-window {
     HACK: Workaround an angular 12 bug where the css precedence changes,
     causing all columns in a row to have 'width: 100%'
 ========================================================================== */
+@include media-breakpoint-up(xl) {
+    .col-xl-11 {
+        width: 91.66% !important;
+    }
+
+    .col-xl-10 {
+        width: 83.33% !important;
+    }
+
+    .col-xl-9 {
+        width: 75% !important;
+    }
+
+    .col-xl-8 {
+        width: 66.66% !important;
+    }
+
+    .col-xl-7 {
+        width: 58.33% !important;
+    }
+
+    .col-xl-6 {
+        width: 50% !important;
+    }
+
+    .col-xl-5 {
+        width: 41.66% !important;
+    }
+
+    .col-xl-4 {
+        width: 33.33% !important;
+    }
+
+    .col-xl-3 {
+        width: 25% !important;
+    }
+
+    .col-xl-2 {
+        width: 16.66% !important;
+    }
+
+    .col-xl-1 {
+        width: 8.33% !important;
+    }
+
+    .col-xl-auto {
+        width: auto !important;
+    }
+
+    .col-xl {
+        width: auto !important;
+    }
+}
+
+@include media-breakpoint-up(lg) {
+    .col-lg-11 {
+        width: 91.66% !important;
+    }
+
+    .col-lg-10 {
+        width: 83.33% !important;
+    }
+
+    .col-lg-9 {
+        width: 75% !important;
+    }
+
+    .col-lg-8 {
+        width: 66.66% !important;
+    }
+
+    .col-lg-7 {
+        width: 58.33% !important;
+    }
+
+    .col-lg-6 {
+        width: 50% !important;
+    }
+
+    .col-lg-5 {
+        width: 41.66% !important;
+    }
+
+    .col-lg-4 {
+        width: 33.33% !important;
+    }
+
+    .col-lg-3 {
+        width: 25% !important;
+    }
+
+    .col-lg-2 {
+        width: 16.66% !important;
+    }
+
+    .col-lg-1 {
+        width: 8.33% !important;
+    }
+
+    .col-lg-auto {
+        width: auto !important;
+    }
+
+    .col-lg {
+        width: auto !important;
+    }
+}
+
+@include media-breakpoint-up(md) {
+    .col-md-11 {
+        width: 91.66% !important;
+    }
+
+    .col-md-10 {
+        width: 83.33% !important;
+    }
+
+    .col-md-9 {
+        width: 75% !important;
+    }
+
+    .col-md-8 {
+        width: 66.66% !important;
+    }
+
+    .col-md-7 {
+        width: 58.33% !important;
+    }
+
+    .col-md-6 {
+        width: 50% !important;
+    }
+
+    .col-md-5 {
+        width: 41.66% !important;
+    }
+
+    .col-md-4 {
+        width: 33.33% !important;
+    }
+
+    .col-md-3 {
+        width: 25% !important;
+    }
+
+    .col-md-2 {
+        width: 16.66% !important;
+    }
+
+    .col-md-1 {
+        width: 8.33% !important;
+    }
+
+    .col-md-auto {
+        width: auto !important;
+    }
+
+    .col-md {
+        width: auto !important;
+    }
+}
+
+@include media-breakpoint-up(sm) {
+    .col-sm-11 {
+        width: 91.66% !important;
+    }
+
+    .col-sm-10 {
+        width: 83.33% !important;
+    }
+
+    .col-sm-9 {
+        width: 75% !important;
+    }
+
+    .col-sm-8 {
+        width: 66.66% !important;
+    }
+
+    .col-sm-7 {
+        width: 58.33% !important;
+    }
+
+    .col-sm-6 {
+        width: 50% !important;
+    }
+
+    .col-sm-5 {
+        width: 41.66% !important;
+    }
+
+    .col-sm-4 {
+        width: 33.33% !important;
+    }
+
+    .col-sm-3 {
+        width: 25% !important;
+    }
+
+    .col-sm-2 {
+        width: 16.66% !important;
+    }
+
+    .col-sm-1 {
+        width: 8.33% !important;
+    }
+
+    .col-sm-auto {
+        width: auto !important;
+    }
+
+    .col-sm {
+        width: auto !important;
+    }
+}
+
 .col-11 {
-    width: 91.66% !important;
-}
-
-.col-sm-11 {
-    width: 91.66% !important;
-}
-
-.col-md-11 {
-    width: 91.66% !important;
-}
-
-.col-lg-11 {
-    width: 91.66% !important;
-}
-
-.col-xl-11 {
     width: 91.66% !important;
 }
 
@@ -879,39 +1087,7 @@ ngb-tooltip-window {
     width: 83.33% !important;
 }
 
-.col-sm-10 {
-    width: 83.33% !important;
-}
-
-.col-md-10 {
-    width: 83.33% !important;
-}
-
-.col-lg-10 {
-    width: 83.33% !important;
-}
-
-.col-xl-10 {
-    width: 83.33% !important;
-}
-
 .col-9 {
-    width: 75% !important;
-}
-
-.col-sm-9 {
-    width: 75% !important;
-}
-
-.col-md-9 {
-    width: 75% !important;
-}
-
-.col-lg-9 {
-    width: 75% !important;
-}
-
-.col-xl-9 {
     width: 75% !important;
 }
 
@@ -919,39 +1095,7 @@ ngb-tooltip-window {
     width: 66.66% !important;
 }
 
-.col-sm-8 {
-    width: 66.66% !important;
-}
-
-.col-md-8 {
-    width: 66.66% !important;
-}
-
-.col-lg-8 {
-    width: 66.66% !important;
-}
-
-.col-xl-8 {
-    width: 66.66% !important;
-}
-
 .col-7 {
-    width: 58.33% !important;
-}
-
-.col-sm-7 {
-    width: 58.33% !important;
-}
-
-.col-md-7 {
-    width: 58.33% !important;
-}
-
-.col-lg-7 {
-    width: 58.33% !important;
-}
-
-.col-xl-7 {
     width: 58.33% !important;
 }
 
@@ -959,39 +1103,7 @@ ngb-tooltip-window {
     width: 50% !important;
 }
 
-.col-sm-6 {
-    width: 50% !important;
-}
-
-.col-md-6 {
-    width: 50% !important;
-}
-
-.col-lg-6 {
-    width: 50% !important;
-}
-
-.col-xl-6 {
-    width: 50% !important;
-}
-
 .col-5 {
-    width: 41.66% !important;
-}
-
-.col-sm-5 {
-    width: 41.66% !important;
-}
-
-.col-md-5 {
-    width: 41.66% !important;
-}
-
-.col-lg-5 {
-    width: 41.66% !important;
-}
-
-.col-xl-5 {
     width: 41.66% !important;
 }
 
@@ -999,39 +1111,7 @@ ngb-tooltip-window {
     width: 33.33% !important;
 }
 
-.col-sm-4 {
-    width: 33.33% !important;
-}
-
-.col-md-4 {
-    width: 33.33% !important;
-}
-
-.col-lg-4 {
-    width: 33.33% !important;
-}
-
-.col-xl-4 {
-    width: 33.33% !important;
-}
-
 .col-3 {
-    width: 25% !important;
-}
-
-.col-sm-3 {
-    width: 25% !important;
-}
-
-.col-md-3 {
-    width: 25% !important;
-}
-
-.col-lg-3 {
-    width: 25% !important;
-}
-
-.col-xl-3 {
     width: 25% !important;
 }
 
@@ -1039,39 +1119,7 @@ ngb-tooltip-window {
     width: 16.66% !important;
 }
 
-.col-sm-2 {
-    width: 16.66% !important;
-}
-
-.col-md-2 {
-    width: 16.66% !important;
-}
-
-.col-lg-2 {
-    width: 16.66% !important;
-}
-
-.col-xl-2 {
-    width: 16.66% !important;
-}
-
 .col-1 {
-    width: 8.33% !important;
-}
-
-.col-sm-1 {
-    width: 8.33% !important;
-}
-
-.col-md-1 {
-    width: 8.33% !important;
-}
-
-.col-lg-1 {
-    width: 8.33% !important;
-}
-
-.col-xl-1 {
     width: 8.33% !important;
 }
 
@@ -1079,38 +1127,6 @@ ngb-tooltip-window {
     width: auto !important;
 }
 
-.col-sm-auto {
-    width: auto !important;
-}
-
-.col-md-auto {
-    width: auto !important;
-}
-
-.col-lg-auto {
-    width: auto !important;
-}
-
-.col-xl-auto {
-    width: auto !important;
-}
-
 .col {
-    width: auto !important;
-}
-
-.col-sm {
-    width: auto !important;
-}
-
-.col-md {
-    width: auto !important;
-}
-
-.col-lg {
-    width: auto !important;
-}
-
-.col-xl {
     width: auto !important;
 }

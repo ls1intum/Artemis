@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -471,8 +470,8 @@ export class CourseManagementService {
     private static convertDateFromClient(course: Course): Course {
         // copy of the object
         return Object.assign({}, course, {
-            startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : undefined,
-            endDate: course.endDate && moment(course.endDate).isValid() ? course.endDate.toJSON() : undefined,
+            startDate: course.startDate && dayjs(course.startDate).isValid() ? course.startDate.toJSON() : undefined,
+            endDate: course.endDate && dayjs(course.endDate).isValid() ? course.endDate.toJSON() : undefined,
         });
     }
 
@@ -518,8 +517,8 @@ export class CourseManagementService {
     }
 
     private setCourseDates(course: Course) {
-        course.startDate = course.startDate ? moment(course.startDate) : undefined;
-        course.endDate = course.endDate ? moment(course.endDate) : undefined;
+        course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
+        course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
         course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
@@ -661,11 +660,11 @@ export class CourseExerciseService {
     handleParticipation(participation: StudentParticipation) {
         if (participation) {
             // convert date
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             if (participation.exercise) {
                 const exercise = participation.exercise;
-                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
-                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
+                exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
+                exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
                 exercise.studentParticipations = [participation];
             }
             this.participationWebsocketService.addParticipation(participation);
@@ -674,17 +673,17 @@ export class CourseExerciseService {
     }
 
     convertDateFromServer<T extends Exercise>(res: T): T {
-        res.releaseDate = res.releaseDate ? moment(res.releaseDate) : undefined;
-        res.dueDate = res.dueDate ? moment(res.dueDate) : undefined;
+        res.releaseDate = res.releaseDate ? dayjs(res.releaseDate) : undefined;
+        res.dueDate = res.dueDate ? dayjs(res.dueDate) : undefined;
         return res;
     }
 
     protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((exercise: T) => {
-                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
-                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
-                exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : undefined;
+                exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
+                exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
+                exercise.assessmentDueDate = exercise.assessmentDueDate ? dayjs(exercise.assessmentDueDate) : undefined;
             });
         }
         return res;

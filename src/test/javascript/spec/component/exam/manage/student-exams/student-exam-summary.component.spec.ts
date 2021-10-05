@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ActivatedRoute } from '@angular/router';
 import { MockDirective } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';

@@ -11,15 +11,6 @@
                     }}
                     {{ exam?.title }}
                 </h2>
-                <a
-                    *ngIf="!isExamMode && course?.postsEnabled && course?.isAtLeastTutor"
-                    routerLinkActive="active"
-                    [routerLink]="['/course-management', course?.id, 'posts']"
-                    class="text-white card-link"
-                >
-                    <fa-icon [icon]="'comment'"></fa-icon>
-                    <span jhiTranslate="entity.action.discussion">Discussion</span>
-                </a>
             </h2>
         </div>
     </div>
@@ -83,7 +74,7 @@
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
             <thead>
-                <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="type">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>

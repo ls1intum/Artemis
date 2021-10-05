@@ -32,10 +32,10 @@ export {};
 declare global {
     namespace Cypress {
         interface Chainable {
-            login(credentials: CypressCredentials, url?: String): any;
+            login(credentials: CypressCredentials, url?: string): any;
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
-            getSettled(selector: String, options?: {}): Chainable<Cypress>;
+            getSettled(selector: string, options?: {}): Chainable<Cypress>;
         }
     }
 }

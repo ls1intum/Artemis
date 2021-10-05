@@ -2,8 +2,8 @@ import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } fr
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
-import * as moment from 'moment';
+import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -48,7 +48,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
@@ -66,6 +66,15 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     /**
+     * Updates the problem statement of the currently loaded file upload exercise which is part of the user's student exam.
+     * @param newProblemStatement is the updated problem statement that should be displayed to the user.
+     */
+    updateProblemStatement(newProblemStatement: string): void {
+        this.exercise.problemStatement = newProblemStatement;
+        this.changeDetectorReference.detectChanges();
+    }
+
+    /**
      * Sets file submission for exercise
      * Here the file selected with the -browse- button is handeled.
      * @param event {object} Event object which contains the uploaded file
@@ -76,9 +85,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
+                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
+                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
                 this.studentSubmission.isSynced = false;
@@ -94,7 +103,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
+        return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
     }
 
     getExercise(): Exercise {
@@ -148,9 +157,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     /**
-     * Pass on an error to the browser console and the jhiAlertService.
+     * Pass on an error to the browser console and the alertService.
      */
     private onError() {
-        this.jhiAlertService.error(this.translateService.instant('error.fileUploadSavingError'));
+        this.alertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
 }

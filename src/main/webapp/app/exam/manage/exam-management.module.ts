@@ -21,14 +21,12 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MomentModule } from 'ngx-moment';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -63,10 +61,8 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisFileUploadExerciseManagementModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisQuizManagementModule,
-        MomentModule,
         ArtemisParticipationSummaryModule,
         ArtemisProgrammingExerciseStatusModule,
-        ProgrammingExerciseUtilsModule,
         ArtemisMarkdownModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisExamParticipantScoresModule,

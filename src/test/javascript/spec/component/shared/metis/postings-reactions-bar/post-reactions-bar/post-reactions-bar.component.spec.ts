@@ -1,13 +1,13 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { CUSTOM_ELEMENTS_SCHEMA, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
+import { SinonSpy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -19,6 +19,12 @@ import { MockReactionService } from '../../../../../helpers/mocks/service/mock-r
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,7 +36,8 @@ describe('PostReactionsBarComponent', () => {
     let debugElement: DebugElement;
     let metisService: MetisService;
     let accountService: MockAccountService;
-    let accountServiceAuthorityStub: SinonStub;
+    let accountServiceAuthorityStub: jest.SpyInstance;
+    let metisServiceUpdateDisplayPrioritySpy: SinonSpy;
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
@@ -39,14 +46,14 @@ describe('PostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, OverlayModule, EmojiModule],
+            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
             providers: [
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-            declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [CUSTOM_ELEMENTS_SCHEMA],
+            declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -56,10 +63,12 @@ describe('PostReactionsBarComponent', () => {
                 accountService = injector.get(AccountService);
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
-                accountServiceAuthorityStub = stub(accountService, 'isAtLeastTutorInCourse');
+                accountServiceAuthorityStub = jest.spyOn(accountService, 'isAtLeastTutorInCourse');
+                metisServiceUpdateDisplayPrioritySpy = sinon.spy(metisService, 'updatePostDisplayPriority');
                 post = new Post();
                 post.id = 1;
                 post.author = user;
+                post.displayPriority = DisplayPriority.NONE;
                 reactionToDelete = new Reaction();
                 reactionToDelete.id = 1;
                 reactionToDelete.emojiId = 'smile';
@@ -71,16 +80,17 @@ describe('PostReactionsBarComponent', () => {
     });
 
     afterEach(function () {
+        jest.clearAllMocks();
         sinon.restore();
     });
 
     it('should initialize user authority and reactions correctly', () => {
-        accountServiceAuthorityStub.returns(false);
+        accountServiceAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(false);
         fixture.detectChanges();
-        const reactions = getElement(debugElement, 'ngx-emoji');
-        expect(reactions).to.exist;
+        const reaction = getElement(debugElement, 'ngx-emoji');
+        expect(reaction).to.exist;
         expect(component.reactionCountMap).to.be.deep.equal({
             smile: {
                 count: 1,
@@ -91,19 +101,22 @@ describe('PostReactionsBarComponent', () => {
 
     it('should initialize user authority and reactions correctly with same user', () => {
         component.posting!.author!.id = 99;
-        accountServiceAuthorityStub.returns(true);
+        accountServiceAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(true);
         fixture.detectChanges();
         const reactions = getElements(debugElement, 'ngx-emoji');
-        // emojis to be displayed it the user reaction
-        expect(reactions).to.have.length(1);
+        // emojis to be displayed it the user reaction, the pin emoji and the archive emoji
+        expect(reactions).to.have.length(3);
         expect(component.reactionCountMap).to.be.deep.equal({
             smile: {
                 count: 1,
                 hasReacted: true,
             },
         });
+        // set correct tooltips for tutor and post that is not pinned and not archived
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.archivePostTutorTooltip');
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinPostTutorTooltip');
     });
 
     it('should invoke metis service method with correctly built reaction to create it', () => {
@@ -126,5 +139,59 @@ describe('PostReactionsBarComponent', () => {
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
         expect(metisServiceDeleteReactionSpy).to.have.been.calledWith(reactionToDelete);
         expect(component.showReactionSelector).to.be.equal(false);
+    });
+
+    it('should invoke metis service method when pin icon is toggled', () => {
+        accountServiceAuthorityStub.mockReturnValue(true);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const pinEmoji = getElement(debugElement, '.pin');
+        pinEmoji.click();
+        component.posting.displayPriority = DisplayPriority.PINNED;
+        expect(metisServiceUpdateDisplayPrioritySpy).to.have.been.calledWith(component.posting.id!, DisplayPriority.PINNED);
+        component.ngOnChanges();
+        // set correct tooltips for tutor and post that is pinned and not archived
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.removePinPostTutorTooltip');
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.archivePostTutorTooltip');
+    });
+
+    it('should invoke metis service method when archive icon is toggled', () => {
+        accountServiceAuthorityStub.mockReturnValue(true);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const archiveEmoji = getElement(debugElement, '.archive');
+        archiveEmoji.click();
+        component.posting.displayPriority = DisplayPriority.ARCHIVED;
+        expect(metisServiceUpdateDisplayPrioritySpy).to.have.been.calledWith(component.posting.id!, DisplayPriority.ARCHIVED);
+        component.ngOnChanges();
+        // set correct tooltips for tutor and post that is archived and not pinned
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinPostTutorTooltip');
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.removeArchivePostTutorTooltip');
+    });
+
+    it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
+        accountServiceAuthorityStub.mockReturnValue(false);
+        component.posting.displayPriority = DisplayPriority.PINNED;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const pinEmoji = getElement(debugElement, '.pin.reaction-button--not-hoverable');
+        expect(pinEmoji).to.exist;
+        pinEmoji.click();
+        expect(metisServiceUpdateDisplayPrioritySpy).to.not.have.been.called;
+        // set correct tooltips for student and post that is pinned
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinnedPostTooltip');
+    });
+
+    it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
+        accountServiceAuthorityStub.mockReturnValue(false);
+        component.posting.displayPriority = DisplayPriority.ARCHIVED;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const archiveEmoji = getElement(debugElement, '.archive.reaction-button--not-hoverable');
+        expect(archiveEmoji).to.exist;
+        archiveEmoji.click();
+        expect(metisServiceUpdateDisplayPrioritySpy).to.not.have.been.called;
+        // set correct tooltips for student and post that is archived
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.archivedPostTooltip');
     });
 });

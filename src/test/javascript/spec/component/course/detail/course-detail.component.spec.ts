@@ -10,11 +10,10 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -25,12 +24,13 @@ import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-e
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { JhiEventManager } from 'ng-jhipster';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,10 +39,10 @@ describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseService: CourseManagementService;
-    let eventManager: JhiEventManager;
+    let eventManager: EventManager;
 
     const route = { params: of({ courseId: 1 }) };
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const dtoMock = {
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
@@ -80,7 +80,6 @@ describe('Course Management Detail Component', () => {
                 MockComponent(AlertErrorComponent),
                 MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(JhiTranslateDirective),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockComponent(CourseDetailDoughnutChartComponent),
@@ -91,7 +90,7 @@ describe('Course Management Detail Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(NgbModal),
                 MockProvider(CourseManagementService),
             ],
@@ -99,7 +98,7 @@ describe('Course Management Detail Component', () => {
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
         courseService = fixture.debugElement.injector.get(CourseManagementService);
-        eventManager = fixture.debugElement.injector.get(JhiEventManager);
+        eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
     beforeEach(fakeAsync(() => {

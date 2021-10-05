@@ -18,19 +18,20 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,7 +42,7 @@ describe('Course Management Detail Component', () => {
     let courseService: CourseManagementService;
     let userService: UserService;
     const courseGroup = CourseGroup.STUDENTS;
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
@@ -62,7 +63,7 @@ describe('Course Management Detail Component', () => {
                 MockComponent(AlertErrorComponent),
                 MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(HasAnyAuthorityDirective),
             ],
@@ -71,7 +72,7 @@ describe('Course Management Detail Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(NgbModal),
                 MockProvider(CourseManagementService),
                 MockProvider(UserService),

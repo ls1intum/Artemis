@@ -8,9 +8,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Lecture } from 'app/entities/lecture.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 
@@ -39,12 +38,12 @@ describe('Attachment Service', () => {
 
         expectedResult = {} as HttpResponse<Attachment>;
         elemDefault = new Attachment();
-        elemDefault.releaseDate = moment();
+        elemDefault.releaseDate = dayjs();
         elemDefault.link = '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
         elemDefault.name = 'testss';
         elemDefault.lecture = new Lecture();
         elemDefault.attachmentType = AttachmentType.FILE;
-        elemDefault.uploadDate = moment();
+        elemDefault.uploadDate = dayjs();
         elemDefault.id = 1;
     });
 

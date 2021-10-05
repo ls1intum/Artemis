@@ -7,7 +7,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
@@ -22,7 +21,6 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         NgxDatatableModule,
         ArtemisDataTableModule,
         FeatureToggleModule,
-        ProgrammingExerciseUtilsModule,
         ArtemisTeamModule,
     ],
     declarations: [ParticipationComponent],

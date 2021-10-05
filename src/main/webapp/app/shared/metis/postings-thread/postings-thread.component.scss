@@ -1,6 +1,6 @@
-.line {
-    width: auto;
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.post-separation-line {
     height: 1px;
-    background: rgba(0, 0, 0, 0.1);
-    content: ' ';
+    background: $metis-light-gray;
 }

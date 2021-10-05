@@ -23,7 +23,6 @@
             "action": "Action",
             "exerciseDashboard": "Exercise dashboard",
             "rating": "Ratings",
-            "discussion": "Discussion",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Course Leaderboard",
                 "examTitle": "Tutor Exam Leaderboard",
@@ -34,7 +33,9 @@
                 "numberOfNotAnsweredMoreFeedbackRequests": "Open requests",
                 "numberOfComplaintResponses": "Complaint responses",
                 "numberOfAnsweredMoreFeedbackRequests": "Answered requests",
-                "points": "Points"
+                "points": "Points",
+                "averageScore": "Average score",
+                "averageRating": "Average rating"
             }
         }
     }

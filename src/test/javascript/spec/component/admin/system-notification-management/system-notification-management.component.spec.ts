@@ -9,15 +9,16 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import { JhiItemCountComponent, JhiSortDirective } from 'ng-jhipster';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import dayjs from 'dayjs';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -62,10 +63,10 @@ describe('SystemNotificationManagementComponent', () => {
                 RouterLinkSpy,
                 MockDirective(RouterOutlet),
                 MockDirective(AlertComponent),
-                MockDirective(JhiItemCountComponent),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(JhiSortDirective),
                 MockDirective(NgbPagination),
+                MockDirective(SortDirective),
+                MockComponent(ItemCountComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -92,8 +93,8 @@ describe('SystemNotificationManagementComponent', () => {
     it('navigate to the details page of system notification if details is clicked', fakeAsync(() => {
         const notification = new SystemNotification();
         notification.id = 1;
-        notification.expireDate = moment();
-        notification.notificationDate = moment();
+        notification.expireDate = dayjs();
+        notification.notificationDate = dayjs();
         managementComponent.notifications = [notification];
         managementComponentFixture.detectChanges();
 
@@ -109,8 +110,8 @@ describe('SystemNotificationManagementComponent', () => {
     it('navigate to the edit page of system notification if details is clicked', fakeAsync(() => {
         const notification = new SystemNotification();
         notification.id = 2;
-        notification.expireDate = moment();
-        notification.notificationDate = moment();
+        notification.expireDate = dayjs();
+        notification.notificationDate = dayjs();
         managementComponent.notifications = [notification];
         managementComponentFixture.detectChanges();
 

@@ -3,7 +3,6 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -11,8 +10,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -21,7 +21,7 @@ import { Course } from 'app/entities/course.model';
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
+    readonly dayjs = dayjs;
 
     textExercise: TextExercise;
     course: Course | undefined;
@@ -36,7 +36,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
 
     constructor(
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private textExerciseService: TextExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,

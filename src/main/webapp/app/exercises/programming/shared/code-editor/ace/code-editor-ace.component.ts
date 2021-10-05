@@ -1,4 +1,4 @@
-import * as ace from 'brace';
+import { acequire, UndoManager } from 'brace';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
@@ -24,7 +24,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
-import { fromPairs, pickBy } from 'lodash';
+import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
@@ -70,14 +70,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileLoad = new EventEmitter<string>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
-    readonly aceModeList = ace.acequire('ace/ext/modelist');
+    readonly aceModeList = acequire('ace/ext/modelist');
     // Line widgets for inline feedback
-    readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
+    readonly LineWidgets = acequire('ace/line_widgets').LineWidgets;
 
-    readonly Range = ace.acequire('ace/range').Range;
+    readonly Range = acequire('ace/range').Range;
 
     /** Ace Editor Options **/
-    editorMode: string; // String or mode object
+    editorMode: string; // string or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
@@ -181,7 +181,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.getEditor().resize();
             this.editor.getEditor().focus();
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
-            this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
+            this.editor.getEditor().getSession().setUndoManager(new UndoManager());
             this.displayAnnotations();
 
             // Setup inline feedbacks
