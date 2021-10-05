@@ -214,8 +214,7 @@ jhipster:
         contact-email:
         license: unlicensed
         license-url:
-    security:
-        content-security-policy: "frame-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; style-src 'self' 'unsafe-inline'"
+
 kafka:
     bootstrap-servers: localhost:9092
     consumer:

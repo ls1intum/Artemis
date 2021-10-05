@@ -16,6 +16,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,8 +37,6 @@ public class SecurityConfiguration {
 
     private final TokenProvider tokenProvider;
 
-//    private final CorsFilter corsFilter;
-
     private final SecurityProblemSupport problemSupport;
 
     @Value("${artemis.encryption-password}")
@@ -46,12 +45,10 @@ public class SecurityConfiguration {
     public SecurityConfiguration(
         TokenProvider tokenProvider,
         JHipsterProperties jHipsterProperties,
-//        CorsFilter corsFilter,
         SecurityProblemSupport problemSupport
     ) {
         this.tokenProvider = tokenProvider;
         this.jHipsterProperties = jHipsterProperties;
-//        this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
     }
 
@@ -89,7 +86,7 @@ public class SecurityConfiguration {
                 pathMatchers(HttpMethod.OPTIONS, "/**")
             )))
             .csrf()
-                .disable()
+            .disable()
             .addFilterAt(new SpaWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
             .addFilterAt(new JWTFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC)
             .exceptionHandling()
@@ -97,13 +94,14 @@ public class SecurityConfiguration {
                 .authenticationEntryPoint(problemSupport)
         .and()
             .headers()
-            .contentSecurityPolicy(jHipsterProperties.getSecurity().getContentSecurityPolicy())
-            .and()
-                .referrerPolicy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-            .and()
-                .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen 'self'; payment 'none'")
-            .and()
-                .frameOptions().disable()
+            .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
+        .and()
+            .referrerPolicy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+        .and()
+            .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen 'self'; payment 'none'")
+        .and()
+            .frameOptions()
+            .disable()
         .and()
             .authorizeExchange()
             .pathMatchers("/").permitAll()
