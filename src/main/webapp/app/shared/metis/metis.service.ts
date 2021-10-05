@@ -335,20 +335,18 @@ export class MetisService {
         } else if (post.lecture) {
             displayName = post.lecture.title!;
             routerLinkComponents = ['/courses', this.courseId, 'lectures', post.lecture.id!];
-            // course-wide topics are not linked
         } else {
+            // course-wide topics are not linked, only displayName is set
             displayName = this.translateService.instant('artemisApp.metis.overview.' + post.courseWideContext);
         }
         return { routerLinkComponents, displayName };
     }
 
     /**
-     * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with the given title
-     * @param title currently written title that is compared against existing course posts
+     * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with a certain strategy
+     * @param tempPost Post that is currently created and compared against existing course posts on updates in the form group
      */
-    getSimilarPosts(title: string): Observable<Post[]> {
-        const tempPost: Post = new Post();
-        tempPost.title = title;
+    getSimilarPosts(tempPost: Post): Observable<Post[]> {
         return this.postService.computeSimilarityScoresWitCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 }

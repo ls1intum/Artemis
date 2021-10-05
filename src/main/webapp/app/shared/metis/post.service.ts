@@ -97,6 +97,12 @@ export class PostService extends PostingsService<Post> {
         return this.http.delete<void>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
     }
 
+    /**
+     * for a given post that is about to be created, determine similar posts in a course
+     * @param {Post} tempPost
+     * @param {number} courseId
+     * @return {Observable<HttpResponse<void>>}
+     */
     computeSimilarityScoresWitCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
         const copy = this.convertDateFromClient(tempPost);
         return this.http.post<Post[]>(`${this.resourceUrl}${courseId}/posts/similarity-check`, copy, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));

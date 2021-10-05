@@ -3,7 +3,6 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import dayjs from 'dayjs';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -77,10 +76,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.title = this.formGroup.get('title')?.value;
-        this.setPostContextPropertyWithFormValue();
-        this.posting.tags = this.tags;
-        this.posting.creationDate = dayjs();
+        this.setPostProperties(this.posting);
         this.metisService.createPost(this.posting).subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
@@ -94,11 +90,13 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     }
 
     /**
-     * invokes the metis service to get similar posts on title changes
+     * invokes the metis service to get similar posts on changes of the formGroup, i.e. title or content
      */
     triggerPostSimilarityCheck(): void {
-        this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
-            this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
+        this.formGroup.valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe(() => {
+            const tempPost = new Post();
+            this.setPostProperties(tempPost);
+            this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
                 this.similarPosts = similarPosts;
             });
         });
@@ -109,9 +107,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.title = this.formGroup.get('title')?.value;
-        this.posting.tags = this.tags;
-        this.setPostContextPropertyWithFormValue();
+        this.setPostProperties(this.posting);
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
@@ -149,7 +145,10 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         return false;
     }
 
-    private setPostContextPropertyWithFormValue(): void {
+    private setPostProperties(post: Post): void {
+        post.title = this.formGroup.get('title')?.value;
+        post.tags = this.tags;
+        post.content = this.formGroup.get('content')?.value;
         const currentContextSelectorOption: ContextSelectorOption = {
             exercise: undefined,
             lecture: undefined,

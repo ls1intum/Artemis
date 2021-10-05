@@ -76,6 +76,21 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.tags).toEqual([]);
     });
 
+    it('should reset context selection on changes', () => {
+        metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
+        component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.ngOnInit();
+        component.currentContextSelectorOption.courseWideContext = CourseWideContext.ORGANIZATION;
+        component.ngOnChanges();
+        // change to Organization as course-wide topic should be reset to Tech Support
+        expect(component.currentContextSelectorOption).toEqual({
+            courseWideContext: CourseWideContext.TECH_SUPPORT,
+            exercise: undefined,
+            lecture: undefined,
+        });
+        expect(component.tags).toEqual([]);
+    });
+
     it('should invoke metis service with created post in overview', fakeAsync(() => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting = metisPostToCreateUser1;
@@ -102,7 +117,6 @@ describe('PostCreateEditModalComponent', () => {
             exercise: undefined,
             metisLecture,
         });
-        expect(component.posting.creationDate).toBeDefined();
         tick();
         expect(component.isLoading).toEqual(false);
         expect(onCreateSpy).toHaveBeenCalled();
