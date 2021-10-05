@@ -112,8 +112,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should be automatically approved
-        assertThat(createdAnswerPost.doesResolvePost()).isTrue();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -124,8 +122,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should be automatically approved
-        assertThat(createdAnswerPost.doesResolvePost()).isTrue();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -136,8 +132,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should be automatically approved
-        assertThat(createdAnswerPost.doesResolvePost()).isTrue();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }

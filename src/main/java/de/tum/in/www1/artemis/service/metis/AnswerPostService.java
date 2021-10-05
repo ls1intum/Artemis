@@ -71,6 +71,8 @@ public class AnswerPostService extends PostingService {
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
+        // on creation of an answer post, we set the resolves_post field to false per default
+        answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
         sendNotification(savedAnswerPost);
