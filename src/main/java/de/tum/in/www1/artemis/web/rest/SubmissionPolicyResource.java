@@ -85,7 +85,7 @@ public class SubmissionPolicyResource {
     public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
-        HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
+        HttpHeaders responseHeaders;
 
         SubmissionPolicy addedSubmissionPolicy;
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
@@ -105,6 +105,8 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
+        responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
+
         return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", Long.toString(exerciseId)))).headers(responseHeaders)
                 .body(addedSubmissionPolicy);
     }
