@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -266,7 +264,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     private AnswerPost createAnswerPost(Post post) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent("Content Answer Post");
-        answerPost.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
         return answerPost;
@@ -283,11 +280,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(createdAnswerPost.getId()).isNotNull();
 
         // check if associated post, answerPost content, and creation date are set correctly on creation
-        assertThat(expectedAnswerPost.getPost()).isEqualTo(createdAnswerPost.getPost());
-        assertThat(expectedAnswerPost.getContent()).isEqualTo(createdAnswerPost.getContent());
-        assertThat(expectedAnswerPost.getCreationDate()).isEqualTo(createdAnswerPost.getCreationDate());
+        assertThat(createdAnswerPost.getPost()).isEqualTo(expectedAnswerPost.getPost());
+        assertThat(createdAnswerPost.getContent()).isEqualTo(expectedAnswerPost.getContent());
+        assertThat(createdAnswerPost.getCreationDate()).isNotNull();
 
         // check if default values are set correctly on creation
-        assertThat(expectedAnswerPost.getReactions()).isEmpty();
+        assertThat(createdAnswerPost.getReactions()).isEmpty();
     }
 }
