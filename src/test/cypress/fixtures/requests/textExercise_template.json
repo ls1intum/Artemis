@@ -21,7 +21,7 @@
     "assessmentType": "MANUAL",
     "title": "Text Exercise 1",
     "maxPoints": 10,
-    "problemStatement": "Problem Statement",
-    "sampleSolution": "Example Solution",
-    "gradingInstructions": "Assessment Instructions"
+    "problemStatement": "Cypress Problem Statement",
+    "sampleSolution": "Cypress Example Solution",
+    "gradingInstructions": "Cypress Assessment Instructions"
 }

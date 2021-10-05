@@ -7,7 +7,10 @@ import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockComponent } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
@@ -47,7 +50,12 @@ describe('ModelingExercise Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ModelingExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+            ],
         })
             .overrideTemplate(ModelingExerciseDetailComponent, '')
             .compileComponents();

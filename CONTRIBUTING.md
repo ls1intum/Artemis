@@ -107,4 +107,4 @@ The folder structure is further divided into:
 - integration
 - service
 
-The tests located in the folder `/app` are not working at them moment and are not included in the test runs.
+The tests located in the folder `/app` are not working at the moment and are not included in the test runs.
