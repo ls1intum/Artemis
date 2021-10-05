@@ -67,8 +67,6 @@ public class AnswerPostService extends PostingService {
         Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
-        // answer post is automatically approved if written by an instructor
-        answerPost.setResolvesPost(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
