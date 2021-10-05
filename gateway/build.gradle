@@ -20,7 +20,7 @@ plugins {
     id "com.diffplug.spotless" version "5.15.1"
     id "org.openapi.generator"
     id "io.spring.nohttp"
-    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.0"
+    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.1"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
