@@ -12,6 +12,7 @@ public interface PostContentCompareStrategy {
      * Method implemented by every strategy; compares the content of two posts using any suitable algorithm to determine content similarity
      * @param post1 first post object that is compared against
      * @param post2 second post object that is compared against
+     * @return the calculated similarity score
      */
     Double performSimilarityCheck(Post post1, Post post2);
 }
