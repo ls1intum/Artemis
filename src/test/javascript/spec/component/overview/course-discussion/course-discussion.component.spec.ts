@@ -29,6 +29,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs';
 import {
     metisAnswerPostUser1,
     metisCourse,
@@ -44,7 +45,6 @@ import {
     metisPostLectureUser2,
     metisUpVoteReactionUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import dayjs from 'dayjs';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -180,6 +180,17 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+    }));
+
+    it('should search for posts with certain id when pattern is used', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.searchText = '#1';
+        component.onSearch();
+        tick();
+        fixture.detectChanges();
+        expect(component.posts).toHaveLength(1);
     }));
 
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {

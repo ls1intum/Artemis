@@ -5,7 +5,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
-import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
