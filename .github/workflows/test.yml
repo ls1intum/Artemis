@@ -50,7 +50,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x npm -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain executeTests jacocoTestReport -x webapp jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -79,7 +79,7 @@ jobs:
     - name: Java Code Style
       run: ./gradlew spotlessCheck
     - name: Java Documentation
-      run: ./gradlew checkstyleMain -x npm -x webapp
+      run: ./gradlew checkstyleMain -x webapp
       if: success() || failure()
 
   client-tests:
@@ -88,7 +88,7 @@ jobs:
     steps:
         - uses: actions/checkout@v2
         - name: Setup Node.js
-          uses: actions/setup-node@v2.4.0
+          uses: actions/setup-node@v2.4.1
           with:
               node-version: '${{ env.node }}'
               cache: 'npm'
@@ -110,7 +110,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.0
+      uses: actions/setup-node@v2.4.1
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
