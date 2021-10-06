@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
             {{ labelName }}
         </label>
         <fa-icon
-            *ngIf="timeZoneWarning"
+            *ngIf="shouldDisplayTimeZoneWarning"
             [icon]="'exclamation-triangle'"
             class="text-warning"
             placement="top"
@@ -51,7 +51,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() startAt: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
-    @Input() timeZoneWarning: boolean; // Displays a warning that the current time zone might differ from the participants'.
+    @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

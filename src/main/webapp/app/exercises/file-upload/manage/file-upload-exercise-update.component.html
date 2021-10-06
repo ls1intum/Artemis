@@ -37,7 +37,6 @@
                     [(ngModel)]="fileUploadExercise.releaseDate"
                     (valueChange)="validateDate()"
                     [error]="false"
-                    [timeZoneWarning]="true"
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
@@ -48,7 +47,6 @@
                     [(ngModel)]="fileUploadExercise.dueDate"
                     name="dueDate"
                     [error]="fileUploadExercise.dueDateError!"
-                    [timeZoneWarning]="true"
                     (valueChange)="validateDate()"
                 ></jhi-date-time-picker>
                 <span *ngIf="fileUploadExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
@@ -62,7 +60,6 @@
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                 (valueChange)="validateDate()"
                 [(ngModel)]="fileUploadExercise.assessmentDueDate"
-                [timeZoneWarning]="true"
             ></jhi-date-time-picker>
             <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
         </div>

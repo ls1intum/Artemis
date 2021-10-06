@@ -26,17 +26,11 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
-                            [timeZoneWarning]="true"
                             name="startDate"
                         ></jhi-date-time-picker>
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                            [(ngModel)]="lecture.endDate"
-                            [timeZoneWarning]="true"
-                            name="endDate"
-                        ></jhi-date-time-picker>
+                        <jhi-date-time-picker labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}" [(ngModel)]="lecture.endDate" name="endDate"></jhi-date-time-picker>
                     </div>
                 </div>
                 <div class="form-group" *ngIf="lecture.course">
