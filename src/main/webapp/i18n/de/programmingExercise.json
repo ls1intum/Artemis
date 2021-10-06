@@ -288,6 +288,79 @@
                 "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
                 "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
                 "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+            },
+            "submissionPolicy": {
+                "title": "Abgaberichtlinie",
+                "updateButton":  {
+                    "title": "Speichern",
+                    "tooltip": "Speichert die Änderungen an der Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories betroffen sind!"
+                },
+                "addButton":  {
+                    "title": "Hinzufügen",
+                    "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
+                },
+                "deleteButton": {
+                    "title": "Löschen",
+                    "tooltip": "Löscht die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories entsperrt werden müssen!"
+                },
+                "activateButton": {
+                    "title": "Aktivieren",
+                    "tooltip": "Aktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
+                },
+                "deactivateButton": {
+                    "title": "Deaktivieren",
+                    "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG: Für Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories entsperrt werden müssen!"
+                },
+                "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
+                "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
+                "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
+                "programmingExercisePolicyPresent": "Die Abgaberichtlinie konnte nicht zu der Programmieraufgabe hinzugefügt werden, da diese bereits eine Abgaberichtlinie hat.",
+                "submissionPolicyHasId": "Die Abgaberichtlinie konnte nicht zu der Programmieraufgabe hinzugefügt werden, da die Abgaberichtlinie bereits eine ID hat.",
+                "programmingExercisePolicyNotPresent": "Von der Programmieraufgabe konnte keine Abgaberichtlinie entfernt werden, da die Programmieraufgabe keine Richtlinie hat.",
+                "submissionPolicyAlreadyEnabled": "Die Abgaberichtlinie konnte nicht aktiviert werden, da diese bereits aktiviert ist.",
+                "submissionPolicyAlreadyDisabled": "Die Abgaberichtlinie konnte nicht deaktiviert werden, da diese bereits deaktiviert ist.",
+                "submissionPolicyToggleFailedPolicyNotExist": "Für diese Programmieraufgabe konnte die Abgaberichtlinie nicht (de)aktiviert werden, da die Programmieraufgabe keine Abgaberichtlinie hat. ",
+                "updatedSubmissionPolicyIncorrectType": "Die Abgaberichtlinie konnte nicht gespeichert werden, da sich der Typ geändert hat.",
+                "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
+                "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
+                "none": {
+                    "optionLabel": "Keine"
+                },
+                "lockRepository": {
+                    "optionLabel": "Repository Sperre"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Strafe für Überzug",
+                    "penaltyInputFieldTitle": "Abzug für Überschreitung des Abgabelimits",
+                    "exceedingLimitDescription": "Der permanente prozentuale Abzug von der maximal erreichbaren Punktzahl.",
+                    "penaltyInputFieldValidationWarning": {
+                        "min": "Der Abzug muss zwischen 0 und 100 Prozent liegen!",
+                        "max": "Der Abzug muss zwischen 0 und 100 Prozent liegen!",
+                        "required": "Der Abzug muss gesetzt sein!"
+                    },
+                    "penaltyInfoLabel": "Strafe für Überzug"
+                },
+                "submissionPolicyType": {
+                    "title": "Typ der Abgaberichtlinie",
+                    "none": {
+                        "title": "Keine"
+                    },
+                    "lock_repository": {
+                        "title": "Repository Sperre",
+                        "tooltip": "Dein Abgaberepository wird gesperrt, sobald das Abgabelimit erreicht wird. Es wird nicht möglich sein, weiter an der Aufgabe teilzunehmen, sobald das Repository gesperrt wurde."
+                    },
+                    "submission_penalty": {
+                        "title": "Strafe für Überzug",
+                        "tooltip": "Für jede Abgabe über dem Abgabelimit wird die maximal erreichbare Punktzahl der Aufgabe verringert. Dieser Abzug steigt linear mit jeder Abgabe, die das Abgabelimit überschreitet."
+                    }
+                },
+                "submissionLimitTitle": "Abgabelimit",
+                "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
+                "submissionLimitWarning": {
+                    "min": "Das Abgabelimit muss zwischen 0 und 500 liegen!",
+                    "max": "Das Abgabelimit muss zwischen 0 und 500 liegen!",
+                    "required": "Das Abgabelimit muss gesetzt sein!"
+                }
             }
         },
         "error": {
