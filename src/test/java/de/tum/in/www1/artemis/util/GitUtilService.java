@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 public class GitUtilService {
 
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
-    private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository");
+    private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository").normalize();
 
     private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 

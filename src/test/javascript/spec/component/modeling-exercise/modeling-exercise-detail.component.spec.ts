@@ -7,14 +7,17 @@ import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockComponent } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import { JhiEventManager } from 'ng-jhipster';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +26,7 @@ describe('ModelingExercise Management Detail Component', () => {
     let comp: ModelingExerciseDetailComponent;
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
     let modelingExerciseService: ModelingExerciseService;
-    let eventManager: JhiEventManager;
+    let eventManager: EventManager;
     let statisticsService: StatisticsService;
 
     const model = { element: { id: '33' } };
@@ -47,7 +50,12 @@ describe('ModelingExercise Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ModelingExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+            ],
         })
             .overrideTemplate(ModelingExerciseDetailComponent, '')
             .compileComponents();
@@ -55,7 +63,7 @@ describe('ModelingExercise Management Detail Component', () => {
         comp = fixture.componentInstance;
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
-        eventManager = fixture.debugElement.injector.get(JhiEventManager);
+        eventManager = fixture.debugElement.injector.get(EventManager);
         fixture.detectChanges();
     });
 

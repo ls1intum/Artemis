@@ -7,7 +7,7 @@ import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exerc
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as chai from 'chai';
 import { MockComponent } from 'ng-mocks';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;

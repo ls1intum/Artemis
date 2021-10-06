@@ -11,7 +11,7 @@ import { routes } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
@@ -39,9 +39,9 @@ describe('ModelingExercise Service', () => {
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined);
-        elemDefault.dueDate = moment();
-        elemDefault.releaseDate = moment();
-        elemDefault.assessmentDueDate = moment();
+        elemDefault.dueDate = dayjs();
+        elemDefault.releaseDate = dayjs();
+        elemDefault.assessmentDueDate = dayjs();
         elemDefault.studentParticipations = [];
         plagiarismResult = new ModelingPlagiarismResult();
         plagiarismResult.exercise = elemDefault;
@@ -94,27 +94,6 @@ describe('ModelingExercise Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should get statistics', fakeAsync(() => {
-        const returnedFromService = {
-            numberModels: 1,
-            numberConflicts: 2,
-            totalConfidence: 3,
-            totalCoverage: 4,
-            uniqueElements: [{ id1: { name: 'statisticsName', apollonId: 'statisticsApollonId', conflict: true } }],
-            models: [{ idModel: { confidence: 23, coverage: 12, conflicts: 3 } }],
-        };
-
-        const expected = { ...returnedFromService };
-        const id = 332;
-        service
-            .getStatistics(id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${id}/statistics` });
         req.flush(returnedFromService);
         tick();
     }));

@@ -235,7 +235,7 @@ public class TextExerciseResource {
         }
 
         if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);

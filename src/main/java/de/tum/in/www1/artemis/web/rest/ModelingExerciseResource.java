@@ -201,8 +201,8 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
+        if ((notificationText != null && modelingExercise.isCourseExercise()) || modelingExercise.isExamExercise()) {
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(modelingExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);
@@ -230,26 +230,6 @@ public class ModelingExerciseResource {
             exercise.setCourse(null);
         }
         return ResponseEntity.ok().body(exercises);
-    }
-
-    /**
-     * GET /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
-     *
-     * @param exerciseId the id of the modelingExercise for which the statistics should be retrieved
-     * @return the json encoded modelingExercise statistics
-     */
-    @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
-        log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        // if (compassService.isSupported(modelingExercise)) {
-        // return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
-        // }
-        // else {
-        return notFound();
-        // }
     }
 
     /**

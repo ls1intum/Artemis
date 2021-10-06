@@ -9,7 +9,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -156,7 +156,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input()
     shouldDisplayAlert = true;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private jhiAlertService: JhiAlertService) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -440,8 +440,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
             const extension = file.name.split('.').pop()!.toLocaleLowerCase();
             if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
                 const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
+                const jhiAlert = this.alertService.error(errorMessage);
+                jhiAlert.message = errorMessage;
             } else {
                 this.fileUploaderService.uploadMarkdownFile(file).then(
                     (res) => {
@@ -453,8 +453,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
                         aceEditor.insert(textToAdd);
                     },
                     (error: Error) => {
-                        const jhiAlert = this.jhiAlertService.error(error.message);
-                        jhiAlert.msg = error.message;
+                        const jhiAlert = this.alertService.error(error.message);
+                        jhiAlert.message = error.message;
                     },
                 );
             }

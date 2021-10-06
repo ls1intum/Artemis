@@ -77,8 +77,8 @@
                 "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
             },
             "problemStatementUpdate": {
-                "showDiff": "show difference",
-                "showNew": "only show new version"
+                "showDiff": "Show Difference",
+                "showNew": "Only show new Version"
             }
         },
         "examScores": {
@@ -94,7 +94,7 @@
             "secondCorrectionColumn": "Second correction",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
-            "averagePointsColumn": "Average",
+            "averagePointsColumn": "Average Points",
             "averageGradeColumn": "Average Grade",
             "averageBonusColumn": "Average Bonus Points",
             "medianGradeColumn": "Median Grade",
@@ -116,8 +116,9 @@
             "exportCSV": "Export Results as CSV",
             "filterForSubmittedExams": "Include only submitted exams",
             "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",
-            "medianColumn": "Median",
-            "standardDeviationColumn": "Standard Deviation",
+            "medianColumn": "Median Points",
+            "standardDeviationColumn": "Standard Point Deviation",
+            "standardGradeDeviationColumn": "Standard Grade Deviation",
             "noOfExams": "Exams",
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
@@ -241,6 +242,8 @@
             }
         },
         "examManagement": {
+            "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
+            "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "editExam": "Edit an existing exam",
