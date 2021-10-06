@@ -2,14 +2,14 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -26,7 +26,7 @@ describe('Create Test Run Modal Component', () => {
     const course = { id: 1 } as Course;
     const exercise = { id: 1, title: 'exampleExercise', type: ExerciseType.TEXT } as Exercise;
     const exerciseGroup1 = { id: 1, exercises: [exercise], title: 'exampleExerciseGroup' } as ExerciseGroup;
-    const exam = { id: 1, course, started: true, startDate: moment(), endDate: moment().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
+    const exam = { id: 1, course, started: true, startDate: dayjs(), endDate: dayjs().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
     const exerciseGroup2 = { id: 2 } as ExerciseGroup;
 
     beforeEach(() => {

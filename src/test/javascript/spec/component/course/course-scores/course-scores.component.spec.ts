@@ -2,6 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -17,19 +18,20 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { round } from 'app/shared/util/utils';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MomentModule } from 'ngx-moment';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -42,7 +44,7 @@ describe('CourseScoresComponent', () => {
 
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
-        releaseDate: moment().add(1, 'day'),
+        releaseDate: dayjs().add(1, 'day'),
     } as Exercise;
 
     const overallPoints = 10 + 10 + 10;
@@ -50,13 +52,13 @@ describe('CourseScoresComponent', () => {
     const textIncludedWith10Points10BonusPoints = {
         title: 'exercise', // testing duplicated titles
         id: 1,
-        dueDate: moment().add(5, 'minutes'),
+        dueDate: dayjs().add(5, 'minutes'),
         type: ExerciseType.TEXT,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxPoints: 10,
         bonusPoints: 10,
     } as Exercise;
-    const sharedDueDate = moment().add(4, 'minutes');
+    const sharedDueDate = dayjs().add(4, 'minutes');
     const quizIncludedWith10Points0BonusPoints = {
         title: 'exercise', // testing duplicated titles
         id: 2,
@@ -78,7 +80,7 @@ describe('CourseScoresComponent', () => {
     const modelingIncludedWith10Points0BonusPoints = {
         title: 'exercise four',
         id: 4,
-        dueDate: moment().add(2, 'minutes'),
+        dueDate: dayjs().add(2, 'minutes'),
         type: ExerciseType.MODELING,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxPoints: 10,
@@ -223,18 +225,18 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.set(ExerciseType.PROGRAMMING, []);
         pointsOfStudent2.set(ExerciseType.TEXT, [Number.NaN]);
 
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MomentModule],
+        return TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(AlertComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
-                MockDirective(JhiSortByDirective),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockTranslateValuesDirective,
             ],
             providers: [
@@ -242,7 +244,7 @@ describe('CourseScoresComponent', () => {
                     provide: ActivatedRoute,
                     useValue: { params: of({ courseId: 1 }) },
                 },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForCourse: () => {
@@ -279,17 +281,17 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should not log error on sentry when correct participant score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).to.not.have.been.called;
     });
 
     it('should log error on sentry when missing participant score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
-        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         findCourseScoresSpy.returns(of(new HttpResponse({ body: [] })));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -297,9 +299,9 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should log error on sentry when wrong points score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
-        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
@@ -317,9 +319,9 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should log error on sentry when wrong score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
-        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 40;
@@ -336,7 +338,7 @@ describe('CourseScoresComponent', () => {
         expect(errorSpy).to.have.been.calledTwice;
     });
     it('should filter and sort exercises', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
 
         expect(component.course).to.equal(course);
@@ -349,15 +351,15 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should make duplicated titles unique', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
         expect(quizIncludedWith10Points0BonusPoints.title).to.equal(`exercise (id=2)`);
         expect(textIncludedWith10Points10BonusPoints.title).to.equal(`exercise (id=1)`);
     });
 
     it('should group exercises and calculate exercise max score', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
 
         expect(component.allParticipationsOfCourse).to.equal(participations);
@@ -366,8 +368,8 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should calculate per student score', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
 
         expect(component.students[0].pointsPerExerciseType).to.deep.equal(pointsOfStudent1);
@@ -384,14 +386,29 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should generate csv correctly', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
         const exportAsCsvStub = sinon.stub(component, 'exportAsCsv');
         component.exportResults();
         const generatedRows = exportAsCsvStub.getCall(0).args[0];
         const user1Row = generatedRows[0];
-        validateUserRow(user1Row, user1.name!, user1.login!, user1.email!, '0', '0%', '10', '100%', '20', '200%', '10', '0%', '40', '133.3%');
+        validateUserRow(
+            user1Row,
+            user1.name!,
+            user1.login!,
+            user1.email!,
+            '0',
+            '0%',
+            '10',
+            '100%',
+            '20',
+            '200%',
+            '10',
+            '0%',
+            '40',
+            round((40 / 30) * 100, 1).toLocaleString() + '%',
+        );
         const user2Row = generatedRows[1];
         validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
@@ -411,9 +428,9 @@ describe('CourseScoresComponent', () => {
             gradeType: GradeType.GRADE,
             gradeSteps: [gradeStep],
         };
-        spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep]);
-        spyOn(gradingSystemService, 'maxGrade').and.returnValue('A');
-        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradeStep);
+        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep]);
+        jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
+        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
         component.calculateGradingScaleInformation(gradingScale);
 

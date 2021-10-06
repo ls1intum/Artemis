@@ -1,19 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { JhiEventManager } from 'ng-jhipster';
 import { Subject, Subscription } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Submission, SubmissionType } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import * as moment from 'moment';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import dayjs from 'dayjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +25,8 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -64,7 +64,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         private modelingAssessmentsService: ModelingAssessmentService,
         private textAssessmentService: TextAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private translate: TranslateService,
         private profileService: ProfileService,
     ) {}
@@ -93,16 +93,21 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
+
                     // Check if requested participationId belongs to the template or solution participation
                     if (this.participationId === templateParticipation?.id) {
                         this.participation = templateParticipation;
                         this.submissions = templateParticipation.submissions!;
+                        // This is needed to access the exercise in the result details
+                        templateParticipation.programmingExercise = this.exercise;
                     } else if (this.participationId === solutionParticipation?.id) {
                         this.participation = solutionParticipation;
                         this.submissions = solutionParticipation.submissions!;
+                        // This is needed to access the exercise in the result details
+                        solutionParticipation.programmingExercise = this.exercise;
                     } else {
                         // Should not happen
                         alert(this.translate.instant('artemisApp.participation.noParticipation'));
@@ -113,7 +118,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }
@@ -174,27 +179,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        const projectKey = (this.exercise as ProgrammingExercise)?.projectKey!.toLowerCase();
-        let repoSlug: string | undefined = undefined;
-        if (this.participation?.type === ParticipationType.PROGRAMMING) {
-            const studentParticipation = this.participation as ProgrammingExerciseStudentParticipation;
-            if (studentParticipation.repositoryUrl) {
-                repoSlug = projectKey + '-' + studentParticipation.participantIdentifier;
-            }
-        } else if (this.participation?.type === ParticipationType.TEMPLATE) {
-            // In case of a test submisson, we need to use the test repository
-            repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-exercise');
-        } else if (this.participation?.type === ParticipationType.SOLUTION) {
-            // In case of a test submisson, we need to use the test repository
-            repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-solution');
-        }
-        if (repoSlug && this.commitHashURLTemplate) {
-            return this.commitHashURLTemplate
-                .replace('{projectKey}', projectKey)
-                .replace('{repoSlug}', repoSlug)
-                .replace('{commitHash}', submission.commitHash ?? '');
-        }
-        return '';
+        return createCommitUrl(this.commitHashURLTemplate, (this.exercise as ProgrammingExercise)?.projectKey, this.participation, submission);
     }
 
     /**

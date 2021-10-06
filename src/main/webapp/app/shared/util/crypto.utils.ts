@@ -1,9 +1,10 @@
-import { createHash } from 'crypto';
+import CryptoJS from 'crypto-js';
 
 /**
  * Generates and returns the hash digest using 'hex' algorithm.
- * @param string The string to which the algorithm will be applied upon.
+ * @param value The string to which the algorithm will be applied upon.
  */
-export function sha1Hex(string: string): string {
-    return createHash('sha1').update(string).digest('hex');
+export function sha1Hex(value: string): string {
+    const hash = CryptoJS.SHA1(value);
+    return CryptoJS.enc.Hex.stringify(hash);
 }

@@ -76,8 +76,8 @@
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
             },
             "problemStatementUpdate": {
-                "showDiff": "zeige Unterschiede",
-                "showNew": "zeige nur neue Version"
+                "showDiff": "Zeige Unterschiede",
+                "showNew": "Zeige nur neue Version"
             }
         },
         "examScores": {
@@ -240,6 +240,8 @@
             }
         },
         "examManagement": {
+            "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
+            "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
             "editExam": "Bearbeite eine existierende Klausur",

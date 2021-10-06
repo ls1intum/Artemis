@@ -1,0 +1,28 @@
+{
+    "files": [
+        {
+            "name": "BubbleSort.java",
+            "path": "programming_exercise_submissions/static_code_analysis/BubbleSort.txt"
+        },
+        {
+            "name": "Context.java",
+            "path": "programming_exercise_submissions/all_successful/Context.txt"
+        },
+        {
+            "name": "Client.java",
+            "path": "programming_exercise_submissions/all_successful/Client.txt"
+        },
+        {
+            "name": "MergeSort.java",
+            "path": "programming_exercise_submissions/all_successful/MergeSort.txt"
+        },
+        {
+            "name": "Policy.java",
+            "path": "programming_exercise_submissions/all_successful/Policy.txt"
+        },
+        {
+            "name": "SortStrategy.java",
+            "path": "programming_exercise_submissions/all_successful/SortStrategy.txt"
+        }
+    ]
+}
