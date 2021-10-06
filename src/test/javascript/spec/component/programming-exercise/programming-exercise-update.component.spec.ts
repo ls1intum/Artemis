@@ -26,11 +26,7 @@ import {
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import {
-    LockRepositoryPolicy,
-    SubmissionPenaltyPolicy,
-    SubmissionPolicyType
-} from 'app/entities/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -201,7 +197,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
             const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
 
-            for (let type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
+            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
                 submissionPolicyTypeField.value = type;
                 submissionPolicyTypeField.dispatchEvent(new Event('change'));
                 fixture.detectChanges();
@@ -225,7 +221,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
 
             const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-            for (let type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
+            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
                 submissionPolicyTypeField.value = type;
                 submissionPolicyTypeField.dispatchEvent(new Event('change'));
                 fixture.detectChanges();
@@ -269,7 +265,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
 
             expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
-            expect(submissionLimitInputField.value).toBe("5");
+            expect(submissionLimitInputField.value).toBe('5');
         }));
 
         it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
@@ -283,8 +279,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
 
             expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
-            expect(submissionLimitInputField.value).toBe("5");
-            expect(submissionLimitExceededPenaltyInputField.value).toBe("50.4");
+            expect(submissionLimitInputField.value).toBe('5');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('50.4');
         }));
 
         it('Should display correct input fields when set policy is broken', fakeAsync(() => {
@@ -296,8 +292,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
             const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
 
-            expect(submissionLimitInputField.value).toBe("0");
-            expect(submissionLimitExceededPenaltyInputField.value).toBe("0");
+            expect(submissionLimitInputField.value).toBe('0');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('0');
         }));
     });
 
