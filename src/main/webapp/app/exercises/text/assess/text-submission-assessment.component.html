@@ -7,7 +7,7 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="!!exercise?.teamMode"
     [isAssessor]="isAssessor"
-    [isAtLeastInstructor]="exercise?.isAtLeastInstructor"
+    [isAtLeastInstructor]="exercise?.isAtLeastInstructor || false"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
