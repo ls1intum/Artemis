@@ -1,9 +1,6 @@
-import { fakeAsync, getTestBed, TestBed, tick} from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import {
-    LockRepositoryPolicy,
-    SubmissionPolicyType
-} from 'app/entities/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { take } from 'rxjs/operators';
@@ -20,9 +17,7 @@ describe('Submission Policy Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [
-                { provide: SubmissionPolicyService, useClass: SubmissionPolicyService },
-            ]
+            providers: [{ provide: SubmissionPolicyService, useClass: SubmissionPolicyService }],
         });
         injector = getTestBed();
         httpMock = injector.get(HttpTestingController);
@@ -38,9 +33,12 @@ describe('Submission Policy Service', () => {
 
     describe('Invoke submission policy service methods', () => {
         it('should add submission policy to exercise', fakeAsync(() => {
-            const addPolicySubscription = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(lockRepositoryPolicy, programmingExercise.id!).pipe(take(1)).subscribe((submissionPolicy) => {
-                expect(submissionPolicy).toBe(lockRepositoryPolicy);
-            });
+            const addPolicySubscription = submissionPolicyService
+                .addSubmissionPolicyToProgrammingExercise(lockRepositoryPolicy, programmingExercise.id!)
+                .pipe(take(1))
+                .subscribe((submissionPolicy) => {
+                    expect(submissionPolicy).toBe(lockRepositoryPolicy);
+                });
             tick();
 
             const request = httpMock.expectOne({ method: 'POST', url: expectedUrl });
@@ -52,12 +50,13 @@ describe('Submission Policy Service', () => {
         }));
 
         it('should update submission policy of exercise', fakeAsync(() => {
-            const addPolicySubscription = submissionPolicyService.updateSubmissionPolicyToProgrammingExercise(lockRepositoryPolicy, programmingExercise.id!)
+            const addPolicySubscription = submissionPolicyService
+                .updateSubmissionPolicyToProgrammingExercise(lockRepositoryPolicy, programmingExercise.id!)
                 .pipe(take(1))
                 .subscribe((submissionPolicy) => {
                     expect(submissionPolicy).toBe(lockRepositoryPolicy);
                 });
-                tick();
+            tick();
 
             const request = httpMock.expectOne({ method: 'PATCH', url: expectedUrl });
             request.flush(lockRepositoryPolicy);
@@ -83,11 +82,9 @@ describe('Submission Policy Service', () => {
         }));
 
         it('should issue delete request', fakeAsync(() => {
-            const removePolicySubscription = submissionPolicyService
-                .removeSubmissionPolicyFromProgrammingExercise(programmingExercise.id!)
-                .subscribe((response) => {
-                    expect(response.ok).toBe(true);
-                });
+            const removePolicySubscription = submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise.id!).subscribe((response) => {
+                expect(response.ok).toBe(true);
+            });
             tick();
 
             const request = httpMock.expectOne({ method: 'DELETE', url: expectedUrl });
@@ -98,11 +95,9 @@ describe('Submission Policy Service', () => {
         }));
 
         it('should issue enable request', fakeAsync(() => {
-            const removePolicySubscription = submissionPolicyService
-                .enableSubmissionPolicyOfProgrammingExercise(programmingExercise.id!)
-                .subscribe((response) => {
-                    expect(response.ok).toBe(true);
-                });
+            const removePolicySubscription = submissionPolicyService.enableSubmissionPolicyOfProgrammingExercise(programmingExercise.id!).subscribe((response) => {
+                expect(response.ok).toBe(true);
+            });
             tick();
 
             const request = httpMock.expectOne({ method: 'PUT', url: expectedUrl + '?activate=true' });
@@ -112,11 +107,9 @@ describe('Submission Policy Service', () => {
         }));
 
         it('should issue disable request', fakeAsync(() => {
-            const removePolicySubscription = submissionPolicyService
-                .disableSubmissionPolicyOfProgrammingExercise(programmingExercise.id!)
-                .subscribe((response) => {
-                    expect(response.ok).toBe(true);
-                });
+            const removePolicySubscription = submissionPolicyService.disableSubmissionPolicyOfProgrammingExercise(programmingExercise.id!).subscribe((response) => {
+                expect(response.ok).toBe(true);
+            });
             tick();
 
             const request = httpMock.expectOne({ method: 'PUT', url: expectedUrl + '?activate=false' });
@@ -125,5 +118,4 @@ describe('Submission Policy Service', () => {
             removePolicySubscription.unsubscribe();
         }));
     });
-
-})
+});
