@@ -41,7 +41,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { ProgrammingExerciseSubmissionPolicyService } from 'app/exercises/programming/manage/services/programming-exercise-submission-policy.service';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
@@ -112,7 +112,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private alertService: AlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
-        private programmingExerciseSubmissionPolicyService: ProgrammingExerciseSubmissionPolicyService,
+        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
         private submissionService: ProgrammingSubmissionService,

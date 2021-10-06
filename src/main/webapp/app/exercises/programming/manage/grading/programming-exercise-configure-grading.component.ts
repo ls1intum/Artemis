@@ -20,7 +20,7 @@ import {
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { ProgrammingExerciseSubmissionPolicyService } from 'app/exercises/programming/manage/services/programming-exercise-submission-policy.service';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 /**
@@ -125,7 +125,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private accountService: AccountService,
         private gradingService: ProgrammingExerciseGradingService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseSubmissionPolicyService: ProgrammingExerciseSubmissionPolicyService,
+        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
         private alertService: AlertService,

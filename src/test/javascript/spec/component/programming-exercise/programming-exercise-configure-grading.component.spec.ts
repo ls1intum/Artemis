@@ -207,7 +207,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseConfigureGradingActionsComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
-                MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
+                ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
                 MockComponent(ProgrammingExerciseTriggerAllButtonComponent),

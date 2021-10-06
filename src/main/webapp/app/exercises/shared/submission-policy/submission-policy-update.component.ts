@@ -120,12 +120,11 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
         this.hadSubmissionPolicyBefore = this.submissionPolicy != undefined;
         this.onSubmissionPolicyTypeChanged(this.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.isNonePolicy) {
-            this.updateSubmissionLimit(this.submissionPolicy?.submissionLimit ?? 0);
+            this.updateSubmissionLimit(this.submissionPolicy!.submissionLimit ?? 0);
             if (this.isSubmissionPenaltyPolicy) {
                 this.updateExceedingPenalty((this.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 0);
             }
         }
-        console.log('SubmissionPolicy: ' + this.programmingExercise + ', ' + this.editable);
     }
 
     updateSubmissionLimit(limit: number) {

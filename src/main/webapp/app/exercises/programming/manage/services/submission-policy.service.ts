@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
-export interface IProgrammingExerciseSubmissionPolicyService {
+export interface ISubmissionPolicyService {
     addSubmissionPolicyToProgrammingExercise: (submissionPolicy: SubmissionPolicy, exerciseId: number) => Observable<SubmissionPolicy>;
     getSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<SubmissionPolicy>;
     removeSubmissionPolicyFromProgrammingExercise: (exerciseId: number) => Observable<HttpResponse<void>>;
@@ -13,7 +13,7 @@ export interface IProgrammingExerciseSubmissionPolicyService {
 }
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseSubmissionPolicyService implements IProgrammingExerciseSubmissionPolicyService {
+export class SubmissionPolicyService implements ISubmissionPolicyService {
     public baseResourceUrl = SERVER_API_URL + '/api/programming-exercises/{exerciseId}/submission-policy';
 
     constructor(private http: HttpClient) {}
