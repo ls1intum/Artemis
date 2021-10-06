@@ -28,7 +28,7 @@ export const metisCourse = {
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
 
-export const metisAnswerPostUser1 = {
+export const metisResolvingAnswerPostUser1 = {
     id: 1,
     author: metisUser1,
     content: 'metisAnswerPostUser3',
@@ -57,7 +57,7 @@ export const metisAnswerPostToCreateUser1 = {
     creationDate: undefined,
 } as AnswerPost;
 
-export const metisAnswerPosts = [metisAnswerPostUser1, metisAnswerPostUser2, metisApprovedAnswerPostTutor];
+export const metisAnswerPosts = [metisResolvingAnswerPostUser1, metisAnswerPostUser2, metisApprovedAnswerPostTutor];
 
 export const metisPostTechSupport = {
     id: 1,
@@ -127,8 +127,10 @@ export const metisPostLectureUser2 = {
     title: 'title',
     content: 'metisPostLectureUser2',
     creationDate: undefined,
-    answers: [metisAnswerPostUser1],
+    answers: [metisResolvingAnswerPostUser1],
 } as Post;
+
+metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
 export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 

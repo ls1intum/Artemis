@@ -29,7 +29,7 @@
     </div>
     <ng-template #notResolved>
         <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
-            <fa-icon class="icon" [icon]="'check'" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+            <fa-icon class="icon notResolved" [icon]="'check'" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
         </div>
     </ng-template>
     <div class="col-auto ps-0">

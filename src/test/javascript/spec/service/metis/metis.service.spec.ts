@@ -18,7 +18,7 @@ import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util'
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    metisAnswerPostUser1,
+    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePostsWithCourseWideContext,
     metisExercise,
@@ -70,7 +70,7 @@ describe('Metis Service', () => {
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
-        answerPost = metisAnswerPostUser1;
+        answerPost = metisResolvingAnswerPostUser1;
         reaction = metisReactionUser2;
         course = metisCourse;
     });

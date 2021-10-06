@@ -29,7 +29,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import dayjs from 'dayjs';
 import {
-    metisAnswerPostUser1,
+    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePosts,
     metisCoursePostsWithCourseWideContext,
@@ -319,7 +319,7 @@ describe('CourseDiscussionComponent', () => {
             post3 = metisPostLectureUser1;
             post3.creationDate = dayjs().subtract(2, 'day');
             post3.reactions = [metisUpVoteReactionUser1];
-            post3.answers = [metisAnswerPostUser1];
+            post3.answers = [metisResolvingAnswerPostUser1];
             post3.displayPriority = DisplayPriority.NONE;
 
             post4 = metisPostLectureUser2;
