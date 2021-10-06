@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { SinonStub, spy, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -15,7 +15,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
@@ -73,6 +73,7 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -101,7 +102,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let repositoryFileService: CodeEditorRepositoryFileService;
 
     let updateAfterComplaintStub: SinonStub;
-    let findByResultIdStub: SinonStub;
+    let findBySubmissionIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
@@ -191,13 +192,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
+                ExtensionPointDirective,
             ],
             providers: [
                 ProgrammingAssessmentManualResultService,
                 ComplaintService,
                 BuildLogService,
                 AccountService,
-                JhiAlertService,
+                AlertService,
                 ResultService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
@@ -231,7 +233,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
                     of(submission).pipe(delay(100)),
                 );
-                findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
+                findBySubmissionIdStub = stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
                     programmingSubmissionService,
@@ -245,7 +247,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(fakeAsync(() => {
         updateAfterComplaintStub.restore();
-        findByResultIdStub.restore();
+        findBySubmissionIdStub.restore();
         lockAndGetProgrammingSubmissionParticipationStub.restore();
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.restore();
     }));
@@ -261,7 +263,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(getIdentityStub.calledOnce).to.be.true;
         expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.calledOnce).to.be.true;
+        expect(findBySubmissionIdStub.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
         fixture.detectChanges();
@@ -286,14 +288,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
     }));
 
-    it('should not show complaint when result does not have it', fakeAsync(() => {
-        result.hasComplaint = false;
+    it('should not show complaint when participation contains no complaint', fakeAsync(() => {
+        findBySubmissionIdStub.returns(of({ body: undefined }));
         comp.ngOnInit();
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
         expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.notCalled).to.be.true;
+        expect(findBySubmissionIdStub.calledOnce).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
 

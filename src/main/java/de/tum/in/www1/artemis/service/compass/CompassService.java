@@ -7,8 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.JsonObject;
-
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -20,7 +18,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.controller.FeedbackSelector;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
-import de.tum.in.www1.artemis.service.compass.statistics.CompassStatistics;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
@@ -182,27 +179,5 @@ public class CompassService {
         }
 
         return isSupported(optionalModelingExercise.get());
-    }
-
-    /**
-     * format: uniqueElements [{id} name apollonId conflicts] numberModels numberConflicts totalConfidence totalCoverage models [{id} confidence coverage conflicts]
-     *
-     * @param exerciseId The ID of the exercise for which to collect statistics
-     * @return statistics about the UML model
-     */
-    public JsonObject getStatistics(long exerciseId) {
-        if (!isSupported(exerciseId)) {
-            return new JsonObject();
-        }
-        return new CompassStatistics().getStatistics();
-    }
-
-    /**
-     * Print statistics of the modeling exercise with the given id for internal analysis.
-     *
-     * @param exerciseId the id of the modeling exercise for which the statistic should be printed
-     */
-    public void printStatistic(Long exerciseId) {
-        new CompassStatistics().getStatistics();
     }
 }

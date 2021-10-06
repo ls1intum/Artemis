@@ -29,12 +29,12 @@ import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -45,6 +45,8 @@ import { MockComponent } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,6 +62,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintStub: SinonStub;
     let router: any;
     let submissionService: SubmissionService;
+    let exampleSubmissionService: ExampleSubmissionService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -89,6 +92,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 router = TestBed.inject(Router);
                 submissionService = TestBed.inject(SubmissionService);
                 mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
+                exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
                 fixture.detectChanges();
@@ -101,7 +105,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     describe('ngOnInit tests', () => {
         it('ngOnInit', fakeAsync(() => {
             modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
-            complaintStub = stub(complaintService, 'findByResultId');
+            complaintStub = stub(complaintService, 'findBySubmissionId');
             const submission = {
                 id: 1,
                 submitted: true,
@@ -289,7 +293,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should try to submit assessment', fakeAsync(() => {
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.assessmentDueDate = moment().subtract(2, 'days');
+        component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
 
         // make sure feedback is valid
         const feedback = new Feedback();
@@ -468,5 +472,24 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.assessNext();
             expect(fake).to.have.been.calledOnce;
         }));
+    });
+    it('should invoke import example submission', () => {
+        const course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.id = 1;
+        component.submission = {
+            id: 2,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+        } as ModelingSubmission;
+
+        const importStub = sinon.stub(exampleSubmissionService, 'import');
+        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
+
+        component.importStudentSubmissionAsExampleSubmission();
+
+        expect(importStub).to.have.calledOnce;
+        expect(importStub).to.have.been.calledWith(component.submission.id, component.modelingExercise!.id);
     });
 });

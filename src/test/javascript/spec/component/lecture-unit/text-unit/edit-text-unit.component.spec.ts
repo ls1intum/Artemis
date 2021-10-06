@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
@@ -11,11 +11,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlert, JhiAlertService } from 'ng-jhipster';
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { Alert, AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +43,7 @@ describe('EditTextUnitComponent', () => {
             declarations: [TextUnitFormStubComponent, LectureUnitLayoutStubComponent, EditTextUnitComponent],
             providers: [
                 MockProvider(TextUnitService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -71,8 +71,8 @@ describe('EditTextUnitComponent', () => {
             .then(() => {
                 editTextUnitComponentFixture = TestBed.createComponent(EditTextUnitComponent);
                 editTextUnitComponent = editTextUnitComponentFixture.componentInstance;
-                const jhiAlertService = TestBed.inject(JhiAlertService);
-                sinon.stub(jhiAlertService, 'error').returns({ msg: '' } as JhiAlert);
+                const alertService = TestBed.inject(AlertService);
+                sinon.stub(alertService, 'error').returns({ message: '' } as Alert);
             });
     });
 
@@ -91,7 +91,7 @@ describe('EditTextUnitComponent', () => {
         const originalTextUnit: TextUnit = new TextUnit();
         originalTextUnit.id = 1;
         originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = moment({ years: 2010, months: 3, date: 5 });
+        originalTextUnit.releaseDate = dayjs().year(2010).month(3).date(5);
         originalTextUnit.content = 'Lorem Ipsum';
 
         const response: HttpResponse<TextUnit> = new HttpResponse({
@@ -120,7 +120,7 @@ describe('EditTextUnitComponent', () => {
         const originalTextUnit: TextUnit = new TextUnit();
         originalTextUnit.id = 1;
         originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = moment({ years: 2010, months: 3, date: 5 });
+        originalTextUnit.releaseDate = dayjs().year(2010).month(3).date(5);
         originalTextUnit.content = 'Lorem Ipsum';
 
         const findByidResponse: HttpResponse<TextUnit> = new HttpResponse({
@@ -132,7 +132,7 @@ describe('EditTextUnitComponent', () => {
 
         const formDate: TextUnitFormData = {
             name: 'CHANGED',
-            releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
         const updatedTextUnit: TextUnit = new TextUnit();

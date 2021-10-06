@@ -1,12 +1,12 @@
 import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import * as chai from 'chai';
@@ -31,9 +31,9 @@ class ParticipantScoresTableContainerStubComponent {
     @Input()
     avgRatedScore = 0;
     @Input()
-    avgGrade?: String;
+    avgGrade?: string;
     @Input()
-    avgRatedGrade?: String;
+    avgRatedGrade?: string;
     @Input()
     isBonus = false;
     @Output()
@@ -49,7 +49,7 @@ describe('CourseParticipantScores', () => {
             declarations: [CourseParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertComponent)],
             providers: [
                 MockProvider(ParticipantScoresService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(GradingSystemService),
                 {
                     provide: ActivatedRoute,

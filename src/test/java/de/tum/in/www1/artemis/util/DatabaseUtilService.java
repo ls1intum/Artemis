@@ -242,6 +242,9 @@ public class DatabaseUtilService {
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    @Autowired
+    private RatingRepository ratingRepo;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -781,6 +784,7 @@ public class DatabaseUtilService {
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
+        post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
@@ -1547,6 +1551,13 @@ public class DatabaseUtilService {
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
+    }
+
+    public Rating addRatingToResult(Result result, int score) {
+        var rating = new Rating();
+        rating.setResult(result);
+        rating.setRating(score);
+        return ratingRepo.save(rating);
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
@@ -2999,6 +3010,7 @@ public class DatabaseUtilService {
         }
         else {
             submission = ModelFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
+            saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
@@ -3422,6 +3434,21 @@ public class DatabaseUtilService {
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
         search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        if ("".equals(searchTerm)) {
+            search.setSortingOrder(SortingOrder.ASCENDING);
+        }
+        else {
+            search.setSortingOrder(SortingOrder.DESCENDING);
+        }
+        return search;
+    }
+
+    public PageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(StudentParticipation.StudentParticipationSearchColumn.ID.name());
         if ("".equals(searchTerm)) {
             search.setSortingOrder(SortingOrder.ASCENDING);
         }
