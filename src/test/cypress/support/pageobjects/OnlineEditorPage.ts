@@ -87,7 +87,7 @@ export class OnlineEditorPage {
         cy.get('#submit_button').click();
         this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should('be.visible');
         this.getBuildOutput().contains(buildingAndTesting).should('be.visible');
-        this.getResultPanel().contains('GRADED', { timeout: 80000 }).should('be.visible');
+        this.getResultPanel().contains('GRADED', { timeout: 140000 }).should('be.visible');
     }
 
     /**
@@ -95,9 +95,9 @@ export class OnlineEditorPage {
      * @param fileName the name of the new file
      */
     createFileInRootPackage(fileName: string) {
-        cy.intercept('POST', '/api/repository/*/**').as('createFile');
-        cy.get('.file-icons').children('button').first().click();
-        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).type('{enter}');
+        cy.intercept(POST, BASE_API + 'repository/*/**').as('createFile');
+        cy.get('.file-icons').children('button').first().click().wait(500);
+        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@createFile');
         this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
     }

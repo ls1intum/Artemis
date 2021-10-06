@@ -337,7 +337,7 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.getResultEtaInMs().subscribe((eta) => (resultEta = eta));
 
         // With 340 submissions, the eta should now have increased.
-        expect(resultEta).to.equal(2000 * 60 + 3 * 4000 * 60);
+        expect(resultEta).to.equal(2000 * 60 + 3 * 1000 * 60);
     });
 
     it('should only unsubscribe if no other participations use the topic', () => {
