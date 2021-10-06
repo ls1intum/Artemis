@@ -1,4 +1,7 @@
-import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import {
+    GradingInstructionsDetailsComponent,
+    GradingInstructionTableColumn,
+} from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -188,63 +191,39 @@ describe('Grading Instructions Management Component', () => {
         expect(component.exercise.gradingInstructions).toEqual(markdownText);
     });
 
-    it('should update credits for grading instruction', () => {
+    it('should update properties for grading instruction', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
-        const event = { target: { value: 5 } };
         const instruction = gradingInstruction;
         const criterion = gradingCriterion;
 
-        component.setCredits(event, instruction, criterion);
+        const eventCredit = { target: { value: 5 } };
+        component.updateGradingInstructionProperty(eventCredit, instruction, criterion, GradingInstructionTableColumn.CREDITS);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits).toEqual(event.target.value);
-    });
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits).toEqual(eventCredit.target.value);
 
-    it('should update grading scale for grading instruction', () => {
-        component.exercise.gradingCriteria = [gradingCriterion];
-        const event = { target: { value: 'changed grading scale' } };
-        const instruction = gradingInstruction;
-        const criterion = gradingCriterion;
-
-        component.setGradingScale(event, instruction, criterion);
+        const eventGradingScale = { target: { value: 'changed grading scale' } };
+        component.updateGradingInstructionProperty(eventGradingScale, instruction, criterion, GradingInstructionTableColumn.SCALE);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale).toEqual(event.target.value);
-    });
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale).toEqual(eventGradingScale.target.value);
 
-    it('should update instruction description for grading instruction', () => {
-        component.exercise.gradingCriteria = [gradingCriterion];
-        const event = { target: { value: 'changed instruction description' } };
-        const instruction = gradingInstruction;
-        const criterion = gradingCriterion;
-
-        component.setGradingInstructionDescription(event, instruction, criterion);
+        const eventDescription = { target: { value: 'changed instruction description' } };
+        component.updateGradingInstructionProperty(eventDescription, instruction, criterion, GradingInstructionTableColumn.DESCRIPTION);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(event.target.value);
-    });
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(eventDescription.target.value);
 
-    it('should update feedback for grading instruction', () => {
-        component.exercise.gradingCriteria = [gradingCriterion];
-        const event = { target: { value: 'changed feedback' } };
-        const instruction = gradingInstruction;
-        const criterion = gradingCriterion;
-
-        component.setFeedback(event, instruction, criterion);
+        const eventFeedback = { target: { value: 'changed feedback' } };
+        component.updateGradingInstructionProperty(eventFeedback, instruction, criterion, GradingInstructionTableColumn.FEEDBACK);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback).toEqual(event.target.value);
-    });
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback).toEqual(eventFeedback.target.value);
 
-    it('should update usage count for grading instruction', () => {
-        component.exercise.gradingCriteria = [gradingCriterion];
-        const event = { target: { value: 2 } };
-        const instruction = gradingInstruction;
-        const criterion = gradingCriterion;
-
-        component.setUsageCount(event, instruction, criterion);
+        const eventUsageCount = { target: { value: 2 } };
+        component.updateGradingInstructionProperty(eventUsageCount, instruction, criterion, GradingInstructionTableColumn.LIMIT);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount).toEqual(event.target.value);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount).toEqual(eventUsageCount.target.value);
     });
 });

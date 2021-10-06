@@ -13,6 +13,14 @@ import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainComman
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 
+export enum GradingInstructionTableColumn {
+    CREDITS = 'CREDITS',
+    SCALE = 'SCALE',
+    DESCRIPTION = 'DESCRIPTION',
+    FEEDBACK = 'FEEDBACK',
+    LIMIT = 'LIMIT',
+}
+
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -41,6 +49,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     usageCountCommand = new UsageCountCommand();
 
     showEditMode: boolean;
+    readonly gradingInstructionTableColumn = GradingInstructionTableColumn;
 
     domainCommands: DomainCommand[] = [
         this.creditsCommand,
@@ -507,9 +516,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     /**
      * Switches edit mode
+     * Updates markdown text between mode switches
      */
     switchMode() {
         this.showEditMode = !this.showEditMode;
+        this.markdownEditorText = this.generateMarkdown();
     }
 
     /**
@@ -525,57 +536,30 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * Updates credits of the GradingInstruction.
+     * Updates changed properties of the GradingInstruction.
      *
-     * @param gradingInstruction needs to be updated
-     * @param criterion includes instruction needs to be update
+     * @param gradingInstruction that needs to be updated
+     * @param criterion that includes the instruction needs to be updated
+     * @param column that is updated
      */
-    setCredits($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
-        instruction.credits = $event.target.value;
-        this.updateGradingInstruction(instruction, criterion);
-    }
-
-    /**
-     * Updates gradingScale of the GradingInstruction.
-     *
-     * @param gradingInstruction needs to be updated
-     * @param criterion includes instruction needs to be update
-     */
-    setGradingScale($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
-        instruction.gradingScale = $event.target.value;
-        this.updateGradingInstruction(instruction, criterion);
-    }
-
-    /**
-     * Updates instructionDescription of the GradingInstruction.
-     *
-     * @param gradingInstruction needs to be updated
-     * @param criterion includes instruction needs to be update
-     */
-    setGradingInstructionDescription($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
-        instruction.instructionDescription = $event.target.value;
-        this.updateGradingInstruction(instruction, criterion);
-    }
-
-    /**
-     * Updates feedback of the GradingInstruction.
-     *
-     * @param gradingInstruction needs to be updated
-     * @param criterion includes instruction needs to be update
-     */
-    setFeedback($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
-        instruction.feedback = $event.target.value;
-        this.updateGradingInstruction(instruction, criterion);
-    }
-
-    /**
-     * Updates usageCount of the GradingInstruction.
-     *
-     * @param gradingInstruction needs to be updated
-     * @param criterion includes instruction needs to be update
-     */
-    setUsageCount($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
-        instruction.usageCount = $event.target.value;
+    updateGradingInstructionProperty($event: any, instruction: GradingInstruction, criterion: GradingCriterion, column: GradingInstructionTableColumn) {
+        switch (column) {
+            case GradingInstructionTableColumn.CREDITS:
+                instruction.credits = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.SCALE:
+                instruction.gradingScale = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.DESCRIPTION:
+                instruction.instructionDescription = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.FEEDBACK:
+                instruction.feedback = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.LIMIT:
+                instruction.usageCount = $event.target.value;
+                break;
+        }
         this.updateGradingInstruction(instruction, criterion);
     }
 }

@@ -73,7 +73,7 @@
                                         [(ngModel)]="instruction.credits"
                                         type="number"
                                         step="0.1"
-                                        (change)="setCredits($event, instruction, criterion)"
+                                        (change)="updateGradingInstructionProperty($event, instruction, criterion, gradingInstructionTableColumn.CREDITS)"
                                     />
                                 </td>
                                 <td>
@@ -81,7 +81,7 @@
                                         class="form-control input-lg"
                                         [(ngModel)]="instruction.gradingScale"
                                         type="text"
-                                        (change)="setGradingScale($event, instruction, criterion)"
+                                        (change)="updateGradingInstructionProperty($event, instruction, criterion, gradingInstructionTableColumn.SCALE)"
                                     />
                                 </td>
                                 <td>
@@ -89,11 +89,16 @@
                                         class="form-control input-lg"
                                         [(ngModel)]="instruction.instructionDescription"
                                         type="text"
-                                        (change)="setGradingInstructionDescription($event, instruction, criterion)"
+                                        (change)="updateGradingInstructionProperty($event, instruction, criterion, gradingInstructionTableColumn.DESCRIPTION)"
                                     />
                                 </td>
                                 <td>
-                                    <input class="form-control input-lg" [(ngModel)]="instruction.feedback" type="text" (change)="setFeedback($event, instruction, criterion)" />
+                                    <input
+                                        class="form-control input-lg"
+                                        [(ngModel)]="instruction.feedback"
+                                        type="text"
+                                        (change)="updateGradingInstructionProperty($event, instruction, criterion, gradingInstructionTableColumn.FEEDBACK)"
+                                    />
                                 </td>
                                 <td>
                                     <input
@@ -102,7 +107,7 @@
                                         type="number"
                                         step="1"
                                         min="0"
-                                        (change)="setUsageCount($event, instruction, criterion)"
+                                        (change)="updateGradingInstructionProperty($event, instruction, criterion, gradingInstructionTableColumn.LIMIT)"
                                     />
                                 </td>
                                 <td>
