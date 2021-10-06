@@ -64,7 +64,7 @@ public class AnswerPostService extends PostingService {
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        Course course = preCheckUserAndCourse(user, courseId);
+        preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
         // use post from database rather than user input

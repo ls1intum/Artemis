@@ -35,7 +35,7 @@ export class AnswerPostHeaderComponent extends PostingsHeaderDirective<AnswerPos
     toggleResolvesPost(): void {
         if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
             this.posting.resolvesPost = !this.posting.resolvesPost;
-            this.metisService.updateAnswerPost(this.posting).subscribe(() => {});
+            this.metisService.updateAnswerPost(this.posting).subscribe();
         }
     }
 }
