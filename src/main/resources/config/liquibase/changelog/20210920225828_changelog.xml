@@ -10,13 +10,13 @@
             -->
             CREATE TEMPORARY TABLE feedbacks_to_migrate
             SELECT
-                f.reference AS text,
+                f.reference COLLATE utf8mb4_unicode_ci AS text,
                 POSITION(f.reference IN s.text) AS start_index,
                 POSITION(f.reference IN s.text) + LENGTH(f.reference) AS end_index,
                 r.submission_id,
-                'MANUAL' AS TYPE,
+                'MANUAL' COLLATE utf8mb4_unicode_ci AS TYPE,
                 f.id AS feedback_id,
-                SHA1(CONCAT(r.submission_id, ';', POSITION(f.reference IN s.text), '-', POSITION(f.reference IN s.text) + LENGTH(f.reference), ';', f.reference)) AS tb_id
+                SHA1(CONCAT(r.submission_id, ';', POSITION(f.reference IN s.text), '-', POSITION(f.reference IN s.text) + LENGTH(f.reference), ';', f.reference)) COLLATE utf8mb4_unicode_ci AS tb_id
             FROM
                 exercise e
                 INNER JOIN participation p ON e.id = p.exercise_id
@@ -52,17 +52,21 @@
                 AND s.participation_id IS NULL
                 AND length(f.reference) > 255;
 
-            <!--This query creates all missing text blocks-->
+            <!--This query creates all missing text blocks and makes sure to NOT create duplicates-->
             INSERT INTO text_block (id, text, start_index, end_index, submission_id, TYPE)
             SELECT
-                ftm.tb_id,
+                distinct ftm.tb_id,
                 ftm.text,
                 ftm.start_index,
                 ftm.end_index,
                 ftm.submission_id,
                 ftm.type
             FROM
-                feedbacks_to_migrate ftm;
+                feedbacks_to_migrate ftm
+            WHERE
+                ftm.tb_id NOT IN (
+                    SELECT id FROM text_block
+                );
 
             <!--This query updates all feedback references-->
             UPDATE
