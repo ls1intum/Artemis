@@ -6,39 +6,39 @@
 
 <div class="modal-body">
     <div class="mb-3">
-        <span class="badge bg-primary hand" (click)="threadStateFilter = undefined">
-            <fa-icon *ngIf="threadStateFilter === undefined" icon="check"></fa-icon>
+        <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
+            <fa-icon *ngIf="selectedThreadState == undefined" icon="check"></fa-icon>
             All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll }}</span>
         </span>
 
-        <span class="badge bg-success hand" (click)="threadStateFilter = ThreadState.Runnable">
-            <fa-icon *ngIf="threadStateFilter === ThreadState.Runnable" icon="check"></fa-icon>
+        <span class="badge bg-success hand" (click)="selectedThreadState = ThreadState.Runnable">
+            <fa-icon *ngIf="selectedThreadState === ThreadState.Runnable" icon="check"></fa-icon>
             Runnable&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpRunnable }}</span>
         </span>
 
-        <span class="badge bg-info hand" (click)="threadStateFilter = ThreadState.Waiting">
-            <fa-icon *ngIf="threadStateFilter === ThreadState.Waiting" icon="check"></fa-icon>
+        <span class="badge bg-info hand" (click)="selectedThreadState = ThreadState.Waiting">
+            <fa-icon *ngIf="selectedThreadState === ThreadState.Waiting" icon="check"></fa-icon>
             Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpWaiting }}</span>
         </span>
 
-        <span class="badge bg-warning hand" (click)="threadStateFilter = ThreadState.TimedWaiting">
-            <fa-icon *ngIf="threadStateFilter === ThreadState.TimedWaiting" icon="check"></fa-icon>
+        <span class="badge bg-warning hand" (click)="selectedThreadState = ThreadState.TimedWaiting">
+            <fa-icon *ngIf="selectedThreadState === ThreadState.TimedWaiting" icon="check"></fa-icon>
             Timed Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpTimedWaiting }}</span>
         </span>
 
-        <span class="badge bg-danger hand" (click)="threadStateFilter = ThreadState.Blocked">
-            <fa-icon *ngIf="threadStateFilter === ThreadState.Blocked" icon="check"></fa-icon>
+        <span class="badge bg-danger hand" (click)="selectedThreadState = ThreadState.Blocked">
+            <fa-icon *ngIf="selectedThreadState === ThreadState.Blocked" icon="check"></fa-icon>
             Blocked&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpBlocked }}</span>
         </span>
     </div>
 
     <div class="mt-2">&nbsp;</div>
-    Filter
-    <input type="text" [(ngModel)]="threadStateFilter" class="form-control" />
+    {{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads.length }} {{ 'metrics.matches' | artemisTranslate }}
+    <input type="text" (keyup)="refreshFilteredThreads()" [(ngModel)]="threadFilter" class="form-control" />
 
-    <div class="pad" *ngFor="let thread of getThreads()">
+    <div class="pad" *ngFor="let thread of filteredThreads">
         <h6>
-            <span class="badge" [ngClass]="getBadgeClass(thread.threadState)">{{ thread.threadState }}</span>
+            <span class="badge" [ngClass]="getBgClass(thread.threadState)">{{ thread.threadState }}</span>
 
             &nbsp;{{ thread.threadName }} (ID {{ thread.threadId }})
 

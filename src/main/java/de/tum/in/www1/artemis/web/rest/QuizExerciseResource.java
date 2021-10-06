@@ -192,7 +192,7 @@ public class QuizExerciseResource {
         if (notificationText != null && quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
