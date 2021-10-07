@@ -104,7 +104,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
         });
         component.confirm();
         expect(metisServiceCreateSpy).to.be.have.been.calledWith({ ...component.posting, content: newContent });
-        expect(component.posting.creationDate).to.not.be.undefined;
         tick();
         expect(component.isLoading).to.equal(false);
         expect(onCreateSpy).to.have.been.called;

@@ -112,8 +112,13 @@ public class GroupNotificationFactory {
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
-            notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
-            notification.setPriority(NotificationPriority.HIGH);
+            if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
+                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
+                notification.setPriority(NotificationPriority.HIGH);
+            }
+            else if (exercise instanceof ProgrammingExercise) {
+                notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+            }
         }
         // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_CREATED) {
