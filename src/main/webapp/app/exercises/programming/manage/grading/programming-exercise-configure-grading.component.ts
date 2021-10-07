@@ -164,6 +164,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                             this.selectTab('test-cases');
                         }
                         this.hadPolicyBefore = !this.programmingExercise.submissionPolicy;
+                        this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
                         this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
                     }),
                     catchError(() => of(null)),

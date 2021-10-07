@@ -9,7 +9,12 @@
                 <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
                     <b>Test Cases</b>
                 </div>
-                <div class="tab-item code-analysis" *ngIf="programmingExercise.staticCodeAnalysisEnabled" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
+                <div
+                    class="tab-item code-analysis"
+                    *ngIf="programmingExercise.staticCodeAnalysisEnabled"
+                    (click)="selectTab('code-analysis')"
+                    [ngClass]="activeTab == 'code-analysis' ? 'active' : ''"
+                >
                     <b>Code Analysis</b>
                 </div>
                 <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab == 'submission-policy' ? 'active' : ''">

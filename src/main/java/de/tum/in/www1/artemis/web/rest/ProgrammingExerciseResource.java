@@ -509,6 +509,11 @@ public class ProgrammingExerciseResource {
                     "staticCodeAnalysisCannotChange");
         }
 
+        // If the new exercise has a submission policy, it must be validated.
+        if (newExercise.getSubmissionPolicy() != null) {
+            submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
+        }
+
         // Check if the user has the rights to access the original programming exercise
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);

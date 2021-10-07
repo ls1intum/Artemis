@@ -291,11 +291,11 @@
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
-                "updateButton":  {
+                "updateButton": {
                     "title": "Update",
                     "tooltip": "Saves the changes to the submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might (un)lock a lot of affected participation repositories!"
                 },
-                "addButton":  {
+                "addButton": {
                     "title": "Add",
                     "tooltip": "Adds the configured submission policy to this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
                 },

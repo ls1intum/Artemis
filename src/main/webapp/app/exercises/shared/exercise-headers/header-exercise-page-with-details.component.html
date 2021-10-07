@@ -78,12 +78,26 @@
             </div>
             <div class="row" *ngIf="submissionPolicy != undefined">
                 <div class="col-6">
-                    <h5>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}: </h5>
+                    <h5>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</h5>
                 </div>
                 <div class="col-6">
                     <h5>
-                        {{ submissionPolicy.submissionLimit + (submissionPolicy.exceedingPenalty != undefined ? ' (' + ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate) + ': ' + submissionPolicy.exceedingPenalty + '%' + ')' : '')}}
-                        <fa-icon icon="question-circle" ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}" placement="top"></fa-icon>
+                        {{
+                            submissionPolicy.submissionLimit +
+                                (submissionPolicy.exceedingPenalty != undefined
+                                    ? ' (' +
+                                      ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate) +
+                                      ': ' +
+                                      submissionPolicy.exceedingPenalty +
+                                      '%' +
+                                      ')'
+                                    : '')
+                        }}
+                        <fa-icon
+                            icon="question-circle"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
+                            placement="top"
+                        ></fa-icon>
                     </h5>
                 </div>
             </div>

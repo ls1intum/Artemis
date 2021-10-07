@@ -291,11 +291,11 @@
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",
-                "updateButton":  {
+                "updateButton": {
                     "title": "Speichern",
                     "tooltip": "Speichert die Änderungen an der Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories betroffen sind!"
                 },
-                "addButton":  {
+                "addButton": {
                     "title": "Hinzufügen",
                     "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
                 },
