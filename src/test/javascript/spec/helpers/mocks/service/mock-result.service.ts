@@ -9,6 +9,7 @@ export class MockResultService implements IResultService {
     find = (id: number) => empty();
     getFeedbackDetailsForResult = (participationId: number, resultId: number) => empty();
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => empty();
+    getResultsForExerciseWithPointsPerGradingCriterion = (exerciseId: number, req: any) => empty();
     update = (result: Result) => of();
     getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
         return of();

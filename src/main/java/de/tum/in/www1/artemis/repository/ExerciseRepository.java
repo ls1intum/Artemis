@@ -387,6 +387,20 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     /**
+     * Fetches an exercise together with its list of grading criteria.
+     *
+     * @param exerciseId of the exercise which should be fetched.
+     * @return an exercise with the given id, if one could be found.
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
+    Optional<Exercise> findWithEagerGradingCriteriaById(Long exerciseId);
+
+    @NotNull
+    default Exercise findWithEagerGradingCriteriaByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
+        return findWithEagerGradingCriteriaById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
+    /**
      * Get one exercise by exerciseId with its categories and its team assignment config
      *
      * @param exerciseId the exerciseId of the entity

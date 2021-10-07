@@ -630,8 +630,8 @@ public class ModelFactory {
 
     public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
         var instructions = new ArrayList<GradingInstruction>();
-        var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
+            var exampleInstruction1 = new GradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);
             exampleInstruction1.setCredits(1);
             exampleInstruction1.setGradingScale("good test");

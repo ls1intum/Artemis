@@ -5,9 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -36,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -83,6 +82,8 @@ public class ResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
+    private final AssessmentService assessmentService;
+
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -97,7 +98,7 @@ public class ResultResource {
             ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseService exerciseService, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, AssessmentService assessmentService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
@@ -115,6 +116,7 @@ public class ResultResource {
         this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.assessmentService = assessmentService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -224,16 +226,60 @@ public class ResultResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        List<Result> results = new ArrayList<>();
-        var isExamMode = exercise.isExamExercise();
-
-        List<StudentParticipation> participations;
-        if (isExamMode) {
+        final List<StudentParticipation> participations;
+        if (exercise.isExamExercise()) {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         }
+
+        List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
+        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
+
+        return ResponseEntity.ok().body(results);
+    }
+
+    @GetMapping(value = "exercises/{exerciseId}/resultsWithPointsPerCriterion")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId) {
+        final Exercise exercise = exerciseRepository.findWithEagerGradingCriteriaByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        final List<StudentParticipation> participations;
+        if (exercise.isExamExercise()) {
+            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacksIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exerciseId);
+        }
+
+        final List<Result> results = resultsForExercise(exercise, participations, false);
+        final List<ResultWithPointsPerGradingCriterionDTO> resultsScored = results.stream().map(result -> {
+            if (exercise.getGradingCriteria().isEmpty()) {
+                return new ResultWithPointsPerGradingCriterionDTO(result, null);
+            }
+            else {
+                final Map<GradingCriterion, Double> points = assessmentService.calculatePointsPerGradingCriterion(exercise.getGradingCriteria(), result);
+                final Map<Long, Double> pointsByCriterion = new HashMap<>(points.size());
+                points.forEach((criterion, criterionPoints) -> pointsByCriterion.put(criterion.getId(), criterionPoints));
+                return new ResultWithPointsPerGradingCriterionDTO(result, pointsByCriterion);
+            }
+        }).toList();
+
+        return ResponseEntity.ok().body(resultsScored);
+    }
+
+    /**
+     * Get the successful results for an exercise, ordered ascending by build completion date.
+     *
+     * @param exercise which the results belong to.
+     * @param withSubmissions true, if each result should also contain the submissions.
+     * @return a list of results as described above for the given exercise.
+     */
+    private List<Result> resultsForExercise(Exercise exercise, List<StudentParticipation> participations, boolean withSubmissions) {
+        final List<Result> results = new ArrayList<>();
+
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
@@ -252,10 +298,8 @@ public class ResultResource {
             results.add(relevantSubmissionWithResult.getLatestResult());
         }
 
-        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
-
         if (withSubmissions) {
-            results = results.stream().filter(result -> result.getSubmission() != null && result.getSubmission().isSubmitted()).collect(Collectors.toList());
+            results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
 
         // remove unnecessary elements in the json response
@@ -265,7 +309,7 @@ public class ResultResource {
             result.getParticipation().setExercise(null);
         });
 
-        return ResponseEntity.ok().body(results);
+        return results;
     }
 
     /**
