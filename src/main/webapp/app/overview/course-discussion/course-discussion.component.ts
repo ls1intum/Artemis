@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { map, Subscription } from 'rxjs';
+import { combineLatest, map, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -58,15 +58,21 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
+        private router: Router,
     ) {}
 
     /**
-     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects to defaults,
+     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
-        this.paramSubscription = this.activatedRoute.parent!.params.subscribe((params) => {
-            const courseId = parseInt(params['courseId'], 10);
+        this.paramSubscription = combineLatest(this.activatedRoute.parent!.params, this.activatedRoute.parent!.queryParams, (params: Params, queryParams: Params) => ({
+            params,
+            queryParams,
+        })).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+            const { params, queryParams } = routeParams;
+            const courseId = params.courseId;
+            this.searchText = queryParams.searchText;
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
@@ -78,6 +84,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
+                    if (this.searchText) {
+                        this.onSearch(true);
+                    }
                 }
             });
         });
@@ -124,10 +133,18 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     /**
      * on changing the search text via input, the metis service is invoked to deliver the posts for the currently set context,
      * the sort will be done on the currently visible posts, so the forceReload flag is set to false
+     *
+     * @param forceUpdate passed to metisService method call; if true, forces a re-fetch even if filter property did not change
      */
-    onSearch(): void {
+    onSearch(forceUpdate = false): void {
         this.currentPostContentFilter.searchText = this.searchText;
-        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+        this.router.navigate([], {
+            queryParams: {
+                searchText: this.searchText,
+            },
+            queryParamsHandling: 'merge',
+        });
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
     }
 
     /**
@@ -164,7 +181,17 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content
             const lowerCasedSearchString = this.currentPostContentFilter.searchText.toLowerCase();
-            return (post.title?.toLowerCase().includes(lowerCasedSearchString) || post.content?.toLowerCase().includes(lowerCasedSearchString)) ?? false;
+            // if searchText starts with a # and is followed by a post id, filter for post with id
+            if (lowerCasedSearchString.startsWith('#') && !isNaN(+lowerCasedSearchString.substring(1))) {
+                return post.id === Number(lowerCasedSearchString.substring(1));
+            }
+            // regular search on content, title, and tags
+            return (
+                (post.title?.toLowerCase().includes(lowerCasedSearchString) ||
+                    post.content?.toLowerCase().includes(lowerCasedSearchString) ||
+                    post.tags?.join().toLowerCase().includes(lowerCasedSearchString)) ??
+                false
+            );
         }
         return true;
     };

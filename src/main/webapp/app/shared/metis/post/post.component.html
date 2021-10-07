@@ -2,9 +2,12 @@
 <div class="row align-items-center">
     <div class="col">
         <div class="row">
-            <p class="m-0 post-title">{{ posting.title }}</p>
+            <p class="mb-2 post-title">
+                {{ posting.title }}
+                <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">#{{ posting.id }}</a>
+            </p>
         </div>
-        <div class="markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
+        <jhi-posting-content [content]="posting.content"> </jhi-posting-content>
     </div>
 </div>
 <jhi-post-footer [posting]="posting"></jhi-post-footer>
