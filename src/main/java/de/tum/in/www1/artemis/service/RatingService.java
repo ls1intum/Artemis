@@ -48,6 +48,11 @@ public class RatingService {
         return ratingRepository.findAllByResult_Participation_Exercise_Course_Id(courseId);
     }
 
+    /**
+     * Get number of ratings for the "courseId" Course
+     * @param courseId - Id of the course that the ratings are fetched for
+     * @return number of Ratings given for exercises of this course
+     */
     public long countRatingsByCourse(long courseId) {
         return ratingRepository.countByResult_Participation_Exercise_Course_Id(courseId);
     }
