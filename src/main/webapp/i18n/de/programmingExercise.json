@@ -356,6 +356,7 @@
                 },
                 "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
+                "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet, (de)aktiviert und entfernt werden.",
                 "submissionLimitWarning": {
                     "min": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
                     "max": "Das Abgabelimit muss zwischen 1 und 500 liegen!",

@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             <select
                 #policy
                 required
-                class="form-control"
+                class="form-select"
                 [ngModel]="selectedSubmissionPolicyType"
                 (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
@@ -41,13 +41,15 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             required
                             type="number"
                             class="form-control"
-                            min="1"
-                            max="500"
+                            [customMin]="1"
+                            [customMax]="500"
+                            step="1"
                             name="submissionLimit"
                             id="field_submissionLimit"
+                            [pattern]="submissionLimitPattern"
                             [disabled]="!editable"
                             [ngModel]="this.submissionPolicy!.submissionLimit"
-                            (ngModelChange)="updateSubmissionLimit(+submissionLimitInput.value)"
+                            (ngModelChange)="updateSubmissionLimit(submissionLimitInput.value)"
                             #penalty="ngModel"
                         />
                     </div>
@@ -81,13 +83,13 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             required
                             type="number"
                             class="form-control"
-                            min="0"
-                            max="100"
+                            [customMin]="0"
+                            [customMax]="100"
                             name="submissionLimitExceededPenalty"
                             id="field_submissionLimitExceededPenalty"
                             [disabled]="!editable"
                             [ngModel]="this.submissionPolicy!.exceedingPenalty"
-                            (ngModelChange)="updateExceedingPenalty(+exceedingPenaltyInput.value)"
+                            (ngModelChange)="updateExceedingPenalty(exceedingPenaltyInput.value)"
                             #penalty="ngModel"
                         />
                     </div>
@@ -115,26 +117,29 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     hadSubmissionPolicyBefore: boolean;
 
+    // This is used to ensure that only integers [1-500] can be used as input for the submission limit.
+    submissionLimitPattern = '^([1-9]|([1-9][0-9])|([1-4][0-9][0-9])|500)$'
+
     ngOnInit(): void {
         this.submissionPolicy = this.programmingExercise!.submissionPolicy;
         this.hadSubmissionPolicyBefore = this.submissionPolicy != undefined;
         this.onSubmissionPolicyTypeChanged(this.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.isNonePolicy) {
-            this.updateSubmissionLimit(this.submissionPolicy!.submissionLimit ?? 0);
+            this.updateSubmissionLimit(String(this.submissionPolicy!.submissionLimit ?? 5));
             if (this.isSubmissionPenaltyPolicy) {
-                this.updateExceedingPenalty((this.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 0);
+                this.updateExceedingPenalty(String((this.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 10));
             }
         }
     }
 
-    updateSubmissionLimit(limit: number) {
-        this.submissionPolicy!.submissionLimit = limit;
+    updateSubmissionLimit(limit: string) {
+        this.submissionPolicy!.submissionLimit = +limit;
         this.linkPolicyToExercise();
         return limit;
     }
 
-    updateExceedingPenalty(penalty: number) {
-        this.submissionPolicy!.exceedingPenalty = penalty;
+    updateExceedingPenalty(penalty: string) {
+        this.submissionPolicy!.exceedingPenalty = +penalty;
         this.linkPolicyToExercise();
         return penalty;
     }

@@ -314,7 +314,8 @@ public class SubmissionPolicyService {
 
     private int getParticipationSubmissionCount(Participation participation) {
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()).stream()
-                .filter(submission -> submission.getType() == SubmissionType.MANUAL).map(ProgrammingSubmission::getCommitHash).distinct().count();
+                .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
+                .count();
     }
 
     private void toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {
