@@ -71,7 +71,7 @@ const exam = {
 } as Exam;
 
 const exerciseGroup = {
-    exam: exam,
+    exam,
 } as ExerciseGroup;
 
 const textSubmission = { id: 1, submitted: true } as TextSubmission;
@@ -84,10 +84,10 @@ const quizParticipation = { id: 2, student: user, submissions: [quizSubmission] 
 const modelingParticipation = { id: 3, student: user, submissions: [modelingSubmission] } as StudentParticipation;
 const programmingParticipation = { id: 4, student: user, submissions: [programmingSubmission] } as StudentParticipation;
 
-const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation], exerciseGroup: exerciseGroup } as TextExercise;
-const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation], exerciseGroup: exerciseGroup } as QuizExercise;
-const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation], exerciseGroup: exerciseGroup } as ModelingExercise;
-const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup: exerciseGroup } as ProgrammingExercise;
+const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation], exerciseGroup } as TextExercise;
+const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation], exerciseGroup } as QuizExercise;
+const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation], exerciseGroup } as ModelingExercise;
+const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
 const studentExam = { id: 1, exam, user, exercises } as StudentExam;
