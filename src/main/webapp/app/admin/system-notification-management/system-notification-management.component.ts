@@ -48,10 +48,13 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe((data) => {
-            this.page = data['pagingParams'].page;
-            this.previousPage = data['pagingParams'].page;
-            this.reverse = data['pagingParams'].ascending;
-            this.predicate = data['pagingParams'].predicate;
+            const pagingParams = data['pagingParams'];
+            if (pagingParams) {
+                this.page = pagingParams.page;
+                this.previousPage = pagingParams.page;
+                this.reverse = pagingParams.ascending;
+                this.predicate = pagingParams.predicate;
+            }
         });
     }
 
@@ -135,7 +138,10 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * Sorts parameters by specified order
      */
     sort() {
-        const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
+        const result = [];
+        if (this.predicate) {
+            result.push(this.predicate + ',' + (this.reverse ? 'asc' : 'desc'));
+        }
         if (this.predicate !== 'id') {
             result.push('id');
         }

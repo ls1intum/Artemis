@@ -7,7 +7,6 @@ export const GET = 'GET';
 export const PUT = 'PUT';
 export const PATCH = 'PATCH';
 export const BASE_API = 'api/';
-export const EXERCISE_BASE = BASE_API + 'exercises/';
 
 // Authentication
 export const authTokenKey = 'jhi-authenticationtoken';
@@ -17,6 +16,3 @@ export const USER_ID_SELECTOR = 'USERID';
 
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
-
-// Time until a programming exercise can be created for a new course
-export const GROUP_SYNCHRONIZATION = 65000;
