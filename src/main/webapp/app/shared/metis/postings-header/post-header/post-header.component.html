@@ -28,16 +28,17 @@
         >
         </jhi-confirm-icon>
     </div>
-    <div
-        class="col-auto ps-0 pe-1 toggle-answer-element"
-        (click)="toggleAnswers()"
-        [ngClass]="numberOfAnswerPosts > 0 ? 'clickable' : ''"
-        [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
-        [disableTooltip]="numberOfAnswerPosts === 0"
-    >
+    <div class="col-auto ps-0 pe-1 toggle-answer-element" (click)="toggleAnswers()" [ngClass]="numberOfAnswerPosts > 0 ? 'clickable' : ''">
         <span class="answer-count"
             >{{ numberOfAnswerPosts }}
-            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"> </fa-icon>
+            <fa-icon
+                [icon]="'comments'"
+                class="icon"
+                [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
+                [disableTooltip]="numberOfAnswerPosts === 0"
+                [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"
+            >
+            </fa-icon>
         </span>
     </div>
 </div>

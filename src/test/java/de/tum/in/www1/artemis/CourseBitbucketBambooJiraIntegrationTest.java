@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -19,9 +20,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Autowired
     private CourseTestService courseTestService;
 
+    @Autowired
+    private CourseRepository courseRepo;
+
     @BeforeEach
     public void setup() {
-        courseTestService.setup(this, this.groupNotificationService);
+        courseTestService.setup(this);
 
         jiraRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -325,7 +329,7 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseTestService.getCourseRepo().save(course);
+        course = courseRepo.save(course);
 
         request.put("/api/courses", course, HttpStatus.OK);
 
