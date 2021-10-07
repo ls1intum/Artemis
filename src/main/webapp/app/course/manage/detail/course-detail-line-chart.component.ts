@@ -2,7 +2,6 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { round } from 'app/shared/util/utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 
@@ -25,19 +24,14 @@ export class CourseDetailLineChartComponent implements OnChanges {
     RIGHT = true;
     displayedNumberOfWeeks = 16;
 
-    // Chart
+    // Chart related
     chartTime: any;
-    // Histogram related properties
-    lineChartOptions: any = {};
     amountOfStudents: string;
-    // Data
-    data: number[] = [];
-    absoluteData: number[] = [];
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
-    // Start new NGX variables
+    // NGX variables
     chartColor: Color = {
         name: 'vivid',
         selectable: true,
@@ -52,27 +46,16 @@ export class CourseDetailLineChartComponent implements OnChanges {
     xAxisLabel = '';
     yAxisLabel = '';
     timeline = false;
-    multi: any[];
-    multiCopy = [
+    data: any[];
+    // Data changes will be stored in the copy first, to trigger change detection when ready
+    dataCopy = [
         {
             name: '',
             series: [{}],
         },
     ];
-
-    onSelect(data: any): void {
-        console.log('Item clicked', JSON.parse(JSON.stringify(data)));
-    }
-
-    onActivate(data: any): void {
-        console.log('Activate', JSON.parse(JSON.stringify(data)));
-    }
-
-    onDeactivate(data: any): void {
-        console.log('Deactivate', JSON.parse(JSON.stringify(data)));
-    }
-
-    // End new NGX variables
+    // Used for storing absolute values to display in tooltip
+    absoluteSeries = [{}];
 
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
@@ -86,7 +69,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
         this.initialStatsReceived = true;
         this.createLabels();
         this.processDataAndCreateChart(this.initialStats);
-        this.multi = this.multiCopy;
+        this.data = this.dataCopy;
     }
 
     /**
@@ -97,7 +80,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
         this.createLabels();
         this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
-            this.multi = [...this.multiCopy];
+            this.data = [...this.dataCopy];
         });
     }
 
@@ -106,29 +89,17 @@ export class CourseDetailLineChartComponent implements OnChanges {
      */
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
-            this.absoluteData = array;
             for (let i = 0; i < array.length; i++) {
-                this.multiCopy[0].series[i]['value'] = round((array[i] / this.numberOfStudentsInCourse) * 100);
+                this.dataCopy[0].series[i]['value'] = round((array[i] / this.numberOfStudentsInCourse) * 100);
+                this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
         } else {
-            this.absoluteData = array;
             for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
-                this.multiCopy[0].series[i]['value'] = 0;
+                this.dataCopy[0].series[i]['value'] = 0;
+                this.absoluteSeries[i]['absoluteValue'] = 0;
             }
         }
-        /*this.chartData = [
-            {
-                label: this.amountOfStudents,
-                data: this.data,
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                fill: false,
-                pointBackgroundColor: 'rgba(53,61,71,1)',
-                pointHoverBorderColor: 'rgba(53,61,71,1)',
-            },
-        ];*/
         this.loading = false;
-        // this.multi = this.multiCopy;
     }
 
     private createLabels() {
@@ -141,11 +112,13 @@ export class CourseDetailLineChartComponent implements OnChanges {
                 .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
-            this.multiCopy[0].series[i] = {};
-            this.multiCopy[0].series[i]['name'] = prefix + ' ' + currentWeek;
+            this.dataCopy[0].series[i] = {};
+            this.dataCopy[0].series[i]['name'] = prefix + ' ' + currentWeek;
+            this.absoluteSeries[i] = {};
+            this.absoluteSeries[i]['name'] = prefix + ' ' + currentWeek;
         }
         this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
-        this.multiCopy[0].name = this.amountOfStudents;
+        this.dataCopy[0].name = this.amountOfStudents;
     }
 
     switchTimeSpan(index: boolean): void {
@@ -158,62 +131,11 @@ export class CourseDetailLineChartComponent implements OnChanges {
         return value.toLocaleString() + ' %';
     }
 
-    private defineChartOptions() {
-        const self = this;
-        this.lineChartOptions = {
-            layout: {
-                padding: {
-                    top: 20,
-                },
-            },
-            responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
-            animation: {
-                duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = !!self.absoluteData ? self.absoluteData[index] : 0;
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
-            },
-            scales: {
-                yAxes: [
-                    {
-                        ticks: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            precision: 0,
-                            autoSkip: true,
-                            callback(value: number) {
-                                return value + '%';
-                            },
-                        },
-                    },
-                ],
-            },
-            tooltips: {
-                enabled: true,
-                callbacks: {
-                    label(tooltipItem: any) {
-                        if (!self.initialStats) {
-                            return ' 0';
-                        }
-                        return ' ' + self.absoluteData[tooltipItem.index];
-                    },
-                },
-            },
-        };
+    /**
+     * Using the model, we look for the entry with the same title (CW XX) and return the absolute value for this entry
+     */
+    findAbsoluteValue(model: any) {
+        const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
+        return result ? result.absoluteValue : '/';
     }
 }

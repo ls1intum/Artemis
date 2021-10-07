@@ -14,14 +14,20 @@
                     [xAxisLabel]="xAxisLabel"
                     [yAxisLabel]="yAxisLabel"
                     [timeline]="timeline"
-                    [results]="multi"
-                    (select)="onSelect($event)"
-                    (activate)="onActivate($event)"
-                    (deactivate)="onDeactivate($event)"
+                    [results]="data"
                     [yScaleMin]=0
                     [yScaleMax]=100
                     [yAxisTickFormatting]="formatYAxis"
                 >
+                    <ng-template #tooltipTemplate let-model="model">
+                        <h3 class="tooltip-header"> {{ findAbsoluteValue(model) }} </h3>
+                        <span>{{model.series}} in {{model.name}}</span>
+                    </ng-template>
+                    <ng-template #seriesTooltipTemplate let-model="model">
+                        <span>
+                            {{model[0].name}}: {{ findAbsoluteValue(model[0]) }}
+                        </span>
+                    </ng-template>
                 </ngx-charts-line-chart>
         </div>
         <h1 *ngIf="loading" style="z-index: 1; display: flex; justify-content: center; align-items: center; position: absolute">

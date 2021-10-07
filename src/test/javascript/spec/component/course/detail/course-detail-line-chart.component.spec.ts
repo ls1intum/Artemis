@@ -22,7 +22,7 @@ describe('CourseDetailLineChartComponent', () => {
     let component: CourseDetailLineChartComponent;
     let service: CourseManagementService;
 
-    const initialStats = [26, 46, 34, 12];
+    const initialStats = [26, 46, 34, 12, 26, 46, 34, 12, 26, 46, 34, 12, 26, 46, 34, 12];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,31 +55,33 @@ describe('CourseDetailLineChartComponent', () => {
     it('should initialize', () => {
         const graphData: number[] = [];
         const spy = jest.spyOn(service, 'getStatisticsData');
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 16; i++) {
             graphData[i] = 40 + 2 * i;
         }
         spy.mockReturnValue(of(graphData));
-
-        component.ngOnChanges();
-
-        expect(component.data).to.deep.equal([]);
 
         component.initialStats = initialStats;
 
         component.ngOnChanges();
 
-        let expectedStats = [52, 92, 68, 24];
-        expect(component.multi[0].series.length).to.equal(16);
+        for (let i = 0; i < 16; i++) {
+            expect(component.absoluteSeries[i]['absoluteValue']).to.equal(initialStats[i]);
+        }
+        expect(component.absoluteSeries.length).to.equal(16);
 
         component.switchTimeSpan(true);
 
-        expectedStats = [80, 84, 88, 92];
-        expect(component.multi[0].series.length).to.equal(16);
+        for (let i = 0; i < 16; i++) {
+            expect(component.absoluteSeries[i]['absoluteValue']).to.equal(graphData[i]);
+        }
+        expect(component.data[0].series.length).to.equal(16);
 
         component.numberOfStudentsInCourse = 0;
         component.switchTimeSpan(true);
 
-        expectedStats = [0, 0, 0, 0];
-        expect(component.multi[0].series.length).to.equal(16);
+        expect(component.data[0].series.length).to.equal(16);
+        for (let i = 0; i < 16; i++) {
+            expect(component.absoluteSeries[i]['absoluteValue']).to.equal(0);
+        }
     });
 });

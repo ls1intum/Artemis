@@ -1,10 +1,3 @@
-@media screen and (max-width: 767px) {
-    .course-detail-line-chart {
-        width: 80% !important;
-        height: 80% !important;
-    }
-}
-
 .course-detail-parent-container {
     flex-direction: column;
     width: 100% !important;
@@ -15,4 +8,8 @@
 .chart {
     display: flex;
     position: relative;
+}
+
+.tooltip-header {
+    margin: 0 !important;
 }
