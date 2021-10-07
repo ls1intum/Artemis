@@ -10,7 +10,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
@@ -129,9 +128,9 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidExamStudentReviewEnd(): boolean {
-        // allow instructors to set examStudentReviewEnd later
+        // checks whether the end date can be undefined depending on if there is an undefined or manually deleted start date
         if (!this.exam.examStudentReviewEnd) {
-            return true;
+            return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
         return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
