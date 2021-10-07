@@ -1,11 +1,10 @@
-import { Component, ContentChild, Input, OnChanges, TemplateRef } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { round } from 'app/shared/util/utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -21,9 +20,6 @@ export class CourseDetailLineChartComponent implements OnChanges {
     initialStats: number[] | undefined;
     initialStatsReceived = false;
     loading = true;
-
-    @ContentChild('tooltipTemplate') tooltipTemplate: TemplateRef<any>;
-    @ContentChild('seriesTooltipTemplate') seriesTooltipTemplate: TemplateRef<any>;
 
     LEFT = false;
     RIGHT = true;
@@ -42,7 +38,6 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private currentPeriod = 0;
 
     // Start new NGX variables
-    view: [number, number] = [880, 450];
     chartColor: Color = {
         name: 'vivid',
         selectable: true,
@@ -56,7 +51,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     showXAxisLabel = false;
     xAxisLabel = '';
     yAxisLabel = '';
-    timeline = true;
+    timeline = false;
     multi: any[];
     multiCopy = [
         {
@@ -104,14 +99,6 @@ export class CourseDetailLineChartComponent implements OnChanges {
             this.processDataAndCreateChart(res);
             this.multi = [...this.multiCopy];
         });
-    }
-
-    // Observable for update
-    update$: Subject<any> = new Subject();
-
-    // Update function
-    updateChart() {
-        this.update$.next(true);
     }
 
     /**

@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { MockPipe } from 'ng-mocks';
-import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import sinonChai from 'sinon-chai';
@@ -13,6 +12,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -26,8 +26,9 @@ describe('CourseDetailLineChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
-            declarations: [CourseDetailLineChartComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgxChartsModule],
+            declarations: [CourseDetailLineChartComponent,
+                MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -68,20 +69,17 @@ describe('CourseDetailLineChartComponent', () => {
         component.ngOnChanges();
 
         let expectedStats = [52, 92, 68, 24];
-        expect(component.data).to.deep.equal(expectedStats);
-        expect(component.chartData[0].data).to.deep.equal(expectedStats);
+        expect(component.multi[0].series.length).to.equal(16);
 
         component.switchTimeSpan(true);
 
         expectedStats = [80, 84, 88, 92];
-        expect(component.data).to.deep.equal(expectedStats);
-        expect(component.chartData[0].data).to.deep.equal(expectedStats);
+        expect(component.multi[0].series.length).to.equal(16);
 
         component.numberOfStudentsInCourse = 0;
         component.switchTimeSpan(true);
 
         expectedStats = [0, 0, 0, 0];
-        expect(component.data).to.deep.equal(expectedStats);
-        expect(component.chartData[0].data).to.deep.equal(expectedStats);
+        expect(component.multi[0].series.length).to.equal(16);
     });
 });
