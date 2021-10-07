@@ -357,8 +357,8 @@
                 "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "submissionLimitWarning": {
-                    "min": "Das Abgabelimit muss zwischen 0 und 500 liegen!",
-                    "max": "Das Abgabelimit muss zwischen 0 und 500 liegen!",
+                    "min": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
+                    "max": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
                 }
             }

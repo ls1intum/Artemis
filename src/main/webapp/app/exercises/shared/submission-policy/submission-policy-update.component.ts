@@ -41,7 +41,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             required
                             type="number"
                             class="form-control"
-                            min="0"
+                            min="1"
                             max="500"
                             name="submissionLimit"
                             id="field_submissionLimit"

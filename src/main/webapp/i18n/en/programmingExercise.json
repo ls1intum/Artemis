@@ -357,8 +357,8 @@
                 "submissionLimitTitle": "Submission Limit",
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "submissionLimitWarning": {
-                    "min": "The submission limit must be between 0 and 500!",
-                    "max": "The submission limit  must be between 0 and 500!",
+                    "min": "The submission limit must be between 1 and 500!",
+                    "max": "The submission limit  must be between 1 and 500!",
                     "required": "The submission limit must be set!"
                 }
             }
