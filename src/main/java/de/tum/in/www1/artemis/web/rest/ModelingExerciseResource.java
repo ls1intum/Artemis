@@ -196,7 +196,7 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
         if ((notificationText != null && modelingExercise.isCourseExercise()) || modelingExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(modelingExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);

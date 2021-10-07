@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
@@ -224,7 +226,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
+        log.info("Update Jenkins permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
         exercises.forEach(exercise -> {
+
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
             // for students, solution, and template.
             var jobName = exercise.getProjectKey();
@@ -272,6 +277,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
+        log.info("Update Jenkins permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
         exercises.forEach(exercise -> {
             try {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
@@ -297,27 +303,29 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             return;
         }
 
-        // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course
-        // anymore.
-        removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, updatedCourse);
+        // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course anymore.
+        var programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
+        log.info("Update Jenkins permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, updatedCourse, programmingExercises);
 
         // Assign teaching assistant and instructor permissions
-        assignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse);
+        assignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse, programmingExercises);
     }
 
     /**
      * Assigns teaching assistant and/or editor and/or instructor permissions to each user belonging to the teaching assistant/editor/instructor groups of the course.
      *
      * @param course the course
+     * @param programmingExercises list of programmingExercises for which the permissions should be changed
      */
-    private void assignPermissionsToInstructorAndEditorAndTAsForCourse(Course course) {
+    private void assignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, List<ProgrammingExercise> programmingExercises) {
         var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
         var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
         var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
 
         // Courses can have the same groups. We do not want to add/remove users from exercises of other courses belonging to the same group
-        var exercises = programmingExerciseRepository.findAllByCourse(course);
-        exercises.forEach(exercise -> {
+
+        programmingExercises.forEach(exercise -> {
             var job = exercise.getProjectKey();
             try {
                 jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(teachingAssistants, editors, instructors, job);
@@ -338,11 +346,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param editorGroup the group of editors
      * @param teachingAssistantGroup the group of teaching assistants
      * @param course the course
+     * @param programmingExercises list of programmingExercises for which the permissions should be changed
      */
-    private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup, Course course) {
-        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses belonging to the same group
-        var exercises = programmingExerciseRepository.findAllByCourse(course);
-
+    private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup, Course course,
+            List<ProgrammingExercise> programmingExercises) {
         // Fetch all instructors and editors and teaching assistants belonging to the group that was removed from the course.
         var oldInstructors = userRepository.findAllInGroupWithAuthorities(instructorGroup);
         var oldEditors = userRepository.findAllInGroupWithAuthorities(editorGroup);
@@ -351,7 +358,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                 .collect(Collectors.toSet());
 
         // Revoke all permissions.
-        exercises.forEach(exercise -> {
+        programmingExercises.forEach(exercise -> {
             try {
                 jenkinsJobPermissionsService.removePermissionsFromUsersForFolder(usersFromOldGroup, exercise.getProjectKey(), Set.of(JenkinsJobPermission.values()));
             }

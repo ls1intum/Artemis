@@ -268,6 +268,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'file-upload-exercises':
             case 'programming-exercises':
             case 'quiz-exercises':
+            case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'hints':
