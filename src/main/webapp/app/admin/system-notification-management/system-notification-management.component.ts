@@ -3,7 +3,6 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
