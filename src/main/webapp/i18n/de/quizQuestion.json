@@ -32,7 +32,9 @@
             "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuche es erneut, indem du auf den Button klickst.",
             "showSampleSolution": "Blende die Musterlösung ein",
             "hideSampleSolution": "Blende die Musterlösung aus",
-            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus."
+            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus.",
+            "longQuestion": "Trage wenn notwendig deine ausführliche Frage ein",
+            "hintText": "Füge hier einen hint hinzu (sichtbar während des Quizzes über den ?-Knopf)"
         }
     }
 }

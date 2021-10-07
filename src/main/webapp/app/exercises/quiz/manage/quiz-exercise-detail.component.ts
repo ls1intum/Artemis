@@ -329,21 +329,21 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const mcQuestion = new MultipleChoiceQuestion();
         mcQuestion.title = '';
-        mcQuestion.text = 'Enter your long question if needed';
-        mcQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
+        mcQuestion.text = this.translateService.instant('artemisApp.quizQuestion.longQuestion');
+        mcQuestion.hint = this.translateService.instant('artemisApp.quizQuestion.hintText');
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.points = 1;
 
         const correctSampleAnswerOption = new AnswerOption();
         correctSampleAnswerOption.isCorrect = true;
-        correctSampleAnswerOption.text = 'Enter a correct answer option here';
-        correctSampleAnswerOption.hint = 'Add a hint here (visible during the quiz via ?-Button)';
-        correctSampleAnswerOption.explanation = 'Add an explanation here (only visible in feedback after quiz has ended)';
+        correctSampleAnswerOption.text = this.translateService.instant('artemisApp.multipleChoiceQuestion.correctAnswer');
+        correctSampleAnswerOption.hint = this.translateService.instant('artemisApp.quizQuestion.hintText');
+        correctSampleAnswerOption.explanation = this.translateService.instant('artemisApp.multipleChoiceQuestion.explanation');
 
         const incorrectSampleAnswerOption = new AnswerOption();
         incorrectSampleAnswerOption.isCorrect = false;
-        incorrectSampleAnswerOption.text = 'Enter a wrong answer option here';
+        incorrectSampleAnswerOption.text = this.translateService.instant('artemisApp.multipleChoiceQuestion.wrongAnswer');
 
         mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
         this.quizExercise.quizQuestions!.push(mcQuestion);
@@ -360,8 +360,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
-        dndQuestion.text = 'Enter your long question if needed';
-        dndQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
+        dndQuestion.text = this.translateService.instant('artemisApp.quizQuestion.longQuestion');
+        dndQuestion.hint = this.translateService.instant('artemisApp.quizQuestion.hint');
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.points = 1;
@@ -383,13 +383,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const shortAnswerQuestion = new ShortAnswerQuestion();
         shortAnswerQuestion.title = '';
         shortAnswerQuestion.text =
-            'Enter your long question if needed\n\n' +
-            'Select a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\n' +
-            'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n\n' +
-            'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):\n\n' +
-            '[-option 1] is\n' +
-            '[-option 2] input\n' +
-            '[-option 1,2] correctInBothFields';
+            this.translateService.instant('artemisApp.quizQuestion.longQuestion') +
+            '\n\n' +
+            this.translateService.instant('artemisApp.shortAnswerQuestion.shortAnswerConfiguration');
         shortAnswerQuestion.scoringType = ScoringType.PROPORTIONAL_WITHOUT_PENALTY; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
         shortAnswerQuestion.points = 1;

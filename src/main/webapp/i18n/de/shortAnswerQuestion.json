@@ -29,7 +29,8 @@
                 "visualModeHeadline": "Visueller Modus",
                 "visualModeExplanation": "Bitte markiere ein Wort und drücke anschließend auf Spot erzeugen um einen neuen Spot mit der zugehörigen Lösung zu erstellen"
             },
-            "addShortAnswerSolution": "Short Answer Lösung hinzufügen"
+            "addShortAnswerSolution": "Short Answer Lösung hinzufügen",
+            "shortAnswerConfiguration": "Wähle einen Teil des Textes aus und klicke auf Spot erzeugen um automatisch ein Eingabefeld mit passender Zuordnung zu erzeugen.\n\nDu kannst Eingabefelder folgendermaßen definieren: Das [-spot 1] ein [-spot 2] -Feld.\n\nUm die Lösung für ein Eingabefeld zu definieren musst du eine Zuordnung erstellen (mehrere Zuordnungen sind möglich):\n\n[-option 1] ist\n[-option 2] Eingabe\n[-option 1,2] korrekt in beiden Feldern"
         }
     }
 }

@@ -24,6 +24,9 @@
             "correct": "Richtig",
             "wrong": "Falsch",
             "invalid": "Ungültige Antworten werden als richtig bewertet",
+            "explanation": "Füge hier eine Erklärung ein (erst sichtbar nachdem das Quiz beendet ist)",
+            "correctAnswer": "Gib hier eine korrekte Antwort ein",
+            "wrongAnswer": "Füge hier eine falsche Antwort ein",
             "editor": {
                 "addCorrectAnswerOption": "[correct] Korrekte Antwortmöglichkeit",
                 "addInCorrectAnswerOption": "[wrong] Falsche Antwortmöglichkeit",

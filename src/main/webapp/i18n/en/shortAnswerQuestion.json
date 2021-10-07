@@ -29,7 +29,8 @@
                 "visualModeHeadline": "Visual Mode",
                 "visualModeExplanation": "Please highlight one word an click on the Add Spot button to create one spot with the corresponding solution"
             },
-            "addShortAnswerSolution": "Add Short Answer Solution"
+            "addShortAnswerSolution": "Add Short Answer Solution",
+            "shortAnswerConfiguration": "Select a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\nYou can define a input field like this: This [-spot 1] an [-spot 2] field.\n\nTo define the solution for the input fields you need to create a mapping (multiple mapping also possible):\n\n[-option 1] is\n[-option 2] input\n[-option 1,2] correctInBothFields"
         }
     }
 }
