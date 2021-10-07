@@ -53,7 +53,11 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
             declarations: [ExamScoresAverageScoresGraphComponent],
             providers: [
-                //MockProvider(CourseManagementService),
+                MockProvider(CourseManagementService, {
+                    find: () => {
+                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
