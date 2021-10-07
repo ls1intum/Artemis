@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -87,7 +88,7 @@ public class ExamRegistrationService {
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
                     // course)
                     if (!student.getGroups().contains(course.getStudentGroupName())) {
-                        userService.addUserToGroup(student, course.getStudentGroupName());
+                        userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
                     }
                     exam.addRegisteredUser(student);
                     continue;
@@ -100,7 +101,7 @@ public class ExamRegistrationService {
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
                     exam.addRegisteredUser(student);
                     continue;
                 }
@@ -110,7 +111,7 @@ public class ExamRegistrationService {
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
                     exam.addRegisteredUser(student);
                     continue;
                 }
@@ -177,7 +178,7 @@ public class ExamRegistrationService {
         exam.addRegisteredUser(student);
 
         if (!student.getGroups().contains(course.getStudentGroupName())) {
-            userService.addUserToGroup(student, course.getStudentGroupName());
+            userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }
         examRepository.save(exam);
 

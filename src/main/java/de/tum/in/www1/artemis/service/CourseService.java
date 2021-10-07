@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -295,7 +296,7 @@ public class CourseService {
      * @param course The course to which the user should get added to
      */
     public void registerUserForCourse(User user, Course course) {
-        userService.addUserToGroup(user, course.getStudentGroupName());
+        userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
@@ -519,11 +520,11 @@ public class CourseService {
         log.info("The course {} has been cleaned up!", courseId);
     }
 
-    public void addUserToGroup(User user, String group) {
-        userService.addUserToGroup(user, group);
+    public void addUserToGroup(User user, String group, Role role) {
+        userService.addUserToGroup(user, group, role);
     }
 
-    public void removeUserFromGroup(User user, String group) {
-        userService.removeUserFromGroup(user, group);
+    public void removeUserFromGroup(User user, String group, Role role) {
+        userService.removeUserFromGroup(user, group, role);
     }
 }

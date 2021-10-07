@@ -11,18 +11,21 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -640,5 +643,37 @@ public class SubmissionService {
         StudentParticipation submissionsParticipation = (StudentParticipation) submission.getParticipation();
         submissionsParticipation.setParticipant(null);
         submissionsParticipation.setExercise(null);
+    }
+
+    /**
+     * Search for all submissions fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of submissions if there are that many in Artemis.
+     *
+     * @param search     DTO containing the search term and information required for pagination and sorting
+     * @param exerciseId Id of the exercise the submissions belongs to
+     * @return A wrapper object containing a list of all found submissions and the total number of pages
+     */
+    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(PageableSearchDTO<String> search, Long exerciseId) {
+        Sort sorting = Sort.by(StudentParticipation.StudentParticipationSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        PageRequest sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
+        String searchTerm = search.getSearchTerm();
+
+        Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm, sorted);
+
+        List<Submission> submissions = new ArrayList<>();
+
+        for (StudentParticipation participation : studentParticipationPage.getContent()) {
+            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+
+            if (!optionalSubmission.isEmpty()) {
+                submissions.add(optionalSubmission.get());
+            }
+        }
+
+        final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());
+
+        return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }
