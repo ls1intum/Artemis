@@ -163,6 +163,22 @@ describe('Exam Update Component', function () {
         exam.endDate = undefined;
         fixture.detectChanges();
         expect(component.isValidConfiguration).is.false;
+
+        exam.visibleDate = dayjs().add(1, 'hours');
+        exam.startDate = dayjs().add(2, 'hours');
+        exam.endDate = dayjs().add(3, 'hours');
+        exam.examStudentReviewEnd = undefined;
+        fixture.detectChanges();
+        expect(component.isValidConfiguration).is.false;
+
+        exam.examStudentReviewStart = dayjs().add(6, 'hours');
+        exam.examStudentReviewEnd = dayjs().add(5, 'hours');
+        fixture.detectChanges();
+        expect(component.isValidConfiguration).is.false;
+
+        exam.examStudentReviewStart = undefined;
+        fixture.detectChanges();
+        expect(component.isValidConfiguration).is.false;
     });
 
     it('should update', fakeAsync(() => {
