@@ -20,37 +20,38 @@ describe('ItemCountComponent test', () => {
     });
 
     describe('UI logic tests', () => {
-        it('should initialize with undefined', () => {
-            expect(comp.first).toBeUndefined();
-            expect(comp.second).toBeUndefined();
-            expect(comp.total).toBeUndefined();
+        it('should initialize with zero', () => {
+            expect(comp.itemRangeBegin).toBe(0);
+            expect(comp.itemRangeEnd).toBe(0);
+            expect(comp.itemTotal).toBe(0);
         });
 
-        it('should set calculated numbers to undefined if the page value is not yet defined', () => {
+        it('should set range from 0 to 0, total 0 if there are no elements', () => {
             // GIVEN
-            comp.params = { page: undefined, totalItems: 0, itemsPerPage: 10 };
+            comp.params = { page: 0, totalItems: 0, itemsPerPage: 10 };
 
             // THEN
-            expect(comp.first).toBeUndefined();
-            expect(comp.second).toBeUndefined();
-        });
+            expect(comp.itemRangeBegin).toBe(0);
+            expect(comp.itemRangeEnd).toBe(0);
+            expect(comp.itemTotal).toBe(0);
+        })
 
         it('should change the content on page change', () => {
             // GIVEN
             comp.params = { page: 1, totalItems: 100, itemsPerPage: 10 };
 
             // THEN
-            expect(comp.first).toBe(1);
-            expect(comp.second).toBe(10);
-            expect(comp.total).toBe(100);
+            expect(comp.itemRangeBegin).toBe(1);
+            expect(comp.itemRangeEnd).toBe(10);
+            expect(comp.itemTotal).toBe(100);
 
             // GIVEN
             comp.params = { page: 2, totalItems: 100, itemsPerPage: 10 };
 
             // THEN
-            expect(comp.first).toBe(11);
-            expect(comp.second).toBe(20);
-            expect(comp.total).toBe(100);
+            expect(comp.itemRangeBegin).toBe(11);
+            expect(comp.itemRangeEnd).toBe(20);
+            expect(comp.itemTotal).toBe(100);
         });
 
         it('should set the second number to totalItems if this is the last page which contains less than itemsPerPage items', () => {
@@ -58,9 +59,9 @@ describe('ItemCountComponent test', () => {
             comp.params = { page: 2, totalItems: 16, itemsPerPage: 10 };
 
             // THEN
-            expect(comp.first).toBe(11);
-            expect(comp.second).toBe(16);
-            expect(comp.total).toBe(16);
+            expect(comp.itemRangeBegin).toBe(11);
+            expect(comp.itemRangeEnd).toBe(16);
+            expect(comp.itemTotal).toBe(16);
         });
     });
 });

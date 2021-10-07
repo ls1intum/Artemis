@@ -26,18 +26,19 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     success: string;
     routeData: Subscription;
     links: any;
-    totalItems: number;
-    itemsPerPage: number;
-    page: number;
     predicate: string;
     previousPage: number;
     reverse: boolean;
+
+    // page information
+    page = 1; // We are at page 1 by default.
+    itemsPerPage = ITEMS_PER_PAGE;
+    totalItems = 0;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
-        private userService: UserService,
         private systemNotificationService: SystemNotificationService,
         private alertService: AlertService,
         private accountService: AccountService,
@@ -46,7 +47,6 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
         private router: Router,
         private eventManager: EventManager,
     ) {
-        this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe((data) => {
             const pagingParams = data['pagingParams'];
             if (pagingParams) {
