@@ -34,7 +34,7 @@ describe('ItemCountComponent test', () => {
             expect(comp.itemRangeBegin).toBe(0);
             expect(comp.itemRangeEnd).toBe(0);
             expect(comp.itemTotal).toBe(0);
-        })
+        });
 
         it('should change the content on page change', () => {
             // GIVEN
