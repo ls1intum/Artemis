@@ -347,6 +347,6 @@ export class MetisService {
      * @param tempPost Post that is currently created and compared against existing course posts on updates in the form group
      */
     getSimilarPosts(tempPost: Post): Observable<Post[]> {
-        return this.postService.computeSimilarityScoresWitCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
+        return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 }

@@ -52,7 +52,7 @@ describe('PostHeaderComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

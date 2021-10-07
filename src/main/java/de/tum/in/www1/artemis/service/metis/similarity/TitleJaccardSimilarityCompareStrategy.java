@@ -23,7 +23,6 @@ public class TitleJaccardSimilarityCompareStrategy implements PostContentCompare
 
         // we only compute a similarity score if the title of both posts are defined
         if (post1.getTitle() != null && post2.getTitle() != null) {
-
             similarityScore = jaccardSimilarity.apply(post1.getTitle().toLowerCase(), post2.getTitle().toLowerCase());
         }
         return similarityScore;

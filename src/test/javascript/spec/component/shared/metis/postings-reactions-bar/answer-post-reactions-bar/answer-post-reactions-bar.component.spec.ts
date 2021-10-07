@@ -58,7 +58,7 @@ describe('AnswerPostReactionsBarComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.clearAllMocks();
     });
 

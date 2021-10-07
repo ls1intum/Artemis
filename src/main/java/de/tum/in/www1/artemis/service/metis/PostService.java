@@ -391,8 +391,8 @@ public class PostService extends PostingService {
     /**
      * Calculates k similar posts based on the underlying content comparison strategy
      *
-     * @param courseId id of the course in which similar posts are searched for
-     * @param post post that is to be created and check for similar posts beforehand
+     * @param courseId  id of the course in which similar posts are searched for
+     * @param post      post that is to be created and check for similar posts beforehand
      * @return list of similar posts
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {

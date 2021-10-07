@@ -133,8 +133,7 @@ public class PostResource {
      *
      * @param courseId id of the course the post should be published in
      * @param post     post to create
-     * @return ResponseEntity with status 200 (OK) and with body most similar posts in the course,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     * @return ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/posts/similarity-check")
     @PreAuthorize("hasRole('USER')")

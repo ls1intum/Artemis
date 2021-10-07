@@ -48,7 +48,7 @@ describe('Post Service', () => {
             const returnedFromService = metisCoursePosts.slice(0, 4);
             const expected = returnedFromService;
             service
-                .computeSimilarityScoresWitCoursePosts(metisPostExerciseUser1, metisCourse.id!)
+                .computeSimilarityScoresWithCoursePosts(metisPostExerciseUser1, metisCourse.id!)
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
