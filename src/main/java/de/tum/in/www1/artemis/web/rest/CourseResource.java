@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static java.time.ZonedDateTime.now;
 
@@ -1491,9 +1491,9 @@ public class CourseResource {
      */
     private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse, Course course) {
         dto.setCurrentMaxAverageScore(reachablePoints);
-        dto.setCurrentAbsoluteAverageScore(roundScore((averageScoreForCourse / 100.0) * reachablePoints, course));
+        dto.setCurrentAbsoluteAverageScore(roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * reachablePoints, course));
         if (reachablePoints > 0.0) {
-            dto.setCurrentPercentageAverageScore(roundScore(averageScoreForCourse, course));
+            dto.setCurrentPercentageAverageScore(roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course));
         }
         else {
             dto.setCurrentPercentageAverageScore(0.0);

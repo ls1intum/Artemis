@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
     templateUrl: './participant-scores-tables-container.component.html',
 })
 export class ParticipantScoresTablesContainerComponent {
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
     @Input()
     isLoading: boolean;

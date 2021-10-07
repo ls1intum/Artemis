@@ -28,7 +28,7 @@ public class RoundingUtil {
      * @param course The course that specifies the amount of decimal places in the attribute {@link Course#getAccuracyOfScores()}
      * @return The rounded number
      */
-    public static double roundScore(double score, Course course) {
+    public static double roundScoreSpecifiedByCourseSettings(double score, Course course) {
         return roundToNDecimalPlaces(score, course.getAccuracyOfScores());
     }
 

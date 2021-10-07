@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
-import { roundScorePercent } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -76,7 +76,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
             this.absoluteData = array;
             this.data = [];
             for (const value of array) {
-                this.data.push(roundScorePercent(value / this.numberOfStudentsInCourse, this.course));
+                this.data.push(roundScorePercentSpecifiedByCourseSettings(value / this.numberOfStudentsInCourse, this.course));
             }
         } else {
             this.absoluteData = array;

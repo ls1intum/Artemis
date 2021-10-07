@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { ChartType } from 'chart.js';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 
@@ -63,7 +63,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
             this.doughnutChartData[0].data = [-1, 0];
         } else {
             this.receivedStats = true;
-            const remaining = roundScore(this.currentMax! - this.currentAbsolute!, this.course);
+            const remaining = roundScoreSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
             this.doughnutChartData[0].data = this.currentMax === 0 ? [-1, 0] : this.stats;
         }

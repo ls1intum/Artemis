@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -464,10 +464,11 @@ public class ExerciseService {
             Double lastPoints = null;
             Double lastRatedPoints = null;
             if (participantScore.getLastScore() != null) {
-                lastPoints = roundScore(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(), updatedExercise.getCourseViaExerciseGroupOrCourseMember());
+                lastPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(),
+                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
             }
             if (participantScore.getLastRatedScore() != null) {
-                lastRatedPoints = roundScore(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(),
+                lastRatedPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(),
                         updatedExercise.getCourseViaExerciseGroupOrCourseMember());
             }
             participantScore.setLastPoints(lastPoints);

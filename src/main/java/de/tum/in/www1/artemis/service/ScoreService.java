@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.util.List;
 import java.util.Optional;
@@ -324,7 +324,8 @@ public class ScoreService {
         }
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
-            associatedParticipantScore.setLastPoints(roundScore(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember()));
+            associatedParticipantScore.setLastPoints(
+                    roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember()));
 
         }
     }
@@ -337,8 +338,8 @@ public class ScoreService {
         }
         else {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
-            associatedParticipantScore
-                    .setLastRatedPoints(roundScore(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember()));
+            associatedParticipantScore.setLastRatedPoints(
+                    roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember()));
         }
     }
 

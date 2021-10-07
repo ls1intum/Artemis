@@ -11,7 +11,11 @@
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
         jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
-        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: roundScore(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course) }"
+        [translateValues]="{
+            userScore: userScore,
+            maxScore: totalScore,
+            percentage: roundScoreSpecifiedByCourseSettings(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course)
+        }"
     ></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
@@ -153,7 +157,10 @@
                 <div id="quiz-score" [ngClass]="{ incorrect: userScore < totalScore }">
                     <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
                     <span id="quiz-score-result"
-                        >{{ userScore }}/{{ totalScore }} ({{ roundScore(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course) }} %)</span
+                        >{{ userScore }}/{{ totalScore }} ({{
+                            roundScoreSpecifiedByCourseSettings(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course)
+                        }}
+                        %)</span
                     >
                 </div>
                 <div *ngIf="mode === 'practice'">

@@ -21,7 +21,7 @@
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
-                    <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScore(result.score, getCourseFromExercise(exercise!)) }}%
+                    <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%
                 </span>
                 <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"> </jhi-chart></div>
                 <div *ngIf="showScoreChartTooltip" class="d-flex justify-content-center position-relative" style="margin-top: -10px">
@@ -39,7 +39,7 @@
             <div class="feedback-list">
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
                     <span>{{ feedback.category }}</span>
-                    <span class="feedback-points" *ngIf="feedback.credits">{{ roundScore(feedback.credits, getCourseFromExercise(exercise!)) }}P</span>
+                    <span class="feedback-points" *ngIf="feedback.credits">{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
                     <jhi-feedback-collapse *ngIf="feedback.text" [text]="feedback.text!"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>

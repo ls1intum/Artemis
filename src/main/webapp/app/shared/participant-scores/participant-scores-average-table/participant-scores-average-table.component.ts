@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 
@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
     templateUrl: './participant-scores-average-table.component.html',
 })
 export class ParticipantScoresAverageTableComponent {
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     @Input()
     participantAverageScores: ParticipantScoreAverageDTO[] = [];
     @Input()

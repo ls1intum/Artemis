@@ -321,7 +321,10 @@
                                             *ngIf="
                                                 !!submission.results && submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined
                                             "
-                                            >{{ roundScore(submission.results![correctionRound]!.score, getCourseFromExercise(exercise)) }} %</span
+                                            >{{
+                                                roundroundScoreSpecifiedByCourseSettingsScore(submission.results![correctionRound]!.score, getCourseFromExercise(exercise))
+                                            }}
+                                            %</span
                                         >
                                     </td>
                                     <td *ngIf="exercise.type === ExerciseType.TEXT">

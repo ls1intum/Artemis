@@ -16,7 +16,7 @@ import {
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ChartDataSets, ChartOptions, ChartType, defaults, helpers, LinearTickOptions } from 'chart.js';
@@ -690,9 +690,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScore(exerciseResult.achievedPoints, this.course));
+                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
                 csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScore(exerciseResult.achievedScore, this.course));
+                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
             } else {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] = '';
@@ -700,8 +700,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScore(studentResult.overallPointsAchieved, this.course));
-        csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScore(studentResult.overallScoreAchieved, this.course));
+        csvRow.overAllPoints =
+            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
+        csvRow.overAllScore =
+            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow['Overall Bonus Points'] = studentResult.overallGrade;
@@ -717,7 +719,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localize(roundScore(points, this.course));
+        return this.localize(roundScoreSpecifiedByCourseSettings(points, this.course));
     }
 
     /**
@@ -734,8 +736,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults) {
-            const overAllPoints = roundScore(studentResult.overallPointsAchieved, this.course);
-            const overallScore = roundScore(studentResult.overallScoreAchieved, this.course);
+            const overAllPoints = roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
+            const overallScore = roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
 
             const regularCalculation = {
                 scoreAchieved: overallScore,
@@ -749,8 +751,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                examScoreDTO.scoreAchieved = roundScore(examScoreDTO.scoreAchieved, this.course);
-                examScoreDTO.pointsAchieved = roundScore(examScoreDTO.pointsAchieved, this.course);
+                examScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
+                examScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(

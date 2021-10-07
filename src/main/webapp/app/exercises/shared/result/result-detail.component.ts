@@ -22,7 +22,7 @@ import {
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -52,7 +52,7 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() result: Result;
@@ -362,9 +362,9 @@ export class ResultDetailComponent implements OnInit {
 
         const course = getCourseFromExercise(this.exercise!);
 
-        const appliedNegativePoints = roundScore(codeIssueCredits + negativeCredits, course);
-        const receivedNegativePoints = roundScore(codeIssuePenalties + negativeCredits, course);
-        const positivePoints = roundScore(testCaseCredits + positiveCredits, course);
+        const appliedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
+        const receivedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
+        const positivePoints = roundScoreSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;

@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -78,7 +78,7 @@ export class CourseCardComponent implements OnChanges {
             this.totalReachableScore = scores.get('reachableScore')!;
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
-            const scoreNotReached = roundScore(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);
+            const scoreNotReached = roundScoreSpecifiedByCourseSettings(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);
             this.doughnutChartData[0].data = [this.totalAbsoluteScore, scoreNotReached];
         }
 

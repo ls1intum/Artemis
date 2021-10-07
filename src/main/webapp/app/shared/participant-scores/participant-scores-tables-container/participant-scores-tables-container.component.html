@@ -6,11 +6,11 @@
 
 <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
 <span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
-    >{{ 'artemisApp.participantScores.averageScore' | artemisTranslate: { avg: roundScore(avgScore, course) } }}
+    >{{ 'artemisApp.participantScores.averageScore' | artemisTranslate: { avg: roundScoreSpecifiedByCourseSettings(avgScore, course) } }}
 </span>
 
 <span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
-    >{{ 'artemisApp.participantScores.averageRatedScore' | artemisTranslate: { avg: roundScore(avgRatedScore, course) } }}
+    >{{ 'artemisApp.participantScores.averageRatedScore' | artemisTranslate: { avg: roundScoreSpecifiedByCourseSettings(avgRatedScore, course) } }}
 </span>
 
 <span *ngIf="avgGrade" class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">

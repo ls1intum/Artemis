@@ -18,7 +18,7 @@ import {
     RELATIVE_SCORE,
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ChartType } from 'chart.js';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -282,7 +282,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const roundedParticipationScore = roundScore(participationResult.score!, this.course);
+                                const roundedParticipationScore = roundScoreSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = roundedParticipationScore >= 100 ? 100 : roundedParticipationScore;
                                 const missedScore = 100 - cappedParticipationScore;
                                 groupedExercises[index].scores.data.push(roundedParticipationScore);
@@ -385,7 +385,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
         // This score is used to cap bonus points, so that we not have negative values for the missedScores
-        const roundedScore = roundScore(result.score!, this.course);
+        const roundedScore = roundScoreSpecifiedByCourseSettings(result.score!, this.course);
         const score = roundedScore >= 100 ? 100 : roundedScore;
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {

@@ -17,7 +17,7 @@ import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 /**
@@ -87,7 +87,7 @@ export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInfo;
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() participation: Participation;

@@ -45,7 +45,7 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/sha
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
@@ -61,7 +61,7 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
     calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     exercise: Exercise;

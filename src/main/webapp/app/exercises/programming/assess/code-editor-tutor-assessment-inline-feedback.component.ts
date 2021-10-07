@@ -3,7 +3,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -48,7 +48,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onEditFeedback = new EventEmitter<number>();
 
     // Expose the function to the template
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
     viewOnly: boolean;
     oldFeedback: Feedback;

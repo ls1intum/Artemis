@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
@@ -99,7 +99,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundScore(points, this.course), this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundScoreSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
     }
 
     private createCharts() {
@@ -162,7 +162,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
                         if (!self.absolutePoints && !self.chartData[0].data) {
                             return ' -';
                         }
-                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index])} (${roundScore(
+                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index])} (${roundScoreSpecifiedByCourseSettings(
                             self.chartData[0].data![tooltipItem.index],
                             self.course,
                         )}%)`;

@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Result } from 'app/entities/result.model';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 // Modal -> Result details view
@@ -12,7 +12,7 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
     styleUrls: ['./result-history.scss'],
 })
 export class ResultHistoryComponent {
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() results: Result[];

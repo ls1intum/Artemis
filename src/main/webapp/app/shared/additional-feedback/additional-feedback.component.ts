@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { roundScore } from '../util/utils';
+import { roundScoreSpecifiedByCourseSettings } from '../util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -15,6 +15,6 @@ export class AdditionalFeedbackComponent {
     additional: boolean;
 
     // Expose the function to the template
-    readonly roundScore = roundScore;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 }

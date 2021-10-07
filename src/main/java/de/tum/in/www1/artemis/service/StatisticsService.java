@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -138,12 +138,12 @@ public class StatisticsService {
         List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
         sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {
-            var roundedAverageScore = roundScore(exercise.getAverageScore(), course);
+            var roundedAverageScore = roundScoreSpecifiedByCourseSettings(exercise.getAverageScore(), course);
             exercise.setAverageScore(roundedAverageScore);
         });
 
         if (averageScoreForCourse != null && averageScoreForCourse > 0) {
-            courseManagementStatisticsDTO.setAverageScoreOfCourse(roundScore(averageScoreForCourse, course));
+            courseManagementStatisticsDTO.setAverageScoreOfCourse(roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course));
         }
         else {
             courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
@@ -202,7 +202,7 @@ public class StatisticsService {
             exerciseManagementStatisticsDTO.setMaxPointsOfExercise(0);
         }
         Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
-        double averageScoreForExercise = averageScore != null ? roundScore(averageScore, course) : 0.0;
+        double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
         exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);
         List<ScoreDistribution> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];

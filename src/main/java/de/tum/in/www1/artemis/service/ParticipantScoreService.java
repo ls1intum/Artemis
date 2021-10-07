@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScore;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -141,7 +141,7 @@ public class ParticipantScoreService {
 
         // calculating achieved score
         for (ScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.scoreAchieved = roundScore((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
+            scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
             // sending this for debugging purposes to find out why the scores calculation could be wrong
             scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
         }

@@ -69,23 +69,36 @@
                     <th></th>
                     <th>
                         {{ localize(averageNumberOfParticipatedExercises) }}
-                        ({{ localize(roundScorePercent(averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
+                        ({{
+                            localize(
+                                roundScorePercentSpecifiedByCourseSettings(averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
+                            )
+                        }}%)
                     </th>
                     <th>
                         {{ localize(averageNumberOfSuccessfulExercises) }}
-                        ({{ localize(roundScorePercent(averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
+                        ({{
+                            localize(
+                                roundScorePercentSpecifiedByCourseSettings(averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
+                            )
+                        }}%)
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
                             {{ localize(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }}
                             ({{
-                                localize(roundScorePercent(averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!, course))
+                                localize(
+                                    roundScorePercentSpecifiedByCourseSettings(
+                                        averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                                        course
+                                    )
+                                )
                             }}%)
                         </th>
                     </ng-container>
                     <th>
                         {{ localize(averageNumberOfOverallPoints) }}
-                        ({{ localize(roundScorePercent(averageNumberOfOverallPoints / maxNumberOfOverallPoints, course)) }}%)
+                        ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfOverallPoints / maxNumberOfOverallPoints, course)) }}%)
                     </th>
                     <th *ngIf="gradingScaleExists">
                         {{ averageGrade }}
@@ -98,21 +111,39 @@
                     <td>{{ student.user.login }}</td>
                     <td>
                         {{ student.numberOfParticipatedExercises }}
-                        ({{ localize(roundScorePercent(student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
+                        ({{
+                            localize(
+                                roundScorePercentSpecifiedByCourseSettings(
+                                    student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length,
+                                    course
+                                )
+                            )
+                        }}%)
                     </td>
                     <td>
                         {{ student.numberOfSuccessfulExercises }}
-                        ({{ localize(roundScorePercent(student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)) }}%)
+                        ({{
+                            localize(
+                                roundScorePercentSpecifiedByCourseSettings(student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length, course)
+                            )
+                        }}%)
                     </td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
                             {{ localize(student.sumPointsPerExerciseType.get(exerciseType)!) }}
-                            ({{ localize(roundScorePercent(student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!, course)) }}%)
+                            ({{
+                                localize(
+                                    roundScorePercentSpecifiedByCourseSettings(
+                                        student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                                        course
+                                    )
+                                )
+                            }}%)
                         </td>
                     </ng-container>
                     <td>
                         {{ localize(student.overallPoints) }}
-                        ({{ localize(roundScorePercent(student.overallPoints / maxNumberOfOverallPoints, course)) }}%)
+                        ({{ localize(roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxNumberOfOverallPoints, course)) }}%)
                     </td>
                     <td *ngIf="gradingScaleExists">
                         {{ student.gradeStep?.gradeName }}

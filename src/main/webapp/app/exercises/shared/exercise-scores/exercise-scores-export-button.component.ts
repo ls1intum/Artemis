@@ -1,5 +1,5 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { roundScore } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -44,7 +44,7 @@ export class ExerciseScoresExportButtonComponent {
                 results.forEach((result, index) => {
                     const studentParticipation = result.participation! as StudentParticipation;
                     const { participantName, participantIdentifier } = studentParticipation;
-                    const score = roundScore(result.score, getCourseFromExercise(exercise));
+                    const score = roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
 
                     if (index === 0) {
                         rows.push(this.getHeadersRow(studentParticipation));
