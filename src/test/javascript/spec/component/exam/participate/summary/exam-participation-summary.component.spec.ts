@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -39,6 +39,10 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -66,6 +70,10 @@ const exam = {
     reviewEndDate,
 } as Exam;
 
+const exerciseGroup = {
+    exam: exam,
+} as ExerciseGroup;
+
 const textSubmission = { id: 1, submitted: true } as TextSubmission;
 const quizSubmission = { id: 1 } as QuizSubmission;
 const modelingSubmission = { id: 1 } as ModelingSubmission;
@@ -76,10 +84,10 @@ const quizParticipation = { id: 2, student: user, submissions: [quizSubmission] 
 const modelingParticipation = { id: 3, student: user, submissions: [modelingSubmission] } as StudentParticipation;
 const programmingParticipation = { id: 4, student: user, submissions: [programmingSubmission] } as StudentParticipation;
 
-const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation] } as TextExercise;
-const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation] } as QuizExercise;
-const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation] } as ModelingExercise;
-const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation] } as ProgrammingExercise;
+const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation], exerciseGroup: exerciseGroup } as TextExercise;
+const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation], exerciseGroup: exerciseGroup } as QuizExercise;
+const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation], exerciseGroup: exerciseGroup } as ModelingExercise;
+const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup: exerciseGroup } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
 const studentExam = { id: 1, exam, user, exercises } as StudentExam;
@@ -118,6 +126,11 @@ function sharedSetup(url: string[]) {
                         },
                     },
                 },
+                MockProvider(CourseManagementService, {
+                    find: () => {
+                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
             ],
         })
             .compileComponents()
