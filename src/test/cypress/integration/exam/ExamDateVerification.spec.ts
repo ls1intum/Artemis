@@ -107,7 +107,7 @@ describe('Exam management', () => {
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
-                .endDate(dayjs().add(15, 'seconds'))
+                .endDate(dayjs().add(30, 'seconds'))
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -127,7 +127,7 @@ describe('Exam management', () => {
                             textEditor.typeSubmission(submissionText);
                         });
                         cy.contains('Save').click();
-                        cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
+                        cy.contains('This is the end of ' + exam.title, { timeout: 40000 });
                         examStartEnd.finishExam();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
