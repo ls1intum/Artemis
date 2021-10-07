@@ -27,9 +27,9 @@ public class SubmissionPolicyResource {
 
     public static final String ENTITY_NAME = "programmingExercise.submissionPolicy";
 
-    public static final String ROOT = "/api";
+    public static final String ROOT = "api/";
 
-    public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = "/programming-exercises/{exerciseId}/submission-policy";
+    public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = "programming-exercises/{exerciseId}/submission-policy";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -48,7 +48,7 @@ public class SubmissionPolicyResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/submission-policy : Gets the submission policy of a programming exercise
+     * GET programming-exercises/:exerciseId/submission-policy : Gets the submission policy of a programming exercise
      *
      * @param exerciseId of the programming exercise for which the submission policy should be fetched
      * @return the ResponseEntity with status 200 (OK) and the submission policy in body. Status 404 when
@@ -67,7 +67,7 @@ public class SubmissionPolicyResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/submission-policy
+     * POST programming-exercises/:exerciseId/submission-policy
      * <br><br>
      * Adds a submission policy to the programming exercise. When a submission policy is added to a programming
      * exercise retroactively, it is disabled by default. More information on adding submission policies
@@ -112,7 +112,7 @@ public class SubmissionPolicyResource {
     }
 
     /**
-     * DELETE /programming-exercises/:exerciseId/submission-policy
+     * DELETE programming-exercises/:exerciseId/submission-policy
      * <br><br>
      * Removes the submission policy of a programming exercise. When a submission policy is removed from a programming
      * exercise, the submission policy effect is removed from every participation. More information on removing submission policies
@@ -145,7 +145,7 @@ public class SubmissionPolicyResource {
     }
 
     /**
-     * PUT /programming-exercises/:exerciseId/submission-policy
+     * PUT programming-exercises/:exerciseId/submission-policy
      * <br><br>
      * Either activates or deactivates the submission policy of a programming exercise, depending on the activate
      * request parameter. Toggling the activation of a submission policy has an immediate effect on student participations.
@@ -192,7 +192,7 @@ public class SubmissionPolicyResource {
     }
 
     /**
-     * PATCH /programming-exercises/:exerciseId/submission-policy
+     * PATCH programming-exercises/:exerciseId/submission-policy
      * <br><br>
      * Updates the submission policy of a programming exercise. When a submission policy is updated, the system applies
      * the effect of the submission policy immediately. More information on updating submission policies can be found at
