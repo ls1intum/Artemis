@@ -14,7 +14,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { metisAnswerPostToCreateUser1, metisAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,10 +52,10 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should init modal with correct content and title for answer post with id', () => {
-        component.posting = metisAnswerPostUser1;
+        component.posting = metisResolvingAnswerPostUser1;
         component.ngOnInit();
         expect(component.modalTitle).to.be.equal('artemisApp.metis.editPosting');
-        expect(component.content).to.be.equal(metisAnswerPostUser1.content);
+        expect(component.content).to.be.equal(metisResolvingAnswerPostUser1.content);
     });
 
     it('should init modal with correct content and title for answer post without id', () => {
@@ -77,7 +77,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke updatePosting when confirming', () => {
-        component.posting = metisAnswerPostUser1;
+        component.posting = metisResolvingAnswerPostUser1;
         createPostingSpy = spy(component, 'updatePosting');
         component.ngOnInit();
         component.confirm();
@@ -85,7 +85,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
-        component.posting = metisAnswerPostUser1;
+        component.posting = metisResolvingAnswerPostUser1;
         createPostingSpy = spy(component, 'updatePosting');
         component.ngOnInit();
         component.confirm();

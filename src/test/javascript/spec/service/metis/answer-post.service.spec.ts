@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { metisAnswerPostToCreateUser1, metisAnswerPostUser1 } from '../../helpers/sample/metis-sample-data';
+import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1 } from '../../helpers/sample/metis-sample-data';
 
 const expect = chai.expect;
 
@@ -35,7 +35,7 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should update a AnswerPost text field', fakeAsync(() => {
-            const returnedFromService = { ...metisAnswerPostUser1, content: 'This is another test answer' };
+            const returnedFromService = { ...metisResolvingAnswerPostUser1, content: 'This is another test answer' };
             const expected = { ...returnedFromService };
             service
                 .update(1, expected)
@@ -46,8 +46,8 @@ describe('AnswerPost Service', () => {
             tick();
         }));
 
-        it('should update a AnswerPost tutorApproved field', fakeAsync(() => {
-            const returnedFromService = { ...metisAnswerPostUser1, tutorApproved: true };
+        it('should update a AnswerPost resolvesPost field', fakeAsync(() => {
+            const returnedFromService = { ...metisResolvingAnswerPostUser1, resolvesPost: true };
             const expected = { ...returnedFromService };
             service
                 .update(1, expected)
@@ -59,7 +59,7 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should delete a AnswerPost', fakeAsync(() => {
-            service.delete(1, metisAnswerPostUser1).subscribe((resp) => expect(resp.ok).to.be.true);
+            service.delete(1, metisResolvingAnswerPostUser1).subscribe((resp) => expect(resp.ok).to.be.true);
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
