@@ -361,7 +361,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
         dndQuestion.text = this.translateService.instant('artemisApp.quizQuestion.longQuestion');
-        dndQuestion.hint = this.translateService.instant('artemisApp.quizQuestion.hint');
+        dndQuestion.hint = this.translateService.instant('artemisApp.quizQuestion.hintText');
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.points = 1;
