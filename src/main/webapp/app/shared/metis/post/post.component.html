@@ -10,12 +10,12 @@
                 [ngbTooltip]="'artemisApp.metis.postMarkedAsResolvedTooltip' | artemisTranslate"
             >
             </fa-icon>
-            <span class="col-auto post-title">
-                {{ posting.title }}
-                <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">#{{ posting.id }}</a>
+            <span class="col-auto">
+                <a class="post-title" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">{{ posting.title }}</a>
+                <span class="reference-hash">#{{ posting.id }}</span>
             </span>
         </div>
-        <jhi-posting-content *ngIf="!previewMode" [content]="posting.content"> </jhi-posting-content>
+        <jhi-posting-content [content]="posting.content"> </jhi-posting-content>
     </div>
 </div>
-<jhi-post-footer [previewMode]="previewMode" [posting]="posting"></jhi-post-footer>
+<jhi-post-footer [posting]="posting"></jhi-post-footer>

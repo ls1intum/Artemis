@@ -93,11 +93,11 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const title = getElement(debugElement, 'p.post-title');
+        const title = getElement(debugElement, 'a.post-title');
         expect(title).toBeDefined();
-        const clickableId = getElement(debugElement, 'a.reference-hash');
-        expect(clickableId).toBeDefined();
-        expect(clickableId.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
+        const idHash = getElement(debugElement, '.reference-hash');
+        expect(idHash).toBeDefined();
+        expect(idHash.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
         expect(metisServiceGetLinkMock).toHaveBeenCalledWith(metisPostExerciseUser1);
         expect(metisServiceGetQueryParamsMock).toHaveBeenCalledWith(metisPostExerciseUser1);
     });
