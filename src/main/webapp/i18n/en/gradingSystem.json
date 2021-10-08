@@ -53,7 +53,7 @@
                 "empty": "Grading key must contain at least one grade step!",
                 "negativeMaxPoints": "Maximum points can't be negative",
                 "emptyFields": "All grade step fields must be filled in!",
-                "invalidMinMaxPercentages": "The grade step percentages must be higher or to 0 and the Min % may not be higher than the Max %!",
+                "invalidMinMaxPercentages": "The grade step percentages must be higher or equal to 0 and the Min % may not be higher than the Max %!",
                 "invalidMinMaxPoints": "The grade step points must be all higher or equal to 0 and the Min Points may not be higher than the Max Points!",
                 "nonUniqueGradeNames": "All grade steps must have unique names!",
                 "unsetFirstPassingGrade": "The first passing grade must be set!",

@@ -6,7 +6,7 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Round', () => {
-    void it('Decimal length', () => {
+    it('Decimal length', () => {
         expect(round(14.821354, 4)).to.be.equal(14.8214);
         expect(round(14.821354, 3)).to.be.equal(14.821);
         expect(round(14.821354, 2)).to.be.equal(14.82);
@@ -14,7 +14,7 @@ describe('Round', () => {
         expect(round(14.821354, 0)).to.be.equal(15);
     });
 
-    void it('Turning points', () => {
+    it('Turning points', () => {
         expect(round(2.4999999, 0)).to.be.equal(2);
         expect(round(2.5, 0)).to.be.equal(3);
         expect(round(2.55, 1)).to.be.equal(2.6);
@@ -23,7 +23,7 @@ describe('Round', () => {
         expect(round(2.55555, 4)).to.be.equal(2.5556);
     });
 
-    void it('Other', () => {
+    it('Other', () => {
         expect(round(9.99999999, 0)).to.be.equal(10);
         expect(round(9.99999999, 1)).to.be.equal(10);
         expect(round(5.55555555, 0)).to.be.equal(6);
@@ -32,7 +32,7 @@ describe('Round', () => {
         expect(round(1.00000001, 1)).to.be.equal(1.0);
     });
 
-    void it('should return NaN', () => {
+    it('should return NaN', () => {
         expect(round(Number.NaN, 2)).to.be.NaN;
         expect(round(Number.NaN, 1)).to.be.NaN;
         expect(round(9.9999, 0.5)).to.NaN;
@@ -40,7 +40,7 @@ describe('Round', () => {
 });
 
 describe('Rounding of scores', () => {
-    void it('RoundScore', () => {
+    it('RoundScore', () => {
         expect(roundScoreSpecifiedByCourseSettings(13.821354, { accuracyOfScores: 4 })).to.be.equal(13.8214);
         expect(roundScoreSpecifiedByCourseSettings(54.821354, { accuracyOfScores: 3 })).to.be.equal(54.821);
         expect(roundScoreSpecifiedByCourseSettings(0.821354, { accuracyOfScores: 2 })).to.be.equal(0.82);
@@ -48,7 +48,7 @@ describe('Rounding of scores', () => {
         expect(roundScoreSpecifiedByCourseSettings(4.821354, { accuracyOfScores: 0 })).to.be.equal(5);
     });
 
-    void it('RoundScorePercent', () => {
+    it('RoundScorePercent', () => {
         expect(roundScorePercentSpecifiedByCourseSettings(0, { accuracyOfScores: 4 })).to.be.equal(0);
         expect(roundScorePercentSpecifiedByCourseSettings(0.222222, { accuracyOfScores: 3 })).to.be.equal(22.222);
         expect(roundScorePercentSpecifiedByCourseSettings(0.5, { accuracyOfScores: 2 })).to.be.equal(50);

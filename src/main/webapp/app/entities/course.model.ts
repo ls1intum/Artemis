@@ -81,7 +81,6 @@ export class Course implements BaseEntity {
         this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
-
         this.accuracyOfScores = 1; // default value
     }
 

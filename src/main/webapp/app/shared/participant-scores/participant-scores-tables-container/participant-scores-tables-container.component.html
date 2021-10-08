@@ -23,7 +23,7 @@
 </span>
 
 <div [ngSwitch]="mode">
-    <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores"> [course]="course" </jhi-participant-scores-table>
+    <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores" [course]="course"></jhi-participant-scores-table>
     <jhi-participant-scores-average-table
         *ngSwitchCase="'average'"
         [isLoading]="isLoading"

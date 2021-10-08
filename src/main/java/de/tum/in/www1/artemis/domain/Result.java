@@ -151,7 +151,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * Builds the resultString attribute
+     * Builds the resultString attribute, e.g. "4.2 of 69 points"
      *
      * @param totalPoints total amount of scored points
      * @param maxPoints   maximum score reachable at corresponding exercise
