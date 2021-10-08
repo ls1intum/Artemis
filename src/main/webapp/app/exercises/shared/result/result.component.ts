@@ -13,7 +13,7 @@ import { getExercise, Participation, ParticipationType } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
-import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -98,6 +98,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
     @Input() missingResultInfo = MissingResultInfo.NONE;
+    @Input() exercise?: Exercise;
 
     ParticipationType = ParticipationType;
     textColorClass: string;
@@ -123,11 +124,13 @@ export class ResultComponent implements OnInit, OnChanges {
      * participation and displays the corresponding message.
      */
     ngOnInit(): void {
-        if (!this.result && this.participation && this.participation.id) {
-            const exercise = getExercise(this.participation);
+        if (this.participation) {
+            this.exercise = this.exercise || getExercise(this.participation);
+        }
 
+        if (!this.result && this.participation && this.participation.id) {
             if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise && exercise.type === ExerciseType.MODELING) {
+                if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
