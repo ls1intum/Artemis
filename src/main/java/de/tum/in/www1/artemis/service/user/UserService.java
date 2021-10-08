@@ -557,7 +557,7 @@ public class UserService {
      * @param group the group
      * @param role the role
      */
-    public void removeUserFromGroup(User user, String group, Role role) {
+    public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab

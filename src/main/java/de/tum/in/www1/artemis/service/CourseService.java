@@ -524,7 +524,7 @@ public class CourseService {
         userService.addUserToGroup(user, group, role);
     }
 
-    public void removeUserFromGroup(User user, String group, Role role) {
-        userService.removeUserFromGroup(user, group, role);
+    public void removeUserFromGroup(User user, String group) {
+        userService.removeUserFromGroup(user, group);
     }
 }
