@@ -1,4 +1,4 @@
-<div class="me-0 row justify-content-between" [ngClass]="previewMode ? 'mb-2 mt-0' : 'mt-3'">
+<div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
     <div class="col-auto row">
         <div *ngIf="pageType === PageType.OVERVIEW" class="col-auto pe-2">
             <a class="linked-context-information" *ngIf="contextInformation.routerLinkComponents" [routerLink]="contextInformation.routerLinkComponents" routerLinkActive="active">

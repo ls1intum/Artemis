@@ -7,7 +7,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
-    styleUrls: ['./post.component.scss'],
+    styleUrls: ['./post.component.scss', './../metis.component.scss'],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
