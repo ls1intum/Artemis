@@ -77,7 +77,7 @@ jobs:
     - name: Autobuild
       uses: github/codeql-action/autobuild@v1
       env:
-        NODE_OPTIONS: '--max_old_space_size=3072'
+        NODE_OPTIONS: '--max_old_space_size=4096'
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
