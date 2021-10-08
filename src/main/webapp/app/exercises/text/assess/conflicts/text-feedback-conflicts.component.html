@@ -31,7 +31,7 @@
                     [maxPoints]="exercise?.maxPoints || 0"
                     [score]="leftTotalScore"
                     [maxBonusPoints]="exercise?.bonusPoints || 0"
-                    [course]="getCourseFromExercise(exercise)"
+                    [course]="getCourseFromExercise(exercise!)"
                 >
                 </jhi-score-display>
             </div>
