@@ -60,20 +60,24 @@
             <tbody>
                 <tr *ngFor="let exam of exams; trackBy: trackId">
                     <td class="d-md-table-cell">
-                        <span *ngIf="course.isAtLeastInstructor">
+                        <span *ngIf="course.isAtLeastInstructor; else notClickableExamId">
                             <a [routerLink]="[exam.id]">{{ exam.id }}</a>
                         </span>
-                        <span *ngIf="course.isAtLeastInstructor">
+                        <ng-template #notClickableExamId>
                             {{ exam.id }}
-                        </span>
+                        </ng-template>
                     </td>
                     <td class="d-md-table-cell">
-                        <span class="bold" *ngIf="course.isAtLeastInstructor">
-                            <a [routerLink]="[exam.id]">{{ exam.title }}</a>
-                        </span>
-                        <span *ngIf="course.isAtLeastInstructor">
-                            {{ exam.title }}
-                        </span>
+                        <ng-container>
+                            <span class="bold" *ngIf="course.isAtLeastInstructor; else notClickableExamTitle">
+                                <a [routerLink]="[exam.id]">{{ exam.title }}</a>
+                            </span>
+                        </ng-container>
+                        <ng-template #notClickableExamTitle>
+                            <span *ngIf="course.isAtLeastInstructor">
+                                {{ exam.title }}
+                            </span>
+                        </ng-template>
                     </td>
                     <td>{{ exam.visibleDate | artemisDate }}</td>
                     <td>{{ exam.startDate | artemisDate }}</td>
@@ -83,14 +87,18 @@
                     <td>{{ exam.examStudentReviewEnd | artemisDate }}</td>
                     <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
                     <td>
-                        <span *ngIf="course.isAtLeastInstructor">
-                            <a [routerLink]="[exam.id, 'students']">
+                        <ng-container *ngIf="course.isAtLeastInstructor; else registeredUsersForTutors">
+                            <span>
+                                <a [routerLink]="[exam.id, 'students']">
+                                    {{ exam.numberOfRegisteredUsers }}
+                                </a>
+                            </span>
+                        </ng-container>
+                        <ng-template #registeredUsersForTutors>
+                            <span *ngIf="course.isAtLeastTutor">
                                 {{ exam.numberOfRegisteredUsers }}
-                            </a>
-                        </span>
-                        <span *ngIf="course.isAtLeastInstructor && course.isAtLeastTutor">
-                            {{ exam.numberOfRegisteredUsers }}
-                        </span>
+                            </span>
+                        </ng-template>
                     </td>
 
                     <td class="text-end">
