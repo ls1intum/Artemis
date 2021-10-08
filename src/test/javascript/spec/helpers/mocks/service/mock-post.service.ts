@@ -54,7 +54,7 @@ export class MockPostService {
         return of({ body: metisTags }) as Observable<HttpResponse<string[]>>;
     }
 
-    computeSimilarityScoresWitCoursePosts(post: Post, courseId: number): Observable<HttpResponse<Post[]>> {
+    computeSimilarityScoresWithCoursePosts(post: Post, courseId: number): Observable<HttpResponse<Post[]>> {
         return of({ body: [metisPostExerciseUser1] }) as Observable<HttpResponse<Post[]>>;
     }
 }

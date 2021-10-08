@@ -12,7 +12,7 @@
             </fa-icon>
             <span class="col-auto post-title">
                 {{ posting.title }}
-                <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)"> #{{ posting.id }} </a>
+                <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">#{{ posting.id }}</a>
             </span>
         </div>
         <jhi-posting-content *ngIf="!previewMode" [content]="posting.content"> </jhi-posting-content>

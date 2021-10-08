@@ -6,13 +6,13 @@ import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
-import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })

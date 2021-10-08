@@ -194,7 +194,7 @@ describe('Metis Service', () => {
         });
 
         it('should get similar posts within course', () => {
-            const postServiceSpy = jest.spyOn(postService, 'computeSimilarityScoresWitCoursePosts');
+            const postServiceSpy = jest.spyOn(postService, 'computeSimilarityScoresWithCoursePosts');
             metisService.getSimilarPosts(post);
             expect(postServiceSpy).toHaveBeenCalled();
         });
