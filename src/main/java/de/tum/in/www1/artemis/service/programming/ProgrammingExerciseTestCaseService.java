@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -91,9 +92,10 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
 
-        // Make sure that at least one test has a weight so that students can still achieve 100% score
+        // Make sure that at least one test has a weight >0 for purely automatic feedback so that students can still achieve 100% score.
+        // If manual feedback is given, then a test case weight of zero is okay, as students can still receive points via manual feedbacks.
         var testWeightsSum = existingTestCases.stream().mapToDouble(testCase -> Optional.ofNullable(testCase.getWeight()).orElse(0.0)).sum();
-        if (testWeightsSum <= 0) {
+        if (testWeightsSum < 0 || (testWeightsSum == 0 && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
             throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError");
         }
 

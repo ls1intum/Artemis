@@ -53,6 +53,7 @@ import { TestCaseDistributionChartComponent } from 'app/exercises/programming/ma
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -445,13 +446,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         flush();
     }));
 
-    it('should show error alert when test case weights are less or equal zero', () => {
-        initGradingComponent({ showInactive: true });
-
-        fixture.detectChanges();
-
-        const orderedTests = _sortBy(testCases1, 'testName');
-
+    const setAllWeightsToZero = () => {
         const table = debugElement.query(By.css(testCaseTableId));
 
         // get all input fields
@@ -467,6 +462,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weightInput.value = '0';
             weightInput.dispatchEvent(new Event('blur'));
         }
+    };
+
+    const checkBehaviourForZeroWeight = (assessmentType: AssessmentType) => {
+        initGradingComponent({ showInactive: true });
+        comp.programmingExercise.assessmentType = assessmentType;
+
+        fixture.detectChanges();
+
+        const orderedTests = _sortBy(testCases1, 'testName');
+        setAllWeightsToZero();
 
         fixture.detectChanges();
         expect(comp.changedTestCaseIds).to.deep.equal(orderedTests.map((test) => test.id));
@@ -486,7 +491,23 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
-        expect(alertServiceSpy).to.be.calledOnce;
+        if (assessmentType === AssessmentType.AUTOMATIC) {
+            expect(alertServiceSpy).to.be.calledOnce;
+        } else {
+            expect(alertServiceSpy).to.not.be.called;
+        }
+    };
+
+    it('should show an error alert when test case weights are less or equal zero for exercises with automatic feedback', () => {
+        checkBehaviourForZeroWeight(AssessmentType.AUTOMATIC);
+    });
+
+    it('should NOT show an error alert when test case weights are zero for exercises with semiautomatic feedback', () => {
+        checkBehaviourForZeroWeight(AssessmentType.SEMI_AUTOMATIC);
+    });
+
+    it('should NOT show an error alert when test case weights are zero for exercises with manual feedback', () => {
+        checkBehaviourForZeroWeight(AssessmentType.MANUAL);
     });
 
     it('should be able to update the value of the visibility', async () => {
