@@ -1,0 +1,11 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.post-title {
+    font-weight: 600;
+    color: #0f6ab4;
+
+    .reference-hash {
+        font-weight: 200;
+        color: $metis-light-gray;
+    }
+}

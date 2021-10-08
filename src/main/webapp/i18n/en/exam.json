@@ -77,8 +77,8 @@
                 "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
             },
             "problemStatementUpdate": {
-                "showDiff": "show difference",
-                "showNew": "only show new version"
+                "showDiff": "Show Difference",
+                "showNew": "Only show new Version"
             }
         },
         "examScores": {
@@ -242,6 +242,8 @@
             }
         },
         "examManagement": {
+            "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
+            "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "editExam": "Edit an existing exam",

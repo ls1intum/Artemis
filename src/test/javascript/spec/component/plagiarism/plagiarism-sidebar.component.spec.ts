@@ -24,7 +24,7 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('displays the run details', () => {
-        spyOn(comp.showRunDetailsChange, 'emit');
+        jest.spyOn(comp.showRunDetailsChange, 'emit');
 
         comp.displayRunDetails();
         expect(comp.showRunDetailsChange.emit).toHaveBeenCalledWith(true);

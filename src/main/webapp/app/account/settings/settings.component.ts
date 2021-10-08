@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { JhiLanguageService } from 'ng-jhipster';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { User } from 'app/core/user/user.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-settings',
@@ -23,7 +23,7 @@ export class SettingsComponent implements OnInit {
     });
     isRegistrationEnabled = false;
 
-    constructor(private accountService: AccountService, private fb: FormBuilder, private languageService: JhiLanguageService, private profileService: ProfileService) {}
+    constructor(private accountService: AccountService, private fb: FormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -58,8 +58,8 @@ export class SettingsComponent implements OnInit {
             () => {
                 this.success = true;
                 this.accountService.authenticate(this.account);
-                if (this.account.langKey !== this.languageService.getCurrentLanguage()) {
-                    this.languageService.changeLanguage(this.account.langKey!);
+                if (this.account.langKey !== this.translateService.currentLang) {
+                    this.translateService.use(this.account.langKey!);
                 }
             },
             () => (this.success = false),

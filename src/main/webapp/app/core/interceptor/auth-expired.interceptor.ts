@@ -25,7 +25,7 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                 (err: any) => {
                     if (err instanceof HttpErrorResponse) {
                         // When there is no existing token we were not logged in to begin with
-                        if (err.status === 401 && this.authServerProvider.getToken() !== null) {
+                        if (err.status === 401 && this.authServerProvider.getToken() != undefined) {
                             // save the url before the logout navigates to another page in a constant
                             const currentUrl = this.router.routerState.snapshot.url;
                             this.loginService.logout(false);

@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-team-delete-button',
@@ -16,7 +16,7 @@ import { JhiAlertService } from 'ng-jhipster';
             [entityTitle]="team.shortName || ''"
             deleteQuestion="artemisApp.team.delete.question"
             deleteConfirmationText="artemisApp.team.delete.typeNameToConfirm"
-            (delete)="removeTeam($event)"
+            (delete)="removeTeam()"
             [dialogError]="dialogError$"
         >
             <fa-icon [icon]="'trash-alt'" class="me-1"></fa-icon>
@@ -36,7 +36,7 @@ export class TeamDeleteButtonComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private jhiAlertService: JhiAlertService, private teamService: TeamService) {}
+    constructor(private alertService: AlertService, private teamService: TeamService) {}
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -48,16 +48,14 @@ export class TeamDeleteButtonComponent implements OnDestroy {
     /**
      * Deletes the provided team on the server and emits the delete event
      *
-     * @param additionalChecksValues Not used here
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    removeTeam = (additionalChecksValues: { [key: string]: boolean }) => {
+    removeTeam = () => {
         this.teamService.delete(this.exercise, this.team.id!).subscribe(
             () => {
                 this.delete.emit(this.team);
                 this.dialogErrorSource.next('');
             },
-            () => this.jhiAlertService.error('artemisApp.team.removeTeam.error'),
+            () => this.alertService.error('artemisApp.team.removeTeam.error'),
         );
     };
 }
