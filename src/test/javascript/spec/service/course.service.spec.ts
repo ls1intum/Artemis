@@ -4,7 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Router } from '@angular/router';
 import { map, take } from 'rxjs/operators';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -17,7 +17,7 @@ describe('Course Service', () => {
     let service: CourseManagementService;
     let httpMock: HttpTestingController;
     let elemDefault: Course;
-    let currentDate: moment.Moment;
+    let currentDate: dayjs.Dayjs;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -31,7 +31,7 @@ describe('Course Service', () => {
         injector = getTestBed();
         service = injector.get(CourseManagementService);
         httpMock = injector.get(HttpTestingController);
-        currentDate = moment();
+        currentDate = dayjs();
 
         elemDefault = new Course();
         elemDefault.id = 0;

@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import * as showdown from 'showdown';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-plant-uml.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
-import * as DOMPurify from 'dompurify';
 import { Result } from 'app/entities/result.model';
+import { ShowdownExtension } from 'showdown';
+import { sanitize } from 'dompurify';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {
@@ -46,7 +46,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                     const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                     if (plantUmlHtmlContainer) {
                         // We need to sanitize the received svg as it could contain malicious code in a script tag.
-                        plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
+                        plantUmlHtmlContainer.innerHTML = sanitize(plantUmlSvg);
                     }
                 }),
             )
@@ -64,7 +64,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
      * 5) Inject the computed svg for the plantUml (from the server) into the plantUml div container based on the unique placeholder id (see step 2)
      */
     getExtension() {
-        const extension: showdown.ShowdownExtension = {
+        const extension: ShowdownExtension = {
             type: 'lang',
             filter: (text: string) => {
                 const idPlaceholder = '%idPlaceholder%';

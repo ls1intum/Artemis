@@ -1,3 +1,5 @@
+import { ExerciseType } from 'app/entities/exercise.model';
+
 export class ExamScoreDTO {
     public examId: number;
     public title: string;
@@ -25,6 +27,7 @@ export class ExerciseInfo {
     public title: string;
     public maxPoints: number;
     public numberOfParticipants: number;
+    public exerciseType: string;
 
     constructor() {}
 }
@@ -39,6 +42,7 @@ export class StudentResult {
     public overallScoreAchieved?: number;
     public overallPointsAchievedInFirstCorrection?: number;
     public overallGrade?: string;
+    public overallGradeInFirstCorrection?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
@@ -79,6 +83,9 @@ export class AggregatedExamResult {
     public standardDeviationPassed?: number;
     public standardDeviation: number;
     public standardDeviationTotal: number;
+    public standardGradeDeviationPassed?: number;
+    public standardGradeDeviation?: number;
+    public standardGradeDeviationTotal?: number;
     public noOfExamsFilteredForPassed = 0;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;
@@ -105,6 +112,9 @@ export class AggregatedExamResult {
     public standardDeviationPassedInFirstCorrection?: number;
     public standardDeviationInFirstCorrection: number;
     public standardDeviationTotalInFirstCorrection: number;
+    public standardGradeDeviationPassedInFirstCorrection?: number;
+    public standardGradeDeviationInFirstCorrection?: number;
+    public standardGradeDeviationTotalInFirstCorrection?: number;
 
     constructor() {}
 }
@@ -133,16 +143,18 @@ export class AggregatedExerciseResult {
     public exerciseId: number;
     public title: string;
     public maxPoints: number;
+    public exerciseType: ExerciseType;
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
 
-    constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number) {
+    constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number, exerciseType: ExerciseType) {
         this.exerciseId = exerciseId;
         this.title = title;
         this.maxPoints = maxPoints;
         this.totalParticipants = totalParticipants;
+        this.exerciseType = exerciseType;
     }
 }

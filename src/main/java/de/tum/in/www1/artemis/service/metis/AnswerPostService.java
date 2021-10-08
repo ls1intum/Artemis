@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
@@ -63,15 +64,15 @@ public class AnswerPostService extends PostingService {
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        Course course = preCheckUserAndCourse(user, courseId);
+        preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
-        // answer post is automatically approved if written by an instructor
-        answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
+        // on creation of an answer post, we set the resolves_post field to false per default
+        answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
         sendNotification(savedAnswerPost);
@@ -97,21 +98,22 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
         Course course = preCheckUserAndCourse(user, courseId);
-        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
 
-        // update: allow overwriting of values only for depicted fields
-        existingAnswerPost.setContent(answerPost.getContent());
-        // tutor approval can only be toggled by a tutor
-        if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            existingAnswerPost.setTutorApproved(answerPost.isTutorApproved());
+        AnswerPost updatedAnswerPost;
+
+        // determine if the update operation is to mark the answer post as resolving the original post
+        if (existingAnswerPost.doesResolvePost() != answerPost.doesResolvePost()) {
+            // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
+            mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
+            existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
+            updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
-        AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
-
-        if (updatedAnswerPost.getPost().getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedAnswerPost.getPost().getExercise().filterSensitiveInformation();
+        else {
+            // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
+            mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
+            existingAnswerPost.setContent(answerPost.getContent());
+            updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
-
         return updatedAnswerPost;
     }
 
@@ -192,5 +194,18 @@ public class AnswerPostService extends PostingService {
      */
     public AnswerPost findById(Long answerPostId) {
         return answerPostRepository.findByIdElseThrow(answerPostId);
+    }
+
+    /**
+     * Checks if the requesting user is authorized in the course context,
+     * i.e. user has to be author of original post associated with the answer post or at least teaching assistant
+     *
+     * @param answerPost    answer post that should be marked as resolving
+     * @param user          requesting user
+     */
+    void mayMarkAnswerPostAsResolvingElseThrow(AnswerPost answerPost, User user, Course course) {
+        if (!answerPost.getPost().getAuthor().equals(user)) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        }
     }
 }

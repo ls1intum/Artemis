@@ -15,7 +15,7 @@
             "releaseDate": "Veröffentlichungsdatum",
             "details": {
                 "releaseDateNotSet": "Kein Veröffentlichungsdatum gesetzt!",
-                "releaseDateSet": "Veröffentlichkeitsdatum: ",
+                "releaseDateSet": "Veröffentlichungsdatum: ",
                 "attachmentVersion": "Dateiversion: "
             }
         },

@@ -4,7 +4,7 @@ import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 
 @Component({
@@ -102,7 +102,7 @@ export class StatisticsGraphComponent implements OnChanges {
     }
 
     private createLabels(): void {
-        const now = moment();
+        const now = dayjs();
         let startDate;
         let endDate;
         switch (this.currentSpan) {
@@ -114,13 +114,13 @@ export class StatisticsGraphComponent implements OnChanges {
                 break;
             case SpanType.WEEK:
                 this.barChartLabels = this.getWeekdays();
-                startDate = moment().add(this.currentPeriod, 'weeks').subtract(6, 'days').format('DD.MM.YYYY');
-                endDate = moment().add(this.currentPeriod, 'weeks').format('DD.MM.YYYY');
+                startDate = dayjs().add(this.currentPeriod, 'weeks').subtract(6, 'days').format('DD.MM.YYYY');
+                endDate = dayjs().add(this.currentPeriod, 'weeks').format('DD.MM.YYYY');
                 this.chartTime = startDate + ' - ' + endDate;
                 break;
             case SpanType.MONTH:
-                startDate = moment().subtract(1 - this.currentPeriod, 'months');
-                endDate = moment().subtract(-this.currentPeriod, 'months');
+                startDate = dayjs().subtract(1 - this.currentPeriod, 'months');
+                endDate = dayjs().subtract(-this.currentPeriod, 'months');
                 const daysInMonth = endDate.diff(startDate, 'days');
                 this.barChartLabels = this.getLabelsForMonth(daysInMonth);
                 this.chartTime = now
@@ -130,11 +130,11 @@ export class StatisticsGraphComponent implements OnChanges {
                 break;
             case SpanType.QUARTER:
                 const prefix = this.translateService.instant('calendar_week');
-                startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
-                endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
+                startDate = dayjs().subtract(11 + 12 * -this.currentPeriod, 'weeks');
+                endDate = this.currentPeriod !== 0 ? dayjs().subtract(12 * -this.currentPeriod, 'weeks') : dayjs();
                 let currentWeek;
                 for (let i = 0; i < 12; i++) {
-                    currentWeek = moment()
+                    currentWeek = dayjs()
                         .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
                         .isoWeekday(1)
                         .isoWeek();
@@ -150,7 +150,7 @@ export class StatisticsGraphComponent implements OnChanges {
     }
 
     private getMonths(): string[] {
-        const currentMonth = moment().month();
+        const currentMonth = dayjs().month();
         const year = [
             this.translateService.instant('months.january'),
             this.translateService.instant('months.february'),
@@ -175,7 +175,7 @@ export class StatisticsGraphComponent implements OnChanges {
 
         for (let i = 0; i < daysInMonth; i++) {
             days.push(
-                moment()
+                dayjs()
                     .subtract(-this.currentPeriod, 'months')
                     .subtract(daysInMonth - 1 - i, 'days')
                     .format('DD.MM'),
@@ -185,7 +185,7 @@ export class StatisticsGraphComponent implements OnChanges {
     }
 
     private getWeekdays(): string[] {
-        const currentDay = moment().day();
+        const currentDay = dayjs().day();
         const days = [
             this.translateService.instant('weekdays.monday'),
             this.translateService.instant('weekdays.tuesday'),

@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
 import de.tum.in.www1.artemis.web.rest.CustomMetricsExtension;
-import io.github.jhipster.config.metric.JHipsterMetricsEndpoint;
 import io.micrometer.core.annotation.Timed;
+import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
 
 /**
  * CustomMetricsExtensionConfiguration.
