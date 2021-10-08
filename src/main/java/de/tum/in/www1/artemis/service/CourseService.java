@@ -306,6 +306,7 @@ public class CourseService {
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
         String courseGroupName = defineCourseGroupName(course, courseGroup);
+        Role courseGroupRole = defineCourseRole(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -318,7 +319,7 @@ public class CourseService {
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
                     // course)
                     if (!student.getGroups().contains(courseGroupName)) {
-                        userService.addUserToGroup(student, courseGroupName);
+                        userService.addUserToGroup(student, courseGroupName, courseGroupRole);
                     }
                     continue;
                 }
@@ -330,7 +331,7 @@ public class CourseService {
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created user needs to get the rights to access the course
-                    userService.addUserToGroup(student, courseGroupName);
+                    userService.addUserToGroup(student, courseGroupName, courseGroupRole);
                     continue;
                 }
 
@@ -339,7 +340,7 @@ public class CourseService {
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created user needs to get the rights to access the course
-                    userService.addUserToGroup(student, courseGroupName);
+                    userService.addUserToGroup(student, courseGroupName, courseGroupRole);
                     continue;
                 }
 
@@ -366,14 +367,25 @@ public class CourseService {
      */
 
     private String defineCourseGroupName(Course course, String courseGroup) {
-        String properCourseGroupName = switch (courseGroup) {
+        String courseGroupName = switch (courseGroup) {
             case "students" -> course.getStudentGroupName();
             case "tutors" -> course.getTeachingAssistantGroupName();
             case "instructors" -> course.getInstructorGroupName();
             case "editors" -> course.getEditorGroupName();
             default -> "";
         };
-        return properCourseGroupName;
+        return courseGroupName;
+    }
+
+    private Role defineCourseRole(String courseGroup) {
+        Role courseGroupRole = switch (courseGroup) {
+            case "students" -> Role.STUDENT;
+            case "tutors" -> Role.TEACHING_ASSISTANT;
+            case "instructors" -> Role.INSTRUCTOR;
+            case "editors" -> Role.EDITOR;
+            default -> Role.ANONYMOUS;
+        };
+        return courseGroupRole;
     }
 
     /**
