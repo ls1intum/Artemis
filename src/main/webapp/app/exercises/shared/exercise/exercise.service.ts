@@ -151,6 +151,7 @@ export class ExerciseService {
         return this.http.get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
             map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRights(res)),
         );
     }
 
@@ -443,6 +444,9 @@ export class ExerciseService {
     private setAccessRightsExercise(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             this.accountService.setAccessRightsForExercise(res.body);
+            if (res.body.course) {
+                this.accountService.setAccessRightsForCourse(res.body.course);
+            }
         }
         return res;
     }
@@ -451,6 +455,9 @@ export class ExerciseService {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
                 this.accountService.setAccessRightsForExercise(exercise);
+                if (exercise.course) {
+                    this.accountService.setAccessRightsForCourse(exercise.course);
+                }
             });
         }
         return res;
