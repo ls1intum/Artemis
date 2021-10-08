@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
+import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -68,7 +69,10 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         });
-        this.triggerPostSimilarityCheck();
+        // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
+        if (this.editType === this.EditType.CREATE) {
+            this.triggerPostSimilarityCheck();
+        }
     }
 
     /**
