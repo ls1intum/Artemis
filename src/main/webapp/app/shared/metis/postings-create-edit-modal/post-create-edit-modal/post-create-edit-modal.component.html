@@ -61,7 +61,7 @@
                     <jhi-post-tag-selector [(postTags)]="tags"></jhi-post-tag-selector>
                 </div>
             </div>
-            <!-- top K similar posts -->
+            <!-- top K similar posts, only shown if there are similar posts (i.e. not during updating a post) -->
             <div *ngIf="similarPosts.length > 0" class="mb-3">
                 <ngb-accordion #a="ngbAccordion" activeIds="custom-panel-1">
                     <ngb-panel id="custom-panel-1" class="similar-post-list">

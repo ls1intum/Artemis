@@ -10,7 +10,6 @@ import { Course } from 'app/entities/course.model';
 import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
-import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
 
 const TITLE_MAX_LENGTH = 200;
 

@@ -3,6 +3,7 @@ import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postin
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ContextInformation, PageType } from 'app/shared/metis/metis.util';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -11,6 +12,9 @@ import { ContextInformation, PageType } from 'app/shared/metis/metis.util';
 })
 export class PostFooterComponent extends PostingsFooterDirective<Post> implements OnInit, OnChanges {
     @Input() previewMode: boolean;
+    // if the post is previewed in the create/edit modal,
+    // we need to pass the ref in order to close it when navigating to the previewed post via post context
+    @Input() modalRef?: NgbModalRef;
     tags: string[];
     pageType: PageType;
     contextInformation: ContextInformation;
@@ -47,6 +51,16 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
             this.tags = this.posting.tags;
         } else {
             this.tags = [];
+        }
+    }
+
+    /**
+     * ensures that only when clicking on context without having control key pressed,
+     * the modal is dismissed (closed and cleared)
+     */
+    onNavigateToContext($event: MouseEvent) {
+        if (!$event.metaKey) {
+            this.modalRef?.dismiss();
         }
     }
 }

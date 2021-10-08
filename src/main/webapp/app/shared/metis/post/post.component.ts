@@ -12,7 +12,8 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @Input() previewMode: boolean;
-    // if the post is previewed in the create/edit modal, we need to pass the ref in order to close it when navigating to the previewed post
+    // if the post is previewed in the create/edit modal,
+    // we need to pass the ref in order to close it when navigating to the previewed post via post title
     @Input() modalRef?: NgbModalRef;
     postIsResolved: boolean;
 
@@ -20,19 +21,28 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         super();
     }
 
+    /**
+     * on initialization: invokes the metis service to evaluate, if the post is already solved
+     */
     ngOnInit() {
         super.ngOnInit();
         this.postIsResolved = this.metisService.isPostResolved(this.posting);
     }
 
+    /**
+     * on changed: re-evaluates, if the post is already resolved by one of the given answers
+     */
     ngOnChanges() {
         this.postIsResolved = this.metisService.isPostResolved(this.posting);
     }
 
     /**
-     * on clicking the post id anchor and navigate to a post previewed in the similar post section, we need to close the create-edit-modal
+     * ensures that only when clicking on a post title without having cmd key pressed,
+     * the modal is dismissed (closed and cleared)
      */
-    closeRef(): void {
-        this.modalRef?.close();
+    onNavigateToPostById($event: MouseEvent) {
+        if (!$event.metaKey) {
+            this.modalRef?.dismiss();
+        }
     }
 }
