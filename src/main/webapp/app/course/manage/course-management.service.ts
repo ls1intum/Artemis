@@ -72,7 +72,7 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(
-                map((res: EntityResponseType) => this.checkAccessRightsCourse(res)),
+                map((res: EntityResponseType) => this.setAccessRightsCourse(res)),
                 tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
@@ -114,6 +114,7 @@ export class CourseManagementService {
     findWithExercises(courseId: number): Observable<EntityResponseType> {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsCourse(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
     }
@@ -125,6 +126,7 @@ export class CourseManagementService {
     findWithExercisesAndParticipations(courseId: number): Observable<EntityResponseType> {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsCourse(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
     }
@@ -136,6 +138,7 @@ export class CourseManagementService {
     findWithOrganizations(courseId: number): Observable<EntityResponseType> {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsCourse(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
     }
@@ -149,7 +152,7 @@ export class CourseManagementService {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)))
             .pipe(
                 map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
@@ -161,7 +164,7 @@ export class CourseManagementService {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsCourse(res)))
             .pipe(map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)))
             .pipe(
                 tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
@@ -205,6 +208,7 @@ export class CourseManagementService {
         return this.http.get<Course[]>(`${this.resourceUrl}/to-register`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
             map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRights(res)),
         );
     }
 
@@ -216,12 +220,8 @@ export class CourseManagementService {
         const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
         return this.http.get<Course>(url, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsCourse(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            tap((res: EntityResponseType) => {
-                if (res.body) {
-                    this.accountService.setAccessRightsForCourse(res.body);
-                }
-            }),
         );
     }
 
@@ -259,7 +259,7 @@ export class CourseManagementService {
         return this.http
             .get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)))
             .pipe(map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -272,7 +272,7 @@ export class CourseManagementService {
         return this.http
             .get<Course[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)))
             .pipe(map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -287,7 +287,7 @@ export class CourseManagementService {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)))
             .pipe(map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -330,6 +330,7 @@ export class CourseManagementService {
         return this.http.get<Course[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' }).pipe(
             map((res: HttpResponse<Course[]>) => this.convertDateArrayFromServer(res)),
             map((res: HttpResponse<Course[]>) => this.convertExerciseCategoryArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRights(res)),
         );
     }
 
@@ -511,14 +512,14 @@ export class CourseManagementService {
         course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
 
-    private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
+    private setAccessRightsCourse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             this.accountService.setAccessRightsForCourse(res.body);
         }
         return res;
     }
 
-    private checkAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
+    private setAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 this.accountService.setAccessRightsForCourse(course);
@@ -551,7 +552,10 @@ export class CourseManagementService {
             .get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
+            .pipe(
+                map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRights(res)),
+            );
     }
 }
 

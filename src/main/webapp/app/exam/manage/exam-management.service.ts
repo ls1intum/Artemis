@@ -64,8 +64,8 @@ export class ExamManagementService {
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
             .pipe(
                 tap((res: EntityResponseType) => {
-                    if (res.body) {
-                        this.accountService.setAccessRightsForCourse(res.body);
+                    if (res.body?.course) {
+                        this.accountService.setAccessRightsForCourse(res.body.course);
                     }
                 }),
             );
