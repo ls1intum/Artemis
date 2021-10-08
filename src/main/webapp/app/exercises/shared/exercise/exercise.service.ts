@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
@@ -86,19 +86,10 @@ export class ExerciseService {
      * @param { number } exerciseId - Exercise that should be loaded
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return (
-            this.http
-                .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
-                // TODO Refactor Services: Why 3 pipes here, can't this be combined within one pipe?
-                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-                .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)))
-                .pipe(
-                    tap((res: EntityResponseType) => {
-                        if (res.body) {
-                            this.accountService.setAccessRightsForExercise(res.body);
-                        }
-                    }),
-                )
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsExercise(res)),
         );
     }
 
@@ -153,7 +144,7 @@ export class ExerciseService {
                     return res;
                 }),
             )
-            .pipe(map((res: EntityResponseType) => this.checkPermission(res)));
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsExercise(res)));
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
@@ -376,12 +367,13 @@ export class ExerciseService {
 
     /**
      * Get the "exerciseId" exercise with data useful for tutors.
-     * @param { number } exerciseId - Id of exercise to retreive
+     * @param { number } exerciseId - Id of exercise to retrieve
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
         return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsExercise(res)),
         );
     }
 
@@ -446,6 +438,22 @@ export class ExerciseService {
 
     toggleSecondCorrection(exerciseId: number): Observable<Boolean> {
         return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
+    }
+
+    private setAccessRightsExercise(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.accountService.setAccessRightsForExercise(res.body);
+        }
+        return res;
+    }
+
+    private setAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((exercise: Exercise) => {
+                this.accountService.setAccessRightsForExercise(exercise);
+            });
+        }
+        return res;
     }
 }
 
