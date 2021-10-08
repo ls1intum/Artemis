@@ -8,7 +8,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -20,13 +19,14 @@ import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import { AlertService } from 'app/core/util/alert.service';
+import { StudentsImportDialogComponent } from 'app/shared/import/students-import-dialog.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('StudentExamImportDialogComponent', () => {
-    let fixture: ComponentFixture<StudentsExamImportDialogComponent>;
-    let component: StudentsExamImportDialogComponent;
+describe('StudentsImportButtonComponent', () => {
+    let fixture: ComponentFixture<StudentsImportDialogComponent>;
+    let component: StudentsImportDialogComponent;
     let examManagementService: ExamManagementService;
 
     const studentCsvColumns = 'REGISTRATION_NUMBER,FIRST_NAME_OF_STUDENT,FAMILY_NAME_OF_STUDENT';
@@ -38,7 +38,7 @@ describe('StudentExamImportDialogComponent', () => {
         return TestBed.configureTestingModule({
             imports: [FormsModule],
             declarations: [
-                StudentsExamImportDialogComponent,
+                StudentsImportDialogComponent,
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
@@ -50,7 +50,7 @@ describe('StudentExamImportDialogComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(StudentsExamImportDialogComponent);
+                fixture = TestBed.createComponent(StudentsImportDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
 
