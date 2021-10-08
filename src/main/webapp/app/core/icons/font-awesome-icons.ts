@@ -116,6 +116,7 @@ import {
     faUserCheck,
     faUserMinus,
     faUserPlus,
+    faUserSlash,
     faVideo,
     faWrench,
     faChartArea,

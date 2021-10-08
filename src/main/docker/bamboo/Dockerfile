@@ -1,4 +1,4 @@
-FROM atlassian/bamboo-server:7.2.3
+FROM atlassian/bamboo-server:7.2.5
 
 LABEL description="Bamboo pre-configured for Artemis"
 

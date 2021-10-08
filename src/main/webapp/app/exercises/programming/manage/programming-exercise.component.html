@@ -1,34 +1,35 @@
 <div>
-    <h4>
-        <span *ngIf="course && !showHeading">{{ course.title }} - </span
-        ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
-        <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
+    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
+        <span class="mb-1 me-auto">
+            <span *ngIf="course && !showHeading"> {{ course.title }} - </span>
+            <span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
+            <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
+        </span>
+
         <ng-container *jhiExtensionPoint="overrideGenerateAndImportButton">
-            <button
-                *ngIf="course && course.isAtLeastEditor"
-                id="jh-import-entity"
-                class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
-                [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                (click)="openImportModal()"
-            >
-                <fa-icon [icon]="'plus'"></fa-icon>
-                <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
-            </button>
             <a
                 *ngIf="course && course.isAtLeastEditor"
                 id="jh-create-entity"
-                class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
+                class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
             >
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
             </a>
+            <button
+                *ngIf="course && course.isAtLeastEditor"
+                id="jh-import-entity"
+                class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
+                [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                (click)="openImportModal()"
+            >
+                <fa-icon [icon]="'plus'"></fa-icon>
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
+            </button>
         </ng-container>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="row"></div>
-    <br />
     <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
         <table class="table table-striped">
             <thead>
