@@ -77,7 +77,9 @@
                 "answers": "Replies",
                 "approvedAnswerPosts": "Approved replies",
                 "exerciseOrLecture": "Exercise / Lecture",
-                "showAllPosts": "Show all posts"
+                "showAllPosts": "Show all posts",
+                "showContent": "Show content",
+                "collapseContent": "Collapse content"
             },
             "answerPost": {
                 "created": "New reply successfully created",
