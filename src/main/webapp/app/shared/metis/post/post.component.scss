@@ -2,10 +2,14 @@
 
 .post-title {
     font-weight: 600;
-    color: #0f6ab4;
+    color: $metis-blue;
 
     .reference-hash {
         font-weight: 200;
         color: $metis-light-gray;
     }
+}
+
+.resolved {
+    color: $metis-green;
 }

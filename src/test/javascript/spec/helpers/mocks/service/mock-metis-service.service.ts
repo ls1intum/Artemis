@@ -74,6 +74,14 @@ export class MockMetisService {
 
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
 
+    isPostResolved(post: Post) {
+        return false;
+    }
+
+    getNumberOfAnswerPosts(post: Post) {
+        return post.answers?.length! ? post.answers?.length! : 0;
+    }
+
     getLinkForPost(post?: Post): (string | number)[] {
         if (post?.lecture) {
             return ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];

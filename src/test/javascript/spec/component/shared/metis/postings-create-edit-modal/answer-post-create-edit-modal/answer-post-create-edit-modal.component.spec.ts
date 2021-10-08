@@ -10,7 +10,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { metisAnswerPostToCreateUser1, metisAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
@@ -46,10 +46,10 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should init modal with correct content and title for answer post with id', () => {
-        component.posting = metisAnswerPostUser1;
+        component.posting = metisResolvingAnswerPostUser1;
         component.ngOnInit();
         expect(component.modalTitle).toEqual('artemisApp.metis.editPosting');
-        expect(component.content).toEqual(metisAnswerPostUser1.content);
+        expect(component.content).toEqual(metisResolvingAnswerPostUser1.content);
     });
 
     it('should init modal with correct content and title for answer post without id', () => {
@@ -71,14 +71,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke updatePosting when confirming', () => {
-        component.posting = metisAnswerPostUser1;
+        component.posting = metisResolvingAnswerPostUser1;
         component.ngOnInit();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalled;
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
-        component.posting = metisAnswerPostUser1;
+        component.posting = metisResolvingAnswerPostUser1;
         component.ngOnInit();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalled;

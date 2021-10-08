@@ -31,7 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs';
 import {
-    metisAnswerPostUser1,
+    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePosts,
     metisCoursePostsWithCourseWideContext,
@@ -193,6 +193,39 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toHaveLength(1);
     }));
 
+    it('should invoke metis service without and update filter setting when checkbox is ticked', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterResolved: true,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterResolved]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterResolved).toBeTruthy();
+        // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
+        expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
+    }));
+
+    it('should invoke metis service without and update filter setting when checkbox is unticked', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterResolved: false,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterResolved]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterResolved).toBeFalsy();
+        expect(component.posts).toHaveLength(metisCoursePosts.length);
+    }));
+
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
         component.ngOnInit();
         tick();
@@ -300,7 +333,7 @@ describe('CourseDiscussionComponent', () => {
             post3 = metisPostLectureUser1;
             post3.creationDate = dayjs().subtract(2, 'day');
             post3.reactions = [metisUpVoteReactionUser1];
-            post3.answers = [metisAnswerPostUser1];
+            post3.answers = [metisResolvingAnswerPostUser1];
             post3.displayPriority = DisplayPriority.NONE;
 
             post4 = metisPostLectureUser2;

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
@@ -106,5 +107,19 @@ export class PostService extends PostingsService<Post> {
     computeSimilarityScoresWithCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
         const copy = this.convertDateFromClient(tempPost);
         return this.http.post<Post[]>(`${this.resourceUrl}${courseId}/posts/similarity-check`, copy, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+    }
+
+    /**
+     * takes an array of posts and converts the date from the server
+     * @param   {HttpResponse<Post[]>} res
+     * @return  {HttpResponse<Post[]>}
+     */
+    protected convertDateArrayFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
+        if (res.body) {
+            res.body.forEach((post: Post) => {
+                post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
+            });
+        }
+        return res;
     }
 }

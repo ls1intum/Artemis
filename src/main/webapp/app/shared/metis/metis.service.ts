@@ -281,7 +281,8 @@ export class MetisService {
             emptyPost.courseWideContext = courseWideContext;
             emptyPost.course = this.course;
         } else if (exercise) {
-            emptyPost.exercise = { ...this.exerciseService.convertExerciseForServer(exercise) };
+            const exercisePost = this.exerciseService.convertExerciseForServer(exercise);
+            emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
         } else if (lectureId) {
             emptyPost.lecture = { id: lectureId } as Lecture;
         } else {
@@ -289,6 +290,26 @@ export class MetisService {
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
         }
         return emptyPost;
+    }
+
+    /**
+     * counts the answer posts of a post, 0 if none exist
+     * @return number number of answer posts
+     */
+    getNumberOfAnswerPosts(post: Post): number {
+        return post.answers?.length! ? post.answers?.length! : 0;
+    }
+
+    /**
+     * determines if the post is resolved by searching for resolving answer posts
+     * @return boolean flag that indicates if the post is resolved
+     */
+    isPostResolved(post: Post): boolean {
+        if (this.getNumberOfAnswerPosts(post) > 0) {
+            return post.answers!.filter((answer: AnswerPost) => answer.resolvesPost === true).length > 0;
+        } else {
+            return false;
+        }
     }
 
     /**
