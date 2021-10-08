@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnChanges } from '@angular/core';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -29,7 +29,7 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
     ngOnChanges() {
         if (this.maxPoints != undefined && this.maxBonusPoints > 0) {
             if (this.score > this.maxPoints) {
-                this.bonusPoints = this.score - this.maxPoints;
+                this.bonusPoints = roundScoreSpecifiedByCourseSettings(this.score - this.maxPoints, this.course);
             } else {
                 this.bonusPoints = undefined;
             }
@@ -40,5 +40,6 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
             this.maxPointsWithBonus = undefined;
             this.maxPercentage = undefined;
         }
+        this.score = roundScoreSpecifiedByCourseSettings(this.score, this.course);
     }
 }
