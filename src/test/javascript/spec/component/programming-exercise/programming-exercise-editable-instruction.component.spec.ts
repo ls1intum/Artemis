@@ -5,9 +5,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject } from 'rxjs';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
@@ -25,12 +22,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -39,9 +32,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let gradingService: IProgrammingExerciseGradingService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
-    let subscribeForTestCaseSpy: SinonSpy;
-    let getLatestResultWithFeedbacksStub: SinonStub;
-    let generateHtmlSubjectStub: SinonStub;
+    let subscribeForTestCaseSpy: jest.SpyInstance;
+    let getLatestResultWithFeedbacksStub: jest.SpyInstance;
+    let generateHtmlSubjectStub: jest.SpyInstance;
 
     const templateParticipation = new TemplateProgrammingExerciseParticipation();
     templateParticipation.id = 99;
@@ -62,7 +55,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
             ],
@@ -73,7 +65,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
@@ -82,17 +73,15 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
-                subscribeForTestCaseSpy = spy(gradingService, 'subscribeForTestCases');
-                getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
-                generateHtmlSubjectStub = stub(comp.generateHtmlSubject, 'next');
+                subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
+                getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
             });
     });
 
     afterEach(() => {
         (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
-        subscribeForTestCaseSpy.restore();
-        getLatestResultWithFeedbacksStub.restore();
-        generateHtmlSubjectStub.restore();
+        jest.restoreAllMocks();
     });
 
     it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
@@ -103,8 +92,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(comp.exerciseTestCases).to.have.lengthOf(0);
+        expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
+        expect(comp.exerciseTestCases).toHaveLength(0);
 
         fixture.destroy();
         flush();
@@ -121,9 +110,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(comp.exerciseTestCases).to.have.lengthOf(2);
-        expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
+        expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
+        expect(comp.exerciseTestCases).toHaveLength(2);
+        expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         fixture.destroy();
         flush();
@@ -140,16 +129,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.exerciseTestCases).to.have.lengthOf(2);
-        expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
+        expect(comp.exerciseTestCases).toHaveLength(2);
+        expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
         fixture.detectChanges();
         tick();
 
-        expect(comp.exerciseTestCases).to.be.empty;
+        expect(comp.exerciseTestCases).toHaveLength(0);
 
-        expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
 
         fixture.destroy();
         flush();
@@ -159,7 +148,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
         const subject = new Subject<Result>();
-        getLatestResultWithFeedbacksStub.returns(subject);
+        getLatestResultWithFeedbacksStub.mockReturnValue(subject);
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
@@ -168,14 +157,14 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.exerciseTestCases).to.have.lengthOf(0);
-        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation!.id!);
+        expect(comp.exerciseTestCases).toHaveLength(0);
+        expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
 
         subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
         tick();
 
-        expect(comp.exerciseTestCases).to.have.lengthOf(2);
-        expect(comp.exerciseTestCases).to.deep.equal(['testX', 'testY']);
+        expect(comp.exerciseTestCases).toHaveLength(2);
+        expect(comp.exerciseTestCases).toEqual(['testX', 'testY']);
 
         fixture.destroy();
         flush();
@@ -191,15 +180,14 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.exerciseTestCases).to.have.lengthOf(0);
-        expect(comp.exerciseTestCases).to.be.empty;
+        expect(comp.exerciseTestCases).toHaveLength(0);
 
-        expect(comp.testCaseSubscription).to.be.undefined;
-        expect(subscribeForTestCaseSpy).not.to.have.been.called;
-        expect(getLatestResultWithFeedbacksStub).not.to.have.been.called;
+        expect(comp.testCaseSubscription).toBeUndefined();
+        expect(subscribeForTestCaseSpy).not.toHaveBeenCalled();
+        expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
 
         const saveProblemStatementButton = debugElement.query(By.css('#save-instructions-button'));
-        expect(saveProblemStatementButton).not.to.exist;
+        expect(saveProblemStatementButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -218,7 +206,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         forceRenderSubject.next();
 
-        expect(generateHtmlSubjectStub).to.have.been.calledOnce;
+        expect(generateHtmlSubjectStub).toHaveBeenCalledTimes(1);
 
         fixture.destroy();
         flush();

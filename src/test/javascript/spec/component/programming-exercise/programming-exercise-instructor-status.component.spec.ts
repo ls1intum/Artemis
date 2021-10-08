@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import * as chai from 'chai';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
@@ -20,8 +19,6 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-
-const expect = chai.expect;
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let comp: ProgrammingExerciseInstructorStatusComponent;
@@ -62,9 +59,9 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     it('should not show anything without inputs', () => {
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should not show anything if participationType is Assignment', () => {
@@ -72,9 +69,9 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participation = { id: 1, results: [{ id: 1, successful: true, score: 100 } as Result] } as ProgrammingExerciseStudentParticipation;
         fixture.detectChanges();
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     [ProgrammingExerciseParticipationType.TEMPLATE, ProgrammingExerciseParticipationType.SOLUTION].map((participationType) =>
@@ -82,9 +79,9 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
             comp.participationType = participationType;
             fixture.detectChanges();
             const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-            expect(templateStatus).to.not.exist;
+            expect(templateStatus).toBeNull();
             const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-            expect(solutionStatus).to.not.exist;
+            expect(solutionStatus).toBeNull();
         }),
     );
 
@@ -97,11 +94,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         triggerChanges(comp, { property: 'participationType', currentValue: comp.participationType }, { property: 'participation', currentValue: comp.participation });
         fixture.detectChanges();
 
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should show nothing if the participation is solution and the latest result is successful', () => {
@@ -115,11 +112,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
             { property: 'participation', currentValue: comp.participationType, firstChange: false },
         );
         fixture.detectChanges();
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should show a template warning if the participation is template and the score is > 0', () => {
@@ -135,11 +132,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         );
         fixture.detectChanges();
 
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.exist;
+        expect(templateStatus).toBeDefined();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should show a solution warning if the participation is solution and the result is not successful', () => {
@@ -155,11 +152,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         );
         fixture.detectChanges();
 
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.exist;
+        expect(solutionStatus).toBeDefined();
     });
 
     it('should update the latestResult on update from the result subscription', () => {
@@ -176,6 +173,6 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         );
         latestResultSubject.next(newResult);
 
-        expect(comp.latestResult).to.deep.equal(newResult);
+        expect(comp.latestResult).toEqual(newResult);
     });
 });

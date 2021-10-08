@@ -7,16 +7,12 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from 'ngx-clipboard';
 import { AlertService } from 'app/core/util/alert.service';
 import { of, BehaviorSubject, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { SinonStub, stub } from 'sinon';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
@@ -29,9 +25,6 @@ import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('JhiCloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
     let fixture: ComponentFixture<CloneRepoButtonComponent>;
@@ -39,10 +32,10 @@ describe('JhiCloneRepoButtonComponent', () => {
     let sourceTreeService: SourceTreeService;
     let accountService: AccountService;
 
-    let localStorageUseSshRetrieveStub: SinonStub;
-    let localStorageUseSshObserveStub: SinonStub;
+    let localStorageUseSshRetrieveStub: jest.SpyInstance;
+    let localStorageUseSshObserveStub: jest.SpyInstance;
     let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
-    let localStorageUseSshStoreStub: SinonStub;
+    let localStorageUseSshStoreStub: jest.SpyInstance;
 
     const info: ProfileInfo = {
         activeProfiles: [],
@@ -90,16 +83,16 @@ describe('JhiCloneRepoButtonComponent', () => {
         accountService = TestBed.inject(AccountService);
 
         const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
-        localStorageUseSshRetrieveStub = stub(localStorageMock, 'retrieve');
-        localStorageUseSshObserveStub = stub(localStorageMock, 'observe');
-        localStorageUseSshStoreStub = stub(localStorageMock, 'store');
+        localStorageUseSshRetrieveStub = jest.spyOn(localStorageMock, 'retrieve');
+        localStorageUseSshObserveStub = jest.spyOn(localStorageMock, 'observe');
+        localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         localStorageUseSshObserveStubSubject = new Subject();
-        localStorageUseSshObserveStub.returns(localStorageUseSshObserveStubSubject);
+        localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
     });
 
     afterEach(function () {
         // completely restore all fakes created through the sandbox
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', fakeAsync(() => {
@@ -107,28 +100,28 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.ngOnInit();
         tick();
-        expect(component.sshKeysUrl).to.equal(info.sshKeysURL);
-        expect(component.sshTemplateUrl).to.equal(info.sshCloneURLTemplate);
-        expect(component.sshEnabled).to.equal(!!info.sshCloneURLTemplate);
-        expect(component.repositoryPassword).to.equal('repository_password');
-        expect(component.versionControlUrl).to.equal(info.versionControlUrl);
+        expect(component.sshKeysUrl).toEqual(info.sshKeysURL);
+        expect(component.sshTemplateUrl).toEqual(info.sshCloneURLTemplate);
+        expect(component.sshEnabled).toEqual(!!info.sshCloneURLTemplate);
+        expect(component.repositoryPassword).toEqual('repository_password');
+        expect(component.versionControlUrl).toEqual(info.versionControlUrl);
     }));
 
     it('should save repository password if SourceTree returns one', () => {
         const fakeSourceTreeResponse = { password: 'repository_password' };
-        sinon.replace(sourceTreeService, 'getRepositoryPassword', sinon.fake.returns(of(fakeSourceTreeResponse)));
+        jest.spyOn(sourceTreeService, 'getRepositoryPassword').mockReturnValue(of(fakeSourceTreeResponse));
 
         component.getRepositoryPassword();
-        expect(component.repositoryPassword).to.equal('repository_password');
+        expect(component.repositoryPassword).toEqual('repository_password');
     });
 
     it('should not save repository password if SourceTree doesnt return one', () => {
         const fakeSourceTreeResponse = { error: 'Some password not found error' };
-        sinon.replace(sourceTreeService, 'getRepositoryPassword', sinon.fake.returns(of(fakeSourceTreeResponse)));
+        jest.spyOn(sourceTreeService, 'getRepositoryPassword').mockReturnValue(of(fakeSourceTreeResponse));
 
         component.repositoryPassword = 'password';
         component.getRepositoryPassword();
-        expect(component.repositoryPassword).to.equal('password');
+        expect(component.repositoryPassword).toEqual('password');
     });
 
     it('should get ssh url (same url for team and individual participation)', () => {
@@ -138,11 +131,11 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
-        expect(url).to.equal('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(url).toEqual('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).to.equal('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(url).toEqual('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
     });
 
     it('should get html url (not the same url for team and individual participation)', () => {
@@ -153,11 +146,11 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.user = { login: 'user1', guidedTourSettings: [] };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
-        expect(url).to.equal(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).to.equal(info.versionControlUrl!);
+        expect(url).toEqual(info.versionControlUrl!);
     });
 
     it('should get copy the repository url', () => {
@@ -167,11 +160,11 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.user = { login: 'user1', guidedTourSettings: [] };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
-        expect(url).to.equal(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).to.equal(info.versionControlUrl!);
+        expect(url).toEqual(info.versionControlUrl!);
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
@@ -182,40 +175,40 @@ describe('JhiCloneRepoButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(localStorageUseSshRetrieveStub).to.have.been.calledOnceWithExactly('useSsh');
-        expect(localStorageUseSshObserveStub).to.have.been.calledOnceWithExactly('useSsh');
-        expect(component.useSsh).to.be.false;
+        expect(localStorageUseSshRetrieveStub).toHaveBeenNthCalledWith(1, 'useSsh');
+        expect(localStorageUseSshObserveStub).toHaveBeenNthCalledWith(1, 'useSsh');
+        expect(component.useSsh).toBeFalsy();
 
         fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
         tick();
         fixture.debugElement.query(By.css('.use-ssh'));
         fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
         tick();
-        expect(localStorageUseSshStoreStub).to.have.been.calledOnceWithExactly('useSsh', true);
-        expect(component.useSsh).to.be.true;
+        expect(localStorageUseSshStoreStub).toHaveBeenNthCalledWith(1, 'useSsh', true);
+        expect(component.useSsh).toBeTruthy();
 
         fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
         tick();
-        expect(localStorageUseSshStoreStub).to.have.been.calledWithExactly('useSsh', false);
-        expect(component.useSsh).to.be.false;
+        expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
+        expect(component.useSsh).toBeFalsy();
 
         localStorageUseSshObserveStubSubject.next(true);
         tick();
-        expect(component.useSsh).to.be.true;
+        expect(component.useSsh).toBeTruthy();
 
         localStorageUseSshObserveStubSubject.next(false);
         tick();
-        expect(component.useSsh).to.be.false;
+        expect(component.useSsh).toBeFalsy();
     }));
 
     function stubServices() {
-        const identityStub = sinon.stub(accountService, 'identity');
-        identityStub.returns(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin' }));
+        const identityStub = jest.spyOn(accountService, 'identity');
+        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin' }));
 
-        const getRepositoryPasswordStub = sinon.stub(sourceTreeService, 'getRepositoryPassword');
-        getRepositoryPasswordStub.returns(of({ password: 'repository_password' }));
+        const getRepositoryPasswordStub = jest.spyOn(sourceTreeService, 'getRepositoryPassword');
+        getRepositoryPasswordStub.mockReturnValue(of({ password: 'repository_password' }));
 
-        const getProfileInfoStub = sinon.stub(profileService, 'getProfileInfo');
-        getProfileInfoStub.returns(new BehaviorSubject(info));
+        const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));
     }
 });
