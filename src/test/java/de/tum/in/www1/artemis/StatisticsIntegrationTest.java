@@ -287,7 +287,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
         answerPost.setContent("Test Answer");
         answerPost.setCreationDate(ZonedDateTime.now().minusHours(1));
-        answerPost.setTutorApproved(true);
+        answerPost.setResolvesPost(true);
         answerPost.setPost(post);
         answerPostRepository.save(answerPost);
 
