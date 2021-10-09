@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { BehaviorSubject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -40,8 +40,8 @@ describe('Notification Sidebar Component', () => {
     let userService: UserService;
     let userSettingsService: UserSettingsService;
 
-    const notificationNow = { id: 1, notificationDate: moment() } as Notification;
-    const notificationPast = { id: 2, notificationDate: moment().subtract(2, 'day') } as Notification;
+    const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
+    const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
     const notificationOptionCoreA: NotificationOptionCore = {
@@ -98,7 +98,7 @@ describe('Notification Sidebar Component', () => {
 
     describe('Initialization', () => {
         it('should set last notification read', () => {
-            const lastNotificationRead = moment();
+            const lastNotificationRead = dayjs();
             const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
             sinon.replace(accountService, 'getAuthenticationState', fake);
             notificationSidebarComponent.ngOnInit();
@@ -182,7 +182,7 @@ describe('Notification Sidebar Component', () => {
         it('should update components last notification read two seconds after the user opened the sidebar', fakeAsync(() => {
             notificationSidebarComponent.lastNotificationRead = undefined;
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
-            const lastNotificationReadNow = moment();
+            const lastNotificationReadNow = dayjs();
             bell.click();
             tick(2000);
             expect(notificationSidebarComponent.lastNotificationRead).to.be.eql(lastNotificationReadNow);
@@ -247,7 +247,7 @@ describe('Notification Sidebar Component', () => {
 
     describe('Recent notifications', () => {
         it('should evaluate recent notifications correctly', () => {
-            notificationSidebarComponent.lastNotificationRead = moment().subtract(1, 'day');
+            notificationSidebarComponent.lastNotificationRead = dayjs().subtract(1, 'day');
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
             sinon.replace(notificationService, 'queryFiltered', fake);
             notificationSidebarComponent.ngOnInit();

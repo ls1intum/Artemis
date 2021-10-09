@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Exercise.
@@ -149,9 +149,9 @@ public class ExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
             // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
-            if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC && !programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
+            if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC && !exercise.getAllowComplaintsForAutomaticAssessments()) {
                 return badRequest();
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);

@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -78,27 +79,33 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about an exercise update.
+     * Notify all groups but tutors about an exercise update.
+     * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
+     * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
-    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         // Do not send a notification before the release date of the exercise.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        // Create and send the notification.
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText), exercise);
+        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
     }
 
     /**
-     * Notify tutor groups about the creation of an exercise.
+     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
      *
      * @param exercise that has been created
      */
-    public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null), exercise);
+    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
+        // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+        if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        }
     }
 
     /**
@@ -208,8 +215,13 @@ public class GroupNotificationService {
      *
      * @param notification that should be saved and sent
      */
-    private void saveAndSend(GroupNotification notification, Object notificationSubject) {
-        groupNotificationRepository.save(notification);
+    private void saveAndSend(GroupNotification notification) {
+        if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
+            saveExamNotification(notification);
+        }
+        else {
+            groupNotificationRepository.save(notification);
+        }
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
 
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
@@ -257,5 +269,17 @@ public class GroupNotificationService {
         if (!usersThatShouldReceiveAnEmail.isEmpty()) {
             mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);
         }
+    }
+
+    /**
+     * Saves an exam notification by removing the problem statement message
+     * @param notification that should be saved (without the problem statement)
+     */
+    private void saveExamNotification(GroupNotification notification) {
+        String originalTarget = notification.getTarget();
+        String targetWithoutProblemStatement = ExamNotificationTargetWithoutProblemStatement.getTargetWithoutProblemStatement(notification.getTarget());
+        notification.setTarget(targetWithoutProblemStatement);
+        groupNotificationRepository.save(notification);
+        notification.setTarget(originalTarget);
     }
 }

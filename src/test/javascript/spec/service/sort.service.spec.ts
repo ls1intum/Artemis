@@ -1,11 +1,11 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { SortService } from 'app/shared/service/sort.service';
 
 type TestObject = {
     a: number;
     b: string;
-    c: moment.Moment;
+    c: dayjs.Dayjs;
     d?: number | null;
     e: Map<string, number>;
 };
@@ -23,42 +23,42 @@ describe('Sort Service', () => {
         e1 = {
             a: 10,
             b: 'dog',
-            c: moment().subtract(1, 'days'),
+            c: dayjs().subtract(1, 'days'),
             d: 2,
             e: new Map().set('f', 4),
         };
         e2 = {
             a: 18,
             b: 'cat',
-            c: moment().subtract(20, 'hours'),
+            c: dayjs().subtract(20, 'hours'),
             d: 5,
             e: new Map().set('f', 8),
         };
         e3 = {
             a: 4,
             b: 'snake',
-            c: moment().add(3, 'minutes'),
+            c: dayjs().add(3, 'minutes'),
             d: null,
             e: new Map().set('f', 29),
         };
         e4 = {
             a: 28,
             b: 'panda',
-            c: moment().subtract(4, 'years'),
+            c: dayjs().subtract(4, 'years'),
             d: 1,
             e: new Map().set('f', 43),
         };
         e5 = {
             a: 15,
             b: 'giraffe',
-            c: moment().add(2, 'hours'),
+            c: dayjs().add(2, 'hours'),
             d: 4,
             e: new Map().set('f', 6),
         };
         e6 = {
             a: 7,
             b: 'tiger',
-            c: moment().subtract(5, 'minutes'),
+            c: dayjs().subtract(5, 'minutes'),
             e: new Map().set('f', 16),
         };
     });
@@ -81,7 +81,7 @@ describe('Sort Service', () => {
         );
 
         it(
-            'should sort array with moment properties',
+            'should sort array with dayjs properties',
             repeatWithRandomArray(10, (arr) => {
                 service.sortByProperty(arr, 'c', true);
                 expect(arr).toEqual([e4, e1, e2, e6, e3, e5]);

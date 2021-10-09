@@ -1,18 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ParseLinks } from 'app/core/util/parse-links.service';
 
 @Component({
     selector: 'jhi-system-notification-management',
@@ -25,32 +25,35 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     success: string;
     routeData: Subscription;
     links: any;
-    totalItems: number;
-    itemsPerPage: number;
-    page: number;
     predicate: string;
     previousPage: number;
     reverse: boolean;
+
+    // page information
+    page = 1; // We are at page 1 by default.
+    itemsPerPage = ITEMS_PER_PAGE;
+    totalItems = 0;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
-        private userService: UserService,
         private systemNotificationService: SystemNotificationService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
-        private parseLinks: JhiParseLinks,
+        private parseLinks: ParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
     ) {
-        this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe((data) => {
-            this.page = data['pagingParams'].page;
-            this.previousPage = data['pagingParams'].page;
-            this.reverse = data['pagingParams'].ascending;
-            this.predicate = data['pagingParams'].predicate;
+            const pagingParams = data['pagingParams'];
+            if (pagingParams) {
+                this.page = pagingParams.page;
+                this.previousPage = pagingParams.page;
+                this.reverse = pagingParams.ascending;
+                this.predicate = pagingParams.predicate;
+            }
         });
     }
 
@@ -127,14 +130,17 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param systemNotification which relevance will be checked
      */
     isNotificationActive(systemNotification: SystemNotification) {
-        return systemNotification.notificationDate!.isBefore(moment()) && systemNotification.expireDate!.isAfter(moment());
+        return systemNotification.notificationDate!.isBefore(dayjs()) && systemNotification.expireDate!.isAfter(dayjs());
     }
 
     /**
      * Sorts parameters by specified order
      */
     sort() {
-        const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
+        const result = [];
+        if (this.predicate) {
+            result.push(this.predicate + ',' + (this.reverse ? 'asc' : 'desc'));
+        }
         if (this.predicate !== 'id') {
             result.push('id');
         }

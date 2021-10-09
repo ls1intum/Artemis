@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
@@ -28,7 +28,7 @@ export class QuizExerciseExportComponent implements OnInit {
         private route: ActivatedRoute,
         private quizExerciseService: QuizExerciseService,
         private courseService: CourseManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         router: Router,
         translateService: TranslateService,
     ) {
@@ -69,7 +69,7 @@ export class QuizExerciseExportComponent implements OnInit {
                         });
                     }
                 },
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         });
     }

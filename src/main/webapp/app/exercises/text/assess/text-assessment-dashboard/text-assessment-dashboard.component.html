@@ -6,12 +6,16 @@
     <div *ngIf="submissions && submissions.length > 0; else emptyTable" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr [(ascending)]="reverse" [(predicate)]="predicate" [callback]="sortRows.bind(this)" jhiSort>
+                <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>
                     <th>
                         <a class="th-link">#</a>
                     </th>
                     <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.student.name">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.student.login">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentId">Student login</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
@@ -61,6 +65,11 @@
                     <td>
                         <span *ngIf="exercise.isAtLeastInstructor">
                             {{ submission.participation?.participantName }}
+                        </span>
+                    </td>
+                    <td>
+                        <span *ngIf="exercise.isAtLeastInstructor">
+                            {{ submission.participation?.participantIdentifier }}
                         </span>
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>

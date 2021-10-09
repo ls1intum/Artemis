@@ -36,13 +36,11 @@
     <!--region Right Panel-->
     <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-    <button right-header id="highlightDiffButton" class="btn" [hidden]="previousProblemStatementUpdate == undefined" (click)="toggleHighlightedProblemStatement()">
-        {{
-            showHighlightedDifferences
-                ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate)
-                : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
-        }}
-    </button>
+
+    <!-- problem statement update & difference highlighter -->
+    <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)">
+    </jhi-exam-exercise-update-highlighter>
+
     <p right-body class="markdown-preview mb-3" *ngIf="exercise.problemStatement">
         <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
     </p>

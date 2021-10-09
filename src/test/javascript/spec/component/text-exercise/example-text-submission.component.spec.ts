@@ -45,14 +45,14 @@ describe('ExampleTextSubmissionComponent', () => {
     let submission: TextSubmission;
     let activatedRouteSnapshot: ActivatedRouteSnapshot;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         const route: ActivatedRoute = {
             snapshot: {
                 paramMap: convertToParamMap({}),
                 queryParamMap: convertToParamMap({}),
             },
         } as any;
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 ExampleTextSubmissionComponent,
@@ -95,9 +95,9 @@ describe('ExampleTextSubmissionComponent', () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
-        spyOn(exerciseService, 'find').and.returnValue(httpResponse(exercise));
-        spyOn(exampleSubmissionService, 'get').and.returnValue(httpResponse(exampleSubmission));
-        spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
+        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
         await comp.ngOnInit();
@@ -113,9 +113,9 @@ describe('ExampleTextSubmissionComponent', () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
-        spyOn(exerciseService, 'find').and.returnValue(httpResponse(exercise));
-        spyOn(exampleSubmissionService, 'get').and.stub();
-        spyOn(assessmentsService, 'getExampleResult').and.stub();
+        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        jest.spyOn(exampleSubmissionService, 'get').mockImplementation();
+        jest.spyOn(assessmentsService, 'getExampleResult').mockImplementation();
 
         // WHEN
         await comp.ngOnInit();
@@ -136,7 +136,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
-        spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
+        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
         of();
 
         // WHEN
@@ -175,7 +175,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.state.assess();
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
-        spyOn(assessmentsService, 'saveExampleAssessment').and.returnValue(httpResponse(result));
+        jest.spyOn(assessmentsService, 'saveExampleAssessment').mockReturnValue(httpResponse(result));
 
         // WHEN
         fixture.detectChanges();
@@ -208,7 +208,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.state = State.forExistingAssessmentWithContext(comp);
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
-        spyOn(assessmentsService, 'deleteExampleFeedback').and.returnValue(httpResponse(null));
+        jest.spyOn(assessmentsService, 'deleteExampleFeedback').mockReturnValue(of());
 
         // WHEN
         fixture.detectChanges();
@@ -231,8 +231,8 @@ describe('ExampleTextSubmissionComponent', () => {
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
-        spyOn(exerciseService, 'find').and.returnValue(httpResponse(exercise));
-        spyOn(exampleSubmissionService, 'get').and.returnValue(httpResponse(exampleSubmission));
+        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -244,14 +244,14 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         textBlock2.computeId();
         submission.blocks = [textBlock1, textBlock2];
-        spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
+        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
         await comp.ngOnInit();
 
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
         comp.validateFeedback();
         const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
-        spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(httpResponse(null));
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(httpResponse(null));
 
         // WHEN
         fixture.detectChanges();
@@ -294,7 +294,7 @@ describe('ExampleTextSubmissionComponent', () => {
             status: 400,
         });
 
-        spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(throwError(() => errorResponse));
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
         comp.ngOnInit();

@@ -31,21 +31,21 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should confirm a plagiarism', () => {
-        spyOn(comp, 'updatePlagiarismStatus');
+        jest.spyOn(comp, 'updatePlagiarismStatus');
         comp.confirmPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
     });
 
     it('should deny a plagiarism', () => {
-        spyOn(comp, 'updatePlagiarismStatus');
+        jest.spyOn(comp, 'updatePlagiarismStatus');
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
     });
 
     it('should update the plagiarism status', fakeAsync(() => {
-        spyOn(comp.http, 'put').and.returnValue(of({ response: {} }));
+        jest.spyOn(comp.http, 'put').mockReturnValue(of({ response: {} }));
         comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
 
         tick();
@@ -56,7 +56,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should emit when expanding left split view pane', () => {
         comp.splitControlSubject = new Subject<string>();
-        spyOn(comp.splitControlSubject, 'next');
+        jest.spyOn(comp.splitControlSubject, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -69,7 +69,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should emit when expanding right split view pane', () => {
         comp.splitControlSubject = new Subject<string>();
-        spyOn(comp.splitControlSubject, 'next');
+        jest.spyOn(comp.splitControlSubject, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -82,7 +82,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should emit when resetting the split panes', () => {
         comp.splitControlSubject = new Subject<string>();
-        spyOn(comp.splitControlSubject, 'next');
+        jest.spyOn(comp.splitControlSubject, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
