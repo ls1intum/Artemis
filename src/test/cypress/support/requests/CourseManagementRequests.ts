@@ -101,7 +101,7 @@ export class CourseManagementRequests {
             programmingTemplate.releaseDate = dayjsToString(releaseDate);
             programmingTemplate.dueDate = dayjsToString(dueDate);
         } else {
-            programmingTemplate.allowComplaintsForAutomaticAssessments = true;
+            programmingTemplate.allowComplaintsForAutomaticAssessments = false;
         }
 
         if (scaMaxPenalty) {
