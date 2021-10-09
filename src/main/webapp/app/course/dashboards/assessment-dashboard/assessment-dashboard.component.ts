@@ -237,10 +237,11 @@ export class AssessmentDashboardComponent implements OnInit {
                 exercises,
                 (exercise) =>
                     // finds if all assessments for all correctionRounds are finished
-                    exercise.numberOfAssessmentsOfCorrectionRounds
+                    ((exercise.numberOfAssessmentsOfCorrectionRounds
                         ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
                         .reduce((acc, current) => acc && current) &&
-                    exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                        exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime) ||
+                        exercise.allowComplaintsForAutomaticAssessments) &&
                     exercise.numberOfOpenComplaints === 0 &&
                     exercise.numberOfOpenMoreFeedbackRequests === 0,
             );

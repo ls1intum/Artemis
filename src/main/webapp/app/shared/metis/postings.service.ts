@@ -1,6 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs';
-import { Post } from 'app/entities/metis/post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Observable } from 'rxjs';
 
@@ -31,20 +30,6 @@ export abstract class PostingsService<T extends Posting> {
     protected convertDateFromServer(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
             res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
-        }
-        return res;
-    }
-
-    /**
-     * takes an array of posts and converts the date from the server
-     * @param   {HttpResponse<T[]>} res
-     * @return  {HttpResponse<T[]>}
-     */
-    protected convertDateArrayFromServer(res: HttpResponse<T[]>): HttpResponse<T[]> {
-        if (res.body) {
-            res.body.forEach((post: Post) => {
-                post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
-            });
         }
         return res;
     }
