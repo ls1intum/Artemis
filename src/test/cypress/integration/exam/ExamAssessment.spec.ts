@@ -125,7 +125,7 @@ describe('Exam assessment', () => {
     });
 
     describe('Exam programming exercise assessment', () => {
-        const examEnd = 115000;
+        const examEnd = 145000;
 
         before('Prepare exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));
