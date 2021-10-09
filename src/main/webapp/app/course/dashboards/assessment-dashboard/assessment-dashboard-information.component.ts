@@ -25,6 +25,7 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
+    styleUrls: ['./assessment-dashboard-information.component.scss'],
 })
 export class AssessmentDashboardInformationComponent implements OnInit {
     @Input() isExamMode: boolean;
@@ -78,15 +79,19 @@ export class AssessmentDashboardInformationComponent implements OnInit {
             },
         ];
     }
-    shouldShowTheGraph = false;
 
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
+        this.setupGraphTranslations();
+
+        this.translateService.onLangChange.subscribe(() => {
+            this.setupGraphTranslations();
+        });
+    }
+
+    setupGraphTranslations() {
         this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
-
-        // Do not show the graph if both data points are zero
-        this.shouldShowTheGraph = this.totalNumberOfAssessments.total !== 0 || this.numberOfSubmissions.total !== 0;
     }
 }
