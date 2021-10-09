@@ -40,11 +40,20 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
 
     // variables for ngx-charts
     ngxData: any[] = []; // data presented by the chart
-    height: number;
+    maxScale: number;
     xAxisLabel: string;
     yAxisLabel: string;
     color: any;
     totalParticipants: number;
+    legend = false;
+    showXAxisLabel = true;
+    showYAxisLabel = true;
+    xAxis = true;
+    yAxis = true;
+    roundEdges = true;
+    showDataLabel = true;
+    barPadding = 150;
+    height = 500;
 
     // timer
     waitingForQuizStart = false;
@@ -249,7 +258,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             this.ngxData.push({ name: label, value: this.data[index] });
         });
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
-        this.height = calculateHeightOfChartData(this.data);
+        this.maxScale = calculateHeightOfChartData(this.data);
 
         // add Axes-labels based on selected language
         this.xAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
