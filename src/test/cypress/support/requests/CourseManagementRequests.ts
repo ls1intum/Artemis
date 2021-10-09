@@ -81,6 +81,7 @@ export class CourseManagementRequests {
      * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
@@ -91,17 +92,17 @@ export class CourseManagementRequests {
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
+        assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
+        programmingTemplate.assessmentType = CypressAssessmentType[assessmentType];
         if (!isExamExercise) {
             programmingTemplate.releaseDate = dayjsToString(releaseDate);
             programmingTemplate.dueDate = dayjsToString(dueDate);
-        } else {
-            programmingTemplate.allowComplaintsForAutomaticAssessments = false;
         }
 
         if (scaMaxPenalty) {
@@ -523,4 +524,10 @@ export class CypressExamBuilder {
     build() {
         return this.template;
     }
+}
+
+export enum CypressAssessmentType {
+    AUTOMATIC,
+    SEMI_AUTOMATIC,
+    MANUAL,
 }
