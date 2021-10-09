@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
@@ -168,6 +169,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testCreateModelingExercise_instructorNotInCourse() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateModelingExercise_examExerciseWithDatesSet() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Exam exam = databaseUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(classExercise.getCourseViaExerciseGroupOrCourseMember());
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        modelingExercise.setExerciseGroup(exerciseGroup);
+        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test

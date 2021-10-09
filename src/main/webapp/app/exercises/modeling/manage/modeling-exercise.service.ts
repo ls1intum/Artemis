@@ -35,7 +35,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         let copy = this.exerciseService.convertDateFromClient(modelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
+        return this.http.put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}`, copy, { params: options, observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
