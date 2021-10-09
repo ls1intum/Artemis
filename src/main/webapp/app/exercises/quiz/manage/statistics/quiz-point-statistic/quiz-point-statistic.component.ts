@@ -293,4 +293,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             return 0;
         });
     }
+
+    roundValue(participation: number) {
+        return Math.round(participation * 100) / 100;
+    }
 }

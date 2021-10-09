@@ -38,7 +38,7 @@
                 [roundEdges]="true"
                 [showDataLabel]="true"
             >
-                <ng-template #tooltipTemplate let-model="model"> {{ (model.value / totalParticipants) * 100 }}% </ng-template>
+                <ng-template #tooltipTemplate let-model="model"> {{ roundValue((model.value / totalParticipants) * 100) }}% </ng-template>
             </ngx-charts-bar-vertical>
             <div class="text-center">
                 <button (click)="switchRated()" type="button" class="btn btn-primary">
