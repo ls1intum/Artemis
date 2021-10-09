@@ -238,6 +238,9 @@ public class DatabaseUtilService {
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    @Autowired
+    private RatingRepository ratingRepo;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -1515,6 +1518,13 @@ public class DatabaseUtilService {
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
+    }
+
+    public Rating addRatingToResult(Result result, int score) {
+        var rating = new Rating();
+        rating.setResult(result);
+        rating.setRating(score);
+        return ratingRepo.save(rating);
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
