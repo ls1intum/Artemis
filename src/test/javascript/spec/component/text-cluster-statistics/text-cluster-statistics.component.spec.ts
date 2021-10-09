@@ -63,7 +63,7 @@ describe('TextClusterStatisticsComponent', () => {
     it('should call setClusterDisabledPredicate', () => {
         const getClusterStatsSpy = sinon.spy(textExerciseService, 'setClusterDisabledPredicate');
         component.setClusterDisabledPredicate(1, true);
-        expect(getClusterStatsSpy).to.have.been.calledWith(1, true);
+        expect(getClusterStatsSpy).to.have.been.calledWith(222, 1, true);
     });
 
     it('should show a not found message in case the cluster statistics is empty', () => {
