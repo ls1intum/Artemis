@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { partition } from 'lodash';
+import { partition } from 'lodash-es';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
@@ -72,7 +72,7 @@ export class AssessmentDashboardComponent implements OnInit {
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
@@ -219,10 +219,11 @@ export class AssessmentDashboardComponent implements OnInit {
                 exercises,
                 (exercise) =>
                     // finds if all assessments for all correctionRounds are finished
-                    exercise.numberOfAssessmentsOfCorrectionRounds
+                    ((exercise.numberOfAssessmentsOfCorrectionRounds
                         ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
                         .reduce((acc, current) => acc && current) &&
-                    exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                        exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime) ||
+                        exercise.allowComplaintsForAutomaticAssessments) &&
                     exercise.numberOfOpenComplaints === 0 &&
                     exercise.numberOfOpenMoreFeedbackRequests === 0,
             );
@@ -255,11 +256,11 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Pass on an error to the browser console and the jhiAlertService.
+     * Pass on an error to the browser console and the alertService.
      * @param error
      */
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 
     sortRows() {

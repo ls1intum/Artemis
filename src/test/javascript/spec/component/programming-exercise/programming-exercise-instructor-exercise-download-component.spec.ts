@@ -5,7 +5,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import * as sinon from 'sinon';
 import * as chai from 'chai';

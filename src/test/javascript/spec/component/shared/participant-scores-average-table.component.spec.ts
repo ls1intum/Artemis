@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { TranslateModule } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +15,7 @@ import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,10 +26,10 @@ describe('ParticipantScoresAverageTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
             declarations: [
                 ParticipantScoresAverageTableComponent,
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 DataTableComponent,
                 MockDirective(NgbTypeahead),

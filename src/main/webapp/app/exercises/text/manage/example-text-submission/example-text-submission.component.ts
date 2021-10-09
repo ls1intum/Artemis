@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import { HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -21,16 +21,17 @@ import { Result } from 'app/entities/result.model';
 import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { notUndefined, onError } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter } from 'rxjs/operators';
+import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
 })
-export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     isNewSubmission: boolean;
     areNewAssessments = true;
     unsavedChanges = false;
@@ -49,7 +50,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     UIStates = UIStates;
 
     constructor(
-        jhiAlertService: JhiAlertService,
+        alertService: AlertService,
         accountService: AccountService,
         assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -64,7 +65,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         private resultService: ResultService,
         private guidedTourService: GuidedTourService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.submission = new TextSubmission();
@@ -169,9 +170,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.resultService.createNewExampleResult(this.exerciseId!, this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.state.edit();
-                this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-            }, this.jhiAlertService.error);
-        }, this.jhiAlertService.error);
+                this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+            }, this.alertService.error);
+        }, this.alertService.error);
     }
 
     /**
@@ -182,8 +183,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.state.edit();
             this.unsavedChanges = false;
-            this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-        }, this.jhiAlertService.error);
+            this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
+        }, this.alertService.error);
     }
 
     public async startAssessment(): Promise<void> {
@@ -196,13 +197,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     public saveAssessments(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
         this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
-            this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
+            this.alertService.success('artemisApp.textAssessment.saveSuccessful');
             this.state.assess();
             if (this.unsavedChanges) {
                 this.exampleSubmissionService
@@ -210,7 +211,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                     .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                         this.exampleSubmission = exampleSubmissionResponse.body!;
                         this.unsavedChanges = false;
-                    }, this.jhiAlertService.error);
+                    }, this.alertService.error);
             }
         });
     }
@@ -256,46 +257,30 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     checkAssessment(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
-            () => {
-                this.markAllFeedbackToCorrect();
-                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
-            },
-            (error: HttpErrorResponse) => {
-                const errorType = error.headers.get('x-artemisapp-error');
 
-                if (errorType === 'error.invalid_assessment') {
-                    this.markAllFeedbackToCorrect();
-
-                    // Mark all wrongly made feedbacks accordingly.
-                    const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
-                    correctionErrors.forEach((res) => {
-                        const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
-                        if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
-                            textBlockRef.feedback.correctionStatus = res.type;
-                        }
-                    });
-
-                    const msg =
-                        correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-                    this.jhiAlertService.error(msg, { mistakeCount: correctionErrors.length });
-                } else {
-                    onError(this.jhiAlertService, error);
-                }
-            },
-        );
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
     }
 
-    private markAllFeedbackToCorrect() {
+    markAllFeedbackToCorrect() {
         this.textBlockRefs
             .map((ref) => ref.feedback)
             .filter((feedback) => feedback != undefined)
             .forEach((feedback) => {
                 feedback!.correctionStatus = 'CORRECT';
             });
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === correctionError.reference);
+            if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
+                textBlockRef.feedback.correctionStatus = correctionError.type;
+            }
+        });
     }
 
     private exampleSubmissionForNetwork() {
@@ -326,7 +311,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      */
     readAndUnderstood(): void {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
+            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

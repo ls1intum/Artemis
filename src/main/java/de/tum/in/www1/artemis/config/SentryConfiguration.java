@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import io.github.jhipster.config.JHipsterConstants;
 import io.sentry.Sentry;
+import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
 @Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })

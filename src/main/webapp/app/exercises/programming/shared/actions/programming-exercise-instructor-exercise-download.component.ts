@@ -3,7 +3,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-exercise-download',
@@ -28,7 +28,7 @@ export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     @Input()
     exerciseId: number;
 
-    constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: JhiAlertService) {}
+    constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 
     exportExercise() {
         if (this.exerciseId) {

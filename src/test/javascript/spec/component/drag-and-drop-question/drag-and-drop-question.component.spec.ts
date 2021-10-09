@@ -18,7 +18,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
@@ -99,8 +99,11 @@ describe('DragAndDropQuestionComponent', () => {
         comp.mappings = [correctMapping4];
         comp.question.correctMappings = [correctMapping1, correctMapping2, correctMapping4];
         comp.ngOnChanges();
-        // without selected items it should set correct answers to drop locations without valid drag item
-        expect(comp.correctAnswer).to.equal(1);
+        /*
+         *   without selected items it should not set correct answers to drop locations without valid drag item
+         *   as they are excluded from the score calculation as well
+         */
+        expect(comp.correctAnswer).to.equal(0);
 
         // if there is a selected item should count drop locations that has the selected items drag item
         // dropLocation1 and dropLocation3 is selected
@@ -109,11 +112,11 @@ describe('DragAndDropQuestionComponent', () => {
         // dropLocation3 is not correct but selected
         // dropLocation4 is not one of the drop locations
         // dropLocation5 is neither correct nor selected
-        // Hence 2 because of dropLocation1 and dropLocation5
+        // Hence 1 because of dropLocation1 (dropLocation5 must be excluded)
         comp.mappings = [correctMapping1, correctMapping3];
         comp.question.dropLocations = [dropLocation1, dropLocation2, dropLocation3, dropLocation5];
         comp.ngOnChanges();
-        expect(comp.correctAnswer).to.equal(2);
+        expect(comp.correctAnswer).to.equal(1);
     });
 
     it('should return correct drag item for drop location', () => {

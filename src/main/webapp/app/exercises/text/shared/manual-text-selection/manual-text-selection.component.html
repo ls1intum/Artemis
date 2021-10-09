@@ -20,12 +20,7 @@
                 we then have to consume the click-intent by way of the (mouseup)
                 event.
             -->
-            <a
-                (mousedown)="$event.preventDefault()"
-                (mouseup)="$event.stopPropagation(); assessAction()"
-                class="indicator__cta-link"
-                jhiTranslate="artemisApp.textAssessment.editor.assess"
-            ></a>
+            <a (mousedown)="$event.preventDefault()" (mouseup)="$event.stopPropagation(); assessAction()" class="indicator__cta-link">{{ assessText }}</a>
         </div>
     </div>
 </div>

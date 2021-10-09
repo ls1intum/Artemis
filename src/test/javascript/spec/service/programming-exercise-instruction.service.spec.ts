@@ -1,7 +1,7 @@
 import { async } from '@angular/core/testing';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 
 chai.use(sinonChai);
@@ -17,7 +17,7 @@ describe('ProgrammingExerciseInstructionService', () => {
     it('should determine a successful state for all tasks if the result is successful', () => {
         const result = {
             id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: true,
             feedbacks: [
                 { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true },
@@ -38,7 +38,7 @@ describe('ProgrammingExerciseInstructionService', () => {
     it('should determine a failed state for a task if at least one test has failed (non legacy case)', () => {
         const result = {
             id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: false,
             feedbacks: [
                 { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false },
@@ -55,7 +55,7 @@ describe('ProgrammingExerciseInstructionService', () => {
     it('should determine a failed state for a task if at least one test has failed (legacy case)', () => {
         const result = {
             id: 1,
-            completionDate: moment('2018-06-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2018-06-06T22:15:29.203+02:00'),
             successful: false,
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }],
         } as any;
@@ -69,7 +69,7 @@ describe('ProgrammingExerciseInstructionService', () => {
     it('should determine a state if there is no feedback for the specified tests (non legacy only)', () => {
         const result = {
             id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: false,
             feedbacks: [{ text: 'irrelevantTest', detail_text: 'lorem ipsum', positive: true }],
         } as any;

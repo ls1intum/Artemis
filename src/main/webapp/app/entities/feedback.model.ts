@@ -46,6 +46,8 @@ export class FeedbackCorrectionError {
     public type: FeedbackCorrectionErrorType;
 }
 
+export type FeedbackCorrectionStatus = FeedbackCorrectionErrorType | 'CORRECT';
+
 export class Feedback implements BaseEntity {
     public id?: number;
     public gradingInstruction?: GradingInstruction;
@@ -63,7 +65,7 @@ export class Feedback implements BaseEntity {
 
     // Specifies whether or not the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
-    public correctionStatus?: FeedbackCorrectionErrorType | 'CORRECT';
+    public correctionStatus?: FeedbackCorrectionStatus;
 
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
@@ -124,7 +126,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction.id) {
+        if (dropInfo && dropInfo.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {

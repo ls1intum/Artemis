@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -35,7 +35,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected alertService: AlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -65,7 +65,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                         }),
                         catchError((error: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
-                            onError(this.jhiAlertService, error);
+                            onError(this.alertService, error);
                             return of(null);
                         }),
                     )

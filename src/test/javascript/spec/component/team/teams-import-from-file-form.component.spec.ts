@@ -9,7 +9,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import * as chai from 'chai';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 
 chai.use(sinonChai);

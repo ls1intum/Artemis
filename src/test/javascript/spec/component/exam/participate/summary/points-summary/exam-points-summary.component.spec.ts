@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import * as sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -32,12 +32,12 @@ const expect = chai.expect;
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
 let component: ExamPointsSummaryComponent;
 
-const visibleDate = moment().subtract(7, 'hours');
-const startDate = moment().subtract(6, 'hours');
-const endDate = moment().subtract(5, 'hours');
-const publishResultsDate = moment().subtract(3, 'hours');
-const reviewStartDate = moment().subtract(2, 'hours');
-const reviewEndDate = moment().add(1, 'hours');
+const visibleDate = dayjs().subtract(7, 'hours');
+const startDate = dayjs().subtract(6, 'hours');
+const endDate = dayjs().subtract(5, 'hours');
+const publishResultsDate = dayjs().subtract(3, 'hours');
+const reviewStartDate = dayjs().subtract(2, 'hours');
+const reviewEndDate = dayjs().add(1, 'hours');
 
 const exam = {
     id: 1,
