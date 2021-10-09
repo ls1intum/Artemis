@@ -24,7 +24,7 @@ export class Notification implements BaseEntity {
 }
 
 /**
- * Corresponds to the NotificationTitleTypeConstants(.java) constant Strings in the server
+ * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
  */
 export const ATTACHMENT_CHANGE_TITLE = 'Attachment updated';
 
@@ -60,23 +60,5 @@ export const EXAM_ARCHIVE_FINISHED_TITLE = 'Exam archival finished';
 
 export const EXAM_ARCHIVE_FAILED_TITLE = 'Exam archival failed';
 
-export const notificationTitles: Set<string> = new Set([
-    ATTACHMENT_CHANGE_TITLE,
-    EXERCISE_CREATED_TITLE,
-    EXERCISE_PRACTICE_TITLE,
-    QUIZ_EXERCISE_STARTED_TITLE,
-    EXERCISE_UPDATED_TITLE,
-    DUPLICATE_TEST_CASE_TITLE,
-    ILLEGAL_SUBMISSION_TITLE,
-    NEW_POST_FOR_EXERCISE_TITLE,
-    NEW_POST_FOR_LECTURE_TITLE,
-    NEW_POST_FOR_LECTURE_TITLE,
-    NEW_ANSWER_POST_FOR_EXERCISE_TITLE,
-    NEW_ANSWER_POST_FOR_LECTURE_TITLE,
-    COURSE_ARCHIVE_STARTED_TITLE,
-    COURSE_ARCHIVE_FINISHED_TITLE,
-    COURSE_ARCHIVE_FAILED_TITLE,
-    EXAM_ARCHIVE_STARTED_TITLE,
-    EXAM_ARCHIVE_FINISHED_TITLE,
-    EXAM_ARCHIVE_FAILED_TITLE,
-]);
+// edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
+export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

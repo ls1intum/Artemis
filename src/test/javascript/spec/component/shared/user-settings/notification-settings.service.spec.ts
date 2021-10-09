@@ -1,28 +1,23 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ATTACHMENT_CHANGE_TITLE, COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE, NotificationType } from 'app/entities/notification.model';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
+import { SettingId } from 'app/shared/constants/user-settings.constants';
 
-export const notificationOptionCoreA: NotificationOptionCore = {
-    optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+export const notificationSettingA: NotificationSetting = {
+    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
     webapp: false,
     email: false,
 };
-export const notificationOptionCoreB: NotificationOptionCore = {
-    optionSpecifier: OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
+export const notificationSettingB: NotificationSetting = {
+    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
     webapp: true,
     email: false,
 };
 
-export const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
-
-chai.use(sinonChai);
-const expect = chai.expect;
+export const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
 describe('User Settings Service', () => {
     let notificationSettingsService: NotificationSettingsService;
@@ -62,35 +57,35 @@ describe('User Settings Service', () => {
                 const resultOfA = notificationSettingsService.isNotificationAllowedBySettings(notificationA, map);
                 const resultOfB = notificationSettingsService.isNotificationAllowedBySettings(notificationB, map);
 
-                expect(resultOfA).to.equal(activationStatusOfA);
-                expect(resultOfB).to.equal(activationStatusOfB);
+                expect(resultOfA).toEqual(activationStatusOfA);
+                expect(resultOfB).toEqual(activationStatusOfB);
             });
         });
 
-        it('should update notificationTitleActivationMap & map between NotificationType and OptionCore', () => {
+        it('should update notificationTitleActivationMap & map between NotificationType and Settings', () => {
             const type1 = EXERCISE_PRACTICE_TITLE;
-            const type1ActivationStatus = notificationOptionCoreA.webapp;
+            const type1ActivationStatus = notificationSettingA.webapp!;
             const type2 = EXAM_ARCHIVE_STARTED_TITLE;
-            const type2ActivationStatus = notificationOptionCoreB.webapp;
+            const type2ActivationStatus = notificationSettingB.webapp!;
             const type3 = COURSE_ARCHIVE_STARTED_TITLE;
-            const type3ActivationStatus = notificationOptionCoreB.webapp;
+            const type3ActivationStatus = notificationSettingB.webapp!;
 
             const expectedMap: Map<string, boolean> = new Map<string, boolean>();
             expectedMap.set(type1, type1ActivationStatus);
             expectedMap.set(type2, type2ActivationStatus);
             expectedMap.set(type3, type3ActivationStatus);
 
-            const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationOptionCoresForTesting);
+            const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationSettingsForTesting);
 
-            expect(resultMap.has(type1)).to.be.true;
-            expect(resultMap.has(type2)).to.be.true;
-            expect(resultMap.has(type3)).to.be.true;
+            expect(resultMap.has(type1)).toBe(true);
+            expect(resultMap.has(type2)).toBe(true);
+            expect(resultMap.has(type3)).toBe(true);
 
-            expect(resultMap.size).to.be.equal(3);
+            expect(resultMap.size).toEqual(3);
 
-            expect(resultMap.get(type1)).to.be.equal(type1ActivationStatus);
-            expect(resultMap.get(type2)).to.be.equal(type2ActivationStatus);
-            expect(resultMap.get(type3)).to.be.equal(type3ActivationStatus);
+            expect(resultMap.get(type1)).toEqual(type1ActivationStatus);
+            expect(resultMap.get(type2)).toEqual(type2ActivationStatus);
+            expect(resultMap.get(type3)).toEqual(type3ActivationStatus);
         });
     });
 });

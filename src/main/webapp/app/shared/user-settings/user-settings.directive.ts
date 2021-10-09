@@ -1,33 +1,29 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { ChangeDetectorRef, Directive, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
+import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
- * Is used as the abstract user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
- * The @Component decorated and templateUrl are needed to be able to use OnInit
+ * Is used as the abstract user-settings "parent" with all the necessary basic logic for other "child" components to implement/inherit from.
  */
-@Component({
-    templateUrl: 'user-settings-prototype.component.html',
-    styleUrls: ['user-settings-prototype.component.scss'],
-})
-export abstract class UserSettingsPrototypeComponent implements OnInit {
+@Directive()
+export abstract class UserSettingsDirective implements OnInit {
     // HTML template related
-    optionsChanged = false;
+    settingsChanged = false;
     currentUser: User;
 
     // userSettings logic related
     userSettingsCategory: UserSettingsCategory;
     changeEventMessage: string;
-    userSettings: UserSettings<OptionCore>;
-    optionCores: Array<OptionCore>;
+    userSettings: UserSettingsStructure<Setting>;
+    settings: Array<Setting>;
     page = 0;
     error?: string;
 
-    protected constructor(protected userSettingsService: UserSettingsService, protected alertService: JhiAlertService, protected changeDetector: ChangeDetectorRef) {}
+    protected constructor(protected userSettingsService: UserSettingsService, protected alertService: AlertService, protected changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         this.alertService.clear();
@@ -37,13 +33,13 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     // methods related to loading
 
     /**
-     * Fetches the userOptionCores based on the settings category, updates the currently loaded userSettings, optionCores, and HTML template
+     * Fetches the settings based on the settings category, updates the currently loaded userSettingsStructure, individual settings, and HTML template
      */
     protected loadSetting(): void {
-        this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe(
-            (res: HttpResponse<OptionCore[]>) => {
-                this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, this.userSettingsCategory);
-                this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
+        this.userSettingsService.loadSettings(this.userSettingsCategory).subscribe(
+            (res: HttpResponse<Setting[]>) => {
+                this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
+                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.changeDetector.detectChanges();
                 this.alertService.clear();
             },
@@ -55,13 +51,13 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
 
     /**
      * Is invoked by clicking the save button
-     * Sends all option cores which were changed by the user to the server for saving
+     * Sends all settings which were changed by the user to the server for saving
      */
-    public saveOptions() {
-        this.userSettingsService.saveUserOptions(this.optionCores, this.userSettingsCategory).subscribe(
-            (res: HttpResponse<OptionCore[]>) => {
-                this.userSettings = this.userSettingsService.saveUserOptionsSuccess(this.userSettings, res.body!);
-                this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
+    public saveSettings() {
+        this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe(
+            (res: HttpResponse<Setting[]>) => {
+                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
+                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.finishSaving();
             },
             (res: HttpErrorResponse) => this.onError(res),
@@ -75,7 +71,7 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
      */
     protected finishSaving() {
         this.createApplyChangesEvent();
-        this.optionsChanged = false;
+        this.settingsChanged = false;
         this.alertService.clear();
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
     }

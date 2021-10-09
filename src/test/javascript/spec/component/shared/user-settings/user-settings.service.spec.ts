@@ -1,45 +1,41 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { SERVER_API_URL } from 'app/app.constants';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
-import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { notificationOptionCoresForTesting } from './notification-settings.service.spec';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
+import { notificationSettingsStructure, NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { notificationSettingsForTesting } from './notification-settings.service.spec';
 
 describe('User Settings Service', () => {
     // general & common
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
     let userSettingsCategory: UserSettingsCategory;
-    let resultingUserSettings: UserSettings<OptionCore>;
+    let resultingUserSettings: UserSettingsStructure<Setting>;
 
     // notification settings specific
     const notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
 
     /**
-     * Updates the NotificationOptionCores of the provided NotificationSettings by using provided Cores
-     * @param settings to be updated
-     * @param providedOptionCores are used to find matching cores and update them
+     * Updates the NotificationSettings of the provided NotificationSettings by using provided Settings
+     * @param settingsStructure to be updated
+     * @param providedSettings are used to find matching settings and update them
      */
-    function updateNotificationSettingsByProvidedNotificationOptionCores(settings: UserSettings<NotificationOptionCore>, providedOptionCores: NotificationOptionCore[]) {
-        providedOptionCores.forEach((providedOptionCore) => {
-            for (const group of settings.groups) {
-                for (const option of group.options) {
-                    if (option.optionCore.optionSpecifier === providedOptionCore.optionSpecifier) {
-                        option.optionCore.webapp = providedOptionCore.webapp;
-                        option.optionCore.email = providedOptionCore.email;
+    function updateNotificationSettingsStructureByProvidedNotificationSettings(
+        settingsStructure: UserSettingsStructure<NotificationSetting>,
+        providedSettings: NotificationSetting[],
+    ) {
+        providedSettings.forEach((providedSetting) => {
+            for (const group of settingsStructure.groups) {
+                for (const setting of group.settings) {
+                    if (setting.settingId === providedSetting.settingId) {
+                        setting.webapp = providedSetting.webapp;
+                        setting.email = providedSetting.email;
                         break;
                     }
                 }
@@ -48,16 +44,16 @@ describe('User Settings Service', () => {
     }
 
     /**
-     * Updates the original NotificationOptionCores by using provided Cores
-     * @param originalOptionCores which should be updated
-     * @param providedOptionCores which are used to update the original cores
+     * Updates the original NotificationSettings by using provided Settings
+     * @param originalSettings which should be updated
+     * @param providedSettings which are used to update the settings
      */
-    function updateNotificationOptionCoresByProvidedNotificationOptionCores(originalOptionCores: NotificationOptionCore[], providedOptionCores: NotificationOptionCore[]) {
-        providedOptionCores.forEach((providedCore) => {
-            for (const originalCore of originalOptionCores) {
-                if (originalCore.optionSpecifier === providedCore.optionSpecifier) {
-                    originalCore.webapp = providedCore.webapp;
-                    originalCore.email = providedCore.email;
+    function updateNotificationSettings(originalSettings: NotificationSetting[], providedSettings: NotificationSetting[]) {
+        providedSettings.forEach((providedSetting) => {
+            for (const originalSetting of originalSettings) {
+                if (originalSetting.settingId === providedSetting.settingId) {
+                    originalSetting.webapp = providedSetting.webapp;
+                    originalSetting.email = providedSetting.email;
                     break;
                 }
             }
@@ -65,16 +61,19 @@ describe('User Settings Service', () => {
     }
 
     /**
-     * Checks if the provided (newly updated) cores are a subset of the expected cores
-     * @param providedNotificationCores which should be part of the expected ones
-     * @param expectedNotificationCores the bigger array of cores which should contain the provided cores
+     * Checks if the provided (newly updated) settings are a subset of the expected settings
+     * @param providedNotificationSettings which should be part of the expected ones
+     * @param expectedNotificationSettings the array of settings which should contain the provided settings
      */
-    function checkIfProvidedNotificationCoresArePartOfExpectedCores(providedNotificationCores: NotificationOptionCore[], expectedNotificationCores: NotificationOptionCore[]) {
-        providedNotificationCores.forEach((providedCore) => {
-            for (const expectedNotificationCore of expectedNotificationCores) {
-                if (providedCore.optionSpecifier === expectedNotificationCore.optionSpecifier) {
-                    expect(providedCore.webapp).to.equal(expectedNotificationCore.webapp);
-                    expect(providedCore.email).to.equal(expectedNotificationCore.email);
+    function checkIfProvidedNotificationSettingsArePartOfExpectedSettings(
+        providedNotificationSettings: NotificationSetting[],
+        expectedNotificationSettings: NotificationSetting[],
+    ) {
+        providedNotificationSettings.forEach((providedSetting) => {
+            for (const expectedNotificationSetting of expectedNotificationSettings) {
+                if (providedSetting.settingId === expectedNotificationSetting.settingId) {
+                    expect(providedSetting.webapp).toEqual(expectedNotificationSetting.webapp);
+                    expect(providedSetting.email).toEqual(expectedNotificationSetting.email);
                     break;
                 }
             }
@@ -82,32 +81,32 @@ describe('User Settings Service', () => {
     }
 
     /**
-     * extracts OptionCores from provided UserSettings
-     * @param settings where the cores should be extracted from
-     * @return extracted option cores
+     * extracts individual settings from provided settingsStructure
+     * @param settingsStructure where the settings should be extracted from
+     * @return extracted settingsStructure
      */
-    function extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
-        const extractedOptionCores: OptionCore[] = [];
-        settings.groups.forEach((group) => {
-            group.options.forEach((option) => {
-                extractedOptionCores.push(option.optionCore);
+    function extractSettingsFromSettingsStructure(settingsStructure: UserSettingsStructure<Setting>): Setting[] {
+        const extractedSettings: Setting[] = [];
+        settingsStructure.groups.forEach((group) => {
+            group.settings.forEach((setting) => {
+                extractedSettings.push(setting);
             });
         });
-        return extractedOptionCores;
+        return extractedSettings;
     }
 
     /**
-     * Compares UserSettings correctly by first checking the settings for the same "signature/structure"
-     * afterwards extracting the cores and comparing them
-     * @param expectedSettings
-     * @param resultSettings
+     * Compares settings structures correctly by first checking for the same "signature/structure"
+     * afterwards extracting the individual settings and comparing them
+     * @param expectedSettingsStructure
+     * @param resultingSettingsStructure
      */
-    function compareSettings(expectedSettings: UserSettings<OptionCore>, resultSettings: UserSettings<OptionCore>) {
-        // this step alone is not enough due to the polymorphic nature of the optionCores
-        expect(expectedSettings).to.deep.equal(resultSettings);
-        const expectedOptionCores = extractOptionCoresFromSettings(expectedSettings);
-        const resultOptionCores = extractOptionCoresFromSettings(resultSettings);
-        expect(expectedOptionCores).to.deep.equal(resultOptionCores);
+    function compareSettingsStructure(expectedSettingsStructure: UserSettingsStructure<Setting>, resultingSettingsStructure: UserSettingsStructure<Setting>) {
+        // this step alone is not enough due to the polymorphic nature of the settings
+        expect(expectedSettingsStructure).toEqual(resultingSettingsStructure);
+        const expectedIndividualSettings = extractSettingsFromSettingsStructure(expectedSettingsStructure);
+        const resultingIndividualSettings = extractSettingsFromSettingsStructure(resultingSettingsStructure);
+        expect(expectedIndividualSettings).toEqual(resultingIndividualSettings);
     }
 
     beforeEach(() => {
@@ -127,73 +126,67 @@ describe('User Settings Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        sinon.restore();
     });
 
     describe('Service methods with Category Notification Settings', () => {
         userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
 
         describe('test loading methods', () => {
-            it('should call correct URL to fetch all option cores', () => {
-                userSettingsService.loadUserOptions(userSettingsCategory).subscribe();
+            it('should call correct URL to fetch all settings', () => {
+                userSettingsService.loadSettings(userSettingsCategory).subscribe();
                 const req = httpMock.expectOne({ method: 'GET' });
-                const infoUrl = notificationSettingsResourceUrl + '/fetch-options';
-                expect(req.request.url).to.equal(infoUrl);
+                expect(req.request.url).toEqual(notificationSettingsResourceUrl);
             });
 
             it('should load correct default settings as foundation', () => {
                 // to make sure the default settings are not modified
-                resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings([], userSettingsCategory);
-                compareSettings(defaultNotificationSettings, resultingUserSettings);
+                resultingUserSettings = userSettingsService.loadSettingsSuccessAsSettingsStructure([], userSettingsCategory);
+                compareSettingsStructure(notificationSettingsStructure, resultingUserSettings);
             });
 
-            it('should correctly update and return settings based on received option cores', () => {
-                const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
-                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
-                resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings(notificationOptionCoresForTesting, userSettingsCategory);
-                compareSettings(expectedUserSettings, resultingUserSettings);
+            it('should correctly update and return settings based on received settings', () => {
+                const expectedUserSettings: UserSettingsStructure<NotificationSetting> = notificationSettingsStructure;
+                updateNotificationSettingsStructureByProvidedNotificationSettings(expectedUserSettings, notificationSettingsForTesting);
+                resultingUserSettings = userSettingsService.loadSettingsSuccessAsSettingsStructure(notificationSettingsForTesting, userSettingsCategory);
+                compareSettingsStructure(expectedUserSettings, resultingUserSettings);
             });
 
-            it('should correctly update and return option cores based on received option cores', () => {
-                const expectedNotificationOptionCores: NotificationOptionCore[] = userSettingsService.extractOptionCoresFromSettings(
-                    defaultNotificationSettings,
-                ) as NotificationOptionCore[];
-                updateNotificationOptionCoresByProvidedNotificationOptionCores(expectedNotificationOptionCores, notificationOptionCoresForTesting);
+            it('should correctly update and return settings based on received settings', () => {
+                const expectedNotificationSettings: NotificationSetting[] = userSettingsService.extractIndividualSettingsFromSettingsStructure(
+                    notificationSettingsStructure,
+                ) as NotificationSetting[];
+                updateNotificationSettings(expectedNotificationSettings, notificationSettingsForTesting);
 
-                let resultingOptionCores: NotificationOptionCore[];
-                resultingOptionCores = userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
-                    notificationOptionCoresForTesting,
-                    userSettingsCategory,
-                ) as NotificationOptionCore[];
+                let resultingSettings: NotificationSetting[];
+                resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(notificationSettingsForTesting, userSettingsCategory) as NotificationSetting[];
 
-                expect(resultingOptionCores.length).to.equal(expectedNotificationOptionCores.length);
-                checkIfProvidedNotificationCoresArePartOfExpectedCores(resultingOptionCores, expectedNotificationOptionCores);
+                expect(resultingSettings.length).toEqual(expectedNotificationSettings.length);
+                checkIfProvidedNotificationSettingsArePartOfExpectedSettings(resultingSettings, expectedNotificationSettings);
             });
         });
 
         describe('test saving methods', () => {
-            it('should call correct URL to save option cores', () => {
-                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe();
-                const req = httpMock.expectOne({ method: 'POST' });
-                const infoUrl = notificationSettingsResourceUrl + '/save-options';
-                expect(req.request.url).to.equal(infoUrl);
+            it('should call correct URL to save settings', () => {
+                userSettingsService.saveSettings(notificationSettingsForTesting, userSettingsCategory).subscribe();
+                const req = httpMock.expectOne({ method: 'PUT' });
+                expect(req.request.url).toEqual(notificationSettingsResourceUrl);
             });
 
-            it('server response should contain inputted options', fakeAsync(() => {
-                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe((resp) => {
-                    checkIfProvidedNotificationCoresArePartOfExpectedCores(resp.body as NotificationOptionCore[], notificationOptionCoresForTesting);
+            it('should correctly update and return settings based on received settings', () => {
+                const expectedUserSettings: UserSettingsStructure<NotificationSetting> = notificationSettingsStructure;
+                updateNotificationSettingsStructureByProvidedNotificationSettings(expectedUserSettings, notificationSettingsForTesting);
+                resultingUserSettings = userSettingsService.saveSettingsSuccess(expectedUserSettings, notificationSettingsForTesting);
+                compareSettingsStructure(expectedUserSettings, resultingUserSettings);
+            });
+
+            it('server response should contain inputted settings', fakeAsync(() => {
+                userSettingsService.saveSettings(notificationSettingsForTesting, userSettingsCategory).subscribe((resp) => {
+                    checkIfProvidedNotificationSettingsArePartOfExpectedSettings(resp.body as NotificationSetting[], notificationSettingsForTesting);
                 });
-                const req = httpMock.expectOne({ method: 'POST' });
-                req.flush(notificationOptionCoresForTesting);
+                const req = httpMock.expectOne({ method: 'PUT' });
+                req.flush(notificationSettingsForTesting);
                 tick();
             }));
-
-            it('should correctly update and return settings based on received option cores', () => {
-                const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
-                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
-                resultingUserSettings = userSettingsService.saveUserOptionsSuccess(expectedUserSettings, notificationOptionCoresForTesting);
-                compareSettings(expectedUserSettings, resultingUserSettings);
-            });
         });
     });
 });

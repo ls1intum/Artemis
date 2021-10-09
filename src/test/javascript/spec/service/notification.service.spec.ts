@@ -109,17 +109,10 @@ describe('Notification Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should call correct URL to fetch all notifications', () => {
-            notificationService.query().subscribe(() => {});
-            const req = httpMock.expectOne({ method: 'GET' });
-            const infoUrl = SERVER_API_URL + 'api/notifications';
-            expect(req.request.url).to.equal(infoUrl);
-        });
-
         it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
-            notificationService.queryFiltered().subscribe(() => {});
+            notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET' });
-            const url = SERVER_API_URL + 'api/notifications/filtered-by-settings';
+            const url = SERVER_API_URL + 'api/notifications';
             expect(req.request.url).to.equal(url);
         });
 
@@ -138,7 +131,7 @@ describe('Notification Service', () => {
             const serverResponse = notificationArray;
             const expectedResult = notificationArray.sort();
 
-            notificationService.query().subscribe((resp) => {
+            notificationService.queryNotificationsFilteredBySettings().subscribe((resp) => {
                 expect(resp.body).to.equal(expectedResult);
             });
 

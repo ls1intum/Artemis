@@ -2,54 +2,52 @@
 <div class="d-flex justify-content-between">
     <h1>
         <!--UserSettingsCategory-->
-        {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | lowerCamelCase) | artemisTranslate }}
+        {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
     </h1>
-    <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="this.saveOptions()">
+    <button type="button" class="btn btn-primary" *ngIf="settingsChanged" id="apply-changes-button" (click)="this.saveSettings()">
         <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
     </button>
 </div>
 <div class="list-group d-block" *ngIf="userSettings">
-    <div *ngFor="let optionGroup of userSettings.groups">
-        <div *jhiHasAnyAuthority="[optionGroup.restrictionLevel]" class="list-group-item">
+    <div *ngFor="let settingGroup of userSettings.groups">
+        <div *jhiHasAnyAuthority="[settingGroup.restrictionLevel]" class="list-group-item">
             <h3>
                 <!--GroupName-->
                 <!-- please look at the README.md file to understand how the translation works -->
-                {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | lowerCamelCase) | artemisTranslate }}
+                {{ 'artemisApp.userSettings.settingGroupNames.' + settingGroup.key | artemisTranslate }}
             </h3>
-            <div *ngFor="let option of optionGroup.options">
+            <div *ngFor="let setting of settingGroup.settings">
                 <dt>
-                    <!--OptionName-->
-                    {{ 'artemisApp.userSettings.optionNames.' + (option.name | lowerCamelCase) | artemisTranslate }}
+                    <!--SettingName-->
+                    {{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}
                 </dt>
                 <span>
-                    <!--OptionDescription-->
-                    {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | lowerCamelCase) | artemisTranslate }}
+                    <!--SettingDescription-->
+                    {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
                 </span>
-                <!--OptionCores-->
-                <div class="d-flex border-bottom">
-                    <div class="form-check pe-3">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            [checked]="option.optionCore.webapp"
-                            id="{{ option.optionCore.optionSpecifier }} webapp"
-                            value="{{ option.optionCore.webapp }}"
-                            (click)="toggleOption($event, true)"
-                        />
-                        <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }} webapp">WebApp</label>
-                    </div>
-                    <div *ngIf="option.optionCore.email != undefined" class="form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            [checked]="option.optionCore.email"
-                            id="{{ option.optionCore.optionSpecifier }} email"
-                            value="{{ option.optionCore.email }}"
-                            (click)="toggleOption($event, false)"
-                        />
-                        <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }} email">Email</label>
-                    </div>
+                <!--Setting Specific Properties-->
+                <div class="form-check border-bottom">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="setting.webapp"
+                        id="{{ setting.settingId }}"
+                        value="{{ setting.webapp }}"
+                        (click)="toggleSetting($event)"
+                    />
+                    <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
+                </div>
+                <div *ngIf="setting.email != undefined" class="form-check">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="setting.email"
+                        id="{{ setting.settingId }} email"
+                        value="{{ setting.email }}"
+                        (click)="toggleOption($event, false)"
+                    />
+                    <label class="form-check-label" for="{{ setting.settingId }} email">Email</label>
                 </div>
             </div>
         </div>

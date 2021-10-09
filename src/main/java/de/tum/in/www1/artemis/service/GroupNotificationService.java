@@ -216,7 +216,7 @@ public class GroupNotificationService {
      * @param notification that should be saved and sent
      */
     private void saveAndSend(GroupNotification notification) {
-        if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
+        if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
         }
         else {

@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { notificationSettingsStructure, NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Option, OptionCore, OptionGroup, UserSettings } from 'app/shared/user-settings/user-settings.model';
+import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
@@ -19,127 +18,120 @@ export class UserSettingsService {
     // load methods
 
     /**
-     * GET call to the server to receive the stored option cores of the current user
-     * @param category limits the server call to only search for options based on the provided category
-     * @return the saved user options (cores) which were found in the database (might be 0 if user has never saved settings before) or error
+     * GET call to the server to receive the stored settings of the current user
+     * or default settings if the user has not yet changed the settings
+     * @param category limits the server call to only search for settings based on the provided category
+     * @return the saved user settings which were found in the database or default settings or error
      */
-    public loadUserOptions(category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
+    public loadSettings(category: UserSettingsCategory): Observable<HttpResponse<Setting[]>> {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.get<NotificationOptionCore[]>(this.notificationSettingsResourceUrl + '/fetch-options', { observe: 'response' });
+                return this.http.get<NotificationSetting[]>(this.notificationSettingsResourceUrl, { observe: 'response' });
             }
         }
     }
 
     /**
-     * Is called after a successful server call to load user options
-     * The fetched option cores are used to update the given settings
-     * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
-     * @param category decided what default settings to use as the base
-     * @return updated UserSettings based on loaded option cores
+     * Is called after a successful server call to load user settings
+     * The fetched settings are used to update the given settings structure
+     * @param receivedSettingsFromServer were loaded from the server to update provided settings structure
+     * @param category decided what settings structure to use
+     * @return updated settings structure based on loaded settings
      */
-    public loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer: OptionCore[], category: UserSettingsCategory): UserSettings<OptionCore> {
-        let settingsResult: UserSettings<OptionCore>;
-        // load default settings as foundation
-        settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
-
-        // if user already customized settings -> update loaded default settings with received data
-        if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
-            this.updateSettings(receivedOptionCoresFromServer, settingsResult);
-        }
-        // else continue using default settings
+    public loadSettingsSuccessAsSettingsStructure(receivedSettingsFromServer: Setting[], category: UserSettingsCategory): UserSettingsStructure<Setting> {
+        let settingsResult: UserSettingsStructure<Setting>;
+        // load structure as foundation
+        settingsResult = UserSettingsService.loadSettingsStructure(category);
+        this.updateSettingsStructure(receivedSettingsFromServer, settingsResult);
         return settingsResult;
     }
 
     /**
-     * Is called after a successful server call to load user options
-     * The fetched option cores are used to create updated settings
-     * Afterwards these settings are used to extract every (also non changed) option cores
-     * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
-     * @param category decided what default settings to use as the base
-     * @return all option cores based on the updated settings
+     * Is called after a successful server call to load user settings
+     * The fetched settings are used to create the settings structure needed for the template
+     * Afterwards the settings structure is used to extract updated individual settings
+     * @param receivedSettingsFromServer were loaded from the server to update provided settings structure
+     * @param category decided what settings structure to use
+     * @return all individual settings based on the updated settings structure
      */
-    public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], category: UserSettingsCategory): OptionCore[] {
-        const settingsResult = this.loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer, category);
-        return this.extractOptionCoresFromSettings(settingsResult);
+    public loadSettingsSuccessAsIndividualSettings(receivedSettingsFromServer: Setting[], category: UserSettingsCategory): Setting[] {
+        const settingsResult = this.loadSettingsSuccessAsSettingsStructure(receivedSettingsFromServer, category);
+        return this.extractIndividualSettingsFromSettingsStructure(settingsResult);
     }
 
     // save methods
 
     /**
-     * Saves only the changed options (cores) to the database.
-     * @param optionCores all options of the given UserSettings which will be filtered
-     * @param category limits the server call to only search for options based on the provided category
-     * @return the saved user options (cores) which were found in the database (for validation) or error
+     * Saves all settings to the database.
+     * @param settings all settings of the given settings structure
+     * @param category limits the server call to only search for settings based on the provided category
+     * @return all saved user settings which were found in the database (for validation) or error
      */
-    public saveUserOptions(optionCores: OptionCore[], category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
-        // only save cores which were changed
-        const changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
+    public saveSettings(settings: Setting[], category: UserSettingsCategory): Observable<HttpResponse<Setting[]>> {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
+                return this.http.put<Setting[]>(this.notificationSettingsResourceUrl, settings, { observe: 'response' });
             }
         }
     }
 
     /**
-     * Is called after a successful server call to save changed user options
-     * The fetched option cores are used to update the given (current) settings (for validation)
-     * @param settingsToUpdate (usually the current settings prior to saving)
-     * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
-     * @return updated UserSettings based on loaded option cores
+     * Is called after a successful server call to save settings
+     * The fetched individual settings are used to update the given (current) settings structure (for validation)
+     * @param settingsStructureToUpdate (usually the current settings structure prior to saving)
+     * @param receivedSettingsFromServer were loaded from the server to update provided settings structure
+     * @return updated UserSettings structure based on loaded individual settings
      */
-    public saveUserOptionsSuccess(settingsToUpdate: UserSettings<OptionCore>, receivedOptionCoresFromServer: OptionCore[]): UserSettings<OptionCore> {
-        this.updateSettings(receivedOptionCoresFromServer, settingsToUpdate);
-        return settingsToUpdate;
+    public saveSettingsSuccess(settingsStructureToUpdate: UserSettingsStructure<Setting>, receivedSettingsFromServer: Setting[]): UserSettingsStructure<Setting> {
+        this.updateSettingsStructure(receivedSettingsFromServer, settingsStructureToUpdate);
+        return settingsStructureToUpdate;
     }
 
     // auxiliary methods
 
     /**
-     * Extracts the individual option (cores) out of the UserSetting hierarchy.
-     * @param settings which option cores should be extracted
-     * @return OptionCore array based on the provided UserSettings
+     * Extracts the individual settings out of the UserSetting structure (hierarchy).
+     * @param settingsStructure where the settings should be extracted from
+     * @return setting array based on the provided settings structure
      */
-    public extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
-        const optionCoreAccumulator: OptionCore[] = [];
-        settings.groups.forEach((group: OptionGroup<OptionCore>) => {
-            group.options.forEach((option: Option<OptionCore>) => {
-                const optionCore: OptionCore = option.optionCore;
+    public extractIndividualSettingsFromSettingsStructure(settingsStructure: UserSettingsStructure<Setting>): Setting[] {
+        const settingAccumulator: Setting[] = [];
+        settingsStructure.groups.forEach((group: SettingGroup<Setting>) => {
+            group.settings.forEach((setting: Setting) => {
                 // sets changed flag to false after update
-                optionCore.changed = false;
-                optionCoreAccumulator.push(optionCore);
+                setting.changed = false;
+                settingAccumulator.push(setting);
             });
         });
-        return optionCoreAccumulator;
+        return settingAccumulator;
     }
 
     /**
-     * Updates the provided settings based on the new option cores
-     * @param newOptionCores received from the server
-     * @param settingsToUpdate will be updated by replacing matching options with new option cores
+     * Updates the provided settings structure based on the new individual settings
+     * @param newSettings received from the server
+     * @param settingsStructureToUpdate will be updated by replacing or merging matching settings
      */
-    private updateSettings(newOptionCores: OptionCore[], settingsToUpdate: UserSettings<OptionCore>): void {
-        for (let i = 0; i < settingsToUpdate.groups.length; i++) {
-            for (let j = 0; j < settingsToUpdate.groups[i].options.length; j++) {
-                const currentOptionCore = settingsToUpdate.groups[i].options[j].optionCore;
-                const matchingOptionCore = newOptionCores.find((newCore) => newCore.optionSpecifier === currentOptionCore.optionSpecifier);
-                if (matchingOptionCore != undefined) {
-                    settingsToUpdate.groups[i].options[j].optionCore = matchingOptionCore;
+    private updateSettingsStructure(newSettings: Setting[], settingsStructureToUpdate: UserSettingsStructure<Setting>): void {
+        for (let i = 0; i < settingsStructureToUpdate.groups.length; i++) {
+            for (let j = 0; j < settingsStructureToUpdate.groups[i].settings.length; j++) {
+                const currentSetting = settingsStructureToUpdate.groups[i].settings[j];
+                const matchingSetting = newSettings.find((newSetting) => newSetting.settingId === currentSetting.settingId);
+                if (matchingSetting != undefined) {
+                    Object.assign(settingsStructureToUpdate.groups[i].settings[j], matchingSetting);
                 }
             }
         }
     }
 
     /**
-     * Provides the foundation with all options for further modification.
-     * @param category defines what default settings to return
-     * @return the default settings based on the provided category
+     * Provides the foundation for further modification and to be displayed in the template.
+     * @param category defines what settings structure to return
+     * @return the settings structure based on the provided category
      */
-    private static loadDefaultSettingsAsFoundation(category: UserSettingsCategory): UserSettings<OptionCore> {
+    private static loadSettingsStructure(category: UserSettingsCategory): UserSettingsStructure<Setting> {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return defaultNotificationSettings;
+                return notificationSettingsStructure;
             }
         }
     }

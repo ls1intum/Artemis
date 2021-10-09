@@ -14,17 +14,6 @@ a:not(.btn):hover {
     text-decoration: none !important;
 }
 
-#settings {
-    color: $artemis-dark;
-    font-size: medium;
-    font-weight: 600;
-
-    &:hover {
-        color: $primary;
-        font-weight: bold;
-    }
-}
-
 .jh-navbar {
     background-color: #353d47;
     padding: 0.2em 1em;

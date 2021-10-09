@@ -1,30 +1,26 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
-import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 
 @Service
 public class NotificationSettingsService {
-
-    private final NotificationOptionRepository notificationOptionRepository;
 
     private final Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
             NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED);
 
     private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
-
-    public NotificationSettingsService(NotificationOptionRepository notificationOptionRepository) {
-        this.notificationOptionRepository = notificationOptionRepository;
-    }
 
     /**
      * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
@@ -74,17 +70,67 @@ public class NotificationSettingsService {
         return !deactivatedTypes.contains(type);
     }
 
+    // notification settings settingIds analogous to client side
+    // exercise notification setting group
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED = "notification.exercise-notification.exercise-created-or-started";
+
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE = "notification.exercise-notification.exercise-open-for-practice";
+
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES = "notification.exercise-notification.new-post-exercises";
+
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES = "notification.exercise-notification.new-answer-post-exercises";
+
+    // lecture notification settings group
+    private final static String NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES = "notification.lecture-notification.attachment-changes";
+
+    private final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE = "notification.lecture-notification.new-post-for-lecture";
+
+    private final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE = "notification.lecture-notification.new-answer-post-for-lecture";
+
+    // lecture notification setting group
+    private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-exclusive-notification.course-and-exam-archiving-started";
+
+    public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
+            // exercise notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES),
+            // lecture notification settings group
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE),
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE),
+            // lecture notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
+
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationOptions
      * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
      * @param notificationOptions which should be mapped to their respective NotificationTypes and filtered by activation status
+     * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
+     * Each SettingId can be based on multiple different NotificationTypes
+     */
+    private final static Map<String, NotificationType[]> NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED, new NotificationType[] { EXERCISE_CREATED }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[] { EXERCISE_PRACTICE }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES, new NotificationType[] { NEW_POST_FOR_EXERCISE }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES, new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE }),
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE, new NotificationType[] { NEW_POST_FOR_LECTURE }),
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE, new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE }), Map.entry(
+                    NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
+
+    /**
+     * Finds the deactivated NotificationTypes based on the user's NotificationSettings
+     * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
+     * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
-    public Set<NotificationType> findDeactivatedNotificationTypes(boolean checkForWebapp, Set<NotificationOption> notificationOptions) {
-        Map<NotificationType, Boolean> notificationOptionWitchActivationStatusMap = convertNotificationOptionsToNotificationTypesWithActivationStatus(checkForWebapp,
+    public Set<NotificationType> findDeactivatedNotificationTypes(boolean checkForWebapp, Set<NotificationSetting> notificationSettings) {
+        Map<NotificationType, Boolean> notificationSettingWitchActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(checkForWebapp,
                 notificationOptions);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
-        notificationOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
+        notificationSettingWithActivationStatusMap.forEach((notificationType, isActivated) -> {
             if (!isActivated) {
                 deactivatedNotificationTypes.add(notificationType);
             }
@@ -93,69 +139,40 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Converts the provided NotificationOptions to a map of corresponding NotificationTypes and activation status.
+     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
+     * @param types Set that should be converted to String
+     * @return the converted String Set
+     */
+    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
+        return types.stream().map(NotificationTitleTypeConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
+    }
+
+    /**
+     * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
      * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
-     * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
+     * @param notificationSetting which will be mapped to their respective NotificationTypes with respect to their activation status
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(boolean checkForWebapp, Set<NotificationOption> notificationOptions) {
+    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(boolean checkForWebapp,
+            Set<NotificationSetting> notificationSettings) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
-        NotificationType[] tmpNotificationTypes;
-        for (NotificationOption option : notificationOptions) {
-            tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(option);
+        for (NotificationSetting setting : notificationSettings) {
+            NotificationType[] tmpNotificationTypes = NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP.getOrDefault(setting.getSettingId(), new NotificationType[0]);
             for (NotificationType type : tmpNotificationTypes) {
-                resultingMap.put(type, checkForWebapp ? option.isWebapp() : option.isEmail());
+                resultingMap.put(type, checkForWebapp ? setting.isWebapp() : setting.isEmail());
             }
         }
         return resultingMap;
     }
 
     /**
-     * This is the place where the mapping between NotificationOptions and NotificationType happens on the server side
-     * Each NotificationOption can be based on multiple different NotificationTypes
-     * @param notificationOption which corresponding NotificationTypes should be found
-     * @return the corresponding NotificationType(s)
-     */
-    private NotificationType[] findCorrespondingNotificationTypesForNotificationOption(NotificationOption notificationOption) {
-        switch (notificationOption.getOptionSpecifier()) {
-            case "notification.exercise-notification.exercise-created-or-started": {
-                return new NotificationType[] { NotificationType.EXERCISE_CREATED };
-            }
-            case "notification.exercise-notification.exercise-open-for-practice": {
-                return new NotificationType[] { NotificationType.EXERCISE_PRACTICE };
-            }
-            case "notification.exercise-notification.new-post-exercises": {
-                return new NotificationType[] { NotificationType.NEW_POST_FOR_EXERCISE };
-            }
-            case "notification.exercise-notification.new-answer-post-exercises": {
-                return new NotificationType[] { NotificationType.NEW_ANSWER_POST_FOR_EXERCISE };
-            }
-            case "notification.lecture-notification.attachment-changes": {
-                return new NotificationType[] { NotificationType.ATTACHMENT_CHANGE };
-            }
-            case "notification.lecture-notification.new-post-for-lecture": {
-                return new NotificationType[] { NotificationType.NEW_POST_FOR_LECTURE };
-            }
-            case "notification.lecture-notification.new-answer-post-for-lecture": {
-                return new NotificationType[] { NotificationType.NEW_ANSWER_POST_FOR_LECTURE };
-            }
-            case "notification.instructor-exclusive-notification.course-and-exam-archiving-started": {
-                return new NotificationType[] { NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_STARTED };
-            }
-            default: {
-                return new NotificationType[0];
-            }
-        }
-    }
-
-    /**
-     * Updates the notificationOptions by setting the current user
-     * @param notificationOptions which might be saved the very first time and have no user set yet
+     * Updates the notificationSettings by setting the current user
+     * @param notificationSettings which might be saved the very first time and have no user set yet
      * @param currentUser who should be set
      */
-    public void setCurrentUser(NotificationOption[] notificationOptions, User currentUser) {
-        for (NotificationOption notificationOption : notificationOptions) {
-            notificationOption.setUser(currentUser);
+    public void setCurrentUser(NotificationSetting[] notificationSettings, User currentUser) {
+        for (NotificationSetting notificationSetting : notificationSettings) {
+            notificationSetting.setUser(currentUser);
         }
     }
 }

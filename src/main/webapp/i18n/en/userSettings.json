@@ -14,32 +14,32 @@
                 "joinedArtemis": "Joined Artemis on"
             },
             "categories": {
-                "notificationSettings": "Notification Settings"
+                "NOTIFICATION_SETTINGS": "Notification Settings"
             },
-            "optionGroupNames": {
+            "settingGroupNames": {
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
-            "optionNames": {
+            "settingNames": {
                 "exerciseCreatedOrStarted": "Exercise created or started",
                 "exerciseOpenForPractice": "Exercise open for Practice",
                 "newPostForExercises": "New Post for Exercises",
-                "newAnswerPostForExercises": "New Answer Post for Exercises",
+                "newReplyForExercises": "New Reply for Exercises",
                 "attachmentChanges": "Attachment Changes",
                 "newPostForLecture": "New Post for Lecture",
-                "newAnswerPostForLecture": "New Answer Post for Lecture",
+                "newReplyForLecture": "New Reply for Lecture",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
-            "optionDescriptions": {
-                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Get notified when a (new) exercise has been created or started",
-                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
-                "getNotifiedIfANewPostAboutAnExerciseHasBeenCreated": "Get notified when a new post about an exercise has been created",
-                "getNotifiedIfANewAnswerPostAboutAnExerciseHasBeenCreated": "Get notified when a new answer post about an exercise has been created",
-                "receiveANotificationWhenAnAttachmentWasChanged": "Receive a notification when an attachment was changed",
-                "getNotifiedWhenANewPostAboutAnExerciseHasBeenCreated": "Get notified when a new post about an exercise has been created",
-                "getNotifiedWhenANewAnswerPostAboutAnExerciseHasBeenCreated": "Get notified when a new answer post about an exercise has been created",
-                "receiveANotificationWhenTheProcessOfArchivingACourseOrExamHasBeenStarted": "Receive a notification when the process of archiving a course or exam has been started"
+            "settingDescriptions": {
+                "exerciseCreatedOrStartedDescription": "Get notified when a (new) exercise has been created or started",
+                "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
+                "newPostForExercisesDescription": "Get notified when a new post about an exercise has been created",
+                "newReplyForExercisesDescription": "Get notified when a new reply about an exercise has been created",
+                "attachmentChangesDescription": "Receive a notification when an attachment was changed",
+                "newPostForLectureDescription": "Get notified when a new post about an exercise has been created",
+                "newReplyForLectureDescription": "Get notified when a new reply about an exercise has been created",
+                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
             }
         }
     }

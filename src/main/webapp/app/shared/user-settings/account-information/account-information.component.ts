@@ -6,7 +6,7 @@ import { Subscription, tap } from 'rxjs';
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
-    styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
+    styleUrls: ['../user-settings.scss'],
 })
 export class AccountInformationComponent implements OnInit {
     currentUser?: User;

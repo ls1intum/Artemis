@@ -111,13 +111,13 @@ public class GroupNotificationFactory {
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
-            if (exercise instanceof ProgrammingExercise) {
+            if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
+                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
+                notification.setPriority(NotificationPriority.HIGH);
+            }
+            else if (exercise instanceof ProgrammingExercise) {
                 notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }
-            else if (exercise instanceof TextExercise) {
-                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
-            }
-            notification.setPriority(NotificationPriority.HIGH);
         }
         // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_CREATED) {
@@ -194,7 +194,7 @@ public class GroupNotificationFactory {
             }
             case NEW_ANSWER_POST_FOR_LECTURE -> {
                 Lecture lecture = answerPost.getPost().getLecture();
-                title = NotificationTitleTypeConstants.NEW_POST_FOR_LECTURE_TITLE;
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 course = lecture.getCourse();
             }
@@ -220,7 +220,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
-     * @param archiveErrors         a list of errors that occured during archiving
+     * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -258,7 +258,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
-     * @param archiveErrors         a list of errors that occured during archiving
+     * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,

@@ -26,8 +26,8 @@ import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-managem
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,19 +44,19 @@ describe('Notification Sidebar Component', () => {
     const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
-    const notificationOptionCoreA: NotificationOptionCore = {
+    const notificationSettingA: NotificationSetting = {
         webapp: true,
         email: false,
         changed: false,
-        optionSpecifier: OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
+        settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
     };
-    const notificationOptionCoreB: NotificationOptionCore = {
+    const notificationSettingB: NotificationSetting = {
         webapp: true,
         email: false,
         changed: false,
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
     };
-    const receivedNotificationOptionCores: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
+    const receivedNotificationSettings: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
     const generateQueryResponse = (ns: Notification[]) => {
         return {
@@ -91,8 +91,8 @@ describe('Notification Sidebar Component', () => {
                 userService = TestBed.inject(UserService);
                 userSettingsService = TestBed.inject(UserSettingsService);
 
-                const fake2 = sinon.fake.returns(of(receivedNotificationOptionCores));
-                sinon.replace(userSettingsService, 'loadUserOptions', fake2);
+                const fake2 = sinon.fake.returns(of(receivedNotificationSettings));
+                sinon.replace(userSettingsService, 'loadSettings', fake2);
             });
     });
 
@@ -107,9 +107,9 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should query notifications', () => {
-            sinon.spy(notificationService, 'queryFiltered');
+            sinon.spy(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
         });
 
         it('should subscribe to notification updates for user', () => {
@@ -198,25 +198,25 @@ describe('Notification Sidebar Component', () => {
         it('should not add already existing notifications', () => {
             notificationSidebarComponent.notifications = [notificationNow];
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
         });
 
         it('should update sorted notifications array after new notifications were loaded', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
             expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
             expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
         });
 
         it('should set total notification count to received X-Total-Count header', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
         });
 
@@ -239,9 +239,9 @@ describe('Notification Sidebar Component', () => {
         it('should load more notifications only if not all are already loaded', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.totalNotifications = 2;
-            sinon.spy(notificationService, 'query');
+            sinon.spy(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).not.to.be.called;
+            expect(notificationService.queryNotificationsFilteredBySettings).not.to.be.called;
         });
     });
 
@@ -249,9 +249,9 @@ describe('Notification Sidebar Component', () => {
         it('should evaluate recent notifications correctly', () => {
             notificationSidebarComponent.lastNotificationRead = dayjs().subtract(1, 'day');
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.be.called;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.be.called;
             expect(notificationSidebarComponent.recentNotificationCount).to.be.equal(1);
         });
 
@@ -298,7 +298,7 @@ describe('Notification Sidebar Component', () => {
     describe('Reset Sidebar', () => {
         it('should listen and catch notification settings change and reset side bar', () => {
             // preparation to test reloading
-            const lastNotificationRead = moment();
+            const lastNotificationRead = dayjs();
             const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
             sinon.replace(accountService, 'getAuthenticationState', fake);
             notificationSidebarComponent.ngOnInit();
@@ -312,7 +312,7 @@ describe('Notification Sidebar Component', () => {
             userSettingsService.sendApplyChangesEvent(reloadNotificationSideBarMessage);
 
             // test the reloading behavior
-            expect(userSettingsService.loadUserOptions).to.have.been.calledTwice;
+            expect(userSettingsService.loadSettings).to.have.been.calledTwice;
             expect(priorNumberOfNotifications).not.to.be.equal(notificationSidebarComponent.totalNotifications);
         });
     });

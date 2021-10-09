@@ -1,46 +1,40 @@
-import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
- * UserSettings represent one entire displayable settings page with detailed information like descriptions, etc.
- * Is used for displaying the settings page in html.
- * The OptionCores are uses as generics to support different implementations
- * Look at a x-settings.default.ts file for an example of the full UserSettings hierarchy
+ * UserSettingsStructures represent one entire displayable settings page with detailed information like descriptions, etc.
+ * It is used for displaying the settings page in html.
+ * The Settings are uses as generics to support multiple implementations for different settings pages
+ * Look at a x-settings-structure.ts file for an example of the full UserSettings hierarchy
  */
-export interface UserSettings<T> {
+export interface UserSettingsStructure<T> {
     category: UserSettingsCategory;
-    groups: OptionGroup<T>[];
+    groups: SettingGroup<T>[];
 }
 
 /**
- * OptionGroup is a simple group of options that have something in common,
+ * SettingGroup is a simple group of settings that have something in common,
  * e.g. they control notifications related to exercises
+ * key will be replaced with the actual name during the translation
  */
-export interface OptionGroup<T> {
-    name: string;
+export interface SettingGroup<T> {
+    key: string;
     restrictionLevel: Authority;
-    options: Option<T>[];
+    settings: T[];
 }
 
 /**
- * Option represents one specific toggleable property the user can modify.
- * To make the database and server communication more lightweight and reduce redundant information
- * the constant properties of an option (name, description) are stored in x-settings.default.ts files
- * whereas the changeable properties (webapp, email : on/off) are encapsulated in an OptionCore
+ * One Setting represents a specific property the user can modify.
+ * To avoid redundant entries in the database the constant properties of a setting
+ * (name, description) are stored in x-settings-structure.ts files,
+ * i.e. their respective keys, the full string is located in the translation jsons
+ * whereas the changeable properties (e.g. webapp, email : on/off) are saved in the DB
  */
-export interface Option<T> {
-    name: string;
-    description: string;
-    // can not replace T with OptionCore due to shadowing rules of TSLint
-    // generic is needed to make OptionCore polymorphic (e.g. for default setting) otherwise compiler errors occur
-    optionCore: T; // concrete OptionCore Implementation
-}
-
-/**
- * OptionCores are used for client server communication and option (de)selection
- * Correspond to UserOptions (Server)
- */
-export abstract class OptionCore {
-    optionSpecifier: OptionSpecifier;
+export abstract class Setting {
+    // can not replace T with Setting due to shadowing rules of TSLint
+    // generic is needed to make Setting polymorphic (e.g. for settings structures) otherwise compiler errors occur
+    key?: string;
+    descriptionKey?: string;
+    settingId: SettingId;
     changed?: boolean;
 }

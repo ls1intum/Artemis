@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -41,7 +41,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     private SystemNotificationRepository systemNotificationRepository;
 
     @Autowired
-    private NotificationOptionRepository notificationOptionRepository;
+    private NotificationSettingRepository notificationSettingRepository;
 
     private Exercise exercise;
 
@@ -255,11 +255,11 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
         NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
 
-        NotificationOption allowedOption = new NotificationOption(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
-        NotificationOption blockedOption = new NotificationOption(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
+        NotificationSetting allowedSetting = new NotificationSetting(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
+        NotificationSetting blockedSetting = new NotificationSetting(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
 
-        notificationOptionRepository.save(allowedOption);
-        notificationOptionRepository.save(blockedOption);
+        notificationSettingRepository.save(allowedSetting);
+        notificationSettingRepository.save(blockedSetting);
 
         GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         allowedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(allowedType));
@@ -269,7 +269,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         blockedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(blockedType));
         notificationRepository.save(blockedNotification);
 
-        List<Notification> notifications = request.getList("/api/notifications/filtered-by-settings", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
 
         assertThat(notifications).as("Notification that is allowed by Settings is returned").contains(allowedNotification);
         assertThat(notifications).as("Notification that is blocked by Settings is not returned").doesNotContain(blockedNotification);

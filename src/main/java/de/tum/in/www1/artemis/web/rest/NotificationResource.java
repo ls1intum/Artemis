@@ -18,13 +18,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
-import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.NotificationSettingsService;
@@ -39,7 +39,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing Notification.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class NotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(NotificationResource.class);
@@ -53,29 +53,29 @@ public class NotificationResource {
 
     private final UserRepository userRepository;
 
-    private final NotificationOptionRepository notificationOptionRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final NotificationSettingsService notificationSettingsService;
 
-    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationOptionRepository notificationOptionRepository,
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
             AuthorizationCheckService authorizationCheckService, NotificationSettingsService notificationSettingsService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
-        this.notificationOptionRepository = notificationOptionRepository;
+        this.notificationSettingRepository = notificationSettingRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
-     * POST /notifications : Create a new notification.
+     * POST notifications : Create a new notification.
      *
      * @param notification the notification to create
      * @return the ResponseEntity with status 201 (Created) and with body the new notification, or with status 400 (Bad Request) if the notification has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/notifications")
+    @PostMapping("notifications")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to save Notification : {}", notification);
@@ -89,32 +89,18 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications : Get all notifications by pages.
-     *
-     * @param pageable Pagination information for fetching the notifications
-     * @return the list notifications
-     */
-    @GetMapping("/notifications")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        final Page<Notification> page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /notifications/filtered-by-settings : Get all notifications that align with the current user notification settings by pages.
+     * GET notifications : Get all notifications that also align with the current user notification settings by pages.
      *
      * @param pageable Pagination information for fetching the notifications
      * @return the filtered list of notifications based on current user settings
      */
-    @GetMapping("/notifications/filtered-by-settings")
+    @GetMapping("notifications")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
-        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(true, notificationOptions);
+        log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
+        Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
+        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationSettings);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
@@ -128,14 +114,14 @@ public class NotificationResource {
     }
 
     /**
-     * PUT /notifications : Updates an existing notification.
+     * PUT notifications : Updates an existing notification.
      *
      * @param notification the notification to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the notification is not valid, or with status 500
      *         (Internal Server Error) if the notification couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/notifications")
+    @PutMapping("notifications")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to update Notification : {}", notification);
@@ -148,12 +134,12 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications/:id : get the "id" notification.
+     * GET notifications/:id : get the "id" notification.
      *
      * @param id the id of the notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("/notifications/{id}")
+    @GetMapping("notifications/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> getNotification(@PathVariable Long id) {
         log.debug("REST request to get Notification : {}", id);
@@ -162,12 +148,12 @@ public class NotificationResource {
     }
 
     /**
-     * DELETE /notifications/:id : delete the "id" notification.
+     * DELETE notifications/:id : delete the "id" notification.
      *
      * @param id the id of the notification to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/notifications/{id}")
+    @DeleteMapping("notifications/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         log.debug("REST request to delete Notification : {}", id);
