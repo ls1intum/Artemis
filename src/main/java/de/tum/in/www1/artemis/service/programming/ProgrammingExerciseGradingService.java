@@ -251,7 +251,7 @@ public class ProgrammingExerciseGradingService {
      * Updates an incoming result with the information of the exercises test cases. This update includes:
      * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
      * - Checking the due date and the visibility.
-     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     * - Recalculating the score based on the successful test cases weight vs the total weight of all test cases.
      *
      * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
      *
@@ -500,6 +500,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
             List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
+
         if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
             result.setScore(0D);
         }
@@ -563,6 +564,12 @@ public class ProgrammingExerciseGradingService {
             }
             result.setScore(score);
         }
+
+        result.getFeedbacks().forEach(feedback -> {
+            if (feedback.getCredits() == null) {
+                feedback.setCredits(0D);
+            }
+        });
     }
 
     /**

@@ -229,13 +229,17 @@
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
             "timeline": {
                 "assessmentType": "Art der Bewertung",
+                "manualAssessment": "Manuelle Bewertung",
+                "automaticAssessment": "Automatische Bewertung",
+                "complaintsAllowed": "Beschwerden erlaubt",
                 "automaticTests": "Automatische Tests",
                 "afterDueDate": "Testlauf nach der Einreichungsfrist",
                 "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
                 "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
                 "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen)",
                 "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
-                "assessmentTypeTooltip": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung, eine Bewertung durch Tutor:innen, nur nach einer Beschwerde von Studierenden",
+                "assessmentTypeTooltipAutomaticAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung",
+                "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
                 "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
@@ -243,7 +247,12 @@
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
-                "notSet": "nicht gesetzt"
+                "notSet": "nicht gesetzt",
+                "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
+                "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
+                "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
+                "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
+                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich"
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -287,7 +296,7 @@
                 "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
                 "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
                 "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
-                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt oder verändert werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",
