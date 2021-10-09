@@ -233,7 +233,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
+            expect(comp.packageNamePattern).toEqual(comp.appNamePatternForSwift);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {

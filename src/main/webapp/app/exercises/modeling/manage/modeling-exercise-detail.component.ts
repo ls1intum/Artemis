@@ -15,6 +15,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -37,6 +38,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
 
     isAdmin = false;
+    isApollonProfileActive = false;
 
     constructor(
         private eventManager: EventManager,
@@ -46,6 +48,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private statisticsService: StatisticsService,
         private accountService: AccountService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
@@ -54,6 +57,12 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
+        // Checks if the current environment includes "apollon" profile
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo && profileInfo.activeProfiles.includes('apollon')) {
+                this.isApollonProfileActive = true;
+            }
+        });
     }
 
     load(id: number) {
