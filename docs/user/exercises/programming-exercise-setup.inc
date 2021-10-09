@@ -75,7 +75,6 @@ Instructors can still use those templates to generate programming exercises and 
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
 
-
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
 
@@ -310,12 +309,12 @@ Exercise Creation
 
   - You can change between the different repos and submit the code when needed
 
-- **Alternative 3:** Use IntelliJ with the Orion plugin and change the code directly in IntelliJ
-
   **Edit in Editor**
 
   .. figure:: programming/instructor-editor.png
             :align: center
+
+- **Alternative 3:** Use IntelliJ with the Orion plugin and change the code directly in IntelliJ
 
 - Check the results of the template and the solution build plan
 - They should not have the status |build_failed|

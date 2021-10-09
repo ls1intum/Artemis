@@ -1,9 +1,14 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
+@import 'src/main/webapp/app/shared/metis/metis.component';
 
 .icon {
     color: $metis-gray;
 }
 
+.answer-count,
 .posting-header {
-    font-size: 12px;
+    font-size: smaller;
+}
+
+.resolved {
+    color: green;
 }
