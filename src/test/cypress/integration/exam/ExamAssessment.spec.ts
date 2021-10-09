@@ -124,7 +124,7 @@ describe('Exam assessment', () => {
         });
     });
 
-    describe.only('Exam programming exercise assessment', () => {
+    describe('Exam programming exercise assessment', () => {
         const examEnd = 155000;
 
         before('Prepare exam', () => {
