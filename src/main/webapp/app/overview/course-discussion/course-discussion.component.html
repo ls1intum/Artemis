@@ -1,5 +1,5 @@
 <div class="row p-3 justify-content-center" *ngIf="course">
-    <div class="row col-9 justify-content-center">
+    <div class="row col-10 justify-content-center">
         <div class="row ps-0">
             <!-- search bar -->
             <div class="input-group col-10 px-0 mb-4">
@@ -19,7 +19,7 @@
                     <fa-icon [icon]="'plus'"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                 </button>
-                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
+                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"> </jhi-post-create-edit-modal>
             </div>
         </div>
         <form [formGroup]="formGroup">
@@ -28,7 +28,7 @@
                 <!-- context filter -->
                 <div class="col-auto">
                     <div class="row">
-                        <div class="col-auto p-0 filter-sort-prefix">
+                        <div class="col-auto p-0 selection-prefix">
                             <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
@@ -53,12 +53,16 @@
                                 </optgroup>
                             </select>
                         </div>
+                        <div class="col-auto px-1 selection-prefix">
+                            <input class="form-check-input" type="checkbox" formControlName="filterResolved" name="filterResolved" (change)="onFilterResolved()" />
+                            <span class="ps-1">{{ 'artemisApp.metis.overview.filterResolved' | artemisTranslate }}</span>
+                        </div>
                     </div>
                 </div>
                 <!-- sort dropdown -->
                 <div class="col-auto p-0">
                     <div class="row">
-                        <div class="col-auto pe-0 filter-sort-prefix">
+                        <div class="col-auto pe-0 selection-prefix">
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
@@ -80,8 +84,8 @@
             </div>
         </form>
     </div>
-    <div class="bold-line row col-9 mt-1 mb-2"></div>
-    <div class="class=row col-9">
+    <div class="bold-line row col-10 mt-1 mb-2"></div>
+    <div class="class=row col-10">
         <!-- loading posts -->
         <div *ngIf="isLoading" class="col-12 post-result-information">
             {{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}
@@ -91,6 +95,6 @@
             {{ posts.length === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: posts.length }) }}
         </div>
         <!-- list of posts -->
-        <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"></jhi-postings-thread>
+        <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-postings-thread>
     </div>
 </div>
