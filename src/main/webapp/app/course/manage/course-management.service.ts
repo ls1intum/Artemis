@@ -488,7 +488,7 @@ export class CourseManagementService {
      * @param res the response
      * @private
      */
-    private static convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 if (course.exercises) {
