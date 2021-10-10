@@ -19,7 +19,7 @@
             "postMarkedAsResolvedTooltip": "Post has been resolved",
             "markAsResolvingAnswerTooltip": "Confirm that this reply resolves the original post",
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original post",
-            "resolvingAnswerTooltip": "This answer resolves the original post",
+            "resolvingAnswerTooltip": "This reply resolves the original post",
             "today": "Today",
             "pinnedPostTooltip": "This post was pinned by a tutor",
             "archivedPostTooltip": "This post was archived by a tutor",
@@ -49,7 +49,9 @@
                 "VOTES": "Upvotes",
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
-                "RANDOM": "Random"
+                "RANDOM": "Random",
+                "ANNOUNCEMENT": "Announcement",
+                "announcementHint": "Announcements are pinned per default and listed at the top of the course overview. Possible replies cannot be marked as resolving. Only tutors or instructors can create announcements."
             },
             "post": {
                 "context": "Context",

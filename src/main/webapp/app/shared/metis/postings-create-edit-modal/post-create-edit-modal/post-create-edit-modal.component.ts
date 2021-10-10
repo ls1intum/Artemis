@@ -45,6 +45,9 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
+        this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
+            this.currentContextSelectorOption = context;
+        });
     }
 
     ngOnChanges() {

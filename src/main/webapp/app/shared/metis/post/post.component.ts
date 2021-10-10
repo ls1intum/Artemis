@@ -2,6 +2,7 @@ import { Component, EventEmitter, OnChanges, OnInit, Output } from '@angular/cor
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseWideContext } from '../metis.util';
 
 @Component({
     selector: 'jhi-post',
@@ -11,6 +12,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     postIsResolved: boolean;
+    readonly CourseWideContext = CourseWideContext;
 
     constructor(public metisService: MetisService) {
         super();

@@ -54,17 +54,23 @@ public class PostService extends PostingService {
     public Post createPost(Long courseId, Post post) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        // check
+        // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
+        Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
+        // announcements can only be created by tutors
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+            // display priority of announcement is set to pinned per default
+            post.setDisplayPriority(DisplayPriority.PINNED);
+        }
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);

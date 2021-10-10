@@ -49,7 +49,9 @@
                 "VOTES": "Zustimmung",
                 "TECH_SUPPORT": "Technische Hilfe",
                 "ORGANIZATION": "Organisation",
-                "RANDOM": "Sonstiges"
+                "RANDOM": "Sonstiges",
+                "ANNOUNCEMENT": "Ankündigung",
+                "announcementHint": "Ankündigungen werden automatisch angeheftet und sind daher in der Übersicht als erstes gelistet. Mögliche Antworten können nicht als klärend markiert werden. Nur Tutor:innen oder Instruktor:innen können Ankündigungen erstellen."
             },
             "post": {
                 "context": "Kontext",

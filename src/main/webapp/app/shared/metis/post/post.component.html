@@ -10,6 +10,7 @@
                 [ngbTooltip]="'artemisApp.metis.postMarkedAsResolvedTooltip' | artemisTranslate"
             >
             </fa-icon>
+            <fa-icon *ngIf="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT" [icon]="'bullhorn'" iconSize="xs" class="col-auto pe-0 icon"> </fa-icon>
             <span class="col-auto post-title">
                 {{ posting.title }}
                 <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">#{{ posting.id }}</a>

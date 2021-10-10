@@ -11,9 +11,12 @@
                 <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contextTutorTooltip"></jhi-help-icon>
                 <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                     <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
-                        <option *ngFor="let context of CourseWideContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
-                            {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
-                        </option>
+                        <!-- only tutors can select the announcement mode on post creation or update -->
+                        <ng-container *ngFor="let context of CourseWideContext | keyvalue">
+                            <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastTutorInCourse" [ngValue]="{ courseWideContext: context.value }">
+                                {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
+                            </option>
+                        </ng-container>
                     </optgroup>
                     <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
                         <option *ngFor="let lecture of lectures" [ngValue]="{ lecture: lecture }">
@@ -34,13 +37,20 @@
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.courseWideTopicTooltip"></jhi-help-icon>
                     <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                         <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
-                            <option *ngFor="let context of CourseWideContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
-                                {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
-                            </option>
+                            <ng-container *ngFor="let context of CourseWideContext | keyvalue">
+                                <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastTutorInCourse" [ngValue]="{ courseWideContext: context.value }">
+                                    {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
+                                </option>
+                            </ng-container>
                         </optgroup>
                     </select>
                 </div>
             </ng-template>
+            <!-- info is announcement as course-wide topic is selected -->
+            <div class="alert alert-info" *ngIf="currentContextSelectorOption.courseWideContext === CourseWideContext.ANNOUNCEMENT">
+                {{ 'artemisApp.metis.overview.announcementHint' | artemisTranslate }}
+            </div>
+            <!-- title -->
             <div class="position-relative mb-3">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
@@ -50,6 +60,7 @@
                     <input formControlName="title" type="text" class="form-control" name="title" />
                 </div>
             </div>
+            <!-- tags -->
             <div class="position-relative mb-3">
                 <div>
                     <label jhiTranslate="artemisApp.metis.post.tags">Tags</label>
@@ -59,6 +70,7 @@
                     <jhi-post-tag-selector [(postTags)]="tags"></jhi-post-tag-selector>
                 </div>
             </div>
+            <!-- content -->
             <div class="position-relative mb-1">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.content">Content</label>
