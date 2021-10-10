@@ -126,25 +126,23 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)))
-            .pipe(
-                map((res: EntityResponseType) => {
-                    if (res.body) {
-                        // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                        if (res.body.exerciseHints === undefined) {
-                            res.body.exerciseHints = [];
-                        }
-                        if (res.body.posts === undefined) {
-                            res.body.posts = [];
-                        }
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => {
+                if (res.body) {
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.exerciseHints === undefined) {
+                        res.body.exerciseHints = [];
                     }
-                    return res;
-                }),
-            )
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)));
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
+                    }
+                }
+                return res;
+            }),
+            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
+        );
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
