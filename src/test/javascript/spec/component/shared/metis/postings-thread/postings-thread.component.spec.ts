@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -9,7 +9,7 @@ import { MockPostService } from '../../../../helpers/mocks/service/mock-post.ser
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
@@ -31,23 +31,23 @@ describe('PostingsThreadComponent', () => {
 
     const unApprovedAnswerPost1 = {
         id: 1,
-        creationDate: moment(),
+        creationDate: dayjs(),
         content: 'not approved most recent',
-        tutorApproved: false,
+        resolvesPost: false,
     } as AnswerPost;
 
     const unApprovedAnswerPost2 = {
         id: 2,
-        creationDate: moment().subtract(1, 'day'),
+        creationDate: dayjs().subtract(1, 'day'),
         content: 'not approved',
-        tutorApproved: false,
+        resolvesPost: false,
     } as AnswerPost;
 
     const approvedAnswerPost = {
         id: 2,
         creationDate: undefined,
         content: 'approved',
-        tutorApproved: true,
+        resolvesPost: true,
     } as AnswerPost;
 
     const sortedAnswerArray: AnswerPost[] = [approvedAnswerPost, unApprovedAnswerPost2, unApprovedAnswerPost1];
@@ -93,7 +93,7 @@ describe('PostingsThreadComponent', () => {
         metisServiceUserAuthorityStub.returns(true);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).to.deep.equal(true);
-        expect(component.createdAnswerPost.tutorApproved).to.be.equal(true);
+        expect(component.createdAnswerPost.resolvesPost).to.be.equal(true);
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
@@ -102,7 +102,7 @@ describe('PostingsThreadComponent', () => {
         metisServiceUserAuthorityStub.returns(false);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).to.deep.equal(false);
-        expect(component.createdAnswerPost.tutorApproved).to.be.equal(false);
+        expect(component.createdAnswerPost.resolvesPost).to.be.equal(false);
     });
 
     it('should sort answers', () => {

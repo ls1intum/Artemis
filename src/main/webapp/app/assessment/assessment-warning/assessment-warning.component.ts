@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 
 /*
@@ -28,7 +28,7 @@ export class AssessmentWarningComponent implements OnChanges {
     ngOnChanges(): void {
         const dueDate = this.exercise.dueDate;
         if (dueDate != undefined) {
-            this.isBeforeDueDate = moment().isBefore(dueDate);
+            this.isBeforeDueDate = dayjs().isBefore(dueDate);
         }
     }
 }

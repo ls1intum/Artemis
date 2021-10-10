@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { JhiEventManager } from 'ng-jhipster';
 import { Subject, Subscription } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
@@ -12,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +26,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -64,7 +64,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         private modelingAssessmentsService: ModelingAssessmentService,
         private textAssessmentService: TextAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private translate: TranslateService,
         private profileService: ProfileService,
     ) {}
@@ -93,7 +93,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
 
@@ -118,7 +118,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }
@@ -200,28 +200,28 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     deleteResult(submission: Submission, result: Result) {
-        if (this.exercise && submission.id && result.id && submission.participation?.id) {
+        if (this.exercise && submission.id && result.id && this.participationId) {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    this.textAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.textAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.MODELING:
-                    this.modelingAssessmentsService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.modelingAssessmentsService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.fileUploadAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.PROGRAMMING:
-                    this.programmingAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.programmingAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );

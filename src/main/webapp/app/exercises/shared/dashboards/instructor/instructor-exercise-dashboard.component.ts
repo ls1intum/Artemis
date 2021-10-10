@@ -1,4 +1,4 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -28,7 +28,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     constructor(
         private exerciseService: ExerciseService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private resultService: ResultService,
         private router: Router,
         private sortService: SortService,
@@ -82,7 +82,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     private loadExercise(exerciseId: number) {
         this.exerciseService.find(exerciseId).subscribe(
             (response: HttpResponse<Exercise>) => (this.exercise = response.body!),
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
@@ -96,6 +96,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 }

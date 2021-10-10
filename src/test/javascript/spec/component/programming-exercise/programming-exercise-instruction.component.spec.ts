@@ -5,8 +5,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { SinonStub, spy, stub } from 'sinon';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -293,7 +293,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     it('should create the steps task icons for the tasks in problem statement markdown (non legacy case)', fakeAsync(() => {
         const result = {
             id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement, showTestNamesToStudents: true } as ProgrammingExercise;
@@ -349,7 +349,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
         const result = {
             id: 1,
-            completionDate: moment('2019-01-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;

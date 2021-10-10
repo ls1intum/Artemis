@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
@@ -30,7 +30,6 @@ describe('PostHeaderComponent', () => {
     let metisService: MetisService;
     let metisServiceUserIsAtLeastTutorStub: SinonStub;
     let metisServiceDeletePostStub: SinonStub;
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
@@ -89,8 +88,7 @@ describe('PostHeaderComponent', () => {
         component.ngOnChanges();
         fixture.detectChanges();
         expect(component.numberOfAnswerPosts).to.be.equal(0);
-        expect(getElement(debugElement, '.answer-count').innerHTML).contains(0);
-        expect(getElement(debugElement, '.answer-count .icon')).to.exist;
+        expect(getElement(debugElement, '.answer-count')).to.not.exist;
         expect(getElement(debugElement, '.toggle-answer-element.clickable')).to.not.exist;
     });
 

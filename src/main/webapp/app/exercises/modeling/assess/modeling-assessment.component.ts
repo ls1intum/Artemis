@@ -4,8 +4,15 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
-import * as $ from 'jquery';
-import { JhiAlertService } from 'ng-jhipster';
+import $ from 'jquery';
+import { AlertService } from 'app/core/util/alert.service';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+
+export interface DropInfo {
+    instruction: GradingInstruction;
+    tooltipMessage: string;
+    removeMessage: string;
+}
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -49,7 +56,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
+    constructor(private alertService: AlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
@@ -182,8 +189,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 }
                 feedback.credits = assessment.score;
                 feedback.text = assessment.feedback;
-                if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
+                if (assessment.dropInfo && assessment.dropInfo.instruction?.id) {
                     feedback.gradingInstruction = assessment.dropInfo.instruction;
+                }
+                if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
+                    feedback.gradingInstruction = undefined;
                 }
             } else {
                 feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
@@ -275,7 +285,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return;
         }
 
-        const elementCountMap = new Map<String, Number>();
+        const elementCountMap = new Map<string, Number>();
 
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 
@@ -317,6 +327,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 label: this.calculateLabel(feedback),
                 labelColor: this.calculateLabelColor(feedback),
                 correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                dropInfo: this.calculateDropInfo(feedback),
             };
         });
         if (this.apollonEditor) {
@@ -372,5 +383,17 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             description: correctionStatusDescription,
             status: correctionStatus,
         };
+    }
+
+    private calculateDropInfo(feedback: Feedback) {
+        if (feedback.gradingInstruction) {
+            const dropInfo = <DropInfo>{};
+            dropInfo.instruction = feedback.gradingInstruction;
+            dropInfo.removeMessage = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.removeAssessmentInstructionLink');
+            dropInfo.tooltipMessage = this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + feedback!.gradingInstruction!.instructionDescription;
+            return dropInfo;
+        }
+
+        return undefined;
     }
 }

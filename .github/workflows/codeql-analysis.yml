@@ -54,12 +54,12 @@ jobs:
 
     # Install Java 16
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.0
+      uses: actions/setup-node@v2.4.1
       with:
         node-version: '${{ env.node }}'
-        cache: 'yarn'
+        cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.3.0
+      uses: actions/setup-java@v2.3.1
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -76,6 +76,8 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
       uses: github/codeql-action/autobuild@v1
+      env:
+        NODE_OPTIONS: --max_old_space_size=6144
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl

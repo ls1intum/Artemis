@@ -4,7 +4,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {

@@ -1,9 +1,8 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MomentModule } from 'ngx-moment';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -38,7 +37,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule, ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
             declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

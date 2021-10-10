@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import * as moment from 'moment';
-import * as _ from 'lodash';
+import dayjs from 'dayjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -32,10 +31,11 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import * as Sentry from '@sentry/browser';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { debounce } from 'lodash-es';
+import { captureException } from '@sentry/browser';
 
 @Component({
     selector: 'jhi-quiz',
@@ -113,7 +113,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
      * @type {Function}
      */
-    timeoutJustSaved = _.debounce(() => {
+    timeoutJustSaved = debounce(() => {
         this.justSaved = false;
     }, 2000);
 
@@ -123,7 +123,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,
@@ -208,7 +208,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizExercise && !this.quizExercise.started) {
                     this.refreshQuiz(true);
-                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(moment())) {
+                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(dayjs())) {
                     // if the quiz has ended, we might have missed to load the results => refresh
                     this.refreshQuiz(true);
                 }
@@ -232,7 +232,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -248,7 +248,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -260,7 +260,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body!);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -271,7 +271,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -292,7 +292,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.submission = new QuizSubmission();
 
         // adjust end date
-        this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.duration, 'seconds');
+        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.duration!, 'seconds');
 
         // auto submit when time is up
         this.runningTimeouts.push(
@@ -370,9 +370,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // update remaining time
         if (this.quizExercise && this.quizExercise.adjustedDueDate) {
             const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(moment())) {
+            if (endDate.isAfter(dayjs())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(moment(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -387,14 +387,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         // update submission time
         if (this.submission && this.submission.adjustedSubmissionDate) {
-            // exact value is not important => use default relative time from moment for better readability and less distraction
-            this.lastSavedTimeText = moment(this.submission.adjustedSubmissionDate).fromNow();
+            // exact value is not important => use default relative time from dayjs for better readability and less distraction
+            this.lastSavedTimeText = dayjs(this.submission.adjustedSubmissionDate).fromNow();
         }
 
         // update time until start
         if (this.quizExercise && this.quizExercise.adjustedReleaseDate) {
-            if (this.quizExercise.adjustedReleaseDate.isAfter(moment())) {
-                this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(moment(), 'seconds'));
+            if (this.quizExercise.adjustedReleaseDate.isAfter(dayjs())) {
+                this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(dayjs(), 'seconds'));
             } else {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 // Check if websocket has updated the quiz exercise and check that following block is only executed once
@@ -603,8 +603,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.waitingForQuizStart = false;
 
             // update timeDifference
-            this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
-            this.timeDifference = moment(this.quizExercise.dueDate!).diff(this.quizExercise.adjustedDueDate, 'seconds');
+            this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
+            this.timeDifference = dayjs(this.quizExercise.dueDate!).diff(this.quizExercise.adjustedDueDate, 'seconds');
 
             // check if quiz hasn't ended
             if (!this.quizExercise.ended) {
@@ -623,8 +623,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             if (this.quizExercise.isPlannedToStart) {
                 // synchronize time with server
-                this.quizExercise.releaseDate = moment(this.quizExercise.releaseDate!);
-                this.quizExercise.adjustedReleaseDate = moment().add(this.quizExercise.timeUntilPlannedStart, 'seconds');
+                this.quizExercise.releaseDate = dayjs(this.quizExercise.releaseDate!);
+                this.quizExercise.adjustedReleaseDate = dayjs().add(this.quizExercise.timeUntilPlannedStart!, 'seconds');
             }
         }
     }
@@ -687,7 +687,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
                     shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
-                    Sentry.captureException(new Error('Unknown question type: ' + clientQuestion));
+                    captureException(new Error('Unknown question type: ' + clientQuestion));
                 }
             }
         }, this);
@@ -737,7 +737,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.sendWebsocket) {
             if (!this.disconnected) {
                 // this.isSaving = true;
-                this.submission.submissionDate = moment().add(this.timeDifference, 'seconds');
+                this.submission.submissionDate = dayjs().add(this.timeDifference, 'seconds');
                 this.sendWebsocket(this.submission);
                 this.unsavedChanges = false;
                 this.updateSubmissionTime();
@@ -752,8 +752,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateSubmissionTime() {
         if (this.submission.submissionDate) {
-            this.submission.adjustedSubmissionDate = moment(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
-            if (Math.abs(moment(this.submission.adjustedSubmissionDate).diff(moment(), 'seconds')) < 2) {
+            this.submission.adjustedSubmissionDate = dayjs(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
+            if (Math.abs(dayjs(this.submission.adjustedSubmissionDate).diff(dayjs(), 'seconds')) < 2) {
                 this.justSaved = true;
                 this.timeoutJustSaved();
             }
@@ -768,8 +768,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (error) {
             const errorMessage = 'Saving answers failed: ' + error;
             // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-            const jhiAlert = this.jhiAlertService.error(errorMessage);
-            jhiAlert.msg = errorMessage;
+            const jhiAlert = this.alertService.error(errorMessage);
+            jhiAlert.message = errorMessage;
             this.unsavedChanges = true;
             this.isSubmitting = false;
         }
@@ -883,8 +883,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     onSubmitError(error: HttpErrorResponse) {
         const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(errorMessage);
-        jhiAlert.msg = errorMessage;
+        const jhiAlert = this.alertService.error(errorMessage);
+        jhiAlert.message = errorMessage;
         this.isSubmitting = false;
     }
 

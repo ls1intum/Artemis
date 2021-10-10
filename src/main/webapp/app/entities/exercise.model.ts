@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
@@ -69,12 +69,13 @@ export abstract class Exercise implements BaseEntity {
     public gradingInstructions?: string;
     public title?: string;
     public shortName?: string;
-    public releaseDate?: Moment;
-    public dueDate?: Moment;
-    public assessmentDueDate?: Moment;
+    public releaseDate?: dayjs.Dayjs;
+    public dueDate?: dayjs.Dayjs;
+    public assessmentDueDate?: dayjs.Dayjs;
     public maxPoints?: number;
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
+    public allowComplaintsForAutomaticAssessments?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -133,6 +134,7 @@ export abstract class Exercise implements BaseEntity {
         this.assessmentDueDateError = false;
         this.dueDateError = false;
         this.presentationScoreEnabled = false; // default value;
+        this.allowComplaintsForAutomaticAssessments = false; // default value;
     }
 
     /**
