@@ -5,6 +5,13 @@
                 "title": "Beispielabgabe-Board",
                 "editor": "Beispielabgabe-Editor"
             },
+            "legend": {
+                "title": "Legende",
+                "positiveScore": "Positive Punktzahl",
+                "negativeScore": "Negative Punktzahl",
+                "incorrectAssessment": "Falsche Beurteilung",
+                "feedbackWithoutScore": "Feedback ohne Punktzahl"
+            },
             "feedback": {
                 "CORRECT": "Richtiges Feedback 👍",
                 "INCORRECT_SCORE": "Falsche Punktzahl",
@@ -45,7 +52,10 @@
             "assessmentInstruction": "Doppelklicke auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten.",
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",
-            "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung"
+            "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung",
+            "importExampleSubmission": "Beispielabgabe importieren",
+            "importExampleSubmissionLabel": "Beispielabgabe importieren",
+            "searchSubmission": "Suche nach Einreichung"
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"

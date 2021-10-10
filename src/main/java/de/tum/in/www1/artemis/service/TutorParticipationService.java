@@ -31,6 +31,16 @@ public class TutorParticipationService {
         INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
     }
 
+    private static final String ENTITY_NAME = "TutorParticipation";
+
+    private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final TutorParticipationRepository tutorParticipationRepository;
+
+    private final ExampleSubmissionService exampleSubmissionService;
+
     /**
      * Wraps the information of tutor feedback validation (during tutor training).
      */
@@ -45,18 +55,6 @@ public class TutorParticipationService {
             this.type = type;
         }
     }
-
-    private static final String ENTITY_NAME = "TutorParticipation";
-
-    private static final float scoreRangePercentage = 10;
-
-    private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
-
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
-    private final TutorParticipationRepository tutorParticipationRepository;
-
-    private final ExampleSubmissionService exampleSubmissionService;
 
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExampleSubmissionService exampleSubmissionService) {
@@ -165,12 +163,6 @@ public class TutorParticipationService {
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        boolean isTextSubmission = tutorExampleSubmission.getSubmission() instanceof TextSubmission;
-        if (!isTextSubmission) {
-            validateTutorialExampleSubmissionUsingTotalScore(tutorExampleSubmission);
-            return;
-        }
-
         var tutorFeedback = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
         var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
 
@@ -197,25 +189,6 @@ public class TutorParticipationService {
             }
         }).collect(Collectors.joining(","));
         throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment");
-    }
-
-    private void validateTutorialExampleSubmissionUsingTotalScore(ExampleSubmission tutorExampleSubmission) {
-        // Retrieve the example feedback created by the instructor
-        List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
-
-        float instructorScore = calculateTotalScore(existingFeedback);
-        float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
-        float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
-
-        float tutorScore = calculateTotalScore(tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks());
-
-        if (lowerInstructorScore > tutorScore) {
-            throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
-        }
-
-        if (tutorScore > higherInstructorScore) {
-            throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
-        }
     }
 
     /**
@@ -311,9 +284,5 @@ public class TutorParticipationService {
                 tutorParticipationRepository.delete(tutorParticipation);
             }
         }
-    }
-
-    private float calculateTotalScore(List<Feedback> feedback) {
-        return (float) feedback.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

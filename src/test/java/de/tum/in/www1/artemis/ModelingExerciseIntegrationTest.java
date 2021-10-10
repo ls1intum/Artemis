@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
@@ -29,9 +28,6 @@ import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -152,24 +148,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetModelingExerciseStatistics_asTA() throws Exception {
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
-        request.get("/api/modeling-exercises/" + classExercise.getId() + 1 + "/statistics", HttpStatus.NOT_FOUND, String.class);
-
-        classExercise.setDiagramType(CommunicationDiagram);
-        exerciseRepo.save(classExercise);
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
-    public void testGetModelingExerciseStatistics_tutorNotInCourse() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -206,7 +184,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.OK,
                 params);
         assertThat(returnedModelingExercise.getGradingCriteria().size()).isEqualTo(gradingCriteria.size());
-        verify(groupNotificationService).notifyStudentGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());

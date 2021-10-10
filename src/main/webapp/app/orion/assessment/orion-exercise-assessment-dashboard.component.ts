@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { calculateSubmissionStatusIsDraft, Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
@@ -29,14 +29,14 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
         private exerciseService: ExerciseService,
         private orionAssessmentService: OrionAssessmentService,
         private orionConnectorService: OrionConnectorService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res) => (this.exercise = res.body!),
-            (error) => onError(this.jhiAlertService, error),
+            (error) => onError(this.alertService, error),
         );
 
         this.orionConnectorService.state().subscribe((state) => (this.orionState = state));

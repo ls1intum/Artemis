@@ -61,10 +61,7 @@
                         <span *ngIf="numberOfSubmissions.late > 0"> | </span>
                         <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
                         /
-                        <a
-                            [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
-                            [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissionsAssessedByYou' | artemisTranslate }}"
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']" [queryParams]="{ tutorId: tutor?.id }"
                             >{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</a
                         >
                     </div>
@@ -76,12 +73,9 @@
                     </div>
                     <div class="col-5">
                         {{ numberOfComplaints }} /
-                        <a
-                            [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']"
-                            [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | artemisTranslate }}"
-                            >{{ numberOfTutorComplaints }}</a
-                        >
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
+                            numberOfTutorComplaints
+                        }}</a>
                     </div>
                 </div>
 
@@ -94,7 +88,6 @@
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
                             [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | artemisTranslate }}"
                             >{{ numberOfTutorMoreFeedbackRequests }}</a
                         >
                     </div>
@@ -234,7 +227,7 @@
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon class="text-secondary" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
+                            <fa-icon class="text-success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -292,10 +285,11 @@
                         <table
                             class="table table-striped exercise-table"
                             *ngIf="
-                                (unassessedSubmissionByCorrectionRound &&
+                                ((unassessedSubmissionByCorrectionRound &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0) ||
-                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0);
+                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0)) &&
+                                    !exercise.allowComplaintsForAutomaticAssessments;
                                 else noSubmissions
                             "
                         >

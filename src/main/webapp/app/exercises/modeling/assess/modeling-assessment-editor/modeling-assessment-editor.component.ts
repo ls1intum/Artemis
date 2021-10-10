@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -73,7 +72,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private cancelConfirmationText: string;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
@@ -165,7 +164,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         }
-        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && dayjs(this.modelingExercise!.assessmentDueDate).isBefore(dayjs());
 
         this.getComplaint();
 
@@ -185,12 +184,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.submission.model) {
             this.model = JSON.parse(this.submission.model);
         } else {
-            this.jhiAlertService.clear();
-            this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
+            this.alertService.clear();
+            this.alertService.error('modelingAssessmentEditor.messages.noModel');
         }
         if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
-            this.jhiAlertService.clear();
-            this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
+            this.alertService.clear();
+            this.alertService.info('modelingAssessmentEditor.messages.lock');
         }
         this.checkPermissions();
         this.validateFeedback();
@@ -266,7 +265,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.modelingExercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.modelingExercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
@@ -301,13 +300,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingExercise = undefined;
         this.result = undefined;
         this.model = undefined;
-        this.jhiAlertService.clear();
-        this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
+        this.alertService.clear();
+        this.alertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
     onSaveAssessment() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
-            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            this.alertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
 
@@ -315,12 +314,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.alertService.clear();
+                this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
             () => {
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.clear();
+                this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
         );
     }
@@ -330,7 +329,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
-            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && dayjs().isBefore(this.modelingExercise.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
@@ -349,7 +348,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private submitAssessment() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
-            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            this.alertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
         this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe(
@@ -357,8 +356,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 result.participation!.results = [result];
                 this.result = result;
 
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                this.alertService.clear();
+                this.alertService.success('modelingAssessmentEditor.messages.submitSuccessful');
 
                 this.highlightMissingFeedback = false;
             },
@@ -367,8 +366,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error(errorMessage);
+                this.alertService.clear();
+                this.alertService.error(errorMessage);
             },
         );
     }
@@ -385,16 +384,16 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result = response.body!;
                 // reconnect
                 this.result.participation!.results = [this.result];
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+                this.alertService.clear();
+                this.alertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
             (httpErrorResponse: HttpErrorResponse) => {
-                this.jhiAlertService.clear();
+                this.alertService.clear();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.jhiAlertService.error(error.message, error.params);
+                    this.alertService.error(error.message, error.params);
                 } else {
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                    this.alertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
                 }
             },
         );
@@ -541,8 +540,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     importStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe(
-                () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
     }

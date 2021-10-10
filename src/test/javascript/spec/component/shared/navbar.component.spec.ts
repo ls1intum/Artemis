@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -13,18 +14,18 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -79,7 +80,7 @@ describe('NavbarComponent', () => {
     } as MockBreadcrumb;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
                 NavbarComponent,
@@ -87,7 +88,7 @@ describe('NavbarComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(NgbDropdown),
                 MockDirective(ActiveMenuDirective),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(MockRouterLinkDirective),
                 MockDirective(MockRouterLinkActiveOptionsDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -99,7 +100,7 @@ describe('NavbarComponent', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
             ],
         })
@@ -355,6 +356,34 @@ describe('NavbarComponent', () => {
             sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/text-exercises/2/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[4], submissionsCrumb);
             sinon.assert.match(component.breadcrumbs[5], conflictCrumb);
+        });
+
+        it('exercise assessment dashboard', () => {
+            const courseId = 1;
+            const exerciseId = 2;
+            const testUrl = `/course-management/${courseId}/assessment-dashboard/${exerciseId}`;
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(courseId);
+            expect(exerciseStub).to.have.been.calledWith(exerciseId);
+
+            expect(component.breadcrumbs.length).to.equal(4);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], {
+                label: 'artemisApp.assessmentDashboard.home.title',
+                translate: true,
+                uri: '/course-management/1/assessment-dashboard/',
+            } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], {
+                label: 'Test Exercise',
+                translate: false,
+                uri: '/course-management/1/assessment-dashboard/2/',
+            } as MockBreadcrumb);
         });
 
         it('modeling exercise example submission', () => {

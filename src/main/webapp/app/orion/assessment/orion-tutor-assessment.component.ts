@@ -2,8 +2,8 @@ import { Component, ViewChild } from '@angular/core';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-orion-course-management-exercises',
@@ -12,7 +12,7 @@ import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.se
 export class OrionTutorAssessmentComponent {
     @ViewChild(CodeEditorTutorAssessmentContainerComponent) container: CodeEditorTutorAssessmentContainerComponent;
 
-    constructor(private orionConnectorService: OrionConnectorService, private jhiAlertService: JhiAlertService, private orionAssessmentService: OrionAssessmentService) {
+    constructor(private orionConnectorService: OrionConnectorService, private alertService: AlertService, private orionAssessmentService: OrionAssessmentService) {
         // Register this component as receiver of updates from Orion
         orionConnectorService.activeAssessmentComponent = this;
     }
@@ -31,7 +31,7 @@ export class OrionTutorAssessmentComponent {
      */
     updateFeedback(submissionId: number, feedback: Feedback[]) {
         if (submissionId !== this.container.submission?.id) {
-            this.jhiAlertService.error('artemisApp.orion.assessment.submissionIdDontMatch');
+            this.alertService.error('artemisApp.orion.assessment.submissionIdDontMatch');
         } else {
             this.container.onUpdateFeedback(feedback);
         }

@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
+import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -41,7 +42,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     private apollonEditor?: ApollonEditor;
     private modelSubscription: number;
 
-    constructor(private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
+    constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 
     /**
      * Initializes the Apollon editor.
@@ -121,7 +122,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      *
      * @param umlModel the model for which the assessments should be removed
      */
-    private removeAssessments(umlModel: UMLModel): void {
+    private removeAssessments(umlModel: UMLModel) {
         if (umlModel) {
             umlModel.assessments = [];
         }
@@ -132,7 +133,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * of the model outside of Apollon.
      */
     getCurrentModel(): UMLModel {
-        const currentModel: UMLModel = this.apollonEditor!.model;
+        const currentModel = this.apollonEditor!.model;
         this.removeAssessments(currentModel);
         return currentModel;
     }
@@ -146,7 +147,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     /**
      * If changes are made to the the uml model, update the model and remove assessments
-     * @param {simpleChanges} changes - Changes made
+     * @param {SimpleChanges} changes - Changes made
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.diagramType) {

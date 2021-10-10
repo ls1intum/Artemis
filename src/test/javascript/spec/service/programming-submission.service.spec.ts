@@ -1,9 +1,9 @@
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
-import { range as _range } from 'lodash';
-import * as sinonChai from 'sinon-chai';
+import { range as _range } from 'lodash-es';
+import sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import {
@@ -14,7 +14,6 @@ import {
 } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -54,8 +53,8 @@ describe('ProgrammingSubmissionService', () => {
     let result2: Result;
 
     beforeEach(() => {
-        currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
-        currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+        currentSubmission = { id: 11, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+        currentSubmission2 = { id: 12, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId } } as any;
         result = { id: 31, submission: currentSubmission } as any;
         result2 = { id: 32, submission: currentSubmission2 } as any;
 
@@ -299,7 +298,7 @@ describe('ProgrammingSubmissionService', () => {
 
     it('should correctly return the submission state based on the servers response', async () => {
         const exerciseId = 10;
-        const submissionState = { 1: { id: 11, submissionDate: moment().subtract(2, 'hours') } as ProgrammingSubmission, 2: undefined };
+        const submissionState = { 1: { id: 11, submissionDate: dayjs().subtract(2, 'hours') } as ProgrammingSubmission, 2: undefined };
         const expectedSubmissionState = {
             1: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: submissionState['1'], participationId: 1 },
             2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 2 },
@@ -317,7 +316,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should recalculate the result eta based on the number of open submissions', () => {
         const exerciseId = 10;
         // Simulate 340 participations with one pending submission each.
-        const submissionState = _range(340).reduce((acc, n) => ({ ...acc, [n]: { submissionDate: moment().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
+        const submissionState = _range(340).reduce((acc, n) => ({ ...acc, [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
         const expectedSubmissionState = Object.entries(submissionState).reduce(
             (acc, [participationID, submission]: [string, ProgrammingSubmission]) => ({
                 ...acc,
@@ -338,7 +337,7 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.getResultEtaInMs().subscribe((eta) => (resultEta = eta));
 
         // With 340 submissions, the eta should now have increased.
-        expect(resultEta).to.equal(2000 * 60 + 3 * 4000 * 60);
+        expect(resultEta).to.equal(2000 * 60 + 3 * 1000 * 60);
     });
 
     it('should only unsubscribe if no other participations use the topic', () => {
