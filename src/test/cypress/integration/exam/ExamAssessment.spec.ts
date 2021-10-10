@@ -1,12 +1,10 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
-import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import dayjs from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/OnlineEditorPage';
+import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -54,7 +52,7 @@ describe('Exam assessment', () => {
         courseManagementRequests.deleteCourse(course.id);
     });
 
-  describe('Exam exercise assessment', () => {
+    describe('Exam exercise assessment', () => {
         beforeEach('Generate new exam name', () => {
             prepareExam(dayjs().add(30, 'seconds'));
         });
@@ -126,11 +124,11 @@ describe('Exam assessment', () => {
                 cy.get('.question-options').contains('7 of 10 points').should('be.visible');
             });
         });
-    
-    it.only('Assess a quiz exercise submission', () => {
-            courseManagementRequests.createQuizExercise({exerciseGroup}, 'Cypress Quiz', dayjs(), 30).then((quizResponse) => {
-                courseManagementRequests.generateMissingIndividualExams(course, exam);
-                courseManagementRequests.prepareExerciseStartForExam(course, exam);
+
+        it('Assess a quiz exercise submission', () => {
+            courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz', dayjs(), 30).then(() => {
+                courseManagementRequests.generateMissingIndividualExams(exam);
+                courseManagementRequests.prepareExerciseStartForExam(exam);
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 // courseManagementRequests.createMultipleChoiceSubmission(quizResponse.body, [0, 2]);
