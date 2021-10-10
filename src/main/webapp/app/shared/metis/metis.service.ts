@@ -67,10 +67,10 @@ export class MetisService {
     }
 
     /**
-     * Set course property before using metis service.
-     * @param course
+     * set course property before using metis service
+     * @param {Course} course in which the metis service is used
      */
-    setCourse(course: Course) {
+    setCourse(course: Course): void {
         if (this.courseId === undefined || this.courseId !== course.id) {
             this.courseId = course.id!;
             this.course = course;
@@ -80,7 +80,7 @@ export class MetisService {
 
     /**
      * to be used to set posts from outside
-     * @param posts
+     * @param {Post[]} posts that are managed by metis service
      */
     setPosts(posts: Post[]): void {
         this.posts$.next(posts);
@@ -101,8 +101,8 @@ export class MetisService {
     /**
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending the newly fetched posts
-     * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
-     * @param forceUpdate if true, forces a re-fetch even if filter property did not change
+     * @param {PostContextFilter} postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      */
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
         // check if the post context did change
@@ -131,7 +131,8 @@ export class MetisService {
     /**
      * creates a new post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
-     * @param post newly created post
+     * @param {Post} post to be created
+     * @return {Observable<Post>} created post
      */
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
@@ -146,7 +147,8 @@ export class MetisService {
     /**
      * creates a new answer post by invoking the answer post service
      * fetches the posts for the currently set filter on response
-     * @param answerPost newly created answer post
+     * @param {AnswerPost} answerPost to be created
+     * @return {Observable<AnswerPost>} created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.create(this.courseId, answerPost).pipe(
@@ -160,7 +162,8 @@ export class MetisService {
     /**
      * updates a given posts by invoking the post service,
      * fetches the posts for the currently set filter on response and updates course tags
-     * @param post post to update
+     * @param {Post} post to be updated
+     * @return {Observable<Post>} updated post
      */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(
@@ -175,7 +178,8 @@ export class MetisService {
     /**
      * updates a given answer posts by invoking the answer post service,
      * fetches the posts for the currently set filter on response
-     * @param answerPost answer post to update
+     * @param {AnswerPost} answerPost to be updated
+     * @return {Observable<AnswerPost>} updated answer post
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.update(this.courseId, answerPost).pipe(
@@ -188,8 +192,9 @@ export class MetisService {
 
     /**
      * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param postId            id of the post for which the displayPriority is changed
-     * @param displayPriority   new displayPriority
+     * @param {number} postId id of the post for which the displayPriority is changed
+     * @param {DisplayPriority} displayPriority new displayPriority
+     * @return {Observable<Post>} updated post
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
@@ -203,7 +208,7 @@ export class MetisService {
     /**
      * deletes a post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
-     * @param post post to delete
+     * @param {Post} post to be deleted
      */
     deletePost(post: Post): void {
         this.postService.delete(this.courseId, post).subscribe(() => {
@@ -215,7 +220,7 @@ export class MetisService {
     /**
      * deletes an answer post by invoking the post service
      * fetches the posts for the currently set filter on response
-     * @param answerPost answer post to delete
+     * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
@@ -226,7 +231,8 @@ export class MetisService {
     /**
      * creates a new reaction
      * fetches the posts for the currently set filter on response
-     * @param reaction reaction to create
+     * @param {Reaction} reaction to be created
+     * @return {Observable<Reaction>} created reaction
      */
     createReaction(reaction: Reaction): Observable<Reaction> {
         return this.reactionService.create(this.courseId, reaction).pipe(
@@ -240,7 +246,7 @@ export class MetisService {
     /**
      * deletes an existing reaction
      * fetches the posts for the currently set filter on response
-     * @param reaction reaction to create
+     * @param {Reaction} reaction to be deleted
      */
     deleteReaction(reaction: Reaction): Observable<void> {
         return this.reactionService.delete(this.courseId, reaction).pipe(
@@ -253,7 +259,7 @@ export class MetisService {
 
     /**
      * determines if the current user is at least tutor in the current course
-     * @return boolean tutor flag
+     * @return {boolean} tutor flag
      */
     metisUserIsAtLeastTutorInCourse(): boolean {
         return this.accountService.isAtLeastTutorInCourse(this.course);
@@ -261,8 +267,8 @@ export class MetisService {
 
     /**
      * determines if the current user is the author of a given posting
-     * @param posting posting to be checked against
-     * @return boolean author flag
+     * @param {Posting} posting for which the author is determined
+     * @return {boolean} author flag
      */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return this.user ? posting?.author!.id === this.getUser().id : false;
@@ -270,10 +276,10 @@ export class MetisService {
 
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @param courseWideContext optional course-wide context as default context
-     * @param exercise optional exercise as default context
-     * @param lectureId of optional lecture as default context
-     * @return Post created default Post object
+     * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
+     * @param {Exercise | undefined} exercise optional exercise as default context
+     * @param {number | undefined} lectureId id of optional lecture as default context
+     * @return {Post} created default object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
         const emptyPost: Post = new Post();
@@ -294,7 +300,8 @@ export class MetisService {
 
     /**
      * counts the answer posts of a post, 0 if none exist
-     * @return number number of answer posts
+     * @param {Post} post of which the answer posts are counted
+     * @return {number} amount of answer posts
      */
     getNumberOfAnswerPosts(post: Post): number {
         return post.answers?.length! ? post.answers?.length! : 0;
@@ -302,7 +309,8 @@ export class MetisService {
 
     /**
      * determines if the post is resolved by searching for resolving answer posts
-     * @return boolean flag that indicates if the post is resolved
+     * @param {Post} post of which the state is determined
+     * @return {boolean} flag that indicates if the post is resolved
      */
     isPostResolved(post: Post): boolean {
         if (this.getNumberOfAnswerPosts(post) > 0) {
@@ -314,8 +322,8 @@ export class MetisService {
 
     /**
      * determines the router link components required for navigating to the detail view of the given post
-     * @param post to be navigated to
-     * @return [] array of router link components
+     * @param {Post} post to be navigated to
+     * @return {(string | number)[]} array of router link components
      */
     getLinkForPost(post?: Post): (string | number)[] {
         if (post?.lecture) {
@@ -329,8 +337,8 @@ export class MetisService {
 
     /**
      * determines the routing params required for navigating to the detail view of the given post
-     * @param post to be navigated to
-     * @return Params required parameter key-value pair
+     * @param {Post} post to be navigated to
+     * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
         const params: Params = {};
@@ -344,8 +352,8 @@ export class MetisService {
 
     /**
      * Creates an object to be used when a post context should be displayed and linked (for exercise and lecture)
-     * @param post for which the contect is displayed and linked
-     * @return ContextInformation object containing the required router link components as well as the context display name
+     * @param {Post} post for which the context is displayed and linked
+     * @return {ContextInformation} object containing the required router link components as well as the context display name
      */
     getContextInformation(post: Post): ContextInformation {
         let routerLinkComponents = undefined;
@@ -365,7 +373,8 @@ export class MetisService {
 
     /**
      * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with a certain strategy
-     * @param tempPost Post that is currently created and compared against existing course posts on updates in the form group
+     * @param {Post} tempPost that is currently created and compared against existing course posts on updates in the form group
+     * @return {Observable<Post[]>} array of similar posts that were found in the course
      */
     getSimilarPosts(tempPost: Post): Observable<Post[]> {
         return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));

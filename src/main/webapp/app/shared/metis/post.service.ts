@@ -99,7 +99,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * determine similar posts in a course
+     * determines similar posts in a course
      * @param {Post} tempPost
      * @param {number} courseId
      * @return {Observable<HttpResponse<void>>}

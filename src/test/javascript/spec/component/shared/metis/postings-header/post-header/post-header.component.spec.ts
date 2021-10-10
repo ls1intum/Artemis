@@ -56,7 +56,11 @@ describe('PostHeaderComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should have information on answers after init or changes', () => {
+    it('should have information on answers on init', () => {
+        expect(component.numberOfAnswerPosts).toBeDefined();
+    });
+
+    it('should have information on answers on changes', () => {
         component.ngOnChanges();
         expect(component.numberOfAnswerPosts).toBeDefined();
     });

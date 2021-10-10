@@ -12,6 +12,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 
 const TITLE_MAX_LENGTH = 200;
+const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
 
 export interface ContextSelectorOption {
     lecture?: Lecture;
@@ -96,7 +97,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      * invokes the metis service to get similar posts on changes of the formGroup, i.e. title or content
      */
     triggerPostSimilarityCheck(): void {
-        this.formGroup.valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe(() => {
+        this.formGroup.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged()).subscribe(() => {
             const tempPost = new Post();
             this.setPostProperties(tempPost);
             this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {

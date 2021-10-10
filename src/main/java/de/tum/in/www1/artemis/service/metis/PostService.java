@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
@@ -397,32 +396,9 @@ public class PostService extends PostingService {
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         List<Post> coursePosts = this.getAllCoursePosts(courseId);
-        Map<SimilarityScore, Double> map = new HashMap<>();
 
-        coursePosts.forEach(coursePost -> {
-            Double score = postContentCompareStrategy.performSimilarityCheck(post, coursePost);
-            map.put(new SimilarityScore(coursePost, score), score);
-        });
-        List<SimilarityScore> result = new ArrayList<>();
-        map.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach((entry) -> result.add(entry.getKey()));
-
-        // return top K posts
-        return Lists.reverse(result).stream().limit(TOP_K_SIMILARITY_RESULTS).map(SimilarityScore::getPost).collect(Collectors.toList());
+        // sort course posts by calculated similarity scores
+        coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
     }
-
-    /**
-     * Wraps the resulting similarity score together with the post
-     */
-    record SimilarityScore(Post post, Double score) implements Comparable<SimilarityScore> {
-
-        public Post getPost() {
-            return post;
-        }
-
-        @Override
-        public int compareTo(@NotNull SimilarityScore similarityScore) {
-            return (int) (this.score - similarityScore.score);
-        }
-    }
-
 }
