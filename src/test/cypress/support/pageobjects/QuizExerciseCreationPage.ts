@@ -1,4 +1,4 @@
-import { POST } from '../constants';
+import { POST, BASE_API } from '../constants';
 
 export class QuizExerciseCreationPage {
     setTitle(title: string) {
@@ -55,7 +55,7 @@ export class QuizExerciseCreationPage {
      * @return <Chainable>  the response of the request
      */
     saveQuiz() {
-        cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
+        cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
         cy.contains('Save').click();
         return cy.wait('@createQuizExercise');
     }

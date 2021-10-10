@@ -41,7 +41,9 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
-            createQuiz();
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
+                quizExercise = quizResponse.body;
+            });
         });
 
         it('Student cannot see hidden quiz', () => {
@@ -72,7 +74,8 @@ describe('Quiz Exercise Management', () => {
 
     describe('SA quiz participation', () => {
         before('Create SA quiz', () => {
-            createQuiz([shortAnswerQuizTemplate]).then(() => {
+            courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
+                quizExercise = quizResponse.body;
                 courseManagementRequest.setQuizVisible(quizExercise.id);
                 courseManagementRequest.startQuizNow(quizExercise.id);
             });
@@ -115,11 +118,3 @@ describe('Quiz Exercise Management', () => {
         });
     });
 });
-
-function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
-    return courseManagementRequest.createQuizExercise({ course }, [quizQuestions]).then((quizResponse) => {
-        quizExercise = quizResponse.body;
-        courseManagementRequest.setQuizVisible(quizExercise.id);
-        courseManagementRequest.startQuizNow(quizExercise.id);
-    });
-}
