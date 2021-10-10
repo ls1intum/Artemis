@@ -1,7 +1,7 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -10,11 +10,10 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../test.module';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
-import { SERVER_API_URL } from 'app/app.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -144,9 +143,9 @@ describe('ProgrammingExercise Service', () => {
         it('should update the Timeline of a ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = Object.assign(
                 {
-                    releaseDate: moment('2020-12-10 10:00:00'),
-                    dueDate: moment('2021-01-01 10:00:00'),
-                    assessmentDueDate: moment('2021-01-02 10:00:00'),
+                    releaseDate: dayjs('2020-12-10 10:00:00'),
+                    dueDate: dayjs('2021-01-01 10:00:00'),
+                    assessmentDueDate: dayjs('2021-01-02 10:00:00'),
                     buildAndTestStudentSubmissionsAfterDueDate: undefined,
                     studentParticipations: [],
                 },

@@ -1,20 +1,19 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
-import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions } from 'chart.js';
+import { ChartDataSets, ChartOptions, ChartPoint } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { round } from 'app/shared/util/utils';
+import { sortBy } from 'lodash-es';
 
 // this exercise information is needed for tooltip generation and to navigate to an exercise page
-export class CustomChartPoint implements Chart.ChartPoint {
+export class CustomChartPoint implements ChartPoint {
     y: number;
     exerciseId: number;
     exerciseTitle: string;
@@ -41,7 +40,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
         private translateService: TranslateService,
     ) {}
@@ -92,7 +91,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
         this.chartInstance.resize();
         // we show all the exercises ordered by their release data
-        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(this.chartInstance, sortedExerciseScores);
     }
 

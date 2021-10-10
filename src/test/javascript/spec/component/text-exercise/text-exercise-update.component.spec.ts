@@ -11,7 +11,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -58,7 +58,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
-                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -85,7 +85,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -113,7 +113,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.isImport = true;
 
                 const entity = { ...textExercise };
-                spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -167,9 +167,9 @@ describe('TextExercise Management Update Component', () => {
     describe('ngOnInit in import mode: Course to Course', () => {
         const textExercise = new TextExercise(new Course(), undefined);
         textExercise.id = 1;
-        textExercise.releaseDate = moment();
-        textExercise.dueDate = moment();
-        textExercise.assessmentDueDate = moment();
+        textExercise.releaseDate = dayjs();
+        textExercise.dueDate = dayjs();
+        textExercise.assessmentDueDate = dayjs();
         const courseId = 1;
 
         beforeEach(() => {
@@ -199,9 +199,9 @@ describe('TextExercise Management Update Component', () => {
         textExercise.exerciseGroup.exam.course = new Course();
         textExercise.exerciseGroup.exam.course.id = 1;
         textExercise.id = 1;
-        textExercise.releaseDate = moment();
-        textExercise.dueDate = moment();
-        textExercise.assessmentDueDate = moment();
+        textExercise.releaseDate = dayjs();
+        textExercise.dueDate = dayjs();
+        textExercise.assessmentDueDate = dayjs();
         const courseId = 1;
 
         beforeEach(() => {
@@ -227,9 +227,9 @@ describe('TextExercise Management Update Component', () => {
     describe('ngOnInit in import mode: Course to Exam', () => {
         const textExercise = new TextExercise(new Course(), undefined);
         textExercise.id = 1;
-        textExercise.releaseDate = moment();
-        textExercise.dueDate = moment();
-        textExercise.assessmentDueDate = moment();
+        textExercise.releaseDate = dayjs();
+        textExercise.dueDate = dayjs();
+        textExercise.assessmentDueDate = dayjs();
         const groupId = 1;
 
         beforeEach(() => {
@@ -257,9 +257,9 @@ describe('TextExercise Management Update Component', () => {
         const textExercise = new TextExercise(undefined, undefined);
         textExercise.exerciseGroup = new ExerciseGroup();
         textExercise.id = 1;
-        textExercise.releaseDate = moment();
-        textExercise.dueDate = moment();
-        textExercise.assessmentDueDate = moment();
+        textExercise.releaseDate = dayjs();
+        textExercise.dueDate = dayjs();
+        textExercise.assessmentDueDate = dayjs();
         const groupId = 1;
 
         beforeEach(() => {

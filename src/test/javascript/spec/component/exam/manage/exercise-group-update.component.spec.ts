@@ -13,14 +13,14 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -42,7 +42,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     let service: ExerciseGroupService;
     const mockRouter = new MockRouter();
     let alertServiceStub: SinonStub;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
 
     const data = of({ exam, exerciseGroup });
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
@@ -64,7 +64,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         fixture = TestBed.createComponent(ExerciseGroupUpdateComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(ExerciseGroupService);
-        alertService = TestBed.inject(JhiAlertService);
+        alertService = TestBed.inject(AlertService);
     });
 
     // Always initialized and bind before tests

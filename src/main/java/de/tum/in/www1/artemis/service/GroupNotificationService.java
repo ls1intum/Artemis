@@ -70,27 +70,33 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about an exercise update.
+     * Notify all groups but tutors about an exercise update.
+     * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
+     * Students, instructors, and editors should be notified about changed as quickly as possible. 
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
-    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         // Do not send a notification before the release date of the exercise.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        // Create and send the notification.
         saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
     }
 
     /**
-     * Notify tutor groups about the creation of an exercise.
+     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
      *
      * @param exercise that has been created
      */
-    public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
+        // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+        if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        }
     }
 
     /**

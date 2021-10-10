@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -75,7 +75,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
                         // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
-                        const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
+                        const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
                         const isEditingAfterDueAllowed =
                             !this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
                             !this.exercise.allowComplaintsForAutomaticAssessments &&

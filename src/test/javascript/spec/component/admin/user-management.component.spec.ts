@@ -51,7 +51,7 @@ describe('UserManagementComponent', () => {
         [],
         fakeAsync(() => {
             const headers = new HttpHeaders().append('link', 'link;link').append('X-Total-Count', '1');
-            spyOn(service, 'query').and.returnValue(
+            jest.spyOn(service, 'query').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: [new User(1)],
@@ -77,7 +77,7 @@ describe('UserManagementComponent', () => {
                 // GIVEN
                 const headers = new HttpHeaders().append('link', 'link;link');
                 const user = new User(123);
-                spyOn(service, 'query').and.returnValue(
+                jest.spyOn(service, 'query').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: [user],
@@ -85,7 +85,7 @@ describe('UserManagementComponent', () => {
                         }),
                     ),
                 );
-                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ status: 200 })));
+                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
 
                 // WHEN
                 comp.setActive(user, true);
