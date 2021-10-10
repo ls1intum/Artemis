@@ -33,6 +33,8 @@ import { MockAccountService } from '../../../../helpers/mocks/service/mock-accou
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -161,6 +163,7 @@ describe('StudentExamsComponent', () => {
             },
         },
         { provide: AccountService, useClass: MockAccountService },
+        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
@@ -195,11 +198,12 @@ describe('StudentExamsComponent', () => {
         studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
             declarations: [
                 StudentExamsComponent,
                 MockComponent(StudentExamStatusComponent),
                 MockComponent(AlertComponent),
+                MockComponent(FaIconComponent),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),

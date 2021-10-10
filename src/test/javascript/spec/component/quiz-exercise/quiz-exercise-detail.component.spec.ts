@@ -42,6 +42,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -153,8 +154,8 @@ describe('QuizExercise Management Detail Component', () => {
             imports: [ArtemisTestModule],
             declarations: [QuizExerciseDetailComponent],
             providers: [
-                NgbModal,
-                ChangeDetectorRef,
+                MockProvider(NgbModal),
+                MockProvider(ChangeDetectorRef),
                 { provide: ActivatedRoute, useValue: testRoute || route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

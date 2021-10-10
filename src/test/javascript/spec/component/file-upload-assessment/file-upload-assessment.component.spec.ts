@@ -81,7 +81,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]]), TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),

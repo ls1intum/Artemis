@@ -18,7 +18,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { flatMap } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import sinonChai from 'sinon-chai';
@@ -64,7 +64,7 @@ describe('TeamsImportDialogComponent', () => {
     beforeEach(
         waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, FormsModule],
+                imports: [ArtemisTestModule, MockModule(FormsModule)],
                 declarations: [
                     TeamsImportDialogComponent,
                     MockComponent(TeamsImportFromFileFormComponent),
