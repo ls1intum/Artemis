@@ -37,10 +37,10 @@ export class ExerciseService {
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
         copy.categories = this.stringifyExerciseCategories(copy);
-        return this.http
-            .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)));
+        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**
@@ -50,10 +50,10 @@ export class ExerciseService {
     update(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
         copy.categories = this.stringifyExerciseCategories(copy);
-        return this.http
-            .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)));
+        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**
