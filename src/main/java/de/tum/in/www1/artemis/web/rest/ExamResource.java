@@ -492,6 +492,28 @@ public class ExamResource {
     }
 
     /**
+     * DELETE /courses/{courseId}/exams/{examId}/reset : Reset the exam with the given id.
+     * The reset operation deletes all studentExams, participations, submissions and feedback.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @param examId    the id pf the exam to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to reset exam : {}", examId);
+        var exam = examRepository.findByIdElseThrow(examId);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        examService.reset(examId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
+    }
+
+    /**
      * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
      *
      * @param courseId     the id of the course

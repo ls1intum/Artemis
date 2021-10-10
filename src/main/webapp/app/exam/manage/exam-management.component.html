@@ -184,6 +184,14 @@
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
+                                <button
+                                    *ngIf="isAtLeastInstructor && exam"
+                                    jhiDeleteButton
+                                    [entityTitle]="exam.title"
+                                    deleteQuestion="artemisApp.examManagement.reset.question"
+                                    deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+                                    (delete)="resetExam(exam.id!)"
+                                ></button>
                             </div>
                         </div>
                     </td>
