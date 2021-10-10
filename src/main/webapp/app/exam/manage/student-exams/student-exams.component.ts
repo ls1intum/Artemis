@@ -13,11 +13,11 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -47,8 +47,8 @@ export class StudentExamsComponent implements OnInit {
         private courseService: CourseManagementService,
         private alertService: AlertService,
         private modalService: NgbModal,
-        private translateService: TranslateService,
         private accountService: AccountService,
+        private artemisTranslatePipe: ArtemisTranslatePipe
     ) {}
 
     /**
@@ -116,7 +116,7 @@ export class StudentExamsComponent implements OnInit {
         if (this.studentExams && this.studentExams.length) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
-            modalRef.componentInstance.text = this.translateService.instant('artemisApp.studentExams.studentExamGenerationModalText');
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
             modalRef.result.then(() => {
                 this.generateStudentExams();
             });
@@ -129,7 +129,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
-                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length });
+                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
@@ -147,7 +147,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.generateMissingStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
-                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length });
+                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
@@ -211,7 +211,7 @@ export class StudentExamsComponent implements OnInit {
     handleUnlockAllRepositories() {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.studentExams.unlockAllRepositories';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.studentExams.unlockAllRepositoriesModalText');
+        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.unlockAllRepositoriesModalText');
         modalRef.result.then(() => {
             this.unlockAllRepositories();
         });
@@ -240,7 +240,7 @@ export class StudentExamsComponent implements OnInit {
     handleLockAllRepositories() {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.studentExams.lockAllRepositories';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.studentExams.lockAllRepositoriesModalText');
+        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.lockAllRepositoriesModalText');
         modalRef.result.then(() => {
             this.lockAllRepositories();
         });
@@ -314,7 +314,7 @@ export class StudentExamsComponent implements OnInit {
     private handleError(translationString: string, err: HttpErrorResponse) {
         let errorDetail;
         if (err?.error && err.error.errorKey) {
-            errorDetail = this.translateService.instant(err.error.errorKey);
+            errorDetail = this.artemisTranslatePipe.transform(err.error.errorKey);
         } else {
             errorDetail = err?.error?.message;
         }
