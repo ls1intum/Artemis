@@ -39,6 +39,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     currentSortDirection = SortDirection.DESC;
     currentPostContentFilter: ContentFilterOption;
     searchText?: string;
+    filterResolved = false;
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
@@ -104,6 +105,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             context: [this.currentPostContextFilter],
             sortBy: [PostSortCriterion.CREATION_DATE],
             sortDirection: [SortDirection.DESC],
+            filterResolved: [this.filterResolved],
         });
     }
 
@@ -126,6 +128,11 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
      */
     onChangeSort(): void {
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+    }
+
+    onFilterResolved(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
@@ -178,6 +185,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * @return boolean predicate if the post is filtered out or not
      */
     filterFn = (post: Post): boolean => {
+        if (this.filterResolved) {
+            return !this.metisService.isPostResolved(post);
+        }
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content
             const lowerCasedSearchString = this.currentPostContentFilter.searchText.toLowerCase();
@@ -279,6 +289,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;
         this.currentSortDirection = this.formGroup.get('sortDirection')?.value;
+        this.filterResolved = this.formGroup.get('filterResolved')?.value;
     }
 
     /**
