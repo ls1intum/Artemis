@@ -57,7 +57,8 @@ to:
                build: bamboo/swift
 
 Execute the docker-compose file e.g. with
-``docker-compose -f src/main/docker/atlassian.yml up -d``
+``docker-compose -f src/main/docker/atlassian.yml up -d``.
+If you notice that the used image didn't change, append the flag ``--build``.
 
 Error Handling: It can happen that there is an overload with other
 docker networks
