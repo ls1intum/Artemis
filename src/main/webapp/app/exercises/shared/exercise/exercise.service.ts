@@ -89,7 +89,7 @@ export class ExerciseService {
         return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsExercise(res)),
+            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
         );
     }
 
@@ -144,14 +144,14 @@ export class ExerciseService {
                     return res;
                 }),
             )
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsExercise(res)));
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)));
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
         return this.http.get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
             map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.setAccessRights(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRightsExerciseEntityArrayResponseType(res)),
         );
     }
 
@@ -374,7 +374,7 @@ export class ExerciseService {
         return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsExercise(res)),
+            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
         );
     }
 
@@ -441,26 +441,30 @@ export class ExerciseService {
         return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 
-    private setAccessRightsExercise(res: EntityResponseType): EntityResponseType {
+    private setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            this.accountService.setAccessRightsForExercise(res.body);
-            if (res.body.course) {
-                this.accountService.setAccessRightsForCourse(res.body.course);
-            }
+            res.body.forEach((exercise: Exercise) => {
+                this.setAccessRightsExercise(exercise);
+            });
         }
         return res;
     }
 
-    private setAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
+    private setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.forEach((exercise: Exercise) => {
-                this.accountService.setAccessRightsForExercise(exercise);
-                if (exercise.course) {
-                    this.accountService.setAccessRightsForCourse(exercise.course);
-                }
-            });
+            this.setAccessRightsExercise(res.body);
         }
         return res;
+    }
+
+    private setAccessRightsExercise(exercise: Exercise): Exercise {
+        if (exercise) {
+            this.accountService.setAccessRightsForExercise(exercise);
+            if (exercise.course) {
+                this.accountService.setAccessRightsForCourse(exercise.course);
+            }
+        }
+        return exercise;
     }
 }
 
