@@ -129,7 +129,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
-                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body });
+                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
@@ -147,7 +147,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.generateMissingStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
-                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body });
+                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
