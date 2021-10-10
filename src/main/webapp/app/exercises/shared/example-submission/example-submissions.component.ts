@@ -9,7 +9,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -23,7 +22,6 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private courseService: CourseManagementService,
         private modalService: NgbModal,
-        private accountService: AccountService,
     ) {}
 
     /**
@@ -33,7 +31,6 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         // Get the exercise
         this.activatedRoute.data.subscribe(({ exercise }) => {
             exercise.course = getCourseFromExercise(exercise);
-            this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
         });
     }
