@@ -7,7 +7,6 @@ import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
-import { SinonStub, stub } from 'sinon';
 import { Result } from 'app/entities/result.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -24,7 +23,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let comp: ProgrammingExerciseInstructorStatusComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorStatusComponent>;
     let participationWebsocketService: ParticipationWebsocketService;
-    let subscribeForLatestResultStub: SinonStub;
+    let subscribeForLatestResultStub: jest.SpyInstance;
     let latestResultSubject: Subject<Result>;
 
     beforeEach(() => {
@@ -44,17 +43,17 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
 
-                subscribeForLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                subscribeForLatestResultStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 latestResultSubject = new Subject();
-                subscribeForLatestResultStub.returns(latestResultSubject);
+                subscribeForLatestResultStub.mockReturnValue(latestResultSubject);
             });
     });
 
     afterEach(() => {
-        subscribeForLatestResultStub.restore();
+        jest.restoreAllMocks();
         latestResultSubject.complete();
         latestResultSubject = new Subject();
-        subscribeForLatestResultStub.returns(latestResultSubject);
+        subscribeForLatestResultStub.mockReturnValue(latestResultSubject);
     });
 
     it('should not show anything without inputs', () => {
