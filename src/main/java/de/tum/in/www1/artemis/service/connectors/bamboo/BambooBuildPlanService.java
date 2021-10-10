@@ -202,11 +202,29 @@ public class BambooBuildPlanService {
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
+
                 // Final tasks:
                 final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
-                defaultJob.finalTasks(testParserTask, cleanupTask);
+                defaultJob.finalTasks(testParserTask);
+
+                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                    // Create artifacts and a final task for the execution of static code analysis
+                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C);
+                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                    defaultJob.artifacts(artifacts);
+                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, "", false, true, null);
+                    defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
+                }
+
+                // Do not remove target, so the report can be sent to Artemis
+                final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("""
+                        sudo rm -rf tests/
+                        sudo rm -rf assignment/
+                        sudo rm -rf test-reports/""");
+                defaultJob.finalTasks(cleanupTask);
                 defaultStage.jobs(defaultJob);
+
                 return defaultStage;
             }
             case HASKELL, OCAML -> {
