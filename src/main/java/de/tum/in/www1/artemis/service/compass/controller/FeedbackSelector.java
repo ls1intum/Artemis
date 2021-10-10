@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.*;
 
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelElement;
@@ -28,6 +29,8 @@ public class FeedbackSelector {
         Map<Double, Integer> creditCount = new HashMap<>();
         // collects the feedback texts of the feedback elements that have the same credits assigned, i.e. maps "credits -> set of feedback text" for every unique credit number
         Map<Double, Set<String>> creditFeedbackText = new HashMap<>();
+        // collects associated grading instruction of the feedback that have the same credits assigned, i.e. maps "credits -> GradingInstruction" for every unique credit number
+        Map<Double, GradingInstruction> creditGradingInstruction = new HashMap<>();
 
         for (Feedback existingFeedback : feedbackList) {
             double credits = existingFeedback.getCredits();
@@ -38,6 +41,9 @@ public class FeedbackSelector {
                 feedbackTextForCredits.add(existingFeedback.getText());
                 creditFeedbackText.put(credits, feedbackTextForCredits);
             }
+            if (existingFeedback.getGradingInstruction() != null) {
+                creditGradingInstruction.put(credits, existingFeedback.getGradingInstruction());
+            }
         }
 
         double maxCount = creditCount.values().stream().mapToInt(i -> i).max().orElse(0);
@@ -45,6 +51,7 @@ public class FeedbackSelector {
         double maxCountCredits = creditCount.entrySet().stream().filter(entry -> entry.getValue() == maxCount).map(Map.Entry::getKey).findFirst().orElse(0.0);
         Set<String> feedbackTextForMaxCountCredits = creditFeedbackText.getOrDefault(maxCountCredits, new HashSet<>());
         String text = feedbackTextForMaxCountCredits.stream().filter(Objects::nonNull).max(Comparator.comparingInt(String::length)).orElse("");
+        GradingInstruction gradingInstruction = creditGradingInstruction.getOrDefault(maxCountCredits, new GradingInstruction());
 
         if (confidence < CompassConfiguration.ELEMENT_CONFIDENCE_THRESHOLD) {
             return null;
@@ -57,6 +64,9 @@ public class FeedbackSelector {
         feedback.setReference(buildReferenceString(modelElement));
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setResult(result);
+        if (gradingInstruction.getId() != null) {
+            feedback.setGradingInstruction(gradingInstruction);
+        }
         return feedback;
     }
 
