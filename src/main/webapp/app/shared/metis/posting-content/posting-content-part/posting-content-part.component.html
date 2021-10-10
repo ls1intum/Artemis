@@ -1,0 +1,13 @@
+<span
+    class="markdown-preview manipulate-p"
+    *ngIf="postingContentPart.contentBeforeReference"
+    [innerHTML]="postingContentPart.contentBeforeReference | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
+></span>
+<a class="reference-hash" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
+    {{ postingContentPart.referenceStr }}
+</a>
+<span
+    class="markdown-preview manipulate-p"
+    *ngIf="postingContentPart.contentAfterReference"
+    [innerHTML]="postingContentPart.contentAfterReference | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
+></span>

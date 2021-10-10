@@ -184,6 +184,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
             getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
             getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
+            getFeaturesStub.withArgs(ProgrammingLanguage.C).returns(getProgrammingLanguageFeature(ProgrammingLanguage.C));
         });
 
         it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
@@ -233,7 +234,19 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
+            expect(comp.packageNamePattern).toEqual(comp.appNamePatternForSwift);
+        }));
+
+        it('Should activate SCA for C', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+
+            // THEN
+            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -360,6 +373,16 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 sequentialTestRuns: false,
                 staticCodeAnalysis: false,
                 plagiarismCheckSupported: false,
+                packageNameRequired: false,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [],
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.C:
+            return {
+                programmingLanguage: ProgrammingLanguage.C,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [],

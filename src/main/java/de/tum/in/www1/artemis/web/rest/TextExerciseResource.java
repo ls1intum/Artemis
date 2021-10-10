@@ -161,11 +161,8 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
+        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(textExercise.getId());
 
-        // Only notify tutors when the exercise is created for a course
-        if (textExercise.isCourseExercise()) {
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
-        }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -229,7 +226,7 @@ public class TextExerciseResource {
         }
 
         if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);

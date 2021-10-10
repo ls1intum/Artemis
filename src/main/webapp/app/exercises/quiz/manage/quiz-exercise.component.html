@@ -1,27 +1,29 @@
 <div>
-    <h4>
-        <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
-        <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
+    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
+        <span class="mb-1 me-auto">
+            <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
+            <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
+        </span>
         <a
             *ngIf="course && course.isAtLeastEditor"
-            class="btn me-2 btn-primary float-end jh-create-entity create-quiz-exercise"
+            class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </a>
+        <a *ngIf="course && course.isAtLeastEditor" class="btn me-2 btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
+        </a>
         <a
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
-            class="btn me-2 btn-primary float-end jh-create-entity create-quiz-exercise"
+            class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
-        </a>
-        <a *ngIf="course && course.isAtLeastEditor" class="btn me-2 btn-primary float-end" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
