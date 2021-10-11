@@ -258,6 +258,14 @@ export class MetisService {
     }
 
     /**
+     * determines if the current user is at least instructor in the current course
+     * @return boolean instructor flag
+     */
+    metisUserIsAtLeastInstructorInCourse(): boolean {
+        return this.accountService.isAtLeastInstructorInCourse(this.course);
+    }
+
+    /**
      * determines if the current user is the author of a given posting
      * @param posting posting to be checked against
      * @return boolean author flag

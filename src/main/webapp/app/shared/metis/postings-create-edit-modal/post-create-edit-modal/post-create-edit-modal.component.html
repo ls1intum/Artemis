@@ -13,7 +13,7 @@
                     <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                         <!-- only tutors can select the announcement mode on post creation or update -->
                         <ng-container *ngFor="let context of CourseWideContext | keyvalue">
-                            <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastTutorInCourse" [ngValue]="{ courseWideContext: context.value }">
+                            <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastInstructorInCourse" [ngValue]="{ courseWideContext: context.value }">
                                 {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                             </option>
                         </ng-container>
@@ -38,7 +38,7 @@
                     <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                         <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                             <ng-container *ngFor="let context of CourseWideContext | keyvalue">
-                                <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastTutorInCourse" [ngValue]="{ courseWideContext: context.value }">
+                                <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastInstructorInCourse" [ngValue]="{ courseWideContext: context.value }">
                                     {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                                 </option>
                             </ng-container>
@@ -46,9 +46,9 @@
                     </select>
                 </div>
             </ng-template>
-            <!-- info is announcement as course-wide topic is selected -->
+            <!-- info if announcement (course-wide topic) is selected -->
             <div class="alert alert-info" *ngIf="currentContextSelectorOption.courseWideContext === CourseWideContext.ANNOUNCEMENT">
-                {{ 'artemisApp.metis.overview.announcementHint' | artemisTranslate }}
+                {{ 'artemisApp.metis.post.announcementHint' | artemisTranslate }}
             </div>
             <!-- title -->
             <div class="position-relative mb-3">

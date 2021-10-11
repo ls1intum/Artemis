@@ -186,6 +186,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     filterFn = (post: Post): boolean => {
         if (this.filterResolved) {
+            // announcement should never be regarded as unresolved posts as they do not address any problem to be solved
             return !this.metisService.isPostResolved(post) && post.courseWideContext !== CourseWideContext.ANNOUNCEMENT;
         }
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {

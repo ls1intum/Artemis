@@ -56,6 +56,10 @@ export class MockMetisService {
         return true;
     }
 
+    metisUserIsAtLeastInstructorInCourse(): boolean {
+        return true;
+    }
+
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return true;
     }

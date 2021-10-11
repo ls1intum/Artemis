@@ -29,6 +29,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     course: Course;
     pageType: PageType;
     isAtLeastTutorInCourse: boolean;
+    isAtLeastInstructorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
@@ -38,19 +39,28 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         super(metisService, modalService, formBuilder);
     }
 
-    ngOnInit() {
+    /**
+     * on initialization: reset all input field of the modal, determine the post context;
+     * subscribe to the form control changes of the context selector in order to show the Announcement info box on selection;
+     * authorize the user by invoking the metis service
+     */
+    ngOnInit(): void {
         this.resetCurrentContextSelectorOption();
         super.ngOnInit();
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
         });
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
     }
 
-    ngOnChanges() {
+    /**
+     * on initialization: reset all input field of the modal, determine the post context;
+     */
+    ngOnChanges(): void {
         this.resetCurrentContextSelectorOption();
         super.ngOnChanges();
     }

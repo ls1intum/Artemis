@@ -24,6 +24,7 @@ describe('PostCreateEditModalComponent', () => {
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
     let metisServiceGetPageTypeStub: SinonStub;
+    let metisServiceIsAtLeastInstructorStub: SinonStub;
     let metisServiceCreateSpy: SinonSpy;
     let metisServiceUpdateSpy: SinonSpy;
 
@@ -46,6 +47,8 @@ describe('PostCreateEditModalComponent', () => {
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceGetPageTypeStub = stub(metisService, 'getPageType');
+                metisServiceIsAtLeastInstructorStub = stub(metisService, 'metisUserIsAtLeastInstructorInCourse');
+                metisServiceIsAtLeastInstructorStub.returns(false);
                 metisServiceCreateSpy = spy(metisService, 'createPost');
                 metisServiceUpdateSpy = spy(metisService, 'updatePost');
             });
@@ -97,6 +100,36 @@ describe('PostCreateEditModalComponent', () => {
             courseWideContext: undefined,
             exercise: undefined,
             metisLecture,
+        });
+        expect(component.posting.creationDate).to.not.be.undefined;
+        tick();
+        expect(component.isLoading).to.equal(false);
+        expect(onCreateSpy).to.have.been.called;
+    }));
+
+    it('should invoke metis service with created announcement in overview', fakeAsync(() => {
+        metisServiceIsAtLeastInstructorStub.returns(true);
+        metisServiceGetPageTypeStub.returns(PageType.OVERVIEW);
+        component.posting = metisPostToCreateUser1;
+        component.ngOnInit();
+        // provide some input before creating the post
+        const newContent = 'New Content';
+        const newTitle = 'New Title';
+        const onCreateSpy = spy(component.onCreate, 'emit');
+        component.formGroup.setValue({
+            title: newTitle,
+            content: newContent,
+            context: { courseWideContext: CourseWideContext.ANNOUNCEMENT, exercise: undefined, undefined },
+        });
+        // trigger the method that is called on clicking the save button
+        component.confirm();
+        expect(metisServiceCreateSpy).to.be.have.been.calledWith({
+            ...component.posting,
+            content: newContent,
+            title: newTitle,
+            courseWideContext: CourseWideContext.ANNOUNCEMENT,
+            exercise: undefined,
+            lecture: undefined,
         });
         expect(component.posting.creationDate).to.not.be.undefined;
         tick();

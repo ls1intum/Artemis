@@ -143,7 +143,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateAnnouncement() throws Exception {
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
@@ -158,7 +158,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testCreateAnnouncement_forbidden() throws Exception {
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
