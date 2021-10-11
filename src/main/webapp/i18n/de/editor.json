@@ -20,7 +20,7 @@
             "unsubmittedChanges": "Nicht abgesendet.",
             "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.\nDu musst die gespeicherten Änderungen manuell absenden.",
             "changesConflict": "Konflikt",
-            "changesConflictTooltip": "Dein Repository befindet sich ein einem Konfliktzustand. Löse den Konflikt, um weiterzuarbeiten.",
+            "changesConflictTooltip": "Dein Repository befindet sich in einem Konfliktzustand. Löse den Konflikt, um weiterzuarbeiten.",
             "submittingChanges": "Sendet...",
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
