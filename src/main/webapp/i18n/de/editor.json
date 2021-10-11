@@ -27,6 +27,7 @@
             "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
             "refreshingFiles": "Aktualisiert...",
             "submit": "Absenden",
+            "submitDescription": "Staged, committed, pushed, baut und tested Deine Änderungen.",
             "buildOutput": "Build Ergebnisse",
             "building": "Build und Tests werden ausgeführt...",
             "buildFailed": "Build gescheitert",

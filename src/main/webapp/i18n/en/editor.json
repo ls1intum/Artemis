@@ -27,6 +27,7 @@
             "preparingForSubmitTooltip": "Preparing for submit.",
             "refreshingFiles": "Refreshing...",
             "submit": "Submit",
+            "submitDescription": "Stage, commit, push, build and test your changes.",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
             "buildFailed": "Build Failed",
