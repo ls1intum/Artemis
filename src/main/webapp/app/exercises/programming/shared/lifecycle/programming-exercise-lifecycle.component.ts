@@ -3,6 +3,8 @@ import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -13,6 +15,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
+
+    course: Course;
 
     readonly assessmentType = AssessmentType;
 
@@ -25,6 +29,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
+        this.course = getCourseFromExercise(this.exercise)!;
     }
 
     /**
