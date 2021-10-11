@@ -82,7 +82,7 @@ export class CourseManagementRequests {
      * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param assessmentDueDate the due date of the assessment
+     * @param assessmentDate the due date of the assessment
      * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
      * @returns <Chainable> request response
      */
@@ -94,7 +94,7 @@ export class CourseManagementRequests {
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
-        assessmentDueDate = day().add(2, 'days'),
+        assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
@@ -104,19 +104,19 @@ export class CourseManagementRequests {
             shortName: programmingShortName,
             packageName,
             assessmentType: CypressAssessmentType[assessmentType],
-            assessmentDueDate,
         };
         const exercise: any = Object.assign({}, template, body);
         if (!isExamExercise) {
             exercise.releaseDate = dayjsToString(releaseDate);
             exercise.dueDate = dayjsToString(dueDate);
+            exercise.assessmentDueDate = dayjsToString(assessmentDate);
         }
 
         if (scaMaxPenalty) {
             exercise.staticCodeAnalysisEnabled = true;
             exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
-
+        debugger;
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
