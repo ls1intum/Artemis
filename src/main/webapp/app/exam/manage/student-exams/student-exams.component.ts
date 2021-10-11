@@ -48,7 +48,7 @@ export class StudentExamsComponent implements OnInit {
         private alertService: AlertService,
         private modalService: NgbModal,
         private accountService: AccountService,
-        private artemisTranslatePipe: ArtemisTranslatePipe
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     /**
