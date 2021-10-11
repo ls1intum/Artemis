@@ -360,4 +360,3 @@ Summary
 .. |no_results_found| image:: student/buttons/no_results_found.png
 .. |export_pdf| image:: student/buttons/export_pdf.png
 .. |conflict_state| image:: student/conflict_state.png
-
