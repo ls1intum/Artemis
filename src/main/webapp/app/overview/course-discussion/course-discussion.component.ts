@@ -12,6 +12,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 interface ContextFilterOption {
     courseId?: number;
@@ -39,7 +40,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     currentSortDirection = SortDirection.DESC;
     currentPostContentFilter: ContentFilterOption;
     searchText?: string;
-    filterResolved = false;
+    filterToUnresolved = false;
+    filterToOwn = false;
+    filterToAnsweredOrReactedByUser = false;
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
@@ -105,7 +108,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             context: [this.currentPostContextFilter],
             sortBy: [PostSortCriterion.CREATION_DATE],
             sortDirection: [SortDirection.DESC],
-            filterResolved: [this.filterResolved],
+            filterToUnresolved: [this.filterToUnresolved],
+            filterToOwn: [this.filterToOwn],
+            filterToAnsweredOrReacted: [this.filterToAnsweredOrReactedByUser],
         });
     }
 
@@ -132,7 +137,10 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
-    onFilterResolved(): void {
+    /**
+     * on changing the filter (to unresolved | own | answered or reacted posts only), the currently loaded posts are filtered accordingly
+     */
+    onFilterChange(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
@@ -182,11 +190,22 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     /**
      * filters posts on their context: checks if a current non-empty search text (provided via user input) in contained in either the post title or post content,
      * the compared strings are lowercase in advance
-     * @return boolean predicate if the post is filtered out or not
+     * @return boolean predicate if the post is kept (true) or filtered out (false)
      */
     filterFn = (post: Post): boolean => {
-        if (this.filterResolved) {
-            return !this.metisService.isPostResolved(post);
+        let keepPost = true;
+        if (this.filterToUnresolved) {
+            keepPost = keepPost && !this.metisService.isPostResolved(post);
+        }
+        if (this.filterToOwn) {
+            keepPost = keepPost && this.metisService.metisUserIsAuthorOfPosting(post);
+        }
+        if (this.filterToAnsweredOrReactedByUser) {
+            const hasAnsweredOrReacted =
+                (post.answers?.some((answer: AnswerPost) => this.metisService.metisUserIsAuthorOfPosting(answer)) ||
+                    post.reactions?.some((reaction: Reaction) => reaction.user?.id === this.metisService.getUser().id)) ??
+                false;
+            keepPost = keepPost && hasAnsweredOrReacted;
         }
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content
@@ -203,7 +222,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                 false
             );
         }
-        return true;
+        return keepPost;
     };
 
     /**
@@ -279,6 +298,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
+    /**
+     * sets the filter and sort options after receiving user input
+     */
     private setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
@@ -289,7 +311,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;
         this.currentSortDirection = this.formGroup.get('sortDirection')?.value;
-        this.filterResolved = this.formGroup.get('filterResolved')?.value;
+        this.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
+        this.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        this.filterToAnsweredOrReactedByUser = this.formGroup.get('filterToAnsweredOrReacted')?.value;
     }
 
     /**

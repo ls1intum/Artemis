@@ -186,12 +186,12 @@ describe('CourseDiscussionComponent', () => {
         component.formGroup.patchValue({
             filterResolved: true,
         });
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterResolved]');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
-        expect(component.filterResolved).toBeTruthy();
+        expect(component.filterToUnresolved).toBeTruthy();
         // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
         expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
     }));
@@ -203,12 +203,12 @@ describe('CourseDiscussionComponent', () => {
         component.formGroup.patchValue({
             filterResolved: false,
         });
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterResolved]');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
-        expect(component.filterResolved).toBeFalsy();
+        expect(component.filterToUnresolved).toBeFalsy();
         expect(component.posts).toHaveLength(metisCoursePosts.length);
     }));
 
