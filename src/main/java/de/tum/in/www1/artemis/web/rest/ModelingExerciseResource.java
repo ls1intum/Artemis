@@ -376,7 +376,8 @@ public class ModelingExerciseResource {
         }
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
-        modelingExerciseRepository.save(newModelingExercise);
+        ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
+        modelingExerciseService.scheduleOperations(result.getId());
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString())).body(newModelingExercise);
     }
