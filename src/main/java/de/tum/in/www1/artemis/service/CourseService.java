@@ -367,25 +367,33 @@ public class CourseService {
      */
 
     private String defineCourseGroupName(Course course, String courseGroup) {
-        String courseGroupName = switch (courseGroup) {
-            case "students" -> course.getStudentGroupName();
-            case "tutors" -> course.getTeachingAssistantGroupName();
-            case "instructors" -> course.getInstructorGroupName();
-            case "editors" -> course.getEditorGroupName();
-            default -> "";
-        };
-        return courseGroupName;
+        switch (courseGroup) {
+            case "students":
+                return course.getStudentGroupName();
+            case "tutors":
+                return course.getTeachingAssistantGroupName();
+            case "instructors":
+                return course.getInstructorGroupName();
+            case "editors":
+                return course.getEditorGroupName();
+            default:
+                return "";
+        }
     }
 
     private Role defineCourseRole(String courseGroup) {
-        Role courseGroupRole = switch (courseGroup) {
-            case "students" -> Role.STUDENT;
-            case "tutors" -> Role.TEACHING_ASSISTANT;
-            case "instructors" -> Role.INSTRUCTOR;
-            case "editors" -> Role.EDITOR;
-            default -> Role.ANONYMOUS;
-        };
-        return courseGroupRole;
+        switch (courseGroup) {
+            case "students":
+                return Role.STUDENT;
+            case "tutors":
+                return Role.TEACHING_ASSISTANT;
+            case "instructors":
+                return Role.INSTRUCTOR;
+            case "editors":
+                return Role.EDITOR;
+            default:
+                return Role.ANONYMOUS;
+        }
     }
 
     /**
