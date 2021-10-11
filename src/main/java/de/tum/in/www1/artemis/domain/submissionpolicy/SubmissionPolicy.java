@@ -11,6 +11,17 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
+/**
+ * Represents an abstract submission policy.
+ * A submission policy configures the parameters for imposing a penalty on programming exercise
+ * participation submissions. The type of penalty is determined by the concrete type of the
+ * submission policy. The system supports two types of policies:
+ * <ol>
+ *     <li>Lock Repository: Locks the participation repository after x submissions</li>
+ *     <li>Submission Penalty: Reduces the possible achievable score after x submissions</li>
+ * </ol>
+ * More information can be found at {@link LockRepositoryPolicy} and {@link SubmissionPenaltyPolicy} respectively.
+ */
 @Entity
 @Table(name = "submission_policy")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -56,4 +67,6 @@ public abstract class SubmissionPolicy extends DomainObject {
     public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
         this.programmingExercise = programmingExercise;
     }
+
+    public abstract String toString();
 }

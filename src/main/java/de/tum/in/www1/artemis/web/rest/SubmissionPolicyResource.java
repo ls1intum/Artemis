@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,27 +86,24 @@ public class SubmissionPolicyResource {
     public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
-        HttpHeaders responseHeaders;
 
         SubmissionPolicy addedSubmissionPolicy;
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         if (programmingExercise.getSubmissionPolicy() != null) {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExercisePolicyPresent",
-                    "The submission policy could not be added to the programming exercise, because it already has a submission policy.");
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
+            throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.",
+                ENTITY_NAME, "programmingExercisePolicyPresent");
         }
 
         if (submissionPolicy.getId() != null) {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyHasId",
-                    "The submission policy could not be added to the programming exercise, because it already has an id.");
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
+            throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has an id.",
+                ENTITY_NAME, "submissionPolicyHasId");
         }
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
-        responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
+        HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
 
         return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", Long.toString(exerciseId)))).headers(responseHeaders)
                 .body(addedSubmissionPolicy);
@@ -127,20 +125,18 @@ public class SubmissionPolicyResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeSubmissionPolicyFromProgrammingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to remove submission policy from programming exercise {}", exerciseId);
-        HttpHeaders responseHeaders;
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExercisePolicyNotPresent",
-                    "The submission policy could not be removed from the programming exercise, because it does not have a submission policy.");
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
+            throw new BadRequestAlertException("The submission policy could not be removed from the programming exercise, because it does not have a submission policy.",
+                ENTITY_NAME, "programmingExercisePolicyNotPresent");
         }
 
         submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
-        responseHeaders = HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
+        HttpHeaders responseHeaders = HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
@@ -170,16 +166,15 @@ public class SubmissionPolicyResource {
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyToggleFailedPolicyNotExist",
-                    "The submission policy could not be toggled, because the programming exercise does not have a submission policy.");
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
+            throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.",
+                ENTITY_NAME, "submissionPolicyToggleFailedPolicyNotExist");
         }
         if (activate == submissionPolicy.isActive()) {
             String errorKey = activate ? "submissionPolicyAlreadyEnabled" : "submissionPolicyAlreadyDisabled";
             String defaultMessage = activate ? "The submission policy could not be enabled, because it is already active."
                     : "The submission policy could not be disabled, because it is not active.";
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, errorKey, defaultMessage);
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
+
+            throw new BadRequestAlertException(defaultMessage, ENTITY_NAME, errorKey);
         }
         if (activate) {
             submissionPolicyService.enableSubmissionPolicy(submissionPolicy);
@@ -187,7 +182,7 @@ public class SubmissionPolicyResource {
         else {
             submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
         }
-        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(exerciseId));
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
@@ -217,24 +212,15 @@ public class SubmissionPolicyResource {
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyUpdateFailedPolicyNotExist",
-                    "The submission policy could not be updated, because the programming exercise does not have a submission policy.");
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
-        }
-
-        // We only care about type equality and not id equality, since the id of the incoming submission policy
-        // is omitted anyway.
-        if (!submissionPolicy.getClass().getTypeName().equals(updatedSubmissionPolicy.getClass().getTypeName())) {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "updatedSubmissionPolicyIncorrectType",
-                    "The submission policy could not be updated, because the new type is different from the old type.");
-            return ResponseEntity.badRequest().headers(responseHeaders).build();
+            throw new BadRequestAlertException("The submission policy could not be updated, because the programming exercise does not have a submission policy.",
+                ENTITY_NAME, "submissionPolicyUpdateFailedPolicyNotExist");
         }
 
         submissionPolicyService.validateSubmissionPolicy(updatedSubmissionPolicy);
 
         submissionPolicy = submissionPolicyService.updateSubmissionPolicy(exercise, updatedSubmissionPolicy);
 
-        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(exerciseId));
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).body(submissionPolicy);
     }
 }

@@ -304,14 +304,6 @@
                     "title": "Speichern",
                     "tooltip": "Speichert die Änderungen an der Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories betroffen sind!"
                 },
-                "addButton": {
-                    "title": "Hinzufügen",
-                    "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
-                },
-                "deleteButton": {
-                    "title": "Löschen",
-                    "tooltip": "Löscht die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories entsperrt werden müssen!"
-                },
                 "activateButton": {
                     "title": "Aktivieren",
                     "tooltip": "Aktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
@@ -347,7 +339,8 @@
                         "max": "Der Abzug muss zwischen 0 und 100 Prozent liegen!",
                         "required": "Der Abzug muss gesetzt sein!"
                     },
-                    "penaltyInfoLabel": "Strafe für Überzug"
+                    "penaltyInfoLabel": "Strafe für Überzug",
+                    "triggerAllInformation": "Anders als für Abgaberichtlinien mit Repository Sperre, tritt die Auswirkung von Abgaberichtlinien mit Überzugsstrafen bei Aktualisierungen nicht sofort ein. Alle Abgaben müssen erneut ausgeführt werden, damit das Ergebnis aktualisiert wird."
                 },
                 "submissionPolicyType": {
                     "title": "Typ der Abgaberichtlinie",
@@ -367,8 +360,7 @@
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet, (de)aktiviert und entfernt werden.",
                 "submissionLimitWarning": {
-                    "min": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
-                    "max": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
+                    "pattern": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
                 }
             }

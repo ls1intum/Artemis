@@ -304,14 +304,6 @@
                     "title": "Update",
                     "tooltip": "Saves the changes to the submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might (un)lock a lot of affected participation repositories!"
                 },
-                "addButton": {
-                    "title": "Add",
-                    "tooltip": "Adds the configured submission policy to this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
-                },
-                "deleteButton": {
-                    "title": "Delete",
-                    "tooltip": "Deletes the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might unlock a lot of affected participation repositories!"
-                },
                 "activateButton": {
                     "title": "Activate",
                     "tooltip": "Activates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
@@ -347,7 +339,8 @@
                         "max": "The penalty must be between 0 and 100 percent!",
                         "required": "The penalty must be set!"
                     },
-                    "penaltyInfoLabel": "Exceeding Penalty"
+                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "triggerAllInformation": "Unlike for lock repository policies, all changes regarding submission penalty policies do not take effect immediately after updating, activating or deactivating the policy. Use the Trigger all functionality to update scores and result strings."
                 },
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
@@ -367,8 +360,7 @@
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited, toggled and removed on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
-                    "min": "The submission limit must be between 1 and 500!",
-                    "max": "The submission limit  must be between 1 and 500!",
+                    "pattern": "The submission limit must be between 1 and 500!",
                     "required": "The submission limit must be set!"
                 }
             }

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
@@ -15,7 +15,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                 (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
                 id="field_submissionPolicy"
-                [disabled]="!editable || updateExistingPolicy"
+                [disabled]="!editable"
             >
                 <option value="none">{{ 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate }}</option>
                 <option value="lock_repository">{{ 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate }}</option>
@@ -23,7 +23,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             </select>
         </div>
 
-        <div class="row" *ngIf="!isNonePolicy">
+        <div class="row mb-3" *ngIf="!isNonePolicy">
             <div class="col">
                 <ng-container>
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
@@ -41,14 +41,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             required
                             type="number"
                             class="form-control"
-                            [customMin]="1"
-                            [customMax]="500"
                             step="1"
                             name="submissionLimit"
                             id="field_submissionLimit"
                             [pattern]="submissionLimitPattern"
                             [disabled]="!editable"
-                            [ngModel]="this.submissionPolicy!.submissionLimit"
+                            [ngModel]="this.programmingExercise.submissionPolicy!.submissionLimit"
                             (ngModelChange)="updateSubmissionLimit(submissionLimitInput.value)"
                             #penalty="ngModel"
                         />
@@ -88,7 +86,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             name="submissionLimitExceededPenalty"
                             id="field_submissionLimitExceededPenalty"
                             [disabled]="!editable"
-                            [ngModel]="this.submissionPolicy!.exceedingPenalty"
+                            [ngModel]="this.programmingExercise.submissionPolicy!.exceedingPenalty"
                             (ngModelChange)="updateExceedingPenalty(exceedingPenaltyInput.value)"
                             #penalty="ngModel"
                         />
@@ -102,45 +100,38 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             </div>
         </div>
     `,
+    styleUrls: ['../../programming/manage/programming-exercise-form.scss'],
 })
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() editable: boolean;
-    @Input() updateExistingPolicy: boolean;
 
-    submissionPolicy?: SubmissionPolicy;
     selectedSubmissionPolicyType: SubmissionPolicyType;
 
     isSubmissionPenaltyPolicy: boolean;
     isLockRepositoryPolicy: boolean;
     isNonePolicy: boolean;
 
-    hadSubmissionPolicyBefore: boolean;
-
     // This is used to ensure that only integers [1-500] can be used as input for the submission limit.
-    submissionLimitPattern = '^([1-9]|([1-9][0-9])|([1-4][0-9][0-9])|500)$'
+    submissionLimitPattern = '^([1-9]|([1-9][0-9])|([1-4][0-9][0-9])|500)$';
 
     ngOnInit(): void {
-        this.submissionPolicy = this.programmingExercise!.submissionPolicy;
-        this.hadSubmissionPolicyBefore = this.submissionPolicy != undefined;
-        this.onSubmissionPolicyTypeChanged(this.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
+        this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.isNonePolicy) {
-            this.updateSubmissionLimit(String(this.submissionPolicy!.submissionLimit ?? 5));
+            this.updateSubmissionLimit(String(this.programmingExercise.submissionPolicy!.submissionLimit ?? 5));
             if (this.isSubmissionPenaltyPolicy) {
-                this.updateExceedingPenalty(String((this.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 10));
+                this.updateExceedingPenalty(String((this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 10));
             }
         }
     }
 
     updateSubmissionLimit(limit: string) {
-        this.submissionPolicy!.submissionLimit = +limit;
-        this.linkPolicyToExercise();
+        this.programmingExercise.submissionPolicy!.submissionLimit = +limit;
         return limit;
     }
 
     updateExceedingPenalty(penalty: string) {
-        this.submissionPolicy!.exceedingPenalty = +penalty;
-        this.linkPolicyToExercise();
+        this.programmingExercise.submissionPolicy!.exceedingPenalty = +penalty;
         return penalty;
     }
 
@@ -162,34 +153,34 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
         const previousSubmissionPolicyType = this.programmingExercise?.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
+        console.log(submissionPolicyType + ', ' + previousSubmissionPolicyType);
         if (submissionPolicyType === SubmissionPolicyType.NONE) {
-            this.submissionPolicy = undefined;
+            if (previousSubmissionPolicyType !== SubmissionPolicyType.NONE) {
+                this.programmingExercise.submissionPolicy!.type = SubmissionPolicyType.NONE;
+            } else {
+                this.programmingExercise.submissionPolicy = undefined;
+            }
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
             const newPolicy = new LockRepositoryPolicy();
-            if (this.submissionPolicy) {
-                newPolicy.id = this.submissionPolicy.id;
-                newPolicy.active = this.submissionPolicy.active;
-                newPolicy.submissionLimit = this.submissionPolicy.submissionLimit;
+            if (this.programmingExercise.submissionPolicy) {
+                newPolicy.id = this.programmingExercise.submissionPolicy.id;
+                newPolicy.active = this.programmingExercise.submissionPolicy.active;
+                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
             }
-            this.submissionPolicy = newPolicy;
+            this.programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
             const newPolicy = new SubmissionPenaltyPolicy();
-            if (this.submissionPolicy) {
-                newPolicy.id = this.submissionPolicy.id;
-                newPolicy.active = this.submissionPolicy.active;
-                newPolicy.submissionLimit = this.submissionPolicy.submissionLimit;
-                if (previousSubmissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
-                    newPolicy.exceedingPenalty = this.submissionPolicy.exceedingPenalty;
+            if (this.programmingExercise.submissionPolicy) {
+                newPolicy.id = this.programmingExercise.submissionPolicy.id;
+                newPolicy.active = this.programmingExercise.submissionPolicy.active;
+                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy!.submissionLimit;
+                if (this.programmingExercise.submissionPolicy.exceedingPenalty) {
+                    newPolicy.exceedingPenalty = this.programmingExercise.submissionPolicy.exceedingPenalty;
                 }
             }
-            this.submissionPolicy = newPolicy;
+            this.programmingExercise.submissionPolicy = newPolicy;
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
-        this.linkPolicyToExercise();
         return submissionPolicyType!;
-    }
-
-    private linkPolicyToExercise(): void {
-        this.programmingExercise.submissionPolicy = this.submissionPolicy;
     }
 }

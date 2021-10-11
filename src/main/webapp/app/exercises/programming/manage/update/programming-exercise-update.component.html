@@ -286,7 +286,7 @@
         <div class="form-group">
             <jhi-submission-policy-update [editable]="!isEdit" [programmingExercise]="programmingExercise"></jhi-submission-policy-update>
             <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
-                <ngb-alert  [dismissible]="false" [type]="'info'">
+                <ngb-alert [dismissible]="false" [type]="'info'">
                     <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
                 </ngb-alert>
             </ng-container>

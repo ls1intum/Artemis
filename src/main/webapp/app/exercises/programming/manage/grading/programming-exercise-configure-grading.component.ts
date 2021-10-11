@@ -21,7 +21,7 @@ import {
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 /**
  * Describes the editableField
@@ -163,7 +163,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         } else if (this.activeTab !== 'test-cases') {
                             this.selectTab('test-cases');
                         }
-                        this.hadPolicyBefore = !this.programmingExercise.submissionPolicy;
+                        this.hadPolicyBefore = this.programmingExercise.submissionPolicy !== undefined;
                         this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
                         this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
                     }),
@@ -467,6 +467,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap(() => {
                     this.programmingExercise.submissionPolicy = undefined;
+                    this.hadPolicyBefore = false;
                 }),
                 catchError(() => {
                     return of(null);
@@ -487,6 +488,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap((submissionPolicy: SubmissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
+                    this.hadPolicyBefore = true;
                 }),
                 catchError(() => {
                     return of(null);
@@ -501,7 +503,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Updates the submission policy of the programming exercise.
      */
     updateSubmissionPolicy() {
-        if (this.hadPolicyBefore) {
+        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.NONE && this.hadPolicyBefore) {
+            this.removeSubmissionPolicy();
+            return;
+        } else if (!this.hadPolicyBefore && this.programmingExercise.submissionPolicy?.type !== SubmissionPolicyType.NONE) {
             this.addSubmissionPolicy();
             return;
         }

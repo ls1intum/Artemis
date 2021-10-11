@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -49,8 +50,6 @@ public class SubmissionPolicyService {
      * @return the persisted submission policy object that is associated with the programming exercise
      */
     public SubmissionPolicy addSubmissionPolicyToProgrammingExercise(SubmissionPolicy submissionPolicy, ProgrammingExercise programmingExercise) {
-        submissionPolicy.setProgrammingExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
         programmingExercise.setSubmissionPolicy(addedSubmissionPolicy);
         programmingExerciseRepository.save(programmingExercise);
@@ -131,25 +130,28 @@ public class SubmissionPolicyService {
      * all participations, depending on the type of policy.
      *
      * @param policy that should be enabled
+     * @return the enabled and persisted submission policy
      */
-    public void enableSubmissionPolicy(SubmissionPolicy policy) {
+    public SubmissionPolicy enableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
-            enableLockRepositoryPolicy(lockRepositoryPolicy);
+            return enableLockRepositoryPolicy(lockRepositoryPolicy);
         }
         else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
-            enableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
+            return enableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
+        } else {
+            throw new NotImplementedException();
         }
     }
 
-    private void enableLockRepositoryPolicy(LockRepositoryPolicy policy) {
+    private SubmissionPolicy enableLockRepositoryPolicy(LockRepositoryPolicy policy) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(policy.getProgrammingExercise().getId());
         lockParticipationsWhenSubmissionsGreaterLimit(exercise, policy.getSubmissionLimit());
         policy.setActive(true);
-        submissionPolicyRepository.save(policy);
+        return submissionPolicyRepository.save(policy);
     }
 
-    private void enableSubmissionPenaltyPolicy(SubmissionPenaltyPolicy policy) {
-        toggleSubmissionPolicy(policy, true);
+    private SubmissionPolicy enableSubmissionPenaltyPolicy(SubmissionPenaltyPolicy policy) {
+        return toggleSubmissionPolicy(policy, true);
     }
 
     /**
@@ -164,6 +166,8 @@ public class SubmissionPolicyService {
         }
         else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             disableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
+        } else {
+            throw new NotImplementedException();
         }
     }
 
@@ -179,8 +183,9 @@ public class SubmissionPolicyService {
 
     /**
      * Updates the existing submission policy of a programming exercise with new values.
-     * The type of submission policy must not change. When a submission policy is updated,
-     * the effect on participations is updated as well.
+     * When a submission policy is updated, the effect on participations is updated as well.
+     * The effect of submission penalty policies is NOT updated automatically. The user needs
+     * to trigger all builds for the policy to take action.
      * <br>
      * Example:
      * When updating a lock repository policy from 5 allowed submissions to 10 allowed submissions,
@@ -192,11 +197,25 @@ public class SubmissionPolicyService {
      */
     public SubmissionPolicy updateSubmissionPolicy(ProgrammingExercise programmingExercise, SubmissionPolicy newPolicy) {
         SubmissionPolicy originalPolicy = programmingExercise.getSubmissionPolicy();
-        if (originalPolicy instanceof LockRepositoryPolicy) {
+
+        // Case 1: The original and new submission policies are both lock repository policies. Then we can simply
+        // update the existing policy with the new values and handle repository (un)locks
+        if (originalPolicy instanceof LockRepositoryPolicy && newPolicy instanceof LockRepositoryPolicy) {
             updateLockRepositoryPolicy(originalPolicy, newPolicy);
         }
-        else if (originalPolicy instanceof SubmissionPenaltyPolicy) {
+
+        // Case 2: The original and new submission policies are both submission penalty policies. Then we can simply
+        // update the existing policy.
+        else if (originalPolicy instanceof SubmissionPenaltyPolicy && newPolicy instanceof SubmissionPenaltyPolicy) {
             updateSubmissionPenaltyPolicy((SubmissionPenaltyPolicy) originalPolicy, (SubmissionPenaltyPolicy) newPolicy);
+        }
+
+        // Case 3: The original and new submission policies have different types. In this case we want to remove
+        // all effects of the original policy and enforce the effects of the new policy.
+        else {
+            removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
+            newPolicy = addSubmissionPolicyToProgrammingExercise(newPolicy, programmingExercise);
+            return enableSubmissionPolicy(newPolicy);
         }
         return submissionPolicyRepository.save(originalPolicy);
     }
@@ -312,14 +331,21 @@ public class SubmissionPolicyService {
         return getParticipationSubmissionCount(result.getParticipation());
     }
 
+    /**
+     * Calculates and returns the number of submissions for one participation. This amount represents
+     * the amount of unique manual submissions with at least one result.
+     *
+     * @param participation for which the number of submissions should be determined
+     * @return the number of submissions of this participation
+     */
     private int getParticipationSubmissionCount(Participation participation) {
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count();
     }
 
-    private void toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {
+    private SubmissionPolicy toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {
         policy.setActive(active);
-        submissionPolicyRepository.save(policy);
+        return submissionPolicyRepository.save(policy);
     }
 }
