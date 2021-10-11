@@ -555,7 +555,14 @@
                         </tbody>
                     </table>
 
-                    <ng-template #noComplaints> </ng-template>
+                    <ng-template #noComplaints>
+                        <div *ngIf="complaintsDashboardInfo.total === 0" class="alert alert-info">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}
+                        </div>
+                        <div *ngIf="complaintsDashboardInfo.total !== 0" class="alert alert-info">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed' | artemisTranslate }}
+                        </div>
+                    </ng-template>
                 </div>
             </ng-container>
 
@@ -620,7 +627,14 @@
                         </tbody>
                     </table>
 
-                    <ng-template #noComplaints> </ng-template>
+                    <ng-template #noComplaints>
+                        <div *ngIf="moreFeedbackRequestsDashboardInfo.total === 0" class="alert alert-info">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}
+                        </div>
+                        <div *ngIf="moreFeedbackRequestsDashboardInfo.total !== 0" class="alert alert-info">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed' | artemisTranslate }}
+                        </div>
+                    </ng-template>
                 </div>
             </ng-container>
         </div>
