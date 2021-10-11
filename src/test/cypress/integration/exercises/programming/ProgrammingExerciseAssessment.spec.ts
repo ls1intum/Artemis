@@ -48,8 +48,6 @@ describe('Programming exercise assessment', () => {
         coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
         courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
-        // Programming exercises seem to be a bit slow
-        cy.wait(5000);
         exerciseAssessment.clickHaveReadInstructionsButton();
         cy.contains('There are no complaints at the moment').should('be.visible');
         cy.contains('There are no requests at the moment.').should('be.visible');
@@ -116,15 +114,11 @@ describe('Programming exercise assessment', () => {
 
     function updateExerciseDueDate() {
         cy.login(admin);
-        cy.wait(1000).then(() => {
-            courseManagement.updateProgrammingExerciseDueDate(exercise);
-        });
+        courseManagement.updateProgrammingExerciseDueDate(exercise);
     }
 
     function updateExerciseAssessmentDueDate() {
         cy.login(admin);
-        cy.wait(200).then(() => {
-            courseManagement.updateProgrammingExerciseAssessmentDueDate(exercise);
-        });
+        courseManagement.updateProgrammingExerciseAssessmentDueDate(exercise);
     }
 });
