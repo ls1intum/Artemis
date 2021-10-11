@@ -3,8 +3,6 @@ import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
