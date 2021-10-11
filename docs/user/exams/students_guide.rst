@@ -108,9 +108,11 @@ Welcome Screen
 Exam Conduction
 ^^^^^^^^^^^^^^^
 - Once the exam working time starts and you have confirmed your participation, the *Exercise Overview* screen will appear. This screen lists all exercises that are part of your exam with their respective amount of points, title and exercise type. The status column indicates the status of each exercise and whether you have a submission in them or not.
+
 .. figure:: student/exercise_overview_after_start.png
    :alt: Exercise Overview Screen
    :align: center
+
 - On the header, you will find the *Exam Navigation Bar*. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
 
     - When there are unsaved **or** unsubmitted changes, the exercise representation on the navigation bar becomes |unsaved|.
@@ -227,6 +229,8 @@ Participating in Programming Exercises
     .. note::
         You can also choose to resize any of the three sections by dragging the |outline_box|.
 
+- When you press |refresh_files| all unsaved changes are overwritten in the online code editor. Your changes are auto-saved every 30 seconds by Artemis in the code editor.
+
 - When you press |submit|, your changes are pushed to the version control (VC) server and a build is started on the continuous integration (CI) server. This is indicated by the results changing from |no_results_found| to |building_and_testing|. You need to first press |submit| to get feedback on your submissions build status.
 
     .. warning::
@@ -237,6 +241,9 @@ Participating in Programming Exercises
    :align: center
 
    Participating in Programming Exercises with the online code editor and local IDE enabled
+
+
+
 
 - If your exercise allows the use of the local IDE you will have access to the button |clone_repo|.
 - When you click it you can choose to clone the exercise via ``HTTPS`` or ``SSH``, if you have configured your private key.
@@ -269,6 +276,11 @@ Participating in Programming Exercises
 
     .. warning::
         Edit a programming exercise **EITHER** in the online editor **OR** in your local IDE! Otherwise, conflicts can occur that are hard to resolve.
+
+    If you work in the online code editor and a merge conflict occurs, the file browser will display the conflict state |conflict_state|.
+    You can use the |resolve_conflict| button to resolve the conflict within the online code editor.
+    This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
+
 
 End Screen
 ^^^^^^^^^^
@@ -330,6 +342,7 @@ Summary
 .. |rename| image:: student/buttons/rename_file.png
 .. |refresh_files| image:: student/buttons/refresh_files.png
 .. |submit| image:: student/buttons/submit.png
+.. |resolve_conflict| image:: student/buttons/resolve_conflict.png
 .. |build_failed| image:: student/buttons/build_failed.png
 .. |save| image:: student/buttons/save.png
 .. |save_continue| image:: student/buttons/save_continue.png
@@ -351,3 +364,5 @@ Summary
 .. |building_and_testing| image:: student/buttons/building_and_testing.png
 .. |no_results_found| image:: student/buttons/no_results_found.png
 .. |export_pdf| image:: student/buttons/export_pdf.png
+.. |conflict_state| image:: student/conflict_state.png
+
