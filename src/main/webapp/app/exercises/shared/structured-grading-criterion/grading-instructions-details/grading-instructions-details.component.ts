@@ -98,18 +98,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     generateMarkdown(): string {
         let markdownText = '';
-        if (this.criteria == undefined || this.criteria.length === 0) {
-            this.criteria = [];
-            const dummyCriterion = new GradingCriterion();
-            const exampleCriterion = new GradingCriterion();
-            exampleCriterion.title = 'This is an example criterion';
-            const exampleInstr = new GradingInstruction();
-            exampleCriterion.structuredGradingInstructions = [];
-            exampleCriterion.structuredGradingInstructions.push(exampleInstr);
-            exampleCriterion.structuredGradingInstructions.push(exampleInstr); // to showcase that a criterion consists of multiple instructions
-            this.criteria.push(dummyCriterion);
-            this.criteria.push(exampleCriterion);
-        }
         markdownText += this.initializeExerciseGradingInstructionText();
         for (const criterion of this.criteria) {
             if (criterion.title == undefined) {

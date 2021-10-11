@@ -19,7 +19,7 @@
                         <td width="4%" [innerHTML]="setScore(instruction.credits)"></td>
                         <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
                         <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
-                        <td style="position: relative; white-space: nowrap">
+                        <td width="4%" style="position: relative; white-space: nowrap">
                             <span>{{ instruction.usageCount }}</span>
                             <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                         </td>
