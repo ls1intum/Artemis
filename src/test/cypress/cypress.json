@@ -5,6 +5,7 @@
     "screenshotsFolder": "screenshots",
     "videosFolder": "videos",
     "supportFile": "support/index.ts",
+    "projectId": "z9i4pd",
     "baseUrl": "http://localhost:8080",
     "video": false,
     "screenshotOnRunFailure": false,
