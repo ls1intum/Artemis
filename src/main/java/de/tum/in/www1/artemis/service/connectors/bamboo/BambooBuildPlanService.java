@@ -239,11 +239,8 @@ public class BambooBuildPlanService {
                 }
                 if (isXcodeProject) {
                     // add a requirement to be able to run the Xcode build tasks using fastlane
-                    var requirement1 = new Requirement("system.builder.fastlane.fastlane");
-                    // add a requirement to be able to run the Xcode build tasks
-                    var requirement2 = new Requirement("system.builder.xcode.Simulator - iOS 14.5");
-                    defaultJob.requirements(requirement1);
-                    defaultJob.requirements(requirement2);
+                    var requirement = new Requirement("system.builder.fastlane.fastlane");
+                    defaultJob.requirements(requirement);
                 }
                 return defaultStage.jobs(defaultJob);
             }

@@ -377,7 +377,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select count(distinct post.id)
             from Post post left join post.exercise exercise left join post.answers answers
-            where exercise.id = :#{#exerciseId} and answers.tutorApproved = true
+            where exercise.id = :#{#exerciseId} and answers.resolvesPost = true
             """)
     long getNumberOfQuestionsAnsweredForExercise(@Param("exerciseId") Long exerciseId);
 
