@@ -13,7 +13,7 @@
                     <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                         <!-- only tutors can select the announcement mode on post creation or update -->
                         <ng-container *ngFor="let context of CourseWideContext | keyvalue">
-                            <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT" [ngValue]="{ courseWideContext: context.value }">
+                            <option *ngIf="context.value !== CourseWideContext.ANNOUNCEMENT || isAtLeastTutorInCourse" [ngValue]="{ courseWideContext: context.value }">
                                 {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                             </option>
                         </ng-container>

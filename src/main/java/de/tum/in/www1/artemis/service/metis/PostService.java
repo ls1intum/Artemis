@@ -65,7 +65,7 @@ public class PostService extends PostingService {
         post.setAuthor(user);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
-        // announcements can only be created by tutors
+        // announcements can not be created by students
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
             // display priority of announcement is set to pinned per default
