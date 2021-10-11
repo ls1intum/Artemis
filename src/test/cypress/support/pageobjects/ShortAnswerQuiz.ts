@@ -1,4 +1,4 @@
-import { POST } from '../constants';
+import { POST, EXERCISE_BASE } from '../constants';
 
 export class ShortAnswerQuiz {
     getQuizBody() {

@@ -1,4 +1,4 @@
-import { POST, BASE_API } from '../constants';
+import { POST, EXERCISE_BASE } from '../constants';
 
 export class DragAndDropQuiz {
     dragItemIntoDragArea() {
@@ -6,7 +6,7 @@ export class DragAndDropQuiz {
     }
 
     submit() {
-        cy.intercept(POST, BASE_API + 'exercises/*/submissions/live').as('createQuizExercise');
+        cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
         cy.get('.jhi-btn').contains('Submit').click();
         return cy.wait('@createQuizExercise');
     }
