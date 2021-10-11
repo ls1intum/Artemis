@@ -39,20 +39,20 @@
         </div>
 
         <div *ngIf="this.question.type === QuizQuestionType.DRAG_AND_DROP">
-            <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
-            <span *ngIf="this.wronglyMappedDragAndDropItems != 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems != 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.points,
-                        paramWrongMappedItems: this.wronglyMappedDragAndDropItems,
+                        paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
                         paramRightMapping: this.correctlyMappedDragAndDropItems,
                         paramPoint: this.scorePoint,
                         paramScorePoint: this.questionPoint,
@@ -161,22 +161,22 @@
         </div>
 
         <div *ngIf="this.question.type === QuizQuestionType.DRAG_AND_DROP">
-            <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
-            <span *ngIf="this.wronglyMappedDragAndDropItems != 0 && this.differenceDragAndDrop >= 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop >= 0">
                 <p
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.points,
-                        paramWrongMappedItems: this.wronglyMappedDragAndDropItems,
+                        paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
                         paramRightMapping: this.correctlyMappedDragAndDropItems,
-                        paramDragAndDropElementsCount: this.dragAndDropZones,
+                        paramDragAndDropElementsCount: this.mappedLocations,
                         paramPoint: this.scorePoint,
                         paramScorePoint: this.questionPoint,
                         rightMap: this.rightMap,
@@ -184,22 +184,22 @@
                     }"
                 ></p>
                 <b
-                    >+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.dragAndDropZones }} - {{ this.wronglyMappedDragAndDropItems }}*{{
+                    >+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} - {{ this.incorrectlyMappedDragAndDropItems }}*{{
                         this.question.points
-                    }}/{{ this.dragAndDropZones }} = {{ this.score }}</b
+                    }}/{{ this.mappedLocations }} = {{ this.score }}</b
                 >
                 <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
 
-            <span *ngIf="this.wronglyMappedDragAndDropItems != 0 && this.differenceDragAndDrop < 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop < 0">
                 <p
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.points,
-                        paramWrongMappedItems: this.wronglyMappedDragAndDropItems,
+                        paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
                         paramRightMapping: this.correctlyMappedDragAndDropItems,
-                        paramDragAndDropElementsCount: this.dragAndDropZones,
+                        paramDragAndDropElementsCount: this.mappedLocations,
                         paramPoint: this.scorePoint,
                         paramScorePoint: this.questionPoint,
                         rightMap: this.rightMap,
@@ -207,9 +207,9 @@
                     }"
                 ></p>
                 <b
-                    >+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.dragAndDropZones }} - {{ this.wronglyMappedDragAndDropItems }}*{{
+                    >+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} - {{ this.incorrectlyMappedDragAndDropItems }}*{{
                         this.question.points
-                    }}/{{ this.dragAndDropZones }}
+                    }}/{{ this.mappedLocations }}
                     = 0
                 </b>
                 <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
@@ -337,48 +337,48 @@
         </div>
 
         <div *ngIf="this.question.type === QuizQuestionType.DRAG_AND_DROP">
-            <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems == 0">
                 <span
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
-            <span *ngIf="this.wronglyMappedDragAndDropItems != 0 && this.differenceDragAndDrop >= 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop >= 0">
                 <p
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.points,
-                        paramWrongMappedItems: this.wronglyMappedDragAndDropItems,
+                        paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
                         paramRightMapping: this.correctlyMappedDragAndDropItems,
-                        paramDragAndDropElementsCount: this.dragAndDropZones,
+                        paramDragAndDropElementsCount: this.mappedLocations,
                         paramPoint: this.scorePoint,
                         paramScorePoint: this.questionPoint,
                         rightMap: this.rightMap,
                         wrongMap: this.wrongMap
                     }"
                 ></p>
-                <b>+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.dragAndDropZones }} = {{ this.score }}</b>
+                <b>+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} = {{ this.score }}</b>
                 <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
 
-            <span *ngIf="this.wronglyMappedDragAndDropItems != 0 && this.differenceDragAndDrop < 0">
+            <span *ngIf="this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop < 0">
                 <p
                     jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.points,
-                        paramWrongMappedItems: this.wronglyMappedDragAndDropItems,
+                        paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
                         paramRightMapping: this.correctlyMappedDragAndDropItems,
-                        paramDragAndDropElementsCount: this.dragAndDropZones,
+                        paramDragAndDropElementsCount: this.mappedLocations,
                         paramPoint: this.scorePoint,
                         paramScorePoint: this.questionPoint,
                         rightMap: this.rightMap,
                         wrongMap: this.wrongMap
                     }"
                 ></p>
-                <b>+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.dragAndDropZones }} = 0 </b>
+                <b>+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} = 0 </b>
                 <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
                 <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>

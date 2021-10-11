@@ -10,6 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * An AnswerPost.
@@ -20,23 +21,23 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerPost extends Posting {
 
-    @Column(name = "tutor_approved")
-    private Boolean tutorApproved;
+    @Column(name = "resolves_post")
+    private Boolean resolvesPost;
 
-    // To be used with introduction of Metis
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "course_wide_context" })
+    @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "course_wide_context", "author" })
     private Post post;
 
-    public Boolean isTutorApproved() {
-        return tutorApproved;
+    @JsonProperty("resolvesPost")
+    public Boolean doesResolvePost() {
+        return resolvesPost;
     }
 
-    public void setTutorApproved(Boolean tutorApproved) {
-        this.tutorApproved = tutorApproved;
+    public void setResolvesPost(Boolean resolvesPost) {
+        this.resolvesPost = resolvesPost;
     }
 
     @Override
@@ -64,7 +65,7 @@ public class AnswerPost extends Posting {
 
     @Override
     public String toString() {
-        return "AnswerPost{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", tutorApproved='" + isTutorApproved() + "'"
+        return "AnswerPost{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", resolvesPosts='" + doesResolvePost() + "'"
                 + "}";
     }
 }

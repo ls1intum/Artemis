@@ -18,7 +18,7 @@ import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util'
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    metisAnswerPostUser1,
+    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePostsWithCourseWideContext,
     metisExercise,
@@ -70,7 +70,7 @@ describe('Metis Service', () => {
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
-        answerPost = metisAnswerPostUser1;
+        answerPost = metisResolvingAnswerPostUser1;
         reaction = metisReactionUser2;
         course = metisCourse;
     });
@@ -296,6 +296,27 @@ describe('Metis Service', () => {
         metisService.setCourse(newCourse);
         const getCourseReturn = metisService.getCourse();
         expect(getCourseReturn).toEqual(newCourse);
+    });
+
+    it('should create empty post for a course-wide context', () => {
+        const emptyPost = metisService.createEmptyPostForContext(CourseWideContext.ORGANIZATION, undefined, undefined);
+        expect(emptyPost.courseWideContext).toEqual(CourseWideContext.ORGANIZATION);
+        expect(emptyPost.exercise).toEqual(undefined);
+        expect(emptyPost.lecture).toEqual(undefined);
+    });
+
+    it('should create empty post for a exercise context', () => {
+        const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
+        expect(emptyPost.courseWideContext).toEqual(undefined);
+        expect(emptyPost.exercise).toEqual({ id: metisExercise.id, title: metisExercise.title, type: metisExercise.type });
+        expect(emptyPost.lecture).toEqual(undefined);
+    });
+
+    it('should create empty post for a lecture context', () => {
+        const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture.id);
+        expect(emptyPost.courseWideContext).toEqual(undefined);
+        expect(emptyPost.exercise).toEqual(undefined);
+        expect(emptyPost.lecture).toEqual({ id: metisLecture.id });
     });
 
     it('should determine the link components for a reference to a post with course-wide context', () => {

@@ -48,13 +48,15 @@ jobs:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.3.0
+      uses: actions/setup-java@v2.3.1
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
+      env:
+        NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
