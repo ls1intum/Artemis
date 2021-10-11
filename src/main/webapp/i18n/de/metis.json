@@ -61,7 +61,7 @@
                 "announcementHint": "Ankündigungen werden automatisch angeheftet und werden daher in der Übersicht als erstes gelistet. Mögliche Antworten können nicht als klärend markiert werden. Nur Übungsleitung kann Ankündigungen erstellen.",
                 "title": "Titel",
                 "postMarkedAsResolvedTooltip": "Beitrag wurde als geklärt markiert",
-                "postMarkedAsAnnouncementTooltip": "Dieser Beitrag ist eine Ankündigung der Vorlesungsleitung",
+                "postMarkedAsAnnouncementTooltip": "Ankündigung",
                 "titleTooltip": "Gib deinem Beitrag einen prägnanten und zusammenfassenden Titel",
                 "tags": "Tags",
                 "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags. Tippe in das Eingabefeld und bestätige mit Enter, um ein Tag hinzuzufügen.",
