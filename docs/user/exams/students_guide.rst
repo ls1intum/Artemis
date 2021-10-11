@@ -242,9 +242,6 @@ Participating in Programming Exercises
 
    Participating in Programming Exercises with the online code editor and local IDE enabled
 
-
-
-
 - If your exercise allows the use of the local IDE you will have access to the button |clone_repo|.
 - When you click it you can choose to clone the exercise via ``HTTPS`` or ``SSH``, if you have configured your private key.
 
@@ -273,14 +270,12 @@ Participating in Programming Exercises
     1. |build_failed| means that your code does **not** compile!
     2. |build_passed| means that your code compiles but provides no further information about your final score.
 
-
     .. warning::
         Edit a programming exercise **EITHER** in the online editor **OR** in your local IDE! Otherwise, conflicts can occur that are hard to resolve.
 
     If you work in the online code editor and a merge conflict occurs, the file browser will display the conflict state |conflict_state|.
     You can use the |resolve_conflict| button, which is now displayed instead of the submit button, to resolve the conflict within the online code editor.
     This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
-
 
 End Screen
 ^^^^^^^^^^
