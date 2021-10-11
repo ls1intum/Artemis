@@ -8,12 +8,16 @@
         (click)="resetRepository()"
         data-toggle="tooltip"
         data-placement="left"
-        title="Reset your repository to continue with your participation"
+        title="{{ 'artemisApp.editor.conflict.resolveConflict.resetRepository' | artemisTranslate }}"
     >
-        <span *ngIf="isResolvingConflict"
-            ><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span></span
-        >
-        <span *ngIf="!isResolvingConflict"><fa-icon [icon]="'times'"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span></span>
+        <span *ngIf="isResolvingConflict">
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
+        </span>
+        <span *ngIf="!isResolvingConflict"
+            ><fa-icon [icon]="'times'"> </fa-icon>
+            <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span>
+        </span>
     </button>
 </div>
 <ng-template #standardActions>
