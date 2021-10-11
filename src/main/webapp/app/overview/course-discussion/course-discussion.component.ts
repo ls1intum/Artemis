@@ -186,7 +186,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     filterFn = (post: Post): boolean => {
         if (this.filterResolved) {
-            return !this.metisService.isPostResolved(post);
+            return !this.metisService.isPostResolved(post) && post.courseWideContext !== CourseWideContext.ANNOUNCEMENT;
         }
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content

@@ -35,6 +35,7 @@
     <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
         <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
             <div *ngIf="posting.resolvesPost; else notResolved">
+                {{ isAnswerOfAnnouncement }}
                 <fa-icon
                     class="resolved"
                     [icon]="'check'"
