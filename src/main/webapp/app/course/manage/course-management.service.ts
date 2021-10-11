@@ -528,6 +528,9 @@ export class CourseManagementService {
             if (course.exercises) {
                 course.exercises.forEach((exercise: Exercise) => {
                     this.accountService.setAccessRightsForExercise(exercise);
+                    if (exercise.course) {
+                        this.accountService.setAccessRightsForCourse(exercise.course);
+                    }
                 });
             }
         }
