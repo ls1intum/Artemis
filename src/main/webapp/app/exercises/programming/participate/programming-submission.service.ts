@@ -108,8 +108,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             return acc + buildingSubmissionsOfExercise;
         }, 0);
 
-        // For every 100 submissions, we increase the expected time by 1 minute. // TODO this is wrong, should be 4 min?
-        this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100) * 4000 * 60;
+        // For every 100 submissions, we increase the expected time by 1 minute.
+        this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100) * 1000 * 60;
         this.resultEtaSubject?.next(this.currentExpectedResultETA);
     }
 

@@ -43,18 +43,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.0
+      uses: actions/setup-node@v2.4.1
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.3.0
+      uses: actions/setup-java@v2.3.1
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
+      env:
+        NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -84,7 +86,7 @@ jobs:
       name: ${{ matrix.environment }}
     steps:
     - name: Check "lock:${{ matrix.environment }}" label
-      uses: actions/github-script@v4.1
+      uses: actions/github-script@v5
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
