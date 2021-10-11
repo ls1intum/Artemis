@@ -4,22 +4,24 @@ import { PUT, BASE_API } from './../../constants';
  * Parent class for all exercise assessment pages.
  */
 export abstract class AbstractExerciseAssessmentPage {
+    readonly unreferencedFeedbackSelector = 'jhi-unreferenced-feedback';
+
     getInstructionsRootElement() {
-        return cy.get('#cardInstructions');
+        return cy.get('[jhitranslate="artemisApp.textAssessment.instructions"]').parents('.card');
     }
 
     addNewFeedback(points: number, feedback?: string) {
         cy.get('.btn-success').contains('Add new Feedback').click();
-        cy.get('.col-lg-6 >>>> :nth-child(1) > :nth-child(2)').clear().type(points.toString());
+        cy.get(this.unreferencedFeedbackSelector).find('input[type="number"]').clear().type(points.toString());
         if (feedback) {
-            cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type(feedback);
+            cy.get(this.unreferencedFeedbackSelector).find('textarea').clear().type(feedback);
         }
     }
 
     submit() {
-        cy.intercept(PUT, BASE_API + 'participations/*/manual-results?submit=true').as('submitFeedback');
         cy.get('[jhitranslate="entity.action.submit"]').click();
-        return cy.wait('@submitFeedback');
+        // TODO: The alert is currently broken
+        // cy.contains('Your assessment was submitted successfully!').should('be.visible');
     }
 
     rejectComplaint(response: string, exerciseType: CypressExerciseType) {
@@ -43,7 +45,6 @@ export abstract class AbstractExerciseAssessmentPage {
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
         }
-
         if (accept) {
             cy.get('#acceptComplaintButton').click();
         } else {

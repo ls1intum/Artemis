@@ -1,6 +1,5 @@
 import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
-import { generateUUID } from 'src/test/cypress/support/utils';
 
 // The user management object
 const users = artemis.users;
@@ -19,15 +18,7 @@ const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const programmingAssessment = artemis.pageobjects.assessment.programming;
 const exerciseResult = artemis.pageobjects.exerciseResult;
 const programmingFeedback = artemis.pageobjects.programmingExercise.feedback;
-const onlineEditor = artemis.pageobjects.onlineEditor;
-
-// Common primitives
-const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
-const programmingExerciseName = 'Cypress programming exercise ' + uid;
-const programmingExerciseShortName = courseShortName;
-const packageName = 'de.test';
+const onlineEditor = artemis.pageobjects.programmingExercise.editor;
 
 describe('Programming exercise assessment', () => {
     let course: any;
@@ -68,7 +59,7 @@ describe('Programming exercise assessment', () => {
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingAssessment.submit().its('response.statusCode').should('eq', 200);
+        programmingAssessment.submit();
     });
 
     describe('Feedback', () => {
@@ -100,24 +91,15 @@ describe('Programming exercise assessment', () => {
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
-        return courseManagement.createCourse(courseName, courseShortName).then((response) => {
+        return courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
             courseManagement.addInstructorToCourse(course.id, instructor);
             courseManagement
-                .createProgrammingExercise(
-                    programmingExerciseName,
-                    programmingExerciseShortName,
-                    packageName,
-                    { course },
-                    undefined,
-                    undefined,
-                    undefined,
-                    CypressAssessmentType.SEMI_AUTOMATIC,
-                )
-                .then((response) => {
-                    exercise = response.body;
+                .createProgrammingExercise({ course }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .then((programmingResponse) => {
+                    exercise = programmingResponse.body;
                 });
         });
     }

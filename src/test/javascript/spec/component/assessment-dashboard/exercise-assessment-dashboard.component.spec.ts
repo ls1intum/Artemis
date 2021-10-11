@@ -2,7 +2,7 @@ import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
@@ -61,14 +61,15 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -223,6 +224,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: ActivatedRoute, useValue: route },
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
+        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
@@ -301,7 +303,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
         const guidedTourMapping = {} as GuidedTourMapping;
-        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
+        jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
         modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 

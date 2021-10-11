@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -18,15 +18,15 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MomentModule } from 'ngx-moment';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,21 +38,21 @@ describe('CourseManagementComponent', () => {
     let guidedTourService: GuidedTourService;
 
     const pastExercise = {
-        dueDate: moment().subtract(6, 'days'),
-        assessmentDueDate: moment().subtract(1, 'days'),
+        dueDate: dayjs().subtract(6, 'days'),
+        assessmentDueDate: dayjs().subtract(1, 'days'),
     } as Exercise;
 
     const currentExercise = {
-        dueDate: moment().add(2, 'days'),
-        releaseDate: moment().subtract(2, 'days'),
+        dueDate: dayjs().add(2, 'days'),
+        releaseDate: dayjs().subtract(2, 'days'),
     } as Exercise;
 
     const futureExercise1 = {
-        releaseDate: moment().add(4, 'days'),
+        releaseDate: dayjs().add(4, 'days'),
     } as Exercise;
 
     const futureExercise2 = {
-        releaseDate: moment().add(6, 'days'),
+        releaseDate: dayjs().add(6, 'days'),
     } as Exercise;
 
     const courseWithExercises187 = {
@@ -94,15 +94,15 @@ describe('CourseManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseManagementComponent,
                 MockDirective(OrionFilterDirective),
                 MockComponent(AlertComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(JhiSortByDirective),
+                MockDirective(SortByDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(CourseManagementCardComponent),

@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';

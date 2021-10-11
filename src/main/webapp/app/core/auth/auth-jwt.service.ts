@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SERVER_API_URL } from 'app/app.constants';
 import { map } from 'rxjs/operators';
 
 export class Credentials {

@@ -2,5 +2,21 @@
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
-    background-color: darkblue;
+    background-color: #e3ecf3;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-size: smaller;
+    color: #5289c7;
+    padding-bottom: 0.1rem;
+}
+
+.linked-context-information {
+    font-weight: 300 !important;
+    font-size: small;
+    color: #5289c7;
+}
+
+.context-information {
+    font-weight: 300 !important;
+    font-size: small;
 }

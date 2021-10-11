@@ -1,4 +1,4 @@
-import { POST } from '../../../constants';
+import { BASE_API, POST } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the text exercise example submission creation page.
@@ -9,7 +9,7 @@ export class TextExerciseExampleSubmissionCreationPage {
     }
 
     clickCreateNewExampleSubmission() {
-        cy.intercept(POST, 'api/exercises/*/example-submissions/*/example-results').as('createExampleSubmission');
+        cy.intercept(POST, BASE_API + 'exercises/*/example-submissions').as('createExampleSubmission');
         cy.get('[data-icon="save"]').click();
         return cy.wait('@createExampleSubmission');
     }

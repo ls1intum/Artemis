@@ -16,7 +16,7 @@
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
-            <div *ngIf="modelingExercise.releaseDate != undefined && moment(modelingExercise.releaseDate).isBefore(moment())" class="mt-3">
+            <div *ngIf="modelingExercise.releaseDate != undefined && dayjs(modelingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics
                     [exercise]="modelingExercise"
                     [doughnutStats]="doughnutStats"
@@ -38,7 +38,7 @@
                 <dt>
                     <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
                     <button
-                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel"
+                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel && isApollonProfileActive"
                         (click)="downloadAsPDf()"
                         class="btn btn-primary m-2"
                         jhiTranslate="entity.action.export"

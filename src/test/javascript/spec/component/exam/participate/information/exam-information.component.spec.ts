@@ -8,10 +8,10 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockPipe } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,8 +21,8 @@ let component: ExamInformationComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const startDate = moment().subtract(5, 'hours');
-const endDate = moment().subtract(4, 'hours');
+const startDate = dayjs().subtract(5, 'hours');
+const endDate = dayjs().subtract(4, 'hours');
 
 let exam = {
     id: 1,
@@ -72,12 +72,12 @@ describe('ExamInformationComponent', function () {
         component.studentExam = studentExam;
         fixture.detectChanges();
         expect(fixture).to.be.ok;
-        expect(component.endTime()?.isSame(moment(exam.startDate).add(studentExam.workingTime, 'seconds'))).to.equal(true);
+        expect(component.endTime()?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).to.equal(true);
     });
 
     it('should detect if the end date is on another day', function () {
         component.exam = exam;
-        exam.endDate = moment(exam.startDate).add(2, 'days');
+        exam.endDate = dayjs(exam.startDate).add(2, 'days');
         fixture.detectChanges();
         expect(fixture).to.be.ok;
         expect(component.isExamOverMultipleDays()).to.be.true;

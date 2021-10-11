@@ -32,7 +32,7 @@ describe('ExerciseHint Management Component', () => {
         const hint = new ExerciseHint();
         hint.id = 123;
 
-        spyOn(service, 'findByExerciseId').and.returnValue(
+        jest.spyOn(service, 'findByExerciseId').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [hint],

@@ -4,7 +4,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
@@ -58,6 +58,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @param {Exam} exam
      */
     isVisible(exam: Exam): boolean {
-        return exam.visibleDate ? moment(exam.visibleDate).isBefore(this.serverDateService.now()) : false;
+        return exam.visibleDate ? dayjs(exam.visibleDate).isBefore(this.serverDateService.now()) : false;
     }
 }

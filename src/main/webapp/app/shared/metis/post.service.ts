@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { SERVER_API_URL } from 'app/app.constants';
+import dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
+import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -25,14 +26,42 @@ export class PostService extends PostingsService<Post> {
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
-        // as we need course information at server side, we need to make sure that the course id is set
-        if (post.lecture && post.lecture.course === undefined) {
-            post.lecture.course = { id: courseId };
-        }
-        if (post.exercise && post.exercise.course === undefined) {
-            post.exercise.course = { id: courseId };
-        }
         return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    }
+
+    /**
+     * gets all posts for course by its id, filtered by context if PostContextFilter is passed
+     * a context to filter posts for can be a course-wide topic, a lecture, or an exercise within a course
+     * @param {number} courseId
+     * @param {PostContextFilter} postContextFilter
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<EntityArrayResponseType> {
+        let params = new HttpParams();
+        if (postContextFilter.courseWideContext) {
+            params = params.set('courseWideContext', postContextFilter.courseWideContext.toString());
+        }
+        if (postContextFilter.lectureId) {
+            params = params.set('lectureId', postContextFilter.lectureId.toString());
+        }
+        if (postContextFilter.exerciseId) {
+            params = params.set('exerciseId', postContextFilter.exerciseId.toString());
+        }
+        return this.http
+            .get<Post[]>(`${this.resourceUrl}${courseId}/posts`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(map(this.convertDateArrayFromServer));
+    }
+
+    /**
+     * gets all tags for course
+     * @param {number} courseId
+     * @return {Observable<string[]>}
+     */
+    getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/posts/tags`, { observe: 'response' });
     }
 
     /**
@@ -47,32 +76,16 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * gets all posts for course by its id
+     * updates the display priority of a post
      * @param {number} courseId
-     * @return {Observable<EntityArrayResponseType>}
+     * @param {number} postId
+     * @param {DisplayPriority} displayPriority
+     * @return {Observable<EntityResponseType>}
      */
-    getAllPostsByCourseId(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
-    }
-
-    /**
-     * gets all posts for a lecture in a certain course by its id
-     * @param {number} courseId
-     * @param {number} lectureId
-     * @return {Observable<EntityArrayResponseType>}
-     */
-    getAllPostsByLectureId(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
-    }
-
-    /**
-     * gets all posts for an exercise in a certain course by its id
-     * @param {number} courseId
-     * @param {number} exerciserId
-     * @return {Observable<EntityArrayResponseType>}
-     */
-    getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+    updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
+        return this.http
+            .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .pipe(map(this.convertDateFromServer));
     }
 
     /**
@@ -86,11 +99,16 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * gets all tags for course
-     * @param {number} courseId
-     * @return {Observable<string[]>}
+     * takes an array of posts and converts the date from the server
+     * @param   {HttpResponse<Post[]>} res
+     * @return  {HttpResponse<Post[]>}
      */
-    getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/posts/tags`, { observe: 'response' });
+    protected convertDateArrayFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
+        if (res.body) {
+            res.body.forEach((post: Post) => {
+                post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
+            });
+        }
+        return res;
     }
 }
