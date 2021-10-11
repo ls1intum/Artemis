@@ -91,7 +91,7 @@ describe('Programming exercise assessment', () => {
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
-        return courseManagement.createCourse().then((response) => {
+        return courseManagement.createCourse(true).then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
