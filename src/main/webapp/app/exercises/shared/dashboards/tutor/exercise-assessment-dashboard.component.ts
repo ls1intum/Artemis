@@ -31,7 +31,6 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
@@ -48,6 +47,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { LegendPosition } from '@swimlane/ngx-charts';
+import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -80,17 +81,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     numberOfTutorAssessments = 0;
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
+    numberOfAutomaticAssistedAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()];
-    numberOfComplaints = 0;
-    numberOfOpenComplaints = 0;
-    numberOfTutorComplaints = 0;
-    numberOfMoreFeedbackRequests = 0;
-    numberOfOpenMoreFeedbackRequests = 0;
-    numberOfTutorMoreFeedbackRequests = 0;
     complaintsEnabled = false;
     feedbackRequestEnabled = false;
-    totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissionsByCorrectionRound: Map<number, Submission[]> = new Map<number, Submission[]>();
@@ -143,6 +138,49 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     exerciseForGuidedTour?: Exercise;
 
+    complaintsDashboardInfo: AssessmentDashboardInformationEntry;
+    moreFeedbackRequestsDashboardInfo: AssessmentDashboardInformationEntry;
+    ratingsDashboardInfo: AssessmentDashboardInformationEntry;
+
+    // graph
+    unassessessedSubmissionsTitle: string;
+    automaticAssisstedSubmissions: string;
+    manualAssessedSubmissions: string;
+    get assessments(): any[] {
+        return [
+            {
+                name: this.unassessessedSubmissionsTitle,
+                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+            },
+            {
+                name: this.manualAssessedSubmissions,
+                value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
+            },
+            {
+                name: this.automaticAssisstedSubmissions,
+                value: this.numberOfAutomaticAssistedAssessments.total,
+            },
+        ];
+    }
+    view: [number, number] = [350, 150];
+    legendPosition = LegendPosition.Below;
+    get customColors(): any[] {
+        return [
+            {
+                name: this.unassessessedSubmissionsTitle,
+                value: '#F4A7B6',
+            },
+            {
+                name: this.manualAssessedSubmissions,
+                value: '#98C7EF',
+            },
+            {
+                name: this.automaticAssisstedSubmissions,
+                value: '#FFDD9C',
+            },
+        ];
+    }
+
     // extension points, see shared/extension-point
     @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
     @ContentChild('overrideOpenButton') overrideOpenButton: TemplateRef<any>;
@@ -150,7 +188,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     constructor(
         private exerciseService: ExerciseService,
-        private courseManagementService: CourseManagementService,
         private alertService: AlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
@@ -164,7 +201,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private router: Router,
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-        private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
@@ -186,6 +222,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
+        this.translateService.onLangChange.subscribe(() => {
+            this.setupGraphTranslations();
+        });
+    }
+
+    setupGraphTranslations() {
+        this.unassessessedSubmissionsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
+        this.automaticAssisstedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
+        this.manualAssessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
     }
 
     /**
@@ -199,7 +244,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
+                this.isAtLeastInstructor = false; // this.accountService.isAtLeastInstructorForExercise(this.exercise);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
@@ -282,34 +327,39 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
+                    this.numberOfAutomaticAssistedAssessments = this.statsForDashboard.numberOfAutomaticAssistedAssessments;
                     this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = this.statsForDashboard.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
 
-                    this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
-                    this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
-                    this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
-                    this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
                     const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
                     this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                        this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
-                        this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
+                        this.complaintsDashboardInfo = new AssessmentDashboardInformationEntry(
+                            this.statsForDashboard.numberOfComplaints,
+                            tutorLeaderboardEntry.numberOfTutorComplaints,
+                            this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                        );
+                        this.moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(
+                            this.statsForDashboard.numberOfMoreFeedbackRequests,
+                            tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests,
+                            this.statsForDashboard.numberOfMoreFeedbackRequests - this.statsForDashboard.numberOfOpenMoreFeedbackRequests,
+                        );
+                        this.ratingsDashboardInfo = new AssessmentDashboardInformationEntry(this.statsForDashboard.numberOfRatings, tutorLeaderboardEntry.numberOfTutorRatings);
                     } else {
                         this.numberOfTutorAssessments = 0;
-                        this.numberOfTutorComplaints = 0;
-                        this.numberOfTutorMoreFeedbackRequests = 0;
+                        this.complaintsDashboardInfo = new AssessmentDashboardInformationEntry(
+                            this.statsForDashboard.numberOfComplaints,
+                            0,
+                            this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                        );
+                        this.moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(
+                            this.statsForDashboard.numberOfMoreFeedbackRequests,
+                            0,
+                            this.statsForDashboard.numberOfMoreFeedbackRequests - this.statsForDashboard.numberOfOpenMoreFeedbackRequests,
+                        );
+                        this.ratingsDashboardInfo = new AssessmentDashboardInformationEntry(this.statsForDashboard.numberOfRatings, 0);
                     }
 
-                    if (this.numberOfSubmissions.inTime > 0) {
-                        this.totalAssessmentPercentage.inTime = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
-                    } else {
-                        this.totalAssessmentPercentage.inTime = 100;
-                    }
-                    if (this.numberOfSubmissions.late > 0) {
-                        this.totalAssessmentPercentage.late = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
-                    } else {
-                        this.totalAssessmentPercentage.late = 100;
-                    }
                     if (this.numberOfSubmissions.total > 0) {
                         this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
                     } else {
@@ -327,6 +377,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
+
+        this.setupGraphTranslations();
     }
 
     get yourStatusTitle(): string {

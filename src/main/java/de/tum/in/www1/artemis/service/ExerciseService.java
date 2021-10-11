@@ -108,6 +108,8 @@ public class ExerciseService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final RatingService ratingService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService,
             QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository,
@@ -117,7 +119,7 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingAssessmentService programmingAssessmentService) {
+            ProgrammingAssessmentService programmingAssessmentService, RatingService ratingService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -147,6 +149,7 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.ratingService = ratingService;
     }
 
     /**
@@ -265,6 +268,8 @@ public class ExerciseService {
                 ComplaintType.MORE_FEEDBACK);
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+
+        stats.setNumberOfRatings(ratingService.countRatingsByExerciseId(exerciseId));
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
