@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -111,15 +110,9 @@ public class BuildLogEntryService {
     }
 
     private boolean isDockerImageLog(String log) {
-        int colonPosition = log.indexOf(':');
-        // most docker logs are prepended by some 12 character checksum, only handle other cases here
-        if (colonPosition != 12) {
-            return (log.startsWith("Unable to find image '") && log.endsWith("' locally")) || (log.startsWith("Digest: sha256:") && log.length() == 79 || log.startsWith("Status: Downloaded newer image for "));
-        }
-        // possible variations after the checksum
-        Set<String> dockerLogs = Set.of("Pulling fs layer", "Waiting", "Verifying Checksum", "Download complete", "Pull complete");
-        // +2 to account for the space after the colon
-        return dockerLogs.contains(log.substring(colonPosition + 2));
+        return (log.startsWith("Unable to find image '") && log.endsWith("' locally"))
+                || (log.startsWith("Digest: sha256:") && log.length() == 79 || log.startsWith("Status: Downloaded newer image for ")) || log.endsWith(": Pulling fs layer")
+                || log.endsWith(": Waiting") || log.endsWith(": Verifying Checksum") || log.endsWith(": Download complete") || log.endsWith(": Pull complete");
     }
 
     /**
