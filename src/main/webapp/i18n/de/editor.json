@@ -47,7 +47,7 @@
                 "resolveConflict": "Konflikt beheben",
                 "conflictExplanationShort": "Behebt den Konflikt Deines Repositories.",
                 "conflictExplanationLong": "Dein Repository befindet sich in einem Konfliktzustand. Dies kann passieren, wenn Du sowohl lokal, als auch mit dem Artemis Online-Editor arbeitest. Falls Du mit git vertraut bist, das Repository befindet sich im Zustand eines Merge- oder Checkout-Konflikts. Du kannst auf den unten stehenden Knopf klicken, um Dein Repository auf den letzten Commit zurückzusetzen.",
-                "conflictWarning": "Dies löscht alle nicht bestätigten Änderungen (die Änderung die Du seit dem letzten Absenden im Online-Editor gemacht hast)!"
+                "conflictWarning": "Dies löscht alle nicht committeten Änderungen (die Änderungen, die Du seit dem letzten Absenden im Online-Editor gemacht hast)!"
             },
             "refresh": {
                 "refreshFilesDescription": "Aktualisiert alle Dateien. Dies überschreibt alle nicht gespeicherten Änderungen.",
