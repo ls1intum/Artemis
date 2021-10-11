@@ -9,7 +9,6 @@ import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
@@ -26,6 +25,8 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     @Input() questionIndex: number; // Question Index of the question
     @Input() question: QuizQuestion;
     @Input() dragAndDropMapping = new Array<DragAndDropMapping>();
+    @Input() incorrectlyMappedDragAndDropItems: number;
+    @Input() mappedLocations: number;
     @Input() multipleChoiceMapping = new Array<AnswerOption>();
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
     @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
@@ -45,9 +46,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     checkForWrongAnswers = new Array<AnswerOption>();
 
     /* Drag and Drop Counting Variables*/
-    dragAndDropZones: number; // Amount of drag and drop Zones
-    wronglyMappedDragAndDropItems: number; // Amount of wrongly mapped drag and drop item
-    differenceDragAndDrop: number; // Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
+    differenceDragAndDrop: number; // Difference between the incorrectlyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
     /* Short Answer Counting Variables*/
     shortAnswerSpots: number; // Amount of short answer spots
@@ -165,10 +164,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countDragAndDrop() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        const dndQuestion = this.question as DragAndDropQuestion;
-        this.dragAndDropZones = dndQuestion.dropLocations!.length;
-        this.wronglyMappedDragAndDropItems = this.dragAndDropZones - this.correctlyMappedDragAndDropItems;
-        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
+        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.incorrectlyMappedDragAndDropItems;
 
         if (this.correctlyMappedDragAndDropItems === 1) {
             this.rightMap = this.translateService.instant(translationBasePath + 'item');
@@ -176,7 +172,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             this.rightMap = this.translateService.instant(translationBasePath + 'items');
         }
 
-        if (this.wronglyMappedDragAndDropItems === 1) {
+        if (this.incorrectlyMappedDragAndDropItems === 1) {
             this.wrongMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.wrongMap = this.translateService.instant(translationBasePath + 'items');

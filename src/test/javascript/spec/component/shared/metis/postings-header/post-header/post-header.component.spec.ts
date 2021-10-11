@@ -88,8 +88,7 @@ describe('PostHeaderComponent', () => {
         component.ngOnChanges();
         fixture.detectChanges();
         expect(component.numberOfAnswerPosts).to.be.equal(0);
-        expect(getElement(debugElement, '.answer-count').innerHTML).contains(0);
-        expect(getElement(debugElement, '.answer-count .icon')).to.exist;
+        expect(getElement(debugElement, '.answer-count')).to.not.exist;
         expect(getElement(debugElement, '.toggle-answer-element.clickable')).to.not.exist;
     });
 
