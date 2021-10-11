@@ -90,7 +90,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const opts = github.issues.listForRepo.endpoint.merge({
+          const opts = github.rest.issues.listForRepo.endpoint.merge({
             owner: context.repo.owner,
             repo: context.repo.repo,
             labels: ['lock:${{ matrix.environment }}']
