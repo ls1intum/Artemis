@@ -7,7 +7,7 @@ export abstract class AbstractExerciseAssessmentPage {
     readonly unreferencedFeedbackSelector = 'jhi-unreferenced-feedback';
 
     getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.textAssessment.instructions"]').parents('.card');
+        return cy.get('[jhitranslate="artemisApp.exercise.instructions"]').parents('.card');
     }
 
     addNewFeedback(points: number, feedback?: string) {
