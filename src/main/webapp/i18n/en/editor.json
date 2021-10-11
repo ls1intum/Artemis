@@ -42,6 +42,7 @@
             "fileLoadedSuccess": "File loaded successfully",
             "fetchingParticipation": "Your participation is being loaded, please wait a moment...",
             "conflict": {
+                "resetRepository": "Reset your repository to continue with your participation",
                 "resolveConflict": "Resolve conflict",
                 "conflictExplanationShort": "Resolve the conflict state of your repository.",
                 "conflictExplanationLong": "Your repository is in a conflict state. This can happen when you work both locally and in the Artemis online editor. If you are familiar with git, the state of your repository is a merge or checkout conflict. You can click the button below to reset your repository to the last commit.",

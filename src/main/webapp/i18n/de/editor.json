@@ -42,7 +42,11 @@
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "conflict": {
-                "resolveConflict": "Konflikt bereinigen"
+                "resetRepository": "Setze Dein Repository zurück um deine Teilnahme fortzusetzen",
+                "resolveConflict": "Konflikt bereinigen",
+                "conflictExplanationShort": "Löst den Konflikt Deines Repositories auf.",
+                "conflictExplanationLong": "Dein Repository befindet sich in einem Konfliktzustand. Dies kann passieren, wenn du sowohl lokal, als auch mit dem Artemis Online-Editor arbeitest. Falls Du mit git vertraut bist, das Repository befindet sich im Zustand eines Merge- oder Checkout-Konflikts. Du kannst auf den unten stehenden Knopf klicken, um Dein Repository auf den letzten commit zurückzusetzen.",
+                "conflictWarning": "Dies löscht alle nicht bestätigten Änderungen (die Änderung die Du seit dem letzten Absenden im Online-Editor gemacht hast)!"
             },
             "refresh": {
                 "performRefresh": "Aktualisieren",
