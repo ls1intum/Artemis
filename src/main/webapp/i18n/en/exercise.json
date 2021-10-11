@@ -77,7 +77,7 @@
             "dateNotSet": "No date set",
             "points": "Points",
             "pointsError": "Must be a number between 1 and 9999.",
-            "bonusPoints": "Bonus points",
+            "bonusPoints": "Bonus Points",
             "bonusPointsError": "Must be a number between 0 and 9999.",
             "includedInOverallScoreCourseLabel": "Should this exercise be included in the course score calculation?",
             "includedInOverallScoreExamLabel": "Should this exercise be included in the exam score calculation?",

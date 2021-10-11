@@ -33,21 +33,21 @@ describe('PostingsThreadComponent', () => {
         id: 1,
         creationDate: dayjs(),
         content: 'not approved most recent',
-        tutorApproved: false,
+        resolvesPost: false,
     } as AnswerPost;
 
     const unApprovedAnswerPost2 = {
         id: 2,
         creationDate: dayjs().subtract(1, 'day'),
         content: 'not approved',
-        tutorApproved: false,
+        resolvesPost: false,
     } as AnswerPost;
 
     const approvedAnswerPost = {
         id: 2,
         creationDate: undefined,
         content: 'approved',
-        tutorApproved: true,
+        resolvesPost: true,
     } as AnswerPost;
 
     const sortedAnswerArray: AnswerPost[] = [approvedAnswerPost, unApprovedAnswerPost2, unApprovedAnswerPost1];
@@ -93,7 +93,7 @@ describe('PostingsThreadComponent', () => {
         metisServiceUserAuthorityStub.returns(true);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).to.deep.equal(true);
-        expect(component.createdAnswerPost.tutorApproved).to.be.equal(true);
+        expect(component.createdAnswerPost.resolvesPost).to.be.equal(true);
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
@@ -102,7 +102,7 @@ describe('PostingsThreadComponent', () => {
         metisServiceUserAuthorityStub.returns(false);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).to.deep.equal(false);
-        expect(component.createdAnswerPost.tutorApproved).to.be.equal(false);
+        expect(component.createdAnswerPost.resolvesPost).to.be.equal(false);
     });
 
     it('should sort answers', () => {

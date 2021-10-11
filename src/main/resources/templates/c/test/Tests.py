@@ -4,8 +4,6 @@ from tests.TestASan import TestASan
 from tests.TestUBSan import TestUBSan
 from tests.TestLSan import TestLSan
 from tests.TestOutput import TestOutput
-from tests.TestGccStaticAnalysis import TestGccStaticAnalysis
-
 
 def main():
     # Makefile location:
@@ -48,11 +46,6 @@ def main():
     tester.addTest(testLSan)
     # This test requires the "TestLSan" to finish with "SUCCESS" to be run:
     tester.addTest(TestOutput(makefileLocation, requirements=[testASan.name], name="TestOutputLSan", executable="lsan.out"))
-
-    # GCC static analysis:
-    # This test requires the "TestCompile" to finish with "SUCCESS" to be run:
-    testGccStaticAnalysis: TestGccStaticAnalysis = TestGccStaticAnalysis(makefileLocation, requirements=[testCompile.name])
-    tester.addTest(testGccStaticAnalysis)
 
     # Run the actual tests:
     tester.run()
