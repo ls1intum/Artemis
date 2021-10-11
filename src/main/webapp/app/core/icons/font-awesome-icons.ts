@@ -170,6 +170,7 @@ export const fontAwesomeIcons = [
     faHome,
     faThList,
     faUserPlus,
+    faUserSlash,
     faRoad,
     faTachometerAlt,
     faHeart,
