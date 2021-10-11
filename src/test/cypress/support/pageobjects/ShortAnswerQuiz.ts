@@ -10,7 +10,7 @@ export class ShortAnswerQuiz {
     }
 
     submit() {
-        cy.intercept(POST, '/api/exercises/*/submissions/live').as('createQuizExercise');
+        cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
         cy.get('.jhi-btn').contains('Submit').click();
         return cy.wait('@createQuizExercise');
     }
