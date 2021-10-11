@@ -87,12 +87,16 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor groups about the creation of an exercise.
+     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
      *
      * @param exercise that has been created
      */
-    public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
+        // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+        if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        }
     }
 
     /**

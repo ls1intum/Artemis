@@ -82,7 +82,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_validExercise_withStaticCodeAnalysis(language,

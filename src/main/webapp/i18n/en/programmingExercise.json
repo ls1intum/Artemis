@@ -229,13 +229,17 @@
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
             "timeline": {
                 "assessmentType": "Assessment Type",
+                "automaticAssessment": "Automatic Assessment",
+                "manualAssessment": "Manual Assessment",
+                "complaintsAllowed": "Complaints Allowed",
                 "automaticTests": "Automatic Tests",
                 "afterDueDate": "Run Tests after Due Date",
                 "timelineLabel": "Timeline of the entire programming exercise",
                 "timelineTooltip": "The entire lifecycle of the programming exercise. You can specify different critical dates and decide when which kind of tests should be run on all submissions",
                 "automaticTestsMandatoryTooltip": "Every commit from a participant triggers all tests in the test repository. This does not include tests specified only to be run after the due date.",
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
-                "assessmentTypeTooltip": "The type of assessment after the deadline: No manual assessment, assessment by a tutor, only after a complaint of a student",
+                "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
+                "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
                 "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date",
                 "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
@@ -243,7 +247,12 @@
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
-                "notSet": "not set"
+                "notSet": "not set",
+                "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
+                "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
+                "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
+                "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
+                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible"
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
@@ -287,7 +296,7 @@
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "invalidDirectoryName": "An existing repository is already checked out into that directory!",
                 "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
-                "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
+                "warning": "Auxiliary repositories that are added or changed after the creation of the exercise need to be manually added to the VCS and the build plan!"
             }
         },
         "error": {

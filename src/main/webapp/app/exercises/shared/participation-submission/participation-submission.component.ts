@@ -200,28 +200,28 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     deleteResult(submission: Submission, result: Result) {
-        if (this.exercise && submission.id && result.id && submission.participation?.id) {
+        if (this.exercise && submission.id && result.id && this.participationId) {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    this.textAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.textAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.MODELING:
-                    this.modelingAssessmentsService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.modelingAssessmentsService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.fileUploadAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.PROGRAMMING:
-                    this.programmingAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
+                    this.programmingAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
