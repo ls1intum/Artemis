@@ -117,7 +117,7 @@ public class BuildLogEntryService {
             return (log.startsWith("Unable to find image '") && log.endsWith("' locally")) || (log.startsWith("Digest: sha256:") && log.length() == 79 || log.startsWith("Status: Downloaded newer image for "));
         }
         // possible variations after the checksum
-        Set<String> dockerLogs = Set.of("Pulling fs layer", " Waiting", "Verifying Checksum", "Download complete", "Pull complete");
+        Set<String> dockerLogs = Set.of("Pulling fs layer", "Waiting", "Verifying Checksum", "Download complete", "Pull complete");
         // +2 to account for the space after the colon
         return dockerLogs.contains(log.substring(colonPosition + 2));
     }
