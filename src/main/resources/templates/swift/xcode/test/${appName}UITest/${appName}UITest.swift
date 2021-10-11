@@ -23,7 +23,40 @@ class ${appName}UITest: XCTestCase {
         app.launch()
     }
 
-    func testGreetingUI() {
-        XCTAssertTrue(app.staticTexts["Hello, world!"].exists, "The greeting was not presented correctly!")
+    func testStartScreen() {
+        XCTAssertTrue(app.staticTexts["Sorting"].exists, "The title of the screen is not correct!")
+        XCTAssertFalse(app.staticTexts["Unsorted Dates"].exists, "The unsorted dates should not be displayed before creation!")
+        XCTAssertFalse(app.staticTexts["Sorted Dates"].exists, "The sorted dates should not be displayed before creation and sorting!")
+        XCTAssertTrue(app.buttons["Create Random Dates"].isEnabled, "The button for creating random dates should be enabled!")
+        XCTAssertFalse(app.buttons["Sort"].isEnabled, "The button for sorting the dates should be disabled!")
+    }
+
+    func testCreateAndDisplayUnsortedDates() {
+        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is no button to create random dates!")
+        app.buttons["Create Random Dates"].tap()
+        XCTAssertTrue(app.staticTexts["Unsorted Dates"].exists, "The unsorted dates should be displayed after creation!")
+    }
+    
+    func testReCreateAndDisplayUnsortedDates() {
+        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is not button to create random dates!")
+        app.buttons["Create Random Dates"].tap()
+        XCTAssertTrue(app.staticTexts["Unsorted Dates"].exists, "The unsorted dates should be displayed after creation!")
+        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is no button to recreate random dates!")
+        app.buttons["Create Random Dates"].tap()
+        XCTAssertTrue(app.staticTexts["Unsorted Dates"].exists, "The new unsorted dates should be displayed after creation!")
+    }
+    
+    func testCreateSortAndDisplaySortedDates() {
+        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is not button to create random dates!")
+        app.buttons["Create Random Dates"].tap()
+        XCTAssertTrue(app.staticTexts["Unsorted Dates"].exists, "The unsorted dates should be displayed after creation!")
+        XCTAssertTrue(app.buttons["Sort"].exists, "There is no button to sort the dates!")
+        app.buttons["Sort"].tap()
+        XCTAssertTrue(app.staticTexts["Sorted Dates"].exists, "The sorted dates should be displayed after sorting!")
+    }
+    
+    func testSwitchSortingAlgorithm() {
+        XCTAssertTrue(app.pickerWheels.element.exists, "There is no way to switch the sorting algorithm!")
+        app.pickerWheels.element.swipeUp()
     }
 }
