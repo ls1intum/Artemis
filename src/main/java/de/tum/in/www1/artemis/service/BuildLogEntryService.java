@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -82,7 +83,7 @@ public class BuildLogEntryService {
      * @return boolean indicating an unnecessary build log or not
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
-        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString);
+        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString) || isDockerImageLog(logString);
         if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
             return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
                     || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]") || logString.startsWith("$ docker");
@@ -107,6 +108,18 @@ public class BuildLogEntryService {
         return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
                 || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
                 || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR] ".equals(log);
+    }
+
+    private boolean isDockerImageLog(String log) {
+        int colonPosition = log.indexOf(':');
+        // most docker logs are prepended by some 12 character checksum, only handle other cases here
+        if (colonPosition != 12) {
+            return (log.startsWith("Unable to find image '") && log.endsWith("' locally")) || (log.startsWith("Digest: sha256:") && log.length() == 79 || log.startsWith("Status: Downloaded newer image for "));
+        }
+        // possible variations after the checksum
+        Set<String> dockerLogs = Set.of("Pulling fs layer", " Waiting", "Verifying Checksum", "Download complete", "Pull complete");
+        // +1 to account for the space after the colon
+        return dockerLogs.contains(log.substring(colonPosition + 1));
     }
 
     /**
