@@ -92,7 +92,7 @@ public class MetricsBean {
             // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
             if (healthContributor instanceof DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor) {
                 for (NamedContributor<HealthContributor> discoveryHealthContributor : discoveryCompositeHealthContributor) {
-                    if (discoveryHealthContributor.getContributor() instanceof HealthIndicator healthIndicator) {
+                    if (discoveryHealthContributor.getContributor()instanceof HealthIndicator healthIndicator) {
                         Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
                                 .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.getName().toLowerCase()).register(meterRegistry);
                     }
