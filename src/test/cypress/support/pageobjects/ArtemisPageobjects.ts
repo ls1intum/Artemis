@@ -20,7 +20,6 @@ import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
 import { ShortAnswerQuiz } from './ShortAnswerQuiz';
 import { DragAndDropQuiz } from './DragAndDropQuiz';
-import { AssessmentDashboard } from './AssessmentDashboard';
 import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
 import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
