@@ -65,7 +65,7 @@
                 "tagSecondaryPlaceholder": "Add tag(s)",
                 "tagsTooltip": "Add up to three descriptive and reusable tags to your post. Type in the input field and confirm with Enter to add a tag.",
                 "similarPosts": "Similar Posts",
-                "similarPostsTooltip": "The automatic post comparison has found the following posts that might be similar to your request - please check if your question has already been asked and/or answered. Click on the title or the displayed exercise/lecture to navigate to a post of the list. Tip: Press cmd key to open a new tab and not close this view.",
+                "similarPostsTooltip": "The automatic post comparison has found the following posts that might be similar to your request - please check if your question has already been asked and/or answered. Click on the title or the displayed exercise/lecture to navigate to a post of the list.",
                 "content": "Content",
                 "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
                 "created": "New post successfully created",
