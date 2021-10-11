@@ -50,9 +50,9 @@
                 "conflictWarning": "Dies löscht alle nicht bestätigten Änderungen (die Änderung die Du seit dem letzten Absenden im Online-Editor gemacht hast)!"
             },
             "refresh": {
-                "refreshFilesDescription": "Aktualisiere alle Dateien. Dies überschreibt alle nicht gespeicherten Änderungen.",
+                "refreshFilesDescription": "Aktualisiert alle Dateien. Dies überschreibt alle nicht gespeicherten Änderungen.",
                 "performRefresh": "Aktualisieren",
-                "refreshExplanationShort": "Aktualisiere alle Dateien aus deinem Repository.",
+                "refreshExplanationShort": "Aktualisiert alle Dateien aus deinem Repository.",
                 "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "fileBrowser": {
