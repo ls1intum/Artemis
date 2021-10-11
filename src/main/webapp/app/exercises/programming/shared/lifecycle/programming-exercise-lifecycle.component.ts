@@ -16,8 +16,6 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
 
-    course: Course;
-
     readonly assessmentType = AssessmentType;
 
     constructor(private translator: TranslateService) {}
@@ -29,7 +27,6 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
-        this.course = getCourseFromExercise(this.exercise)!;
     }
 
     /**
