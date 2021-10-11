@@ -101,6 +101,12 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("user-management-cancel-remove-non-activated-user", userId);
     }
 
+    @Override
+    public void sendExerciseReleaseNotificationSchedule(Long exerciseId) {
+        log.info("Sending prepare notification for exercise {} to broker.", exerciseId);
+        sendMessageDelayed("exercise-notification-schedule", exerciseId);
+    }
+
     private void sendMessageDelayed(String destination, Long exerciseId) {
         exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(exerciseId), 1, TimeUnit.SECONDS);
     }
