@@ -52,15 +52,15 @@
             "refresh": {
                 "refreshFilesDescription": "Aktualisiert alle Dateien. Dies überschreibt alle nicht gespeicherten Änderungen.",
                 "performRefresh": "Aktualisieren",
-                "refreshExplanationShort": "Aktualisiert alle Dateien aus deinem Repository.",
-                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
+                "refreshExplanationShort": "Aktualisiert alle Dateien aus Deinem Repository.",
+                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn Du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
-                "deleteFileConfirm": "Bist du sicher, dass du die Datei <strong>{{filename}}</strong> löschen willst?",
-                "deleteFolderConfirm": "Bist du sicher, dass du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
+                "deleteFileConfirm": "Bist Du sicher, dass Du die Datei <strong>{{filename}}</strong> löschen willst?",
+                "deleteFolderConfirm": "Bist Du sicher, dass Du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
                 "unsavedChanges": "Datei enthält ungespeicherte Änderungen",
                 "createFolderRoot": "Verzeichnis auf Root Level erstellen",
                 "createFileRoot": "Datei auf Root Level erstellen",
