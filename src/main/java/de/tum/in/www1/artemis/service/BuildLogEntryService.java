@@ -118,8 +118,8 @@ public class BuildLogEntryService {
         }
         // possible variations after the checksum
         Set<String> dockerLogs = Set.of("Pulling fs layer", " Waiting", "Verifying Checksum", "Download complete", "Pull complete");
-        // +1 to account for the space after the colon
-        return dockerLogs.contains(log.substring(colonPosition + 1));
+        // +2 to account for the space after the colon
+        return dockerLogs.contains(log.substring(colonPosition + 2));
     }
 
     /**
