@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -23,6 +23,11 @@ polyfill({
 /* eslint-enable */
 window.addEventListener('touchmove', function () {}, { passive: false });
 
+enum MappingResult {
+    MAPPED_CORRECT,
+    MAPPED_INCORRECT,
+    NOT_MAPPED,
+}
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
@@ -30,7 +35,7 @@ window.addEventListener('touchmove', function () {}, { passive: false });
     styleUrls: ['./drag-and-drop-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class DragAndDropQuestionComponent implements OnChanges {
+export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /** needed to trigger a manual reload of the drag and drop background picture */
     @ViewChild(SecuredImageComponent, { static: false })
     secureImageComponent: SecuredImageComponent;
@@ -78,13 +83,21 @@ export class DragAndDropQuestionComponent implements OnChanges {
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
     correctAnswer: number;
+    incorrectLocationMappings: number;
+    mappedLocations: number;
+
+    readonly MappingResult = MappingResult;
 
     loadingState = 'loading';
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
+    ngOnInit(): void {
+        this.evaluateDropLocations();
+    }
+
     ngOnChanges(): void {
-        this.countCorrectMappings();
+        this.evaluateDropLocations();
     }
 
     watchCollection() {
@@ -230,11 +243,11 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * (Only possible if this.question.correctMappings is available)
      *
      * @param dropLocation {object} the drop location to check for correctness
-     * @return {boolean} true, if the drop location is correct, otherwise false
+     * @return {MappingResult} MAPPED_CORRECT, if the drop location is correct, MAPPED_INCORRECT if not and NOT_MAPPED if the location is correctly left blank
      */
-    isLocationCorrect(dropLocation: DropLocation): boolean {
+    isLocationCorrect(dropLocation: DropLocation): MappingResult {
         if (!this.question.correctMappings) {
-            return false;
+            return MappingResult.MAPPED_INCORRECT;
         }
         const validDragItems = this.question.correctMappings
             .filter(function (mapping) {
@@ -246,12 +259,29 @@ export class DragAndDropQuestionComponent implements OnChanges {
         const selectedItem = this.dragItemForDropLocation(dropLocation);
 
         if (selectedItem === null) {
-            return validDragItems.length === 0;
+            return validDragItems.length === 0 ? MappingResult.NOT_MAPPED : MappingResult.MAPPED_INCORRECT;
         } else {
             return validDragItems.some(function (dragItem) {
                 return this.dragAndDropQuestionUtil.isSameDragItem(dragItem, selectedItem);
-            }, this);
+            }, this)
+                ? MappingResult.MAPPED_CORRECT
+                : MappingResult.MAPPED_INCORRECT;
         }
+    }
+
+    /**
+     * Check if there is a drag item assigned to the given location in the solution of the question
+     * (Only possible if this.question.correctMappings is available)
+     *
+     * @param dropLocation {object} the drop location to check for mapping
+     * @return {boolean} true, if the drop location is part of a mapping, otherwise false.
+     */
+
+    isAssignedLocation(dropLocation: DropLocation): boolean {
+        if (!this.question.correctMappings) {
+            return false;
+        }
+        return this.question.correctMappings.some((mapping) => this.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, mapping.dropLocation));
     }
 
     /**
@@ -284,9 +314,14 @@ export class DragAndDropQuestionComponent implements OnChanges {
     }
 
     /**
-     * counts the amount of right mappings for a question by using the isLocationCorrect Method
+     * Count and assign the amount of right mappings, incorrect mappings and the number of drop locations participating in at least one mapping for a question
+     * by using the isLocationCorrect Method and the isAssignedLocation Method
      */
-    countCorrectMappings(): void {
-        this.correctAnswer = this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
+    evaluateDropLocations(): void {
+        if (this.question.dropLocations) {
+            this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_CORRECT).length;
+            this.incorrectLocationMappings = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT).length;
+            this.mappedLocations = this.question.dropLocations.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
+        }
     }
 }

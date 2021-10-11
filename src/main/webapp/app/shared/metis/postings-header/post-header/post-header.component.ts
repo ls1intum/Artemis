@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnInit, OnDestroy, Output, ViewChild, OnChanges } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -9,7 +9,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-e
     templateUrl: './post-header.component.html',
     styleUrls: ['../posting-header.component.scss'],
 })
-export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges, OnDestroy {
+export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnInit, OnChanges, OnDestroy {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     numberOfAnswerPosts: number;
@@ -20,10 +20,18 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
     }
 
     /**
-     * on changes: updates the number of answer posts
+     * on initialization: updates answer post information
+     */
+    ngOnInit(): void {
+        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
+        super.ngOnInit();
+    }
+
+    /**
+     * on changes: updates answer post information
      */
     ngOnChanges(): void {
-        this.numberOfAnswerPosts = this.getNumberOfAnswerPosts();
+        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
     }
 
     /**
@@ -34,19 +42,11 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
     }
 
     /**
-     * counts the answer posts of a post, 0 if none exist
-     * @return number number of answer posts
-     */
-    getNumberOfAnswerPosts(): number {
-        return <number>this.posting.answers?.length! ? this.posting.answers?.length! : 0;
-    }
-
-    /**
      * toggles showAnswers flag to highlight header icon when answers are toggled
      * emits an event of toggling (show, do not show) the answer posts for a post
      */
     toggleAnswers(): void {
-        if (this.getNumberOfAnswerPosts() > 0) {
+        if (this.numberOfAnswerPosts > 0) {
             this.showAnswers = !this.showAnswers;
         }
         this.toggleAnswersChange.emit();
