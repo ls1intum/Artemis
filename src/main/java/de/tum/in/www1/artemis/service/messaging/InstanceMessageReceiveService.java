@@ -9,19 +9,14 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
-import de.tum.in.www1.artemis.service.scheduled.ModelingExerciseScheduleService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
-import de.tum.in.www1.artemis.service.scheduled.UserScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.*;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -43,6 +38,10 @@ public class InstanceMessageReceiveService {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final NotificationScheduleService notificationScheduleService;
+
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
     private final UserRepository userRepository;
@@ -51,15 +50,18 @@ public class InstanceMessageReceiveService {
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
-            Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService) {
+            ExerciseRepository exerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseScheduleService = modelingExerciseScheduleService;
+        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
+        this.notificationScheduleService = notificationScheduleService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -108,6 +110,10 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic("user-management-cancel-remove-non-activated-user").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processCancelRemoveNonActivatedUser((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("exercise-notification-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleNotification((message.getMessageObject()));
         });
     }
 
@@ -184,5 +190,11 @@ public class InstanceMessageReceiveService {
         log.info("Received cancel removal of non-activated user for user {}", userId);
         User user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
         userScheduleService.cancelScheduleRemoveNonActivatedUser(user);
+    }
+
+    public void processScheduleNotification(Long exerciseId) {
+        log.info("Received schedule update for exercise {} notification ", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        notificationScheduleService.updateScheduling(exercise);
     }
 }
