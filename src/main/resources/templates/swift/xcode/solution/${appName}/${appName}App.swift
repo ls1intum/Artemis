@@ -7,11 +7,12 @@
 
 import SwiftUI
 
+/// The starting point of the App.
 @main
-struct ${appName}App: App {
+struct ${shortName}App: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
     }
 }
