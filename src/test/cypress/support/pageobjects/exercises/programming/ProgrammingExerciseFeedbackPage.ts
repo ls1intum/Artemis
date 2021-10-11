@@ -1,4 +1,4 @@
-import { OnlineEditorPage } from './../../OnlineEditorPage';
+import { OnlineEditorPage } from '../../OnlineEditorPage';
 import { AbstractExerciseFeedback } from '../AbstractExerciseFeedbackPage';
 
 /**
