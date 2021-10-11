@@ -8,7 +8,7 @@
         (click)="resetRepository()"
         data-toggle="tooltip"
         data-placement="left"
-        title="{{ 'artemisApp.editor.conflict.resolveConflict.resetRepository' | artemisTranslate }}"
+        title="{{ 'artemisApp.editor.conflict.resetRepository' | artemisTranslate }}"
     >
         <span *ngIf="isResolvingConflict">
             <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
@@ -30,7 +30,7 @@
         (click)="onRefresh()"
         data-toggle="tooltip"
         data-placement="left"
-        title="Refresh all files. This will overwrite all uncommitted changes."
+        title="{{ 'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate }}"
     >
         <span *ngIf="editorState === EditorState.REFRESHING">
             <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>

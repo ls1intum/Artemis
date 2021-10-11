@@ -49,6 +49,7 @@
                 "conflictWarning": "This will delete all uncommitted changes (the changes from your last submit in the online editor)!"
             },
             "refresh": {
+                "refreshFilesDescription": "Refresh all files. This will overwrite all unsaved changes.",
                 "performRefresh": "Refresh files",
                 "refreshExplanationShort": "Refresh and load all files from your repository.",
                 "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
