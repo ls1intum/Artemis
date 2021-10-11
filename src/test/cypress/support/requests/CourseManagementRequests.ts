@@ -116,7 +116,6 @@ export class CourseManagementRequests {
             exercise.staticCodeAnalysisEnabled = true;
             exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
-        debugger;
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
