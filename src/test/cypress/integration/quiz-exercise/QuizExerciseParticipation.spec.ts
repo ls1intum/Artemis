@@ -20,7 +20,6 @@ let course: any;
 let quizExercise: any;
 
 describe('Quiz Exercise Management', () => {
-
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
@@ -85,12 +84,12 @@ describe('Quiz Exercise Management', () => {
             cy.login(student, '/courses/' + course.id);
             cy.contains(quizExercise.title);
             cy.get('[jhi-exercise-action-button]').eq(0).click();
-            shortAnswerQuiz.typeAnswer( 0, 'give');
-            shortAnswerQuiz.typeAnswer( 1, 'let');
-            shortAnswerQuiz.typeAnswer( 2, 'run');
-            shortAnswerQuiz.typeAnswer( 3, 'desert');
-            shortAnswerQuiz.typeAnswer( 4, 'cry');
-            shortAnswerQuiz.typeAnswer( 5, 'goodbye');
+            shortAnswerQuiz.typeAnswer(0, 'give');
+            shortAnswerQuiz.typeAnswer(1, 'let');
+            shortAnswerQuiz.typeAnswer(2, 'run');
+            shortAnswerQuiz.typeAnswer(3, 'desert');
+            shortAnswerQuiz.typeAnswer(4, 'cry');
+            shortAnswerQuiz.typeAnswer(5, 'goodbye');
             shortAnswerQuiz.submit();
         });
     });

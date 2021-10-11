@@ -20,7 +20,6 @@ let quizExerciseName: string;
 let course: any;
 
 describe('Quiz Exercise Management', () => {
-
     before('Set up course', () => {
         uid = generateUUID();
         cy.login(admin);
@@ -41,7 +40,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         afterEach('Delete Quiz', () => {
-           courseManagementRequest.deleteQuizExercise(quizExercise.id);
+            courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
         beforeEach(() => {
