@@ -95,6 +95,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExerciseForExam_datesSet() throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_datesSet();
+    }
+
     private static Stream<Arguments> generateArgumentsForImportExercise() {
         return Arrays.stream(ProgrammingLanguage.values()).flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));
     }

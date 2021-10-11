@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -376,6 +377,17 @@ public class ProgrammingExerciseTestService {
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+    }
+
+    public void createProgrammingExerciseForExam_datesSet() throws Exception {
+        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
+        mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
+        ZonedDateTime someMoment = ZonedDateTime.of(2000, 06, 15, 0, 0, 0, 0, ZoneId.of("Z"));
+        examExercise.setDueDate(someMoment);
+
+        request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(exerciseGroup.getExercises()).doesNotContain(examExercise);
     }
 
     private void commonImportSetup(ProgrammingExercise sourceExercise) {

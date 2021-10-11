@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -180,6 +181,17 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createFileUploadExerciseForExam_datesSet() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
+        ZonedDateTime someMoment = ZonedDateTime.of(2000, 06, 15, 0, 0, 0, 0, ZoneId.of("Z"));
+        fileUploadExercise.setAssessmentDueDate(someMoment);
+        request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(exerciseGroup.getExercises()).doesNotContain(fileUploadExercise);
     }
 
     @Test

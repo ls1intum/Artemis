@@ -89,6 +89,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExerciseForExam_datesSet() throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_datesSet();
+    }
+
     private static Stream<Arguments> generateArgumentsForImportExercise() {
         // Only Java and Python are supported right?
         var supportedProgrammingLanguages = Arrays.stream(ProgrammingLanguage.values())

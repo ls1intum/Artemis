@@ -175,7 +175,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_examExerciseWithDatesSet() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        Exam exam = databaseUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(classExercise.getCourseViaExerciseGroupOrCourseMember());
+        Exam exam = databaseUtilService.setupSimpleExamWithExerciseGroupExercise(classExercise.getCourseViaExerciseGroupOrCourseMember());
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
         modelingExercise.setExerciseGroup(exerciseGroup);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
@@ -192,8 +192,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.OK,
-                params);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises/" + createdModelingExercise.getId(), createdModelingExercise,
+                ModelingExercise.class, HttpStatus.OK, params);
         assertThat(returnedModelingExercise.getGradingCriteria().size()).isEqualTo(gradingCriteria.size());
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
@@ -218,7 +218,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         updatedModelingExercise.setCourse(newCourse);
 
         // Modeling exercise update with the new course should fail.
-        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.CONFLICT);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + createdModelingExercise.getId(), createdModelingExercise,
+                ModelingExercise.class, HttpStatus.CONFLICT);
         assertThat(returnedModelingExercise).isNull();
     }
 
@@ -271,7 +272,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_instructorNotInCourse() throws Exception {
-        request.put("/api/modeling-exercises", classExercise, HttpStatus.FORBIDDEN);
+        request.put("/api/modeling-exercises/" + classExercise.getId(), classExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -345,6 +346,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
+        modelingExercise.setDueDate(null);
+        modelingExercise.setReleaseDate(null);
+        modelingExercise.setAssessmentDueDate(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
 
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -447,7 +451,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
-        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
