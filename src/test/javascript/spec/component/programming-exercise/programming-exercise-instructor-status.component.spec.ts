@@ -1,16 +1,12 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { AceEditorModule } from 'ng2-ace-editor';
-import * as chai from 'chai';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
-import { SinonStub, stub } from 'sinon';
 import { Result } from 'app/entities/result.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -21,21 +17,19 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-
-const expect = chai.expect;
+import { MockDirective, MockPipe } from 'ng-mocks';
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let comp: ProgrammingExerciseInstructorStatusComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorStatusComponent>;
     let participationWebsocketService: ParticipationWebsocketService;
-    let subscribeForLatestResultStub: SinonStub;
+    let subscribeForLatestResultStub: jest.SpyInstance;
     let latestResultSubject: Subject<Result>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
-            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
             providers: [
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -49,24 +43,24 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
 
-                subscribeForLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                subscribeForLatestResultStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 latestResultSubject = new Subject();
-                subscribeForLatestResultStub.returns(latestResultSubject);
+                subscribeForLatestResultStub.mockReturnValue(latestResultSubject);
             });
-    }));
+    });
 
     afterEach(() => {
-        subscribeForLatestResultStub.restore();
+        jest.restoreAllMocks();
         latestResultSubject.complete();
         latestResultSubject = new Subject();
-        subscribeForLatestResultStub.returns(latestResultSubject);
+        subscribeForLatestResultStub.mockReturnValue(latestResultSubject);
     });
 
     it('should not show anything without inputs', () => {
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should not show anything if participationType is Assignment', () => {
@@ -74,9 +68,9 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participation = { id: 1, results: [{ id: 1, successful: true, score: 100 } as Result] } as ProgrammingExerciseStudentParticipation;
         fixture.detectChanges();
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     [ProgrammingExerciseParticipationType.TEMPLATE, ProgrammingExerciseParticipationType.SOLUTION].map((participationType) =>
@@ -84,9 +78,9 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
             comp.participationType = participationType;
             fixture.detectChanges();
             const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-            expect(templateStatus).to.not.exist;
+            expect(templateStatus).toBeNull();
             const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-            expect(solutionStatus).to.not.exist;
+            expect(solutionStatus).toBeNull();
         }),
     );
 
@@ -99,11 +93,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         triggerChanges(comp, { property: 'participationType', currentValue: comp.participationType }, { property: 'participation', currentValue: comp.participation });
         fixture.detectChanges();
 
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should show nothing if the participation is solution and the latest result is successful', () => {
@@ -117,11 +111,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
             { property: 'participation', currentValue: comp.participationType, firstChange: false },
         );
         fixture.detectChanges();
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should show a template warning if the participation is template and the score is > 0', () => {
@@ -137,11 +131,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         );
         fixture.detectChanges();
 
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.exist;
+        expect(templateStatus).toBeDefined();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.not.exist;
+        expect(solutionStatus).toBeNull();
     });
 
     it('should show a solution warning if the participation is solution and the result is not successful', () => {
@@ -157,11 +151,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         );
         fixture.detectChanges();
 
-        expect(comp.latestResult).to.deep.equal(latestResult);
+        expect(comp.latestResult).toEqual(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
-        expect(templateStatus).to.not.exist;
+        expect(templateStatus).toBeNull();
         const solutionStatus = fixture.debugElement.query(By.css('#instructor-status-solution'));
-        expect(solutionStatus).to.exist;
+        expect(solutionStatus).toBeDefined();
     });
 
     it('should update the latestResult on update from the result subscription', () => {
@@ -178,6 +172,6 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         );
         latestResultSubject.next(newResult);
 
-        expect(comp.latestResult).to.deep.equal(newResult);
+        expect(comp.latestResult).toEqual(newResult);
     });
 });
