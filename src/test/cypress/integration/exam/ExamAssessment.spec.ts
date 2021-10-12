@@ -1,5 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
@@ -125,25 +125,27 @@ describe('Exam assessment', () => {
     });
 
     describe('Exam programming exercise assessment', () => {
-        const examEnd = 115000;
+        const examEnd = 155000;
 
         before('Prepare exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));
         });
 
         beforeEach('Create exam, exercise and submission', () => {
-            courseManagementRequests.createProgrammingExercise({ exerciseGroup }).then((progRespone) => {
-                const programmingExercise = progRespone.body;
-                courseManagementRequests.generateMissingIndividualExams(exam);
-                courseManagementRequests.prepareExerciseStartForExam(exam);
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                examStartEnd.startExam();
-                cy.contains(programmingExercise.title).should('be.visible').click();
-                makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
-                    examNavigation.handInEarly();
-                    examStartEnd.finishExam();
+            courseManagementRequests
+                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .then((progRespone) => {
+                    const programmingExercise = progRespone.body;
+                    courseManagementRequests.generateMissingIndividualExams(exam);
+                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    examStartEnd.startExam();
+                    cy.contains(programmingExercise.title).should('be.visible').click();
+                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
+                        examNavigation.handInEarly();
+                        examStartEnd.finishExam();
+                    });
                 });
-            });
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
