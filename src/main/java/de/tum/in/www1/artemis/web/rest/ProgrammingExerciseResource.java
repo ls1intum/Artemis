@@ -186,7 +186,7 @@ public class ProgrammingExerciseResource {
         // otherwise students can never reach a score >0%
         if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
             final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            double testCaseWeightSum = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).reduce(0D, Double::sum);
+            double testCaseWeightSum = testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).filter(Objects::nonNull).sum();
             if (!testCases.isEmpty() && testCaseWeightSum <= 0) {
                 throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
                         ErrorKeys.INVALID_TEST_CASE_WEIGHTS);
