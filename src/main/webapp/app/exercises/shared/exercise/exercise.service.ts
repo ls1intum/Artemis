@@ -430,6 +430,11 @@ export class ExerciseService {
         return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 
+    /**
+     * This method bundles recurring conversion steps for Exercise EntityResponses.
+     * @param exerciseRes
+     * @private
+     */
     private processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(exerciseRes);
         this.convertExerciseCategoriesFromServer(exerciseRes);
@@ -456,7 +461,7 @@ export class ExerciseService {
     /**
      * To reduce the error proneness the access rights for exercises and also
      * their referenced course are set.
-     * @param course the course for which the access rights are set
+     * @param exercise the course for which the access rights are set
      * @private
      */
     private setAccessRightsExercise(exercise: Exercise): Exercise {
