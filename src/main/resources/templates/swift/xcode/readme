@@ -1,11 +1,114 @@
-# Introduction to SwiftUI
+# Sorting with the Strategy Pattern using a SwiftUI App.
 
-In this exercise, we want to implement a simple Hello World SwiftUI example via Xcode.
+In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables, which means that the user is able to select different sorting algorithms at runtime of the app.
+
+
+### Part 1: Sorting
+
+First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.
 
 **You have the following tasks:**
 
-1. [task][Implement Greeting.swift](testGreeting)
-Implement the class `Greeting.swift`.
+1. [task][Implement Bubble Sort](testBubbleSort)
+Implement the method `performSort([Date])` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-2. [task][Implement UI](testGreetingUI)
-Implement the UI and verify that the shown TextView contains "Hello, world!".
+2. [task][Implement Merge Sort](testMergeSort)
+Implement the method `performSort([Date])` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
+
+
+### Part 2: Strategy Pattern
+
+We want the application to apply different algorithms for sorting an `Array` of `Date` objects.
+Use the strategy pattern to select the right sorting algorithm at runtime.
+
+**You have the following tasks:**
+
+1. Implement SortStrategy Protocol
+Create a `SortStrategy` protocol and adjust the sorting algorithms, so that they implement this protocol.
+
+2. [task][Context Class](testContextMergeSort, testContextBubbleSort)
+Create and implement a `Context` class following the below class diagram
+
+3. [task][Policy Class](testPolicy)
+Create and implement a `Policy` class following the below class diagram to use the user input as a simple configuration mechanism:
+**Select the corresponding sorting algorithm the user chose in the UI of the app**
+
+
+### Part 3:
+
+We want to implement a UI to enable that the user selects a sorting algorithm at runtime of the app, generate dates to get sorted and display the result.
+
+**You have the following tasks:**
+
+1. [task][Implement the main view](testStartScreen, testCreateAndDisplayUnsortedDates, testReCreateAndDisplayUnsortedDates, testCreateSortAndDisplaySortedDates, testSwitchSortingAlgorithm, testMainViewLogic, testMainViewContextSort)
+The user should be able to select his favourite `sorting algorithm` at runtime. Use a suitable `UI element` for this.
+The `View` should also display two `Button`s. One for `generating` an unnsorted list with random dates and one for `sorting` this list with the selected sorting algorithm. The `Sort` button should configure the `Policy` and call `sort` on the `Context`.
+Last but not least the (un-) sorted list should be displayed using a `ScrollView`.
+
+2. List Items
+Implement the view for the listed date items for a clean displaying.
+Hint: Use the `DateFormatterExtension` we provide.
+
+3. Custom View Modifier
+For a clean and tidy code you should implement a `ListItemModifier` to surround the list items with a rounded rectangle with a blue stroke. Use this in the `ListItemView`.
+
+
+
+@startuml
+
+skinparam ArrowFontSize 16
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+    FontSize 20
+    BackgroundColor white
+    AttributeFontSize 16
+    BorderColor black
+    ArrowColor black
+}
+
+class Client {
+}
+
+class Policy {
+  +configure()
+}
+
+class Context {
+  -dates: [Date]
+  +sort()
+}
+
+interface SortStrategy {
+  +performSort([Date])
+}
+
+class BubbleSort {
+  +performSort([Date])
+}
+
+class MergeSort {
+  +performSort([Date])
+}
+
+MergeSort -up-|> SortStrategy
+BubbleSort -up-|> SortStrategy
+Policy -right-> Context : context
+Context -right-> SortStrategy : sortAlgorithm
+Client .down.> Policy
+Client .down.> Context
+
+hide empty fields
+hide empty methods
+
+@enduml
+
+
+### Part 4: Optional Challenges
+
+(These are not tested)
+
+1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
+
+2. Make the method `performSort([Date])` generic, so that other objects can also be sorted by the same method.
+**Hint:** Have a look at Swift Generics and the interface `Comparable`.
