@@ -303,6 +303,7 @@
         "invalid.auxiliary.repository.name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang!",
+        "invalid.testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
