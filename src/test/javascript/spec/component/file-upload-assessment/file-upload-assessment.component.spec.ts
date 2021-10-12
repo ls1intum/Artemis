@@ -18,7 +18,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
