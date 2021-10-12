@@ -98,7 +98,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExerciseForExam_datesSet() throws Exception {
-        programmingExerciseTestService.createProgrammingExerciseForExam_datesSet();
+        programmingExerciseTestService.createProgrammingExerciseForExam_DatesSet();
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {

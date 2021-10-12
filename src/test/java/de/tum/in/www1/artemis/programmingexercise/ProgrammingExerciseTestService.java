@@ -379,7 +379,8 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
-    public void createProgrammingExerciseForExam_datesSet() throws Exception {
+    // TEST
+    public void createProgrammingExerciseForExam_DatesSet() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
