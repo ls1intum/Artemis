@@ -45,11 +45,7 @@ export class CourseManagementService {
      */
     create(course: Course): Observable<EntityResponseType> {
         const copy = CourseManagementService.convertDateFromClient(course);
-        return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -58,11 +54,7 @@ export class CourseManagementService {
      */
     update(course: Course): Observable<EntityResponseType> {
         const copy = CourseManagementService.convertDateFromClient(course);
-        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -70,11 +62,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course to be found
      */
     find(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -112,11 +100,9 @@ export class CourseManagementService {
      * @param courseId - the id of the course to be found
      */
     findWithExercises(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -124,11 +110,9 @@ export class CourseManagementService {
      * @param courseId - the id of the course to be found
      */
     findWithExercisesAndParticipations(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -136,11 +120,9 @@ export class CourseManagementService {
      * @param courseId the id of the course to be found
      */
     findWithOrganizations(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     // TODO: separate course overview and course management REST API calls in a better way
@@ -160,10 +142,8 @@ export class CourseManagementService {
 
     findOneForDashboard(courseId: number): Observable<EntityResponseType> {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
+            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
             map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             tap((res: EntityResponseType) => this.courseWasUpdated(res.body)),
         );
     }
@@ -214,11 +194,7 @@ export class CourseManagementService {
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
-        return this.http.get<Course>(url, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http.get<Course>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -448,6 +424,18 @@ export class CourseManagementService {
         return this.coursesForNotifications;
     }
 
+    /**
+     * This method bundles recurring conversion steps for Course EntityResponses.
+     * @param courseRes
+     * @private
+     */
+    private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+        this.convertDateFromServer(courseRes);
+        this.setAccessRightsCourseEntityResponseType(courseRes);
+        this.convertExerciseCategoriesFromServer(courseRes);
+        return courseRes;
+    }
+
     private setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             this.coursesForNotifications.next(res.body);
@@ -483,10 +471,11 @@ export class CourseManagementService {
      * @param res the response
      * @private
      */
-    private convertExerciseCategoriesFromServer(res: EntityResponseType): void {
+    private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
             res.body.exercises.forEach((exercise) => this.exerciseService.parseExerciseCategories(exercise));
         }
+        return res;
     }
 
     /**
