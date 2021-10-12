@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.*;
 

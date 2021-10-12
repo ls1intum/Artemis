@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-
 import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -14,7 +12,7 @@ class ArchTest {
     void servicesAndRepositoriesShouldNotDependOnWebLayer() {
         JavaClasses importedClasses = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages("de.tum.in.www1.artemis");
 
-//        noClasses().that().resideInAnyPackage("de.tum.in.www1.artemis.service..").should().dependOnClassesThat()
-//                .resideInAnyPackage("..de.tum.in.www1.artemis.web..").because("Services and repositories should not depend on web layer").check(importedClasses);
+        // noClasses().that().resideInAnyPackage("de.tum.in.www1.artemis.service..").should().dependOnClassesThat()
+        // .resideInAnyPackage("..de.tum.in.www1.artemis.web..").because("Services and repositories should not depend on web layer").check(importedClasses);
     }
 }

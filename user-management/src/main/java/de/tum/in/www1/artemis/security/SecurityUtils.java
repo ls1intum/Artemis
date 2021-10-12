@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.security;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -13,8 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Utility class for Spring Security.
