@@ -106,7 +106,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.accountService.setAccessRightsForExercise(this.exercise);
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 

@@ -125,6 +125,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
+                this.isAdmin = this.accountService.isAdmin();
             });
         });
     }

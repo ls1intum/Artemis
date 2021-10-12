@@ -221,6 +221,7 @@ export class TeamService implements ITeamService {
      * @param {Course} course - Course which to find
      * @param {Team} team - Team for which to find exercises and participations (by team short name)
      */
+    // TODO: Move this method to the CourseManagementService and delete the only here used duplicated setAccessRightsCourseEntityResponseType() helper method
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http
             .get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })

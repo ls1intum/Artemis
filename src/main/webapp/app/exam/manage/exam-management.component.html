@@ -87,15 +87,15 @@
                     <td>{{ exam.examStudentReviewEnd | artemisDate }}</td>
                     <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
                     <td>
-                        <ng-container *ngIf="course.isAtLeastInstructor; else registeredUsersForTutors">
+                        <ng-container *ngIf="course.isAtLeastInstructor; else notClickableNumberOfRegisteredUsers">
                             <span>
                                 <a [routerLink]="[exam.id, 'students']">
                                     {{ exam.numberOfRegisteredUsers }}
                                 </a>
                             </span>
                         </ng-container>
-                        <ng-template #registeredUsersForTutors>
-                            <span *ngIf="course.isAtLeastTutor">
+                        <ng-template #notClickableNumberOfRegisteredUsers>
+                            <span>
                                 {{ exam.numberOfRegisteredUsers }}
                             </span>
                         </ng-template>
