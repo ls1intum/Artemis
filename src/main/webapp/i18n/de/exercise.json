@@ -71,7 +71,7 @@
             "dateNotSet": "Kein Datum gesetzt",
             "points": "Punktzahl",
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
-            "bonusPoints": "Bonus points",
+            "bonusPoints": "Bonuspunkte",
             "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
             "includedInOverallScoreCourseLabel": "Soll diese Aufgabe bei der Berechnung des Kursergebnis miteinbezogen werden?",
             "includedInOverallScoreExamLabel": "Soll diese Aufgabe bei der Berechnung des Klausurergebnisses miteinbezogen werden?",

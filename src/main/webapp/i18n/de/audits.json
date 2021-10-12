@@ -1,6 +1,7 @@
 {
     "audits": {
         "title": "Audits",
+        "notFound": "Kein Audit gefunden",
         "filter": {
             "title": "Nach Datum filtern",
             "from": "von",

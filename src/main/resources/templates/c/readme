@@ -1,6 +1,6 @@
 # Hello World
 
-In dieser Aufgabe werden Sie Ihr erstes C Programm erstellen. 
+In dieser Aufgabe werden Sie Ihr erstes C Programm erstellen.
 Die Aufgabenstellung entnehmen Sie bitte [https://gbs.cm.in.tum.de](https://gbs.cm.in.tum.de).
 
 #### Allgemein
@@ -19,6 +19,3 @@ Die Aufgabenstellung entnehmen Sie bitte [https://gbs.cm.in.tum.de](https://gbs.
 #### Leak Sanitizer
 1. [task][Kompilieren mit Leak Sanitizer](TestCompileLeak)
 2. [task][Ausgabe prüfen mit Leak Sanitizer](TestOutputLSan)
-
-#### GCC Static Analysis
-1. [task][GCC Static analysis](TestGccStaticAnalysis)
