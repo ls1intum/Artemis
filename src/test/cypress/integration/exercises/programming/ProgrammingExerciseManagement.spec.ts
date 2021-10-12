@@ -1,6 +1,7 @@
-import { DELETE } from '../support/constants';
-import { artemis } from '../support/ArtemisTesting';
-import { generateUUID } from '../support/utils';
+import { DELETE } from '../../../support/constants';
+import { artemis } from '../../../support/ArtemisTesting';
+import { generateUUID } from '../../../support/utils';
+import { PROGRAMMING_EXERCISE_BASE } from '../../../support/requests/CourseManagementRequests';
 
 //  Admin account
 const admin = artemis.users.getAdmin();
@@ -22,7 +23,7 @@ describe('Programming Exercise Management', () => {
     before(() => {
         cy.login(admin);
         artemisRequests.courseManagement
-            .createCourse()
+            .createCourse(true)
             .its('body')
             .then((body) => {
                 expect(body).property('id').to.be.a('number');
@@ -44,7 +45,7 @@ describe('Programming Exercise Management', () => {
         });
 
         it('Deletes an existing programming exercise', function () {
-            cy.login(admin, '/');
+            cy.login(admin, '/').wait(500);
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
             cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
@@ -54,7 +55,7 @@ describe('Programming Exercise Management', () => {
                 .each(($el) => {
                     cy.wrap($el).check();
                 });
-            cy.intercept(DELETE, '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
+            cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
             cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExercise.title).type('{enter}');
             cy.wait('@deleteProgrammingExerciseQuery');
             cy.contains('No Programming Exercises').should('be.visible');
@@ -75,12 +76,12 @@ describe('Programming Exercise Management', () => {
             programmingCreation.setPackageName('de.test');
 
             // Set release and due dates via owl date picker
-            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should('be.visible').click();
-            cy.get(datepickerButtons).wait(500).eq(1).should('be.visible').click();
-            cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
+            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
+            cy.get(datepickerButtons).wait(500).eq(1).click().wait(500);
+            cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click({ force: true });
             cy.get('.owl-dt-control-arrow-button').eq(1).click();
             cy.get('.owl-dt-day-3').eq(2).click();
-            cy.get(datepickerButtons).eq(1).should('be.visible').click();
+            cy.get(datepickerButtons).eq(1).click();
 
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();

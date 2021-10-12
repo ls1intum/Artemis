@@ -126,7 +126,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction.id) {
+        if (dropInfo && dropInfo.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {
