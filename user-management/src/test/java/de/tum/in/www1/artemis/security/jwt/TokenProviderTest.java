@@ -43,7 +43,7 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWThasInvalidSignature() {
-        boolean isTokenValid = tokenProvider.validateToken(createTokenWithDifferentSignature());
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(createTokenWithDifferentSignature());
 
         assertThat(isTokenValid).isFalse();
     }
@@ -53,7 +53,7 @@ class TokenProviderTest {
         Authentication authentication = createAuthentication();
         String token = tokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
-        boolean isTokenValid = tokenProvider.validateToken(invalidToken);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken);
 
         assertThat(isTokenValid).isFalse();
     }
@@ -65,7 +65,7 @@ class TokenProviderTest {
         Authentication authentication = createAuthentication();
         String token = tokenProvider.createToken(authentication, false);
 
-        boolean isTokenValid = tokenProvider.validateToken(token);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(token);
 
         assertThat(isTokenValid).isFalse();
     }
@@ -74,40 +74,16 @@ class TokenProviderTest {
     void testReturnFalseWhenJWTisUnsupported() {
         String unsupportedToken = createUnsupportedToken();
 
-        boolean isTokenValid = tokenProvider.validateToken(unsupportedToken);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(unsupportedToken);
 
         assertThat(isTokenValid).isFalse();
     }
 
     @Test
     void testReturnFalseWhenJWTisInvalid() {
-        boolean isTokenValid = tokenProvider.validateToken("");
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority("");
 
         assertThat(isTokenValid).isFalse();
-    }
-
-    @Test
-    void testKeyIsSetFromSecretWhenSecretIsNotEmpty() {
-        final String secret = "NwskoUmKHZtzGRKJKVjsJF7BtQMMxNWi";
-        JHipsterProperties jHipsterProperties = new JHipsterProperties();
-        jHipsterProperties.getSecurity().getAuthentication().getJwt().setSecret(secret);
-
-        TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
-
-        Key key = (Key) ReflectionTestUtils.getField(tokenProvider, "key");
-        assertThat(key).isNotNull().isEqualTo(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    @Test
-    void testKeyIsSetFromBase64SecretWhenSecretIsEmpty() {
-        final String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
-        JHipsterProperties jHipsterProperties = new JHipsterProperties();
-        jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
-
-        TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
-
-        Key key = (Key) ReflectionTestUtils.getField(tokenProvider, "key");
-        assertThat(key).isNotNull().isEqualTo(Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
     }
 
     private Authentication createAuthentication() {

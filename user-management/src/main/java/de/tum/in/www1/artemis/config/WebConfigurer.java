@@ -42,6 +42,9 @@ public class WebConfigurer implements ServletContextInitializer {
         log.info("Web application fully configured");
     }
 
+    /**
+     * @return register the cors filter bean
+     */
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
