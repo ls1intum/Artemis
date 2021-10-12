@@ -123,6 +123,11 @@ export class ExerciseDetailsStudentActionsComponent {
                         participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
+                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                            this.alertService.success('artemisApp.exercise.resumeWithPersonalRepository');
+                        } else {
+                            this.alertService.success('artemisApp.exercise.resumeWithOnlineEditor');
+                        }
                     }
                 },
                 (error) => {
