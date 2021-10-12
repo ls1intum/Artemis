@@ -47,6 +47,7 @@ export class CourseManagementService {
         const copy = CourseManagementService.convertDateFromClient(course);
         return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
     }
@@ -59,6 +60,7 @@ export class CourseManagementService {
         const copy = CourseManagementService.convertDateFromClient(course);
         return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
     }
@@ -293,9 +295,13 @@ export class CourseManagementService {
     getCourseOverview(req?: any): Observable<HttpResponse<Course[]>> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
-        return this.http
-            .get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' })
-            .pipe(tap((res: HttpResponse<Course[]>) => res.body!.forEach((course) => this.accountService.setAccessRightsForCourse(course))));
+        return this.http.get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' }).pipe(
+            tap((res: HttpResponse<Course[]>) => {
+                if (res.body) {
+                    res.body.forEach((course) => this.accountService.setAccessRightsForCourse(course));
+                }
+            }),
+        );
     }
 
     /**
@@ -522,6 +528,12 @@ export class CourseManagementService {
         return res;
     }
 
+    /**
+     * To reduce the error proneness the rights access rights for exercises and their
+     * referenced course are set in addition to the course access rights itself.
+     * @param course the course for which the access rights are set
+     * @private
+     */
     private setAccessRightsCourse(course: Course): Course {
         if (course) {
             this.accountService.setAccessRightsForCourse(course);
@@ -570,7 +582,12 @@ export class CourseManagementService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService, private exerciseService: ExerciseService) {}
+    constructor(
+        private http: HttpClient,
+        private participationWebsocketService: ParticipationWebsocketService,
+        private exerciseService: ExerciseService,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * returns all programming exercises for the course corresponding to courseId
@@ -581,6 +598,11 @@ export class CourseExerciseService {
         return this.http.get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' }).pipe(
             map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res)),
             map((res: HttpResponse<ProgrammingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+            tap((res: HttpResponse<ProgrammingExercise[]>) => {
+                if (res.body) {
+                    res.body.forEach((exercise) => this.accountService.setAccessRightsForExercise(exercise));
+                }
+            }),
         );
     }
 
@@ -593,6 +615,11 @@ export class CourseExerciseService {
         return this.http.get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { observe: 'response' }).pipe(
             map((res: HttpResponse<ModelingExercise[]>) => this.convertDateArrayFromServer(res)),
             map((res: HttpResponse<ModelingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+            tap((res: HttpResponse<ModelingExercise[]>) => {
+                if (res.body) {
+                    res.body.forEach((exercise) => this.accountService.setAccessRightsForExercise(exercise));
+                }
+            }),
         );
     }
 
@@ -605,6 +632,11 @@ export class CourseExerciseService {
         return this.http.get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' }).pipe(
             map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res)),
             map((res: HttpResponse<TextExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+            tap((res: HttpResponse<TextExercise[]>) => {
+                if (res.body) {
+                    res.body.forEach((exercise) => this.accountService.setAccessRightsForExercise(exercise));
+                }
+            }),
         );
     }
 
@@ -617,6 +649,11 @@ export class CourseExerciseService {
         return this.http.get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' }).pipe(
             map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res)),
             map((res: HttpResponse<FileUploadExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+            tap((res: HttpResponse<FileUploadExercise[]>) => {
+                if (res.body) {
+                    res.body.forEach((exercise) => this.accountService.setAccessRightsForExercise(exercise));
+                }
+            }),
         );
     }
 
