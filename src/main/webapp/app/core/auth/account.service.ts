@@ -249,7 +249,7 @@ export class AccountService implements IAccountService {
      *
      * @param course for which the access rights shall be set
      */
-    setAccessRightsForCourse(course: Course): void {
+    setAccessRightsForCourse(course: Course) {
         course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
         course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);
         course.isAtLeastInstructor = this.isAtLeastInstructorInCourse(course);
