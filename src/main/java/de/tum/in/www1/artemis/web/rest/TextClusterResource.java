@@ -46,7 +46,7 @@ public class TextClusterResource {
 
     /**
      * Get text-exercises/{exerciseId}/cluster-statistics/
-     * <p>
+     *
      * Get text cluster stats
      * @param exerciseId The id of the text exercise to fetch cluster statistics data from
      * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
