@@ -518,7 +518,7 @@ export class CourseManagementService {
     }
 
     /**
-     * To reduce the error proneness the rights access rights for exercises and their
+     * To reduce the error proneness the access rights for exercises and their
      * referenced course are set in addition to the course access rights itself.
      * @param course the course for which the access rights are set
      * @private

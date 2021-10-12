@@ -37,10 +37,7 @@ export class ExerciseService {
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
         copy.categories = this.stringifyExerciseCategories(copy);
-        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -50,10 +47,7 @@ export class ExerciseService {
     update(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
         copy.categories = this.stringifyExerciseCategories(copy);
-        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -86,11 +80,9 @@ export class ExerciseService {
      * @param { number } exerciseId - Exercise that should be loaded
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
-        );
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -101,6 +93,29 @@ export class ExerciseService {
      */
     getTitle(exerciseId: number): Observable<HttpResponse<string>> {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
+     * Get exercise details including all results for the currently logged in user
+     * @param { number } exerciseId - Id of the exercise to get the repos from
+     */
+    getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                this.processExerciseEntityResponse(res);
+
+                if (res.body) {
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.exerciseHints === undefined) {
+                        res.body.exerciseHints = [];
+                    }
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
+                    }
+                }
+                return res;
+            }),
+        );
     }
 
     /**
@@ -119,30 +134,6 @@ export class ExerciseService {
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
-    }
-
-    /**
-     * Get exercise details including all results for the currently logged in user
-     * @param { number } exerciseId - Id of the exercise to get the repos from
-     */
-    getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => {
-                if (res.body) {
-                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exerciseHints === undefined) {
-                        res.body.exerciseHints = [];
-                    }
-                    if (res.body.posts === undefined) {
-                        res.body.posts = [];
-                    }
-                }
-                return res;
-            }),
-            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
-        );
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
@@ -439,6 +430,13 @@ export class ExerciseService {
         return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 
+    private processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
+        this.convertDateFromServer(exerciseRes);
+        this.convertExerciseCategoriesFromServer(exerciseRes);
+        this.setAccessRightsExerciseEntityResponseType(exerciseRes);
+        return exerciseRes;
+    }
+
     private setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
@@ -455,6 +453,12 @@ export class ExerciseService {
         return res;
     }
 
+    /**
+     * To reduce the error proneness the access rights for exercises and also
+     * their referenced course are set.
+     * @param course the course for which the access rights are set
+     * @private
+     */
     private setAccessRightsExercise(exercise: Exercise): Exercise {
         if (exercise) {
             this.accountService.setAccessRightsForExercise(exercise);
