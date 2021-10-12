@@ -13,14 +13,41 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
+import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
+import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
     let gradingInstruction: GradingInstruction;
     let gradingCriterion: GradingCriterion;
+    let gradingInstructionWithoutId: GradingInstruction;
+    let gradingCriterionWithoutId: GradingCriterion;
     const exercise = { id: 1 } as Exercise;
     const backupExercise = { id: 1 } as Exercise;
+
+    const criterionMarkdownText =
+        '[criterion]' +
+        'testCriteria' +
+        '\n' +
+        '\t' +
+        '[instruction]\n' +
+        '\t' +
+        '[credits]' +
+        ' 1\n' +
+        '\t' +
+        '[gradingScale] scale\n' +
+        '\t' +
+        '[description] description\n' +
+        '\t' +
+        '[feedback] feedback\n' +
+        '\t' +
+        '[maxCountInScore] 0\n\n';
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -40,13 +67,14 @@ describe('Grading Instructions Management Component', () => {
         component.backupExercise = backupExercise;
         gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
         gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
+        gradingInstructionWithoutId = { credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
+        gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
     });
 
     describe('OnInit', function () {
         it('should initialize the component', fakeAsync(() => {
             // WHEN
             component.ngOnInit();
-            tick(); // simulate async
 
             // THEN
             expect(component).toBeTruthy();
@@ -57,25 +85,7 @@ describe('Grading Instructions Management Component', () => {
             component.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(component.markdownEditorText).toEqual(
-                'Add Assessment Instruction text here\n\n' +
-                    '[criterion]' +
-                    'testCriteria' +
-                    '\n' +
-                    '\t' +
-                    '[instruction]\n' +
-                    '\t' +
-                    '[credits]' +
-                    ' 1\n' +
-                    '\t' +
-                    '[gradingScale] scale\n' +
-                    '\t' +
-                    '[description] description\n' +
-                    '\t' +
-                    '[feedback] feedback\n' +
-                    '\t' +
-                    '[maxCountInScore] 0\n\n',
-            );
+            expect(component.markdownEditorText).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
         }));
     });
 
@@ -164,6 +174,43 @@ describe('Grading Instructions Management Component', () => {
         fixture.detectChanges();
 
         expect(component.exercise.gradingInstructions).toEqual(markdownText);
+    });
+
+    it('should set grading instruction without criterion command when markdown-change triggered', () => {
+        const domainCommands = [
+            ['', new GradingInstructionCommand()],
+            ['1', new CreditsCommand()],
+            ['scale', new GradingScaleCommand()],
+            ['description', new InstructionDescriptionCommand()],
+            ['feedback', new FeedbackCommand()],
+            ['0', new UsageCountCommand()],
+        ] as [string, DomainCommand | null][];
+
+        component.domainCommandsFound(domainCommands);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria).not.toBeUndefined();
+        const gradingCriteria = component.exercise.gradingCriteria![0];
+        expect(gradingCriteria.structuredGradingInstructions[0]).toEqual(gradingInstructionWithoutId);
+    });
+
+    it('should set grading instruction with criterion command when markdown-change triggered', () => {
+        const domainCommands = [
+            ['testCriteria', new GradingCriterionCommand()],
+            ['', new GradingInstructionCommand()],
+            ['1', new CreditsCommand()],
+            ['scale', new GradingScaleCommand()],
+            ['description', new InstructionDescriptionCommand()],
+            ['feedback', new FeedbackCommand()],
+            ['0', new UsageCountCommand()],
+        ] as [string, DomainCommand | null][];
+
+        component.domainCommandsFound(domainCommands);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria).not.toBeUndefined();
+        const gradingCriteria = component.exercise.gradingCriteria![0];
+        expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
     });
 
     it('should update properties for grading instruction', () => {
