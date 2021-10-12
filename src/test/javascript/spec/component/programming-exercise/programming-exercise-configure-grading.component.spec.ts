@@ -2,15 +2,12 @@ import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angul
 import dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import sinonChai from 'sinon-chai';
 import { sortBy as _sortBy } from 'lodash-es';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie-service';
 import { AlertService } from 'app/core/util/alert.service';
-import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -55,9 +52,6 @@ import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/prog
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
     let fixture: ComponentFixture<ProgrammingExerciseConfigureGradingComponent>;
@@ -67,15 +61,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
 
-    let updateTestCasesStub: SinonStub;
-    let updateCategoriesStub: SinonStub;
-    let resetTestCasesStub: SinonStub;
-    let resetCategoriesStub: SinonStub;
-    let notifyTestCasesSpy: SinonSpy;
-    let testCasesChangedStub: SinonStub;
-    let getExerciseTestCaseStateStub: SinonStub;
-    let loadExerciseStub: SinonStub;
-    let loadStatisticsStub: SinonStub;
+    let updateTestCasesStub: jest.SpyInstance;
+    let updateCategoriesStub: jest.SpyInstance;
+    let resetTestCasesStub: jest.SpyInstance;
+    let resetCategoriesStub: jest.SpyInstance;
+    let testCasesChangedStub: jest.SpyInstance;
+    let getExerciseTestCaseStateStub: jest.SpyInstance;
+    let loadExerciseStub: jest.SpyInstance;
+    let loadStatisticsStub: jest.SpyInstance;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -245,12 +238,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
-                updateTestCasesStub = stub(gradingService, 'updateTestCase');
-                updateCategoriesStub = stub(gradingService, 'updateCodeAnalysisCategories');
-                notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
-                resetTestCasesStub = stub(gradingService, 'resetTestCases');
-                resetCategoriesStub = stub(gradingService, 'resetCategories');
-                loadStatisticsStub = stub(gradingService, 'getGradingStatistics');
+                updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
+                updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
+                resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
+                resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
+                loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -258,26 +250,23 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 // @ts-ignore
                 (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-                testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
-                getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
-                loadExerciseStub = stub(programmingExerciseService, 'find');
+                testCasesChangedStub = jest.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
+                getExerciseTestCaseStateStub = jest.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+                loadExerciseStub = jest.spyOn(programmingExerciseService, 'find');
 
                 getExerciseTestCaseStateSubject = new Subject();
 
                 testCasesChangedSubject = new Subject<boolean>();
-                testCasesChangedStub.returns(testCasesChangedSubject);
-                getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
+                testCasesChangedStub.mockReturnValue(testCasesChangedSubject);
+                getExerciseTestCaseStateStub.mockReturnValue(getExerciseTestCaseStateSubject);
 
-                loadStatisticsStub.returns(of(gradingStatistics));
-                loadExerciseStub.returns(of({ body: exercise }));
+                loadStatisticsStub.mockReturnValue(of(gradingStatistics));
+                loadExerciseStub.mockReturnValue(of({ body: exercise }));
             });
     }));
 
     afterEach(() => {
-        notifyTestCasesSpy.restore();
-        testCasesChangedStub.restore();
-        getExerciseTestCaseStateStub.restore();
-        loadStatisticsStub.restore();
+        jest.restoreAllMocks();
     });
 
     const initGradingComponent = ({
@@ -309,12 +298,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const rows = table.queryAll(By.css(rowClass));
 
-        expect(comp.testCases).to.deep.equal(testCases1);
-        expect(rows).to.have.lengthOf(testCases1.filter(({ active }) => active).length);
+        expect(comp.testCases).toEqual(testCases1);
+        expect(rows).toHaveLength(testCases1.filter(({ active }) => active).length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).to.exist;
-        expect(saveButton.nativeElement.disabled).to.be.true;
+        expect(saveButton).toBeDefined();
+        expect(saveButton.nativeElement.disabled).toBeTruthy();
 
         tick();
         fixture.destroy();
@@ -328,12 +317,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const rows = table.queryAll(By.css(rowClass));
 
-        expect(comp.testCases).to.deep.equal(testCases1);
-        expect(rows).to.have.lengthOf(testCases1.length);
+        expect(comp.testCases).toEqual(testCases1);
+        expect(rows).toHaveLength(testCases1.length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).to.exist;
-        expect(saveButton.nativeElement.disabled).to.be.true;
+        expect(saveButton).toBeDefined();
+        expect(saveButton.nativeElement.disabled).toBeTruthy();
 
         tick();
         fixture.destroy();
@@ -350,10 +339,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // get first weight input
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).to.have.lengthOf(testCases1.length * 3);
+        expect(editingInputs).toHaveLength(testCases1.length * 3);
 
         const weightInput = editingInputs[0].nativeElement;
-        expect(weightInput).to.exist;
+        expect(weightInput).toBeDefined();
         weightInput.focus();
 
         // Set new weight.
@@ -361,7 +350,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         weightInput.dispatchEvent(new Event('blur'));
 
         const multiplierInput = editingInputs[1].nativeElement;
-        expect(multiplierInput).to.exist;
+        expect(multiplierInput).toBeDefined();
         multiplierInput.focus();
 
         // Set new multiplier.
@@ -369,7 +358,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         multiplierInput.dispatchEvent(new Event('blur'));
 
         const bonusInput = editingInputs[2].nativeElement;
-        expect(bonusInput).to.exist;
+        expect(bonusInput).toBeDefined();
         bonusInput.focus();
 
         // Set new bonus.
@@ -378,10 +367,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
+        expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
 
         // Save weight.
-        updateTestCasesStub.returns(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 2, bonusPoints: 1 }]));
+        updateTestCasesStub.mockReturnValue(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 2, bonusPoints: 1 }]));
         const saveButton = getSaveButton();
         expectElementToBeEnabled(saveButton);
         saveButton.click();
@@ -389,17 +378,15 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         let testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
-        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility),
-        ]);
-        expect(testThatWasUpdated.weight).to.equal(20);
-        expect(testThatWasUpdated.bonusMultiplier).to.equal(2);
-        expect(testThatWasUpdated.bonusPoints).to.equal(1);
-        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+        expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility)]);
+        expect(testThatWasUpdated.weight).toEqual(20);
+        expect(testThatWasUpdated.bonusMultiplier).toEqual(2);
+        expect(testThatWasUpdated.bonusPoints).toEqual(1);
+        expect(comp.changedTestCaseIds).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).to.be.true;
+        expect(comp.hasUpdatedGradingConfig).toBeTruthy();
 
         fixture.detectChanges();
 
@@ -418,26 +405,24 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
+        expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
 
-        expect(multiplierInput.value).to.equal('1');
-        expect(bonusInput.value).to.equal('1');
+        expect(multiplierInput.value).toEqual('1');
+        expect(bonusInput.value).toEqual('1');
 
         // Save weight.
-        updateTestCasesStub.reset();
-        updateTestCasesStub.returns(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 1, bonusPoints: 1 }]));
+        updateTestCasesStub.mockReset();
+        updateTestCasesStub.mockReturnValue(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 1, bonusPoints: 1 }]));
         saveButton.click();
 
         fixture.detectChanges();
 
         testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
-        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility),
-        ]);
-        expect(testThatWasUpdated.weight).to.equal(20);
-        expect(testThatWasUpdated.bonusMultiplier).to.equal(1);
-        expect(testThatWasUpdated.bonusPoints).to.equal(1);
-        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+        expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility)]);
+        expect(testThatWasUpdated.weight).toEqual(20);
+        expect(testThatWasUpdated.bonusMultiplier).toEqual(1);
+        expect(testThatWasUpdated.bonusPoints).toEqual(1);
+        expect(comp.changedTestCaseIds).toHaveLength(0);
 
         fixture.detectChanges();
 
@@ -451,11 +436,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // get all input fields
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).to.have.lengthOf(testCases1.length * 3);
+        expect(editingInputs).toHaveLength(testCases1.length * 3);
         // Set only the weight input fields to 0 of all test cases
         for (let i = 0; i < editingInputs.length; i += 3) {
             const weightInput = editingInputs[i].nativeElement;
-            expect(weightInput).to.exist;
+            expect(weightInput).toBeDefined();
             weightInput.focus();
 
             // Set new weight.
@@ -474,27 +459,27 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         setAllWeightsToZero();
 
         fixture.detectChanges();
-        expect(comp.changedTestCaseIds).to.deep.equal(orderedTests.map((test) => test.id));
+        expect(comp.changedTestCaseIds).toEqual(orderedTests.map((test) => test.id));
 
         // Mock which should be return from update service call
         const updateTestCases = orderedTests.map((test) => {
             return { ...test, weight: 0, bonusMultiplier: 2, bonusPoints: 1 };
         });
         // Save weight.
-        updateTestCasesStub.returns(of(updateTestCases));
+        updateTestCasesStub.mockReturnValue(of(updateTestCases));
 
         // Initialize spy for error alert
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = spy(alertService, 'error');
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
 
         const saveButton = getSaveButton();
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
         if (assessmentType === AssessmentType.AUTOMATIC) {
-            expect(alertServiceSpy).to.be.calledOnce;
+            expect(alertServiceSpy).toHaveBeenCalled();
         } else {
-            expect(alertServiceSpy).to.not.be.called;
+            expect(alertServiceSpy).not.toHaveBeenCalled();
         }
     };
 
@@ -520,30 +505,30 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const table = debugElement.query(By.css(testCaseTableId));
         const dropdowns = table.queryAll(By.all()).filter((elem) => elem.name === 'select');
-        expect(dropdowns).to.have.lengthOf(testCases1.length);
+        expect(dropdowns).toHaveLength(testCases1.length);
         dropdowns[0].nativeElement.value = Visibility.AfterDueDate;
         dropdowns[0].nativeElement.dispatchEvent(new Event('change'));
 
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
+        expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
 
         // The UI should now show that there are unsaved changes.
-        expect(getUnsavedChangesBadge()).to.exist;
-        expect(getNoUnsavedChangesBadge()).not.to.exist;
+        expect(getUnsavedChangesBadge()).toBeDefined();
+        expect(getNoUnsavedChangesBadge()).toBeNull();
 
         // Save weight.
-        updateTestCasesStub.returns(of({ ...orderedTests[0], afterDueDate: true }));
+        updateTestCasesStub.mockReturnValue(of({ ...orderedTests[0], afterDueDate: true }));
         const saveTestCases = debugElement.query(By.css(saveTableButton));
-        expect(saveTestCases).to.exist;
-        expect(saveTestCases.nativeElement.disabled).to.be.false;
+        expect(saveTestCases).toBeDefined();
+        expect(saveTestCases.nativeElement.disabled).toBeFalsy();
         saveTestCases.nativeElement.click();
 
         fixture.detectChanges();
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
-        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
+        expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
 
         await new Promise((resolve) => setTimeout(resolve));
         fixture.destroy();
@@ -558,7 +543,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
         // three options for each test case should still be available
-        expect(options).to.have.lengthOf(testCases1.length * 3);
+        expect(options).toHaveLength(testCases1.length * 3);
 
         fixture.destroy();
     });
@@ -568,8 +553,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).to.exist;
-        expect(getNoUpdatedTestCaseBadge()).to.exist;
+        expect(getNoUnsavedChangesBadge()).toBeDefined();
+        expect(getNoUpdatedTestCaseBadge()).toBeDefined();
 
         tick();
         fixture.destroy();
@@ -581,8 +566,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).to.exist;
-        expect(getNoUpdatedTestCaseBadge()).not.to.exist;
+        expect(getNoUnsavedChangesBadge()).toBeDefined();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
 
         tick();
         fixture.destroy();
@@ -594,8 +579,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).to.exist;
-        expect(getNoUpdatedTestCaseBadge()).not.to.exist;
+        expect(getNoUnsavedChangesBadge()).toBeDefined();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
 
         tick();
         fixture.destroy();
@@ -607,8 +592,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getUpdatedTestCaseBadge()).to.exist;
-        expect(getNoUpdatedTestCaseBadge()).not.to.exist;
+        expect(getUpdatedTestCaseBadge()).toBeDefined();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
 
         tick();
         fixture.destroy();
@@ -634,24 +619,24 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             { ...testCases1[1], weight: 4, bonusMultiplier: 2 },
             { ...testCases1[2], bonusMultiplier: 3, bonusPoints: 10 },
         ];
-        updateTestCasesStub.returns(of(updatedTestCases));
+        updateTestCasesStub.mockReturnValue(of(updatedTestCases));
 
         // Save tests.
         comp.saveTestCases();
 
         fixture.detectChanges();
 
-        expect(updateTestCasesStub).to.have.been.calledOnce;
+        expect(updateTestCasesStub).toHaveBeenCalled();
 
-        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+        expect(comp.changedTestCaseIds).toHaveLength(0);
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).to.be.true;
+        expect(comp.hasUpdatedGradingConfig).toBeTruthy();
 
         fixture.detectChanges();
 
-        resetTestCasesStub.returns(of(testCases1));
+        resetTestCasesStub.mockReturnValue(of(testCases1));
 
         const resetButton = getResetButton();
         expectElementToBeEnabled(resetButton);
@@ -659,9 +644,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(resetTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId);
-        expect(comp.testCases).to.deep.equal(testCases1);
-        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+        expect(resetTestCasesStub).toHaveBeenCalledWith(exerciseId);
+        expect(comp.testCases).toEqual(testCases1);
+        expect(comp.changedTestCaseIds).toHaveLength(0);
 
         tick();
         fixture.destroy();
@@ -686,27 +671,27 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             { ...codeAnalysisCategories1[0], state: StaticCodeAnalysisCategoryState.Feedback, penalty: 3, maxPenalty: 15 },
             { ...codeAnalysisCategories1[1], state: StaticCodeAnalysisCategoryState.Feedback, penalty: 4, maxPenalty: 15 },
         ];
-        updateCategoriesStub.returns(of(updatedCategories));
+        updateCategoriesStub.mockReturnValue(of(updatedCategories));
 
         // Save tests.
         comp.saveCategories();
 
         fixture.detectChanges();
 
-        expect(updateCategoriesStub).to.have.been.calledOnce;
-        expect(comp.changedCategoryIds).to.have.lengthOf(0);
+        expect(updateCategoriesStub).toHaveBeenCalled();
+        expect(comp.changedCategoryIds).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the categories were saved.
-        expect(comp.hasUpdatedGradingConfig).to.be.true;
+        expect(comp.hasUpdatedGradingConfig).toBeTruthy();
 
         fixture.detectChanges();
 
-        resetCategoriesStub.returns(of(codeAnalysisCategories1));
+        resetCategoriesStub.mockReturnValue(of(codeAnalysisCategories1));
 
         // Reset the stub to ensure that it function is called exactly once on category reset
-        loadStatisticsStub.reset();
+        loadStatisticsStub.mockReset();
 
         const resetButton = getResetButton();
         expectElementToBeEnabled(resetButton);
@@ -714,10 +699,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(resetCategoriesStub).to.have.been.calledOnceWithExactly(exerciseId);
-        expect(loadStatisticsStub).to.have.been.calledOnceWithExactly(exerciseId);
-        expect(comp.staticCodeAnalysisCategories).to.deep.equal(codeAnalysisCategories1);
-        expect(comp.changedCategoryIds).to.have.lengthOf(0);
+        expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
+        expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
+        expect(comp.staticCodeAnalysisCategories).toEqual(codeAnalysisCategories1);
+        expect(comp.changedCategoryIds).toHaveLength(0);
 
         tick();
         fixture.destroy();
@@ -735,10 +720,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // get inputs
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).to.have.lengthOf(gradedCategories.length * 2);
+        expect(editingInputs).toHaveLength(gradedCategories.length * 2);
 
         const penaltyInput = editingInputs[0].nativeElement;
-        expect(penaltyInput).to.exist;
+        expect(penaltyInput).toBeDefined();
         penaltyInput.focus();
 
         // Set new penalty.
@@ -746,7 +731,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         penaltyInput.dispatchEvent(new Event('blur'));
 
         const maxPenaltyInput = editingInputs[1].nativeElement;
-        expect(maxPenaltyInput).to.exist;
+        expect(maxPenaltyInput).toBeDefined();
         maxPenaltyInput.focus();
 
         // Set new max penalty.
@@ -755,28 +740,28 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.changedCategoryIds).to.deep.equal([gradedCategories[0].id]);
+        expect(comp.changedCategoryIds).toEqual([gradedCategories[0].id]);
 
         const updatedCategory: StaticCodeAnalysisCategory = { ...gradedCategories[0], penalty: 20, maxPenalty: 100 };
 
         // Save weight.
-        updateCategoriesStub.returns(of([updatedCategory]));
+        updateCategoriesStub.mockReturnValue(of([updatedCategory]));
         const saveButton = getSaveButton();
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
         fixture.detectChanges();
 
-        expect(updateCategoriesStub).to.have.been.calledOnceWithExactly(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
+        expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
 
         const categoryThatWasUpdated = comp.staticCodeAnalysisCategories.find((category) => category.id === updatedCategory.id)!;
-        expect(categoryThatWasUpdated.penalty).to.equal(20);
-        expect(categoryThatWasUpdated.maxPenalty).to.equal(100);
-        expect(comp.changedCategoryIds).to.have.lengthOf(0);
+        expect(categoryThatWasUpdated.penalty).toEqual(20);
+        expect(categoryThatWasUpdated.maxPenalty).toEqual(100);
+        expect(comp.changedCategoryIds).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).to.be.true;
+        expect(comp.hasUpdatedGradingConfig).toBeTruthy();
 
         fixture.detectChanges();
 
@@ -790,24 +775,24 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(loadStatisticsStub).to.have.been.calledWithExactly(exerciseId);
+        expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
 
-        expect(comp.maxIssuesPerCategory).to.equal(5);
-        expect(comp.gradingStatistics).to.deep.equal(gradingStatistics);
+        expect(comp.maxIssuesPerCategory).toEqual(5);
+        expect(comp.gradingStatistics).toEqual(gradingStatistics);
 
         fixture.detectChanges();
         tick();
 
         const issueCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
 
-        expect(issueCharts[0].columns).to.have.lengthOf(11);
-        expect(issueCharts[0].columns[0].tooltip).to.equal('2 students have 1 issue.');
-        expect(issueCharts[0].columns[1].tooltip).to.equal('2 students have 2 issues.');
-        expect(issueCharts[0].columns[2].tooltip).to.equal('1 student has 3 issues.');
+        expect(issueCharts[0].columns).toHaveLength(11);
+        expect(issueCharts[0].columns[0].tooltip).toEqual('2 students have 1 issue.');
+        expect(issueCharts[0].columns[1].tooltip).toEqual('2 students have 2 issues.');
+        expect(issueCharts[0].columns[2].tooltip).toEqual('1 student has 3 issues.');
 
-        expect(issueCharts[1].columns).to.have.lengthOf(11);
-        expect(issueCharts[1].columns[1].tooltip).to.equal('1 student has 2 issues.');
-        expect(issueCharts[1].columns[4].tooltip).to.equal('1 student has 5 issues.');
+        expect(issueCharts[1].columns).toHaveLength(11);
+        expect(issueCharts[1].columns[1].tooltip).toEqual('1 student has 2 issues.');
+        expect(issueCharts[1].columns[4].tooltip).toEqual('1 student has 5 issues.');
 
         comp.selectTab('test-cases');
 
@@ -816,9 +801,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const percentageCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
 
-        expect(percentageCharts[0].tooltip).to.equal('0% passed, 0% failed, 100% not executed of 5 students.');
-        expect(percentageCharts[1].tooltip).to.equal('40% passed, 60% failed of 5 students.');
-        expect(percentageCharts[2].tooltip).to.equal('20% passed, 80% failed of 5 students.');
+        expect(percentageCharts[0].tooltip).toEqual('0% passed, 0% failed, 100% not executed of 5 students.');
+        expect(percentageCharts[1].tooltip).toEqual('40% passed, 60% failed of 5 students.');
+        expect(percentageCharts[2].tooltip).toEqual('20% passed, 80% failed of 5 students.');
 
         tick();
         fixture.destroy();
@@ -831,8 +816,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
 
-        expect(comp.tableSorts[table]).to.deep.equal([{ prop, dir }]);
-        expect(sortIcon).to.equal(dir === 'asc' ? 'sort-up' : 'sort-down');
+        expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
+        expect(sortIcon).toEqual(dir === 'asc' ? 'sort-up' : 'sort-down');
     };
 
     it('should sort test-case table', fakeAsync(() => {
