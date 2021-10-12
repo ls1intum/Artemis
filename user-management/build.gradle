@@ -229,6 +229,8 @@ repositories {
 }
 
 dependencies {
+    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
+    implementation "org.gitlab4j:gitlab4j-api:4.18.0"
     implementation files("../libs/jplag-3.0.0.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
@@ -243,6 +245,7 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
     implementation "io.sentry:sentry-spring-boot-starter:5.1.2"
     implementation "io.sentry:sentry-logback:5.2.0"
+    implementation "org.jsoup:jsoup:1.14.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.5.10"
@@ -263,7 +266,7 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:2.2.1"
     implementation "javax.cache:cache-api:1.1.1"
-    implementation "org.hibernate:hibernate-core"
+    implementation "org.hibernate:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.0.0"
     implementation "org.apache.commons:commons-text:1.9"
     implementation 'org.apache.commons:commons-math3:3.6.1'
@@ -271,7 +274,7 @@ dependencies {
     implementation "org.apache.commons:commons-lang3"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    implementation "org.liquibase:liquibase-core:4.4.3"
+    implementation "org.liquibase:liquibase-core:4.5.0"
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
@@ -361,7 +364,7 @@ task cleanResources(type: Delete) {
 }
 
 task executeTests (type: Exec) {
-    commandLine "./gradlew", "test", "-x", "webapp"
+    commandLine "./gradlew", "test"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -410,7 +413,7 @@ nohttp {
 }
 
 task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "npm", "-x", "webapp"
+    commandLine "./gradlew", "checkstyleMain"
 }
 
 task buildJarForDocker (type: Exec) {
@@ -449,13 +452,11 @@ tasks.named("dependencyUpdates").configure {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x npm -x webapp
-// 2a) Execute tests without coverage report:       ./gradlew executeTests -x npm -x webapp
+// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport
+// 2a) Execute tests without coverage report:       ./gradlew executeTests
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
-// 3) Check Java code format:                       ./gradlew spotlessCheck -x npm -x webapp
-// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x npm -x webapp
+// 3) Check Java code format:                       ./gradlew spotlessCheck
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release
-// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x npm -x webapp
-// 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
-// 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
-// 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain
+// 7) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
