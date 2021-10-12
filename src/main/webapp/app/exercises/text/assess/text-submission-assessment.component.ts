@@ -445,7 +445,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get readOnly(): boolean {
-        return !this.exercise!.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return (!this.exercise?.isAtLeastInstructor || false) && !!this.complaint && this.isAssessor;
     }
 
     protected handleError(error: HttpErrorResponse): void {
