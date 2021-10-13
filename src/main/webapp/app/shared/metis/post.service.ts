@@ -99,6 +99,17 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
+     * determines similar posts in a course
+     * @param {Post} tempPost
+     * @param {number} courseId
+     * @return {Observable<HttpResponse<void>>}
+     */
+    computeSimilarityScoresWithCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
+        const copy = this.convertDateFromClient(tempPost);
+        return this.http.post<Post[]>(`${this.resourceUrl}${courseId}/posts/similarity-check`, copy, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+    }
+
+    /**
      * takes an array of posts and converts the date from the server
      * @param   {HttpResponse<Post[]>} res
      * @return  {HttpResponse<Post[]>}
