@@ -66,6 +66,8 @@
                 "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags. Tippe in das Eingabefeld und bestätige mit Enter, um ein Tag hinzuzufügen.",
                 "tagPlaceholder": "+ Tag",
                 "tagSecondaryPlaceholder": "Tag(s) hinzufügen",
+                "similarPosts": "Ähnliche Beiträge",
+                "similarPostsTooltip": "Der automatische Abgleich von Kursbeiträgen hat folgende Beiträge gefunden, die deinem Anliegen ähnlich sein könnten - bitte prüfe, ob deine Frage bereits gestellt und/oder beantwortet wurde. Klicke auf den Titel oder die angezeigte Übung/Vorlesung, um zu einem der gelisteten Beiträge zu kommen. Tipp: Halte die cmd Taste dabei gedrückt, um einen neuen Tab zu öffnen um dieses Bearbeitungsfenster nicht zu schließen.",
                 "content": "Inhalt",
                 "contentTooltip": "Beschreibe dein Problem oder deine Anfrage so präzise wie möglich. Dort, wo es die Lesbarkeit verbessert, verwende bitte Markdown Formatierungen.",
                 "created": "Beitrag erfolgreich erstellt",
@@ -77,7 +79,9 @@
                 "answers": "Antworten",
                 "approvedAnswerPosts": "Bestätigte Antworten",
                 "exerciseOrLecture": "Übung / Vorlesung",
-                "showAllPosts": "Zeige alle Beiträge"
+                "showAllPosts": "Zeige alle Beiträge",
+                "showContent": "Inhalt ausklappen",
+                "collapseContent": "Inhalt einklappen"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
