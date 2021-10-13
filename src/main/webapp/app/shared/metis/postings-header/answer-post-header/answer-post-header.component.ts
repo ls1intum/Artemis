@@ -6,7 +6,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 @Component({
     selector: 'jhi-answer-post-header',
     templateUrl: './answer-post-header.component.html',
-    styleUrls: ['../posting-header.component.scss'],
+    styleUrls: ['../../metis.component.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingsHeaderDirective<AnswerPost> implements OnInit {
     isAuthorOfOriginalPost: boolean;
