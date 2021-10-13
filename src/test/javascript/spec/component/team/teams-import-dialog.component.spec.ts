@@ -517,7 +517,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('should return false', () => {
-            let dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
+            const dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
             comp.clear();
             expect(dismissSpy).toBeCalledWith('cancel');
         });
