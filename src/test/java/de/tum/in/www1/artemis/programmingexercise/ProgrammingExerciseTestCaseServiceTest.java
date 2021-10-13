@@ -194,7 +194,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = AssessmentType.class)
+    @EnumSource(AssessmentType.class)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldAllowTestCaseWeightSumZeroManualAssessment(AssessmentType assessmentType) throws Exception {
         // for non-automatic exercises the update succeeds and triggers an update
