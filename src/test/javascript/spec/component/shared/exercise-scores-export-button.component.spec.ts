@@ -1,7 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -21,9 +18,6 @@ import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
@@ -103,13 +97,13 @@ describe('ExerciseScoresExportButtonComponent', () => {
     });
 
     afterEach(async () => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should not start the export if the exercise has no results', () => {
         // GIVEN
-        const exportCSVStub = sinon.stub(resultService, 'triggerDownloadCSV');
-        const getResultsStub = sinon.stub(resultService, 'getResultsWithScoresPerGradingCriterion').returns(of(new HttpResponse({ body: [] })));
+        const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const getResultsStub = jest.spyOn(resultService, 'getResultsWithScoresPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: [] })));
         component.exercise = exercise1;
 
         // WHEN
@@ -117,8 +111,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(getResultsStub).to.have.been.called;
-        expect(exportCSVStub).to.not.have.been.called;
+        expect(getResultsStub).toHaveBeenCalled();
+        expect(exportCSVStub).not.toHaveBeenCalled();
     });
 
     it('should export results for one exercise', () => {
@@ -158,8 +152,10 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     it('should export results for multiple exercise', () => {
         // GIVEN
-        const exportCSVStub = sinon.stub(resultService, 'triggerDownloadCSV');
-        const getResultsStub = sinon.stub(resultService, 'getResultsWithScoresPerGradingCriterion').returns(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
+        const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const getResultsStub = jest
+            .spyOn(resultService, 'getResultsWithScoresPerGradingCriterion')
+            .mockReturnValue(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
         component.exercises = [exercise1, exercise2];
 
         // WHEN
@@ -167,16 +163,16 @@ describe('ExerciseScoresExportButtonComponent', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(getResultsStub).to.have.been.calledTwice;
-        expect(exportCSVStub).to.have.been.calledTwice;
-        expect(exportCSVStub).to.have.been.calledWith(expectedCSVWithCriteria, 'ex1-results-scores.csv');
-        expect(exportCSVStub).to.have.been.calledWith(expectedCSVNoCriteria, 'ex2-results-scores.csv');
+        expect(getResultsStub).toHaveBeenCalledTimes(2);
+        expect(exportCSVStub).toHaveBeenCalledTimes(2);
+        expect(exportCSVStub).toHaveBeenNthCalledWith(1, expectedCSVWithCriteria, 'ex1-results-scores.csv');
+        expect(exportCSVStub).toHaveBeenNthCalledWith(2, expectedCSVNoCriteria, 'ex2-results-scores.csv');
     });
 
     function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvRows: string[], expectedCsvFilename: string) {
         // GIVEN
-        const exportCSVStub = sinon.stub(resultService, 'triggerDownloadCSV');
-        const getResultsStub = sinon.stub(resultService, 'getResultsWithScoresPerGradingCriterion').returns(of(new HttpResponse({ body: results })));
+        const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const getResultsStub = jest.spyOn(resultService, 'getResultsWithScoresPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
         component.exercise = exercise;
 
         // WHEN
@@ -184,8 +180,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(getResultsStub).to.have.been.called;
-        expect(exportCSVStub).to.have.been.calledWith(expectedCsvRows, expectedCsvFilename);
+        expect(getResultsStub).toHaveBeenCalled();
+        expect(exportCSVStub).toHaveBeenCalledWith(expectedCsvRows, expectedCsvFilename);
     }
 
     function setupParticipation(studentLogin: string, studentName: string, isProgramming: boolean): StudentParticipation {
