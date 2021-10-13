@@ -1,10 +1,6 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
-.answer-count,
-.posting-header {
+.toggle-content {
     font-size: smaller;
-}
-
-.resolved {
-    color: green;
+    color: $metis-light-gray;
 }

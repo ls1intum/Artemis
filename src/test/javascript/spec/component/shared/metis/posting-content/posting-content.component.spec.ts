@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -9,6 +9,7 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { PatternMatch, PostingContentPart } from 'app/shared/metis/metis.util';
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import {
     metisCourse,
     metisCoursePosts,
@@ -28,7 +29,7 @@ describe('PostingContentComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent)],
+            declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent), MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {

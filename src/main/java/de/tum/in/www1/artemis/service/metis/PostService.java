@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+
+import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -28,18 +31,24 @@ public class PostService extends PostingService {
 
     private static final String METIS_POST_ENTITY_NAME = "metis.post";
 
+    public static final int TOP_K_SIMILARITY_RESULTS = 5;
+
     private final UserRepository userRepository;
 
     private final PostRepository postRepository;
 
     private final GroupNotificationService groupNotificationService;
 
+    private final PostContentCompareStrategy postContentCompareStrategy;
+
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
+            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
+            PostContentCompareStrategy postContentCompareStrategy) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
+        this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
     /**
@@ -382,5 +391,20 @@ public class PostService extends PostingService {
      */
     public Post findById(Long postId) {
         return postRepository.findByIdElseThrow(postId);
+    }
+
+    /**
+     * Calculates k similar posts based on the underlying content comparison strategy
+     *
+     * @param courseId  id of the course in which similar posts are searched for
+     * @param post      post that is to be created and check for similar posts beforehand
+     * @return list of similar posts
+     */
+    public List<Post> getSimilarPosts(Long courseId, Post post) {
+        List<Post> coursePosts = this.getAllCoursePosts(courseId);
+
+        // sort course posts by calculated similarity scores
+        coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
     }
 }
