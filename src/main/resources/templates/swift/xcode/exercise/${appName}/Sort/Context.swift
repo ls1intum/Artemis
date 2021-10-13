@@ -12,6 +12,18 @@ import Foundation
  Implement the Context Class
 */
 public class Context {
+    public func getDates() -> [Date] { return [Date()] }
+
+    public func setDates(_ dates: [Date]) { }
+
+    public func setSortAlgorithm(_ sa: SortStrategy) { }
+
+    public func getSortAlgorithm() -> SortStrategy? { return nil }
+
+    public func sort() { }
+    
+    public func setRandomDates() { }
+    
     /*
      We added some helper functions to make your life easier
     */

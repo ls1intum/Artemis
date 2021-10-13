@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class BubbleSort {
+public class BubbleSort: SortStrategy {
     /**
      Sorts dates with BubbleSort.
 

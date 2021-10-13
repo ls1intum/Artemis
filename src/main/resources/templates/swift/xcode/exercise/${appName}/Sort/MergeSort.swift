@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class MergeSort {
+public class MergeSort: SortStrategy {
     /**
      Sorts dates with MergeSort.
 

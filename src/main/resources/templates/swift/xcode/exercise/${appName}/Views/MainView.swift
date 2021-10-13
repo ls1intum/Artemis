@@ -13,6 +13,9 @@ import SwiftUI
 */
 
 struct MainView: View {
+    let context = Context()
+    var sortAlgorithm: String = ""
+    
     var body: some View {
         Text("MainView")
     }

@@ -13,7 +13,6 @@ class ${appName}Test: XCTestCase {
     private var sortedDates: [Date]!
     
     override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
         super.setUp()
         
         // Create a sorted array of the above created dates
@@ -21,20 +20,54 @@ class ${appName}Test: XCTestCase {
         
         // Create some unsorted dates for testing
         self.unsortedDates = self.sortedDates.shuffled()
-        
+    }
+    
+    func testAttributesForContext() {
+        let context = Context()
+        let mirror = Mirror(reflecting: context)
+        var dates = true
+        var sortAlgorithm = true
+        for child in mirror.children {
+            if child.label == "dates" {
+                dates = false
+            }
+            if child.label == "sortAlgorithm" {
+                sortAlgorithm = false
+            }
+        }
+        if dates {
+            XCTFail("Attribute 'dates' of Context.swift is not implemented!")
+        }
+        if sortAlgorithm {
+            XCTFail("Attribute 'sortAlgorithm' of Context.swift is not implemented!")
+        }
+    }
+    
+    func testAttributesForPolicy() {
+        let policy = Policy(Context())
+        let mirror = Mirror(reflecting: policy)
+        var context = true
+        for child in mirror.children {
+            if child.label == "context" {
+                context = false
+            }
+        }
+        if context {
+            XCTFail("Attribute 'context' of Policy.swift is not implemented!")
+        }
     }
     
     func testBubbleSort() {
         let bubbleSort = BubbleSort()
         let sortedInput = bubbleSort.performSort(unsortedDates)
-
+        
         XCTAssertEqual(sortedInput, sortedDates, "BubbleSort does not sort correctly.")
     }
-
+    
     func testMergeSort() {
         let mergeSort = MergeSort()
         let sortedInput = mergeSort.performSort(unsortedDates)
-
+        
         XCTAssertEqual(sortedInput, sortedDates, "MergeSort does not sort correctly.")
     }
     
