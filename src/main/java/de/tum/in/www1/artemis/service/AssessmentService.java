@@ -331,14 +331,14 @@ public class AssessmentService {
 
         final Map<GradingCriterion, Double> pointsPerCriterion = new HashMap<>();
         final List<Feedback> assessments = result.getFeedbacks();
-        final Map<Long, Integer> gradingInstructions = new HashMap<>();
+        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
 
-        for (Feedback feedback : assessments) {
+        for (final Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() == null) {
                 continue;
             }
 
-            double feedbackPoints = feedback.computeTotalScore(0, gradingInstructions);
+            double feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
             long criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
             GradingCriterion criterion = gradingCriteriaById.get(criterionId);
             pointsPerCriterion.compute(criterion, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
