@@ -73,7 +73,7 @@ Use JSDoc style comments for functions, interfaces, enums, and classes.
 9. Icons with Text
 ====================
 
-If you use icons aside of text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
+If you use icons next to text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
 
 Do this:
 .. code-block:: html

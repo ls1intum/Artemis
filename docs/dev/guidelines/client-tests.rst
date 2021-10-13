@@ -198,7 +198,7 @@ More examples on test speed improvement can be found in the `following PR <https
 
 4. Calling `jest.clearAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests.
 
-5. Make sure to have at least 80% line test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+5. Make sure to have at least 80% line test coverage. Run ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
 
 6. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
