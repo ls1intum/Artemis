@@ -253,7 +253,7 @@ describe('StudentExamsComponent', () => {
         // exam is not over
         studentExamsComponentFixture.detectChanges();
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).not.toBeNull();
+        expect(assessButton).toBeTruthy();
         expect(assessButton.nativeElement.disabled).toEqual(true);
     });
 
@@ -267,10 +267,10 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamOver).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         const assessSpy = jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeDefined();
+        expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
         expect(assessSpy).toBeCalled();
     });
@@ -288,10 +288,10 @@ describe('StudentExamsComponent', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamOver).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(httpError));
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeDefined();
+        expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
     });
@@ -306,13 +306,13 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamStarted).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
 
         studentExams = [studentExamOne!, studentExamTwo!];
 
         const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateStudentExams');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
-        expect(generateStudentExamsButton).toBeDefined();
+        expect(generateStudentExamsButton).toBeTruthy();
         expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(false);
         generateStudentExamsButton.nativeElement.click();
@@ -341,7 +341,7 @@ describe('StudentExamsComponent', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const translationServiceSpy = jest.spyOn(translationService, 'instant');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
-        expect(generateStudentExamsButton).toBeDefined();
+        expect(generateStudentExamsButton).toBeTruthy();
         expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
         generateStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
@@ -363,10 +363,10 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamStarted).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateStudentExams');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
-        expect(generateStudentExamsButton).toBeDefined();
+        expect(generateStudentExamsButton).toBeTruthy();
         expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(true);
         generateStudentExamsButton.nativeElement.click();
@@ -387,10 +387,10 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isExamStarted).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
         expect(studentExamsComponent.studentExams.length).toEqual(1);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateMissingStudentExams');
         const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
-        expect(generateMissingStudentExamsButton).toBeDefined();
+        expect(generateMissingStudentExamsButton).toBeTruthy();
         expect(generateMissingStudentExamsButton.nativeElement.disabled).toEqual(false);
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(true);
         generateMissingStudentExamsButton.nativeElement.click();
@@ -412,7 +412,7 @@ describe('StudentExamsComponent', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         expect(studentExamsComponent.hasStudentsWithoutExam).toEqual(true);
         const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
-        expect(generateMissingStudentExamsButton).toBeDefined();
+        expect(generateMissingStudentExamsButton).toBeTruthy();
         expect(generateMissingStudentExamsButton.nativeElement.disabled).toEqual(false);
         generateMissingStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
@@ -426,11 +426,11 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamStarted).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
 
         const startExercisesSpy = jest.spyOn(examManagementService, 'startExercises');
         const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
-        expect(startExercisesButton).toBeDefined();
+        expect(startExercisesButton).toBeTruthy();
         expect(startExercisesButton.nativeElement.disabled).toEqual(false);
 
         startExercisesButton.nativeElement.click();
@@ -449,7 +449,7 @@ describe('StudentExamsComponent', () => {
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
-        expect(startExercisesButton).toBeDefined();
+        expect(startExercisesButton).toBeTruthy();
         expect(startExercisesButton.nativeElement.disabled).toEqual(false);
         startExercisesButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
@@ -468,10 +468,10 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         const unlockAllRepositories = jest.spyOn(examManagementService, 'unlockAllRepositories');
         const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
-        expect(unlockAllRepositoriesButton).toBeDefined();
+        expect(unlockAllRepositoriesButton).toBeTruthy();
         expect(unlockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
         unlockAllRepositoriesButton.nativeElement.click();
         expect(modalServiceOpenStub).toBeCalled();
@@ -494,12 +494,13 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
-        expect(unlockAllRepositoriesButton).toBeDefined();
+        expect(unlockAllRepositoriesButton).toBeTruthy();
         expect(unlockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
+
         unlockAllRepositoriesButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
     });
@@ -517,11 +518,12 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         const lockAllRepositories = jest.spyOn(examManagementService, 'lockAllRepositories');
         const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
-        expect(lockAllRepositoriesButton).toBeDefined();
+        expect(lockAllRepositoriesButton).toBeTruthy();
         expect(lockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
+
         lockAllRepositoriesButton.nativeElement.click();
         expect(modalServiceOpenStub).toBeCalled();
         expect(lockAllRepositories).toBeCalled();
@@ -543,11 +545,11 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
-        expect(lockAllRepositoriesButton).toBeDefined();
+        expect(lockAllRepositoriesButton).toBeTruthy();
         expect(lockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
         lockAllRepositoriesButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
@@ -562,12 +564,13 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamOver).toEqual(true);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
         const evaluateQuizExercises = jest.spyOn(examManagementService, 'evaluateQuizExercises');
         const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
 
-        expect(evaluateQuizExercisesButton).toBeDefined();
+        expect(evaluateQuizExercisesButton).toBeTruthy();
         expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
+
         evaluateQuizExercisesButton.nativeElement.click();
         expect(evaluateQuizExercises).toBeCalled();
     });
@@ -582,7 +585,7 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isLoading).toEqual(false);
         expect(studentExamsComponent.isExamOver).toEqual(true);
         expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeDefined();
+        expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(examManagementService, 'evaluateQuizExercises').mockReturnValue(throwError(httpError));
@@ -590,7 +593,7 @@ describe('StudentExamsComponent', () => {
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
-        expect(evaluateQuizExercisesButton).toBeDefined();
+        expect(evaluateQuizExercisesButton).toBeTruthy();
         expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
         evaluateQuizExercisesButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
