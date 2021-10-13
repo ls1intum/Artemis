@@ -210,14 +210,14 @@ Here is an example of a test for `exercise-update-warning component <https://git
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {
         const emitSpy = jest.spyOn(comp.confirmed, 'emit');
-        const saveExerciseWithoutReevaluation = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
+        const saveExerciseWithoutReevaluationSpy = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
         const button = fixture.debugElement.nativeElement.querySelector('#save-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluation).toHaveBeenCalledTimes(1);
+        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
         expect(emitSpy).toHaveBeenCalled();
     });
 

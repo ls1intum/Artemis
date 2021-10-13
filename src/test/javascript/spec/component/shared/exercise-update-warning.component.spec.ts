@@ -31,39 +31,39 @@ describe('Exercise Update Warning Component Tests', () => {
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {
         const emitSpy = jest.spyOn(comp.confirmed, 'emit');
-        const saveExerciseWithoutReevaluation = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
+        const saveExerciseWithoutReevaluationSpy = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
         const button = fixture.debugElement.nativeElement.querySelector('#save-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluation).toHaveBeenCalledTimes(1);
+        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
         expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should trigger reEvaluateExercise once', () => {
         const emitSpy = jest.spyOn(comp.reEvaluated, 'emit');
-        const reEvaluateExercise = jest.spyOn(comp, 'reEvaluateExercise');
+        const reEvaluateExerciseSpy = jest.spyOn(comp, 'reEvaluateExercise');
 
         const button = fixture.debugElement.nativeElement.querySelector('#reevaluate-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(reEvaluateExercise).toHaveBeenCalledTimes(1);
+        expect(reEvaluateExerciseSpy).toHaveBeenCalledTimes(1);
         expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should trigger clear once', () => {
-        const clear = jest.spyOn(comp, 'clear');
+        const clearSpy = jest.spyOn(comp, 'clear');
 
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(clear).toHaveBeenCalledTimes(1);
+        expect(clearSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle deleteFeedback', () => {

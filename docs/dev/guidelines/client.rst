@@ -80,10 +80,9 @@ Do this:
     <fa-icon [icon]="'times'"></fa-icon>
     <span>Text</span>
 
-Don't do these or any combinations of them:
+Don't do these or any combination:
 
 .. code-block:: html
-
     <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
 
     <fa-icon [icon]="'times'"></fa-icon><span> Text</span>
