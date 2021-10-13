@@ -4,10 +4,6 @@ import { authTokenKey } from '../support/constants';
 describe('Authentication tests', () => {
     const user = artemis.users.getStudentOne();
 
-    beforeEach(() => {
-        cy.logout();
-    });
-
     it('fails to access protected resource without login', () => {
         cy.visit('/course-management');
         cy.location('pathname').should('eq', '/');

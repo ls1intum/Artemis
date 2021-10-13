@@ -44,7 +44,7 @@ declare global {
  * Overwrite the normal cypress request to always add the authorization token.
  */
 Cypress.Commands.overwrite('request', (originalFn, options) => {
-    const token = Cypress.env(authTokenKey);
+    const token = localStorage.getItem(authTokenKey);
 
     if (!!token) {
         const authHeader = 'Bearer ' + token;
@@ -82,24 +82,10 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     }).then((response) => {
         expect(response.status).to.equal(200);
         localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
-        Cypress.env(authTokenKey, response.body.id_token);
     });
     if (url) {
         cy.visit(url);
     }
-});
-
-/**
- * Log out and removes all references to authToken
- * */
-Cypress.Commands.add('logout', () => {
-    localStorage.removeItem(authTokenKey);
-    // The 'jhi-previousurl' can cause issues when it is not cleared
-    sessionStorage.clear();
-    Cypress.env(authTokenKey, '');
-    cy.visit('/');
-    cy.location('pathname').should('eq', '/');
-    cy.log('Logged out');
 });
 
 /**
@@ -109,7 +95,6 @@ Cypress.Commands.add('loginWithGUI', (credentials) => {
     cy.visit('/');
     cy.get('#username').type(credentials.username, { log: false });
     cy.get('#password').type(credentials.password, { log: false }).type('{enter}');
-    Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
 });
 
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
