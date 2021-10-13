@@ -99,14 +99,21 @@ export class ResultService implements IResultService {
 
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach(this.convertResultResponse);
+            res.body.forEach((result: Result) => this.convertResultResponse(result));
         }
         return res;
     }
 
     protected convertResultWithPointsResponse(res: ResultsWithPointsArrayResponseType): ResultsWithPointsArrayResponseType {
         if (res.body) {
-            res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => this.convertResultResponse(resultWithPoints.result));
+            res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
+                this.convertResultResponse(resultWithPoints.result);
+                const pointsMap = new Map<number, number>();
+                Object.keys(resultWithPoints.points).forEach((key) => {
+                    pointsMap.set(Number(key), resultWithPoints.points[key]);
+                });
+                resultWithPoints.points = pointsMap;
+            });
         }
         return res;
     }
@@ -124,7 +131,7 @@ export class ResultService implements IResultService {
         return res;
     }
 
-    convertParticipationDateFromServer(participation: StudentParticipation) {
+    private convertParticipationDateFromServer(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             if (participation.exercise) {
