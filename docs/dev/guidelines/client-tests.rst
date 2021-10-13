@@ -6,23 +6,13 @@ Client Tests
 
 We use `Jest <https://jestjs.io>`_ as our client testing framework.
 
-There are different tools available to support client testing. A common combination you can see in our codebase is:
-
-- `Sinon <https://sinonjs.org/>`_ for creating test spies, stubs and mocks
-- `Chai <https://www.chaijs.com/>`_ with `Sinon Chai <https://github.com/domenic/sinon-chai>`_ for assertions.
-- `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
+There are different tools available to support client testing. We try to limit ourselves to Jest as much as possible. We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
 
 The most basic test looks similar to this:
 
  .. code:: ts
 
-    import * as chai from 'chai';
-    import sinonChai from 'sinon-chai';
-    import * as sinon from 'sinon';
     import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-    chai.use(sinonChai);
-    const expect = chai.expect;
 
     describe('SomeComponent', () => {
         let someComponentFixture: ComponentFixture<SomeComponent>;
@@ -49,12 +39,12 @@ The most basic test looks similar to this:
         });
 
         afterEach(function () {
-            sinon.restore();
+            jest.clearAllMocks();
         });
 
         it('should initialize', () => {
             someComponentFixture.detectChanges();
-            expect(SomeComponent).to.not.be.undefined;
+            expect(SomeComponent).not.toBeUndefined();
         });
     });
 
@@ -63,9 +53,7 @@ Some guidelines:
 1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
    that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components>`_.
    This has the benefit of being able to test the interaction with the child components.
-2. According to [Chai](https://www.chaijs.com/api/bdd) you should make expectations as specific as possible. This means
-    - Rather compare to the specific result you expect instead of comparing to something to be not equal to an **arbitrary** other value.
-    - Instead of using `.to.be.ok` (which only checks for a truthy value) use `.to.not.be.undefined` or `.to.be.true` depending on your use case. But remember that `.to.not.be.undefined` could possibly be arbitrary here.
+2. Try to make expectations as specific as possible. This means rather comparing to the specific result you expect instead, compare something to be not equal to an **arbitrary** other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing.
 
 Example of a bad test practice:
 
@@ -190,7 +178,7 @@ More examples on test speed improvement can be found in the `following PR <https
           afterEach(() => {
               ...
               httpMock.verify();
-              sinon.restore();
+              jest.clearAllMocks();
           });
 
           it('should make get request', fakeAsync(() => {
@@ -208,10 +196,7 @@ More examples on test speed improvement can be found in the `following PR <https
 3. Do not use ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_).
    This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
-4. Sinon uses sandboxes, which remove the need of keeping track of every fake created, which greatly simplifies cleanup and improves readability.
-   Since ``sinon@5.0.0``, the sinon object is a default `sandbox <https://sinonjs.org/releases/latest/sandbox/>`_, meaning one doesn't need to do any setup work.
-   Unless you have a very advanced setup or need a special configuration, you probably want to only use that one.
-   In ``afterEach`` block one should add ``sinon.restore()``, which restores all fakes created through sandbox.
+4. Calling `jest.clearAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests.
 
 5. Make sure to have at least 80% line test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
 
@@ -219,33 +204,26 @@ More examples on test speed improvement can be found in the `following PR <https
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
    template changes have occurred.
 
-Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/master/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L38-L49>`_
+Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
 
  .. code:: ts
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {
-        const emitSpy = sinon.spy(comp.confirmed, 'emit');
-        const saveExerciseWithoutReevaluation = sinon.spy(comp, 'saveExerciseWithoutReevaluation');
+        const emitSpy = jest.spyOn(comp.confirmed, 'emit');
+        const saveExerciseWithoutReevaluation = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
         const button = fixture.debugElement.nativeElement.querySelector('#save-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluation).to.have.been.calledOnce;
-        expect(emitSpy).to.have.been.called;
+        expect(saveExerciseWithoutReevaluation).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalled();
     });
 
 7. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:
 
  .. code:: ts
-
-    import * as chai from 'chai';
-    import sinonChai from 'sinon-chai';
-    import * as sinon from 'sinon';
-
-    chai.use(sinonChai);
-    const expect = chai.expect;
 
     describe('SomeComponent', () => {
         let someComponentFixture: ComponentFixture<SomeComponent>;

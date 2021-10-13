@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
@@ -8,9 +5,6 @@ import { MockDirective, MockProvider, MockPipe } from 'ng-mocks';
 import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Exercise Update Warning Component Tests', () => {
     let fixture: ComponentFixture<ExerciseUpdateWarningComponent>;
@@ -31,45 +25,45 @@ describe('Exercise Update Warning Component Tests', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {
-        const emitSpy = sinon.spy(comp.confirmed, 'emit');
-        const saveExerciseWithoutReevaluation = sinon.spy(comp, 'saveExerciseWithoutReevaluation');
+        const emitSpy = jest.spyOn(comp.confirmed, 'emit');
+        const saveExerciseWithoutReevaluation = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
         const button = fixture.debugElement.nativeElement.querySelector('#save-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluation).to.have.been.calledOnce;
-        expect(emitSpy).to.have.been.called;
+        expect(saveExerciseWithoutReevaluation).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should trigger reEvaluateExercise once', () => {
-        const emitSpy = sinon.spy(comp.reEvaluated, 'emit');
-        const reEvaluateExercise = sinon.spy(comp, 'reEvaluateExercise');
+        const emitSpy = jest.spyOn(comp.reEvaluated, 'emit');
+        const reEvaluateExercise = jest.spyOn(comp, 'reEvaluateExercise');
 
         const button = fixture.debugElement.nativeElement.querySelector('#reevaluate-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(reEvaluateExercise).to.have.been.calledOnce;
-        expect(emitSpy).to.have.been.called;
+        expect(reEvaluateExercise).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should trigger clear once', () => {
-        const clear = sinon.spy(comp, 'clear');
+        const clear = jest.spyOn(comp, 'clear');
 
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
         button.click();
 
         fixture.detectChanges();
 
-        expect(clear).to.have.been.calledOnce;
+        expect(clear).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle deleteFeedback', () => {
@@ -77,6 +71,6 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(comp.deleteFeedback).to.be.true;
+        expect(comp.deleteFeedback).toBe(true);
     });
 });
