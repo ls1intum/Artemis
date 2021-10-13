@@ -1,6 +1,7 @@
 {
     "audits": {
         "title": "Audits",
+        "notFound": "No audit found",
         "filter": {
             "title": "Filter per date",
             "from": "from",
