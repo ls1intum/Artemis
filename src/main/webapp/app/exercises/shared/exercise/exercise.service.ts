@@ -263,7 +263,6 @@ export class ExerciseService {
         return res;
     }
 
-    // TODO Refactoring Services: Remove this method as this should be done by the account service?!
     /**
      * Look up permissions and add/replace isAtLeastInstructor, isAtLeastEditor and isAtLeastTutor to http request containing a course
      * @param { ERT } res - Response from server including a course
