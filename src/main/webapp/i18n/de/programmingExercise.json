@@ -324,6 +324,7 @@
                 "updatedSubmissionPolicyIncorrectType": "Die Abgaberichtlinie konnte nicht gespeichert werden, da sich der Typ geändert hat.",
                 "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
                 "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
+                "submissionsAllowed": "erlaubte Abgaben",
                 "none": {
                     "optionLabel": "Keine"
                 },

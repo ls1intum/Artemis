@@ -24,6 +24,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -32,6 +33,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;

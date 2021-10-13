@@ -138,7 +138,8 @@ public class SubmissionPolicyService {
         }
         else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             return enableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
-        } else {
+        }
+        else {
             throw new NotImplementedException();
         }
     }
@@ -166,7 +167,8 @@ public class SubmissionPolicyService {
         }
         else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             disableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
-        } else {
+        }
+        else {
             throw new NotImplementedException();
         }
     }

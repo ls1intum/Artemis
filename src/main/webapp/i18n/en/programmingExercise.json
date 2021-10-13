@@ -324,6 +324,7 @@
                 "updatedSubmissionPolicyIncorrectType": "The submission policy could not be updated, because the new type is different from the old type.",
                 "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
                 "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
+                "submissionsAllowed": "allowed Submissions",
                 "none": {
                     "optionLabel": "None"
                 },
@@ -331,9 +332,9 @@
                     "optionLabel": "Lock Repository"
                 },
                 "submissionPenalty": {
-                    "optionLabel": "Submission Limit Exceeded Penalty",
+                    "optionLabel": "Submission Penalty",
                     "penaltyInputFieldTitle": "Penalty after Exceeding Submission Limit",
-                    "exceedingLimitDescription": "The permanent penalty the system imposes on the maximum achievable participant score when exceeding the submission limit.",
+                    "exceedingLimitDescription": "The permanent penalty the system imposes on the maximum achievable participation score when exceeding the submission limit.",
                     "penaltyInputFieldValidationWarning": {
                         "min": "The penalty must be between 0 and 100 percent!",
                         "max": "The penalty must be between 0 and 100 percent!",

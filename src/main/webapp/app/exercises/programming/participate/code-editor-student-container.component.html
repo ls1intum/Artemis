@@ -29,8 +29,16 @@
             *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
             <jhi-included-in-score-badge
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span><br><span>{{ exercise.submissionPolicy?.type }}
-    </span>
+                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span
+
+
+        ><br />
+        <span *ngIf="exercise.submissionPolicy"
+            >{{ exercise.submissionPolicy.submissionLimit }} {{ 'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed' | artemisTranslate }}</span
+        >
+        <span *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
+            ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}: {{ exercise.submissionPolicy.exceedingPenalty }})</span
+        >
     </div>
     <!-- prettier-ignore -->
     <div editorToolbar class="d-inline-flex align-items-center">

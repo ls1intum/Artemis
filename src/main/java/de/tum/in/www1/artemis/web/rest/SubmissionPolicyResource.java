@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +17,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -92,13 +92,13 @@ public class SubmissionPolicyResource {
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         if (programmingExercise.getSubmissionPolicy() != null) {
-            throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.",
-                ENTITY_NAME, "programmingExercisePolicyPresent");
+            throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.", ENTITY_NAME,
+                    "programmingExercisePolicyPresent");
         }
 
         if (submissionPolicy.getId() != null) {
-            throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has an id.",
-                ENTITY_NAME, "submissionPolicyHasId");
+            throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has an id.", ENTITY_NAME,
+                    "submissionPolicyHasId");
         }
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
@@ -132,7 +132,7 @@ public class SubmissionPolicyResource {
         SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             throw new BadRequestAlertException("The submission policy could not be removed from the programming exercise, because it does not have a submission policy.",
-                ENTITY_NAME, "programmingExercisePolicyNotPresent");
+                    ENTITY_NAME, "programmingExercisePolicyNotPresent");
         }
 
         submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
@@ -166,8 +166,8 @@ public class SubmissionPolicyResource {
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
-            throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.",
-                ENTITY_NAME, "submissionPolicyToggleFailedPolicyNotExist");
+            throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.", ENTITY_NAME,
+                    "submissionPolicyToggleFailedPolicyNotExist");
         }
         if (activate == submissionPolicy.isActive()) {
             String errorKey = activate ? "submissionPolicyAlreadyEnabled" : "submissionPolicyAlreadyDisabled";
@@ -212,8 +212,8 @@ public class SubmissionPolicyResource {
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
-            throw new BadRequestAlertException("The submission policy could not be updated, because the programming exercise does not have a submission policy.",
-                ENTITY_NAME, "submissionPolicyUpdateFailedPolicyNotExist");
+            throw new BadRequestAlertException("The submission policy could not be updated, because the programming exercise does not have a submission policy.", ENTITY_NAME,
+                    "submissionPolicyUpdateFailedPolicyNotExist");
         }
 
         submissionPolicyService.validateSubmissionPolicy(updatedSubmissionPolicy);
