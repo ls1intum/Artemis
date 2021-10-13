@@ -53,7 +53,7 @@ Some guidelines:
 1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
    that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components>`_.
    This has the benefit of being able to test the interaction with the child components.
-2. Try to make expectations as specific as possible. This means rather comparing to the specific result you expect instead, compare something to be not equal to an **arbitrary** other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing.
+2. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example toBe(5) is better than not.toBeUndefined(), which would also pass if the value wrongly changes to 6.
 
 Example of a bad test practice:
 
