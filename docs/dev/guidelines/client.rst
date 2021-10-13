@@ -249,4 +249,4 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
-Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md
+Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
