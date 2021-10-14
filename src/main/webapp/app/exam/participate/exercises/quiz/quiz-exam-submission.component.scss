@@ -105,10 +105,10 @@
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
-    overflow: hidden;
+    overflow: visible;
     position: fixed;
     height: 90vh;
-    top: 30%;
+    top: 45%;
 
     &__step {
         display: inline-block;
