@@ -80,8 +80,7 @@ Do this:
     <fa-icon [icon]="'times'"></fa-icon>
     <span>Text</span>
 
-Don't do these or any combination:
-
+Don't do one of these or any other combination of whitespaces:
 .. code-block:: html
     <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
 
