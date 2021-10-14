@@ -79,13 +79,13 @@
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
-                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortBy">
+                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSortBy()" name="sortBy">
                                 <option *ngFor="let sortByOption of SortBy | keyvalue" [ngValue]="sortByOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
                                 </option>
                             </select>
                         </div>
-                        <div class="col-auto p-0 clickable" (click)="onChangeSort()">
+                        <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                             <fa-icon
                                 [icon]="currentSortDirection === SortDirection.ASC ? 'long-arrow-alt-up' : 'long-arrow-alt-down'"
                                 [ngbTooltip]="

@@ -131,7 +131,16 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * on changing the sort options via dropdown, the metis service is invoked to deliver the posts for the currently set context,
      * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
      */
-    onChangeSort(): void {
+    onChangeSortBy(): void {
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+    }
+
+    /**
+     * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
+     * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
+     */
+    onChangeSortDir(): void {
         // flip sort direction
         this.currentSortDirection = this.currentSortDirection === SortDirection.DESC ? SortDirection.ASC : SortDirection.DESC;
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
