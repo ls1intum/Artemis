@@ -81,25 +81,26 @@ export class ExerciseScoresExportButtonComponent {
      * @param gradingCriteria the list of grading criteria for which the points should be included in the CSV
      */
     private formatHeaderRow(exercise: Exercise, studentParticipation: StudentParticipation, gradingCriteria: GradingCriterion[]) {
-        let header = 'data:text/csv;charset=utf-8';
-        if (studentParticipation.team) {
-            header += ',Team Name,Team Short Name';
-        } else {
-            header += ',Name,Username';
-        }
-        header += ',Score,Points';
+        const columns = [];
 
-        gradingCriteria.forEach((criterion) => (header += `,"${criterion.title}"`));
+        if (studentParticipation.team) {
+            columns.push('Team Name', 'Team Short Name');
+        } else {
+            columns.push('Name', 'Username');
+        }
+        columns.push('Score', 'Points');
+
+        gradingCriteria.forEach((criterion) => columns.push(`"${criterion.title}"`));
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            header += ',Repo Link';
+            columns.push('Repo Link');
         }
 
         if (studentParticipation.team) {
-            header += ',Students';
+            columns.push('Students');
         }
 
-        return header;
+        return 'data:text/csv;charset=utf-8,' + columns.join(',');
     }
 
     /**
@@ -118,26 +119,22 @@ export class ExerciseScoresExportButtonComponent {
     ): string {
         const result = resultWithPoints.result;
         const { participantName, participantIdentifier } = participation;
-        const score = round(result.score!);
-        const points = round((result.score! / 100.0) * exercise.maxPoints!);
 
-        let row = `${participantName},${participantIdentifier},${score},${points}`;
+        const columns = [participantName, participantIdentifier, round(result.score!), resultWithPoints.totalPoints];
 
-        gradingCriteria
-            .map((criterion) => resultWithPoints.points.get(criterion.id!) || 0.0)
-            .map(round)
-            .forEach((criterionPoints) => (row += `,${criterionPoints}`));
+        gradingCriteria.map((criterion) => resultWithPoints.pointsPerCriterion.get(criterion.id!) || 0).forEach((criterionPoints) => columns.push(criterionPoints));
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const repoLink = (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-            row += `,${repoLink}`;
+            columns.push(repoLink);
         }
 
         if (participation.team) {
-            row += `,"${participation.team?.students?.map((s) => s.name).join(', ')}"`;
+            const students = `"${participation.team?.students?.map((s) => s.name).join(', ')}"`;
+            columns.push(students);
         }
 
-        return row;
+        return columns.join(',');
     }
 
     /**

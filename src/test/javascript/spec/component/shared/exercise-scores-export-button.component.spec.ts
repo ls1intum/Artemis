@@ -59,7 +59,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
     resultWithPoints1.result = result1;
-    resultWithPoints1.points = new Map([
+    resultWithPoints1.totalPoints = 2;
+    resultWithPoints1.pointsPerCriterion = new Map([
         [1, 2.0],
         [2, 10.0],
     ]);
@@ -71,7 +72,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
     resultWithPoints2.result = result2;
-    resultWithPoints2.points = new Map();
+    resultWithPoints2.totalPoints = 4;
+    resultWithPoints2.pointsPerCriterion = new Map();
 
     const expectedCSVWithCriteria = [
         'data:text/csv;charset=utf-8,Name,Username,Score,Points,"Criterion 1","Criterion 2",Repo Link',
@@ -140,7 +142,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         const teamResultWithPoints = new ResultWithPointsPerGradingCriterion();
         teamResultWithPoints.result = teamResult;
-        teamResultWithPoints.points = new Map();
+        teamResultWithPoints.totalPoints = 100;
+        teamResultWithPoints.pointsPerCriterion = new Map();
 
         const expectedCSVTeamExercise = [
             'data:text/csv;charset=utf-8,Team Name,Team Short Name,Score,Points,Students',
