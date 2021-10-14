@@ -510,7 +510,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.getPoints()).isEmpty();
+            assertThat(resultWithPoints.getPointsPerCriterion()).isEmpty();
         }
     }
 
@@ -531,7 +531,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         for (final var resultWithPoints : resultsWithPoints) {
-            final Map<Long, Double> points = resultWithPoints.getPoints();
+            final Map<Long, Double> points = resultWithPoints.getPointsPerCriterion();
             if (resultWithPoints.getResult().getScore() == 10.0) {
                 // two feedbacks of the same criterion -> credits should be summed up in one entry of the map
                 assertThat(points).hasSize(1);
@@ -539,7 +539,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             }
             else {
                 // two feedbacks of different criteria -> map should contain two entries
-                assertThat(resultWithPoints.getPoints()).hasSize(2);
+                assertThat(resultWithPoints.getPointsPerCriterion()).hasSize(2);
                 assertThat(points).containsEntry(2L, 1.0);
                 assertThat(points).containsEntry(3L, 3.0);
             }
@@ -659,7 +659,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.getPoints()).isEmpty();
+            assertThat(resultWithPoints.getPointsPerCriterion()).isEmpty();
         }
     }
 

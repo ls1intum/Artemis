@@ -107,10 +107,10 @@ export class ResultService implements IResultService {
             res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
                 this.convertResultResponse(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
-                Object.keys(resultWithPoints.points).forEach((key) => {
-                    pointsMap.set(Number(key), resultWithPoints.points[key]);
+                Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
+                    pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
                 });
-                resultWithPoints.points = pointsMap;
+                resultWithPoints.pointsPerCriterion = pointsMap;
             });
         }
         return res;

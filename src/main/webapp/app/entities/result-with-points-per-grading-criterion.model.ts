@@ -5,5 +5,6 @@ type Points = number;
 
 export class ResultWithPointsPerGradingCriterion {
     result: Result;
-    points: Map<GradingCriterionId, Points>;
+    totalPoints: Points;
+    pointsPerCriterion: Map<GradingCriterionId, Points>;
 }

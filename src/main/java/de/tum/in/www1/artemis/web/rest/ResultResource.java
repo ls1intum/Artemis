@@ -263,14 +263,15 @@ public class ResultResource {
 
         final List<Result> results = resultsForExercise(exercise, participations, false);
         final List<ResultWithPointsPerGradingCriterionDTO> resultsScored = results.stream().map(result -> {
+            double totalPoints = resultRepository.calculateTotalPoints(result.getFeedbacks());
             if (exercise.getGradingCriteria().isEmpty()) {
-                return new ResultWithPointsPerGradingCriterionDTO(result);
+                return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints);
             }
             else {
                 final Map<GradingCriterion, Double> points = assessmentService.calculatePointsPerGradingCriterion(exercise.getGradingCriteria(), result);
                 final Map<Long, Double> pointsByCriterion = new HashMap<>(points.size());
                 points.forEach((criterion, criterionPoints) -> pointsByCriterion.put(criterion.getId(), criterionPoints));
-                return new ResultWithPointsPerGradingCriterionDTO(result, pointsByCriterion);
+                return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsByCriterion);
             }
         }).toList();
 

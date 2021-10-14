@@ -13,18 +13,21 @@ public class ResultWithPointsPerGradingCriterionDTO {
 
     private Result result;
 
+    private Double totalPoints;
+
     /**
      * Map of {@link GradingCriterion#getId()} to the result points in that category.
      */
-    private Map<Long, Double> points;
+    private Map<Long, Double> pointsPerCriterion;
 
-    public ResultWithPointsPerGradingCriterionDTO(Result result) {
-        this(result, new HashMap<>());
+    public ResultWithPointsPerGradingCriterionDTO(Result result, double totalPoints) {
+        this(result, totalPoints, new HashMap<>());
     }
 
-    public ResultWithPointsPerGradingCriterionDTO(Result result, Map<Long, Double> points) {
+    public ResultWithPointsPerGradingCriterionDTO(Result result, double totalPoints, Map<Long, Double> pointsPerCriterion) {
         this.result = result;
-        this.points = points;
+        this.totalPoints = totalPoints;
+        this.pointsPerCriterion = pointsPerCriterion;
     }
 
     public Result getResult() {
@@ -35,11 +38,19 @@ public class ResultWithPointsPerGradingCriterionDTO {
         this.result = result;
     }
 
-    public Map<Long, Double> getPoints() {
-        return points;
+    public Double getTotalPoints() {
+        return totalPoints;
     }
 
-    public void setPoints(Map<Long, Double> points) {
-        this.points = points;
+    public void setTotalPoints(Double totalPoints) {
+        this.totalPoints = totalPoints;
+    }
+
+    public Map<Long, Double> getPointsPerCriterion() {
+        return pointsPerCriterion;
+    }
+
+    public void setPointsPerCriterion(Map<Long, Double> pointsPerCriterion) {
+        this.pointsPerCriterion = pointsPerCriterion;
     }
 }

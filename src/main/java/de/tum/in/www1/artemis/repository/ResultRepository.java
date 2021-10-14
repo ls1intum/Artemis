@@ -580,9 +580,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             if (feedback.getGradingInstruction() != null) {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
-            else {
+            else if (feedback.getCredits() != null) {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                // TODO: what happens if getCredits is null?
                 totalPoints += feedback.getCredits();
             }
         }
