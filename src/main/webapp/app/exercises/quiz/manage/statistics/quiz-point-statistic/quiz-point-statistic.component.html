@@ -36,7 +36,6 @@
                 [yAxis]="yAxis"
                 [yScaleMax]="maxScale"
                 [roundEdges]="roundEdges"
-                [barPadding]="barPadding"
                 [showDataLabel]="showDataLabel"
             >
                 <ng-template #tooltipTemplate let-model="model"> {{ roundValue((model.value / totalParticipants) * 100) }}% </ng-template>

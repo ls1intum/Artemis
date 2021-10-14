@@ -18,6 +18,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
+    styleUrls: ['./quiz-point-statistic.component.scss'],
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
@@ -52,7 +53,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     yAxis = true;
     roundEdges = true;
     showDataLabel = true;
-    barPadding = 150;
     height = 500;
 
     // timer
