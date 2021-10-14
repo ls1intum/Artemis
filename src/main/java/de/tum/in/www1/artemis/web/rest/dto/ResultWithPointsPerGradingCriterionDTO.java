@@ -20,6 +20,10 @@ public class ResultWithPointsPerGradingCriterionDTO {
      */
     private Map<Long, Double> pointsPerCriterion;
 
+    public ResultWithPointsPerGradingCriterionDTO() {
+        // needed for Jackson when executing tests
+    }
+
     public ResultWithPointsPerGradingCriterionDTO(Result result, double totalPoints) {
         this(result, totalPoints, new HashMap<>());
     }
