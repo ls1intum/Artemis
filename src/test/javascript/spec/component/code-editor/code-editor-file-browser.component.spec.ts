@@ -7,17 +7,10 @@ import { DebugElement } from '@angular/core';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { of, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import {
-    CommitState,
-    FileType,
-    GitConflictState,
-} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import {
-    CodeEditorRepositoryFileService,
-    CodeEditorRepositoryService,
-} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
@@ -213,8 +206,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.isLoadingFiles).toBe(false);
         expect(comp.repositoryFiles).toBeUndefined();
         expect(comp.filesTreeViewItem).toBeUndefined();
-        expect(onErrorSpy).toBeCalledTimes(1);
-        expect(loadFilesSpy).toBeCalledTimes(0);
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
+        expect(loadFilesSpy).toHaveBeenCalledTimes(0);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders.length).toBe(0);
@@ -239,7 +232,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.isLoadingFiles).toBe(false);
         expect(comp.repositoryFiles).toBeUndefined();
         expect(comp.filesTreeViewItem).toBeUndefined();
-        expect(onErrorSpy).toBeCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders.length).toBe(0);
@@ -277,7 +270,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.selectedFile).toEqual(selectedFile);
         const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!.children.find(({ value }) => value === selectedFile)!;
         expect(selectedTreeItem).toBeDefined();
-        expect(selectedTreeItem.checked).toBe(true)
+        expect(selectedTreeItem.checked).toBe(true);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders.length).toBe(2);
@@ -285,10 +278,10 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         const selectedFileHtml = renderedFiles[0];
         const isSelected = !!selectedFileHtml.query(By.css('.node-selected'));
-        expect(isSelected).toBe(true)
+        expect(isSelected).toBe(true);
         const notSelectedFilesHtml = [renderedFiles[1], ...renderedFolders];
         const areUnSelected = !notSelectedFilesHtml.some((el) => !!el.query(By.css('.node-selected')));
-        expect(areUnSelected).toBe(true)
+        expect(areUnSelected).toBe(true);
     });
 
     it('should add file to node tree if created', fakeAsync(() => {
@@ -311,7 +304,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'folder2',
             } as any),
         ];
-        const onFileChangeSpy =  jest.spyOn(comp.onFileChange, 'emit');
+        const onFileChangeSpy = jest.spyOn(comp.onFileChange, 'emit');
         const setupTreeviewSpy = jest.spyOn(comp, 'setupTreeview');
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
@@ -336,7 +329,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.creatingFile).toBeUndefined();
         expect(setupTreeviewSpy).toHaveBeenCalledTimes(1);
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
-        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(onFileChangeSpy).toHaveBeenCalledTimes(1);
         expect(comp.repositoryFiles).toEqual({ ...repositoryFiles, [filePath]: FileType.FILE });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).toBeNull();
@@ -388,7 +381,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.creatingFile).toBeUndefined();
         expect(setupTreeviewSpy).toHaveBeenCalledTimes(1);
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
-        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(onFileChangeSpy).toHaveBeenCalledTimes(1);
         expect(comp.repositoryFiles).toEqual({ ...repositoryFiles, [filePath]: FileType.FOLDER });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).toBeNull();
@@ -400,7 +393,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.creatingFile = ['', FileType.FILE];
         comp.onCreateFile(fileName);
         fixture.detectChanges();
-        expect(onErrorSpy).toBeCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
         expect(createFileMock).toHaveBeenCalledTimes(0);
     });
 
@@ -412,7 +405,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.repositoryFiles = repositoryFiles;
         comp.onCreateFile(fileName);
         fixture.detectChanges();
-        expect(onErrorSpy).toBeCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
         expect(createFileMock).toHaveBeenCalledTimes(0);
     });
 
@@ -462,7 +455,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renameFileMock).toHaveBeenCalledTimes(1);
         expect(renameFileMock).toHaveBeenCalledWith(fileName, afterRename);
         expect(comp.renamingFile).toBeUndefined();
-        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(onFileChangeSpy).toHaveBeenCalledTimes(1);
         expect(comp.repositoryFiles).toEqual({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
 
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
@@ -535,7 +528,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renameFileMock).toHaveBeenCalledTimes(1);
         expect(renameFileMock).toHaveBeenCalledWith(folderName, afterRename);
         expect(comp.renamingFile).toBeUndefined();
-        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(onFileChangeSpy).toHaveBeenCalledTimes(1);
         expect(comp.repositoryFiles).toEqual({
             [[afterRename, 'file1'].join('/')]: FileType.FILE,
             [[afterRename, 'file2'].join('/')]: FileType.FILE,
@@ -574,7 +567,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).toBeCalledTimes(0);
+        expect(renameFileMock).toHaveBeenCalledTimes(0);
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
@@ -607,7 +600,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).toBeCalledTimes(0);
+        expect(renameFileMock).toHaveBeenCalledTimes(0);
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
@@ -637,7 +630,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).toBeCalledTimes(0);
+        expect(renameFileMock).toHaveBeenCalledTimes(0);
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
@@ -656,8 +649,8 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         expect(comp.commitState).toEqual(CommitState.CONFLICT);
 
-        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBe(true)
-        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(true)
+        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBe(true);
+        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(true);
         expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
 
         // Resolve conflict.
@@ -675,7 +668,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(false);
         expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
 
-        expect(getRepositoryContentMock).toBeCalledTimes(1);
+        expect(getRepositoryContentMock).toHaveBeenCalledTimes(1);
         expect(comp.selectedFile).toBeUndefined();
     });
 });
