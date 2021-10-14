@@ -362,7 +362,7 @@ public class PostService extends PostingService {
             // set exercise retrieved from database to show title in notification
             Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
             post.setExercise(exercise);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
         }
@@ -371,7 +371,7 @@ public class PostService extends PostingService {
             // set lecture retrieved from database to show title in notification
             Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
             post.setLecture(lecture);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
         }
     }
 
