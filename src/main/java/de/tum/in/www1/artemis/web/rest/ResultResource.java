@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -263,14 +264,16 @@ public class ResultResource {
 
         final List<Result> results = resultsForExercise(exercise, participations, false);
         final List<ResultWithPointsPerGradingCriterionDTO> resultsScored = results.stream().map(result -> {
-            double totalPoints = resultRepository.calculateTotalPoints(result.getFeedbacks());
+            double totalPoints = RoundingUtil.round(resultRepository.calculateTotalPoints(result.getFeedbacks()));
+
             if (exercise.getGradingCriteria().isEmpty()) {
                 return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints);
             }
             else {
                 final Map<GradingCriterion, Double> points = assessmentService.calculatePointsPerGradingCriterion(exercise.getGradingCriteria(), result);
                 final Map<Long, Double> pointsByCriterion = new HashMap<>(points.size());
-                points.forEach((criterion, criterionPoints) -> pointsByCriterion.put(criterion.getId(), criterionPoints));
+                points.forEach((criterion, criterionPoints) -> pointsByCriterion.put(criterion.getId(), RoundingUtil.round(criterionPoints)));
+
                 return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsByCriterion);
             }
         }).toList();
