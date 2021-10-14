@@ -4,7 +4,6 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
