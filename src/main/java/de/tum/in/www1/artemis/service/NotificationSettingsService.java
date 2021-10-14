@@ -7,20 +7,26 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 
 @Service
 public class NotificationSettingsService {
+
+    private NotificationSettingRepository notificationSettingRepository;
 
     private final Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
             NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED);
 
     private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
+
+    public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
+        this.notificationSettingRepository = notificationSettingRepository;
+    }
 
     /**
      * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
@@ -60,9 +66,9 @@ public class NotificationSettingsService {
     public boolean checkIfNotificationEmailIsAllowedBySettingsForGivenUser(Notification notification, User user) {
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
 
-        Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(user.getId());
+        Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
 
-        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(false, notificationOptions);
+        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(false, notificationSettings);
 
         if (deactivatedTypes.isEmpty()) {
             return true;
@@ -104,9 +110,9 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
-     * Finds the deactivated NotificationTypes based on the user's NotificationOptions
+     * Finds the deactivated NotificationTypes based on the user's NotificationSettings
      * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
-     * @param notificationOptions which should be mapped to their respective NotificationTypes and filtered by activation status
+     * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
      * Each SettingId can be based on multiple different NotificationTypes
      */
@@ -127,8 +133,8 @@ public class NotificationSettingsService {
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
     public Set<NotificationType> findDeactivatedNotificationTypes(boolean checkForWebapp, Set<NotificationSetting> notificationSettings) {
-        Map<NotificationType, Boolean> notificationSettingWitchActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(checkForWebapp,
-                notificationOptions);
+        Map<NotificationType, Boolean> notificationSettingWithActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(checkForWebapp,
+                notificationSettings);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
         notificationSettingWithActivationStatusMap.forEach((notificationType, isActivated) -> {
             if (!isActivated) {
@@ -139,21 +145,12 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
-     * @param types Set that should be converted to String
-     * @return the converted String Set
-     */
-    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
-        return types.stream().map(NotificationTitleTypeConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
-    }
-
-    /**
      * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
      * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
-     * @param notificationSetting which will be mapped to their respective NotificationTypes with respect to their activation status
+     * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(boolean checkForWebapp,
+    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(boolean checkForWebapp,
             Set<NotificationSetting> notificationSettings) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         for (NotificationSetting setting : notificationSettings) {

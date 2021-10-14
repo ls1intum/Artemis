@@ -91,7 +91,7 @@ public class GroupNotificationService {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText), exercise);
         notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
     }
 
@@ -103,8 +103,8 @@ public class GroupNotificationService {
     public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
         // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
         if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
-            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null), exercise);
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null), exercise);
         }
     }
 
@@ -215,7 +215,7 @@ public class GroupNotificationService {
      *
      * @param notification that should be saved and sent
      */
-    private void saveAndSend(GroupNotification notification) {
+    private void saveAndSend(GroupNotification notification, Object notificationSubject) {
         if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
         }
@@ -229,6 +229,18 @@ public class GroupNotificationService {
         if (hasEmailSupport) {
             prepareSendingGroupEmail(notification, notificationSubject);
         }
+    }
+
+    /**
+     * Saves an exam notification by removing the problem statement message
+     * @param notification that should be saved (without the problem statement)
+     */
+    private void saveExamNotification(GroupNotification notification) {
+        String originalTarget = notification.getTarget();
+        String targetWithoutProblemStatement = ExamNotificationTargetWithoutProblemStatement.getTargetWithoutProblemStatement(notification.getTarget());
+        notification.setTarget(targetWithoutProblemStatement);
+        groupNotificationRepository.save(notification);
+        notification.setTarget(originalTarget);
     }
 
     /**
@@ -251,7 +263,7 @@ public class GroupNotificationService {
     /**
      * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
      * If the checks are successful creates and sends a corresponding email
-     * If the notification type indicates an urgent (critical) email it will be send to all users (regardless of settings)
+     * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
      * @param notification that should be checked
      * @param users which will be filtered based on their notification (email) settings
      */
@@ -269,17 +281,5 @@ public class GroupNotificationService {
         if (!usersThatShouldReceiveAnEmail.isEmpty()) {
             mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);
         }
-    }
-
-    /**
-     * Saves an exam notification by removing the problem statement message
-     * @param notification that should be saved (without the problem statement)
-     */
-    private void saveExamNotification(GroupNotification notification) {
-        String originalTarget = notification.getTarget();
-        String targetWithoutProblemStatement = ExamNotificationTargetWithoutProblemStatement.getTargetWithoutProblemStatement(notification.getTarget());
-        notification.setTarget(targetWithoutProblemStatement);
-        groupNotificationRepository.save(notification);
-        notification.setTarget(originalTarget);
     }
 }
