@@ -16,10 +16,9 @@
             "createModalTitlePost": "Create post",
             "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
-            "postMarkedAsResolvedTooltip": "Post has been resolved",
             "markAsResolvingAnswerTooltip": "Confirm that this reply resolves the original post",
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original post",
-            "resolvingAnswerTooltip": "This answer resolves the original post",
+            "resolvingAnswerTooltip": "This reply resolves the original post",
             "today": "Today",
             "pinnedPostTooltip": "This post was pinned by a tutor",
             "archivedPostTooltip": "This post was archived by a tutor",
@@ -51,7 +50,8 @@
                 "VOTES": "Upvotes",
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
-                "RANDOM": "Random"
+                "RANDOM": "Random",
+                "ANNOUNCEMENT": "Announcement"
             },
             "post": {
                 "context": "Context",
@@ -60,7 +60,10 @@
                 "courseWideContext": "Course-wide Topics",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
+                "announcementHint": "Announcements are pinned per default and listed at the top of the course overview. Possible replies cannot be marked as resolving. Only instructors can create announcements.",
                 "title": "Title",
+                "postMarkedAsResolvedTooltip": "Post has been resolved",
+                "postMarkedAsAnnouncementTooltip": "Announcement",
                 "titleTooltip": "Add a precise and summarizing title to your post",
                 "tags": "Tags",
                 "tagPlaceholder": "+ Tag",

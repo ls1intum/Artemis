@@ -3,6 +3,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CourseWideContext } from '../metis.util';
 
 @Component({
     selector: 'jhi-post',
@@ -16,6 +17,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     @Input() modalRef?: NgbModalRef;
     postIsResolved: boolean;
+    readonly CourseWideContext = CourseWideContext;
 
     constructor(public metisService: MetisService) {
         super();

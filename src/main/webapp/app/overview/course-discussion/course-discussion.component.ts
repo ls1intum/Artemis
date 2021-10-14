@@ -198,7 +198,8 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     filterFn = (post: Post): boolean => {
         let keepPost = true;
         if (this.filterToUnresolved) {
-            keepPost = keepPost && !this.metisService.isPostResolved(post);
+            // announcement should never be regarded as unresolved posts as they do not address any problem to be solved
+            keepPost = keepPost && (!this.metisService.isPostResolved(post) || post.courseWideContext === CourseWideContext.ANNOUNCEMENT);
         }
         if (this.filterToOwn) {
             keepPost = keepPost && this.metisService.metisUserIsAuthorOfPosting(post);

@@ -12,12 +12,17 @@
 <div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'">
     <div class="d-flex flex-column">
         <div class="header pt-4 px-3">
-            <button class="close position-absolute border-0 bg-transparent" (click)="toggleSidebar()">
-                <fa-icon [icon]="'times'"></fa-icon>
-            </button>
-            <h5 class="mb-3 text-center">
-                {{ 'artemisApp.notification.notifications' | artemisTranslate }}
-            </h5>
+            <div class="d-flex header-icon justify-content-between align-items-baseline">
+                <a class="ps-2" [routerLink]="['/user-settings/notifications']" (click)="toggleSidebar()">
+                    <fa-icon class="ng-fa-icon" [icon]="'cog'"></fa-icon>
+                </a>
+                <h5 class="mb-3 text-center">
+                    {{ 'artemisApp.notification.notifications' | artemisTranslate }}
+                </h5>
+                <button class="close header-icon border-0 bg-transparent pe-2" (click)="toggleSidebar()">
+                    <fa-icon class="ng-fa-icon" [icon]="'times'"></fa-icon>
+                </button>
+            </div>
             <div class="text-end">
                 <small class="text-muted">
                     {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
