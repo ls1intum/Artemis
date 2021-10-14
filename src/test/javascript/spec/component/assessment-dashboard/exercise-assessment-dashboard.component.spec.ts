@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, empty } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
@@ -66,7 +66,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { empty } from 'rxjs';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
