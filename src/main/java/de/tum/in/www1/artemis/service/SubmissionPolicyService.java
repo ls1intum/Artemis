@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.service;
 import org.apache.commons.lang.NotImplementedException;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -13,6 +12,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
@@ -31,12 +31,16 @@ public class SubmissionPolicyService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     public SubmissionPolicyService(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            FeedbackRepository feedbackRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -255,19 +259,18 @@ public class SubmissionPolicyService {
     }
 
     /**
-     * Calculates the achievable score for one programming exercise participation in [0;100]%
-     * The achievable score depends on the presence of a submission penalty policy.
+     * Calculates the deduction for one programming exercise participation.
      *
-     * @param participation for which the achievable score should be determined
+     * @param participation for which the deduction should be determined
      * @param submissionPenaltyPolicy that contains the policy configuration of the programming exercise
-     * @return achievable score in %
+     * @return total deduction in absolute points
      */
-    public double calculateAchievableScoreForParticipation(Participation participation, SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+    public double calculateSubmissionPenalty(Participation participation, SubmissionPenaltyPolicy submissionPenaltyPolicy) {
         if (submissionPenaltyPolicy != null && submissionPenaltyPolicy.isActive()) {
             int presentSubmissions = getParticipationSubmissionCount(participation);
             int illegalSubmissionCount = presentSubmissions - submissionPenaltyPolicy.getSubmissionLimit();
             if (illegalSubmissionCount > 0) {
-                return Math.max(100 - (illegalSubmissionCount * submissionPenaltyPolicy.getExceedingPenalty()), 0);
+                return illegalSubmissionCount * submissionPenaltyPolicy.getExceedingPenalty();
             }
         }
         return 100;
@@ -305,9 +308,7 @@ public class SubmissionPolicyService {
      * Determines the string that is attached to the result string of an incoming result.
      * When the number of submissions is below the allowed submissions specified in the submission policy
      * of the exercise, the attachment has the form 'x of y Submissions', where x is the number
-     * of submissions and y is the allowed number of submissions. <br>
-     * When a submission penalty policy is active and the submission count exceeds the allowed limit,
-     * the attachment has the form 'z% Submission Penalty' where z is the imposed score penalty.
+     * of submissions and y is the allowed number of submissions.
      *
      * @param exercise that specifies the active submission policy
      * @param participation to which the new result belongs
@@ -322,9 +323,6 @@ public class SubmissionPolicyService {
         int allowedSubmissions = policy.getSubmissionLimit();
         if (submissions <= allowedSubmissions) {
             return ", %d of %d Submissions".formatted(submissions, allowedSubmissions);
-        }
-        else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
-            return ", %d%% Submission Penalty".formatted((int) Math.min(submissionPenaltyPolicy.getExceedingPenalty() * (submissions - allowedSubmissions), 100));
         }
         return "";
     }
@@ -341,13 +339,30 @@ public class SubmissionPolicyService {
      * @return the number of submissions of this participation
      */
     private int getParticipationSubmissionCount(Participation participation) {
+        int submissionCompensation = participation.findLatestSubmission().orElse(new ProgrammingSubmission()).getResults().isEmpty() ? 1 : 0;
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
-                .count();
+                .count() + submissionCompensation;
     }
 
     private SubmissionPolicy toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {
         policy.setActive(active);
         return submissionPolicyRepository.save(policy);
+    }
+
+    public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
+        if (penaltyPolicy != null && penaltyPolicy.isActive()) {
+            int presentSubmissions = getParticipationSubmissionCount(result);
+            int illegalSubmissionCount = presentSubmissions - penaltyPolicy.getSubmissionLimit();
+            if (illegalSubmissionCount > 0) {
+                double deduction = illegalSubmissionCount * penaltyPolicy.getExceedingPenalty();
+                Feedback penaltyFeedback = new Feedback().credits(-deduction).text("Submission Policy")
+                        .detailText("You have submitted %d more time%s than the submission limit of %d. This results in a deduction of %.1f points!"
+                                .formatted(illegalSubmissionCount, illegalSubmissionCount == 1 ? "" : "s", penaltyPolicy.getSubmissionLimit(), deduction))
+                        .positive(false).type(FeedbackType.AUTOMATIC);
+
+                result.addFeedback(feedbackRepository.save(penaltyFeedback));
+            }
+        }
     }
 }

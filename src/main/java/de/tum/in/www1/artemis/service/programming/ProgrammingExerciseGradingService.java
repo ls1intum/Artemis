@@ -389,6 +389,11 @@ public class ProgrammingExerciseGradingService {
             // Add feedbacks for all duplicate test cases
             boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
 
+            // Add feedback if submission penalty policy is active
+            if (exercise.getSubmissionPolicy()instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+                submissionPolicyService.createFeedbackForPenaltyPolicy(result, penaltyPolicy);
+            }
+
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
@@ -549,19 +554,15 @@ public class ProgrammingExerciseGradingService {
                 }
             }
 
+            // If the submission policy should be enforced, we deduct the calculated deduction
+            // from the overall score
+            if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy()instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+                successfulTestPoints -= submissionPolicyService.calculateSubmissionPenalty(result.getParticipation(), penaltyPolicy);
+            }
+
             // The score is calculated as a percentage of the maximum points
             double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
 
-            // When a submission penalty policy is active, the score must be capped at the
-            // maximum achievable score. The maximum achievable score depends on the policy
-            // settings and number of unique submissions in the participation.
-            if (applySubmissionPolicy) {
-                SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
-                if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
-                    double achievableScore = submissionPolicyService.calculateAchievableScoreForParticipation(result.getParticipation(), policy);
-                    score = Math.min(score, achievableScore);
-                }
-            }
             result.setScore(score);
         }
 

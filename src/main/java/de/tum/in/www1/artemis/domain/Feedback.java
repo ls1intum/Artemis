@@ -31,6 +31,8 @@ public class Feedback extends DomainObject {
 
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
+    public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "Submission Policy";
+
     @Size(max = 500)
     @Column(name = "text", length = 500)
     private String text;
@@ -334,6 +336,15 @@ public class Feedback extends DomainObject {
             return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
         }
         return "";
+    }
+
+    /**
+     * Checks whether the feedback was created by a submission policy
+     * @return true if the it is submission policy feedback else false
+     */
+    @JsonIgnore
+    public boolean isSubmissionPolicyFeedback() {
+        return this.text != null && this.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
     public boolean referenceEquals(Feedback otherFeedback) {
