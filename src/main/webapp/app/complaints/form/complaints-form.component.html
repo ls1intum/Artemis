@@ -3,7 +3,7 @@
     <div class="row">
         <div class="col-12">
             <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
-            <p *ngIf="complaintType === ComplaintType.COMPLAINT; else moreFeedbackDescription">
+            <p *ngIf="complaintType === ComplaintType.COMPLAINT">
                 <span
                     *ngIf="!examId && allowedComplaints == undefined"
                     [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
@@ -17,12 +17,10 @@
                 <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
                 <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
             </p>
-            <ng-template #moreFeedbackDescription>
-                <p>
-                    {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
-                    <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
-                </p>
-            </ng-template>
+            <p *ngIf="complaintType !== ComplaintType.COMPLAINT">
+                {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
+                <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+            </p>
         </div>
     </div>
 
