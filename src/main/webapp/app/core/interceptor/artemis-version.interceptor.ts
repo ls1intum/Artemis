@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, isDevMode } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
@@ -23,7 +23,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                 if (response instanceof HttpResponse) {
                     const isTranslationStringsRequest = response.url?.includes('/i18n/');
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
-                    if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
+                    if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest && !isDevMode()) {
                         this.showAlert.next();
                     }
                     // only invoke the time call if the call was not already the time call to prevent recursion here

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, isDevMode, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { combineLatest, map, Subscription } from 'rxjs';
@@ -63,7 +63,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
         private router: Router,
-    ) {}
+    ) {
+        console.log(isDevMode());
+    }
 
     /**
      * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
@@ -215,15 +217,14 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             const lowerCasedSearchString = this.currentPostContentFilter.searchText.toLowerCase();
             // if searchText starts with a # and is followed by a post id, filter for post with id
             if (lowerCasedSearchString.startsWith('#') && !isNaN(+lowerCasedSearchString.substring(1))) {
-                return post.id === Number(lowerCasedSearchString.substring(1));
+                return keepPost && post.id === Number(lowerCasedSearchString.substring(1));
             }
             // regular search on content, title, and tags
-            return (
-                (post.title?.toLowerCase().includes(lowerCasedSearchString) ||
-                    post.content?.toLowerCase().includes(lowerCasedSearchString) ||
-                    post.tags?.join().toLowerCase().includes(lowerCasedSearchString)) ??
-                false
-            );
+            const searchStringMatchesAnyPostProperty =
+                post.title?.toLowerCase().includes(lowerCasedSearchString) ||
+                post.content?.toLowerCase().includes(lowerCasedSearchString) ||
+                post.tags?.join().toLowerCase().includes(lowerCasedSearchString);
+            return keepPost && (searchStringMatchesAnyPostProperty ?? false);
         }
         return keepPost;
     };
