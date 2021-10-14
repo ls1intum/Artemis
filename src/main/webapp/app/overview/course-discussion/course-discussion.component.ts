@@ -63,9 +63,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
         private router: Router,
-    ) {
-        console.log(isDevMode());
-    }
+    ) {}
 
     /**
      * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
