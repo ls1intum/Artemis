@@ -143,7 +143,7 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 360, height: 0 },
+                        min: { width: 375, height: 0 },
                         max: { width: 600, height: 4000 },
                     }),
                 ],
