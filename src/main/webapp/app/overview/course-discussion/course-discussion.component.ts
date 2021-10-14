@@ -107,7 +107,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.formGroup = this.formBuilder.group({
             context: [this.currentPostContextFilter],
             sortBy: [PostSortCriterion.CREATION_DATE],
-            sortDirection: [SortDirection.DESC],
             filterToUnresolved: [this.filterToUnresolved],
             filterToOwn: [this.filterToOwn],
             filterToAnsweredOrReacted: [this.filterToAnsweredOrReactedByUser],
@@ -133,7 +132,8 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
      */
     onChangeSort(): void {
-        this.setFilterAndSort();
+        // flip sort direction
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESC ? SortDirection.ASC : SortDirection.DESC;
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
@@ -312,7 +312,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             ...this.formGroup.get('context')?.value,
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;
-        this.currentSortDirection = this.formGroup.get('sortDirection')?.value;
         this.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         this.filterToOwn = this.formGroup.get('filterToOwn')?.value;
         this.filterToAnsweredOrReactedByUser = this.formGroup.get('filterToAnsweredOrReacted')?.value;

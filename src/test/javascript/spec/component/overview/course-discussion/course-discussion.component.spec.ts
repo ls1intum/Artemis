@@ -132,7 +132,9 @@ describe('CourseDiscussionComponent', () => {
             lectureId: undefined,
         });
         expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        expect(component.formGroup.get('sortDirection')?.value).toEqual(SortDirection.DESC);
+        fixture.detectChanges();
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
@@ -145,7 +147,7 @@ describe('CourseDiscussionComponent', () => {
             lectureId: undefined,
         });
         expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        expect(component.formGroup.get('sortDirection')?.value).toEqual(SortDirection.DESC);
+        expect(component.currentSortDirection).toEqual(SortDirection.DESC);
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toEqual('');
@@ -161,8 +163,8 @@ describe('CourseDiscussionComponent', () => {
         const selectedSortByOption = getElement(fixture.debugElement, 'select[name=sortBy]');
         expect(selectedSortByOption.value).toBeDefined();
         // descending should be selected as sort direction
-        const selectedDirectionOption = getElement(fixture.debugElement, 'select[name=sortDirection]');
-        expect(selectedDirectionOption.value).toBeDefined();
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
         expect(component.posts).toEqual(metisCoursePosts);
@@ -379,8 +381,8 @@ describe('CourseDiscussionComponent', () => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        const sortByOptions = getElement(fixture.debugElement, 'select[name=sortDirection]');
-        sortByOptions.dispatchEvent(new Event('change'));
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        selectedDirectionOption.dispatchEvent(new Event('click'));
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalledWith(
             {
                 courseId: metisCourse.id,
