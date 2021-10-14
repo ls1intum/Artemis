@@ -240,7 +240,14 @@ public class ResultResource {
         return ResponseEntity.ok().body(results);
     }
 
-    @GetMapping(value = "exercises/{exerciseId}/resultsWithPointsPerCriterion")
+    /**
+     * GET /exercises/:exerciseId/resultsWithPointsPerCriterion : get the successful results for an exercise, ordered ascending by build completion date.
+     * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
+     *
+     * @param exerciseId of the exercise for which to retrieve the results.
+     * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
+     */
+    @GetMapping("exercises/{exerciseId}/resultsWithPointsPerCriterion")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId) {
         final Exercise exercise = exerciseRepository.findWithEagerGradingCriteriaByIdElseThrow(exerciseId);
@@ -257,7 +264,7 @@ public class ResultResource {
         final List<Result> results = resultsForExercise(exercise, participations, false);
         final List<ResultWithPointsPerGradingCriterionDTO> resultsScored = results.stream().map(result -> {
             if (exercise.getGradingCriteria().isEmpty()) {
-                return new ResultWithPointsPerGradingCriterionDTO(result, null);
+                return new ResultWithPointsPerGradingCriterionDTO(result);
             }
             else {
                 final Map<GradingCriterion, Double> points = assessmentService.calculatePointsPerGradingCriterion(exercise.getGradingCriteria(), result);

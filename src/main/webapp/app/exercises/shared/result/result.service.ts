@@ -20,7 +20,7 @@ export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPe
 export interface IResultService {
     find: (id: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
-    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
+    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number) => Observable<ResultsWithPointsArrayResponseType>;
     getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
@@ -49,11 +49,9 @@ export class ResultService implements IResultService {
             .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
     }
 
-    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
-        const options = createRequestOption(req);
+    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number): Observable<ResultsWithPointsArrayResponseType> {
         return this.http
             .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/resultsWithPointsPerCriterion`, {
-                params: options,
                 observe: 'response',
             })
             .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultWithPointsResponse(res)));
@@ -155,9 +153,7 @@ export class ResultService implements IResultService {
     }
 
     getResultsWithScoresPerGradingCriterion(exercise: Exercise) {
-        return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!, {
-            withSubmissions: exercise.type === ExerciseType.MODELING,
-        }).pipe(
+        return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!).pipe(
             tap((res: HttpResponse<ResultWithPointsPerGradingCriterion[]>) => {
                 return res.body!.map((resultWithScores) => {
                     const result = resultWithScores.result;

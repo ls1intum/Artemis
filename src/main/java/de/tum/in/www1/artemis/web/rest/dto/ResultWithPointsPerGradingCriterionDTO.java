@@ -16,9 +16,10 @@ public class ResultWithPointsPerGradingCriterionDTO {
     /**
      * Map of {@link GradingCriterion#getId()} to the result points in that category.
      */
-    private Map<Long, Double> points = new HashMap<>();
+    private Map<Long, Double> points;
 
-    public ResultWithPointsPerGradingCriterionDTO() {
+    public ResultWithPointsPerGradingCriterionDTO(Result result) {
+        this(result, new HashMap<>());
     }
 
     public ResultWithPointsPerGradingCriterionDTO(Result result, Map<Long, Double> points) {
