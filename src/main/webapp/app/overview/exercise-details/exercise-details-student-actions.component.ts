@@ -123,6 +123,7 @@ export class ExerciseDetailsStudentActionsComponent {
                         participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
+                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
                 (error) => {
