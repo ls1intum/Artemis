@@ -14,7 +14,7 @@
         [translateValues]="{
             userScore: userScore,
             maxScore: totalScore,
-            percentage: roundScoreSpecifiedByCourseSettings(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course)
+            percentage: roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(quizExercise))
         }"
     ></p>
 </div>

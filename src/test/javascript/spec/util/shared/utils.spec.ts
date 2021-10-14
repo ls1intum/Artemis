@@ -50,7 +50,7 @@ describe('Rounding of scores', () => {
 
     it('RoundScorePercent', () => {
         expect(roundScorePercentSpecifiedByCourseSettings(0, { accuracyOfScores: 4 })).to.be.equal(0);
-        expect(roundScorePercentSpecifiedByCourseSettings(0.222222, { accuracyOfScores: 3 })).to.be.equal(22.222);
+        expect(roundScorePercentSpecifiedByCourseSettings(0.222222, { accuracyOfScores: 3 })).to.be.equal(22.2);
         expect(roundScorePercentSpecifiedByCourseSettings(0.5, { accuracyOfScores: 2 })).to.be.equal(50);
         expect(roundScorePercentSpecifiedByCourseSettings(0.7999999, { accuracyOfScores: 1 })).to.be.equal(80);
         expect(roundScorePercentSpecifiedByCourseSettings(1, { accuracyOfScores: 0 })).to.be.equal(100);
