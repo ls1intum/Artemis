@@ -96,8 +96,6 @@ jobs:
           run: npm install
         - name: TypeScript Test With Typechecking
           run: npm run test:ci
-          env:
-              NODE_OPTIONS: --max_old_space_size=6144
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
           if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
