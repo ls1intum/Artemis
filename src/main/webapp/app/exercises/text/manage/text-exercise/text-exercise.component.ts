@@ -48,7 +48,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 // reconnect exercise with course
                 this.textExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    this.accountService.setAccessRightsForCourse(exercise.course);
+                    this.accountService.setAccessRightsForExercise(exercise);
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },

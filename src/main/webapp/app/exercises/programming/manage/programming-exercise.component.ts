@@ -77,7 +77,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    this.accountService.setAccessRightsForCourse(exercise.course);
+                    this.accountService.setAccessRightsForExercise(exercise);
                     if (exercise.projectKey) {
                         if (exercise.solutionParticipation!.buildPlanId) {
                             exercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(

@@ -46,7 +46,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     // reconnect exercise with course
                     this.fileUploadExercises.forEach((exercise) => {
                         exercise.course = this.course;
-                        this.accountService.setAccessRightsForCourse(exercise.course);
+                        this.accountService.setAccessRightsForExercise(exercise);
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                 },
