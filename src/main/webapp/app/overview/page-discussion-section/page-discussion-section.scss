@@ -1,8 +1,8 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
-$background-color: #353d47;
-$label-color: #6a737d;
+$draggable-width: 15px;
+$discussion-section-card-min-width: 360px;
 
 .postings-container {
     display: flex;
@@ -15,25 +15,25 @@ $label-color: #6a737d;
 }
 
 .expanded-discussion {
-    width: 390px;
+    width: calc(#{$draggable-width} + #{$discussion-section-card-min-width});
 
     .draggable-left {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-width: 15px;
+        min-width: $draggable-width;
     }
 
     .card {
         width: inherit;
-        min-width: 200px;
+        min-width: $discussion-section-card-min-width;
 
         .card-header {
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
-            background-color: $background-color;
+            background-color: $artemis-dark;
             cursor: pointer;
 
             .card-title {
@@ -53,7 +53,7 @@ $label-color: #6a737d;
     width: 38px;
     justify-content: space-between;
     flex-flow: column nowrap;
-    background-color: $background-color;
+    background-color: $artemis-dark;
     margin-left: auto;
     cursor: pointer;
 

@@ -6,13 +6,13 @@ import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
-import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -93,11 +93,11 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const title = getElement(debugElement, 'p.post-title');
+        const title = getElement(debugElement, 'a.post-title');
         expect(title).toBeDefined();
-        const clickableId = getElement(debugElement, 'a.reference-hash');
-        expect(clickableId).toBeDefined();
-        expect(clickableId.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
+        const idHash = getElement(debugElement, '.reference-hash');
+        expect(idHash).toBeDefined();
+        expect(idHash.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
         expect(metisServiceGetLinkMock).toHaveBeenCalledWith(metisPostExerciseUser1);
         expect(metisServiceGetQueryParamsMock).toHaveBeenCalledWith(metisPostExerciseUser1);
     });
