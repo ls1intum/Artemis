@@ -533,11 +533,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         for (final var resultWithPoints : resultsWithPoints) {
             final Map<Long, Double> points = resultWithPoints.getPointsPerCriterion();
             if (resultWithPoints.getResult().getScore() == 10.0) {
+                assertThat(resultWithPoints.getTotalPoints()).isEqualTo(6.1);
                 // two feedbacks of the same criterion -> credits should be summed up in one entry of the map
                 assertThat(points).hasSize(1);
                 assertThat(points).containsEntry(2L, 5.0);
             }
             else {
+                assertThat(resultWithPoints.getTotalPoints()).isEqualTo(14);
                 // two feedbacks of different criteria -> map should contain two entries
                 assertThat(resultWithPoints.getPointsPerCriterion()).hasSize(2);
                 assertThat(points).containsEntry(2L, 1.0);
@@ -598,6 +600,11 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                     feedback2.setGradingInstruction(instruction1b);
                     feedbackRepository.save(feedback2);
                     database.addFeedbackToResult(feedback2, result);
+
+                    // one feedback without grading instruction should be included in total score calculation
+                    final Feedback feedback3 = new Feedback().credits(1.111);
+                    feedbackRepository.save(feedback3);
+                    database.addFeedbackToResult(feedback3, result);
                 }
                 else {
                     final Feedback feedback1 = new Feedback().credits(1.0);

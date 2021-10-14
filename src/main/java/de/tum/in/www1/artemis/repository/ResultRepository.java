@@ -16,7 +16,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -580,12 +582,55 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             if (feedback.getGradingInstruction() != null) {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
-            else if (feedback.getCredits() != null) {
+            else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
+                // TODO: what happens if getCredits is null?
                 totalPoints += feedback.getCredits();
             }
         }
         return totalPoints;
+    }
+
+    /**
+     * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
+     *
+     * Points are rounded to one decimal place.
+     *
+     * @param result for which the points should be summed up.
+     * @return the result together with the total points and the points per criterion.
+     */
+    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result) {
+        final Map<Long, Double> pointsPerCriterion = new HashMap<>();
+        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
+
+        for (final Feedback feedback : result.getFeedbacks()) {
+            final double feedbackPoints;
+            final Long criterionId;
+
+            if (feedback.getGradingInstruction() != null) {
+                feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
+                criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
+            }
+            else {
+                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
+                criterionId = null;
+            }
+
+            pointsPerCriterion.compute(criterionId, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
+        }
+
+        final double totalPoints = RoundingUtil.round(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum());
+
+        // points for feedbacks without criterion were only needed for totalPoints calculation
+        pointsPerCriterion.remove(null);
+
+        // round the point sums once at the end
+        pointsPerCriterion.entrySet().forEach(entry -> {
+            Double rounded = RoundingUtil.round(entry.getValue());
+            entry.setValue(rounded);
+        });
+
+        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
     }
 
     /**

@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -65,8 +64,6 @@ public class ResultResource {
 
     private final ExamDateService examDateService;
 
-    private final ExerciseService exerciseService;
-
     private final ExerciseRepository exerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -83,8 +80,6 @@ public class ResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final AssessmentService assessmentService;
-
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -96,10 +91,10 @@ public class ResultResource {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseService exerciseService, ExerciseRepository exerciseRepository,
-            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, AssessmentService assessmentService, ParticipationRepository participationRepository,
+            ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
+            WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
@@ -108,7 +103,6 @@ public class ResultResource {
         this.participationService = participationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
-        this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -117,7 +111,6 @@ public class ResultResource {
         this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.assessmentService = assessmentService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -251,7 +244,7 @@ public class ResultResource {
     @GetMapping("exercises/{exerciseId}/resultsWithPointsPerCriterion")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId) {
-        final Exercise exercise = exerciseRepository.findWithEagerGradingCriteriaByIdElseThrow(exerciseId);
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         final List<StudentParticipation> participations;
@@ -263,22 +256,9 @@ public class ResultResource {
         }
 
         final List<Result> results = resultsForExercise(exercise, participations, false);
-        final List<ResultWithPointsPerGradingCriterionDTO> resultsScored = results.stream().map(result -> {
-            double totalPoints = RoundingUtil.round(resultRepository.calculateTotalPoints(result.getFeedbacks()));
+        final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(resultRepository::calculatePointsPerGradingCriterion).toList();
 
-            if (exercise.getGradingCriteria().isEmpty()) {
-                return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints);
-            }
-            else {
-                final Map<GradingCriterion, Double> points = assessmentService.calculatePointsPerGradingCriterion(exercise.getGradingCriteria(), result);
-                final Map<Long, Double> pointsByCriterion = new HashMap<>(points.size());
-                points.forEach((criterion, criterionPoints) -> pointsByCriterion.put(criterion.getId(), RoundingUtil.round(criterionPoints)));
-
-                return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsByCriterion);
-            }
-        }).toList();
-
-        return ResponseEntity.ok().body(resultsScored);
+        return ResponseEntity.ok().body(resultsWithPoints);
     }
 
     /**

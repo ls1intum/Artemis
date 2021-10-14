@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -317,33 +315,5 @@ public class AssessmentService {
         resultRepository.deleteById(result.getId());
         // this keeps the result order intact
         submissionRepository.save(submission);
-    }
-
-    /**
-     * For each {@link GradingCriterion} calculates the sum of points of all feedback belonging to it.
-     *
-     * @param result for which the points should be summed up.
-     * @return a map of {@link GradingCriterion} to the sum of points of feedbacks which are part of this category.
-     */
-    public Map<GradingCriterion, Double> calculatePointsPerGradingCriterion(List<GradingCriterion> gradingCriteria, Result result) {
-        final Map<Long, GradingCriterion> gradingCriteriaById = new HashMap<>(gradingCriteria.size());
-        gradingCriteria.forEach(criterion -> gradingCriteriaById.put(criterion.getId(), criterion));
-
-        final Map<GradingCriterion, Double> pointsPerCriterion = new HashMap<>();
-        final List<Feedback> assessments = result.getFeedbacks();
-        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
-
-        for (final Feedback feedback : assessments) {
-            if (feedback.getGradingInstruction() == null) {
-                continue;
-            }
-
-            double feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
-            long criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
-            GradingCriterion criterion = gradingCriteriaById.get(criterionId);
-            pointsPerCriterion.compute(criterion, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
-        }
-
-        return pointsPerCriterion;
     }
 }
