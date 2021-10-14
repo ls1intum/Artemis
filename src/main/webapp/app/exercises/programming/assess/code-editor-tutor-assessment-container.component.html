@@ -70,8 +70,8 @@
     <ng-template #editorTitle>
         <span>{{ exercise?.title }}</span>
         <span
-            >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
-            <span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
+            >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
+            }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
             >]
             <jhi-included-in-score-badge
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -105,7 +105,7 @@
             [isBuilding]="false"
             [participation]="participation"
             [short]="true"
-            class="me-1"
+            class="me-1 my-1"
         ></jhi-result>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints" class="me-2"></jhi-exercise-hint-student>
     </ng-template>

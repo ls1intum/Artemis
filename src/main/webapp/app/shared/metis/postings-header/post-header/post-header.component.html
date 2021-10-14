@@ -9,7 +9,7 @@
             </span>
         </span>
         <fa-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="!previewMode && (isAtLeastTutorInCourse || isAuthorOfPosting)"
             size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
@@ -19,7 +19,7 @@
         ></fa-icon>
         <jhi-post-create-edit-modal #createEditModal [posting]="posting"></jhi-post-create-edit-modal>
         <jhi-confirm-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="!previewMode && (isAtLeastTutorInCourse || isAuthorOfPosting)"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"
@@ -28,15 +28,14 @@
         >
         </jhi-confirm-icon>
     </div>
-    <div *ngIf="numberOfAnswerPosts > 0" class="col-auto ps-0 pe-1 toggle-answer-element clickable" (click)="toggleAnswers()">
+    <div *ngIf="numberOfAnswerPosts > 0" class="col-auto ps-0 pe-1 toggle-answer-element clickable" (click)="toggleAnswers()" [ngClass]="previewMode ? '' : 'clickable'">
         <span class="answer-count">
             {{ numberOfAnswerPosts }}
             <fa-icon
                 [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
-                [disableTooltip]="numberOfAnswerPosts === 0"
+                [disableTooltip]="numberOfAnswerPosts === 0 || previewMode"
                 [icon]="'comments'"
                 class="icon"
-                size="lg"
                 [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"
             >
             </fa-icon>
