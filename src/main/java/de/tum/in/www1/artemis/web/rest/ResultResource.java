@@ -239,11 +239,13 @@ public class ResultResource {
      * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
      *
      * @param exerciseId of the exercise for which to retrieve the results.
+     * @param withSubmissions defines if submissions are loaded from the database for the results.
      * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
      */
     @GetMapping("exercises/{exerciseId}/resultsWithPointsPerCriterion")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "true") boolean withSubmissions) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
@@ -255,7 +257,7 @@ public class ResultResource {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exerciseId);
         }
 
-        final List<Result> results = resultsForExercise(exercise, participations, false);
+        final List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
         final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(resultRepository::calculatePointsPerGradingCriterion).toList();
 
         return ResponseEntity.ok().body(resultsWithPoints);

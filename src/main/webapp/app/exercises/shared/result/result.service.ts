@@ -20,7 +20,7 @@ export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPe
 export interface IResultService {
     find: (id: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
-    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number) => Observable<ResultsWithPointsArrayResponseType>;
+    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
@@ -30,7 +30,6 @@ export interface IResultService {
 export class ResultService implements IResultService {
     private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
-    private submissionResourceUrl = SERVER_API_URL + 'api/submissions';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
@@ -49,9 +48,11 @@ export class ResultService implements IResultService {
             .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
     }
 
-    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number): Observable<ResultsWithPointsArrayResponseType> {
+    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
+        const options = createRequestOption(req);
         return this.http
             .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/resultsWithPointsPerCriterion`, {
+                params: options,
                 observe: 'response',
             })
             .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultWithPointsResponse(res)));
@@ -152,8 +153,14 @@ export class ResultService implements IResultService {
         );
     }
 
+    /**
+     * Fetches all results together with the total points and points per grading criterion for each of the given exercise.
+     * @param exercise of which the results with points should be fetched.
+     */
     getResultsWithScoresPerGradingCriterion(exercise: Exercise) {
-        return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!).pipe(
+        return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!, {
+            withSubmissions: exercise.type === ExerciseType.MODELING,
+        }).pipe(
             tap((res: HttpResponse<ResultWithPointsPerGradingCriterion[]>) => {
                 return res.body!.map((resultWithScores) => {
                     const result = resultWithScores.result;
