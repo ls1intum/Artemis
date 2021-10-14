@@ -63,17 +63,23 @@ public class PostService extends PostingService {
     public Post createPost(Long courseId, Post post) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        // check
+        // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
+        Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
+        // announcements can only be created by instructors
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+            // display priority of announcement is set to pinned per default
+            post.setDisplayPriority(DisplayPriority.PINNED);
+        }
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -356,7 +362,7 @@ public class PostService extends PostingService {
             // set exercise retrieved from database to show title in notification
             Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
             post.setExercise(exercise);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
         }
@@ -365,7 +371,7 @@ public class PostService extends PostingService {
             // set lecture retrieved from database to show title in notification
             Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
             post.setLecture(lecture);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
         }
     }
 
