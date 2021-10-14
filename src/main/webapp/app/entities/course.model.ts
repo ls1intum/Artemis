@@ -39,6 +39,7 @@ export class Course implements BaseEntity {
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
+    public accuracyOfScores?: number;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;
@@ -52,9 +53,6 @@ export class Course implements BaseEntity {
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];
-
-    // This attribute could be set in the course settings in the future to allow different accuracies
-    public accuracyOfScores?: number;
 
     // helper attributes
     public isAtLeastTutor?: boolean;

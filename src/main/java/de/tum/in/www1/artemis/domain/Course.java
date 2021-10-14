@@ -136,7 +136,6 @@ public class Course extends DomainObject {
     @Column(name = "max_points")
     private Integer maxPoints;
 
-    // This attribute could be set in the course settings in the future to allow different accuracies
     @Column(name = "accuracy_of_scores")
     private Integer accuracyOfScores;
 
