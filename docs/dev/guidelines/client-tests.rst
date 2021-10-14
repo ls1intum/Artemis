@@ -109,13 +109,11 @@ Some guidelines:
                             MockDirective(DeleteButtonDirective),
                             MockComponent(AlertComponent),
                             MockComponent(ResultComponent),
-                            MockComponent(FaIconComponent),
                         ],
                         providers: [
                             ...
                         ],
                     })
-                        .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                         .compileComponents()
                         .then(() => {
                             ...
