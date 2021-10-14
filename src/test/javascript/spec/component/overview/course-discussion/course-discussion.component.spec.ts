@@ -19,19 +19,18 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
 import {
-    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePosts,
     metisCoursePostsWithCourseWideContext,
@@ -43,7 +42,9 @@ import {
     metisPostExerciseUser2,
     metisPostLectureUser1,
     metisPostLectureUser2,
+    metisResolvingAnswerPostUser1,
     metisUpVoteReactionUser1,
+    metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
 
 describe('CourseDiscussionComponent', () => {
@@ -52,6 +53,7 @@ describe('CourseDiscussionComponent', () => {
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsMock: jest.SpyInstance;
+    let metisServiceGetUserMock: jest.SpyInstance;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -73,7 +75,6 @@ describe('CourseDiscussionComponent', () => {
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -99,6 +100,7 @@ describe('CourseDiscussionComponent', () => {
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsMock = jest.spyOn(metisService, 'getFilteredPosts');
+                metisServiceGetUserMock = jest.spyOn(metisService, 'getUser');
             });
     });
 
@@ -193,12 +195,14 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toHaveLength(1);
     }));
 
-    it('should invoke metis service without and update filter setting when checkbox is ticked', fakeAsync(() => {
+    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved checkbox is checked', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         component.formGroup.patchValue({
-            filterResolved: true,
+            filterToUnresolved: true,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
         });
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
@@ -210,20 +214,88 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
     }));
 
-    it('should invoke metis service without and update filter setting when checkbox is unticked', fakeAsync(() => {
+    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved and filterToOwn checkbox is checked', fakeAsync(() => {
+        const currentUser = metisUser1;
+        metisServiceGetUserMock.mockReturnValue(currentUser);
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         component.formGroup.patchValue({
-            filterResolved: false,
+            filterToUnresolved: true,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: false,
         });
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterToUnresolved).toBeTruthy();
+        expect(component.filterToOwn).toBeTruthy();
+        expect(component.filterToAnsweredOrReactedByUser).toBeFalsy();
+        // determine expected posts
+        const expectedPosts = metisCoursePosts.filter(
+            (post: Post) => post.author === currentUser && !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
+        );
+        expect(component.posts).toHaveLength(expectedPosts.length);
+    }));
+
+    it('should invoke metis service, update filter setting and displayed posts when filterToOwn checkbox is checked', fakeAsync(() => {
+        const currentUser = metisUser1;
+        metisServiceGetUserMock.mockReturnValue(currentUser);
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: false,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
         expect(component.filterToUnresolved).toBeFalsy();
-        expect(component.posts).toHaveLength(metisCoursePosts.length);
+        expect(component.filterToOwn).toBeTruthy();
+        expect(component.filterToAnsweredOrReactedByUser).toBeFalsy();
+        // determine expected posts
+        const expectedPosts = metisCoursePosts.filter((post: Post) => post.author === currentUser);
+        expect(component.posts).toHaveLength(expectedPosts.length);
+    }));
+
+    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved and filterToAnsweredOrReactedByUser checkbox is checked', fakeAsync(() => {
+        const currentUser = metisUser1;
+        metisServiceGetUserMock.mockReturnValue(currentUser);
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: true,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterToUnresolved).toBeTruthy();
+        expect(component.filterToOwn).toBeFalsy();
+        expect(component.filterToAnsweredOrReactedByUser).toBeTruthy();
+        // determine expected posts
+        const expectedPosts = metisCoursePosts.filter(
+            (post: Post) =>
+                ((post.answers && post.answers.some((answer: AnswerPost) => answer.author === currentUser)) ||
+                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user === currentUser))) &&
+                !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
+        );
+        expect(component.posts).toHaveLength(expectedPosts.length);
     }));
 
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {

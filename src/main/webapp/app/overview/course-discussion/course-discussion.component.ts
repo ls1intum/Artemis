@@ -188,8 +188,11 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * filters posts on their context: checks if a current non-empty search text (provided via user input) in contained in either the post title or post content,
-     * the compared strings are lowercase in advance
+     * filters posts on several post characteristics criteria, their context and a search string in a match-all-manner
+     * - filterToUnresolved: post is only kept if none of the given answers is marked as resolving
+     * - filterToOwn: post is only kept if the author of the post matches the currently logged in user
+     * - filterToAnsweredOrReactedByUser: post is only kept if the author of any given answer the user that put any reaction on that post matches the currently logged in user
+     * - currentPostContentFilter: post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
      * @return boolean predicate if the post is kept (true) or filtered out (false)
      */
     filterFn = (post: Post): boolean => {
