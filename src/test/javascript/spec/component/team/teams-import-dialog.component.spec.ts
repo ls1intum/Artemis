@@ -486,15 +486,13 @@ describe('TeamsImportDialogComponent', () => {
             expect(onErrorStub).not.toHaveBeenCalled();
             expect(comp.isImporting).toEqual(false);
         });
-        it('should call importTeamsFromSourceExercise if show import from exercise and call save success', fakeAsync(() => {
+        it('should call importTeamsFromSourceExercise if show import from exercise and call save success', () => {
             comp.importTeams();
-            expect(comp.isImporting).toEqual(true);
-            tick();
             expect(importFromSourceExerciseStub).toHaveBeenCalledWith(comp.exercise, comp.sourceExercise, comp.importStrategy);
             expect(importTeamsStub).not.toHaveBeenCalled();
             expect(onSuccessStub).toHaveBeenCalledWith(fromExerciseResponse);
             expect(onErrorStub).not.toHaveBeenCalled();
-        }));
+        });
         it('should call importTeamsFromSourceExercise if show import from exercise and call save error on Error', () => {
             const error = { status: 404 };
             importFromSourceExerciseStub.mockReturnValue(throwError(error));
