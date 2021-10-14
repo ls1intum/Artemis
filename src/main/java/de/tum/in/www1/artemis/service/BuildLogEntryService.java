@@ -110,10 +110,10 @@ public class BuildLogEntryService {
     }
 
     private boolean isDockerImageLog(String log) {
-        return (log.startsWith("Unable to find image '") && log.endsWith("' locally"))
-                || (log.startsWith("Digest: sha256:") && log.length() == 79 || log.startsWith("Status: Downloaded newer image for ")) || log.endsWith(": Pulling fs layer")
-                || log.endsWith(": Waiting") || log.endsWith(": Verifying Checksum") || log.endsWith(": Download complete") || log.endsWith(": Pull complete") || log.equals(".")
-                || log.equals("Jenkins does not seem to be running inside a container") || log.startsWith("Jenkins seems to be running inside container ");
+        return (log.startsWith("Unable to find image '") && log.endsWith("' locally")) || (log.startsWith("Digest: sha256:") && log.length() == 79)
+                || log.startsWith("Status: Downloaded newer image for ") || log.endsWith(": Pulling fs layer") || log.endsWith(": Waiting") || log.endsWith(": Verifying Checksum")
+                || log.endsWith(": Download complete") || log.endsWith(": Pull complete") || ".".equals(log) || "Jenkins does not seem to be running inside a container".equals(log)
+                || log.startsWith("Jenkins seems to be running inside container ");
     }
 
     /**
