@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
@@ -16,7 +15,6 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
@@ -93,9 +91,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         priority: '1',
     } as StaticCodeAnalysisIssue;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
@@ -106,7 +104,6 @@ describe('CodeEditorBuildOutputComponent', () => {
                 { provide: CookieService, useClass: MockCookieService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorBuildOutputComponent);

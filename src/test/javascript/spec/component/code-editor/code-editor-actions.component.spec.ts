@@ -6,14 +6,12 @@ import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
-
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -35,9 +33,9 @@ describe('CodeEditorActionsComponent', () => {
     let updateFilesStub: jest.SpyInstance;
     let commitStub: jest.SpyInstance;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, FeatureToggleModule],
+            imports: [ArtemisTestModule, AceEditorModule, FeatureToggleModule],
             declarations: [CodeEditorActionsComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },

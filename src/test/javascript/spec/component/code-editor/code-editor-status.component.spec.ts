@@ -18,7 +18,7 @@ describe('CodeEditorStatusComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
+            imports: [ArtemisTestModule, AceEditorModule, NgbModule],
             declarations: [CodeEditorStatusComponent, TranslatePipeMock],
         })
             .compileComponents()

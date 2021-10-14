@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
-
 import { ArtemisTestModule } from '../../test.module';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { Interactable } from '@interactjs/core/Interactable';

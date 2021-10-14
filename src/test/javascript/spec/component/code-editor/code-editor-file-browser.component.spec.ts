@@ -3,19 +3,21 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CookieService } from 'ngx-cookie-service';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
-import { SinonStub, spy, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    FileType,
+    GitConflictState,
+} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import {
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
@@ -28,11 +30,7 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -41,19 +39,18 @@ describe('CodeEditorFileBrowserComponent', () => {
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let conflictService: CodeEditorConflictStateService;
-    let getRepositoryContentStub: SinonStub;
-    let isCleanStub: SinonStub;
-    let createFileStub: SinonStub;
-    let createFolderStub: SinonStub;
-    let renameFileStub: SinonStub;
+    let getRepositoryContentMock: jest.SpyInstance;
+    let getStatusMock: jest.SpyInstance;
+    let createFileMock: jest.SpyInstance;
+    let renameFileMock: jest.SpyInstance;
 
     const createFileRoot = '#create_file_root';
     const createFolderRoot = '#create_folder_root';
     const compressTree = '#compress_tree';
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot(), NgbModule],
+            imports: [ArtemisTestModule, TreeviewModule.forRoot()],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 MockComponent(CodeEditorStatusComponent),
@@ -78,61 +75,57 @@ describe('CodeEditorFileBrowserComponent', () => {
                 fixture = TestBed.createComponent(CodeEditorFileBrowserComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
-                codeEditorRepositoryService = debugElement.injector.get(CodeEditorRepositoryService);
-                conflictService = debugElement.injector.get(CodeEditorConflictStateService);
-                isCleanStub = stub(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
-                createFileStub = stub(codeEditorRepositoryFileService, 'createFile');
-                createFolderStub = stub(codeEditorRepositoryFileService, 'createFolder');
-                renameFileStub = stub(codeEditorRepositoryFileService, 'renameFile');
+                codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
+                codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
+                conflictService = TestBed.inject(CodeEditorConflictStateService);
+                getStatusMock = jest.spyOn(codeEditorRepositoryService, 'getStatus');
+                getRepositoryContentMock = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+                createFileMock = jest.spyOn(codeEditorRepositoryFileService, 'createFile').mockReturnValue(of(undefined));
+                renameFileMock = jest.spyOn(codeEditorRepositoryFileService, 'renameFile').mockReturnValue(of(undefined));
             });
     });
 
     afterEach(() => {
-        isCleanStub.restore();
-        getRepositoryContentStub.restore();
-        createFileStub.restore();
-        createFolderStub.restore();
+        jest.restoreAllMocks();
     });
 
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         const expectedFileTreeItems: TreeviewItem[] = [];
-        getRepositoryContentStub.returns(of(repositoryContent));
-        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
+        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
-        expect(comp.isLoadingFiles).to.equal(false);
-        expect(comp.repositoryFiles).to.deep.equal(repositoryContent);
-        expect(comp.filesTreeViewItem).to.deep.equal(expectedFileTreeItems);
+        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.repositoryFiles).toEqual(repositoryContent);
+        expect(comp.filesTreeViewItem).toEqual(expectedFileTreeItems);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(0);
-        expect(renderedFiles).to.have.lengthOf(0);
+        expect(renderedFolders.length).toBe(0);
+        expect(renderedFiles.length).toBe(0);
     });
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
         const repositoryContent: { [fileName: string]: string } = { file: 'FILE', folder: 'FOLDER' };
-        getRepositoryContentStub.returns(of(repositoryContent));
-        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
+        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).to.equal(false);
-        expect(comp.repositoryFiles).to.deep.equal(repositoryContent);
+        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.repositoryFiles).toEqual(repositoryContent);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(1);
-        expect(renderedFiles).to.have.lengthOf(1);
+        expect(renderedFolders.length).toBe(1);
+        expect(renderedFiles.length).toBe(1);
     });
 
     it('should create treeviewItems with nested folder structure', () => {
-        const repositoryFiles = {
+        comp.repositoryFiles = {
             folder: FileType.FOLDER,
             'folder/file1': FileType.FILE,
             folder2: FileType.FOLDER,
@@ -140,31 +133,30 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder2/folder3': FileType.FOLDER,
             'folder2/folder3/file3': FileType.FILE,
         };
-        comp.repositoryFiles = repositoryFiles;
         comp.setupTreeview();
         fixture.detectChanges();
         const folder = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!;
-        expect(folder).to.exist;
-        expect(folder.children).to.have.lengthOf(1);
+        expect(folder).toBeDefined();
+        expect(folder.children.length).toBe(1);
         const file1 = folder.children.find(({ value }) => value === 'folder/file1')!;
-        expect(file1).to.exist;
-        expect(file1.children).to.be.undefined;
+        expect(file1).toBeDefined();
+        expect(file1.children).toBeUndefined();
         const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2')!;
-        expect(folder2).to.exist;
-        expect(folder2.children).to.have.lengthOf(2);
+        expect(folder2).toBeDefined();
+        expect(folder2.children.length).toBe(2);
         const file2 = folder2.children.find(({ value }) => value === 'folder2/file2')!;
-        expect(file2).to.exist;
-        expect(file2.children).to.be.undefined;
+        expect(file2).toBeDefined();
+        expect(file2.children).toBeUndefined();
         const folder3 = folder2.children.find(({ value }) => value === 'folder2/folder3')!;
-        expect(folder3).to.exist;
-        expect(folder3.children).to.have.lengthOf(1);
+        expect(folder3).toBeDefined();
+        expect(folder3.children.length).toBe(1);
         const file3 = folder3.children.find(({ value }) => value === 'folder2/folder3/file3')!;
-        expect(file3).to.exist;
-        expect(file3.children).to.be.undefined;
+        expect(file3).toBeDefined();
+        expect(file3.children).toBeUndefined();
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(3);
-        expect(renderedFiles).to.have.lengthOf(3);
+        expect(renderedFolders.length).toBe(3);
+        expect(renderedFiles.length).toBe(3);
     });
 
     it('should filter forbidden files from getRepositoryContent response', () => {
@@ -190,68 +182,68 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'file1',
             } as any),
         ].map((x) => x.toString());
-        getRepositoryContentStub.returns(of(repositoryContent));
-        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
+        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).to.equal(false);
-        expect(comp.repositoryFiles).to.deep.equal(allowedFiles);
-        expect(comp.filesTreeViewItem.map((x) => x.toString())).to.deep.equal(expectedFileTreeItems);
+        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.repositoryFiles).toEqual(allowedFiles);
+        expect(comp.filesTreeViewItem.map((x) => x.toString())).toEqual(expectedFileTreeItems);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(0);
-        expect(renderedFiles).to.have.lengthOf(1);
+        expect(renderedFolders.length).toBe(0);
+        expect(renderedFiles.length).toBe(1);
     });
 
     it('should not load files if commitState could not be retrieved (possibly corrupt repository or server error)', () => {
         const isCleanSubject = new Subject<{ isClean: boolean }>();
-        const onErrorSpy = spy(comp.onError, 'emit');
-        const loadFilesSpy = spy(comp, 'loadFiles');
-        isCleanStub.returns(isCleanSubject);
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+        const loadFilesSpy = jest.spyOn(comp, 'loadFiles');
+        getStatusMock.mockReturnValue(isCleanSubject);
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).to.equal(true);
-        expect(comp.commitState).to.equal(CommitState.UNDEFINED);
+        expect(comp.isLoadingFiles).toBe(true);
+        expect(comp.commitState).toEqual(CommitState.UNDEFINED);
         isCleanSubject.error('fatal error');
 
         fixture.detectChanges();
-        expect(comp.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(comp.isLoadingFiles).to.equal(false);
-        expect(comp.repositoryFiles).to.be.undefined;
-        expect(comp.filesTreeViewItem).to.be.undefined;
-        expect(onErrorSpy).to.have.been.calledOnce;
-        expect(loadFilesSpy).to.not.have.been.called;
+        expect(comp.commitState).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.repositoryFiles).toBeUndefined();
+        expect(comp.filesTreeViewItem).toBeUndefined();
+        expect(onErrorSpy).toBeCalledTimes(1);
+        expect(loadFilesSpy).toBeCalledTimes(0);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(0);
-        expect(renderedFiles).to.have.lengthOf(0);
+        expect(renderedFolders.length).toBe(0);
+        expect(renderedFiles.length).toBe(0);
     });
 
     it('should set isLoading false and emit an error if loadFiles fails', () => {
         const isCleanSubject = new Subject<{ isClean: boolean }>();
         const getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
-        const onErrorSpy = spy(comp.onError, 'emit');
-        isCleanStub.returns(isCleanSubject);
-        getRepositoryContentStub.returns(getRepositoryContentSubject);
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+        getStatusMock.mockReturnValue(isCleanSubject);
+        getRepositoryContentMock.mockReturnValue(getRepositoryContentSubject);
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).to.equal(true);
-        expect(comp.commitState).to.equal(CommitState.UNDEFINED);
+        expect(comp.isLoadingFiles).toBe(true);
+        expect(comp.commitState).toEqual(CommitState.UNDEFINED);
         isCleanSubject.next({ isClean: true });
         getRepositoryContentSubject.error('fatal error');
 
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).to.equal(false);
-        expect(comp.repositoryFiles).to.be.undefined;
-        expect(comp.filesTreeViewItem).to.be.undefined;
-        expect(onErrorSpy).to.have.been.calledOnce;
+        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.repositoryFiles).toBeUndefined();
+        expect(comp.filesTreeViewItem).toBeUndefined();
+        expect(onErrorSpy).toBeCalledTimes(1);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(0);
-        expect(renderedFiles).to.have.lengthOf(0);
+        expect(renderedFolders.length).toBe(0);
+        expect(renderedFiles.length).toBe(0);
     });
 
     it('should set node to checked if its file gets selected and update ui', () => {
@@ -282,21 +274,21 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.selectedFile = selectedFile;
         triggerChanges(comp, { property: 'selectedFile', currentValue: 'folder/file2', firstChange: false });
         fixture.detectChanges();
-        expect(comp.selectedFile).to.equal(selectedFile);
+        expect(comp.selectedFile).toEqual(selectedFile);
         const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!.children.find(({ value }) => value === selectedFile)!;
-        expect(selectedTreeItem).to.exist;
-        expect(selectedTreeItem.checked).to.be.true;
+        expect(selectedTreeItem).toBeDefined();
+        expect(selectedTreeItem.checked).toBe(true)
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).to.have.lengthOf(2);
-        expect(renderedFiles).to.have.lengthOf(2);
+        expect(renderedFolders.length).toBe(2);
+        expect(renderedFiles.length).toBe(2);
 
         const selectedFileHtml = renderedFiles[0];
         const isSelected = !!selectedFileHtml.query(By.css('.node-selected'));
-        expect(isSelected).to.be.true;
+        expect(isSelected).toBe(true)
         const notSelectedFilesHtml = [renderedFiles[1], ...renderedFolders];
         const areUnSelected = !notSelectedFilesHtml.some((el) => !!el.query(By.css('.node-selected')));
-        expect(areUnSelected).to.be.true;
+        expect(areUnSelected).toBe(true)
     });
 
     it('should add file to node tree if created', fakeAsync(() => {
@@ -319,33 +311,35 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'folder2',
             } as any),
         ];
-        const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        const setupTreeviewStub = stub(comp, 'setupTreeview');
-        createFileStub.returns(of(undefined));
+        const onFileChangeSpy =  jest.spyOn(comp.onFileChange, 'emit');
+        const setupTreeviewSpy = jest.spyOn(comp, 'setupTreeview');
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FILE];
         fixture.detectChanges();
 
         let creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
-        expect(creatingElement).to.exist;
+        expect(creatingElement).toBeDefined();
         const creatingInput = creatingElement.query(By.css('input'));
-        expect(creatingInput).to.exist;
+        expect(creatingInput).toBeDefined();
 
         tick();
         const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(creatingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(creatingInput.nativeElement).toEqual(focusedElement);
 
         comp.onCreateFile(fileName);
         fixture.detectChanges();
+        tick();
 
-        expect(createFileStub).to.have.been.calledOnceWithExactly(filePath);
-        expect(comp.creatingFile).to.be.undefined;
-        expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
-        expect(onFileChangeSpy).to.have.been.calledOnce;
-        expect(comp.repositoryFiles).to.deep.equal({ ...repositoryFiles, [filePath]: FileType.FILE });
+        expect(createFileMock).toHaveBeenCalledTimes(1);
+        expect(createFileMock).toHaveBeenCalledWith(filePath);
+        expect(comp.creatingFile).toBeUndefined();
+        expect(setupTreeviewSpy).toHaveBeenCalledTimes(1);
+        expect(setupTreeviewSpy).toHaveBeenCalledWith();
+        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(comp.repositoryFiles).toEqual({ ...repositoryFiles, [filePath]: FileType.FILE });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
-        expect(creatingElement).not.to.exist;
+        expect(creatingElement).toBeNull();
     }));
 
     it('should add folder to node tree if created', fakeAsync(() => {
@@ -368,55 +362,58 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'folder2',
             } as any),
         ];
-        const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        const setupTreeviewStub = stub(comp, 'setupTreeview');
-        createFolderStub.returns(of(undefined));
+        const onFileChangeSpy = jest.spyOn(comp.onFileChange, 'emit');
+        const setupTreeviewSpy = jest.spyOn(comp, 'setupTreeview');
+        let createFolderMock = jest.spyOn(codeEditorRepositoryFileService, 'createFolder').mockReturnValue(of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FOLDER];
         fixture.detectChanges();
 
         let creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
-        expect(creatingElement).to.exist;
+        expect(creatingElement).toBeDefined();
         const creatingInput = creatingElement.query(By.css('input'));
-        expect(creatingInput).to.exist;
+        expect(creatingInput).toBeDefined();
 
         tick();
         const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(creatingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(creatingInput.nativeElement).toEqual(focusedElement);
 
         comp.onCreateFile(fileName);
-
         fixture.detectChanges();
-        expect(createFolderStub).to.have.been.calledOnceWithExactly(filePath);
-        expect(comp.creatingFile).to.be.undefined;
-        expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
-        expect(onFileChangeSpy).to.have.been.calledOnce;
-        expect(comp.repositoryFiles).to.deep.equal({ ...repositoryFiles, [filePath]: FileType.FOLDER });
+        tick();
+
+        expect(createFolderMock).toHaveBeenCalledTimes(1);
+        expect(createFolderMock).toHaveBeenCalledWith(filePath);
+        expect(comp.creatingFile).toBeUndefined();
+        expect(setupTreeviewSpy).toHaveBeenCalledTimes(1);
+        expect(setupTreeviewSpy).toHaveBeenCalledWith();
+        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(comp.repositoryFiles).toEqual({ ...repositoryFiles, [filePath]: FileType.FOLDER });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
-        expect(creatingElement).not.to.exist;
+        expect(creatingElement).toBeNull();
     }));
 
     it('should not be able to create binary file', () => {
         const fileName = 'danger.bin';
-        const onErrorSpy = spy(comp.onError, 'emit');
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         comp.creatingFile = ['', FileType.FILE];
         comp.onCreateFile(fileName);
         fixture.detectChanges();
-        expect(onErrorSpy).to.have.been.calledOnce;
-        expect(createFileStub).not.to.have.been.called;
+        expect(onErrorSpy).toBeCalledTimes(1);
+        expect(createFileMock).toHaveBeenCalledTimes(0);
     });
 
     it('should not be able to create node that already exists', () => {
         const fileName = 'file1';
         const repositoryFiles = { 'folder2/file1': FileType.FILE, folder2: FileType.FOLDER };
-        const onErrorSpy = spy(comp.onError, 'emit');
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         comp.creatingFile = ['folder2', FileType.FILE];
         comp.repositoryFiles = repositoryFiles;
         comp.onCreateFile(fileName);
         fixture.detectChanges();
-        expect(onErrorSpy).to.have.been.calledOnce;
-        expect(createFileStub).not.to.have.been.called;
+        expect(onErrorSpy).toBeCalledTimes(1);
+        expect(createFileMock).toHaveBeenCalledTimes(0);
     });
 
     it('should update repository file entry on rename', fakeAsync(() => {
@@ -439,41 +436,41 @@ describe('CodeEditorFileBrowserComponent', () => {
             } as any),
         ];
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
-        const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        renameFileStub.returns(of(undefined));
+        const onFileChangeSpy = jest.spyOn(comp.onFileChange, 'emit');
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [fileName, fileName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
         fixture.detectChanges();
 
         let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(filesInTreeHtml).to.have.lengthOf(1);
+        expect(filesInTreeHtml.length).toBe(1);
         let foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
-        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        expect(foldersInTreeHtml.length).toBe(1);
         let renamingInput = filesInTreeHtml[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
 
         // Wait for focus of input element
         tick();
         const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
 
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileStub).to.have.been.calledOnceWithExactly(fileName, afterRename);
-        expect(comp.renamingFile).to.be.undefined;
-        expect(onFileChangeSpy).to.have.been.calledOnce;
-        expect(comp.repositoryFiles).to.deep.equal({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
+        expect(renameFileMock).toHaveBeenCalledTimes(1);
+        expect(renameFileMock).toHaveBeenCalledWith(fileName, afterRename);
+        expect(comp.renamingFile).toBeUndefined();
+        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(comp.repositoryFiles).toEqual({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
 
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(filesInTreeHtml).to.have.lengthOf(1);
+        expect(filesInTreeHtml.length).toBe(1);
         foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
-        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        expect(foldersInTreeHtml.length).toBe(1);
         renamingInput = filesInTreeHtml[0].query(By.css('input'));
-        expect(renamingInput).not.to.exist;
+        expect(renamingInput).toBeNull();
 
         // Wait for focus of input element
         tick();
@@ -513,33 +510,33 @@ describe('CodeEditorFileBrowserComponent', () => {
             } as any),
         ];
         const repositoryFiles = { 'folder/file1': FileType.FILE, 'folder/file2': FileType.FILE, folder: FileType.FOLDER, folder2: FileType.FOLDER };
-        const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        renameFileStub.returns(of(undefined));
+        const onFileChangeSpy = jest.spyOn(comp.onFileChange, 'emit');
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [folderName, folderName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
         fixture.detectChanges();
 
         let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(filesInTreeHtml).to.have.lengthOf(2);
+        expect(filesInTreeHtml.length).toBe(2);
         let foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
-        expect(foldersInTreeHtml).to.have.lengthOf(2);
+        expect(foldersInTreeHtml.length).toBe(2);
         let renamingInput = foldersInTreeHtml[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
 
         // Wait for focus of input element
         tick();
         const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
 
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
 
-        expect(renameFileStub).to.have.been.calledOnceWithExactly(folderName, afterRename);
-        expect(comp.renamingFile).to.be.undefined;
-        expect(onFileChangeSpy).to.have.been.calledOnce;
-        expect(comp.repositoryFiles).to.deep.equal({
+        expect(renameFileMock).toHaveBeenCalledTimes(1);
+        expect(renameFileMock).toHaveBeenCalledWith(folderName, afterRename);
+        expect(comp.renamingFile).toBeUndefined();
+        expect(onFileChangeSpy).toBeCalledTimes(1);
+        expect(comp.repositoryFiles).toEqual({
             [[afterRename, 'file1'].join('/')]: FileType.FILE,
             [[afterRename, 'file2'].join('/')]: FileType.FILE,
             [afterRename]: FileType.FOLDER,
@@ -547,11 +544,11 @@ describe('CodeEditorFileBrowserComponent', () => {
         });
 
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(filesInTreeHtml).to.have.lengthOf(2);
+        expect(filesInTreeHtml.length).toBe(2);
         foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
-        expect(foldersInTreeHtml).to.have.lengthOf(2);
+        expect(foldersInTreeHtml.length).toBe(2);
         renamingInput = filesInTreeHtml[0].query(By.css('input'));
-        expect(renamingInput).not.to.exist;
+        expect(renamingInput).toBeNull();
     }));
 
     it('should not rename a file if its new fileName already exists in the repository', fakeAsync(() => {
@@ -565,26 +562,26 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
 
         // Wait for focus of input element
         tick();
         let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
 
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileStub).not.to.have.been.called;
-        expect(comp.repositoryFiles).to.deep.equal(repositoryFiles);
+        expect(renameFileMock).toBeCalledTimes(0);
+        expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
         focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
     }));
 
     it('should not rename a file if its new fileName indicates a binary file', fakeAsync(() => {
@@ -598,26 +595,26 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
 
         // Wait for focus of input element
         tick();
         let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
 
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileStub).not.to.have.been.called;
-        expect(comp.repositoryFiles).to.deep.equal(repositoryFiles);
+        expect(renameFileMock).toBeCalledTimes(0);
+        expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
         focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
     }));
 
     it('should leave rename state if renaming a file to the same file name', fakeAsync(() => {
@@ -630,55 +627,55 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
-        expect(renamingInput).to.exist;
+        expect(renamingInput).toBeDefined();
 
         // Wait for focus of input element
         tick();
         const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+        expect(renamingInput.nativeElement).toEqual(focusedElement);
 
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileStub).not.to.have.been.called;
-        expect(comp.repositoryFiles).to.deep.equal(repositoryFiles);
+        expect(renameFileMock).toBeCalledTimes(0);
+        expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
-        expect(renamingInput).not.to.exist;
+        expect(renamingInput).toBeNull();
     }));
 
     it('should disable action buttons if there is a git conflict', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        isCleanStub.returns(of({ repositoryStatus: CommitState.CONFLICT }));
-        getRepositoryContentStub.returns(of(repositoryContent));
+        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CONFLICT }));
+        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
-        expect(comp.commitState).to.equal(CommitState.CONFLICT);
+        expect(comp.commitState).toEqual(CommitState.CONFLICT);
 
-        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).to.be.true;
-        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).to.be.true;
-        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).to.be.false;
+        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBe(true)
+        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(true)
+        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
 
         // Resolve conflict.
         conflictService.notifyConflictState(GitConflictState.OK);
-        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
+        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
 
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
-        expect(comp.commitState).to.equal(CommitState.CLEAN);
+        expect(comp.commitState).toEqual(CommitState.CLEAN);
 
-        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).to.be.false;
-        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).to.be.false;
-        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).to.be.false;
+        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBe(false);
+        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(false);
+        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
 
-        expect(getRepositoryContentStub).to.have.been.calledOnce;
-        expect(comp.selectedFile).to.be.undefined;
+        expect(getRepositoryContentMock).toBeCalledTimes(1);
+        expect(comp.selectedFile).toBeUndefined();
     });
 });
