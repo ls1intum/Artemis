@@ -26,7 +26,7 @@ describe('Exercise Update Warning Component Tests', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {

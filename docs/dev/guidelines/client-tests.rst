@@ -39,7 +39,7 @@ The most basic test looks similar to this:
         });
 
         afterEach(function () {
-            jest.clearAllMocks();
+            jest.restoreAllMocks();
         });
 
         it('should initialize', () => {
@@ -178,7 +178,7 @@ More examples on test speed improvement can be found in the `following PR <https
           afterEach(() => {
               ...
               httpMock.verify();
-              jest.clearAllMocks();
+              jest.restoreAllMocks();
           });
 
           it('should make get request', fakeAsync(() => {
@@ -196,7 +196,7 @@ More examples on test speed improvement can be found in the `following PR <https
 3. Do not use ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_).
    This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
-4. Calling `jest.clearAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests.
+4. Calling `jest.restoreAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests. This will only work if the mocks were created with `jest.spyOn`. Also, manually assigning `jest.fn()` should be avoided with this configuration.
 
 5. Make sure to have at least 80% line test coverage. Run ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
 
@@ -246,3 +246,9 @@ Here is an example of a test for `exercise-update-warning component <https://git
                 });
         });
     });
+
+7. Name the variables properly for test doubles:
+
+.. code:: ts
+    const clearSpy = jest.spyOn(someComponent, 'clear');
+    const getNumberMock = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42);
