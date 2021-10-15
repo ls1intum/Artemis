@@ -17,8 +17,8 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -153,9 +153,13 @@ public class AnswerPostService extends PostingService {
      * @param answerPost answer post that triggered the notification
      */
     void sendNotification(AnswerPost answerPost) {
-        // notify via coursse
+        // the course property is needed for notifications
+        Course course;
+
+        // notify via course
         if (answerPost.getPost().getCourseWideContext() != null) {
             Post post = answerPost.getPost();
+
             singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(answerPost);
             return;
         }

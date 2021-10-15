@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;

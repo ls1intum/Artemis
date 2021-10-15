@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;

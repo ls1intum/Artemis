@@ -9,8 +9,11 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
 
 public class GroupNotificationFactory {
+
+    private static NotificationTargetService targetService = new NotificationTargetService();
 
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
@@ -48,7 +51,7 @@ public class GroupNotificationFactory {
         Course course = lecture.getCourse();
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        notification.setTarget(notification.getAttachmentUpdated(lecture));
+        notification.setTarget(targetService.getAttachmentUpdatedTarget(lecture));
 
         return notification;
     }
@@ -112,22 +115,22 @@ public class GroupNotificationFactory {
         // Exercises for exams
         if (exercise.isExamExercise()) {
             if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
-                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
+                notification.setTarget(targetService.getExamExerciseTargetWithExerciseUpdate(exercise));
                 notification.setPriority(NotificationPriority.HIGH);
             }
             else if (exercise instanceof ProgrammingExercise) {
-                notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+                notification.setTarget(targetService.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }
         }
         // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_CREATED) {
-            notification.setTarget(notification.getExerciseCreatedTarget(exercise));
+            notification.setTarget(targetService.getExerciseCreatedTarget(exercise));
         }
         else if (notificationType == NotificationType.DUPLICATE_TEST_CASE) {
-            notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
+            notification.setTarget(targetService.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
         }
         else {
-            notification.setTarget(notification.getExerciseUpdatedTarget(exercise));
+            notification.setTarget(targetService.getExerciseUpdatedTarget(exercise));
         }
 
         return notification;
@@ -174,16 +177,16 @@ public class GroupNotificationFactory {
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
         if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
-            notification.setTarget(notification.getExercisePostTarget(post));
+            notification.setTarget(targetService.getExercisePostTarget(post));
         }
         else if (notificationType == NotificationType.NEW_COURSE_POST) {
-            notification.setTarget(notification.getCoursePostTarget(post));
+            notification.setTarget(targetService.getCoursePostTarget(post));
         }
         else if (notificationType == NotificationType.NEW_ANNOUNCEMENT_POST) {
-            notification.setTarget(notification.getCoursePostTarget(post));
+            notification.setTarget(targetService.getCoursePostTarget(post));
         }
         else {
-            notification.setTarget(notification.getLecturePostTarget(post));
+            notification.setTarget(targetService.getLecturePostTarget(post));
         }
 
         return notification;
@@ -226,13 +229,13 @@ public class GroupNotificationFactory {
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
         if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
-            notification.setTarget(notification.getExercisePostTarget(answerPost.getPost()));
+            notification.setTarget(targetService.getExercisePostTarget(answerPost.getPost()));
         }
         else if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
-            notification.setTarget(notification.getLecturePostTarget(answerPost.getPost()));
+            notification.setTarget(targetService.getLecturePostTarget(answerPost.getPost()));
         }
         else {
-            notification.setTarget(notification.getCoursePostTarget(answerPost.getPost()));
+            notification.setTarget(targetService.getCoursePostTarget(answerPost.getPost()));
         }
 
         return notification;
@@ -272,7 +275,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-        notification.setTarget(notification.getCourseTarget(course, "courseArchiveUpdated"));
+        notification.setTarget(targetService.getCourseTarget(course, "courseArchiveUpdated"));
         return notification;
     }
 
@@ -310,7 +313,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, groupNotificationType);
-        notification.setTarget(notification.getCourseTarget(exam.getCourse(), "examArchiveUpdated"));
+        notification.setTarget(targetService.getCourseTarget(exam.getCourse(), "examArchiveUpdated"));
         return notification;
     }
 }

@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -360,6 +360,9 @@ public class PostService extends PostingService {
      * @param post post that triggered the notification
      */
     void sendNotification(Post post) {
+
+        // TODO Make sure the course property is set else the notification -> null pointer exception
+
         // notify via course
         if (post.getCourseWideContext() != null) {
             groupNotificationService.notifyAllGroupsAboutNewCoursePost(post);

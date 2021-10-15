@@ -3,8 +3,11 @@ package de.tum.in.www1.artemis.domain.notification;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
 
 public class SingleUserNotificationFactory {
+
+    private static NotificationTargetService targetService = new NotificationTargetService();
 
     /**
      * Creates an instance of SingleUserNotification.
@@ -22,13 +25,13 @@ public class SingleUserNotificationFactory {
             String text = "Your post got replied.";
             SingleUserNotification notification = new SingleUserNotification(recipient, author, title, text);
             if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
-                notification.setTarget(notification.answerPostTargetForExercise(answerPost));
+                notification.setTarget(targetService.getExercisePostTarget(answerPost.getPost()));
             }
             else if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
-                notification.setTarget(notification.answerPostTargetForLecture(answerPost));
+                notification.setTarget(targetService.getLecturePostTarget(answerPost.getPost()));
             }
             else {
-                notification.setTarget(notification.answerPostTargetForCoursePost(answerPost));
+                notification.setTarget(targetService.getCoursePostTarget(answerPost.getPost()));
             }
             return notification;
         }

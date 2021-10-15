@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 
