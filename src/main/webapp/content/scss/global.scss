@@ -1133,3 +1133,10 @@ Course Info Bar
 .col {
     width: auto !important;
 }
+
+.accordion-body {
+    background: white;
+    max-height: 50vh;
+    overflow: scroll;
+    padding: 0 0.5rem;
+}

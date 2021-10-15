@@ -1,25 +1,29 @@
 <div>
-    <h4>
-        <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
-        <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
-        <button
-            id="modeling-exercise-import-button"
-            *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-end jh-create-entity create-modeling-exercise me-1"
-            (click)="openImportModal()"
-        >
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
-        </button>
+    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
+        <span class="mb-1 me-auto">
+            <span *ngIf="course && !showHeading">{{ course.title }} - </span
+            ><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
+            <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
+        </span>
+
         <a
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-end jh-create-entity create-modeling-exercise me-1"
+            class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create new Modeling Exercise</span>
         </a>
+        <button
+            id="modeling-exercise-import-button"
+            *ngIf="course && course.isAtLeastEditor"
+            class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
+        </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>

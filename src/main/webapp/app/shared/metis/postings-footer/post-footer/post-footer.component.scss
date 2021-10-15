@@ -1,14 +1,21 @@
+@import 'src/main/webapp/app/shared/metis/metis.component';
+
 .post-tag {
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
-    background-color: darkblue;
+    background-color: $metis-light-blue;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-size: smaller;
+    color: $metis-blue;
+    padding-bottom: 0.1rem;
 }
 
 .linked-context-information {
     font-weight: 300 !important;
     font-size: small;
-    color: #0f6ab4;
+    color: $metis-blue;
 }
 
 .context-information {

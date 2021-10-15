@@ -19,6 +19,9 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GroupNotification extends Notification {
 
+    /**
+     * Specifies the group : INSTRUCTOR, EDITOR, TA, STUDENT, ...
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
     private GroupNotificationType type;
