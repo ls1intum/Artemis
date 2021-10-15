@@ -69,7 +69,7 @@ public class GroupNotificationFactory {
         switch (notificationType) {
             case EXERCISE_RELEASED -> {
                 title = NotificationTitleTypeConstants.EXERCISE_RELEASED_TITLE;
-                text = "A new exercise \"" + exercise.getTitle() + "\" got created.";
+                text = "A new exercise \"" + exercise.getTitle() + "\" got released.";
             }
             case EXERCISE_PRACTICE -> {
                 title = NotificationTitleTypeConstants.EXERCISE_PRACTICE_TITLE;
