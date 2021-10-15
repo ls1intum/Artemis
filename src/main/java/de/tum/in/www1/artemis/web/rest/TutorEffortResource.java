@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
@@ -28,6 +29,8 @@ public class TutorEffortResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final CourseRepository courseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserRepository userRepository;
@@ -35,11 +38,12 @@ public class TutorEffortResource {
     private final TutorEffortService tutorEffortService;
 
     public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            TutorEffortService tutorEffortService) {
+            TutorEffortService tutorEffortService, CourseRepository courseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.tutorEffortService = tutorEffortService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -52,9 +56,16 @@ public class TutorEffortResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
+
+        // check courseId and exerciseId exist and are linked to each other
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            return ResponseEntity.noContent().build();
+        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+
         List<TutorEffort> tutorEffortList = tutorEffortService.buildTutorEffortList(courseId, exerciseId);
         if (tutorEffortList.isEmpty()) {
             return ResponseEntity.noContent().build();

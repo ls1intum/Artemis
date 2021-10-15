@@ -86,7 +86,7 @@ describe('TextAssessment Service', () => {
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
-        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/analytics/text-assessment/events`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
         mockRequest.flush(mockResponse);
         tick();
     }));
@@ -200,7 +200,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toEqual(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            url: `/api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);

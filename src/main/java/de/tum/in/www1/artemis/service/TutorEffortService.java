@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static java.lang.Math.toIntExact;
+import static java.util.stream.Collectors.groupingBy;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -38,15 +39,13 @@ public class TutorEffortService {
         List<TextAssessmentEvent> listOfEvents = textAssessmentEventRepository.findAllNonEmptyEvents(courseId, exerciseId);
 
         List<TutorEffort> tutorEffortList = new ArrayList<>();
-        Map<Long, List<TextAssessmentEvent>> newMap = groupByUserId(listOfEvents);
+        Map<Long, List<TextAssessmentEvent>> newMap = listOfEvents.stream().collect(groupingBy(TextAssessmentEvent::getUserId));
         if (newMap.isEmpty()) {
             return tutorEffortList;
         }
         newMap.forEach((currentUserId, currentUserEvents) -> {
-            if (currentUserEvents != null) {
-                TutorEffort effort = createTutorEffortWithInformation(currentUserId, currentUserEvents, submissionsPerTutor.get(currentUserId));
-                tutorEffortList.add(effort);
-            }
+            TutorEffort effort = createTutorEffortWithInformation(currentUserId, currentUserEvents, submissionsPerTutor.get(currentUserId));
+            tutorEffortList.add(effort);
         });
         return tutorEffortList;
     }
@@ -89,25 +88,6 @@ public class TutorEffortService {
             index++;
         }
         return timeSeconds / 60;
-    }
-
-    /**
-     * Groups assessment events by user id into a map
-     * @param events the events to query from
-     * @return a map with key representing user id and value representing respective list of events for the user
-     */
-    private Map<Long, List<TextAssessmentEvent>> groupByUserId(List<TextAssessmentEvent> events) {
-        Map<Long, List<TextAssessmentEvent>> map = new HashMap<>();
-
-        events.forEach((event) -> {
-            Long currentUserId = event.getUserId();
-            // if key, value pair doesn't exist, initialize empty list
-            var cEvents = map.getOrDefault(currentUserId, new ArrayList<>());
-            // append a new element to value list
-            cEvents.add(event);
-            map.putIfAbsent(currentUserId, cEvents);
-        });
-        return map;
     }
 
     /**
