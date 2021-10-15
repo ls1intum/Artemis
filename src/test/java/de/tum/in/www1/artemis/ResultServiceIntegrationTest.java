@@ -499,7 +499,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
 
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/resultsWithPointsPerCriterion",
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
@@ -521,7 +521,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
 
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/resultsWithPointsPerCriterion",
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
@@ -662,8 +662,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     public void testGetResultsWithPointsForExamExercise() throws Exception {
         setupExamModelingExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/resultsWithPointsPerCriterion",
-                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request
+                .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);

@@ -51,7 +51,7 @@ export class ResultService implements IResultService {
     getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
-            .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/resultsWithPointsPerCriterion`, {
+            .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/results-with-points-per-criterion`, {
                 params: options,
                 observe: 'response',
             })

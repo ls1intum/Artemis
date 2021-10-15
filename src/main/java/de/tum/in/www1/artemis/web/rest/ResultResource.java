@@ -235,14 +235,14 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/resultsWithPointsPerCriterion : get the successful results for an exercise, ordered ascending by build completion date.
+     * GET /exercises/:exerciseId/results-with-points-per-criterion : get the successful results for an exercise, ordered ascending by build completion date.
      * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
      *
      * @param exerciseId of the exercise for which to retrieve the results.
      * @param withSubmissions defines if submissions are loaded from the database for the results.
      * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
      */
-    @GetMapping("exercises/{exerciseId}/resultsWithPointsPerCriterion")
+    @GetMapping("exercises/{exerciseId}/results-with-points-per-criterion")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "true") boolean withSubmissions) {
