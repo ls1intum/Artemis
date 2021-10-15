@@ -158,11 +158,6 @@ public class GroupNotificationFactory {
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 course = lecture.getCourse();
             }
-            case NEW_ANNOUNCEMENT_POST -> {
-                course = post.getCourse();
-                title = NotificationTitleTypeConstants.NEW_ANNOUNCEMENT_POST;
-                text = "Course \"" + course.getTitle() + "\" got a new announcement.";
-            }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
