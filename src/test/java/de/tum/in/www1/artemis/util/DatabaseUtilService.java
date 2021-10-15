@@ -3712,6 +3712,16 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course createCourseWithInstructorAndTextExercise(String login) {
+        Course course = this.createCourse();
+        TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
+        studentParticipationRepo.save(participation);
+        course.addExercises(textExercise);
+        addUsers(0, 0, 0, 1);
+        return course;
+    }
+
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
