@@ -33,11 +33,11 @@ export class NotificationService {
     }
 
     /**
-     * Query all notifications.
+     * Query all notifications with respect to the current user's notification settings.
      * @param req request options
      * @return Observable<HttpResponse<Notification[]>>
      */
-    query(req?: any): Observable<HttpResponse<Notification[]>> {
+    queryNotificationsFilteredBySettings(req?: any): Observable<HttpResponse<Notification[]>> {
         const options = createRequestOption(req);
         return this.http
             .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
