@@ -153,17 +153,21 @@ Exercise Creation
 
     |
 
-    .. figure:: programming/programming-options-timeline.png
+    .. figure:: programming/programming-options-timeline-manual.png
               :align: center
+    .. figure:: programming/programming-options-timeline-automatic.png
+    :align: center
 
     - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
     - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
       Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date** has been activated.
       The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
     - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
+    - **Complaint on Automatic Assessment:** This option allows students to write a complaint on the automatic assessment after the due date.
+        This option is only available if complaints are enabled in the course or the exercise is part of an exam.
 
       .. note::
-        Students can still commit code and receive feedback after the exercise due date, if manual review is not activated.
+        Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated.
         The results for these submissions will not be rated.
 
     - **Run Tests once after Due Date:** Activate this option to build and test the latest in-time submission of each student on this date.
