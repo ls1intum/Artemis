@@ -171,6 +171,9 @@ public class GroupNotificationFactory {
         if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
             notification.setTarget(notification.getExercisePostTarget(post.getExercise()));
         }
+        else if (notificationType == NotificationType.NEW_ANNOUNCEMENT_POST) {
+            notification.setTarget(notification.getAnnouncementTarget(post.getCourse()));
+        }
         else {
             notification.setTarget(notification.getLecturePostTarget(post.getLecture()));
         }

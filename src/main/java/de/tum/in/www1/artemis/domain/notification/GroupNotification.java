@@ -94,6 +94,10 @@ public class GroupNotification extends Notification {
         return getLectureTarget(lecture, "newAnswerPost");
     }
 
+    public String getAnnouncementTarget(Course course) {
+        return getCourseTarget(course, "newAnnouncement");
+    }
+
     public String getAttachmentUpdated(Lecture lecture) {
         return getLectureTarget(lecture, "attachmentUpdated");
     }
