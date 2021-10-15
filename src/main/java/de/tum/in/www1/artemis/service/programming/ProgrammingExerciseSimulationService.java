@@ -84,7 +84,7 @@ public class ProgrammingExerciseSimulationService {
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
         if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(programmingExercise);
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
         }
         else {
             instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());

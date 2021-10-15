@@ -151,7 +151,7 @@ public class ProgrammingExerciseService {
 
         scheduleOperations(programmingExercise.getId());
         if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(programmingExercise);
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
         }
         else {
             instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());

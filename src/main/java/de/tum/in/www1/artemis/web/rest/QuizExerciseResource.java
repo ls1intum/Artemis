@@ -131,7 +131,7 @@ public class QuizExerciseResource {
             // notify websocket channel of changes to the quiz exercise
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             if (quizExercise.getReleaseDate() == null || !quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-                groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(quizExercise);
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(quizExercise);
             }
             else {
                 instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());

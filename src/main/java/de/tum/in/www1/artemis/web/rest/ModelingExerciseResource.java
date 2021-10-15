@@ -132,7 +132,7 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(result.getId());
 
         if (modelingExercise.getReleaseDate() == null || !modelingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(modelingExercise);
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(modelingExercise);
         }
         else {
             instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());

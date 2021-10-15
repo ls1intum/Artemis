@@ -115,7 +115,7 @@ public class FileUploadExerciseResource {
         // Only notify students and tutors when the exercise is created for a course
         if (fileUploadExercise.isCourseExercise()) {
             if (fileUploadExercise.getReleaseDate() == null || !fileUploadExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-                groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(fileUploadExercise);
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(fileUploadExercise);
             }
             else {
                 instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());

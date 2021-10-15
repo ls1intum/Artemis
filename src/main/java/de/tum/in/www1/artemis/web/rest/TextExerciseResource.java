@@ -163,7 +163,7 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         if (textExercise.getReleaseDate() == null || !textExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(textExercise);
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(textExercise);
         }
         else {
             instanceMessageSendService.sendExerciseReleaseNotificationSchedule(textExercise.getId());

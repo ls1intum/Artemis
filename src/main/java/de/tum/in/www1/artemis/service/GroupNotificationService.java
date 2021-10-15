@@ -87,16 +87,20 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student and tutor groups about a newly released exercise at the moment of its release date.
+     * Notify all groups about a newly released exercise at the moment of its release date.
+     *
+     * This notification can be deactivated in the notification settings
      *
      * @param exercise that has been created
      */
-    public void notifyStudentAndTutorGroupAboutReleasedExercise(Exercise exercise) {
+    public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
         // only send notification if ReleaseDate is now or null (not in the future) (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
         if (exercise.getReleaseDate() == null
                 || !exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_RELEASED, null));
             saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_RELEASED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.EDITOR, NotificationType.EXERCISE_RELEASED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_RELEASED, null));
         }
     }
 
