@@ -32,9 +32,10 @@
             <fa-icon class="icon notResolved" [icon]="'check'" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
         </div>
     </ng-template>
-    <div class="col-auto ps-0">
+    <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
         <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
             <div *ngIf="posting.resolvesPost; else notResolved">
+                {{ isAnswerOfAnnouncement }}
                 <fa-icon
                     class="resolved"
                     [icon]="'check'"

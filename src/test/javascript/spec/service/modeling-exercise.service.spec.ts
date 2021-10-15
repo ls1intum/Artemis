@@ -11,9 +11,9 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import dayjs from 'dayjs';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ArtemisTestModule } from '../test.module';
 import * as helper from 'app/shared/util/download.util';
+import { Router } from '@angular/router';
+import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('ModelingExercise Service', () => {
     let injector: TestBed;
@@ -25,12 +25,12 @@ describe('ModelingExercise Service', () => {
     const categories = [JSON.stringify(category) as ExerciseCategory];
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [HttpClientTestingModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                ExerciseService,
+                { provide: Router, useClass: MockRouter },
             ],
         });
         injector = getTestBed();
