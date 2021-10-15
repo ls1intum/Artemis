@@ -121,7 +121,7 @@ public class GroupNotificationFactory {
         }
         // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_RELEASED) {
-            notification.setTarget(notification.getExerciseCreatedTarget(exercise));
+            notification.setTarget(notification.getExerciseReleasedTarget(exercise));
         }
         else if (notificationType == NotificationType.DUPLICATE_TEST_CASE) {
             notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
