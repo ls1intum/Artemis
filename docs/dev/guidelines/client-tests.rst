@@ -248,4 +248,4 @@ Here is an example of a test for `exercise-update-warning component <https://git
 .. code:: ts
 
     const clearSpy = jest.spyOn(someComponent, 'clear');
-    const getNumberMock = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42);
+    const getNumberStub = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42); // This always returns 42
