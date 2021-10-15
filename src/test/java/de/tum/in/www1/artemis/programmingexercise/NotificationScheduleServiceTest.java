@@ -33,6 +33,6 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
         Thread.sleep(delayInSeconds * 1000);
 
-        verify(groupNotificationService, times(1)).notifyStudentAndTutorGroupAboutStartedExercise(exercise);
+        verify(groupNotificationService, times(1)).notifyStudentAndTutorGroupAboutReleasedExercise(exercise);
     }
 }

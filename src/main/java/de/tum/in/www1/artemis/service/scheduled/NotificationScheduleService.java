@@ -86,7 +86,7 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
                 SecurityUtils.setAuthorizationObject();
             }
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
-                groupNotificationService.notifyStudentAndTutorGroupAboutStartedExercise(exercise);
+                groupNotificationService.notifyStudentAndTutorGroupAboutReleasedExercise(exercise);
             });
             log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());
         }

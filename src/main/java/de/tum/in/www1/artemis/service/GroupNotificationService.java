@@ -71,7 +71,7 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups but tutors about an exercise update.
-     * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
+     * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
      * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated
@@ -87,11 +87,11 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
+     * Notify student and tutor groups about a newly released exercise at the moment of its release date.
      *
      * @param exercise that has been created
      */
-    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
+    public void notifyStudentAndTutorGroupAboutReleasedExercise(Exercise exercise) {
         // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
         if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_RELEASED, null));
