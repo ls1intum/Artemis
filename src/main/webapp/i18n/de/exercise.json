@@ -61,7 +61,7 @@
             "instructionDescription": "Beschreibung",
             "credits": "Credits",
             "feedback": "Feedback",
-            "editText": "Text bearbeiten",
+            "editText": "Als Text bearbeiten",
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden.",
             "creditsHint": "Diese Zahl gibt die Punktzahl für diese Bewertungsanweisung an.",
             "gradingScaleHint": "Die Benotungsskala definiert die untere und obere Grenze für die Bewertung des Leistungsniveaus von Studierenden mit dieser Anweisung.",
