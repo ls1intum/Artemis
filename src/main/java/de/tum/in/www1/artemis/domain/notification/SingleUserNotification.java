@@ -52,11 +52,9 @@ public class SingleUserNotification extends Notification {
      */
     public String answerPostTargetForExercise(AnswerPost answerPost) {
         JsonObject target = new JsonObject();
-        target.addProperty("message", "newAnswer");
-        target.addProperty("id", answerPost.getPost().getExercise().getId());
-        target.addProperty("entity", "exercises");
+        target.addProperty("id", answerPost.getId());
+        target.addProperty("exerciseId", answerPost.getPost().getExercise().getId());
         target.addProperty("course", answerPost.getPost().getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        target.addProperty("mainPage", "courses");
         return target.toString();
     }
 
@@ -68,11 +66,22 @@ public class SingleUserNotification extends Notification {
      */
     public String answerPostTargetForLecture(AnswerPost answerPost) {
         JsonObject target = new JsonObject();
-        target.addProperty("message", "newAnswer");
-        target.addProperty("id", answerPost.getPost().getLecture().getId());
-        target.addProperty("entity", "lectures");
+        target.addProperty("id", answerPost.getId());
+        target.addProperty("lectureId", answerPost.getPost().getLecture().getId());
         target.addProperty("course", answerPost.getPost().getLecture().getCourse().getId());
-        target.addProperty("mainPage", "courses");
+        return target.toString();
+    }
+
+    /**
+     * Set the target JSON string for an couse-wide post notification
+     *
+     * @param answerPost an answer for an course-wide post
+     * @return JSON string with all properties for the notification target field
+     */
+    public String answerPostTargetForCoursePost(AnswerPost answerPost) {
+        JsonObject target = new JsonObject();
+        target.addProperty("id", answerPost.getId());
+        target.addProperty("course", answerPost.getPost().getCourse().getId());
         return target.toString();
     }
 

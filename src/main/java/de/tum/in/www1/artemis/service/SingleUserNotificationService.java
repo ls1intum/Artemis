@@ -23,7 +23,7 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Notify author of a question for an exercise that there is a new answer.
+     * Notify author of a post for an exercise that there is a new answer.
      *
      * @param answer for exercise that is new
      */
@@ -32,11 +32,20 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Notify author of a question for a lecture that there is a new answer.
+     * Notify author of a post for a lecture that there is a new answer.
      *
      * @param answer for lecture that is new
      */
     public void notifyUserAboutNewAnswerForLecture(AnswerPost answer) {
+        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+    }
+
+    /**
+     * Notify author of a course-wide that there is a new answer.
+     *
+     * @param answer for lecture that is new
+     */
+    public void notifyUserAboutNewAnswerForCoursePost(AnswerPost answer) {
         saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
     }
 

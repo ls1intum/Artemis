@@ -10,7 +10,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
-import { NEW_ANNOUNCEMENT_POST_TITLE, NEW_COURSE_POST_TITLE, NEW_POST_FOR_EXERCISE_TITLE, NEW_POST_FOR_LECTURE_TITLE, Notification } from 'app/entities/notification.model';
+import {
+    NEW_ANNOUNCEMENT_POST_TITLE,
+    NEW_ANSWER_POST_FOR_COURSE_POST_TITLE,
+    NEW_ANSWER_POST_FOR_EXERCISE_TITLE,
+    NEW_ANSWER_POST_FOR_LECTURE_TITLE,
+    NEW_COURSE_POST_TITLE,
+    NEW_POST_FOR_EXERCISE_TITLE,
+    NEW_POST_FOR_LECTURE_TITLE,
+    Notification,
+} from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -66,13 +75,17 @@ export class NotificationService {
 
             if (notification.title === 'Quiz started') {
                 this.router.navigate([target.mainPage, courseId, 'quiz-exercises', target.id, 'live']);
-            } else if (notification.title === NEW_ANNOUNCEMENT_POST_TITLE || notification.title === NEW_COURSE_POST_TITLE) {
+            } else if (
+                notification.title === NEW_ANNOUNCEMENT_POST_TITLE ||
+                notification.title === NEW_COURSE_POST_TITLE ||
+                notification.title === NEW_ANSWER_POST_FOR_COURSE_POST_TITLE
+            ) {
                 const queryParams: Params = this.metisService.getQueryParamsForCoursePost(target.id);
                 this.router.navigate(this.metisService.getLinkForCoursePost(courseId), { queryParams });
-            } else if (notification.title === NEW_POST_FOR_EXERCISE_TITLE) {
+            } else if (notification.title === NEW_POST_FOR_EXERCISE_TITLE || notification.title === NEW_ANSWER_POST_FOR_EXERCISE_TITLE) {
                 const queryParams: Params = this.metisService.getQueryParamsForLectureOrExercisePost(target.id);
                 this.router.navigate(this.metisService.getLinkForExercisePost(courseId, target.exerciseId), { queryParams });
-            } else if (notification.title === NEW_POST_FOR_LECTURE_TITLE) {
+            } else if (notification.title === NEW_POST_FOR_LECTURE_TITLE || notification.title === NEW_ANSWER_POST_FOR_LECTURE_TITLE) {
                 const queryParams: Params = this.metisService.getQueryParamsForLectureOrExercisePost(target.id);
                 this.router.navigate(this.metisService.getLinkForLecturePost(courseId, target.lectureId), { queryParams });
             } else {

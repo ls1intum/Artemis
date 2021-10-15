@@ -214,16 +214,25 @@ public class GroupNotificationFactory {
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 course = lecture.getCourse();
             }
+            case NEW_ANSWER_POST_FOR_COURSE_POST -> {
+                Lecture lecture = answerPost.getPost().getLecture();
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_COURSE_POST_TITLE;
+                course = answerPost.getPost().getCourse();
+                text = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
+            }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
         if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
-            notification.setTarget(notification.getExerciseAnswerPostTarget(answerPost.getPost().getExercise()));
+            notification.setTarget(notification.getExercisePostTarget(answerPost.getPost()));
+        }
+        else if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
+            notification.setTarget(notification.getLecturePostTarget(answerPost.getPost()));
         }
         else {
-            notification.setTarget(notification.getLectureAnswerPostTarget(answerPost.getPost().getLecture()));
+            notification.setTarget(notification.getCoursePostTarget(answerPost.getPost()));
         }
 
         return notification;

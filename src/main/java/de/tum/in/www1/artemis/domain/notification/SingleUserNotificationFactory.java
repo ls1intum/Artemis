@@ -14,7 +14,8 @@ public class SingleUserNotificationFactory {
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(AnswerPost answerPost, NotificationType notificationType) {
-        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE || notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
+        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE || notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE
+                || notificationType == NotificationType.NEW_ANSWER_POST_FOR_COURSE_POST) {
             User recipient = answerPost.getPost().getAuthor();
             User author = answerPost.getAuthor();
             String title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
@@ -23,8 +24,11 @@ public class SingleUserNotificationFactory {
             if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
                 notification.setTarget(notification.answerPostTargetForExercise(answerPost));
             }
-            else {
+            else if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
                 notification.setTarget(notification.answerPostTargetForLecture(answerPost));
+            }
+            else {
+                notification.setTarget(notification.answerPostTargetForCoursePost(answerPost));
             }
             return notification;
         }

@@ -79,14 +79,6 @@ public class GroupNotification extends Notification {
         return getExerciseTarget(exercise, "exerciseUpdated");
     }
 
-    public String getExerciseAnswerPostTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "newAnswerPost");
-    }
-
-    public String getLectureAnswerPostTarget(Lecture lecture) {
-        return getLectureTarget(lecture, "newAnswerPost");
-    }
-
     public String getAttachmentUpdated(Lecture lecture) {
         return getLectureTarget(lecture, "attachmentUpdated");
     }

@@ -153,6 +153,12 @@ public class AnswerPostService extends PostingService {
      * @param answerPost answer post that triggered the notification
      */
     void sendNotification(AnswerPost answerPost) {
+        // notify via coursse
+        if (answerPost.getPost().getCourseWideContext() != null) {
+            Post post = answerPost.getPost();
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(answerPost);
+            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(answerPost);
+        }
         // notify via exercise
         if (answerPost.getPost().getExercise() != null) {
             Post post = answerPost.getPost();
