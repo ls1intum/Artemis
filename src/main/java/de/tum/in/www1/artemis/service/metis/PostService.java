@@ -79,6 +79,7 @@ public class PostService extends PostingService {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post);
         }
         Post savedPost = postRepository.save(post);
 

@@ -72,7 +72,7 @@ public class GroupNotificationService {
     /**
      * Notify all groups but tutors about an exercise update.
      * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
-     * Students, instructors, and editors should be notified about changed as quickly as possible. 
+     * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
@@ -165,6 +165,13 @@ public class GroupNotificationService {
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+    }
+
+    public void notifyAllGroupsAboutNewAnnouncement(Post post) {
+        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANNOUNCEMENT_POST));
+        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.EDITOR, NotificationType.NEW_ANNOUNCEMENT_POST));
+        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.TA, NotificationType.NEW_ANNOUNCEMENT_POST));
+        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.STUDENT, NotificationType.NEW_ANNOUNCEMENT_POST));
     }
 
     /**
