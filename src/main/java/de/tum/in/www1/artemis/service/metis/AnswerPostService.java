@@ -156,8 +156,8 @@ public class AnswerPostService extends PostingService {
         // notify via coursse
         if (answerPost.getPost().getCourseWideContext() != null) {
             Post post = answerPost.getPost();
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(answerPost);
             singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(answerPost);
+            return;
         }
         // notify via exercise
         if (answerPost.getPost().getExercise() != null) {
@@ -171,6 +171,7 @@ public class AnswerPostService extends PostingService {
 
             // protect Sample Solution, Grading Instructions, etc.
             answerPost.getPost().getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
         if (answerPost.getPost().getLecture() != null) {
@@ -181,6 +182,7 @@ public class AnswerPostService extends PostingService {
             answerPost.setPost(post);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(answerPost);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(answerPost);
+            return;
         }
     }
 
