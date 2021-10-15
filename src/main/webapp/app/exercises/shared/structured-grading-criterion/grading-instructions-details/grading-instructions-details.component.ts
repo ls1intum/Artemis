@@ -99,12 +99,14 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     generateMarkdown(): string {
         let markdownText = '';
         markdownText += this.initializeExerciseGradingInstructionText();
-        for (const criterion of this.criteria) {
-            if (criterion.title == undefined) {
-                // if it is a dummy criterion, leave out the command identifier
-                markdownText += this.generateInstructionsMarkdown(criterion);
-            } else {
-                markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+        if (this.exercise.gradingCriteria) {
+            for (const criterion of this.exercise.gradingCriteria) {
+                if (criterion.title == undefined) {
+                    // if it is a dummy criterion, leave out the command identifier
+                    markdownText += this.generateInstructionsMarkdown(criterion);
+                } else {
+                    markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                }
             }
         }
         return markdownText;
