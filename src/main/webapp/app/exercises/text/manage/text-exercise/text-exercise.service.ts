@@ -8,6 +8,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -142,5 +143,27 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
+    }
+
+    /**
+     * Fetches the cluster statistics data for a specific text exercise
+     * @param exerciseId The id of the exercise to get the cluster information from
+     * @returns An Observable resolving to a TextExerciseClusterStatistics containing the returned data from the server
+     */
+    public getClusterStats(exerciseId: number): Observable<TextExerciseClusterStatistics[]> {
+        return this.http
+            .get<TextExerciseClusterStatistics[]>(`api/text-exercises/${exerciseId}/cluster-statistics`, { observe: 'response' })
+            .pipe(map((response: HttpResponse<TextExerciseClusterStatistics[]>) => response.body!));
+    }
+
+    /**
+     * Sets the cluster disabled predicate value
+     * @param exerciseId The id of the exercise the cluster belongs to
+     * @param clusterId The id of the cluster to be disabled/enabled
+     * @param disabled Boolean describing the disable state of the cluster
+     * @returns An Observable resolving to a boolean predicate
+     */
+    public setClusterDisabledPredicate(exerciseId: number, clusterId: number, disabled: boolean): Observable<boolean> {
+        return this.http.patch<boolean>(`api/text-exercises/${exerciseId}/text-clusters/${clusterId}`, {}, { params: { disabled } });
     }
 }
