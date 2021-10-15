@@ -530,20 +530,24 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
+        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
+
         for (final var resultWithPoints : resultsWithPoints) {
             final Map<Long, Double> points = resultWithPoints.getPointsPerCriterion();
             if (resultWithPoints.getResult().getScore() == 10.0) {
+                // feedback without criterion (1.1 points) is considered in the total points calculation
                 assertThat(resultWithPoints.getTotalPoints()).isEqualTo(6.1);
                 // two feedbacks of the same criterion -> credits should be summed up in one entry of the map
                 assertThat(points).hasSize(1);
-                assertThat(points).containsEntry(2L, 5.0);
+                assertThat(points).containsEntry(criterion1.getId(), 5.0);
             }
             else {
                 assertThat(resultWithPoints.getTotalPoints()).isEqualTo(14);
                 // two feedbacks of different criteria -> map should contain two entries
                 assertThat(resultWithPoints.getPointsPerCriterion()).hasSize(2);
-                assertThat(points).containsEntry(2L, 1.0);
-                assertThat(points).containsEntry(3L, 3.0);
+                assertThat(points).containsEntry(criterion1.getId(), 1.0);
+                assertThat(points).containsEntry(criterion2.getId(), 3.0);
             }
         }
     }
@@ -580,9 +584,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         gradingCriterionRepository.saveAll(gradingCriteria);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        final List<GradingCriterion> criteria = fileUploadExercise.getGradingCriteria();
-        final GradingCriterion criterion1 = criteria.stream().filter(crit -> "test title".equals(crit.getTitle())).findFirst().get();
-        final GradingCriterion criterion2 = criteria.stream().filter(crit -> "test title2".equals(crit.getTitle())).findFirst().get();
+        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
 
         final GradingInstruction instruction1a = criterion1.getStructuredGradingInstructions().get(0);
         final GradingInstruction instruction1b = criterion1.getStructuredGradingInstructions().get(1);
@@ -623,6 +626,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 }
             }
         }
+    }
+
+    private GradingCriterion getGradingCriterionByTitle(Exercise exercise, String title) {
+        return exercise.getGradingCriteria().stream().filter(crit -> title.equals(crit.getTitle())).findFirst().get();
     }
 
     @Test
