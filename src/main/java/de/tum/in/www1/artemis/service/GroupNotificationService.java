@@ -94,8 +94,8 @@ public class GroupNotificationService {
     public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
         // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
         if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
-            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_RELEASED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_RELEASED, null));
         }
     }
 

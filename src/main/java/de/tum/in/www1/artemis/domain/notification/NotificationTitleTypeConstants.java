@@ -11,7 +11,7 @@ public class NotificationTitleTypeConstants {
 
     public static final String ATTACHMENT_CHANGE_TITLE = "Attachment updated";
 
-    public static final String EXERCISE_CREATED_TITLE = "Exercise created";
+    public static final String EXERCISE_RELEASED_TITLE = "Exercise released";
 
     public static final String EXERCISE_PRACTICE_TITLE = "Exercise open for practice";
 
@@ -47,7 +47,7 @@ public class NotificationTitleTypeConstants {
 
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
-            .put(NotificationType.ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(NotificationType.EXERCISE_CREATED, EXERCISE_CREATED_TITLE)
+            .put(NotificationType.ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(NotificationType.EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
             .put(NotificationType.EXERCISE_PRACTICE, EXERCISE_PRACTICE_TITLE).put(NotificationType.QUIZ_EXERCISE_STARTED, QUIZ_EXERCISE_STARTED_TITLE)
             .put(NotificationType.EXERCISE_UPDATED, EXERCISE_UPDATED_TITLE).put(NotificationType.DUPLICATE_TEST_CASE, DUPLICATE_TEST_CASE_TITLE)
             .put(NotificationType.ILLEGAL_SUBMISSION, ILLEGAL_SUBMISSION_TITLE).put(NotificationType.NEW_POST_FOR_EXERCISE, NEW_POST_FOR_EXERCISE_TITLE)

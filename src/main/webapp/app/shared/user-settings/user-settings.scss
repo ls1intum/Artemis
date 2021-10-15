@@ -24,6 +24,15 @@ span {
     font-size: smaller;
 }
 
+.userSettings-info {
+    font-style: italic;
+    color: gray;
+
+    .ng-fa-icon {
+        color: gray;
+    }
+}
+
 .form-check {
     padding-top: 5px;
     padding-bottom: 5px;
