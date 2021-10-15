@@ -15,11 +15,10 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { MockExamExerciseUpdateService } from '../../../helpers/mocks/service/mock-exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
