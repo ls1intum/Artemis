@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.metis.Post;
 
 /**
  * A GroupNotification.
@@ -92,10 +93,6 @@ public class GroupNotification extends Notification {
 
     public String getLectureAnswerPostTarget(Lecture lecture) {
         return getLectureTarget(lecture, "newAnswerPost");
-    }
-
-    public String getAnnouncementTarget(Course course) {
-        return getCourseTarget(course, "newAnnouncement");
     }
 
     public String getAttachmentUpdated(Lecture lecture) {
@@ -182,6 +179,15 @@ public class GroupNotification extends Notification {
         target.addProperty("message", message);
         target.addProperty("id", course.getId());
         target.addProperty("entity", "courses");
+        target.addProperty("course", course.getId());
+        target.addProperty("mainPage", "courses");
+        return target.toString();
+    }
+
+    public String getAnnouncementPostTarget(Post post) {
+        JsonObject target = new JsonObject();
+        target.addProperty("id", post.getId());
+        target.addProperty("entity", "discussion?searchText=%23");
         target.addProperty("course", course.getId());
         target.addProperty("mainPage", "courses");
         return target.toString();

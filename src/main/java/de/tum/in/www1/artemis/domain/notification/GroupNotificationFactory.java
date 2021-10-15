@@ -172,7 +172,7 @@ public class GroupNotificationFactory {
             notification.setTarget(notification.getExercisePostTarget(post.getExercise()));
         }
         else if (notificationType == NotificationType.NEW_ANNOUNCEMENT_POST) {
-            notification.setTarget(notification.getAnnouncementTarget(post.getCourse()));
+            notification.setTarget(notification.getAnnouncementPostTarget(post));
         }
         else {
             notification.setTarget(notification.getLecturePostTarget(post.getLecture()));
