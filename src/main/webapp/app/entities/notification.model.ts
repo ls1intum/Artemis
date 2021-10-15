@@ -46,6 +46,8 @@ export const NEW_POST_FOR_LECTURE_TITLE = 'New Lecture Post';
 
 export const NEW_ANNOUNCEMENT_POST_TITLE = 'New Announcement';
 
+export const NEW_COURSE_POST_TITLE = 'New Course-wide Post';
+
 export const NEW_ANSWER_POST_FOR_EXERCISE_TITLE = 'New Exercise Reply';
 
 export const NEW_ANSWER_POST_FOR_LECTURE_TITLE = 'New Lecture Reply';

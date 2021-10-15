@@ -360,6 +360,11 @@ public class PostService extends PostingService {
      * @param post post that triggered the notification
      */
     void sendNotification(Post post) {
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post);
+            return;
+        }
         // notify via exercise
         if (post.getExercise() != null) {
             // set exercise retrieved from database to show title in notification
@@ -368,6 +373,7 @@ public class PostService extends PostingService {
             groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
@@ -375,6 +381,7 @@ public class PostService extends PostingService {
             Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
             post.setLecture(lecture);
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
+            return;
         }
     }
 

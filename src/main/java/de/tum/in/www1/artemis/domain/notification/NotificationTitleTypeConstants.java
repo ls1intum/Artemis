@@ -27,11 +27,13 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_POST_FOR_LECTURE_TITLE = "New Lecture Post";
 
+    public static final String NEW_COURSE_POST_TITLE = "New Course-wide Post";
+
+    public static final String NEW_ANNOUNCEMENT_POST_TITLE = "New Announcement";
+
     public static final String NEW_ANSWER_POST_FOR_EXERCISE_TITLE = "New Exercise Reply";
 
     public static final String NEW_ANSWER_POST_FOR_LECTURE_TITLE = "New Lecture Reply";
-
-    public static final String NEW_ANNOUNCEMENT_POST_TITLE = "New Announcement";
 
     public static final String COURSE_ARCHIVE_STARTED_TITLE = "Course archival started";
 
@@ -52,10 +54,10 @@ public class NotificationTitleTypeConstants {
             .put(NotificationType.EXERCISE_UPDATED, EXERCISE_UPDATED_TITLE).put(NotificationType.DUPLICATE_TEST_CASE, DUPLICATE_TEST_CASE_TITLE)
             .put(NotificationType.ILLEGAL_SUBMISSION, ILLEGAL_SUBMISSION_TITLE).put(NotificationType.NEW_POST_FOR_EXERCISE, NEW_POST_FOR_EXERCISE_TITLE)
             .put(NotificationType.NEW_POST_FOR_LECTURE, NEW_POST_FOR_LECTURE_TITLE).put(NotificationType.NEW_ANSWER_POST_FOR_EXERCISE, NEW_ANSWER_POST_FOR_EXERCISE_TITLE)
-            .put(NotificationType.NEW_ANSWER_POST_FOR_LECTURE, NEW_ANSWER_POST_FOR_LECTURE_TITLE).put(NotificationType.COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED_TITLE)
-            .put(NotificationType.NEW_ANNOUNCEMENT_POST, NEW_ANNOUNCEMENT_POST_TITLE).put(NotificationType.COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE)
-            .put(NotificationType.COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE).put(NotificationType.EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE)
-            .put(NotificationType.EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE).build();
+            .put(NotificationType.NEW_ANSWER_POST_FOR_LECTURE, NEW_ANSWER_POST_FOR_LECTURE_TITLE).put(NotificationType.NEW_COURSE_POST, NEW_COURSE_POST_TITLE)
+            .put(NotificationType.COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED_TITLE).put(NotificationType.NEW_ANNOUNCEMENT_POST, NEW_ANNOUNCEMENT_POST_TITLE)
+            .put(NotificationType.COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE).put(NotificationType.COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE)
+            .put(NotificationType.EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE).put(NotificationType.EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

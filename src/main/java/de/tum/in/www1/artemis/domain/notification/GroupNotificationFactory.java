@@ -158,6 +158,11 @@ public class GroupNotificationFactory {
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 course = lecture.getCourse();
             }
+            case NEW_COURSE_POST -> {
+                course = post.getCourse();
+                title = NotificationTitleTypeConstants.NEW_COURSE_POST_TITLE;
+                text = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
+            }
             case NEW_ANNOUNCEMENT_POST -> {
                 course = post.getCourse();
                 title = NotificationTitleTypeConstants.NEW_ANNOUNCEMENT_POST_TITLE;
@@ -169,13 +174,16 @@ public class GroupNotificationFactory {
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
         if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
-            notification.setTarget(notification.getExercisePostTarget(post.getExercise()));
+            notification.setTarget(notification.getExercisePostTarget(post));
+        }
+        else if (notificationType == NotificationType.NEW_COURSE_POST) {
+            notification.setTarget(notification.getCoursePostTarget(post));
         }
         else if (notificationType == NotificationType.NEW_ANNOUNCEMENT_POST) {
-            notification.setTarget(notification.getAnnouncementPostTarget(post));
+            notification.setTarget(notification.getCoursePostTarget(post));
         }
         else {
-            notification.setTarget(notification.getLecturePostTarget(post.getLecture()));
+            notification.setTarget(notification.getLecturePostTarget(post));
         }
 
         return notification;

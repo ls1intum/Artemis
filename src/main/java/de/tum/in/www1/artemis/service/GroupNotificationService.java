@@ -157,6 +157,18 @@ public class GroupNotificationService {
     }
 
     /**
+     * Notify all groups about a new course-wide post.
+     *
+     * @param post that has been posted
+     */
+    public void notifyAllGroupsAboutNewCoursePost(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_COURSE_POST));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_COURSE_POST));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_COURSE_POST));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_COURSE_POST));
+    }
+
+    /**
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param answerPost that has been submitted for a post
@@ -167,6 +179,11 @@ public class GroupNotificationService {
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
     }
 
+    /**
+     * Notify all groups about a new announcement in the couse.
+     *
+     * @param post that has been created as announcement
+     */
     public void notifyAllGroupsAboutNewAnnouncement(Post post) {
         saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANNOUNCEMENT_POST));
         saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.EDITOR, NotificationType.NEW_ANNOUNCEMENT_POST));

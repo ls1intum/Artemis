@@ -83,14 +83,6 @@ public class GroupNotification extends Notification {
         return getExerciseTarget(exercise, "newAnswerPost");
     }
 
-    public String getExercisePostTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "newPost");
-    }
-
-    public String getLecturePostTarget(Lecture lecture) {
-        return getLectureTarget(lecture, "newPost");
-    }
-
     public String getLectureAnswerPostTarget(Lecture lecture) {
         return getLectureTarget(lecture, "newAnswerPost");
     }
@@ -184,11 +176,26 @@ public class GroupNotification extends Notification {
         return target.toString();
     }
 
-    public String getAnnouncementPostTarget(Post post) {
+    public String getLecturePostTarget(Post post) {
+        JsonObject target = new JsonObject();
+        target.addProperty("id", post.getId());
+        target.addProperty("lectureId", post.getLecture().getId());
+        target.addProperty("course", course.getId());
+        return target.toString();
+    }
+
+    public String getExercisePostTarget(Post post) {
+        JsonObject target = new JsonObject();
+        target.addProperty("id", post.getId());
+        target.addProperty("exerciseId", post.getExercise().getId());
+        target.addProperty("course", course.getId());
+        return target.toString();
+    }
+
+    public String getCoursePostTarget(Post post) {
         JsonObject target = new JsonObject();
         target.addProperty("id", post.getId());
         target.addProperty("course", course.getId());
-        target.addProperty("mainPage", "courses");
         return target.toString();
     }
 

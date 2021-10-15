@@ -361,13 +361,11 @@ export class MetisService {
      * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
-        const params: Params = {};
         if (post.courseWideContext) {
-            this.getQueryParamsForCoursePost(post.id!);
+            return this.getQueryParamsForCoursePost(post.id!);
         } else {
-            this.getQueryParamsForLectureOrExercisePost(post.id!);
+            return this.getQueryParamsForLectureOrExercisePost(post.id!);
         }
-        return params;
     }
 
     getQueryParamsForCoursePost(postId: number): Params {
