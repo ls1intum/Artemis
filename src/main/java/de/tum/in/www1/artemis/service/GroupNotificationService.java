@@ -111,18 +111,6 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify all groups about a new post in an exercise.
-     *
-     * @param post that has been posted
-     */
-    public void notifyAllGroupsAboutNewPostForExercise(Post post) {
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_POST_FOR_EXERCISE));
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_POST_FOR_EXERCISE));
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_POST_FOR_EXERCISE));
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_POST_FOR_EXERCISE));
-    }
-
-    /**
      * Notify editor and instructor groups about duplicate test cases.
      *
      * @param exercise         that has been updated
@@ -157,6 +145,18 @@ public class GroupNotificationService {
     }
 
     /**
+     * Notify all groups about a new post in an exercise.
+     *
+     * @param post that has been posted
+     */
+    public void notifyAllGroupsAboutNewPostForExercise(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_POST_FOR_EXERCISE));
+    }
+
+    /**
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param answerPost that has been submitted for a post
@@ -165,13 +165,6 @@ public class GroupNotificationService {
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
         saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
-    }
-
-    public void notifyAllGroupsAboutNewAnnouncement(Post post) {
-        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANNOUNCEMENT_POST));
-        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.EDITOR, NotificationType.NEW_ANNOUNCEMENT_POST));
-        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.TA, NotificationType.NEW_ANNOUNCEMENT_POST));
-        saveAndSend(createNotification(post, post.getAuthor(), GroupNotificationType.STUDENT, NotificationType.NEW_ANNOUNCEMENT_POST));
     }
 
     /**
