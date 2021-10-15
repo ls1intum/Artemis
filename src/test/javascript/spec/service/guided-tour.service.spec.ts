@@ -32,7 +32,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';
@@ -177,14 +177,18 @@ describe('GuidedTourService', () => {
                     MockDirective(TranslateDirective),
                     TranslatePipeMock,
                     MockPipe(SafeResourceUrlPipe),
-                    /**/ NavbarComponent /**/,
-                    /*MockDirective(LoadingNotificationComponent),
-                    MockDirective(NotificationSidebarComponent),
-                    MockHasAnyAuthorityDirective,
+                    MockComponent(LoadingNotificationComponent),
+                    MockComponent(NotificationSidebarComponent),
                     MockDirective(NgbCollapse),
+                    MockHasAnyAuthorityDirective,
                     MockDirective(ActiveMenuDirective),
                     MockDirective(NgbDropdown),
-                    MockPipe(FindLanguageFromKeyPipe),*/
+                    MockPipe(FindLanguageFromKeyPipe),
+                    // NOTE: just preserving this solves the issue, however one test is failing.
+                    NavbarComponent,
+                    // NOTE: Even though mocking should work, it gives the follewing error message:
+                    // > Component NavbarComponent is not part of any NgModule or the module has not been imported into your module.
+                    // MockComponent(NavbarComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -198,13 +202,10 @@ describe('GuidedTourService', () => {
                     MockProvider(DeviceDetectorService) /**/,
                 ],
             })
-                /**/ .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>') /**/
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
-
-                    TestBed.createComponent(NavbarComponent);
 
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
