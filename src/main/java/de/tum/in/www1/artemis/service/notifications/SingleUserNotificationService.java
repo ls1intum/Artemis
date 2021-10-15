@@ -46,7 +46,7 @@ public class SingleUserNotificationService {
      * @param answer for lecture that is new
      */
     public void notifyUserAboutNewAnswerForCoursePost(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_COURSE_POST));
+        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_COURSE));
     }
 
     /**

@@ -14,11 +14,15 @@ export enum SettingId {
     NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES = 'notification.exercise-notification.new-post-exercises',
     NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES = 'notification.exercise-notification.new-answer-post-exercises',
 
-    // lecture notification settings group
+    // lecture notification setting group
     NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES = 'notification.lecture-notification.attachment-changes',
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE = 'notification.lecture-notification.new-post-for-lecture',
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE = 'notification.lecture-notification.new-answer-post-for-lecture',
 
-    // lecture notification setting group
+    // course wide discussion notification setting group
+    NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_POST_FOR_COURSE = 'notification.course-wide-discussion.new-post-for-course',
+    NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANSWER_FOR_COURSE = 'notification.course-wide-discussion.new-answer-post-for-course',
+
+    // instructor exclusive notification setting group
     NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = 'notification.instructor-exclusive-notification.course-and-exam-archiving-started',
 }

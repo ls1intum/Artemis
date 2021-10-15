@@ -19,6 +19,7 @@
             "settingGroupNames": {
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
+                "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
                 "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
             "settingNames": {
@@ -29,6 +30,8 @@
                 "attachmentChanges": "Attachment Changes",
                 "newPostForLecture": "New Post for Lecture",
                 "newReplyForLecture": "New Reply for Lecture",
+                "newPostForCourse": "New Post for Course",
+                "newReplyForCourse": "New Reply for Course",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
             "settingDescriptions": {
@@ -39,6 +42,8 @@
                 "attachmentChangesDescription": "Receive a notification when an attachment was changed",
                 "newPostForLectureDescription": "Get notified when a new post about an exercise has been created",
                 "newReplyForLectureDescription": "Get notified when a new reply about an exercise has been created",
+                "newPostForCourseDescription": "Receive a notification when a new course-wide post has been created",
+                "newReplyForCourseDescription": "Receive a notification when a new reply about a course-wide post has been created",
                 "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
             }
         }

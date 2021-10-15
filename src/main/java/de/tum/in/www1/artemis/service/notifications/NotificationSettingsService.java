@@ -32,7 +32,12 @@ public class NotificationSettingsService {
 
     private final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE = "notification.lecture-notification.new-answer-post-for-lecture";
 
-    // lecture notification setting group
+    // course wide discussion notification setting group
+    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_POST_FOR_COURSE = "notification.course-wide-discussion.new-post-for-course";
+
+    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANSWER_FOR_COURSE = "notification.course-wide-discussion.new-answer-post-for-course";
+
+    // instructor exclusive notification setting group
     private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-exclusive-notification.course-and-exam-archiving-started";
 
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -45,7 +50,10 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE),
-            // lecture notification setting group
+            // course wide discussion notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_POST_FOR_COURSE),
+            new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANSWER_FOR_COURSE),
+            // instructor exclusive notification setting group
             new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
@@ -59,7 +67,9 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES, new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE, new NotificationType[] { NEW_POST_FOR_LECTURE }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE, new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE }), Map.entry(
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE, new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE }),
+            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_POST_FOR_COURSE, new NotificationType[] { NEW_COURSE_POST }),
+            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANSWER_FOR_COURSE, new NotificationType[] { NEW_ANSWER_POST_FOR_COURSE }), Map.entry(
                     NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     /**

@@ -19,6 +19,7 @@
             "settingGroupNames": {
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
+                "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
                 "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
             },
             "settingNames": {
@@ -29,6 +30,8 @@
                 "attachmentChanges": "Änderungen von Anhängen",
                 "newPostForLecture": "Neue Beiträge für Vorlesungen",
                 "newReplyForLecture": "Neue Antworten für Vorlesungen",
+                "newPostForCourse": "Neue Beiträge für Kursdiskussionen",
+                "newReplyForCourse": "Neue Antworten von Kursdiskussionen",
                 "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
             },
             "settingDescriptions": {
@@ -39,6 +42,8 @@
                 "attachmentChangesDescription": "Erhalte eine Mitteilung wenn ein Anhang aktualisiert wurde",
                 "newPostForLectureDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
                 "newReplyForLectureDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "newPostForCourseDescription": "Erhalte eine Mitteilung wenn ein neuer Beitrag in den Kursdiskussionen erstellt wurde",
+                "newReplyForCourseDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher eine Kursdiskussion betrifft, erstellt wurde",
                 "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
             }
         }

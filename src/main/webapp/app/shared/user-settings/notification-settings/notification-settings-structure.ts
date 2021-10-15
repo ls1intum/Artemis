@@ -58,6 +58,22 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
+            key: 'courseWideDiscussionNotifications',
+            restrictionLevel: Authority.USER,
+            settings: [
+                {
+                    key: 'newPostForCourse',
+                    descriptionKey: 'newPostForCourseDescription',
+                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_POST_FOR_COURSE,
+                },
+                {
+                    key: 'newReplyForCourse',
+                    descriptionKey: 'newReplyForCourseDescription',
+                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANSWER_FOR_COURSE,
+                },
+            ],
+        },
+        {
             key: 'instructorExclusiveNotifications',
             restrictionLevel: Authority.INSTRUCTOR,
             settings: [

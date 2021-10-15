@@ -18,7 +18,7 @@ public class SingleUserNotificationFactory {
      */
     public static SingleUserNotification createNotification(AnswerPost answerPost, NotificationType notificationType) {
         if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE || notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE
-                || notificationType == NotificationType.NEW_ANSWER_POST_FOR_COURSE_POST) {
+                || notificationType == NotificationType.NEW_ANSWER_POST_FOR_COURSE) {
             User recipient = answerPost.getPost().getAuthor();
             User author = answerPost.getAuthor();
             String title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
