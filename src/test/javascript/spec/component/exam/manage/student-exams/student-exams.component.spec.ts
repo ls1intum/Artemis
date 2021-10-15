@@ -133,6 +133,7 @@ describe('StudentExamsComponent', () => {
             },
         }),
         MockProvider(AlertService),
+        MockProvider(ArtemisTranslatePipe),
         MockDirective(TranslateDirective),
         {
             provide: LocalStorageService,
