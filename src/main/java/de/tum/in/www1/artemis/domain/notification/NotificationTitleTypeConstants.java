@@ -31,8 +31,6 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_ANSWER_POST_FOR_LECTURE_TITLE = "New Lecture Reply";
 
-    public static final String NEW_ANNOUNCEMENT_POST = "New Announcement";
-
     public static final String COURSE_ARCHIVE_STARTED_TITLE = "Course archival started";
 
     public static final String COURSE_ARCHIVE_FINISHED_TITLE = "Course archival finished";
