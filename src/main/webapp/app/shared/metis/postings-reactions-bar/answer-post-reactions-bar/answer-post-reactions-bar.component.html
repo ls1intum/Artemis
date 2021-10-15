@@ -1,4 +1,4 @@
-<div class="me-0 row">
+<div class="me-0 row justify-content-end">
     <div class="col-auto p-0" *ngFor="let reactionCount of reactionCountMap | keyvalue">
         <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionCount.value.hasReacted" (click)="updateReaction(reactionCount.key)">
             <ngx-emoji class="emoji" [emoji]="reactionCount.key" [size]="16"></ngx-emoji>

@@ -67,72 +67,54 @@
             >
                 <ngx-datatable-column name="Repository Name" prop="repositoryName">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-repositoryName'"
-                                [value]="row.name || ''"
-                                [onValueUpdate]="updateRepositoryName(row)"
-                                [pattern]="invalidRepositoryNamePattern"
-                                [isRequired]="true"
-                                [translationRequiredMessage]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
-                                [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidRepositoryName'"
-                            >
-                            </jhi-table-editable-field>
-                        </div>
-                        <ng-template #auxiliaryRepositoryIsNotEditable>
-                            {{ row.name }}
-                        </ng-template>
+                        <jhi-table-editable-field
+                            [id]="row.id + '-repositoryName'"
+                            [value]="row.name || ''"
+                            [onValueUpdate]="updateRepositoryName(row)"
+                            [pattern]="invalidRepositoryNamePattern"
+                            [isRequired]="true"
+                            [translationRequiredMessage]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
+                            [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidRepositoryName'"
+                        >
+                        </jhi-table-editable-field>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-checkoutDirectory'"
-                                [value]="row.checkoutDirectory || ''"
-                                [onValueUpdate]="updateCheckoutDirectory(row)"
-                                [pattern]="invalidDirectoryNamePattern"
-                                [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
-                            >
-                            </jhi-table-editable-field>
-                        </div>
-                        <ng-template #auxiliaryRepositoryIsNotEditable>
-                            {{ row.checkoutDirectory }}
-                        </ng-template>
+                        <jhi-table-editable-field
+                            [id]="row.id + '-checkoutDirectory'"
+                            [value]="row.checkoutDirectory || ''"
+                            [onValueUpdate]="updateCheckoutDirectory(row)"
+                            [pattern]="invalidDirectoryNamePattern"
+                            [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
+                        >
+                        </jhi-table-editable-field>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Description" prop="description">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                            <jhi-table-editable-field [id]="row.id + '-description'" [value]="row.description || ''" [onValueUpdate]="updateDescription(row)">
-                            </jhi-table-editable-field>
-                        </div>
-                        <ng-template #auxiliaryRepositoryIsNotEditable>
-                            {{ row.description }}
-                        </ng-template>
+                        <jhi-table-editable-field [id]="row.id + '-description'" [value]="row.description || ''" [onValueUpdate]="updateDescription(row)">
+                        </jhi-table-editable-field>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="RemoveButton" prop="removeButton">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id">
-                            <jhi-remove-auxiliary-repository-button
-                                *ngIf="!row.id"
-                                placement="right"
-                                [programmingExercise]="programmingExercise"
-                                [row]="row"
-                                class="ml-2"
-                            ></jhi-remove-auxiliary-repository-button>
-                            <span *ngIf="isEdit">
-                                <fa-icon
-                                    [icon]="'exclamation-triangle'"
-                                    class="text-warning mr-1"
-                                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-                                ></fa-icon>
-                                <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
-                                    >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
-                                >
-                            </span>
-                        </div>
+                        <jhi-remove-auxiliary-repository-button
+                            placement="right"
+                            [programmingExercise]="programmingExercise"
+                            [row]="row"
+                            class="ml-2"
+                        ></jhi-remove-auxiliary-repository-button>
+                        <span *ngIf="isEdit">
+                            <fa-icon
+                                [icon]="'exclamation-triangle'"
+                                class="text-warning mr-1"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
+                            ></fa-icon>
+                            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
+                                >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
+                            >
+                        </span>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>

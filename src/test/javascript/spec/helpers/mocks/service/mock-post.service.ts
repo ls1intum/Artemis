@@ -2,7 +2,16 @@ import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { HttpResponse } from '@angular/common/http';
 import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
-import { metisCoursePosts, metisExercisePosts, metisLecturePosts, metisPostOrganization, metisPostRandom, metisPostTechSupport, metisTags } from '../../sample/metis-sample-data';
+import {
+    metisCoursePosts,
+    metisExercisePosts,
+    metisLecturePosts,
+    metisPostExerciseUser1,
+    metisPostOrganization,
+    metisPostRandom,
+    metisPostTechSupport,
+    metisTags,
+} from '../../sample/metis-sample-data';
 
 export class MockPostService {
     create(courseId: number, post: Post): Observable<HttpResponse<Post>> {
@@ -43,5 +52,9 @@ export class MockPostService {
 
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
         return of({ body: metisTags }) as Observable<HttpResponse<string[]>>;
+    }
+
+    computeSimilarityScoresWithCoursePosts(post: Post, courseId: number): Observable<HttpResponse<Post[]>> {
+        return of({ body: [metisPostExerciseUser1] }) as Observable<HttpResponse<Post[]>>;
     }
 }
