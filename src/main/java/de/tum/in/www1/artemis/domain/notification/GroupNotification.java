@@ -187,7 +187,6 @@ public class GroupNotification extends Notification {
     public String getAnnouncementPostTarget(Post post) {
         JsonObject target = new JsonObject();
         target.addProperty("id", post.getId());
-        target.addProperty("entity", "discussion?searchText=%23");
         target.addProperty("course", course.getId());
         target.addProperty("mainPage", "courses");
         return target.toString();

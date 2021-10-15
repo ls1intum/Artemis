@@ -335,12 +335,24 @@ export class MetisService {
      */
     getLinkForPost(post?: Post): (string | number)[] {
         if (post?.lecture) {
-            return ['/courses', this.courseId, 'lectures', post.lecture.id!];
+            return this.getLinkForLecturePost(this.courseId, post.lecture.id!);
         }
         if (post?.exercise) {
-            return ['/courses', this.courseId, 'exercises', post.exercise.id!];
+            return this.getLinkForExercisePost(this.courseId, post.exercise.id!);
         }
-        return ['/courses', this.courseId, 'discussion'];
+        return this.getLinkForCoursePost(this.courseId);
+    }
+
+    getLinkForLecturePost(courseId: number, lectureId: number): (string | number)[] {
+        return ['/courses', courseId, 'lectures', lectureId];
+    }
+
+    getLinkForExercisePost(courseId: number, exerciseId: number): (string | number)[] {
+        return ['/courses', courseId, 'exercises', exerciseId];
+    }
+
+    getLinkForCoursePost(courseId: number): (string | number)[] {
+        return ['/courses', courseId, 'discussion'];
     }
 
     /**
@@ -351,10 +363,22 @@ export class MetisService {
     getQueryParamsForPost(post: Post): Params {
         const params: Params = {};
         if (post.courseWideContext) {
-            params.searchText = `#${post.id}`;
+            this.getQueryParamsForCoursePost(post.id!);
         } else {
-            params.postId = post.id;
+            this.getQueryParamsForLectureOrExercisePost(post.id!);
         }
+        return params;
+    }
+
+    getQueryParamsForCoursePost(postId: number): Params {
+        const params: Params = {};
+        params.searchText = `#${postId}`;
+        return params;
+    }
+
+    getQueryParamsForLectureOrExercisePost(postId: number): Params {
+        const params: Params = {};
+        params.postId = postId;
         return params;
     }
 
