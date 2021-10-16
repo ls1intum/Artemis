@@ -31,7 +31,7 @@ describe('PostingsButtonComponent', () => {
 
     it('should not have icon shown if property not set', () => {
         fixture.detectChanges();
-        const button = getElement(debugElement, '#buttonIcon');
+        const button = getElement(debugElement, '#icon');
         expect(button).toBeNull;
     });
 
