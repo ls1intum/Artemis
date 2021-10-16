@@ -237,6 +237,30 @@ describe('Grading System Component', () => {
         });
     });
 
+    it('should set inclusivity correctly for grade step where lowerBound=upperBound', () => {
+        comp.lowerBoundInclusivity = false;
+
+        comp.gradingScale.gradeSteps.push({
+            gradeName: 'Super Excellent',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        });
+
+        comp.setInclusivity(comp.gradingScale.gradeSteps);
+
+        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
+            expect(gradeStep.upperBoundInclusive).to.be.equal(true);
+            if (gradeStep.lowerBoundPercentage === 0) {
+                expect(gradeStep.lowerBoundInclusive).to.be.equal(true);
+            } else {
+                expect(gradeStep.lowerBoundInclusive).to.be.equal(false);
+            }
+        });
+    });
+
     it('should determine lower bound inclusivity correctly', () => {
         comp.setBoundInclusivity();
 
@@ -419,7 +443,7 @@ describe('Grading System Component', () => {
     it('should validate invalid grading scale with invalid points', () => {
         comp.maxPoints = 100;
         comp.gradingScale.gradeSteps[0].lowerBoundPoints = 0;
-        comp.gradingScale.gradeSteps[0].upperBoundPoints = 120;
+        comp.gradingScale.gradeSteps[0].upperBoundPoints = -120;
         comp.gradingScale.gradeSteps[1].lowerBoundPoints = 40;
         comp.gradingScale.gradeSteps[1].upperBoundPoints = 80;
         comp.gradingScale.gradeSteps[2].lowerBoundPoints = 80;
