@@ -59,9 +59,6 @@ public class MailService {
     private static final String NOTIFICATION_URL = "notificationUrl";
 
     // time related variables
-    // todo remove .getDueDate()
-    private static final String DUE_DATE = "dueDate";
-
     private static final String TIME_SERVICE = "timeService";
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
@@ -147,7 +144,7 @@ public class MailService {
     // notification related
 
     /**
-     * Sends a notification based Email to one user or to multiple via BCC (i.e. only one email is created)
+     * Sends a notification based Email to one user
      * @param notification which properties are used to create the email
      * @param user who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
@@ -185,7 +182,8 @@ public class MailService {
     private String createContentForNotificationEmailByType(NotificationType notificationType, Context context) {
         return switch (notificationType) {
             case ATTACHMENT_CHANGE -> templateEngine.process("mail/notification/attachmentChangedEmail", context);
-            case EXERCISE_CREATED -> templateEngine.process("mail/notification/exerciseCreatedEmail", context);
+            case EXERCISE_CREATED -> templateEngine.process("mail/notification/exerciseReleasedEmail", context);
+            case EXERCISE_PRACTICE -> templateEngine.process("mail/notification/exerciseOpenForPracticeEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

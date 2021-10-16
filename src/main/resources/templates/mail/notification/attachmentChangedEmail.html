@@ -10,7 +10,7 @@
             <span th:text="#{email.notification.title.attachment(
                 ${notificationSubject.getName()},
                 ${notificationSubject.getLecture().getTitle()},
-                ${courseTitle}
+                ${notificationSubject.getLecture().getCourse().getTitle()}
                 )}">Notification Content for Attachment Changed</span>
             <!-- Change message : notification text -->
             <th:block th:replace="mail/notification/fragments :: notificationText"/>

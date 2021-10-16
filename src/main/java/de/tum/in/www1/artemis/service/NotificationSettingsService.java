@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.findCorrespondingNotificationType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,8 +20,11 @@ public class NotificationSettingsService {
 
     private NotificationSettingRepository notificationSettingRepository;
 
-    private final Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
-            NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED);
+    private final Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(COURSE_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED, QUIZ_EXERCISE_STARTED);
+
+    // TODO add the templates step by step to create small PRs
+    private final Set<NotificationType> notificationTypesWithNoEmailSupportYet = Set.of(EXERCISE_UPDATED, NEW_POST_FOR_EXERCISE, NEW_ANSWER_POST_FOR_EXERCISE, NEW_POST_FOR_LECTURE,
+            NEW_ANSWER_POST_FOR_LECTURE, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED);
 
     private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
 
@@ -39,12 +43,12 @@ public class NotificationSettingsService {
 
     /**
      * Checks if the notification type has email support
-     * For some types there is no need for email support and they will be filtered out here.
+     * For some types there is no need for email support so they will be filtered out here.
      * @param type of the notification
      * @return true if the type has email support else false
      */
     public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
-        return !notificationTypesWithNoEmailSupport.contains(type);
+        return !(notificationTypesWithNoEmailSupport.contains(type) || notificationTypesWithNoEmailSupportYet.contains(type));
     }
 
     /**
@@ -64,11 +68,20 @@ public class NotificationSettingsService {
      * @return true if the type is allowed else false
      */
     public boolean checkIfNotificationEmailIsAllowedBySettingsForGivenUser(Notification notification, User user) {
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
 
-        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(false, notificationSettings);
+        Set<NotificationType> deactivatedTypes;
+
+        // the urgent emails were already sent
+        // if the user has not yet changes his settings they will be of size 0 -> use default
+        if (notificationSettings.isEmpty()) {
+            deactivatedTypes = findDeactivatedNotificationTypes(false, DEFAULT_NOTIFICATION_SETTINGS);
+        }
+        else {
+            deactivatedTypes = findDeactivatedNotificationTypes(false, notificationSettings);
+        }
 
         if (deactivatedTypes.isEmpty()) {
             return true;

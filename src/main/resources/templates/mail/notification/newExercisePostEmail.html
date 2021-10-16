@@ -7,16 +7,17 @@
 <div id="message-body">
     <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
     <div class="notification-content">
-            <span th:text="#{email.notification.title.exercise.practice(
+            <span th:text="#{email.notification.title.post.exercise.new(
                 ${notificationSubject.getTitle()},
-                ${notificationSubject.getCourseViaExerciseGroupOrCourseMember().getTitle()}
-                )}">Notification Content for Exercise opened for Practice</span>
-        <th:block th:if="${notificationSubject.getDifficulty()}">
-        <p class="bold-text" th:text="#{email.notification.title.exercise.information}">Information about this exercise:</p>
-        <ul>
-            <li th:text="#{email.notification.title.exercise.information.difficulty(${notificationSubject.getDifficulty()})}">Difficulty</li>
-        </ul>
-        </th:block>
+                ${notificationSubject.getExercise().getTitle()},
+                ${notificationSubject.getExercise().getCourse().getTitle()}
+                )}">Notification Content for new Exercise Posts</span>
+
+            <p class="bold-text" th:text="#{email.notification.title.post.content}">Post content:</p>
+            <ul>
+                <li th:text="#{email.notification.title.exercise.information.difficulty(${notificationSubject.getDifficulty()})}">Difficulty</li>
+            </ul>
+
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>
     <th:block th:replace="mail/notification/fragments :: farewell"/>

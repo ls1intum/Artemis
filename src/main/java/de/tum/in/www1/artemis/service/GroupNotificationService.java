@@ -266,6 +266,7 @@ public class GroupNotificationService {
      * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
      * @param notification that should be checked
      * @param users which will be filtered based on their notification (email) settings
+     * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)
      */
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
