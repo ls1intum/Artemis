@@ -89,10 +89,20 @@ export const metisPostOrganization = {
     creationDate: undefined,
 } as Post;
 
+export const metisAnnouncement = {
+    id: 4,
+    author: metisUser1,
+    courseWideContext: CourseWideContext.ORGANIZATION,
+    course: metisCourse,
+    title: 'title',
+    content: 'metisPostOrganization',
+    creationDate: undefined,
+} as Post;
+
 export const metisCoursePostsWithCourseWideContext = [metisPostTechSupport, metisPostRandom, metisPostOrganization];
 
 export const metisPostExerciseUser1 = {
-    id: 4,
+    id: 5,
     author: metisUser1,
     exercise: metisExercise,
     title: 'title',
@@ -101,7 +111,7 @@ export const metisPostExerciseUser1 = {
 } as Post;
 
 export const metisPostExerciseUser2 = {
-    id: 5,
+    id: 6,
     author: metisUser2,
     exercise: metisExercise,
     title: 'title',
@@ -112,7 +122,7 @@ export const metisPostExerciseUser2 = {
 export const metisExercisePosts = [metisPostExerciseUser1, metisPostExerciseUser2];
 
 export const metisPostLectureUser1 = {
-    id: 6,
+    id: 7,
     author: metisUser1,
     lecture: metisLecture,
     title: 'title',
@@ -121,7 +131,7 @@ export const metisPostLectureUser1 = {
 } as Post;
 
 export const metisPostLectureUser2 = {
-    id: 7,
+    id: 8,
     author: metisUser2,
     lecture: metisLecture,
     title: 'title',
