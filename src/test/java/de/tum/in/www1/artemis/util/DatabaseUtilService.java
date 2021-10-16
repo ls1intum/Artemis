@@ -706,10 +706,10 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(textExercise));
+        posts.addAll(createBasicPosts(course1, textExercise));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(lecture));
+        posts.addAll(createBasicPosts(course1, lecture));
 
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
@@ -737,10 +737,11 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext) {
+    private List<Post> createBasicPosts(Course courseContext, Lecture lectureContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
+            postToAdd.setCourse(courseContext);
             postToAdd.setLecture(lectureContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -748,10 +749,11 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Exercise exerciseContext) {
+    private List<Post> createBasicPosts(Course courseContext, Exercise exerciseContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
+            postToAdd.setCourse(courseContext);
             postToAdd.setExercise(exerciseContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
