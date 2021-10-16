@@ -252,28 +252,38 @@ Here is an example of a test for `exercise-update-warning component <https://git
 
 9. For situations described below, only use the uniform solution to keep the codebase as consistent as possible. Otherwise refer to the standard `Jest API <https://jestjs.io/docs/expect>`_ or the `Jest Extended API <https://github.com/jest-community/jest-extended#api>`_.
 
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | Situation                                              | Solution                                                   |
-  +========================================================+============================================================+
-  | Expecting a boolean value                              | :code:`expect(value).toBe(true);`                          |
-  |                                                        |                                                            |
-  |                                                        | :code:`expect(value).toBe(false);`                         |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | An object is the same reference                        | :code:`expect(object).toBe(referenceObject);`              |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | A CSS element exists (or anything else returning null) | :code:`expect(element).toBe(null);`                        |
-  |                                                        |                                                            |
-  | A CSS element does not exists                          | :code:`expect(element).not.toBe(null);`                    |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | A value is undefined                                   | :code:`expect(value).toBe(undefined);`                     |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | A class object is defined                              | :code:`expect(classObject).toContainAllEntries(tsObject);` |
-  |                                                        |                                                            |
-  |                                                        | :code:`expect(classObject).toEqual(referenceClassObject);` |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | A class object is not undefined                        | Try to test for a defined value by testing the entries.    |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | A spy was not called                                   | :code:`expect(spy).not.toHaveBeenCalled();`                |
-  +--------------------------------------------------------+------------------------------------------------------------+
-  | A spy was once called                                  | :code:`expect(spy).toHaveBeenCalledTimes(1);`              |
-  +--------------------------------------------------------+------------------------------------------------------------+
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | Situation                                              | Solution                                                       |
+  +========================================================+================================================================+
+  | Expecting a boolean value                              | :code:`expect(value).toBe(true);`                              |
+  |                                                        |                                                                |
+  |                                                        | :code:`expect(value).toBe(false);`                             |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | An object is the same reference                        | :code:`expect(object).toBe(referenceObject);`                  |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A CSS element exists (or anything else returning null) | :code:`expect(element).toBe(null);`                            |
+  |                                                        |                                                                |
+  | A CSS element does not exists                          | :code:`expect(element).not.toBe(null);`                        |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A value is undefined                                   | :code:`expect(value).toBe(undefined);`                         |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A value is either null or undefined                    | Use :code:`expect(value).toBe(undefined);` for internal calls. |
+  |                                                        |                                                                |
+  |                                                        | If an external library uses null value, use                    |
+  |                                                        | :code:`expect(value).toBe(null);` and if really needed         |
+  |                                                        | :code:`expect(value).not.toBe(null);`.                         |
+  |                                                        |                                                                |
+  |                                                        | **Important:** Never use :code:`expect(value).toBeDefined() or |
+  |                                                        | :code:`expect(value).toBeNil() as they might not catch certain |
+  |                                                        | failures under certain conditions.                             |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A class object is defined                              | :code:`expect(classObject).toContainEntries([[key, value]]);`  |
+  |                                                        |                                                                |
+  |                                                        | :code:`expect(classObject).toEqual(referenceClassObject);`     |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A class object is not undefined                        | Try to test for a defined value by testing the entries.        |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A spy was not called                                   | :code:`expect(spy).not.toHaveBeenCalled();`                    |
+  +--------------------------------------------------------+----------------------------------------------------------------+
+  | A spy was once called                                  | :code:`expect(spy).toHaveBeenCalledTimes(1);`                  |
+  +--------------------------------------------------------+----------------------------------------------------------------+
