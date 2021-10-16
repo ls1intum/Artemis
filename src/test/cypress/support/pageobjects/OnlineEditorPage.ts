@@ -31,7 +31,7 @@ export class OnlineEditorPage {
      */
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
         for (const newFile of submission.files) {
-            this.createFileInRootPackage(newFile.name);
+            this.createFileInRootPackage(newFile.name, packageName);
             cy.fixture(newFile.path).then(($fileContent) => {
                 const sanitizedContent = this.sanitizeInput($fileContent, packageName);
                 this.focusCodeEditor().type(sanitizedContent, { delay: 3 });
@@ -92,13 +92,19 @@ export class OnlineEditorPage {
 
     /**
      * Creates a file at root level (in the main package) in the file browser.
-     * @param fileName the name of the new file
+     * @param fileName the name of the new file (e.g. "Policy.java")
+     * @param packageName the name of the package (e.g. "de.test")
      */
-    createFileInRootPackage(fileName: string) {
-        cy.intercept(POST, BASE_API + 'repository/*/**').as('createFile');
+    createFileInRootPackage(fileName: string, packageName: string) {
+        const packagePath = packageName.replace(/\./g, '/');
+        const filePath = `src/${packagePath}/${fileName}`;
+        const requestId = 'createFile' + fileName;
+        cy.intercept(POST, BASE_API + 'repository/*/file?file=' + filePath).as(requestId);
         cy.get('.file-icons').children('button').first().click().wait(500);
         cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
-        cy.wait('@createFile');
+        cy.wait('@' + requestId)
+            .its('response.statusCode')
+            .should('eq', 200);
         this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
     }
 
@@ -136,7 +142,7 @@ export class OnlineEditorPage {
  */
 export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
     // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
-    editorPage.createFileInRootPackage('placeholderFile');
+    editorPage.createFileInRootPackage('placeholderFile', packageName);
     // We delete all existing files, so we can create new files and don't have to delete their already existing content
     editorPage.deleteFile('Client.java');
     editorPage.deleteFile('BubbleSort.java');
