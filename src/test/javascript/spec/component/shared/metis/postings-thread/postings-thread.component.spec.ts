@@ -167,6 +167,6 @@ describe('PostingsThreadComponent', () => {
         component.showAnswers = false;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).toBeFalsy();
+        expect(answerPostComponent).toBeNull();
     });
 });
