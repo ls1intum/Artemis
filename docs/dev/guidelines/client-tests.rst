@@ -189,15 +189,13 @@ Some guidelines:
                 }));
             });
 
-2. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
+2. Do not use ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
-3. Do not use ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
+3. Calling `jest.restoreAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests. This will only work if the mocks were created with `jest.spyOn`. Manually assigning `jest.fn()` should be avoided with this configuration.
 
-4. Calling `jest.restoreAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests. This will only work if the mocks were created with `jest.spyOn`. Manually assigning `jest.fn()` should be avoided with this configuration.
+4. Make sure to have at least 80% line test coverage. Run ``npm test`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
 
-5. Make sure to have at least 80% line test coverage. Run ``npm test`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
-
-6. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
+5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected template changes have occurred.
 
 Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
@@ -217,7 +215,7 @@ Here is an example of a test for `exercise-update-warning component <https://git
         expect(emitSpy).toHaveBeenCalled();
     });
 
-7. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:
+6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:
 
 .. code:: ts
 
@@ -243,9 +241,39 @@ Here is an example of a test for `exercise-update-warning component <https://git
         });
     });
 
-8. Name the variables properly for test doubles:
+7. Name the variables properly for test doubles:
 
 .. code:: ts
 
     const clearSpy = jest.spyOn(someComponent, 'clear');
     const getNumberStub = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42); // This always returns 42
+
+8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
+
+9. For situations described below, only use the uniform solution to keep the codebase as consistent as possible. Otherwise refer to the standard `Jest API <https://jestjs.io/docs/expect>`_ or the `Jest Extended API <https://github.com/jest-community/jest-extended#api>`_.
+
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | Situation                                              | Solution                                                   |
+  +========================================================+============================================================+
+  | Expecting a boolean value                              | :code:`expect(value).toBe(true);`                          |
+  |                                                        |                                                            |
+  |                                                        | :code:`expect(value).toBe(false);`                         |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | An object is the same reference                        | :code:`expect(object).toBe(referenceObject);`              |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | A CSS element exists (or anything else returning null) | :code:`expect(element).toBe(null);`                        |
+  |                                                        |                                                            |
+  | A CSS element does not exists                          | :code:`expect(element).not.toBe(null);`                    |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | A value is undefined                                   | :code:`expect(value).toBe(undefined);`                     |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | A class object is defined                              | :code:`expect(classObject).toContainAllEntries(tsObject);` |
+  |                                                        |                                                            |
+  |                                                        | :code:`expect(classObject).toEqual(referenceClassObject);` |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | A class object is not undefined                        | Try to test for a defined value by testing the entries.    |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | A spy was not called                                   | :code:`expect(spy).not.toHaveBeenCalled();`                |
+  +--------------------------------------------------------+------------------------------------------------------------+
+  | A spy was once called                                  | :code:`expect(spy).toHaveBeenCalledTimes(1);`              |
+  +--------------------------------------------------------+------------------------------------------------------------+
