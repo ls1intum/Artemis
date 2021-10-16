@@ -153,16 +153,14 @@ public class GroupNotificationFactory {
                 Exercise exercise = post.getExercise();
                 title = NotificationTitleTypeConstants.NEW_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
-                course = exercise.getCourseViaExerciseGroupOrCourseMember();
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(post.getCourse(), title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
             case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
-                course = lecture.getCourse();
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(post.getCourse(), title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getLecturePostTarget(post));
             }
             case NEW_COURSE_POST -> {

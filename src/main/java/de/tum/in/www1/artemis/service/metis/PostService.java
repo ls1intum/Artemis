@@ -377,7 +377,6 @@ public class PostService extends PostingService {
         // notify via lecture
         if (post.getLecture() != null) {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
-            return;
         }
     }
 

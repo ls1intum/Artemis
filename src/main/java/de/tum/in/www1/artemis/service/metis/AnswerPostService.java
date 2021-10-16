@@ -73,7 +73,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
-        sendNotification(savedAnswerPost, post);
+        sendNotification(post);
 
         return savedAnswerPost;
     }
@@ -148,12 +148,12 @@ public class AnswerPostService extends PostingService {
     /**
      * Sends notification to affected groups
      *
-     * @param answerPost answer post that triggered the notification
-     * @param post       post that is answered
+     * @param post which is answered
      */
-    void sendNotification(AnswerPost answerPost, Post post) {
+    void sendNotification(Post post) {
         // notify via course
         if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post);
             singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post);
             return;
         }
@@ -162,7 +162,7 @@ public class AnswerPostService extends PostingService {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post);
             // protect Sample Solution, Grading Instructions, etc.
-            answerPost.getPost().getExercise().filterSensitiveInformation();
+            post.getExercise().filterSensitiveInformation();
             return;
         }
         // notify via lecture
