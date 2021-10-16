@@ -149,6 +149,7 @@ public class AnswerPostService extends PostingService {
      * Sends notification to affected groups
      *
      * @param answerPost answer post that triggered the notification
+     * @param post       post that is answered
      */
     void sendNotification(AnswerPost answerPost, Post post) {
         // notify via course

@@ -362,9 +362,6 @@ public class PostService extends PostingService {
      * @param post post that triggered the notification
      */
     void sendNotification(Post post) {
-
-        // TODO Make sure the course property is set else the notification -> null pointer exception
-
         // notify via course
         if (post.getCourseWideContext() != null) {
             groupNotificationService.notifyAllGroupsAboutNewCoursePost(post);
@@ -372,9 +369,6 @@ public class PostService extends PostingService {
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
             groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
@@ -382,9 +376,6 @@ public class PostService extends PostingService {
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
             return;
         }
