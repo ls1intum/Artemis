@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.util.List;
 import java.util.Map;
@@ -91,14 +91,16 @@ public class ExerciseScoresChartService {
             exerciseScoresDTO.maxScoreAchieved = 0D;
         }
         else {
-            exerciseScoresDTO.averageScoreAchieved = roundToNDecimalPlaces(aggregatedInformation.getAverageScoreAchieved(), 1);
-            exerciseScoresDTO.maxScoreAchieved = roundToNDecimalPlaces(aggregatedInformation.getMaxScoreAchieved(), 0);
+            exerciseScoresDTO.averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getAverageScoreAchieved(),
+                    exercise.getCourseViaExerciseGroupOrCourseMember());
+            exerciseScoresDTO.maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getMaxScoreAchieved(),
+                    exercise.getCourseViaExerciseGroupOrCourseMember());
         }
 
         ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
                 : teamExerciseIdToTeamScore.get(exercise.getId());
         exerciseScoresDTO.scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
-                : roundToNDecimalPlaces(participantScore.getLastScore(), 0);
+                : roundScoreSpecifiedByCourseSettings(participantScore.getLastScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         return exerciseScoresDTO;
     }
 }
