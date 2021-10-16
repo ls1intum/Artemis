@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
 import $ from 'jquery';
 import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 export interface DropInfo {
@@ -34,6 +35,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() elementCounts?: OtherModelElementCount[];
+    @Input() course?: Course;
 
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {

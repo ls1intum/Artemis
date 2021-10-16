@@ -144,6 +144,32 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateAnnouncement() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        postToSave.setDisplayPriority(DisplayPriority.PINNED);
+        checkCreatedPost(postToSave, createdPost);
+
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
+        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateAnnouncement_forbidden() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateExistingPost_badRequest() throws Exception {
         Post existingPostToSave = existingPosts.get(0);
