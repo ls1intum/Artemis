@@ -44,8 +44,7 @@ declare global {
  * Overwrite the normal cypress request to always add the authorization token.
  */
 Cypress.Commands.overwrite('request', (originalFn, options) => {
-    const token = localStorage.getItem(authTokenKey);
-
+    const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
     if (!!token) {
         const authHeader = 'Bearer ' + token;
         if (!!options.headers) {
@@ -86,15 +85,6 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     if (url) {
         cy.visit(url);
     }
-});
-
-/**
- * Logs in using GUI and sets authToken in Cypress.env
- * */
-Cypress.Commands.add('loginWithGUI', (credentials) => {
-    cy.visit('/');
-    cy.get('#username').type(credentials.username, { log: false });
-    cy.get('#password').type(credentials.password, { log: false }).type('{enter}');
 });
 
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good

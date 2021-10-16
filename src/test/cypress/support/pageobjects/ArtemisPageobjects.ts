@@ -1,3 +1,4 @@
+import { LoginPage } from './LoginPage';
 import { ExerciseResultPage } from './exercises/ExerciseResultPage';
 import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
 import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
@@ -31,6 +32,7 @@ import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
  */
 export class ArtemisPageobjects {
+    login = new LoginPage();
     courseManagement = new CourseManagementPage();
     courses = new CoursesPage();
     courseOverview = new CourseOverviewPage();

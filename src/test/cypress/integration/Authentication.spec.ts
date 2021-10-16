@@ -1,35 +1,39 @@
 import { artemis } from '../support/ArtemisTesting';
 import { authTokenKey } from '../support/constants';
 
-describe('Authentication tests', () => {
-    const user = artemis.users.getStudentOne();
+const user = artemis.users.getStudentOne();
+const loginPage = artemis.pageobjects.login;
 
-    it('fails to access protected resource without login', () => {
-        cy.visit('/course-management');
-        cy.location('pathname').should('eq', '/');
-    });
+it('Logs in via the UI', function () {
+    cy.visit('/');
+    loginPage.login(user);
+    cy.url()
+        .should('include', '/courses')
+        .then(() => {
+            expect(localStorage.getItem(authTokenKey)).to.not.be.null;
+        });
+});
 
-    it('logs in via the ui', function () {
-        cy.loginWithGUI(user);
-        cy.url()
-            .should('include', '/courses')
-            .then(() => {
-                expect(localStorage.getItem(authTokenKey)).to.not.be.null;
-            });
-    });
+it('Logs in programmatically and logs out via the UI', function () {
+    cy.login(user, '/courses');
+    cy.url().should('include', '/courses');
+    cy.get('#account-menu').click().get('#logout').click();
+    cy.url()
+        .should('equal', Cypress.config().baseUrl + '/')
+        .then(() => {
+            expect(localStorage.getItem(authTokenKey)).to.be.null;
+        });
+});
 
-    it('logs in programmatically and logs out via the ui', function () {
-        cy.login(user, '/courses');
-        cy.url().should('include', '/courses');
-        cy.get('#account-menu').click().get('#logout').click();
-        cy.url().should('equal', Cypress.config().baseUrl + '/');
-    });
+it('Displays error messages on wrong password', () => {
+    loginPage.login({ username: 'some_user_name', password: 'lorem-ipsum' });
+    cy.location('pathname').should('eq', '/');
+    cy.get('.alert').should('exist').and('have.text', 'Failed to sign in! Please check your username and password and try again.');
+    cy.get('.btn').click();
+    cy.get('.btn').click();
+});
 
-    it('displays error messages on wrong password', () => {
-        cy.loginWithGUI({ username: 'artemis_admin', password: 'lorem-ipsum' });
-        cy.location('pathname').should('eq', '/');
-        cy.get('.alert').should('exist').and('have.text', 'Failed to sign in! Please check your username and password and try again.');
-        cy.get('.btn').click();
-        cy.get('.btn').click();
-    });
+it('Fails to access protected resource without login', () => {
+    cy.visit('/course-management');
+    cy.location('pathname').should('eq', '/');
 });
