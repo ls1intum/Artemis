@@ -28,7 +28,7 @@ public class SingleUserNotificationService {
      * @param post that is answered
      */
     public void notifyUserAboutNewAnswerForExercise(Post post) {
-        saveAndSend(createNotification(post, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST));
     }
 
     /**
@@ -37,7 +37,7 @@ public class SingleUserNotificationService {
      * @param post that is answe3red
      */
     public void notifyUserAboutNewAnswerForLecture(Post post) {
-        saveAndSend(createNotification(post, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+        saveAndSend(createNotification(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST));
     }
 
     /**
@@ -46,7 +46,7 @@ public class SingleUserNotificationService {
      * @param post that is answered
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post) {
-        saveAndSend(createNotification(post, NotificationType.NEW_ANSWER_POST_FOR_COURSE));
+        saveAndSend(createNotification(post, NotificationType.NEW_REPLY_FOR_COURSE_POST));
     }
 
     /**

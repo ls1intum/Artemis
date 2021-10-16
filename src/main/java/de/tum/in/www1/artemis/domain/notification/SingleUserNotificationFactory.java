@@ -22,18 +22,18 @@ public class SingleUserNotificationFactory {
         String text = "Your post got replied.";
         SingleUserNotification notification;
         switch (notificationType) {
-            case NEW_ANSWER_POST_FOR_EXERCISE -> {
-                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
+            case NEW_REPLY_FOR_EXERCISE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, text);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
-            case NEW_ANSWER_POST_FOR_LECTURE -> {
-                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
+            case NEW_REPLY_FOR_LECTURE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, text);
                 notification.setTarget(targetService.getLecturePostTarget(post));
             }
-            case NEW_ANSWER_POST_FOR_COURSE -> {
-                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_COURSE_POST_TITLE;
+            case NEW_REPLY_FOR_COURSE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, text);
                 notification.setTarget(targetService.getCoursePostTarget(post));
             }

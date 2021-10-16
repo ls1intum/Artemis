@@ -12,12 +12,12 @@ import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
     NEW_ANNOUNCEMENT_POST_TITLE,
-    NEW_ANSWER_POST_FOR_COURSE_POST_TITLE,
-    NEW_ANSWER_POST_FOR_EXERCISE_TITLE,
-    NEW_ANSWER_POST_FOR_LECTURE_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_COURSE_POST_TITLE,
-    NEW_POST_FOR_EXERCISE_TITLE,
-    NEW_POST_FOR_LECTURE_TITLE,
+    NEW_EXERCISE_POST_TITLE,
+    NEW_LECTURE_POST_TITLE,
     Notification,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
@@ -78,14 +78,14 @@ export class NotificationService {
             } else if (
                 notification.title === NEW_ANNOUNCEMENT_POST_TITLE ||
                 notification.title === NEW_COURSE_POST_TITLE ||
-                notification.title === NEW_ANSWER_POST_FOR_COURSE_POST_TITLE
+                notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE
             ) {
                 const queryParams: Params = this.metisService.getQueryParamsForCoursePost(target.id);
                 this.router.navigate(this.metisService.getLinkForCoursePost(courseId), { queryParams });
-            } else if (notification.title === NEW_POST_FOR_EXERCISE_TITLE || notification.title === NEW_ANSWER_POST_FOR_EXERCISE_TITLE) {
+            } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE) {
                 const queryParams: Params = this.metisService.getQueryParamsForLectureOrExercisePost(target.id);
                 this.router.navigate(this.metisService.getLinkForExercisePost(courseId, target.exerciseId), { queryParams });
-            } else if (notification.title === NEW_POST_FOR_LECTURE_TITLE || notification.title === NEW_ANSWER_POST_FOR_LECTURE_TITLE) {
+            } else if (notification.title === NEW_LECTURE_POST_TITLE || notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE) {
                 const queryParams: Params = this.metisService.getQueryParamsForLectureOrExercisePost(target.id);
                 this.router.navigate(this.metisService.getLinkForLecturePost(courseId, target.lectureId), { queryParams });
             } else {

@@ -40,19 +40,19 @@ export const DUPLICATE_TEST_CASE_TITLE = 'Duplicate test case was found.';
 
 export const ILLEGAL_SUBMISSION_TITLE = 'Illegal submission of a student.';
 
-export const NEW_POST_FOR_EXERCISE_TITLE = 'New Exercise Post';
+export const NEW_EXERCISE_POST_TITLE = 'New exercise post';
 
-export const NEW_POST_FOR_LECTURE_TITLE = 'New Lecture Post';
+export const NEW_LECTURE_POST_TITLE = 'New lecture post';
 
-export const NEW_ANNOUNCEMENT_POST_TITLE = 'New Announcement';
+export const NEW_ANNOUNCEMENT_POST_TITLE = 'New announcement';
 
-export const NEW_COURSE_POST_TITLE = 'New Course-wide Post';
+export const NEW_COURSE_POST_TITLE = 'New course-wide post';
 
-export const NEW_ANSWER_POST_FOR_EXERCISE_TITLE = 'New Exercise Reply';
+export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'New reply for exercise post';
 
-export const NEW_ANSWER_POST_FOR_LECTURE_TITLE = 'New Lecture Reply';
+export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'New reply for lecture post';
 
-export const NEW_ANSWER_POST_FOR_COURSE_POST_TITLE = 'New Reply to Course-wide Post';
+export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'New reply for course-wide post';
 
 export const COURSE_ARCHIVE_STARTED_TITLE = 'Course archival started';
 

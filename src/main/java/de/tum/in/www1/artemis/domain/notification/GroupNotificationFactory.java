@@ -149,17 +149,17 @@ public class GroupNotificationFactory {
         Course course;
         GroupNotification notification;
         switch (notificationType) {
-            case NEW_POST_FOR_EXERCISE -> {
+            case NEW_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
-                title = NotificationTitleTypeConstants.NEW_POST_FOR_EXERCISE_TITLE;
+                title = NotificationTitleTypeConstants.NEW_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
-            case NEW_POST_FOR_LECTURE -> {
+            case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
-                title = NotificationTitleTypeConstants.NEW_POST_FOR_LECTURE_TITLE;
+                title = NotificationTitleTypeConstants.NEW_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 course = lecture.getCourse();
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
@@ -179,24 +179,24 @@ public class GroupNotificationFactory {
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getCoursePostTarget(post));
             }
-            case NEW_ANSWER_POST_FOR_EXERCISE -> {
+            case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
-                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
-            case NEW_ANSWER_POST_FOR_LECTURE -> {
+            case NEW_REPLY_FOR_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
-                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 course = lecture.getCourse();
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getLecturePostTarget(post));
             }
-            case NEW_ANSWER_POST_FOR_COURSE -> {
-                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_COURSE_POST_TITLE;
+            case NEW_REPLY_FOR_COURSE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
                 course = post.getCourse();
                 text = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);

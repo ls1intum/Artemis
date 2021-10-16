@@ -308,14 +308,14 @@ public class GroupNotificationFactoryTest {
     // Based on Post
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_POST_FOR_EXERCISE.
+     * Tests the functionality that deals with notifications that have the notification type of NEW_EXERCISE_POST.
      * I.e. notifications that originate from a new post concerning an exercise.
      */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewPostForExercise() {
-        notificationType = NotificationType.NEW_POST_FOR_EXERCISE;
+        notificationType = NotificationType.NEW_EXERCISE_POST;
 
-        expectedTitle = NEW_POST_FOR_EXERCISE_TITLE;
+        expectedTitle = NEW_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createDefaultExpectedTarget("newPost", "exercises", exerciseId);
@@ -324,14 +324,14 @@ public class GroupNotificationFactoryTest {
     }
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_POST_FOR_LECTURE.
+     * Tests the functionality that deals with notifications that have the notification type of NEW_LECTURE_POST.
      * I.e. notifications that originate from a new post concerning a lecture.
      */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewPostForLecture() {
-        notificationType = NotificationType.NEW_POST_FOR_LECTURE;
+        notificationType = NotificationType.NEW_LECTURE_POST;
 
-        expectedTitle = NEW_POST_FOR_LECTURE_TITLE;
+        expectedTitle = NEW_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createDefaultExpectedTarget("newPost", "lectures", lectureId);
@@ -342,14 +342,14 @@ public class GroupNotificationFactoryTest {
     // Based on AnswerPost
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_ANSWER_POST_FOR_EXERCISE.
+     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_EXERCISE_POST.
      * I.e. notifications that originate from a new answer post concerning an exercise.
      */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewAnswerPostForExercise() {
-        notificationType = NotificationType.NEW_ANSWER_POST_FOR_EXERCISE;
+        notificationType = NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 
-        expectedTitle = NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
+        expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createDefaultExpectedTarget("newAnswerPost", "exercises", exerciseId);
@@ -358,14 +358,14 @@ public class GroupNotificationFactoryTest {
     }
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_ANSWER_POST_FOR_LECTURE.
+     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_LECTURE_POST.
      * I.e. notifications that originate from a new answer post concerning a lecture.
      */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewAnswerPostForLecture() {
-        notificationType = NotificationType.NEW_ANSWER_POST_FOR_LECTURE;
+        notificationType = NotificationType.NEW_REPLY_FOR_LECTURE_POST;
 
-        expectedTitle = NEW_ANSWER_POST_FOR_LECTURE_TITLE;
+        expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createDefaultExpectedTarget("newAnswerPost", "lectures", lectureId);
