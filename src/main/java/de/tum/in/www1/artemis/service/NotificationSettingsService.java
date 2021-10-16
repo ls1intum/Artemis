@@ -26,19 +26,10 @@ public class NotificationSettingsService {
     private final Set<NotificationType> notificationTypesWithNoEmailSupportYet = Set.of(EXERCISE_UPDATED, NEW_POST_FOR_EXERCISE, NEW_ANSWER_POST_FOR_EXERCISE, NEW_POST_FOR_LECTURE,
             NEW_ANSWER_POST_FOR_LECTURE, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED);
 
-    private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
+    private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
-    }
-
-    /**
-     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
-     * @param types Set that should be converted to String
-     * @return the converted String Set
-     */
-    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
-        return types.stream().map(type -> NotificationTitleTypeConstants.findCorrespondingNotificationTitle(type)).collect(Collectors.toSet());
     }
 
     /**
@@ -166,9 +157,11 @@ public class NotificationSettingsService {
     /**
      * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
      * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
+     * @param checkForWebapp indicates if the map should look for the email or webapp activity
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(Set<NotificationSetting> notificationSettings) {
+    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(boolean checkForWebapp,
+            Set<NotificationSetting> notificationSettings) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         for (NotificationSetting setting : notificationSettings) {
             NotificationType[] tmpNotificationTypes = NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP.getOrDefault(setting.getSettingId(), new NotificationType[0]);
