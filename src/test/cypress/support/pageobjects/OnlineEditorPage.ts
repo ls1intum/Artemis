@@ -98,11 +98,17 @@ export class OnlineEditorPage {
     createFileInRootPackage(fileName: string, packageName: string) {
         const packagePath = packageName.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${fileName}`;
-        const requestId = 'createFile' + fileName;
-        cy.intercept(POST, BASE_API + 'repository/*/file?file=' + filePath).as(requestId);
+        const postRequestId = 'createFile' + fileName;
+        const getRequestId = 'getFile' + fileName;
+        const requestPath = BASE_API + 'repository/*/file?file=' + filePath;
         cy.get('.file-icons').children('button').first().click().wait(500);
+        cy.intercept(POST, requestPath).as(postRequestId);
+        cy.intercept(GET, requestPath).as(getRequestId);
         cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
-        cy.wait('@' + requestId)
+        cy.wait('@' + postRequestId)
+            .its('response.statusCode')
+            .should('eq', 200);
+        cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
         this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
