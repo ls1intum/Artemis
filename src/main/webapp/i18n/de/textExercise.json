@@ -29,7 +29,18 @@
             "checkPlagiarism": "Auf Plagiate prüfen",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen. Du wirst automatisch weitergeleitet.",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "clusterStatistics": {
+                "title": "Cluster Statistik",
+                "description": "Ein Textcluster stellt eine Gruppe von ähnlichen Textblöcken in Abgaben zu Textaufgaben dar. <br/> Sobald es Feedback von Tutor:innen zu einem der Textblöcke innerhalb des Clusters gibt, wird dieses Feedback als Vorschlag für die Bewertung der anderen Textblöcke dieses Clusters übernommen.<br/> Die folgende Tabelle zeigt eine Übersicht aller für diese Übung generierten Cluster.<br/> Du kannst sehen, wie viele automatische Feedback-Vorschläge innerhalb des Clusters wiederverwendet werden. Du kannst ein Cluster auch deaktivieren, z.B. wenn eine niedrige Verwendungsrate des automatischen Feedbacks darauf hindeutet, dass das Clustering nicht dazu geführt hat, dass bei der Bewertung von Textaufgaben wiederverwendbares Feedback vorgeschlagen wurde.",
+                "clusterId": "Cluster ID",
+                "reusedFeedbackRatio": "Anzahl wiederverwendetes Feedback / Clustergröße",
+                "reusedFeedbackRatioTooltip": "Anzahl an wiederverwendetem, automatischem Feedback / Clustergröße",
+                "action": "Aktion",
+                "disable": "Deaktivieren",
+                "enable": "Aktivieren",
+                "noClustersFound": "Keine Textcluster für diese Aufgabe gefunden"
+            }
         }
     }
 }
