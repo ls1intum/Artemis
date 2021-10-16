@@ -181,7 +181,7 @@ public class GroupNotificationFactoryTest {
                 break;
             }
             case ANSWER_POST: {
-                createdNotification = groupNotificationFactory.createNotification(answerPost, user, groupNotificationType, notificationType);
+                createdNotification = groupNotificationFactory.createNotification(post, user, groupNotificationType, notificationType);
                 break;
             }
             case COURSE: {

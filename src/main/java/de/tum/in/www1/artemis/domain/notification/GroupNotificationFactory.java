@@ -7,7 +7,6 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
 
@@ -139,7 +138,7 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param post              for which a notification should be created
+     * @param post                  for which a notification should be created (either if created or answered)
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
@@ -148,96 +147,63 @@ public class GroupNotificationFactory {
     public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
         String title, text;
         Course course;
+        GroupNotification notification;
         switch (notificationType) {
             case NEW_POST_FOR_EXERCISE -> {
                 Exercise exercise = post.getExercise();
                 title = NotificationTitleTypeConstants.NEW_POST_FOR_EXERCISE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getExercisePostTarget(post));
             }
             case NEW_POST_FOR_LECTURE -> {
                 Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_POST_FOR_LECTURE_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 course = lecture.getCourse();
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getLecturePostTarget(post));
             }
             case NEW_COURSE_POST -> {
                 course = post.getCourse();
                 title = NotificationTitleTypeConstants.NEW_COURSE_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getCoursePostTarget(post));
             }
             case NEW_ANNOUNCEMENT_POST -> {
                 course = post.getCourse();
                 title = NotificationTitleTypeConstants.NEW_ANNOUNCEMENT_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new announcement.";
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getCoursePostTarget(post));
             }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
-
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-
-        if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
-            notification.setTarget(targetService.getExercisePostTarget(post));
-        }
-        else if (notificationType == NotificationType.NEW_COURSE_POST) {
-            notification.setTarget(targetService.getCoursePostTarget(post));
-        }
-        else if (notificationType == NotificationType.NEW_ANNOUNCEMENT_POST) {
-            notification.setTarget(targetService.getCoursePostTarget(post));
-        }
-        else {
-            notification.setTarget(targetService.getLecturePostTarget(post));
-        }
-
-        return notification;
-    }
-
-    /**
-     * Creates an instance of GroupNotification based on the passed parameters.
-     *
-     * @param answerPost            for which a notification should be created
-     * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
-     * @param notificationType      type of the notification that should be created
-     * @return an instance of GroupNotification
-     */
-    public static GroupNotification createNotification(AnswerPost answerPost, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
-        String text, title;
-        Course course;
-        switch (notificationType) {
             case NEW_ANSWER_POST_FOR_EXERCISE -> {
-                Exercise exercise = answerPost.getPost().getExercise();
+                Exercise exercise = post.getExercise();
                 title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getExercisePostTarget(post));
             }
             case NEW_ANSWER_POST_FOR_LECTURE -> {
-                Lecture lecture = answerPost.getPost().getLecture();
+                Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 course = lecture.getCourse();
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getLecturePostTarget(post));
             }
             case NEW_ANSWER_POST_FOR_COURSE -> {
-                Lecture lecture = answerPost.getPost().getLecture();
                 title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_COURSE_POST_TITLE;
-                course = answerPost.getPost().getCourse();
+                course = post.getCourse();
                 text = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTarget(targetService.getCoursePostTarget(post));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-
-        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
-            notification.setTarget(targetService.getExercisePostTarget(answerPost.getPost()));
-        }
-        else if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
-            notification.setTarget(targetService.getLecturePostTarget(answerPost.getPost()));
-        }
-        else {
-            notification.setTarget(targetService.getCoursePostTarget(answerPost.getPost()));
-        }
-
         return notification;
     }
 

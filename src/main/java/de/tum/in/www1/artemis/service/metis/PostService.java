@@ -70,6 +70,8 @@ public class PostService extends PostingService {
         Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
+        // set course
+        post.setCourse(course);
         // set author to current user
         post.setAuthor(user);
         // set default value display priority -> NONE
@@ -80,7 +82,7 @@ public class PostService extends PostingService {
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
-            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post);
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost);
             return savedPost;
         }
         Post savedPost = postRepository.save(post);

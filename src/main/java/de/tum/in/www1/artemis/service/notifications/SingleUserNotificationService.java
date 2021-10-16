@@ -6,7 +6,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 
@@ -25,28 +25,28 @@ public class SingleUserNotificationService {
     /**
      * Notify author of a post for an exercise that there is a new answer.
      *
-     * @param answer for exercise that is new
+     * @param post that is answered
      */
-    public void notifyUserAboutNewAnswerForExercise(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+    public void notifyUserAboutNewAnswerForExercise(Post post) {
+        saveAndSend(createNotification(post, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
     }
 
     /**
      * Notify author of a post for a lecture that there is a new answer.
      *
-     * @param answer for lecture that is new
+     * @param post that is answe3red
      */
-    public void notifyUserAboutNewAnswerForLecture(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+    public void notifyUserAboutNewAnswerForLecture(Post post) {
+        saveAndSend(createNotification(post, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
     }
 
     /**
      * Notify author of a course-wide that there is a new answer.
      *
-     * @param answer for lecture that is new
+     * @param post that is answered
      */
-    public void notifyUserAboutNewAnswerForCoursePost(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_COURSE));
+    public void notifyUserAboutNewAnswerForCoursePost(Post post) {
+        saveAndSend(createNotification(post, NotificationType.NEW_ANSWER_POST_FOR_COURSE));
     }
 
     /**

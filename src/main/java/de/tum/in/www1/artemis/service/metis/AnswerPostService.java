@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.metis;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -75,7 +73,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
-        sendNotification(savedAnswerPost);
+        sendNotification(savedAnswerPost, post);
 
         return savedAnswerPost;
     }
@@ -152,40 +150,24 @@ public class AnswerPostService extends PostingService {
      *
      * @param answerPost answer post that triggered the notification
      */
-    void sendNotification(AnswerPost answerPost) {
-        // the course property is needed for notifications
-        Course course;
-
+    void sendNotification(AnswerPost answerPost, Post post) {
         // notify via course
-        if (answerPost.getPost().getCourseWideContext() != null) {
-            Post post = answerPost.getPost();
-
-            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(answerPost);
+        if (post.getCourseWideContext() != null) {
+            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post);
             return;
         }
         // notify via exercise
-        if (answerPost.getPost().getExercise() != null) {
-            Post post = answerPost.getPost();
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
-            answerPost.setPost(post);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(answerPost);
-            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(answerPost);
-
+        if (post.getExercise() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post);
+            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post);
             // protect Sample Solution, Grading Instructions, etc.
             answerPost.getPost().getExercise().filterSensitiveInformation();
             return;
         }
         // notify via lecture
-        if (answerPost.getPost().getLecture() != null) {
-            Post post = answerPost.getPost();
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
-            answerPost.setPost(post);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(answerPost);
-            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(answerPost);
+        if (post.getLecture() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post);
+            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post);
             return;
         }
     }

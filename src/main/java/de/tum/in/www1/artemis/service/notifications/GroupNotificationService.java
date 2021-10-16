@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
@@ -171,12 +170,12 @@ public class GroupNotificationService {
     /**
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
-     * @param answerPost that has been submitted for a post
+     * @param post that has been answered
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(AnswerPost answerPost) {
-        saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
-        saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
-        saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
     }
 
     /**
@@ -194,12 +193,12 @@ public class GroupNotificationService {
     /**
      * Notify tutor, editor and instructor groups about a new answer post for a lecture.
      *
-     * @param answerPost that has been submitted for a post
+     * @param post that has been ansered
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(AnswerPost answerPost) {
-        saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
-        saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
-        saveAndSend(createNotification(answerPost, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
     }
 
     /**
