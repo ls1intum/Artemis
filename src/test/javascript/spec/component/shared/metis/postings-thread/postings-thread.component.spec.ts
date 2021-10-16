@@ -133,7 +133,7 @@ describe('PostingsThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).toBeFalsy();
+        expect(answerNowButton).toBeNull();
     });
 
     it('answer now button should be visible if post does not yet have any answers', () => {
