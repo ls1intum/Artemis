@@ -21,6 +21,7 @@
     [showEditorInstructions]="showEditorInstructions"
     [isTutorAssessment]="hasTutorAssessment"
     [readOnlyManualFeedback]="true"
+    [course]="getCourseFromExercise(exercise)"
 >
     <div editorTitle>
         <span>{{ exercise?.title }}</span>

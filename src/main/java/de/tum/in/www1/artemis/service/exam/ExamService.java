@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -258,7 +258,7 @@ public class ExamService {
                     // In the client, these are now displayed rounded as 1.1 points.
                     // If the student adds up the displayed points, he gets a total of 5.5 points.
                     // In order to get the same total result as the student, we have to round before summing.
-                    double achievedPoints = round(relevantResult.getScore() / 100.0 * exercise.getMaxPoints());
+                    double achievedPoints = roundScoreSpecifiedByCourseSettings(relevantResult.getScore() / 100.0 * exercise.getMaxPoints(), exam.getCourse());
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
@@ -279,7 +279,9 @@ public class ExamService {
                                 double achievedPointsInFirstCorrection = 0.0;
                                 if (firstManualResult != null) {
                                     Double resultScore = firstManualResult.getScore();
-                                    achievedPointsInFirstCorrection = resultScore != null ? round(resultScore / 100.0 * exercise.getMaxPoints()) : 0.0;
+                                    achievedPointsInFirstCorrection = resultScore != null
+                                            ? roundScoreSpecifiedByCourseSettings(resultScore / 100.0 * exercise.getMaxPoints(), exam.getCourse())
+                                            : 0.0;
                                 }
                                 studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                             }
