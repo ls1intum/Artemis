@@ -39,7 +39,7 @@
                         />
                         <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                     </div>
-                    <div *ngIf="setting.email != undefined" class="form-check">
+                    <div *ngIf="setting.email != undefined && checkIfNotificationSettingHasEmailSupport(setting)" class="form-check">
                         <input
                             type="checkbox"
                             class="form-check-input"
