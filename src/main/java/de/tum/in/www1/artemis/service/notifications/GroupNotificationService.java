@@ -172,6 +172,17 @@ public class GroupNotificationService {
      *
      * @param post that has been answered
      */
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+    }
+
+    /**
+     * Notify tutor, editor and instructor groups about a new answer post for an exercise.
+     *
+     * @param post that has been answered
+     */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post) {
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
@@ -179,7 +190,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify all groups about a new announcement in the couse.
+     * Notify all groups about a new announcement in the course.
      *
      * @param post that has been created as announcement
      */
