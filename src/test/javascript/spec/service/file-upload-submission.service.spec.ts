@@ -68,6 +68,28 @@ describe('FileUploadSubmission Service', () => {
         httpMock.verify();
     });
 
+    it('should return next submission with no assessment', async () => {
+        const returnedFromService = Object.assign({}, elemDefault);
+        service
+            .getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should return data from participation id', async () => {
+        const returnedFromService = Object.assign({}, elemDefault);
+        service
+            .getDataForFileUploadEditor(42)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
     afterEach(() => {
         httpMock.verify();
     });
