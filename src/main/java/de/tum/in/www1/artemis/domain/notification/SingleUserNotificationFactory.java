@@ -17,23 +17,28 @@ public class SingleUserNotificationFactory {
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(Post post, NotificationType notificationType) {
-        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE || notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE
-                || notificationType == NotificationType.NEW_ANSWER_POST_FOR_COURSE) {
-            User recipient = post.getAuthor();
-            String title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
-            String text = "Your post got replied.";
-            SingleUserNotification notification = new SingleUserNotification(recipient, title, text);
-            if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
+        User recipient = post.getAuthor();
+        String title;
+        String text = "Your post got replied.";
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case NEW_ANSWER_POST_FOR_EXERCISE -> {
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
+                notification = new SingleUserNotification(recipient, title, text);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
-            else if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
+            case NEW_ANSWER_POST_FOR_LECTURE -> {
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
+                notification = new SingleUserNotification(recipient, title, text);
                 notification.setTarget(targetService.getLecturePostTarget(post));
             }
-            else {
+            case NEW_ANSWER_POST_FOR_COURSE -> {
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_COURSE_POST_TITLE;
+                notification = new SingleUserNotification(recipient, title, text);
                 notification.setTarget(targetService.getCoursePostTarget(post));
             }
-            return notification;
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-        throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        return notification;
     }
 }

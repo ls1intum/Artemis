@@ -169,7 +169,6 @@ public class AnswerPostService extends PostingService {
         if (post.getLecture() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post);
-            return;
         }
     }
 
