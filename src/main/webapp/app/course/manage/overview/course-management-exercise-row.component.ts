@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/ex
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -59,7 +59,7 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
         }
 
         this.statisticsLoaded = true;
-        this.averageScoreNumerator = round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, 1);
+        this.averageScoreNumerator = roundScoreSpecifiedByCourseSettings((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, this.course);
     }
 
     setIcon(exerciseType?: ExerciseType) {
