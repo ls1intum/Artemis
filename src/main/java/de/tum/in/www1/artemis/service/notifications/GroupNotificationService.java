@@ -173,9 +173,9 @@ public class GroupNotificationService {
      * @param post that has been answered
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post) {
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_REPLY_FOR_EXERCISE_POST));
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_REPLY_FOR_EXERCISE_POST));
-        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_REPLY_FOR_EXERCISE_POST));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_REPLY_FOR_COURSE_POST));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_REPLY_FOR_COURSE_POST));
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_REPLY_FOR_COURSE_POST));
     }
 
     /**

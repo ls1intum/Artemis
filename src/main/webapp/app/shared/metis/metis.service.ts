@@ -286,10 +286,10 @@ export class MetisService {
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
      * @param {Exercise | undefined} exercise optional exercise as default context
-     * @param {number | undefined} lectureId id of optional lecture as default context
+     * @param {Lecture | undefined} lecture optional lecture as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
@@ -297,8 +297,8 @@ export class MetisService {
         } else if (exercise) {
             const exercisePost = this.exerciseService.convertExerciseForServer(exercise);
             emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
-        } else if (lectureId) {
-            emptyPost.lecture = { id: lectureId } as Lecture;
+        } else if (lecture) {
+            emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
         } else {
             // set default
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;

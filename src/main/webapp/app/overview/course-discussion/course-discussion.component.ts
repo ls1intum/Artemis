@@ -270,7 +270,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.createdPost = this.metisService.createEmptyPostForContext(
             this.currentPostContextFilter.courseWideContext,
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
-            this.currentPostContextFilter.lectureId,
+            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
     }
 
