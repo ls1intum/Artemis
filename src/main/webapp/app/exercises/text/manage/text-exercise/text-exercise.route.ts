@@ -138,4 +138,8 @@ export const textExerciseRoute: Routes = [
         path: ':courseId/text-exercises/:exerciseId/tutor-effort-statistics',
         loadChildren: () => import('../tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
     },
+    {
+        path: ':courseId/text-exercises/:exerciseId/text-cluster-statistics',
+        loadChildren: () => import('../cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
+    },
 ];
