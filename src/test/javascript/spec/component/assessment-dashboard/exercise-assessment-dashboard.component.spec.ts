@@ -308,7 +308,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toEqual(undefined);
-        expect(comp.submissionLockLimitReached).toBeFalsy();
+        expect(comp.submissionLockLimitReached).toEqual(false);
         expect(comp.submissionsByCorrectionRound?.get(0)!.length).toEqual(0);
     });
 
@@ -323,7 +323,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toBeTruthy();
+        expect(comp.submissionLockLimitReached).toEqual(true);
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).toEqual(0);
     });
 
