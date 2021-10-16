@@ -109,6 +109,23 @@ describe('FileUploadExercise Service', () => {
         req.flush({ status: 200 });
     });
 
+    it('should update and re-evaluate a FileUploadExercise', async () => {
+        const returnedFromService = Object.assign(
+            {
+                filePattern: 'BBBBBB',
+            },
+            elemDefault,
+        );
+
+        const expected = Object.assign({}, returnedFromService);
+        service
+            .reevaluateAndUpdate(expected, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
     afterEach(() => {
         httpMock.verify();
     });
