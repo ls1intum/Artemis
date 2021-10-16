@@ -4,7 +4,7 @@ import { PostingContentPart } from '../../metis.util';
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
-    styleUrls: ['./posting-content-part.component.scss'],
+    styleUrls: ['./../../metis.component.scss'],
 })
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;

@@ -223,9 +223,8 @@ Start Gitlab
            gitlab/gitlab-ce:latest
 
 3. Wait a couple of minutes until the container is deployed and GitLab
-   is set up, then open the instance in you browser and set a first
-   admin password of your choosing. You can then login using the
-   username ``root`` and your password.
+   is set up, then open the instance in you browser.
+   You can get the initial password for the ``root`` user using ``docker exec gitlab cat /etc/gitlab/initial_root_password``.
 
 4. We recommend to rename the ``root`` admin user to ``artemis``. To rename
    the user, click on the image on the top right and select ``Settings``.

@@ -9,7 +9,6 @@ import { SystemNotificationComponent } from 'app/shared/notification/system-noti
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
@@ -37,7 +36,7 @@ describe('System Notification Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule],
             declarations: [SystemNotificationComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -46,7 +45,6 @@ describe('System Notification Component', () => {
                 { provide: jhiWebsocketService, useClass: JhiWebsocketService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 systemNotificationComponentFixture = TestBed.createComponent(SystemNotificationComponent);
