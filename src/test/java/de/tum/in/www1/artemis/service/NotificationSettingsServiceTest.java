@@ -20,7 +20,7 @@ public class NotificationSettingsServiceTest {
 
     @Autowired
     private static NotificationSettingRepository notificationSettingRepository;
-
+  
     private static User student1;
 
     private static NotificationSetting unsavedNotificationSettingA;
