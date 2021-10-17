@@ -2,6 +2,7 @@
 # Project Specific
 ######################
 /build/www/**
+/gateway/build/www/**
 /src/test/javascript/coverage/
 /src/test/javascript/PhantomJS*/
 /uploads
@@ -85,6 +86,7 @@ out/
 ######################
 .gradle/
 /build/
+gateway/build/
 
 ######################
 # NPM
@@ -130,7 +132,9 @@ Desktop.ini
 # Directories
 ######################
 /bin/
+gateway/bin/
 /deploy/
+gateway/deploy/
 
 ######################
 # Logs
@@ -172,8 +176,11 @@ repos-download/
 .v8flags.*.json
 /.cache-loader
 /src/main/generated
+/gateway/src/main/generated
 /coverage
+/gateway/coverage
 /exports
 /src/main/resources/config/application-local*.yml
+/gateway/src/main/resources/config/application-local*.yml
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
