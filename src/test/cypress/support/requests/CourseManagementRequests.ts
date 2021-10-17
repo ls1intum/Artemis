@@ -257,12 +257,12 @@ export class CourseManagementRequests {
 
     makeModelingExerciseSubmission(exerciseID: number, participation: any) {
         return cy.request({
-            url: `${MODELING_EXERCISE_BASE}/${exerciseID}/modeling-submissions`,
+            url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
             method: PUT,
             body: {
                 ...modelingExerciseSubmissionTemplate,
                 id: participation.submissions[0].id,
-                participation
+                participation,
             },
         });
     }
