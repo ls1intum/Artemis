@@ -176,20 +176,6 @@
                                 <button
                                     *ngIf="isAtLeastInstructor && exam"
                                     jhiDeleteButton
-                                    [actionType]="resetType"
-                                    [entityTitle]="exam.title || ''"
-                                    deleteQuestion="artemisApp.examManagement.reset.question"
-                                    deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
-                                    (delete)="resetExam(exam.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="'undo'"></fa-icon>
-                                </button>
-                            </div>
-                            <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <button
-                                    *ngIf="isAtLeastInstructor && exam"
-                                    jhiDeleteButton
                                     [entityTitle]="exam.title || ''"
                                     deleteQuestion="artemisApp.examManagement.delete.question"
                                     deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"

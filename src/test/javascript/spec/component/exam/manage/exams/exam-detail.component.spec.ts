@@ -27,6 +27,9 @@ import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,6 +42,7 @@ class DummyComponent {}
 describe('ExamDetailComponent', () => {
     let examDetailComponentFixture: ComponentFixture<ExamDetailComponent>;
     let examDetailComponent: ExamDetailComponent;
+    let service: ExamManagementService;
 
     const exampleHTML = '<h1>Sample Markdown</h1>';
     const exam = new Exam();
@@ -101,6 +105,7 @@ describe('ExamDetailComponent', () => {
             .then(() => {
                 examDetailComponentFixture = TestBed.createComponent(ExamDetailComponent);
                 examDetailComponent = examDetailComponentFixture.componentInstance;
+                service = TestBed.inject(ExamManagementService);
             });
     });
 
@@ -202,5 +207,18 @@ describe('ExamDetailComponent', () => {
     it('should return general routes correctly', () => {
         const route = examDetailComponent.getExamRoutesByIdentifier('edit');
         expect(JSON.stringify(route)).to.be.equal(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
+    });
+
+    it('Should reset an exam when reset exam is called', () => {
+        // GIVEN
+        const responseFakeReset = {} as HttpResponse<any>;
+        sinon.replace(service, 'reset', sinon.fake.returns(of(responseFakeReset)));
+
+        // WHEN
+        examDetailComponent.resetExam();
+
+        // THEN
+        expect(service.reset).to.have.been.calledOnce;
+        expect(examDetailComponent.exam).to.deep.eq(exam);
     });
 });

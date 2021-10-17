@@ -56,6 +56,21 @@
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
 
+                <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                    <button
+                        *ngIf="isAtLeastInstructor && exam"
+                        jhiDeleteButton
+                        [actionType]="resetType"
+                        [entityTitle]="exam.title || ''"
+                        deleteQuestion="artemisApp.examManagement.reset.question"
+                        deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+                        (delete)="resetExam(exam.id!)"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="'undo'"></fa-icon>
+                    </button>
+                </div>
+
                 <div class="mt-1" *ngIf="exam && isExamOver && exam.course" class="my-2 me-1">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
                 </div>

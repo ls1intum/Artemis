@@ -1,16 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
 })
-export class ExamDetailComponent implements OnInit {
+export class ExamDetailComponent implements OnInit, OnDestroy {
     exam: Exam;
     formattedStartText?: SafeHtml;
     formattedConfirmationStartText?: SafeHtml;
@@ -19,8 +23,16 @@ export class ExamDetailComponent implements OnInit {
     isAtLeastEditor = false;
     isAtLeastInstructor = false;
     isExamOver = true;
+    resetType = ActionType.Reset;
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdownService,
+        private accountService: AccountService,
+        private examManagementService: ExamManagementService,
+    ) {}
 
     /**
      * Initialize the exam
@@ -39,9 +51,28 @@ export class ExamDetailComponent implements OnInit {
     }
 
     /**
+     * unsubscribe on component destruction
+     */
+    ngOnDestroy() {
+        this.dialogErrorSource.unsubscribe();
+    }
+
+    /**
      * Returns the route for exam components by identifier
      */
     getExamRoutesByIdentifier(identifier: string) {
         return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, identifier];
+    }
+
+    /**
+     * Reset an exam with examId by deleting all studentExams and participations
+     */
+    resetExam(): void {
+        this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe(
+            () => {
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 }
