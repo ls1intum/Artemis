@@ -31,6 +31,11 @@ public class OpenApiConfiguration {
         return docket -> docket.select().apis(RequestHandlerSelectors.basePackage("de.tum.in.www1.artemis.web.api").negate());
     }
 
+    /**
+     *
+     * @param jHipsterProperties
+     * @return the created Docket
+     */
     @Bean
     public Docket apiFirstDocket(JHipsterProperties jHipsterProperties) {
         JHipsterProperties.ApiDocs properties = jHipsterProperties.getApiDocs();

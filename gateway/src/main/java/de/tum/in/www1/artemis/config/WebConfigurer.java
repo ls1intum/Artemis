@@ -41,6 +41,11 @@ public class WebConfigurer implements WebFluxConfigurer {
         this.jHipsterProperties = jHipsterProperties;
     }
 
+    /**
+     * Define a cors filter
+     *
+     * @return the cors filter
+     */
     @Bean
     public CorsWebFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

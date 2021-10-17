@@ -34,6 +34,12 @@ public class LocaleConfiguration {
         return new AngularCookieLocaleContextResolver();
     }
 
+    /**
+     * Set Locale Context if there is a locale change and
+     *
+     * @param localeContextResolver
+     * @return the web filter
+     */
     @Bean
     public WebFilter localeChangeFilter(LocaleContextResolver localeContextResolver) {
         return (exchange, chain) -> {

@@ -41,6 +41,13 @@ public class GatewayKafkaResource {
                 .map(metadata -> new PublishResult(metadata.topic(), metadata.partition(), metadata.offset(), Instant.ofEpochMilli(metadata.timestamp())));
     }
 
+    /**
+     * Consume records from Kafka topics
+     *
+     * @param topics
+     * @param consumerParams
+     * @return Flux publisher
+     */
     @GetMapping("/consume")
     public Flux<String> consume(@RequestParam("topic") List<String> topics, @RequestParam Map<String, String> consumerParams) {
         log.debug("REST request to consume records from Kafka topics {}", topics);

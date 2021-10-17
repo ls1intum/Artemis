@@ -77,6 +77,12 @@ public class SecurityConfiguration {
         return roleHierarchy;
     }
 
+    /**
+     * Configures accepted http options, add filters for specific paths relatedto the user authentication and/or Role
+     *
+     * @param http
+     * @return the configured filter
+     */
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         // @formatter:off

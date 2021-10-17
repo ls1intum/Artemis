@@ -52,6 +52,13 @@ public class GatewaySwaggerResourcesProvider implements SwaggerResourcesProvider
         return swaggerResources;
     }
 
+    /**
+     * Create a new Swagger Resource
+     *
+     * @param name
+     * @param location
+     * @return the created swagger resource
+     */
     public static SwaggerResource swaggerResource(String name, String location) {
         SwaggerResource swaggerResource = new SwaggerResource();
         swaggerResource.setName(name);
