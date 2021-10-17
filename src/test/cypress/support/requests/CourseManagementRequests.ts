@@ -11,6 +11,7 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
+import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -251,6 +252,18 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${MODELING_EXERCISE_BASE}/${exerciseID}`,
             method: DELETE,
+        });
+    }
+
+    makeModelingExerciseSubmission(exerciseID: number, participation: any) {
+        return cy.request({
+            url: `${MODELING_EXERCISE_BASE}/${exerciseID}/modeling-submissions`,
+            method: PUT,
+            body: {
+                ...modelingExerciseSubmissionTemplate,
+                id: participation.submissions[0].id,
+                participation
+            },
         });
     }
 
