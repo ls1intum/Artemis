@@ -253,7 +253,7 @@ export class CourseManagementRequests {
         return this.updateModelingExercise(exercise);
     }
 
-    updateModelingExercise (exercise: any) {
+    updateModelingExercise(exercise: any) {
         return cy.request({
             url: MODELING_EXERCISE_BASE,
             method: PUT,

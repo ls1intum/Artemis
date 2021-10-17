@@ -30,13 +30,7 @@ describe('Modeling Exercise Spec', () => {
     });
 
     before('Create modeling exercise and submission', () => {
-        courseManagementRequests.createModelingExercise(
-            { course },
-            undefined,
-            undefined,
-            day().add(5, 'seconds'),
-            day().add(1, 'hour')
-        ).then((resp) => {
+        courseManagementRequests.createModelingExercise({ course }, undefined, undefined, day().add(5, 'seconds'), day().add(1, 'hour')).then((resp) => {
             modelingExercise = resp.body;
             cy.login(student);
             courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
@@ -77,7 +71,9 @@ describe('Modeling Exercise Spec', () => {
             courseManagementRequests
                 .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
                 .its('body')
-                .then((exercise) => { modelingExercise = exercise; });
+                .then((exercise) => {
+                    modelingExercise = exercise;
+                });
             cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         });
 
