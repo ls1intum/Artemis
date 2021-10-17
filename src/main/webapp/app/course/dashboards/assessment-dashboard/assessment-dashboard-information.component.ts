@@ -53,22 +53,26 @@ export class AssessmentDashboardInformationComponent implements OnInit {
     // Graph data.
     completedAssessmentsTitle: string;
     openedAssessmentsTitle: string;
-    get assessments(): any[] {
-        return [
-            {
-                name: this.completedAssessmentsTitle,
-                value: this.totalNumberOfAssessments.total,
-            },
-            {
-                name: this.openedAssessmentsTitle,
-                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
-            },
-        ];
-    }
+    assessments: any[];
+    customColors: any[];
     view: [number, number] = [320, 150];
     legendPosition = LegendPosition.Below;
-    get customColors(): any[] {
-        return [
+
+    constructor(private translateService: TranslateService) {}
+
+    ngOnInit(): void {
+        this.setupGraph();
+
+        this.translateService.onLangChange.subscribe(() => {
+            this.setupGraph();
+        });
+    }
+
+    setupGraph() {
+        this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+        this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
+
+        this.customColors = [
             {
                 name: this.completedAssessmentsTitle,
                 value: '#98C7EF',
@@ -78,20 +82,16 @@ export class AssessmentDashboardInformationComponent implements OnInit {
                 value: '#F4A7B6',
             },
         ];
-    }
 
-    constructor(private translateService: TranslateService) {}
-
-    ngOnInit(): void {
-        this.setupGraphTranslations();
-
-        this.translateService.onLangChange.subscribe(() => {
-            this.setupGraphTranslations();
-        });
-    }
-
-    setupGraphTranslations() {
-        this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
+        this.assessments = [
+            {
+                name: this.completedAssessmentsTitle,
+                value: this.totalNumberOfAssessments.total,
+            },
+            {
+                name: this.openedAssessmentsTitle,
+                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+            },
+        ];
     }
 }
