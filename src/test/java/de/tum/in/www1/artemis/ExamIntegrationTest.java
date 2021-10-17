@@ -628,7 +628,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete", HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", null, HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", HttpStatus.FORBIDDEN);
