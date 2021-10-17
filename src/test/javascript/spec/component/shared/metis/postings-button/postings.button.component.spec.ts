@@ -26,7 +26,7 @@ describe('PostingsButtonComponent', () => {
         component.buttonIcon = 'plus';
         fixture.detectChanges();
         const button = getElement(debugElement, 'fa-icon');
-        expect(button).not.toBeNull;
+        expect(button).toBeNull;
     });
 
     it('should not have icon shown if property not set', () => {
