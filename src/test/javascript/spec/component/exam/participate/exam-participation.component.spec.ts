@@ -346,10 +346,6 @@ describe('ExamParticipationComponent', () => {
             comp.studentExam = new StudentExam();
         });
 
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
         const expectSyncedSubmissions = (submission: Submission, syncedSubmission: Submission) => {
             expect(submission.isSynced).toBe(true);
             expect(submission.submitted).toBe(true);
@@ -428,10 +424,6 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('isOver', () => {
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
         it('should return true if exam has ended', () => {
             const studentExam = new StudentExam();
             studentExam.ended = true;
@@ -473,10 +465,6 @@ describe('ExamParticipationComponent', () => {
     };
 
     describe('isVisible', () => {
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
         it('should be visible if test run', () => {
             expect(comp.isVisible()).toBe(true);
             setComponentWithoutTestRun();
@@ -505,10 +493,6 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('isActive', () => {
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
         it('should be active if test run', () => {
             expect(comp.isActive()).toBe(true);
             setComponentWithoutTestRun();
