@@ -881,6 +881,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        exerciseRepo.save(textExercise);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
+    }
+
+    @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testResetExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/654555/reset", HttpStatus.NOT_FOUND);

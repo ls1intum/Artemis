@@ -250,9 +250,9 @@ describe('Exam Management Component', () => {
 
     it('Should reset an exam when reset exam is called', () => {
         // GIVEN
-        comp.exams = [{ ...exam, studentExams: [{ id: 1 }] }];
+        comp.exams = [exam];
         comp.course = course;
-        const responseFakeReset = { body: { ...exam, studentExams: [] } } as HttpResponse<any>;
+        const responseFakeReset = {} as HttpResponse<any>;
         sinon.replace(service, 'reset', sinon.fake.returns(of(responseFakeReset)));
 
         // WHEN
@@ -260,6 +260,6 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.reset).to.have.been.calledOnce;
-        expect(comp.exams[0].studentExams!.length).to.eq(0);
+        expect(comp.exams).to.deep.eq([exam]);
     });
 });

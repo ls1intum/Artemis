@@ -123,9 +123,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      */
     resetExam(examId: number): void {
         this.examManagementService.reset(this.course.id!, examId).subscribe(
-            (res: HttpResponse<Exam>) => {
+            () => {
                 this.dialogErrorSource.next('');
-                this.exams = this.exams.map((exam) => (exam.id === examId ? res.body! : exam));
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
