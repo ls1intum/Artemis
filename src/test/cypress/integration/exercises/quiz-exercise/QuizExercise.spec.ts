@@ -1,7 +1,7 @@
-import { artemis } from '../../support/ArtemisTesting';
-import { generateUUID } from '../../support/utils';
-import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
-import { DELETE } from '../../support/constants';
+import { artemis } from '../../../support/ArtemisTesting';
+import { generateUUID } from '../../../support/utils';
+import multipleChoiceTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import { DELETE } from '../../../support/constants';
 
 // Accounts
 const admin = artemis.users.getAdmin();
