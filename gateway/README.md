@@ -10,7 +10,7 @@ This application is configured for Service Discovery and Configuration with the 
 To start your application in the dev profile, run:
 
 ```
-./gradlew
+./gradlew :gateway:bootRun
 ```
 
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development][].
@@ -20,7 +20,7 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 [OpenAPI-Generator][] is configured for this application. You can generate API code from the `src/main/resources/swagger/api.yml` definition file by running:
 
 ```bash
-./gradlew openApiGenerate
+./gradlew :gateway:openApiGenerate
 ```
 
 Then implements the generated delegate classes with `@Service` classes.
@@ -36,7 +36,7 @@ Refer to [Doing API-First development][] for more details.
 To build the final jar and optimize the gateway application for production, run:
 
 ```
-./gradlew -Pprod clean bootJar
+./gradlew -Pprod clean :gateway:bootJar
 ```
 
 This will concatenate and minify the client CSS and JavaScript files. It will also modify `index.html` so it references these new files.
@@ -55,7 +55,7 @@ Refer to [Using JHipster in production][] for more details.
 To package your application as a war in order to deploy it to an application server, run:
 
 ```
-./gradlew -Pprod -Pwar clean bootWar
+./gradlew -Pprod -Pwar clean :gateway:bootWar
 ```
 
 ## Testing
@@ -63,7 +63,7 @@ To package your application as a war in order to deploy it to an application ser
 To launch your application's tests, run:
 
 ```
-./gradlew test jacocoTestReport -x yarn -x webapp -x copyClientBuildFiles
+./gradlew :gateway:executeTests :gateway:jacocoTestReport -x webapp -x copyClientBuildFiles
 ```
 
 ## Using Docker to simplify development (optional)
@@ -74,7 +74,7 @@ You can also fully dockerize your application and all the services that it depen
 To achieve this, first build a docker image of your app by running:
 
 ```
-./gradlew bootJar -Pprod jibDockerBuild
+./gradlew bootJar -Pprod :gateway:jibDockerBuild
 ```
 
 Then run:

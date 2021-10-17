@@ -16,22 +16,18 @@ plugins {
     id "idea"
     id "eclipse"
     id "jacoco"
-    id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.1.4"
-    id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "5.15.1"
-    id "org.openapi.generator"
-    id "io.spring.nohttp"
-    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.1"
+    id "org.springframework.boot" // no version has to be specified since it's taken by the root project
+    id "com.google.cloud.tools.jib"
+    id "com.github.node-gradle.node"
+    id "com.diffplug.spotless"
+    id "org.openapi.generator" version "5.1.1" // version is included since the plugin is not used by Artemis
+    id "io.spring.nohttp" version "0.0.8" // version is included since the plugin is not used by Artemis
+    id "com.github.andygoossens.gradle-modernizer-plugin"
+    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
+    id "com.github.ben-manes.versions"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
-group = "de.tum.in.www1.artemis"
-version = "5.2.0"
-description = "Interactive Learning with Individual Feedback"
-
-sourceCompatibility = 16
-targetCompatibility = 16
 
 apply from: "gradle/docker.gradle"
 apply from: "gradle/swagger.gradle"
@@ -57,16 +53,17 @@ idea {
     }
 }
 
+apply from: "../gradle/tasks.gradle"
 
 spotless {
-    // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
+    // allows to execute the code formatting commands ./gradlew :gateway:spotlessApply and ./gradlew :gateway:spotlessCheck
     java {
         target project.fileTree(project.rootDir) {
-            include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            include "gateway/**/*.java"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/exports/**"
         }
-        importOrderFile "artemis-spotless.importorder"
-        eclipse().configFile "artemis-spotless-style.xml"
+        importOrderFile "../artemis-spotless.importorder"
+        eclipse().configFile "../artemis-spotless-style.xml"
 
         removeUnusedImports()
     }
@@ -83,30 +80,7 @@ modernizer {
     includeTestClasses = true
 }
 
-test {
-    useJUnitPlatform()
-    testLogging {
-        events 'FAILED', 'SKIPPED'
-    }
-    // uncomment if the tests reports are not generated
-    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
-    // ignoreFailures true
-    testLogging.showStandardStreams = true
-    reports.html.required = false
-    jvmArgs "--illegal-access=warn"
 
-}
-
-task testReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn test
-}
-
-checkstyle {
-    toolVersion "8.45"
-    configFile file("checkstyle.xml")
-    checkstyleTest.enabled = false
-}
 nohttp {
     source.include "build.gradle", "README.md"
 }
@@ -116,50 +90,24 @@ configurations {
     implementation.exclude module: "spring-boot-starter-tomcat"
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    //jhipster-needle-gradle-repositories - JHipster will add additional repositories
-}
+
+apply from: "../gradle/dependencies.gradle"
 
 dependencies {
-    // import JHipster dependencies BOM
-    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
-
     // Use ", version: jhipsterDependenciesVersion, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
     implementation group: "tech.jhipster", name: "jhipster-framework", {
         exclude group: "org.springframework", module: "spring-webmvc"
     }
-    implementation "org.jasypt:jasypt:1.9.3"
-    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     implementation "javax.annotation:javax.annotation-api"
     implementation "io.dropwizard.metrics:metrics-core"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.7.2"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
-    implementation "javax.cache:cache-api:1.1.1"
     implementation "commons-beanutils:commons-beanutils:${commons_beanutils_version}"
     implementation "org.apache.commons:commons-lang3"
-    implementation "commons-codec:commons-codec:1.15"
-    implementation "javax.transaction:javax.transaction-api:1.3"
-    implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "io.projectreactor.kafka:reactor-kafka"
-    implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation("org.springframework.boot:spring-boot-starter-webflux:${spring_boot_version}") {
         exclude module: "spring-boot-starter-tomcat"
     }
-    implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "io.netty:netty-tcnative-boringssl-static"
-    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
     implementation "org.zalando:problem-spring-webflux"
     implementation "org.springframework.cloud:spring-cloud-starter-gateway"
     implementation "com.github.vladimir-bukhtoyarov:bucket4j-core"
@@ -168,47 +116,16 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.4"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.5"
     implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
-    implementation "org.springframework.security:spring-security-config:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.data:spring-data-jpa"
-
-    implementation "io.jsonwebtoken:jjwt-api:0.11.2"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
-    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
-    implementation("io.springfox:springfox-oas")
-    implementation("io.springfox:springfox-swagger2:3.0.0") {
-        exclude module: "mapstruct"
-    }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
 
-    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
-        exclude group: "com.vaadin.external.google", module: "android-json"
-    }
-    testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
-        exclude module: "junit"
-        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-        exclude group: "com.vaadin.external.google", module: "android-json"
-    }
-    testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
-    testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
-    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.20.1"
-    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.20.1"
+    implementation("io.springfox:springfox-oas")
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}")
+
     testImplementation "org.testcontainers:kafka"
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
-}
-
-task cleanResources(type: Delete) {
-    delete "build/resources"
-}
-
-wrapper {
-    gradleVersion = "7.2"
 }
 
 node {
@@ -217,18 +134,22 @@ node {
     npmVersion = "${npm_version}"
 }
 
-// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
-checkstyle {
-    toolVersion "${checkstyle_version}"
-    configFile file("checkstyle.xml")
-    checkstyleTest.enabled = false
-    maxErrors = 0
+task executeCheckstyle (type: Exec) {
+    commandLine "./gradlew", ":gateway:checkstyleMain", "-x", "webapp"
 }
 
-task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "npm", "-x", "webapp"
+task executeTests (type: Exec) {
+    commandLine "./gradlew", ":gateway:test", "-x", "webapp"
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
+    commandLine "./gradlew", ":gateway:build", "-x", "webapp", "-x", ":gateway:test", "-x", "jacocoTestCoverageVerification"
+}
+
+// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
+checkstyle {
+    toolVersion "${checkstyle_version}"
+    configFile file("../checkstyle.xml")
+    checkstyleTest.enabled = false
+    maxErrors = 0
 }

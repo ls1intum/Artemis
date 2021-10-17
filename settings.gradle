@@ -11,4 +11,6 @@ pluginManagement {
     }
 }
 
+
 rootProject.name = 'Artemis'
+include 'gateway'
