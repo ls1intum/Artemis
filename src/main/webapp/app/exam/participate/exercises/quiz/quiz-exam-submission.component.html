@@ -7,7 +7,7 @@
                         *ngIf="question.type === DRAG_AND_DROP"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                         (click)="navigateToQuestion(question.id!)"
-                        [ngbTooltip]="dragAndDropMappings[question.id!]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                        [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                         [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
                     >
                         <b class="fa">DD</b>
@@ -16,7 +16,7 @@
                         *ngIf="question.type === MULTIPLE_CHOICE"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                         (click)="navigateToQuestion(question.id!)"
-                        [ngbTooltip]="selectedAnswerOptions[question.id!]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                        [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                         [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
                     >
                         <b class="fa">MC</b>
@@ -25,7 +25,7 @@
                         *ngIf="question.type === SHORT_ANSWER"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
                         (click)="navigateToQuestion(question.id!)"
-                        [ngbTooltip]="shortAnswerSubmittedTexts[question.id!]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                        [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                         [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
                     >
                         <b class="fa">SA</b>

@@ -200,6 +200,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         course_statistics: 'statistics.course_statistics_title',
         grading_system: 'artemisApp.gradingSystem.title',
         exercise_statistics: 'exercise-statistics.title',
+        text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
+        user_settings: 'artemisApp.userSettings.title',
     };
 
     /**

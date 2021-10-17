@@ -127,4 +127,18 @@ public class PostResource {
         postService.deletePostById(courseId, postId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
     }
+
+    /**
+     * POST /courses/{courseId}/posts/similarity-check : trigger a similarity check for post to be created
+     *
+     * @param courseId id of the course the post should be published in
+     * @param post     post to create
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/posts/similarity-check")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) throws URISyntaxException {
+        List<Post> similarPosts = postService.getSimilarPosts(courseId, post);
+        return ResponseEntity.ok().body(similarPosts);
+    }
 }
