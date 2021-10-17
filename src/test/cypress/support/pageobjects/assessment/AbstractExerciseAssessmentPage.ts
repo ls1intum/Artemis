@@ -1,4 +1,4 @@
-import { PUT, BASE_API } from './../../constants';
+import { PUT, BASE_API, POST } from './../../constants';
 /**
  * Parent class for all exercise assessment pages.
  */
@@ -18,7 +18,9 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     submit() {
+        cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitTextAssessment');
         cy.get('[jhitranslate="entity.action.submit"]').click();
+        return cy.wait('@submitTextAssessment');
         // TODO: The alert is currently broken
         // cy.contains('Your assessment was submitted successfully!').should('be.visible');
     }
