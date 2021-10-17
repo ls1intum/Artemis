@@ -69,7 +69,7 @@
                             | {{ assessmentLocks.tutor }}
                         </div>
                         <div *ngIf="!isAtLeastInstructor">
-                            {{ assessmentLocks.tutor }}
+                            {{ assessmentLocks.tutor }} |
                             <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutorId }">
                                 {{ assessmentLocks.tutor }}
                             </a>
