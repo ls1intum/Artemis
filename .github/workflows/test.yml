@@ -109,6 +109,8 @@ jobs:
       timeout-minutes: 45
       steps:
           - uses: actions/checkout@v2
+            with:
+                fetch-depth: 0
           - name: Setup Node.js
             uses: actions/setup-node@v2.4.1
             with:
