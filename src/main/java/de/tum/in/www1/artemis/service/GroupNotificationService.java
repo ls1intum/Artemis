@@ -218,10 +218,11 @@ public class GroupNotificationService {
     private void saveAndSend(GroupNotification notification, Object notificationSubject) {
         if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
+            messagingTemplate.convertAndSend(notification.getTopic(), notification);
+            return;
         }
-        else {
-            groupNotificationRepository.save(notification);
-        }
+
+        groupNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
 
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
