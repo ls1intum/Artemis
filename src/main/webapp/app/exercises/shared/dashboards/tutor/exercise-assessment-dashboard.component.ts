@@ -143,43 +143,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo: AssessmentDashboardInformationEntry;
 
     // graph
-    unassessessedSubmissionsTitle: string;
+    unassessessedSubmissions: string;
     automaticAssisstedSubmissions: string;
     manualAssessedSubmissions: string;
-    get assessments(): any[] {
-        return [
-            {
-                name: this.unassessessedSubmissionsTitle,
-                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
-            },
-            {
-                name: this.manualAssessedSubmissions,
-                value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
-            },
-            {
-                name: this.automaticAssisstedSubmissions,
-                value: this.numberOfAutomaticAssistedAssessments.total,
-            },
-        ];
-    }
     view: [number, number] = [350, 150];
     legendPosition = LegendPosition.Below;
-    get customColors(): any[] {
-        return [
-            {
-                name: this.unassessessedSubmissionsTitle,
-                value: '#F4A7B6',
-            },
-            {
-                name: this.manualAssessedSubmissions,
-                value: '#98C7EF',
-            },
-            {
-                name: this.automaticAssisstedSubmissions,
-                value: '#FFDD9C',
-            },
-        ];
-    }
+    assessments: any[];
+    customColors: any[];
 
     // extension points, see shared/extension-point
     @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
@@ -223,14 +193,44 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
         this.translateService.onLangChange.subscribe(() => {
-            this.setupGraphTranslations();
+            this.setupGraph();
         });
     }
 
-    setupGraphTranslations() {
-        this.unassessessedSubmissionsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
+    setupGraph() {
+        this.unassessessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
         this.automaticAssisstedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
         this.manualAssessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
+
+        this.customColors = [
+            {
+                name: this.unassessessedSubmissions,
+                value: '#F4A7B6',
+            },
+            {
+                name: this.manualAssessedSubmissions,
+                value: '#98C7EF',
+            },
+            {
+                name: this.automaticAssisstedSubmissions,
+                value: '#FFDD9C',
+            },
+        ];
+
+        this.assessments = [
+            {
+                name: this.unassessessedSubmissions,
+                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+            },
+            {
+                name: this.manualAssessedSubmissions,
+                value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
+            },
+            {
+                name: this.automaticAssisstedSubmissions,
+                value: this.numberOfAutomaticAssistedAssessments.total,
+            },
+        ];
     }
 
     /**
@@ -304,6 +304,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
+
+                this.setupGraph();
             },
             (response: string) => this.onError(response),
         );
@@ -368,6 +370,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     this.complaintsEnabled = this.statsForDashboard.complaintsEnabled;
                     this.feedbackRequestEnabled = this.statsForDashboard.feedbackRequestEnabled;
                     this.calculateAssessmentProgressInformation();
+
+                    this.setupGraph();
                 },
                 (response: string) => this.onError(response),
             );
@@ -377,8 +381,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
-
-        this.setupGraphTranslations();
     }
 
     get yourStatusTitle(): string {
