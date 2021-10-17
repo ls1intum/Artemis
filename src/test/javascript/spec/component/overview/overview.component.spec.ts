@@ -33,6 +33,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -85,6 +86,7 @@ describe('Overview Component', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: MetisService, useClass: MetisService },
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
