@@ -42,7 +42,7 @@ struct MainView: View {
                         }.pickerStyle(WheelPickerStyle())
                     }.padding()
                 }
-                /// The user can create and display a list pf random unnsorted dates via a simple button tap.
+                /// The user can create and display a list of random unsorted dates via a simple button tap.
                 Button(action: self.createRandomDates) {
                     HStack {
                         Image(systemName: "calendar.badge.plus").font(.largeTitle).foregroundColor(.white)
@@ -94,7 +94,7 @@ struct MainView: View {
     }
     
     /**
-     Creates random dates in the Context and displays a list of unnsorted Dates.
+     Creates random dates in the Context and displays a list of unsorted Dates.
 
      - Parameter none
     */
