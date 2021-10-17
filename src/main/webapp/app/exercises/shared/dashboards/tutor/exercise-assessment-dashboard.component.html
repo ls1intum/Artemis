@@ -285,10 +285,11 @@
                         <table
                             class="table table-striped exercise-table"
                             *ngIf="
-                                (unassessedSubmissionByCorrectionRound &&
+                                ((unassessedSubmissionByCorrectionRound &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0) ||
-                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0);
+                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0)) &&
+                                    !exercise.allowComplaintsForAutomaticAssessments;
                                 else noSubmissions
                             "
                         >
@@ -311,6 +312,7 @@
                                         <jhi-result
                                             [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                             [participation]="submission.participation!"
+                                            [exercise]="exercise"
                                         ></jhi-result>
                                     </td>
                                     <td>
@@ -321,7 +323,7 @@
                                             *ngIf="
                                                 !!submission.results && submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined
                                             "
-                                            >{{ round(submission.results![correctionRound]!.score) }} %</span
+                                            >{{ roundScoreSpecifiedByCourseSettings(submission.results![correctionRound]!.score, getCourseFromExercise(exercise)) }} %</span
                                         >
                                     </td>
                                     <td *ngIf="exercise.type === ExerciseType.TEXT">

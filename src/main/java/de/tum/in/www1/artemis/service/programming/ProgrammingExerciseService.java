@@ -150,11 +150,7 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         scheduleOperations(programmingExercise.getId());
-
-        // Notify tutors only if this a course exercise
-        if (programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-        }
+        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
 
         return programmingExercise;
     }

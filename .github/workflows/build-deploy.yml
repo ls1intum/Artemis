@@ -55,6 +55,8 @@ jobs:
         cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
+      env:
+        NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -88,7 +90,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const opts = github.issues.listForRepo.endpoint.merge({
+          const opts = github.rest.issues.listForRepo.endpoint.merge({
             owner: context.repo.owner,
             repo: context.repo.repo,
             labels: ['lock:${{ matrix.environment }}']
@@ -99,7 +101,7 @@ jobs:
           } else if (issues.length > 1) {
             core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
           } else if (context.issue && context.issue.number) {
-            await github.issues.addLabels({
+            await github.rest.issues.addLabels({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
