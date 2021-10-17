@@ -34,7 +34,7 @@ on:
 env:
   CI: true
   node: 14.x
-  java: 16
+  java: 17
 
 jobs:
 
