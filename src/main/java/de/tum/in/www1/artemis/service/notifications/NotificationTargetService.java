@@ -15,10 +15,20 @@ public class NotificationTargetService {
 
     // EXERCISE related targets
 
+    /**
+     * Get the needed target for "ExerciseCreated" notifications
+     * @param exercise that was created
+     * @return the final target property
+     */
     public String getExerciseCreatedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, "exerciseCreated");
     }
 
+    /**
+     * Get the needed target for "ExerciseUpdated" notifications
+     * @param exercise that was updated
+     * @return the final target property
+     */
     public String getExerciseUpdatedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, "exerciseUpdated");
     }
@@ -76,10 +86,6 @@ public class NotificationTargetService {
 
     // LECTURE related targets
 
-    public String getAttachmentUpdated(Lecture lecture) {
-        return getLectureTarget(lecture, "attachmentUpdated");
-    }
-
     /**
      * Create JSON representation for a GroupNotification for a Lecture.
      *
@@ -97,6 +103,11 @@ public class NotificationTargetService {
         return target.toString();
     }
 
+    /**
+     * Get the needed target for "AttachmentUpdated" notifications
+     * @param lecture where an attachment was updated
+     * @return the final target property
+     */
     public String getAttachmentUpdatedTarget(Lecture lecture) {
         return getLectureTarget(lecture, "attachmentUpdated");
     }
@@ -122,6 +133,11 @@ public class NotificationTargetService {
 
     // POST related targets
 
+    /**
+     * Get the needed target for "LecturePost" notifications
+     * @param post which contains the needed lecture
+     * @return the final target property
+     */
     public String getLecturePostTarget(Post post) {
         JsonObject target = new JsonObject();
         target.addProperty("id", post.getId());
@@ -130,6 +146,11 @@ public class NotificationTargetService {
         return target.toString();
     }
 
+    /**
+     * Get the needed target for "ExercisePost" notifications
+     * @param post which contains the needed exercise
+     * @return the final target property
+     */
     public String getExercisePostTarget(Post post) {
         JsonObject target = new JsonObject();
         target.addProperty("id", post.getId());
@@ -138,6 +159,11 @@ public class NotificationTargetService {
         return target.toString();
     }
 
+    /**
+     * Get the needed target for "CoursePost" notifications
+     * @param post which contains the needed course
+     * @return the final target property
+     */
     public String getCoursePostTarget(Post post) {
         JsonObject target = new JsonObject();
         target.addProperty("id", post.getId());
