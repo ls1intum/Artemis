@@ -1,6 +1,6 @@
 import { BASE_API, POST, PUT } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
-import dayjs from 'dayjs';
+import day from 'dayjs';
 
 // pageobjects
 const assessmentEditor = artemis.pageobjects.modelingExercise.assessmentEditor;
@@ -29,8 +29,14 @@ describe('Modeling Exercise Spec', () => {
         });
     });
 
-    beforeEach('Create modeling exercise and submission', () => {
-        courseManagementRequests.createModelingExercise({ course }, undefined, undefined, dayjs().add(5, 'seconds')).then((resp) => {
+    before('Create modeling exercise and submission', () => {
+        courseManagementRequests.createModelingExercise(
+            { course },
+            undefined,
+            undefined,
+            day().add(5, 'seconds'),
+            day().add(1, 'hour')
+        ).then((resp) => {
             modelingExercise = resp.body;
             cy.login(student);
             courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
@@ -42,11 +48,6 @@ describe('Modeling Exercise Spec', () => {
     after('Delete test course', () => {
         cy.login(admin);
         courseManagementRequests.deleteCourse(course.id);
-    });
-
-    afterEach('Delete modeling exercise', () => {
-        cy.login(instructor);
-        courseManagementRequests.deleteModelingExercise(modelingExercise.id);
     });
 
     it('Tutor can assess a submission', () => {
@@ -67,28 +68,39 @@ describe('Modeling Exercise Spec', () => {
         assessmentEditor.assessComponent(0, 'Unnecessary');
         cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitModelingAssessment');
         assessmentEditor.submit();
-        cy.wait('@submitModelingAssessment');
+        cy.wait('@submitModelingAssessment').its('response.statusCode').should('eq', 200);
     });
 
-    it('Student can view the assessment and complain', () => {
-        cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
-        cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 10 points');
-        cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
-        cy.url().should('contain', `/courses/${course.id}/modeling-exercises/${modelingExercise.id}/participate/`);
-        cy.get('.col-xl-8').should('contain.text', 'thanks, i hate it');
-        cy.get('jhi-complaint-interactions > :nth-child(1) > .mt-4 > :nth-child(1)').click();
-        cy.get('#complainTextArea').type('Thanks i hate you :^)');
-        cy.intercept(POST, BASE_API + 'complaints').as('complaintCreated');
-        cy.get('.col-6 > .btn').click();
-        cy.wait('@complaintCreated');
-    });
+    describe('Handling complaints', () => {
+        before(() => {
+            cy.login(admin);
+            courseManagementRequests
+                .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
+                .its('body')
+                .then((exercise) => { modelingExercise = exercise; });
+            cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+        });
 
-    it('Instructor can see complaint and reject it', () => {
-        cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-        cy.get(`[href="/course-management/${course.id}/complaints"]`).click();
-        cy.get('tr > .text-center >').click();
-        cy.get('#responseTextArea').type('lorem ipsum...');
-        cy.get('#rejectComplaintButton').click();
-        cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
+        it('Student can view the assessment and complain', () => {
+            cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 10 points');
+            cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
+            cy.url().should('contain', `/courses/${course.id}/modeling-exercises/${modelingExercise.id}/participate/`);
+            cy.get('.col-xl-8').should('contain.text', 'Thanks, good job.');
+            cy.get('jhi-complaint-interactions > :nth-child(1) > .mt-4 > :nth-child(1)').click();
+            cy.get('#complainTextArea').type('Thanks i hate you :^)');
+            cy.intercept(POST, BASE_API + 'complaints').as('complaintCreated');
+            cy.get('.col-6 > .btn').click();
+            cy.wait('@complaintCreated');
+        });
+
+        it('Instructor can see complaint and reject it', () => {
+            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
+            cy.get(`[href="/course-management/${course.id}/complaints"]`).click();
+            cy.get('tr > .text-center >').click();
+            cy.get('#responseTextArea').type('lorem ipsum...');
+            cy.get('#rejectComplaintButton').click();
+            cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
+        });
     });
 });

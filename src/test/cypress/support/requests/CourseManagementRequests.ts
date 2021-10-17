@@ -248,6 +248,19 @@ export class CourseManagementRequests {
         });
     }
 
+    updateModelingExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateModelingExercise(exercise);
+    }
+
+    updateModelingExercise (exercise: any) {
+        return cy.request({
+            url: MODELING_EXERCISE_BASE,
+            method: PUT,
+            body: exercise,
+        });
+    }
+
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
             url: `${MODELING_EXERCISE_BASE}/${exerciseID}`,
