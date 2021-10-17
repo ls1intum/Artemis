@@ -1520,7 +1520,7 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses/:courseId/:courseGroup : Add multiple users to the students of the course so that they can access the course
+     * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
      *
@@ -1534,8 +1534,8 @@ public class CourseResource {
      */
     @PostMapping("courses/{courseId}/{courseGroup}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<StudentDTO>> addStudentsToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
-        log.debug("REST request to add {}" + courseGroup + "as to course {}" + courseId, studentDtos);
+    public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
+        log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }

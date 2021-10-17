@@ -582,4 +582,47 @@ public class UserService {
             saveUser(user);
         }
     }
+
+    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login) {
+        try {
+            // 1) we use the registration number and try to find the student in the Artemis user database
+            var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            if (optionalStudent.isPresent()) {
+                var student = optionalStudent.get();
+                // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
+                // course)
+                if (!student.getGroups().contains(courseGroupName)) {
+                    this.addUserToGroup(student, courseGroupName, courseGroupRole);
+                }
+                return optionalStudent;
+            }
+
+            // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a
+            // potential
+            // external user management system
+            optionalStudent = this.createUserFromLdap(registrationNumber);
+            if (optionalStudent.isPresent()) {
+                var student = optionalStudent.get();
+                // the newly created user needs to get the rights to access the course
+                this.addUserToGroup(student, courseGroupName, courseGroupRole);
+                return optionalStudent;
+            }
+
+            // 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
+            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+            if (optionalStudent.isPresent()) {
+                var student = optionalStudent.get();
+                // the newly created user needs to get the rights to access the course
+                this.addUserToGroup(student, courseGroupName, courseGroupRole);
+                return optionalStudent;
+            }
+
+            log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
+        }
+        catch (Exception ex) {
+            log.warn("Error while processing user with registration number " + registrationNumber, ex);
+        }
+        return Optional.empty();
+    }
+
 }
