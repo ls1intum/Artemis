@@ -30,6 +30,8 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -102,6 +104,7 @@ describe('NavbarComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
+                { provide: MetisService, useClass: MockMetisService },
             ],
         })
             .compileComponents()

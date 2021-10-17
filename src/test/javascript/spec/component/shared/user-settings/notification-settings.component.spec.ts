@@ -12,6 +12,8 @@ import { MockComponent } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { AlertService } from 'app/core/util/alert.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
@@ -19,7 +21,12 @@ describe('NotificationSettingsComponent', () => {
 
     const imports = [ArtemisTestModule];
     const declarations = [MockComponent(AlertComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
-    const providers = [MockProvider(AlertService), { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }];
+    const providers = [
+        MockProvider(AlertService),
+        { provide: LocalStorageService, useClass: MockSyncStorage },
+        { provide: SessionStorageService, useClass: MockSyncStorage },
+        { provide: MetisService, useClass: MockMetisService },
+    ];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
