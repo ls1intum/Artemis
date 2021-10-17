@@ -26,7 +26,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Attachment attachment, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             String notificationText) {
-        String title, text;
+        String title;
+        String text;
         if (notificationType == NotificationType.ATTACHMENT_CHANGE) {
             title = NotificationTitleTypeConstants.ATTACHMENT_CHANGE_TITLE;
             text = "Attachment \"" + attachment.getName() + "\" updated.";
@@ -67,7 +68,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Exercise exercise, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             String notificationText) {
-        String title, text;
+        String title;
+        String text;
         switch (notificationType) {
             case EXERCISE_CREATED -> {
                 title = NotificationTitleTypeConstants.EXERCISE_CREATED_TITLE;
@@ -145,7 +147,8 @@ public class GroupNotificationFactory {
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
-        String title, text;
+        String title;
+        String text;
         Course course;
         GroupNotification notification;
         switch (notificationType) {
@@ -217,7 +220,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
-        String title, text;
+        String title;
+        String text;
         switch (notificationType) {
             case COURSE_ARCHIVE_STARTED -> {
                 title = NotificationTitleTypeConstants.COURSE_ARCHIVE_STARTED_TITLE;
@@ -255,7 +259,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
-        String title, text;
+        String title;
+        String text;
         switch (notificationType) {
             case EXAM_ARCHIVE_STARTED -> {
                 title = NotificationTitleTypeConstants.EXAM_ARCHIVE_STARTED_TITLE;
