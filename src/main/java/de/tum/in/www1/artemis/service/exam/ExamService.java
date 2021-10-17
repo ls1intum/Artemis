@@ -192,7 +192,7 @@ public class ExamService {
      * <ul>
      *     <li>All StudentExams</li>
      *     <li>All Exercises including:
-     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseService#delete}</li>
+     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseService#reset}</li>
      * </ul>
      * @param examId the ID of the exam to be reset
      */
@@ -202,7 +202,13 @@ public class ExamService {
         log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.reset(exercise);
+                }
+            }
+        }
         studentExamRepository.deleteAll(exam.getStudentExams());
     }
 

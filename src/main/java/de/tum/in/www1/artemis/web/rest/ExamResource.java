@@ -501,16 +501,16 @@ public class ExamResource {
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Exam> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to reset exam : {}", examId);
         var exam = examRepository.findByIdElseThrow(examId);
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
-        examService.reset(examId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
+        examService.reset(exam.getId());
+        return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
     }
 
     /**

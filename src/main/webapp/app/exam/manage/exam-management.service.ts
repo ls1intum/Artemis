@@ -339,8 +339,8 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    reset(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
+    reset(courseId: number, examId: number): Observable<EntityResponseType> {
+        return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
     }
 
     public static convertDateFromClient(exam: Exam): Exam {

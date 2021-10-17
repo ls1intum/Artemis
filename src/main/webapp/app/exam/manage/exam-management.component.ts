@@ -14,6 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import dayjs from 'dayjs';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -30,6 +31,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    resetType = ActionType.Reset;
 
     constructor(
         private route: ActivatedRoute,
@@ -121,9 +123,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      */
     resetExam(examId: number): void {
         this.examManagementService.reset(this.course.id!, examId).subscribe(
-            () => {
+            (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
-                // TODO: think if something needs to be done here
+                this.exams = this.exams.map((exam) => (exam.id === examId ? res.body! : exam));
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

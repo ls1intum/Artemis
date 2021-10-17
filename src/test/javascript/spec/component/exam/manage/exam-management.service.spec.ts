@@ -635,4 +635,22 @@ describe('Exam Management Service Tests', () => {
         req.flush({});
         tick();
     }));
+
+    it('should reset an exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1, studentExams: [{ id: 1 }] };
+        const expected: Exam = { id: 1, studentExams: [] };
+
+        // WHEN
+        service.reset(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq(expected));
+
+        // THEN
+        const req = httpMock.expectOne({
+            method: 'DELETE',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/reset`,
+        });
+
+        req.flush(expected);
+        tick();
+    }));
 });

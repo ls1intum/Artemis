@@ -247,4 +247,19 @@ describe('Exam Management Component', () => {
         // THEN
         expect(sortService.sortByProperty).to.have.been.calledOnce;
     });
+
+    it('Should reset an exam when reset exam is called', () => {
+        // GIVEN
+        comp.exams = [{ ...exam, studentExams: [{ id: 1 }] }];
+        comp.course = course;
+        const responseFakeReset = { body: { ...exam, studentExams: [] } } as HttpResponse<any>;
+        sinon.replace(service, 'reset', sinon.fake.returns(of(responseFakeReset)));
+
+        // WHEN
+        comp.resetExam(exam.id!);
+
+        // THEN
+        expect(service.reset).to.have.been.calledOnce;
+        expect(comp.exams[0].studentExams!.length).to.eq(0);
+    });
 });

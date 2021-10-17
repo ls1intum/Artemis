@@ -357,6 +357,10 @@
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
             },
+            "reset": {
+                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+            },
             "checklist": {
                 "title": "Exam Checklist",
                 "introduction": "You can find detailed documentation with screenshots about the exam mode in the",
