@@ -1,8 +1,11 @@
-import { BASE_API, POST } from '../../../support/constants';
+import { BASE_API, POST, PUT } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
+import dayjs from 'dayjs';
 
 // pageobjects
-const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExercise.assessmentEditor;
+const assessmentEditor = artemis.pageobjects.modelingExercise.assessmentEditor;
+const courseAssessmentDashboard = artemis.pageobjects.assessment.course;
+const exerciseAssessmentDashboard = artemis.pageobjects.assessment.exercise;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -22,11 +25,12 @@ describe('Modeling Exercise Spec', () => {
             course = courseResp.body;
             courseManagementRequests.addStudentToCourse(course.id, student.username);
             courseManagementRequests.addInstructorToCourse(course.id, instructor);
+            courseManagementRequests.addTutorToCourse(course, tutor);
         });
     });
 
     beforeEach('Create modeling exercise and submission', () => {
-        courseManagementRequests.createModelingExercise({ course }).then((resp) => {
+        courseManagementRequests.createModelingExercise({ course }, undefined, undefined, dayjs().add(5, 'seconds')).then((resp) => {
             modelingExercise = resp.body;
             cy.login(student);
             courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
@@ -35,7 +39,7 @@ describe('Modeling Exercise Spec', () => {
         });
     });
 
-    after('Delete the test course', () => {
+    after('Delete test course', () => {
         cy.login(admin);
         courseManagementRequests.deleteCourse(course.id);
     });
@@ -45,28 +49,25 @@ describe('Modeling Exercise Spec', () => {
         courseManagementRequests.deleteModelingExercise(modelingExercise.id);
     });
 
-    it.only('Tutor can assess the submission', () => {
+    it('Tutor can assess a submission', () => {
         cy.login(tutor, '/course-management');
         cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
         cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
-        cy.get('#field_showFinishedExercise').should('be.visible').click();
-        cy.get('tbody > tr > :nth-child(6) >').click();
-        cy.get('.btn').click();
-        cy.wait(5000);
-        cy.get('.btn').click();
+        courseAssessmentDashboard.checkShowFinishedExercises();
+        courseAssessmentDashboard.clickExerciseDashboardButton();
+        exerciseAssessmentDashboard.clickHaveReadInstructionsButton();
+        exerciseAssessmentDashboard.clickStartNewAssessment();
         cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
-        cy.get('jhi-unreferenced-feedback > .btn').click();
-        cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(1) > :nth-child(2)').clear().type('1');
-        cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(2) > :nth-child(2)').clear().type('thanks, i hate it');
-        modelingExerciseExampleSubmission.openAssessmentForComponent(1);
-        modelingExerciseExampleSubmission.assessComponent(-1, 'False');
-        modelingExerciseExampleSubmission.openAssessmentForComponent(2);
-        modelingExerciseExampleSubmission.assessComponent(2, 'Good');
-        modelingExerciseExampleSubmission.openAssessmentForComponent(3);
-        modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-        cy.get('[jhitranslate="entity.action.submit"]').click();
-        // TODO: The alert is currently broken
-        // cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
+        assessmentEditor.addNewFeedback(1, 'Thanks, good job.');
+        assessmentEditor.openAssessmentForComponent(1);
+        assessmentEditor.assessComponent(-1, 'False');
+        assessmentEditor.openAssessmentForComponent(2);
+        assessmentEditor.assessComponent(2, 'Good');
+        assessmentEditor.openAssessmentForComponent(3);
+        assessmentEditor.assessComponent(0, 'Unnecessary');
+        cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitModelingAssessment');
+        assessmentEditor.submit();
+        cy.wait('@submitModelingAssessment');
     });
 
     it('Student can view the assessment and complain', () => {
