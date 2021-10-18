@@ -64,8 +64,8 @@ public class GroupNotificationService {
                 case EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_PRACTICE, (String) typeSpecificInformation);
                 case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, NotificationType.QUIZ_EXERCISE_STARTED,
                         (String) typeSpecificInformation);
-                case EXERCISE_UPDATED -> createNotification((Exercise) notificationSubject, null, group, NotificationType.EXERCISE_UPDATED, (String) typeSpecificInformation);
-                case EXERCISE_CREATED -> createNotification((Exercise) notificationSubject, null, group, NotificationType.EXERCISE_CREATED, (String) typeSpecificInformation);
+                case EXERCISE_UPDATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_UPDATED, (String) typeSpecificInformation);
+                case EXERCISE_CREATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_CREATED, (String) typeSpecificInformation);
                 // Archive Types
                 case COURSE_ARCHIVE_STARTED -> createNotification((Course) notificationSubject, author, group, NotificationType.COURSE_ARCHIVE_STARTED,
                         (List<String>) typeSpecificInformation);
@@ -161,7 +161,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
-                exercise, null, null);
+                exercise, notificationText, userRepository.getUser());
     }
 
     /**
@@ -195,8 +195,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutIllegalSubmissionsForExercise(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.ILLEGAL_SUBMISSION,
-                exercise, notificationText, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, NotificationType.ILLEGAL_SUBMISSION, exercise, notificationText, null);
     }
 
     /**
@@ -276,8 +275,7 @@ public class GroupNotificationService {
      * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutCourseArchiveState(Course course, NotificationType notificationType, List<String> archiveErrors) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, notificationType,
-                course, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, course, archiveErrors, null);
     }
 
     /**
@@ -288,8 +286,7 @@ public class GroupNotificationService {
      * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutExamArchiveState(Exam exam, NotificationType notificationType, List<String> archiveErrors) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, notificationType,
-                exam, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, exam, archiveErrors, null);
     }
 
     /**
