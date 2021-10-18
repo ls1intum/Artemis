@@ -15,8 +15,8 @@ const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
     matrikelNummer: 'matrikelnummer',
     matriculationNumber: 'matriculationnumber',
-    firstNameOfStudent: 'firstnameofstudent',
-    familyNameOfStudent: 'familynameofstudent',
+    firstNameOfUser: 'firstname',
+    familyNameOfUser: 'familyname',
     firstName: 'firstname',
     familyName: 'familyname',
     lastName: 'lastname',
@@ -27,15 +27,15 @@ const csvColumns = Object.freeze({
     benutzerName: 'benutzername',
 });
 
-type CsvStudent = object;
+type CsvUser = object;
 
 @Component({
-    selector: 'jhi-students-import-dialog',
-    templateUrl: './students-import-dialog.component.html',
-    styleUrls: ['./students-import-dialog.component.scss'],
+    selector: 'jhi-users-import-dialog',
+    templateUrl: './users-import-dialog.component.html',
+    styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class StudentsImportDialogComponent implements OnDestroy {
+export class UsersImportDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
@@ -44,8 +44,8 @@ export class StudentsImportDialogComponent implements OnDestroy {
     @Input() courseGroup: String;
     @Input() exam: Exam;
 
-    studentsToImport: StudentDTO[] = [];
-    notFoundStudents: StudentDTO[] = [];
+    usersToImport: StudentDTO[] = [];
+    notFoundUsers: StudentDTO[] = [];
 
     isParsing = false;
     validationError?: string;
@@ -67,96 +67,90 @@ export class StudentsImportDialogComponent implements OnDestroy {
     }
 
     private resetDialog() {
-        this.studentsToImport = [];
-        this.notFoundStudents = [];
+        this.usersToImport = [];
+        this.notFoundUsers = [];
         this.hasImported = false;
     }
 
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             this.resetDialog();
-            this.studentsToImport = await this.readStudentsFromCSVFile(event, event.target.files[0]);
+            this.usersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
         }
     }
 
     /**
-     * Reads students from a csv file into a list of StudentDTOs
+     * Reads users from a csv file into a list of StudentDTOs
      * The column "registrationNumber" is mandatory since the import requires it as an identifier
      * @param event File change event from the HTML input of type file
-     * @param csvFile File that contains one student per row and has at least the columns specified in csvColumns
+     * @param csvFile File that contains one user per row and has at least the columns specified in csvColumns
      */
-    private async readStudentsFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[]> {
-        let csvStudents: CsvStudent[] = [];
+    private async readUsersFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[]> {
+        let csvUsers: CsvUser[] = [];
         try {
             this.isParsing = true;
             this.validationError = undefined;
-            csvStudents = await this.parseCSVFile(csvFile);
+            csvUsers = await this.parseCSVFile(csvFile);
         } catch (error) {
             this.validationError = error.message;
         } finally {
             this.isParsing = false;
         }
-        if (csvStudents.length > 0) {
-            this.performExtraValidations(csvFile, csvStudents);
+        if (csvUsers.length > 0) {
+            this.performExtraValidations(csvFile, csvUsers);
         }
         if (this.validationError) {
             event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
-        return csvStudents.map(
-            (student) =>
+        return csvUsers.map(
+            (users) =>
                 ({
-                    registrationNumber: student[csvColumns.registrationNumber] || student[csvColumns.matrikelNummer] || student[csvColumns.matriculationNumber] || '',
-                    login:
-                        student[csvColumns.login] ||
-                        student[csvColumns.username] ||
-                        student[csvColumns.user] ||
-                        student[csvColumns.benutzer] ||
-                        student[csvColumns.benutzerName] ||
-                        '',
-                    firstName: student[csvColumns.firstName] || student[csvColumns.firstNameOfStudent] || '',
-                    lastName: student[csvColumns.lastName] || student[csvColumns.familyName] || student[csvColumns.familyNameOfStudent] || '',
+                    registrationNumber: users[csvColumns.registrationNumber] || users[csvColumns.matrikelNummer] || users[csvColumns.matriculationNumber] || '',
+                    login: users[csvColumns.login] || users[csvColumns.username] || users[csvColumns.user] || users[csvColumns.benutzer] || users[csvColumns.benutzerName] || '',
+                    firstName: users[csvColumns.firstName] || users[csvColumns.firstNameOfUser] || '',
+                    lastName: users[csvColumns.lastName] || users[csvColumns.familyName] || users[csvColumns.familyNameOfUser] || '',
                 } as StudentDTO),
         );
     }
 
     /**
-     * Performs validations on the parsed students
+     * Performs validations on the parsed users
      * - checks if values for the required column {csvColumns.registrationNumber} are present
      *
-     * @param csvFile File that contains one student per row and has at least the columns specified in csvColumns
-     * @param csvStudents Parsed list of students
+     * @param csvFile File that contains one user per row and has at least the columns specified in csvColumns
+     * @param csvUsers Parsed list of users
      */
-    performExtraValidations(csvFile: File, csvStudents: CsvStudent[]) {
-        const invalidStudentEntries = this.computeInvalidStudentEntries(csvStudents);
-        if (invalidStudentEntries) {
+    performExtraValidations(csvFile: File, csvUsers: CsvUser[]) {
+        const invalidUserEntries = this.computeInvalidUserEntries(csvUsers);
+        if (invalidUserEntries) {
             const msg = (body: string) => `
                 Could not read file <b>${csvFile.name}</b> due to the following error:
                 <ul class="mt-1"><li><b>Rows must have a value in one of the required columns ${body}</b></li></ul>
                 Please repair the file and try again.
             `;
             const maxLength = 30;
-            const entriesFormatted = invalidStudentEntries.length <= maxLength ? invalidStudentEntries : invalidStudentEntries.slice(0, maxLength) + '...';
+            const entriesFormatted = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
             this.validationError = msg(`${csvColumns.registrationNumber} or ${csvColumns.login}: ${entriesFormatted}`);
         }
     }
 
     /**
      * Returns a comma separated list of row numbers that contains invalid student entries
-     * @param csvStudents Parsed list of students
+     * @param csvUsers Parsed list of users
      */
-    computeInvalidStudentEntries(csvStudents: CsvStudent[]): string | null {
+    computeInvalidUserEntries(csvUser: CsvUser[]): string | null {
         const invalidList: number[] = [];
-        for (const [i, student] of csvStudents.entries()) {
+        for (const [i, user] of csvUser.entries()) {
             if (
-                !student[csvColumns.registrationNumber] &&
-                !student[csvColumns.matrikelNummer] &&
-                !student[csvColumns.matriculationNumber] &&
-                !student[csvColumns.login] &&
-                !student[csvColumns.user] &&
-                !student[csvColumns.username] &&
-                !student[csvColumns.benutzer] &&
-                !student[csvColumns.benutzerName]
+                !user[csvColumns.registrationNumber] &&
+                !user[csvColumns.matrikelNummer] &&
+                !user[csvColumns.matriculationNumber] &&
+                !user[csvColumns.login] &&
+                user[csvColumns.user] &&
+                !user[csvColumns.username] &&
+                !user[csvColumns.benutzer] &&
+                !user[csvColumns.benutzerName]
             ) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
@@ -169,59 +163,59 @@ export class StudentsImportDialogComponent implements OnDestroy {
      * Parses a csv file and returns a promise with a list of rows
      * @param csvFile File that should be parsed
      */
-    private parseCSVFile(csvFile: File): Promise<CsvStudent[]> {
+    private parseCSVFile(csvFile: File): Promise<CsvUser[]> {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
-                complete: (results) => resolve(results.data as CsvStudent[]),
+                complete: (results) => resolve(results.data as CsvUser[]),
                 error: (error) => reject(error),
             });
         });
     }
 
     /**
-     * Sends the import request to the server with the list of students to be imported
+     * Sends the import request to the server with the list of users to be imported
      */
-    importStudents() {
+    importUsers() {
         this.isImporting = true;
         if (this.courseGroup && !this.exam) {
-            this.courseManagementService.addStudentsToGroupInCourse(this.courseId, this.studentsToImport, this.courseGroup).subscribe(
+            this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe(
                 (res) => this.onSaveSuccess(res),
                 () => this.onSaveError(),
             );
         } else if (!this.courseGroup && this.exam) {
-            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.studentsToImport).subscribe(
+            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.usersToImport).subscribe(
                 (res) => this.onSaveSuccess(res),
                 () => this.onSaveError(),
             );
         } else {
-            this.alertService.error('importStudents.genericErrorMessage');
+            this.alertService.error('importUsers.genericErrorMessage');
         }
     }
 
     /**
-     * True if this student was successfully imported, false otherwise
-     * @param student The student to be checked
+     * True if this user was successfully imported, false otherwise
+     * @param user The user to be checked
      */
-    wasImported(student: StudentDTO): boolean {
-        return this.hasImported && !this.wasNotImported(student);
+    wasImported(user: StudentDTO): boolean {
+        return this.hasImported && !this.wasNotImported(user);
     }
 
     /**
-     * True if this student could not be imported, false otherwise
-     * @param student The student to be checked
+     * True if this user could not be imported, false otherwise
+     * @param user The user to be checked
      */
-    wasNotImported(student: StudentDTO): boolean {
-        if (this.hasImported && this.notFoundStudents?.length === 0) {
+    wasNotImported(user: StudentDTO): boolean {
+        if (this.hasImported && this.notFoundUsers?.length === 0) {
             return false;
         }
 
-        for (const notFound of this.notFoundStudents) {
+        for (const notFound of this.notFoundUsers) {
             if (
-                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === student.registrationNumber) ||
-                (notFound.login?.length > 0 && notFound.login === student.login)
+                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === user.registrationNumber) ||
+                (notFound.login?.length > 0 && notFound.login === user.login)
             ) {
                 return true;
             }
@@ -231,38 +225,38 @@ export class StudentsImportDialogComponent implements OnDestroy {
     }
 
     /**
-     * Number of students that were successfully imported
+     * Number of Users that were successfully imported
      */
-    get numberOfStudentsImported(): number {
-        return !this.hasImported ? 0 : this.studentsToImport.length - this.numberOfStudentsNotImported;
+    get numberOfUsersImported(): number {
+        return !this.hasImported ? 0 : this.usersToImport.length - this.numberOfUsersNotImported;
     }
 
     /**
-     * Number of students which could not be imported
+     * Number of users which could not be imported
      */
-    get numberOfStudentsNotImported(): number {
-        return !this.hasImported ? 0 : this.notFoundStudents.length;
+    get numberOfUsersNotImported(): number {
+        return !this.hasImported ? 0 : this.notFoundUsers.length;
     }
 
     get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.studentsToImport?.length;
+        return this.isImporting || !this.usersToImport?.length;
     }
 
     /**
      * Callback method that is called when the import request was successful
-     * @param {HttpResponse<StudentDTO[]>} notFoundStudents - List of students that could NOT be imported since they were not found
+     * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
      */
-    onSaveSuccess(notFoundStudents: HttpResponse<StudentDTO[]>) {
+    onSaveSuccess(notFoundUsers: HttpResponse<StudentDTO[]>) {
         this.isImporting = false;
         this.hasImported = true;
-        this.notFoundStudents = notFoundStudents.body! || [];
+        this.notFoundUsers = notFoundUsers.body! || [];
     }
 
     /**
      * Callback method that is called when the import request failed
      */
     onSaveError() {
-        this.alertService.error('importStudents.genericErrorMessage');
+        this.alertService.error('importUsers.genericErrorMessage');
         this.isImporting = false;
     }
 

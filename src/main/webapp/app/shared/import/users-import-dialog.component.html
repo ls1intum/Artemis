@@ -1,7 +1,7 @@
-<form id="studentsImportDialogForm" name="importForm" role="form" novalidate>
+<form id="userImportDialogForm" name="importForm" role="form" novalidate>
     <div class="modal-header">
         <h4 class="modal-title">
-            <span [jhiTranslate]="'importStudents.dialogTitle'"> Import students into: </span>
+            <span [jhiTranslate]="'importUsers.dialogTitle'"> Import users into: </span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
@@ -25,10 +25,10 @@
                 <div *ngIf="validationError" class="mt-4 mb-2 text-danger" [innerHTML]="validationError"></div>
             </div>
         </div>
-        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="form-group mt-4">
+        <div *ngIf="usersToImport && usersToImport.length > 0" class="form-group mt-4">
             <div>
-                <label class="label-narrow font-weight-bold" jhiTranslate="importUsers.studentsForImport.label"> Students for import</label>
-                <jhi-help-icon placement="right" text="importUsers.studentsForImport.tooltip" class="me-1"></jhi-help-icon>
+                <label class="label-narrow font-weight-bold" jhiTranslate="importUsers.usersForImport.label"> Users for import</label>
+                <jhi-help-icon placement="right" text="importUsers.usersForImport.tooltip" class="me-1"></jhi-help-icon>
             </div>
             <table class="table table-striped table-sm header-fixed mt-2">
                 <thead>
@@ -41,31 +41,31 @@
                     </tr>
                 </thead>
                 <tbody class="table-body--students">
-                    <tr *ngFor="let student of studentsToImport; let i = index" [class.import-success]="wasImported(student)" [class.import-fail]="wasNotImported(student)">
+                    <tr *ngFor="let user of usersToImport; let i = index" [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
                         <th scope="row">{{ i + 1 }}</th>
-                        <td style="width: 300px">{{ student.registrationNumber }}</td>
-                        <td>{{ student.login }}</td>
-                        <td>{{ student.firstName }}</td>
-                        <td>{{ student.lastName }}</td>
+                        <td style="width: 300px">{{ user.registrationNumber }}</td>
+                        <td>{{ user.login }}</td>
+                        <td>{{ user.firstName }}</td>
+                        <td>{{ user.lastName }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="flex-shrink-0 me-2 d-flex">
+        <div *ngIf="usersToImport && usersToImport.length > 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="!hasImported; else numbersAfterImport">
-                <strong>{{ 'importUsers.numberOfStudents' | artemisTranslate }}</strong>
-                <span>&nbsp;{{ studentsToImport.length }}</span>
+                <strong>{{ 'importUsers.numberOfUsers' | artemisTranslate }}</strong>
+                <span>&nbsp;{{ usersToImport.length }}</span>
             </div>
             <ng-template #numbersAfterImport>
                 <div>
-                    <strong>{{ 'importUsers.numberOfStudentsImported' | artemisTranslate }}</strong>
-                    <span>{{ numberOfStudentsImported }}</span>
+                    <strong>{{ 'importUsers.numberOfUsersImported' | artemisTranslate }}</strong>
+                    <span>{{ numberOfUsersImported }}</span>
                 </div>
                 <div class="ms-2">
-                    <strong>{{ 'importUsers.numberOfStudentsNotImported' | artemisTranslate }}</strong>
-                    <span>{{ numberOfStudentsNotImported }}</span>
+                    <strong>{{ 'importUsers.numberOfUsersNotImported' | artemisTranslate }}</strong>
+                    <span>{{ numberOfUsersNotImported }}</span>
                 </div>
             </ng-template>
         </div>
@@ -80,7 +80,7 @@
                 name="importButton"
                 class="btn btn-primary"
                 [disabled]="isSubmitDisabled"
-                (click)="importStudents()"
+                (click)="importUsers()"
             >
                 <fa-icon [icon]="'upload'" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>

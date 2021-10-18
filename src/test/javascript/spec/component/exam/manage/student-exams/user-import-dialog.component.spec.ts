@@ -19,14 +19,14 @@ import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import { AlertService } from 'app/core/util/alert.service';
-import { StudentsImportDialogComponent } from 'app/shared/import/students-import-dialog.component';
+import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('StudentsImportButtonComponent', () => {
-    let fixture: ComponentFixture<StudentsImportDialogComponent>;
-    let component: StudentsImportDialogComponent;
+describe('UsersImportButtonComponent', () => {
+    let fixture: ComponentFixture<UsersImportDialogComponent>;
+    let component: UsersImportDialogComponent;
     let examManagementService: ExamManagementService;
 
     const studentCsvColumns = 'REGISTRATION_NUMBER,FIRST_NAME_OF_STUDENT,FAMILY_NAME_OF_STUDENT';
@@ -38,7 +38,7 @@ describe('StudentsImportButtonComponent', () => {
         return TestBed.configureTestingModule({
             imports: [FormsModule],
             declarations: [
-                StudentsImportDialogComponent,
+                UsersImportDialogComponent,
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
@@ -50,7 +50,7 @@ describe('StudentsImportButtonComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(StudentsImportDialogComponent);
+                fixture = TestBed.createComponent(UsersImportDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
 
@@ -69,23 +69,23 @@ describe('StudentsImportButtonComponent', () => {
     });
 
     it('should reset dialog when selecting csv file', async () => {
-        component.studentsToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1' }];
-        component.notFoundStudents = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2' }];
+        component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1' }];
+        component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2' }];
         component.hasImported = true;
 
         const event = { target: { files: [studentCsvColumns] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.studentsToImport).to.be.empty;
-        expect(component.notFoundStudents).to.be.empty;
+        expect(component.usersToImport).to.be.empty;
+        expect(component.notFoundUsers).to.be.empty;
     });
 
     it('should read no students from csv file', async () => {
         const event = { target: { files: [studentCsvColumns] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.studentsToImport).to.be.empty;
-        expect(component.notFoundStudents).to.be.empty;
+        expect(component.usersToImport).to.be.empty;
+        expect(component.notFoundUsers).to.be.empty;
     });
 
     it('should read students from csv file', async () => {
@@ -93,8 +93,8 @@ describe('StudentsImportButtonComponent', () => {
         const event = { target: { files: [csv] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.studentsToImport.length).to.equal(2);
-        expect(component.notFoundStudents).to.be.empty;
+        expect(component.usersToImport.length).to.equal(2);
+        expect(component.notFoundUsers).to.be.empty;
     });
 
     it('should have validation error for invalid csv', async () => {
@@ -117,13 +117,13 @@ describe('StudentsImportButtonComponent', () => {
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
         sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
 
-        component.studentsToImport = studentsToImport;
-        component.importStudents();
+        component.usersToImport = studentsToImport;
+        component.importUsers();
 
         expect(examManagementService.addStudentsToExam).to.have.been.calledOnce;
         expect(component.isImporting).to.be.false;
         expect(component.hasImported).to.be.true;
-        expect(component.notFoundStudents.length).to.equal(studentsNotFound.length);
+        expect(component.notFoundUsers.length).to.equal(studentsNotFound.length);
     });
 
     it('should compute invalid student entries', function () {
@@ -156,8 +156,8 @@ describe('StudentsImportButtonComponent', () => {
         const fakeResponse = { body: notImportedStudents } as HttpResponse<StudentDTO[]>;
         sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
 
-        component.studentsToImport = importedStudents.concat(notImportedStudents);
-        component.importStudents();
+        component.usersToImport = importedStudents.concat(notImportedStudents);
+        component.importUsers();
 
         importedStudents.forEach((student) => expect(component.wasImported(student)).to.be.true);
         notImportedStudents.forEach((student) => expect(component.wasImported(student)).to.be.false);
@@ -176,7 +176,7 @@ describe('StudentsImportButtonComponent', () => {
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
         sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
 
-        component.studentsToImport = studentsToImport;
+        component.usersToImport = studentsToImport;
 
         fixture.detectChanges();
 
@@ -190,7 +190,7 @@ describe('StudentsImportButtonComponent', () => {
         expect(examManagementService.addStudentsToExam).to.have.been.calledOnce;
         expect(component.isImporting).to.be.false;
         expect(component.hasImported).to.be.true;
-        expect(component.notFoundStudents.length).to.equal(studentsNotFound.length);
+        expect(component.notFoundUsers.length).to.equal(studentsNotFound.length);
 
         // Reset call counter
         sinon.restore();

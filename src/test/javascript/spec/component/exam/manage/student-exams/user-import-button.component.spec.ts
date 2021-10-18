@@ -9,25 +9,25 @@ import { Exam } from 'app/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('StudentsImportButtonComponent', () => {
-    let fixture: ComponentFixture<StudentsImportButtonComponent>;
-    let comp: StudentsImportButtonComponent;
+describe('UsersImportButtonComponent', () => {
+    let fixture: ComponentFixture<UsersImportButtonComponent>;
+    let comp: UsersImportButtonComponent;
     let modalService: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbModule), TranslateModule.forRoot()],
-            declarations: [StudentsImportButtonComponent, MockComponent(ButtonComponent)],
+            declarations: [UsersImportButtonComponent, MockComponent(ButtonComponent)],
             providers: [MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(StudentsImportButtonComponent);
+                fixture = TestBed.createComponent(UsersImportButtonComponent);
                 comp = fixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
             });
@@ -42,7 +42,7 @@ describe('StudentsImportButtonComponent', () => {
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
-        comp.openStudentsImportDialog(new MouseEvent('click'));
+        comp.openUsersImportDialog(new MouseEvent('click'));
 
         const openStudentsExamImportDialogButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(openStudentsExamImportDialogButton).to.exist;

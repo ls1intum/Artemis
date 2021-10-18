@@ -28,7 +28,7 @@ import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/cou
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -73,7 +73,7 @@ describe('Course Management Detail Component', () => {
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),
-                MockComponent(StudentsImportButtonComponent),
+                MockComponent(UsersImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),

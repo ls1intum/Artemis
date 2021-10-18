@@ -11,8 +11,8 @@ import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-e
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/components/help-icon-without-translation.component';
-import { StudentsImportDialogComponent } from 'app/shared/import/students-import-dialog.component';
-import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule, ArtemisMarkdownModule],
@@ -27,8 +27,8 @@ import { StudentsImportButtonComponent } from 'app/shared/import/students-import
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
-        StudentsImportDialogComponent,
-        StudentsImportButtonComponent,
+        UsersImportDialogComponent,
+        UsersImportButtonComponent,
     ],
     exports: [
         ButtonComponent,
@@ -39,8 +39,8 @@ import { StudentsImportButtonComponent } from 'app/shared/import/students-import
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
-        StudentsImportDialogComponent,
-        StudentsImportButtonComponent,
+        UsersImportDialogComponent,
+        UsersImportButtonComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}

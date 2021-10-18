@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { StudentsImportDialogComponent } from 'app/shared/import/students-import-dialog.component';
+import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 
@@ -13,11 +13,11 @@ import { Exam } from 'app/entities/exam.model';
             [btnSize]="buttonSize"
             [icon]="'plus'"
             [title]="'importUsers.buttonLabel'"
-            (onClick)="openStudentsImportDialog($event)"
+            (onClick)="openUsersImportDialog($event)"
         ></jhi-button>
     `,
 })
-export class StudentsImportButtonComponent {
+export class UsersImportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -31,12 +31,12 @@ export class StudentsImportButtonComponent {
     constructor(private modalService: NgbModal) {}
 
     /**
-     * Open up import dialog for students
+     * Open up import dialog for users
      * @param {Event} event - Mouse Event which invoked the opening
      */
-    openStudentsImportDialog(event: MouseEvent) {
+    openUsersImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(StudentsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(UsersImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.courseGroup = this.courseGroup;
         modalRef.componentInstance.exam = this.exam;

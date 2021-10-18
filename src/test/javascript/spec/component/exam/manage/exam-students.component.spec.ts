@@ -23,7 +23,7 @@ import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
@@ -51,7 +51,7 @@ describe('ExamStudentsComponent', () => {
             imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
             declarations: [
                 ExamStudentsComponent,
-                MockComponent(StudentsImportButtonComponent),
+                MockComponent(UsersImportButtonComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(AlertComponent),
                 MockDirective(TranslateDirective),

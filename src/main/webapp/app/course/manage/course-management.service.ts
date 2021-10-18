@@ -418,7 +418,7 @@ export class CourseManagementService {
      * @param studentDtos Student DTOs of student to add to the exam
      * @return studentDtos of students that were not found in the system
      */
-    addStudentsToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
+    addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, studentDtos, { observe: 'response' });
     }
 
