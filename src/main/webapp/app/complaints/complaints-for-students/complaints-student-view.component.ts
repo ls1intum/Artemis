@@ -141,10 +141,10 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (!this.course?.maxRequestMoreFeedbackTimeDays) {
             return false;
         }
-        if (!this.exercise.assessmentDueDate || completionDate.isAfter(this.exercise.assessmentDueDate)) {
-            return completionDate.isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
+        if (!this.exercise.assessmentDueDate || dayjs(completionDate).isAfter(dayjs(this.exercise.assessmentDueDate))) {
+            return dayjs(completionDate).isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
         }
-        return this.exercise.assessmentDueDate.isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
+        return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
     }
 
     /**
@@ -155,7 +155,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (this.testRun) {
             return true;
         } else if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isBetween(this.exam.examStudentReviewStart, this.exam.examStudentReviewEnd);
+            return this.serverDateService.now().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd));
         }
         return false;
     }

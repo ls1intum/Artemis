@@ -1,5 +1,5 @@
 <div *ngIf="showComplaintsSection">
-    <div class="mt-4" *ngIf="result?.completionDate && isCurrentUserSubmissionAuthor && complaint">
+    <div class="mt-4" *ngIf="result?.completionDate && isCurrentUserSubmissionAuthor && !complaint">
         <button
             *ngIf="isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)"
             class="btn btn-primary"
