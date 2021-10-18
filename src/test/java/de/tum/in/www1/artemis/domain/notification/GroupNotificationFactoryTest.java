@@ -106,7 +106,6 @@ public class GroupNotificationFactoryTest {
         post = mock(Post.class);
         when(post.getExercise()).thenReturn(exercise);
         when(post.getLecture()).thenReturn(lecture);
-        when(post.getCourse()).thenReturn(course);
 
         answerPost = mock(AnswerPost.class);
         when(answerPost.getPost()).thenReturn(post);
@@ -330,7 +329,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 
@@ -344,7 +343,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 
@@ -358,7 +357,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_COURSE_POST_TITLE;
         expectedText = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 
@@ -372,7 +371,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_ANNOUNCEMENT_POST_TITLE;
         expectedText = "Course \"" + course.getTitle() + "\" got a new announcement.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 
@@ -388,7 +387,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 
@@ -402,7 +401,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 
@@ -416,7 +415,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), post.getCourse().getId());
+        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
 

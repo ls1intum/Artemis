@@ -32,6 +32,8 @@ public class NotificationTargetService {
 
     private final String PROBLEM_STATEMENT_TEXT = "problemStatement";
 
+    private final String EXERCISE_TEXT = "exercise";
+
     private final String EXERCISES_TEXT = "exercises";
 
     private final String EXERCISE_ID_TEXT = "exerciseId";
@@ -96,7 +98,7 @@ public class NotificationTargetService {
     public String getExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
         JsonObject target = new JsonObject();
         target.addProperty(PROBLEM_STATEMENT_TEXT, exercise.getProblemStatement());
-        target.addProperty(EXERCISES_TEXT, exercise.getId());
+        target.addProperty(EXERCISE_TEXT, exercise.getId());
         target.addProperty(EXAM_TEXT, exercise.getExamViaExerciseGroupOrCourseMember().getId());
         target.addProperty(ENTITY_TEXT, EXAMS_TEXT);
         target.addProperty(COURSE_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -179,8 +181,8 @@ public class NotificationTargetService {
     public String getLecturePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
-        target.addProperty(LECTURE_ID_TEXT, course.getId());
-        target.addProperty(COURSE_TEXT, post.getCourse().getId());
+        target.addProperty(LECTURE_ID_TEXT, post.getLecture().getId());
+        target.addProperty(COURSE_TEXT, course.getId());
         return target.toString();
     }
 
@@ -193,8 +195,8 @@ public class NotificationTargetService {
     public String getExercisePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
-        target.addProperty(EXERCISE_ID_TEXT, course.getId());
-        target.addProperty(COURSE_TEXT, post.getCourse().getId());
+        target.addProperty(EXERCISE_ID_TEXT, post.getExercise().getId());
+        target.addProperty(COURSE_TEXT, course.getId());
         return target.toString();
     }
 
