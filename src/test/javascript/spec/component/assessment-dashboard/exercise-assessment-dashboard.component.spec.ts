@@ -307,9 +307,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toEqual(undefined);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
         expect(comp.submissionLockLimitReached).toEqual(false);
-        expect(comp.submissionsByCorrectionRound?.get(0)!.length).toEqual(0);
+        expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
@@ -324,7 +324,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
         expect(comp.submissionLockLimitReached).toEqual(true);
-        expect(comp.submissionsByCorrectionRound?.get(1)!.length).toEqual(0);
+        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
     it('should have correct percentages calculated', () => {
@@ -341,7 +341,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toEqual(7);
         expect(comp.totalAssessmentPercentage.inTime).toEqual(75);
         expect(comp.totalAssessmentPercentage.late).toEqual(20);
-        expect(comp.submissionsByCorrectionRound?.get(1)!.length).toEqual(0);
+        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
     it('should  set assessed Submission and latest result', () => {
