@@ -62,7 +62,8 @@ public class AnswerPostService extends PostingService {
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
+
+        Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
         // use post from database rather than user input
@@ -73,7 +74,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
-        sendNotification(post);
+        sendNotification(post, course);
 
         return savedAnswerPost;
     }
@@ -150,25 +151,25 @@ public class AnswerPostService extends PostingService {
      *
      * @param post which is answered
      */
-    void sendNotification(Post post) {
+    void sendNotification(Post post, Course course) {
         // notify via course
         if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post);
-            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post);
-            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
             // protect Sample Solution, Grading Instructions, etc.
             post.getExercise().filterSensitiveInformation();
             return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post);
-            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
         }
     }
 

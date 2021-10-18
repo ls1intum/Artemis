@@ -164,10 +164,10 @@ public class NotificationTargetService {
      * @param post which contains the needed course
      * @return the final target property
      */
-    public String getCoursePostTarget(Post post) {
+    public String getCoursePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty("id", post.getId());
-        target.addProperty("course", post.getCourse().getId());
+        target.addProperty("course", course.getId());
         return target.toString();
     }
 }
