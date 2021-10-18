@@ -2,7 +2,6 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
-import { round } from 'app/shared/util/utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
@@ -25,6 +24,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     LEFT = false;
     RIGHT = true;
     displayedNumberOfWeeks = 16;
+    showsCurrentWeek = true;
 
     // Chart related
     chartTime: any;
@@ -92,7 +92,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
             for (let i = 0; i < array.length; i++) {
-                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
+                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course);
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
         } else {
@@ -126,6 +126,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     switchTimeSpan(index: boolean): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
+        this.showsCurrentWeek = this.currentPeriod === 0;
         this.reloadChart();
     }
 

@@ -3,37 +3,42 @@
     <div class="row flex-nowrap" style="display: flex; justify-content: center; align-items: center; flex: 1">
         <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
-                <ngx-charts-line-chart
-                    [view]="[containerRef.offsetWidth, 450]"
-                    [scheme]="chartColor"
-                    [legend]="legend"
-                    [showXAxisLabel]="showXAxisLabel"
-                    [showYAxisLabel]="showYAxisLabel"
-                    [xAxis]="xAxis"
-                    [yAxis]="yAxis"
-                    [xAxisLabel]="xAxisLabel"
-                    [yAxisLabel]="yAxisLabel"
-                    [timeline]="timeline"
-                    [results]="data"
-                    [yScaleMin]=0
-                    [yScaleMax]=100
-                    [yAxisTickFormatting]="formatYAxis"
-                >
-                    <ng-template #tooltipTemplate let-model="model">
-                        <h3 class="tooltip-header"> {{ findAbsoluteValue(model) }} </h3>
-                        <span>{{model.series}} in {{model.name}}</span>
-                    </ng-template>
-                    <ng-template #seriesTooltipTemplate let-model="model">
-                        <span>
-                            {{model[0].name}}: {{ findAbsoluteValue(model[0]) }}
-                        </span>
-                    </ng-template>
-                </ngx-charts-line-chart>
+            <ngx-charts-line-chart
+                [view]="[containerRef.offsetWidth, 450]"
+                [scheme]="chartColor"
+                [legend]="legend"
+                [showXAxisLabel]="showXAxisLabel"
+                [showYAxisLabel]="showYAxisLabel"
+                [xAxis]="xAxis"
+                [yAxis]="yAxis"
+                [xAxisLabel]="xAxisLabel"
+                [yAxisLabel]="yAxisLabel"
+                [timeline]="timeline"
+                [results]="data"
+                [yScaleMin]="0"
+                [yScaleMax]="100"
+                [yAxisTickFormatting]="formatYAxis"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <h3 class="tooltip-header">{{ findAbsoluteValue(model) }}</h3>
+                    <span>{{ model.series }} in {{ model.name }}</span>
+                </ng-template>
+                <ng-template #seriesTooltipTemplate let-model="model">
+                    <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
+                </ng-template>
+            </ngx-charts-line-chart>
         </div>
         <h1 *ngIf="loading" style="z-index: 1; display: flex; justify-content: center; align-items: center; position: absolute">
             <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
         </h1>
-        <fa-icon [icon]="'arrow-right'" size="2x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
+        <fa-icon
+            [icon]="'arrow-right'"
+            size="2x"
+            class="col-md-1 d-flex justify-content-start align-items-center"
+            role="button"
+            (click)="switchTimeSpan(RIGHT)"
+            [ngClass]="showsCurrentWeek ? 'hide-arrow' : ''"
+        ></fa-icon>
     </div>
     <h5 class="col-md-10 offset-md-1 text-center mt-4">{{ chartTime }}</h5>
 </div>
