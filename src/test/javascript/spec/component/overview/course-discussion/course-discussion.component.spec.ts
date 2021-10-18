@@ -27,6 +27,8 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs';
 import {
     metisResolvingAnswerPostUser1,
@@ -73,6 +75,7 @@ describe('CourseDiscussionComponent', () => {
                 { provide: PostService, useClass: MockPostService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [
                 CourseDiscussionComponent,
@@ -177,6 +180,17 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+    }));
+
+    it('should search for posts with certain id when pattern is used', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.searchText = '#1';
+        component.onSearch();
+        tick();
+        fixture.detectChanges();
+        expect(component.posts).toHaveLength(1);
     }));
 
     it('should invoke metis service without and update filter setting when checkbox is ticked', fakeAsync(() => {

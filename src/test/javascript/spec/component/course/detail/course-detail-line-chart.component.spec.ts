@@ -44,7 +44,7 @@ describe('CourseDetailLineChartComponent', () => {
     });
 
     beforeEach(() => {
-        component.courseId = 1;
+        component.course = { id: 1 };
         component.numberOfStudentsInCourse = 50;
     });
 

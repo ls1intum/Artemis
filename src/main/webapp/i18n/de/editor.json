@@ -20,13 +20,14 @@
             "unsubmittedChanges": "Nicht abgesendet.",
             "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.\nDu musst die gespeicherten Änderungen manuell absenden.",
             "changesConflict": "Konflikt",
-            "changesConflictTooltip": "Dein Repository befindet sich ein einem Konfliktzustand. Löse den Konflikt, um weiterzuarbeiten.",
+            "changesConflictTooltip": "Dein Repository befindet sich in einem Konfliktzustand. Löse den Konflikt, um weiterzuarbeiten.",
             "submittingChanges": "Sendet...",
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
             "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
             "refreshingFiles": "Aktualisiert...",
             "submit": "Absenden",
+            "submitDescription": "Staged, committed, pushed, kompiliert und testet Deine Änderungen.",
             "buildOutput": "Build Ergebnisse",
             "building": "Build und Tests werden ausgeführt...",
             "buildFailed": "Build gescheitert",
@@ -42,19 +43,24 @@
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "conflict": {
-                "resolveConflict": "Konflikt bereinigen"
+                "resetRepository": "Setze Dein Repository zurück, um Deine Teilnahme fortzusetzen",
+                "resolveConflict": "Konflikt beheben",
+                "conflictExplanationShort": "Behebt den Konflikt Deines Repositories.",
+                "conflictExplanationLong": "Dein Repository befindet sich in einem Konfliktzustand. Dies kann passieren, wenn Du sowohl lokal, als auch mit dem Artemis Online-Editor arbeitest. Falls Du mit git vertraut bist, das Repository befindet sich im Zustand eines Merge- oder Checkout-Konflikts. Du kannst auf den unten stehenden Knopf klicken, um Dein Repository auf den letzten Commit zurückzusetzen.",
+                "conflictWarning": "Dies löscht alle nicht committeten Änderungen (die Änderungen, die Du seit dem letzten Absenden im Online-Editor gemacht hast)!"
             },
             "refresh": {
+                "refreshFilesDescription": "Aktualisiert alle Dateien. Dies überschreibt alle nicht gespeicherten Änderungen.",
                 "performRefresh": "Aktualisieren",
-                "refreshExplanationShort": "Aktualisiere alle Dateien aus deinem Repository.",
-                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
+                "refreshExplanationShort": "Aktualisiert alle Dateien aus Deinem Repository.",
+                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn Du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
-                "deleteFileConfirm": "Bist du sicher, dass du die Datei <strong>{{filename}}</strong> löschen willst?",
-                "deleteFolderConfirm": "Bist du sicher, dass du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
+                "deleteFileConfirm": "Bist Du sicher, dass Du die Datei <strong>{{filename}}</strong> löschen willst?",
+                "deleteFolderConfirm": "Bist Du sicher, dass Du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
                 "unsavedChanges": "Datei enthält ungespeicherte Änderungen",
                 "createFolderRoot": "Verzeichnis auf Root Level erstellen",
                 "createFileRoot": "Datei auf Root Level erstellen",

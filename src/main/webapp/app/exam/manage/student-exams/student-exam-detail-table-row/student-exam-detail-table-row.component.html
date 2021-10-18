@@ -9,7 +9,7 @@
 </td>
 <td class="align-middle">
     <ng-container class="score" *ngIf="result && result.score != undefined && exercise && exercise.maxPoints; else scoreNotDefined">
-        {{ rounding((result.score * exercise.maxPoints) / 100) }}
+        {{ roundScoreSpecifiedByCourseSettings((result.score * exercise.maxPoints) / 100, course) }}
     </ng-container>
     <ng-template #scoreNotDefined>
         {{ 'N/A' }}

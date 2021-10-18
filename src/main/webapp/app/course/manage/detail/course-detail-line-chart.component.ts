@@ -4,6 +4,8 @@ import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { round } from 'app/shared/util/utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -12,7 +14,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 })
 export class CourseDetailLineChartComponent implements OnChanges {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     numberOfStudentsInCourse: number;
     @Input()
@@ -78,7 +80,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private reloadChart() {
         this.loading = true;
         this.createLabels();
-        this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
+        this.service.getStatisticsData(this.course.id!, this.currentPeriod).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
             this.data = [...this.dataCopy];
         });
@@ -90,7 +92,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
             for (let i = 0; i < array.length; i++) {
-                this.dataCopy[0].series[i]['value'] = round((array[i] / this.numberOfStudentsInCourse) * 100);
+                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
         } else {
