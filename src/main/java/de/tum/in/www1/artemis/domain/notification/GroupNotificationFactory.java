@@ -144,6 +144,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
+     * @param course                the post belongs to
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType, Course course) {
@@ -244,7 +245,7 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param exam                the exam being archived
+     * @param exam                  the exam being archived
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created

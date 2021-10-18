@@ -199,7 +199,7 @@ public class NotificationTargetService {
     /**
      * Get the needed target for "CoursePost" notifications
      * @param post course-wide post
-     * @param course course the posts belongs to
+     * @param course the posts belongs to
      * @return the final target property
      */
     public String getCoursePostTarget(Post post, Course course) {
