@@ -9,7 +9,7 @@
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>
-            <jhi-students-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-students-import-button>
+            <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
             <button
                 class="btn btn btn-primary ms-auto"
                 (click)="registerAllStudentsFromCourse()"

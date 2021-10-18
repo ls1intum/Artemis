@@ -6,13 +6,13 @@ import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 
 @Component({
-    selector: 'jhi-students-import-button',
+    selector: 'jhi-user-import-button',
     template: `
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
             [icon]="'plus'"
-            [title]="'importStudents.buttonLabel'"
+            [title]="'importUsers.buttonLabel'"
             (onClick)="openStudentsImportDialog($event)"
         ></jhi-button>
     `,

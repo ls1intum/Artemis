@@ -1,5 +1,5 @@
 {
-    "importStudents": {
+    "importUsers": {
         "buttonLabel": "Nutzer importieren",
         "dialogTitle": "Nutzer importieren nach:",
         "introText": "Mit diesem Dialog können Studierende importiert werden.",
