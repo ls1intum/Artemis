@@ -26,10 +26,10 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 1. Implement SortStrategy Protocol
 Create a `SortStrategy` protocol and adjust the sorting algorithms, so that they implement this protocol.
 
-2. [task][Context Class](testContextMergeSort, testContextBubbleSort)
+2. [task][Context Class](testAttributesForContext, testContextMergeSort, testContextBubbleSort)
 Create and implement a `Context` class following the below class diagram
 
-3. [task][Policy Class](testPolicy)
+3. [task][Policy Class](testAttributesForPolicy, testPolicy)
 Create and implement a `Policy` class following the below class diagram to use the user input as a simple configuration mechanism:
 **Select the corresponding sorting algorithm the user chose in the UI of the app**
 
