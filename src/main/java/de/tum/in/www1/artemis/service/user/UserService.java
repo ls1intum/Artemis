@@ -609,8 +609,7 @@ public class UserService {
             }
 
             // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a
-            // potential
-            // external user management system
+            // potential external user management system
             optionalStudent = this.createUserFromLdap(registrationNumber);
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
