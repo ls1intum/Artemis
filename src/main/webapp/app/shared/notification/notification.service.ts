@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request-util';
-import { Params, Router } from '@angular/router';
+import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -38,7 +38,7 @@ export class NotificationService {
         private http: HttpClient,
         private accountService: AccountService,
         private courseManagementService: CourseManagementService,
-        private metisService: MetisService,
+        private serializer: UrlSerializer,
     ) {
         this.initNotificationObserver();
     }
@@ -81,12 +81,16 @@ export class NotificationService {
                 notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE
             ) {
                 const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
-                // TODO: add this
+                // Todo: WIP here
                 // read course id from url
-                // if current course id not defined or not equal to course id saved in notification
-                // use window with reload
-                // else use router.navigate
-                this.router.navigate(MetisService.getLinkForCoursePost(courseId), { queryParams });
+                const currentCourseId = 1;
+                const tree = this.router.createUrlTree(MetisService.getLinkForCoursePost(courseId), { queryParams });
+                if (currentCourseId == undefined || currentCourseId !== courseId) {
+                    window.location.href = this.serializer.serialize(tree);
+                    console.log(window.location.pathname);
+                } else {
+                    this.router.navigate(MetisService.getLinkForCoursePost(courseId), { queryParams });
+                }
             } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE) {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 this.router.navigate(MetisService.getLinkForExercisePost(courseId, target.exerciseId), { queryParams });
