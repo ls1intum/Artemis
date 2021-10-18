@@ -56,20 +56,20 @@
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
 
-                <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                    <button
-                        *ngIf="isAtLeastInstructor && exam"
-                        jhiDeleteButton
-                        [actionType]="resetType"
-                        [entityTitle]="exam.title || ''"
-                        deleteQuestion="artemisApp.examManagement.reset.question"
-                        deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
-                        (delete)="resetExam(exam.id!)"
-                        [dialogError]="dialogError$"
-                    >
-                        <fa-icon [icon]="'undo'"></fa-icon>
-                    </button>
-                </div>
+                <button
+                    *ngIf="isAtLeastInstructor"
+                    jhiDeleteButton
+                    [actionType]="resetType"
+                    [buttonSize]="buttonSize"
+                    [entityTitle]="exam.title || ''"
+                    deleteQuestion="artemisApp.examManagement.reset.question"
+                    deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+                    (delete)="resetExam()"
+                    [dialogError]="dialogError$"
+                    class="btn mt-1"
+                >
+                    <fa-icon [icon]="'undo'"></fa-icon>
+                </button>
 
                 <div class="mt-1" *ngIf="exam && isExamOver && exam.course" class="my-2 me-1">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
@@ -77,7 +77,7 @@
             </div>
             <hr />
             <!-- Exam Checklist -->
-            <div *ngIf="isAtLeastInstructor">
+            <div *ngIf="isAtLeastInstructor && exam">
                 <jhi-exam-checklist [isAtLeastInstructor]="isAtLeastInstructor" [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam"></jhi-exam-checklist>
             </div>
 

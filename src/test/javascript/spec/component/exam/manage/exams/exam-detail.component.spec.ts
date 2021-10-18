@@ -30,6 +30,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -77,6 +78,7 @@ describe('ExamDetailComponent', () => {
                 ProgressBarComponent,
                 MockDirective(NgbTooltip),
                 MockComponent(CourseExamArchiveButtonComponent),
+                MockDirective(DeleteButtonDirective),
             ],
             providers: [
                 {
@@ -211,7 +213,8 @@ describe('ExamDetailComponent', () => {
 
     it('Should reset an exam when reset exam is called', () => {
         // GIVEN
-        const responseFakeReset = {} as HttpResponse<any>;
+        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
+        const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         sinon.replace(service, 'reset', sinon.fake.returns(of(responseFakeReset)));
 
         // WHEN

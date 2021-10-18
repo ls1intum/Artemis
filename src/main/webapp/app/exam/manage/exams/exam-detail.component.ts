@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -24,6 +25,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     isAtLeastInstructor = false;
     isExamOver = true;
     resetType = ActionType.Reset;
+    buttonSize = ButtonSize.MEDIUM;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -69,8 +71,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     resetExam(): void {
         this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe(
-            () => {
+            (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
+                this.exam = res.body!;
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

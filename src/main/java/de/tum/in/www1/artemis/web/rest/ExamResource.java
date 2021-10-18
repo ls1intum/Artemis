@@ -496,21 +496,23 @@ public class ExamResource {
      * The reset operation deletes all studentExams, participations, submissions and feedback.
      *
      * @param courseId  the course to which the exam belongs
-     * @param examId    the id pf the exam to delete
+     * @param examId    the id of the exam to reset
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Exam> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to reset exam : {}", examId);
         var exam = examRepository.findByIdElseThrow(examId);
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
         examService.reset(exam.getId());
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
+        Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        examService.setExamProperties(returnExam);
+        return ResponseEntity.ok(returnExam);
     }
 
     /**
