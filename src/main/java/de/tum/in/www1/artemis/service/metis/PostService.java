@@ -70,8 +70,6 @@ public class PostService extends PostingService {
         Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
-        // set course
-        post.setCourse(course);
         // set author to current user
         post.setAuthor(user);
         // set default value display priority -> NONE
