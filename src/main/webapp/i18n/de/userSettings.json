@@ -36,7 +36,7 @@
             },
             "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine (neue) Aufgabe erstellt oder gestartet wurde",
-                "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)",
+                "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (z.B. ein Quiz)",
                 "newExercisePostDescription": "Erhalte eine Mitteilung wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
                 "newReplyForExercisePostDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
                 "attachmentChangesDescription": "Erhalte eine Mitteilung wenn ein Anhang aktualisiert wurde",
