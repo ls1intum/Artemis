@@ -15,10 +15,10 @@ class ${appName}Test: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        // Create a sorted array of the above created dates
+        // Create a sorted array of random dates
         self.sortedDates = createOrderedDatesList(11)
         
-        // Create some unsorted dates for testing
+        // Shuffle the above created dates to created an array of unsorted dates for testing
         self.unsortedDates = self.sortedDates.shuffled()
     }
     
@@ -92,11 +92,11 @@ class ${appName}Test: XCTestCase {
     func testPolicy() {
         let context = Context()
         let policy = Policy(context)
-        policy.configure(sortAlgorithm: "Merge Sort")
+        policy.configure(sortAlgorithm: SortAlgorithm.MergeSort)
         
         XCTAssertEqual("Sorting.MergeSort", String(describing: context.getSortAlgorithm()), "The Policy does not cofigure the Sorting Algorithm correctly!")
         
-        policy.configure(sortAlgorithm: "Bubble Sort")
+        policy.configure(sortAlgorithm: SortAlgorithm.BubbleSort)
         
         XCTAssertEqual("Sorting.BubbleSort", String(describing: context.getSortAlgorithm()), "The Policy does not cofigure the Sorting Algorithm correctly!")
     }
@@ -104,7 +104,7 @@ class ${appName}Test: XCTestCase {
     func testMainViewLogic() {
         let mainView = MainView()
         
-        XCTAssertEqual(mainView.sortAlgorithm, "Merge Sort", "The default sorting algorithm should be Merge Sort!")
+        XCTAssertEqual(mainView.sortAlgorithm, SortAlgorithm.MergeSort, "The default sorting algorithm should be Merge Sort!")
         Policy(mainView.context).configure(sortAlgorithm: mainView.sortAlgorithm)
         
         XCTAssertEqual(String(describing: mainView.context.getSortAlgorithm()), "Sorting.MergeSort", "The sorting algorithm was not set correctly!")
