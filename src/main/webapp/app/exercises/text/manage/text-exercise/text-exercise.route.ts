@@ -134,4 +134,8 @@ export const textExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: ':courseId/text-exercises/:exerciseId/text-cluster-statistics',
+        loadChildren: () => import('../cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
+    },
 ];

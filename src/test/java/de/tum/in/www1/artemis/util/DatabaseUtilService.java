@@ -2662,6 +2662,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100D);
+        result.setParticipation(participation);
         result.setResultString(exercise.getMaxPoints(), exercise.getMaxPoints());
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
@@ -3428,6 +3429,11 @@ public class DatabaseUtilService {
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
 
+        Course course = new Course();
+        course.setAccuracyOfScores(1);
+        storedFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+        sentFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+
         double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
         double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
         storedFeedbackResult.setScore(totalPoints, 20.0);
@@ -3709,6 +3715,16 @@ public class DatabaseUtilService {
         user.setId(1L);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepo.save(user);
+        return course;
+    }
+
+    public Course createCourseWithInstructorAndTextExercise(String login) {
+        Course course = this.createCourse();
+        TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
+        studentParticipationRepo.save(participation);
+        course.addExercises(textExercise);
+        addUsers(0, 0, 0, 1);
         return course;
     }
 

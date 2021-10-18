@@ -5,7 +5,7 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
@@ -21,7 +21,7 @@ export class CourseScoreCalculationService {
 
     constructor() {}
 
-    calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
+    calculateTotalScores(courseExercises: Exercise[], course: Course): Map<string, number> {
         const scores = new Map<string, number>();
         let pointsAchievedByStudentInCourse = 0.0;
         let maxPointsInCourse = 0;
@@ -56,20 +56,20 @@ export class CourseScoreCalculationService {
                         // In the client, these are now displayed rounded as 1.1 points.
                         // If the student adds up the displayed points, he gets a total of 5.5 points.
                         // In order to get the same total result as the student, we have to round before summing.
-                        pointsAchievedByStudentInCourse += round(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, 1);
+                        pointsAchievedByStudentInCourse += roundScoreSpecifiedByCourseSettings(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, course);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
                 }
             }
         }
-        scores.set(ABSOLUTE_SCORE, round(pointsAchievedByStudentInCourse, 1));
+        scores.set(ABSOLUTE_SCORE, roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course));
         if (maxPointsInCourse > 0) {
-            scores.set(RELATIVE_SCORE, round((pointsAchievedByStudentInCourse / maxPointsInCourse) * 100, 1));
+            scores.set(RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxPointsInCourse, course));
         } else {
             scores.set(RELATIVE_SCORE, 0);
         }
         if (reachableMaxPointsInCourse > 0) {
-            scores.set(CURRENT_RELATIVE_SCORE, round((pointsAchievedByStudentInCourse / reachableMaxPointsInCourse) * 100, 1));
+            scores.set(CURRENT_RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / reachableMaxPointsInCourse, course));
         } else {
             scores.set(CURRENT_RELATIVE_SCORE, 0);
         }

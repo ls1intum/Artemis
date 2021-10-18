@@ -1,12 +1,12 @@
 <div class="mt-3 mb-4 text-center">
     <div class="mb-2" *ngIf="exam">
         <ng-container *ngIf="exam.startDate">
-            <div *ngIf="isExamOverMultipleDays(); else examSingleDay">
+            <div *ngIf="isExamOverMultipleDays; else examSingleDay">
                 <span class="mx-2">
                     <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
                     {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}
                     -
-                    {{ endTime() | artemisDate: 'long-date' }} {{ endTime() | artemisDate: 'time' }}
+                    {{ examEndDate | artemisDate: 'long-date' }} {{ examEndDate | artemisDate: 'time' }}
                 </span>
             </div>
             <ng-template #examSingleDay>
@@ -18,16 +18,19 @@
                     <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
                     {{ exam.startDate | artemisDate: 'time' }}
                     -
-                    {{ endTime() | artemisDate: 'time' }}
+                    {{ examEndDate | artemisDate: 'time' }}
                 </span>
             </ng-template>
         </ng-container>
         <span class="mx-2" *ngIf="exam && exam.startDate && exam.endDate">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.duration' | artemisTranslate }}:</strong>
-            {{ normalWorkingTime() || 0 | artemisDurationFromSeconds }}
-            <ng-container *ngIf="studentExam && studentExam.workingTime && hasAdditionalWorkingTime()">
-                ( + {{ getAdditionalWorkingTime() | artemisDurationFromSeconds }} )
+            <ng-container *ngIf="studentExam && studentExam.workingTime && studentExam.workingTime! < normalWorkingTime!; else normalOrLongerWorkingTime">
+                {{ studentExam.workingTime || 0 | artemisDurationFromSeconds }}
             </ng-container>
+            <ng-template #normalOrLongerWorkingTime>
+                {{ normalWorkingTime || 0 | artemisDurationFromSeconds }}
+                <ng-container *ngIf="additionalWorkingTime"> ( + {{ additionalWorkingTime | artemisDurationFromSeconds }} ) </ng-container>
+            </ng-template>
         </span>
     </div>
     <div class="mb-2">

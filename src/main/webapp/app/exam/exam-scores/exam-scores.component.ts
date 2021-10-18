@@ -16,7 +16,7 @@ import {
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ChartDataSets, ChartOptions, ChartType, defaults, helpers, LinearTickOptions } from 'chart.js';
@@ -29,6 +29,8 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -71,6 +73,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     hasSecondCorrectionAndStarted: boolean;
     hasNumericGrades: boolean;
 
+    course?: Course;
+
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription?: Subscription;
@@ -85,6 +89,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit() {
@@ -97,6 +102,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const gradingScaleObservable = this.gradingSystemService
                 .findGradingScaleForExam(params['courseId'], params['examId'])
                 .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+
+            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe(
                 ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
@@ -246,7 +253,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
                             ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
+                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered)}%)`, bar._model.x, bar._model.y - 5);
                         });
                     });
                 },
@@ -657,12 +664,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Wrapper for round utility function so it can be used in the template.
-     * @param value
-     * @param exp
+     * Localizes a number, e.g. switching the decimal separator
      */
-    round(value: any, exp: number) {
-        return round(value, exp);
+    localize(numberToLocalize: number): string {
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
+    }
+
+    /**
+     * Localizes a percent number, e.g. switching the decimal separator
+     */
+    localizePercent(numberToLocalize: number): string {
+        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course!.accuracyOfScores!);
     }
 
     private convertToCSVRow(studentResult: StudentResult) {
@@ -678,9 +690,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localeConversionService.toLocaleString(round(exerciseResult.achievedPoints, 1));
+                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
                 csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localeConversionService.toLocaleString(round(exerciseResult.achievedScore, 2), 2);
+                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
             } else {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] = '';
@@ -688,8 +700,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
-        csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
+        csvRow.overAllPoints =
+            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
+        csvRow.overAllScore =
+            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow['Overall Bonus Points'] = studentResult.overallGrade;
@@ -704,12 +718,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return csvRow;
     }
 
-    toLocaleString(points: number) {
-        return this.localeConversionService.toLocaleString(points);
-    }
-
-    roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
-        return this.localeConversionService.toLocaleString(round(points, exp), fractions);
+    roundAndPerformLocalConversion(points: number | undefined) {
+        return this.localize(roundScoreSpecifiedByCourseSettings(points, this.course));
     }
 
     /**
@@ -726,8 +736,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults) {
-            const overAllPoints = round(studentResult.overallPointsAchieved, 1);
-            const overallScore = round(studentResult.overallScoreAchieved, 1);
+            const overAllPoints = roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
+            const overallScore = roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
 
             const regularCalculation = {
                 scoreAchieved: overallScore,
@@ -741,8 +751,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                examScoreDTO.scoreAchieved = round(examScoreDTO.scoreAchieved, 1);
-                examScoreDTO.pointsAchieved = round(examScoreDTO.pointsAchieved, 1);
+                examScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
+                examScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
