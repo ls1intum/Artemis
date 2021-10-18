@@ -11,7 +11,7 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { ContextInformation, CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, CourseWideContext, DisplayPriority, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -331,9 +331,9 @@ export class MetisService {
     /**
      * determines the router link components required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
-     * @return {(string | number)[]} array of router link components
+     * @return {RouteComponents} array of router link components
      */
-    getLinkForPost(post?: Post): (string | number)[] {
+    getLinkForPost(post?: Post): RouteComponents {
         if (post?.lecture) {
             return MetisService.getLinkForLecturePost(this.courseId, post.lecture.id!);
         }
@@ -343,15 +343,15 @@ export class MetisService {
         return MetisService.getLinkForCoursePost(this.courseId);
     }
 
-    static getLinkForLecturePost(courseId: number, lectureId: number): (string | number)[] {
+    static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
         return ['/courses', courseId, 'lectures', lectureId];
     }
 
-    static getLinkForExercisePost(courseId: number, exerciseId: number): (string | number)[] {
+    static getLinkForExercisePost(courseId: number, exerciseId: number): RouteComponents {
         return ['/courses', courseId, 'exercises', exerciseId];
     }
 
-    static getLinkForCoursePost(courseId: number): (string | number)[] {
+    static getLinkForCoursePost(courseId: number): RouteComponents {
         return ['/courses', courseId, 'discussion'];
     }
 

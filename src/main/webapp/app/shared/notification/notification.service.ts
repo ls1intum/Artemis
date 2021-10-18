@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request-util';
-import { Params, Router, UrlSerializer, UrlTree } from '@angular/router';
+import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -24,6 +24,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { RouteComponents } from 'app/shared/metis/metis.util';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -81,16 +82,16 @@ export class NotificationService {
                 notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE
             ) {
                 const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
-                const routerLinkComponents: any[] = MetisService.getLinkForCoursePost(targetCourseId);
-                this.navigateToNotificationTarget(targetCourseId, routerLinkComponents, queryParams);
+                const routeComponents: any[] = MetisService.getLinkForCoursePost(targetCourseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE) {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
-                const routerLinkComponents: any[] = MetisService.getLinkForExercisePost(targetCourseId, target.exerciseId);
-                this.navigateToNotificationTarget(targetCourseId, routerLinkComponents, queryParams);
+                const routeComponents: RouteComponents = MetisService.getLinkForExercisePost(targetCourseId, target.exerciseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else if (notification.title === NEW_LECTURE_POST_TITLE || notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE) {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
-                const routerLinkComponents: any[] = MetisService.getLinkForLecturePost(targetCourseId, target.lectureId);
-                this.navigateToNotificationTarget(targetCourseId, routerLinkComponents, queryParams);
+                const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lectureId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }
@@ -100,20 +101,20 @@ export class NotificationService {
     /**
      * Navigate to post related targets, decide if reload if required, i.e. when switching course context
      * @param {number} targetCourseId
-     * @param {any[]} routerLinkComponents
+     * @param {RouteComponents} routeComponents
      * @param {Params} queryParams
      */
-    navigateToNotificationTarget(targetCourseId: number, routerLinkComponents: any[], queryParams: Params): void {
+    navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
         const currentCourseId = NotificationService.getCurrentCourseId();
         // determine if reload is required when notification is clicked
         // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
         if (currentCourseId == undefined || currentCourseId !== targetCourseId) {
-            const tree = this.router.createUrlTree(routerLinkComponents, { queryParams });
+            const tree = this.router.createUrlTree(routeComponents, { queryParams });
             // navigate by string url to force reload when switching the course context
             window.location.href = this.serializer.serialize(tree);
         } else {
             // navigate with router when staying in same course context when clicking on notification
-            this.router.navigate(routerLinkComponents);
+            this.router.navigate(routeComponents);
         }
     }
 
