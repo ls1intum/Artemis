@@ -196,6 +196,8 @@ export class StudentsImportDialogComponent implements OnDestroy {
                 (res) => this.onSaveSuccess(res),
                 () => this.onSaveError(),
             );
+        } else {
+            this.alertService.error('importStudents.genericErrorMessage');
         }
     }
 
