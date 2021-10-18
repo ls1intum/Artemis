@@ -4,13 +4,10 @@
         <!--SQL script that sets the course_id for all legacy posts that only have exercise_id or lecture_id set-->
         <sql>
             UPDATE post, (
-                -- get all posts with exercise_id but without course_id -> create lookup: post_id | course_id
                 SELECT post.id, ex.course_id FROM post INNER JOIN exercise ex ON post.exercise_id = ex.id WHERE post.course_id IS NULL
                 UNION
-                -- get all posts with lecture_id but without course_id -> create lookup: post_id | course_id
                 SELECT post.id, lect.course_id FROM post INNER JOIN lecture lect ON post.lecture_id = lect.id WHERE post.course_id IS NULL
                 ) post_id_course_id_lookup
-            -- set course_id in post table to the course_id retrieved from the created lookup table
             SET post.course_id = post_id_course_id_lookup.course_id
             WHERE post.id = post_id_course_id_lookup.id;
         </sql>
