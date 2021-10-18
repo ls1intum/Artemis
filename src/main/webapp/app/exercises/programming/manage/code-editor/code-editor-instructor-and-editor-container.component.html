@@ -16,6 +16,7 @@
     *ngIf="exercise"
     [participation]="selectedParticipation!"
     [buildable]="selectedRepository !== REPOSITORY.TEST"
+    [course]="course"
     (onResizeEditorInstructions)="onResizeEditorInstructions()"
 >
     <div editorTitle>

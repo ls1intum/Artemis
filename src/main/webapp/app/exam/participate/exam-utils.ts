@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
  * @return {dayjs}
  */
 export const endTime = (exam: Exam, studentExam: StudentExam) => {
-    if (!exam || !exam.endDate) {
+    if (!exam) {
         return undefined;
     }
     if (studentExam && studentExam.workingTime && exam.startDate) {
@@ -33,21 +33,6 @@ export const normalWorkingTime = (exam: Exam): number | undefined => {
 };
 
 /**
- * Determines whether or not the student has additional working time in the exam
- *
- * @param exam
- * @param studentExam
- * @return {boolean | undefined}
- */
-export const hasAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): boolean | undefined => {
-    if (exam && exam.endDate && exam.startDate && studentExam && studentExam.workingTime) {
-        const personalEndDate = dayjs(exam.startDate).add(studentExam.workingTime, 'seconds');
-        return personalEndDate.isAfter(exam.endDate);
-    }
-    return false;
-};
-
-/**
  * Calculates the additional working time in seconds
  *
  * @param exam
@@ -55,8 +40,11 @@ export const hasAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
  * @return {number} The additional working time in seconds
  */
 export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): number => {
-    const personalEndDate = dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds');
-    return personalEndDate.diff(exam.endDate, 'seconds');
+    if (exam && exam.endDate && exam.startDate && studentExam && studentExam.workingTime) {
+        const personalEndDate = dayjs(exam.startDate).add(studentExam.workingTime, 'seconds');
+        return personalEndDate.diff(exam.endDate, 'seconds');
+    }
+    return 0;
 };
 
 /**
