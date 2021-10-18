@@ -52,7 +52,7 @@ public class SingleUserNotificationService {
     /**
      * Notify author of a post for a lecture that there is a new answer.
      *
-     * @param post that is answe3red
+     * @param post that is answered
      */
     public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
         notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
