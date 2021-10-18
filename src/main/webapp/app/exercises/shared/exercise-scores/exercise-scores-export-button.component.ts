@@ -1,8 +1,8 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Component, Injectable, Input } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -119,8 +119,9 @@ export class ExerciseScoresExportButtonComponent {
     ): string {
         const result = resultWithPoints.result;
         const { participantName, participantIdentifier } = participation;
+        const score = roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
 
-        const columns = [participantName, participantIdentifier, round(result.score!), resultWithPoints.totalPoints];
+        const columns = [participantName, participantIdentifier, score, resultWithPoints.totalPoints];
 
         gradingCriteria.map((criterion) => resultWithPoints.pointsPerCriterion.get(criterion.id!) || 0).forEach((criterionPoints) => columns.push(criterionPoints));
 

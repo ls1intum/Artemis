@@ -545,8 +545,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
         double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);
         // Set score and resultString according to maxPoints, to establish results with score > 100%
-        result.setScore(totalPoints, maxPoints);
-        result.setResultString(totalPoints, maxPoints);
+        result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setResultString(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
@@ -594,12 +594,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     /**
      * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
      *
-     * Points are rounded to one decimal place.
+     * Points are rounded as defined by the course settings.
      *
      * @param result for which the points should be summed up.
+     * @param course with the exercise the result belongs to.
      * @return the result together with the total points and the points per criterion.
      */
-    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result) {
+    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result, final Course course) {
         final Map<Long, Double> pointsPerCriterion = new HashMap<>();
         final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
 
@@ -619,14 +620,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             pointsPerCriterion.compute(criterionId, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
         }
 
-        final double totalPoints = RoundingUtil.round(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum());
+        final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);
 
         // points for feedbacks without criterion were only needed for totalPoints calculation
         pointsPerCriterion.remove(null);
 
-        // round the point sums once at the end
+        // round the point sums per criterion once at the end
         pointsPerCriterion.entrySet().forEach(entry -> {
-            Double rounded = RoundingUtil.round(entry.getValue());
+            Double rounded = RoundingUtil.roundScoreSpecifiedByCourseSettings(entry.getValue(), course);
             entry.setValue(rounded);
         });
 

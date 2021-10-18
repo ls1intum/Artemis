@@ -11,6 +11,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import dayjs from 'dayjs';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import * as helper from 'app/shared/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
 
@@ -104,6 +105,29 @@ describe('ModelingExercise Service', () => {
         req.flush({ status: 200 });
     }));
 
+    it('should convert model to pdf', fakeAsync(() => {
+        spyOn(helper, 'downloadStream').and.returnValue({});
+        const blob = new Blob(['test'], { type: 'text/html' }) as File;
+        service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).resolves);
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(blob);
+        tick();
+    }));
+
+    it('should re-evaluate and update a modelling exercise', () => {
+        const modelingExerciseReturned = { ...elemDefault };
+        modelingExerciseReturned.id = 111;
+        service
+            .reevaluateAndUpdate(modelingExerciseReturned)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toBe(modelingExerciseReturned);
+            });
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(modelingExerciseReturned);
+    });
+
     it('should import a modeling exercise', fakeAsync(() => {
         const modelingExercise = { ...elemDefault };
         modelingExercise.id = 445;
@@ -158,6 +182,38 @@ describe('ModelingExercise Service', () => {
             .subscribe((resp) => expect(resp).toEqual(expected));
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${elemDefault.id}/plagiarism-result` });
         req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should get number of clusters', fakeAsync(() => {
+        elemDefault.id = 756;
+        const expected = 1;
+        service
+            .getNumberOfClusters(elemDefault.id)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.body).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${elemDefault.id}/check-clusters` });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should build clusters', fakeAsync(() => {
+        elemDefault.id = 756;
+        const expected = {};
+        service
+            .buildClusters(elemDefault.id)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should delete clusters', fakeAsync(() => {
+        elemDefault.id = 756;
+        service.deleteClusters(elemDefault.id).subscribe((resp) => expect(resp).resolves);
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.resourceUrl}/${elemDefault.id}/clusters` });
+        req.flush({});
         tick();
     }));
 

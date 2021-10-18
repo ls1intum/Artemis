@@ -257,8 +257,10 @@ public class ResultResource {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exerciseId);
         }
 
+        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
-        final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(resultRepository::calculatePointsPerGradingCriterion).toList();
+        final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(result -> resultRepository.calculatePointsPerGradingCriterion(result, course))
+                .toList();
 
         return ResponseEntity.ok().body(resultsWithPoints);
     }
