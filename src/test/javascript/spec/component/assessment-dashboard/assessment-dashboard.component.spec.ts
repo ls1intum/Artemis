@@ -1,9 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -44,27 +40,27 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue.model';
+import { HttpResponse } from '@angular/common/http';
+import { User } from 'app/core/user/user.model';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
     let fixture: ComponentFixture<AssessmentDashboardComponent>;
 
     let examManagementService: ExamManagementService;
-    let getExamWithInterestingExercisesForAssessmentDashboardStub: SinonStub;
-    let getStatsForExamAssessmentDashboardStub: SinonStub;
+    let getExamWithInterestingExercisesForAssessmentDashboardStub: jest.SpyInstance;
+    let getStatsForExamAssessmentDashboardStub: jest.SpyInstance;
 
     let courseManagementService: CourseManagementService;
-    let getCourseWithInterestingExercisesForTutorsStub: SinonStub;
-    let getStatsForTutorsStub: SinonStub;
+    let getCourseWithInterestingExercisesForTutorsStub: jest.SpyInstance;
+    let getStatsForTutorsStub: jest.SpyInstance;
 
     let exerciseService: ExerciseService;
-    let toggleSecondCorrectionStub: SinonStub;
+    let toggleSecondCorrectionStub: jest.SpyInstance;
 
     let accountService: AccountService;
-    let isAtLeastInstructorInCourseStub: SinonStub;
+    let isAtLeastInstructorInCourseStub: jest.SpyInstance;
 
     const programmingExercise = {
         id: 16,
@@ -160,24 +156,25 @@ describe('AssessmentDashboardInformationComponent', () => {
                 fixture = TestBed.createComponent(AssessmentDashboardComponent);
                 comp = fixture.componentInstance;
 
+                courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+
                 examManagementService = TestBed.inject(ExamManagementService);
-                courseManagementService = TestBed.inject(CourseManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
                 accountService = TestBed.inject(AccountService);
 
-                getExamWithInterestingExercisesForAssessmentDashboardStub = stub(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard');
-                getStatsForExamAssessmentDashboardStub = stub(examManagementService, 'getStatsForExamAssessmentDashboard');
-                toggleSecondCorrectionStub = stub(exerciseService, 'toggleSecondCorrection');
-                //
-                getCourseWithInterestingExercisesForTutorsStub = stub(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
-                getStatsForTutorsStub = stub(courseManagementService, 'getStatsForTutors');
+                getExamWithInterestingExercisesForAssessmentDashboardStub = jest.spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard');
+                getStatsForExamAssessmentDashboardStub = jest.spyOn(examManagementService, 'getStatsForExamAssessmentDashboard');
+                toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
 
-                isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
+                getCourseWithInterestingExercisesForTutorsStub = jest.spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
+                getStatsForTutorsStub = jest.spyOn(courseManagementService, 'getStatsForTutors');
+
+                isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('ngOnInit', () => {
@@ -192,64 +189,202 @@ describe('AssessmentDashboardInformationComponent', () => {
             activatedRoute.snapshot = newRoute.snapshot;
             TestBed.inject(ActivatedRoute);
 
-            // TODO: for some very odd reason those two stubs do not work. I could not figure out why. This test tests nothing atm.
-            getCourseWithInterestingExercisesForTutorsStub = getCourseWithInterestingExercisesForTutorsStub.returns(of({ body: course }));
-            getStatsForTutorsStub = getStatsForTutorsStub.returns(of(courseTutorStats));
-
-            // let getCourseWithReturnValue: Observable<Course> = of({});
-            //  getCourseWithInterestingExercisesForTutorsStub.returns(getCourseWithReturnValue);
-            // getStatsForTutorsStub = stub(courseManagementService, 'getStatsForTutors').returns(of(new HttpResponse({body: courseTutorStats })));
-            // sinon.replace(courseManagementService, 'getStatsForTutors', sinon.fake.returns(of(new HttpResponse({body: courseTutorStats }))));
+            getCourseWithInterestingExercisesForTutorsStub.mockReturnValue(of({ body: course }));
+            getStatsForTutorsStub.mockReturnValue(of(courseTutorStats));
 
             comp.ngOnInit();
-            // expect(getCourseWithInterestingExercisesForTutorsStub).to.have.been.called;
-            // expect(getStatsForTutorsStub).to.have.been.called;
+            expect(getCourseWithInterestingExercisesForTutorsStub).toBeCalled();
+            expect(getStatsForTutorsStub).toBeCalled();
         });
+
         it('should loadAll for exam', () => {
-            getExamWithInterestingExercisesForAssessmentDashboardStub.returns(of({ body: exam }));
-            getStatsForExamAssessmentDashboardStub.returns(of(courseTutorStats));
-            isAtLeastInstructorInCourseStub.returns(of(true));
+            getExamWithInterestingExercisesForAssessmentDashboardStub.mockReturnValue(of({ body: exam }));
+            getStatsForExamAssessmentDashboardStub.mockReturnValue(of(courseTutorStats));
+            isAtLeastInstructorInCourseStub.mockReturnValue(of(true));
 
             comp.ngOnInit();
-            expect(getExamWithInterestingExercisesForAssessmentDashboardStub).to.have.been.called;
-            expect(getStatsForExamAssessmentDashboardStub).to.have.been.called;
-            expect(comp.exam).to.deep.equal(exam);
-            expect(comp.unfinishedExercises.length).to.be.equal(3);
-            expect(comp.finishedExercises.length).to.equal(1);
+            expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toBeCalled();
+            expect(getStatsForExamAssessmentDashboardStub).toBeCalled();
+            expect(comp.exam).toEqual(exam);
+            expect(comp.unfinishedExercises.length).toEqual(3);
+            expect(comp.finishedExercises.length).toEqual(1);
         });
     });
+
     describe('toggle second correctionRound', () => {
         it('should toggle correctionRound for exercises', () => {
             comp.exercises = exercises;
-            toggleSecondCorrectionStub.returns(of(true));
+            toggleSecondCorrectionStub.mockReturnValue(of(true));
             comp.toggleSecondCorrection(fileUploadExercise.id!);
-            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).to.be.true;
-            toggleSecondCorrectionStub.returns(of(false));
+            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toEqual(true);
+            toggleSecondCorrectionStub.mockReturnValue(of(false));
             comp.toggleSecondCorrection(fileUploadExercise.id!);
-            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).to.be.false;
-            expect(comp.toggelingSecondCorrectionButton).to.be.false;
+            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toEqual(false);
+            expect(comp.toggelingSecondCorrectionButton).toEqual(false);
         });
     });
+
     describe('getAssessmentDashboardLinkForExercise', () => {
         beforeEach(() => {
             comp.courseId = course.id!;
             comp.examId = exam.id!;
         });
+
         it('should getAssessmentDashboardLinkForExercise for exam', () => {
             comp.isExamMode = true;
             const link = ['/course-management', comp.courseId.toString(), 'exams', comp.examId.toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
-            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).to.deep.equal(link);
+            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
         });
+
         it('should getAssessmentDashboardLinkForExercise for exam and testrun', () => {
             comp.isExamMode = true;
             comp.isTestRun = true;
             const link = ['/course-management', comp.courseId.toString(), 'exams', comp.examId.toString(), 'test-assessment-dashboard', fileUploadExercise.id!.toString()];
-            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).to.deep.equal(link);
+            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
         });
+
         it('should getAssessmentDashboardLinkForExercise for course', () => {
             comp.isExamMode = false;
             const link = ['/course-management', comp.courseId.toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
-            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).to.deep.equal(link);
+            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
+        });
+    });
+
+    describe('tutor issues', () => {
+        describe('on ngOnInit', () => {
+            it('compute issues if not in exam mode', () => {
+                // given
+                const newRoute = {
+                    snapshot: {
+                        paramMap: convertToParamMap({ courseId: course.id }),
+                        url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+                    },
+                } as any as ActivatedRoute;
+                const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+                activatedRoute.snapshot = newRoute.snapshot;
+                TestBed.inject(ActivatedRoute);
+
+                comp.tutor = new User(1);
+
+                let stats = new StatsForDashboard();
+                stats.numberOfRatings = 2;
+                stats.tutorLeaderboardEntries = [
+                    {
+                        userId: 1,
+                        numberOfAssessments: 1,
+                        numberOfTutorComplaints: 0,
+                        numberOfTutorMoreFeedbackRequests: 0,
+                        averageRating: 1,
+                        numberOfTutorRatings: 1,
+                    } as TutorLeaderboardElement,
+                    {
+                        userId: 2,
+                        numberOfAssessments: 1,
+                        numberOfTutorComplaints: 0,
+                        numberOfTutorMoreFeedbackRequests: 0,
+                        averageRating: 5,
+                        numberOfTutorRatings: 1,
+                    } as TutorLeaderboardElement,
+                ];
+                getStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ status: 200, body: stats })));
+
+                // when
+                comp.ngOnInit();
+
+                // then
+                expect(comp.tutorIssues).toHaveLength(1);
+            });
+
+            it('do not compute issues if in exam mode', () => {
+                // given
+                const newRoute = {
+                    snapshot: {
+                        paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
+                        url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+                    },
+                } as any as ActivatedRoute;
+                const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+                activatedRoute.snapshot = newRoute.snapshot;
+                TestBed.inject(ActivatedRoute);
+
+                // when
+                comp.ngOnInit();
+
+                // then
+                expect(comp.tutorIssues).toEqual([]);
+            });
+        });
+
+        describe('tutor issue checkers', () => {
+            describe('rating checker', () => {
+                it('tutors value is significantly less than the course average value', () => {
+                    const tutorName = 'TutorA';
+                    const ratingsCount = 1;
+                    const tutorAverageValue = 2.25;
+                    const courseAverageValue = 4;
+                    const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName);
+                    expect(ratingChecker.isWorseThanAverage).toEqual(true);
+                    expect(ratingChecker.toIssue()).toEqual(
+                        `${tutorName} has received ${ratingsCount} rating(s) with an average of ${tutorAverageValue} ⭐️️ which is below ${courseAverageValue} ⭐.`,
+                    );
+                });
+
+                it('tutors value is within allowed range', () => {
+                    const ratingCheckerA = new TutorIssueRatingChecker(1, 0, 0, 'TutorA');
+                    const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, 'TutorA');
+                    const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, 'TutorA');
+                    expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
+                });
+            });
+
+            describe('score checker', () => {
+                it('tutors value is significantly less than the course average value', () => {
+                    const tutorName = 'TutorA';
+                    const submissionsCount = 5;
+                    const tutorAverageValue = 40;
+                    const courseAverageValue = 80;
+                    const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName);
+                    expect(ratingChecker.isWorseThanAverage).toEqual(true);
+                    expect(ratingChecker.toIssue()).toEqual(
+                        `${tutorName} has assessed ${submissionsCount} submission(s) with an average score of ${tutorAverageValue}.00%
+which is below ${courseAverageValue}.00%.`,
+                    );
+                });
+
+                it('tutors value is within allowed range', () => {
+                    const ratingCheckerA = new TutorIssueScoreChecker(1, 0, 0, 'TutorA');
+                    const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, 'TutorA');
+                    const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, 'TutorA');
+                    expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
+                });
+            });
+
+            describe('complaints checker', () => {
+                it('tutors value is significantly bigger than the course average value', () => {
+                    const tutorName = 'TutorA';
+                    const submissionsCount = 5;
+                    const tutorAverageValue = 14;
+                    const courseAverageValue = 10;
+                    const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName);
+                    expect(ratingChecker.isWorseThanAverage).toEqual(true);
+                    expect(ratingChecker.toIssue()).toEqual(
+                        `${tutorName} has assessed ${submissionsCount} submission(s) with an average number of complaints ${tutorAverageValue} which is below ${courseAverageValue}.`,
+                    );
+                });
+
+                it('tutors value is within allowed range', () => {
+                    const ratingCheckerA = new TutorIssueComplaintsChecker(1, 0, 0, 'TutorA');
+                    const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, 'TutorA');
+                    const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, 'TutorA');
+                    expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
+                });
+            });
         });
     });
 });

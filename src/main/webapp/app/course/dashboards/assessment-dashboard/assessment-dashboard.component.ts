@@ -20,6 +20,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue.model';
 
 @Component({
     selector: 'jhi-courses',
@@ -66,6 +68,8 @@ export class AssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     toggelingSecondCorrectionButton = false;
+
+    tutorIssues: TutorIssue[] = [];
 
     constructor(
         private courseService: CourseManagementService,
@@ -162,6 +166,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
                     }
+                    this.computeIssuesWithTutorPerformance();
                 },
                 (response: string) => this.onError(response),
             );
@@ -219,10 +224,42 @@ export class AssessmentDashboardComponent implements OnInit {
                     }
                     // This is done here to make sure the whole page is already loaded when the guided tour step is started on the page
                     this.guidedTourService.componentPageLoaded();
+                    this.computeIssuesWithTutorPerformance();
                 },
                 (response: string) => this.onError(response),
             );
         }
+    }
+
+    /**
+     * Computes the performance issues for every tutor based on its rating, score, complaints number comparing to the average tutor numbers
+     */
+    computeIssuesWithTutorPerformance() {
+        const courseInformation = this.stats.tutorLeaderboardEntries.reduce(
+            (accumulator, entry) => {
+                return {
+                    summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
+                    summedAverageScore: accumulator.summedAverageScore + entry.averageScore,
+                    numberOfComplaints: accumulator.numberOfComplaints,
+                };
+            },
+            { summedAverageRatings: 0, summedAverageScore: 0, numberOfComplaints: this.stats.numberOfComplaints },
+        );
+
+        const tutorCount = this.stats.tutorLeaderboardEntries.length;
+
+        this.stats.tutorLeaderboardEntries
+            // create the tutor issue checkers for rating, score and complaints
+            .flatMap((entry) => [
+                new TutorIssueRatingChecker(entry.numberOfTutorRatings, entry.averageRating, courseInformation.summedAverageRatings / tutorCount, entry.name),
+                new TutorIssueScoreChecker(entry.numberOfAssessments, entry.averageScore, courseInformation.summedAverageScore / tutorCount, entry.name),
+                new TutorIssueComplaintsChecker(entry.numberOfAssessments, entry.numberOfTutorComplaints, courseInformation.numberOfComplaints / tutorCount, entry.name),
+            ])
+            // run every checker to see if the tutor value is within the allowed threshold
+            .filter((checker) => checker.isWorseThanAverage)
+            // create tutor issue and add it to the `tutorIssues` array
+            .map((checker) => checker.toIssue())
+            .forEach((issue) => this.tutorIssues.push(issue));
     }
 
     /**
