@@ -169,9 +169,7 @@ public class MailService {
         context.setVariable(TIME_SERVICE, this.timeService);
 
         // replace with (e.g.) "http://localhost:9000" for local testing
-        // context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, jHipsterProperties.getMail().getBaseUrl()));
         context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
-        // context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = createContentForNotificationEmailByType(notificationType, context);
