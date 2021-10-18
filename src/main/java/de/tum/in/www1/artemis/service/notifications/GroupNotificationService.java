@@ -110,7 +110,8 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.EXERCISE_PRACTICE, exercise, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.EXERCISE_PRACTICE, exercise, null,
+                userRepository.getUser());
     }
 
     /**
@@ -172,7 +173,7 @@ public class GroupNotificationService {
     public void notifyAllGroupsAboutNewPostForExercise(Post post, Course course) {
         notifyGroupsWithNotificationType(
                 new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_EXERCISE_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_EXERCISE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -206,7 +207,7 @@ public class GroupNotificationService {
     public void notifyAllGroupsAboutNewPostForLecture(Post post, Course course) {
         notifyGroupsWithNotificationType(
                 new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_LECTURE_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_LECTURE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -218,7 +219,7 @@ public class GroupNotificationService {
     public void notifyAllGroupsAboutNewCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(
                 new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_COURSE_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_COURSE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -229,7 +230,7 @@ public class GroupNotificationService {
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -240,7 +241,7 @@ public class GroupNotificationService {
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -252,7 +253,7 @@ public class GroupNotificationService {
     public void notifyAllGroupsAboutNewAnnouncement(Post post, Course course) {
         notifyGroupsWithNotificationType(
                 new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_ANNOUNCEMENT_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_ANNOUNCEMENT_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -263,7 +264,7 @@ public class GroupNotificationService {
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, userRepository.getUser());
+                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, post.getAuthor());
     }
 
     /**

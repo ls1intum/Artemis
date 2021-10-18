@@ -99,7 +99,7 @@ export class NotificationService {
     }
 
     /**
-     * Navigate to post related targets, decide if reload if required, i.e. when switching course context
+     * Navigate to post related targets, decide if reload is required, i.e. when switching course context
      * @param {number} targetCourseId
      * @param {RouteComponents} routeComponents
      * @param {Params} queryParams
@@ -108,7 +108,7 @@ export class NotificationService {
         const currentCourseId = NotificationService.getCurrentCourseId();
         // determine if reload is required when notification is clicked
         // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
-        if (currentCourseId == undefined || currentCourseId !== targetCourseId) {
+        if (currentCourseId === undefined || currentCourseId !== targetCourseId) {
             const tree = this.router.createUrlTree(routeComponents, { queryParams });
             // navigate by string url to force reload when switching the course context
             window.location.href = this.serializer.serialize(tree);
