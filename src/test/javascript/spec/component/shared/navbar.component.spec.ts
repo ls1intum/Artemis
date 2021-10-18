@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { Directive, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, UrlSerializer } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -21,7 +21,7 @@ import { LoadingNotificationComponent } from 'app/shared/notification/loading-no
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -100,11 +100,11 @@ describe('NavbarComponent', () => {
                 MockComponent(LoadingNotificationComponent),
             ],
             providers: [
+                MockProvider(UrlSerializer),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
-                { provide: MetisService, useClass: MockMetisService },
             ],
         })
             .compileComponents()
