@@ -33,7 +33,7 @@ module.exports = {
             lines: 76.5,
         },
     },
-    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon'],
+    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     modulePathIgnorePatterns: [],
     testTimeout: 2000,
