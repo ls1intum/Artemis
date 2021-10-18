@@ -19,3 +19,13 @@ public protocol SortStrategy {
      */
     func performSort(_ input: [Date]) -> [Date]
 }
+
+/*
+ We added an enum for the different sorting algorithms you should implement to make your life easier
+*/
+
+/// Enum for the different available sorting algorithms.
+public enum SortAlgorithm: String, CaseIterable {
+    case MergeSort = "Merge Sort"
+    case BubbleSort = "Bubble Sort"
+}

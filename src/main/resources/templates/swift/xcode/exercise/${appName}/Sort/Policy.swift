@@ -13,5 +13,5 @@ import Foundation
 */
 public class Policy {
     init(_ context: Context!) { }
-    public func configure(sortAlgorithm: String) { }
+    public func configure(sortAlgorithm: SortAlgorithm) { }
 }

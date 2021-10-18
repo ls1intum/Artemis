@@ -15,8 +15,8 @@ import SwiftUI
 struct MainView: View {
     let context = Context()
     
-    @State var sortAlgorithm: String = "Merge Sort"
-    private let sortAlgorithms = ["Merge Sort", "Bubble Sort"]
+    @State var sortAlgorithm: SortAlgorithm = SortAlgorithm.MergeSort
+    private let sortAlgorithms: [SortAlgorithm] = SortAlgorithm.allCases
     
     @State private var displayDates = false
     @State private var sorted = false
@@ -113,7 +113,7 @@ struct MainView: View {
         self.context.setDates([])
         self.displayDates = false
         self.sorted = false
-        self.sortAlgorithm = "Merge Sort"
+        self.sortAlgorithm = SortAlgorithm.MergeSort
     }
 }
 

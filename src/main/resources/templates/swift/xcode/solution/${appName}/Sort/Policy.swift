@@ -19,14 +19,12 @@ public class Policy {
     }
 
     /// Chooses a strategy depending on the choice of the user.
-    public func configure(sortAlgorithm: String) {
+    public func configure(sortAlgorithm: SortAlgorithm) {
         switch sortAlgorithm {
-        case "Merge Sort":
+        case SortAlgorithm.MergeSort:
             self.context.setSortAlgorithm(MergeSort())
-        case "Bubble Sort":
+        case SortAlgorithm.BubbleSort:
             self.context.setSortAlgorithm(BubbleSort())
-        default:
-            self.context.setSortAlgorithm(MergeSort())
         }
     }
 }
