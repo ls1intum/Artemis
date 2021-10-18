@@ -160,7 +160,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
-                exercise, null, userRepository.getUser());
+                exercise, notificationText, userRepository.getUser());
     }
 
     /**
@@ -274,7 +274,7 @@ public class GroupNotificationService {
      * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutCourseArchiveState(Course course, NotificationType notificationType, List<String> archiveErrors) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, course, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, course, archiveErrors, null);
     }
 
     /**
@@ -285,7 +285,7 @@ public class GroupNotificationService {
      * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutExamArchiveState(Exam exam, NotificationType notificationType, List<String> archiveErrors) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, exam, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, exam, archiveErrors, null);
     }
 
     /**
