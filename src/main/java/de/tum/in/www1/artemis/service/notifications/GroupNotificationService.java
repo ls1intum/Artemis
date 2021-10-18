@@ -40,7 +40,7 @@ public class GroupNotificationService {
      * @param groups is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
-     * @param typeSpecificInformation is based on the current usecase (e.g. POST -> Course, ARCHIVE -> List<String> archiveErrors)
+     * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
      */
     public void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation) {
         User author = userRepository.getUser();
@@ -198,6 +198,7 @@ public class GroupNotificationService {
      * Notify all groups about a new post in a lecture.
      *
      * @param post that has been posted
+     * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewPostForLecture(Post post, Course course) {
         notifyGroupsWithNotificationType(
@@ -209,6 +210,7 @@ public class GroupNotificationService {
      * Notify all groups about a new course-wide post.
      *
      * @param post that has been posted
+     * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(
@@ -220,6 +222,7 @@ public class GroupNotificationService {
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param post that has been answered
+     * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
@@ -230,6 +233,7 @@ public class GroupNotificationService {
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param post that has been answered
+     * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
@@ -240,6 +244,7 @@ public class GroupNotificationService {
      * Notify all groups about a new announcement in the course.
      *
      * @param post that has been created as announcement
+     * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewAnnouncement(Post post, Course course) {
         notifyGroupsWithNotificationType(
@@ -250,7 +255,8 @@ public class GroupNotificationService {
     /**
      * Notify tutor, editor and instructor groups about a new answer post for a lecture.
      *
-     * @param post that has been ansered
+     * @param post that has been answered
+     * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },

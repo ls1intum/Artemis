@@ -27,6 +27,7 @@ public class SingleUserNotificationService {
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
      * @param post that will be used to create the notification
      * @param notificationType is the discriminator for the factory
+     * @param course that the post belongs to
      */
     public void notifyGroupsWithNotificationType(Post post, NotificationType notificationType, Course course) {
         SingleUserNotification resultingGroupNotification;
@@ -44,6 +45,7 @@ public class SingleUserNotificationService {
      * Notify author of a post for an exercise that there is a new answer.
      *
      * @param post that is answered
+     * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
         notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
@@ -53,6 +55,7 @@ public class SingleUserNotificationService {
      * Notify author of a post for a lecture that there is a new answer.
      *
      * @param post that is answered
+     * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
         notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
@@ -62,6 +65,7 @@ public class SingleUserNotificationService {
      * Notify author of a course-wide that there is a new answer.
      *
      * @param post that is answered
+     * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
