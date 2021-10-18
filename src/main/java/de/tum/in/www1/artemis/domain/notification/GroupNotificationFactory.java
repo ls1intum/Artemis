@@ -26,7 +26,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Attachment attachment, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             String notificationText) {
-        String title, text;
+        String title;
+        String text;
         if (notificationType == NotificationType.ATTACHMENT_CHANGE) {
             title = NotificationTitleTypeConstants.ATTACHMENT_CHANGE_TITLE;
             text = "Attachment \"" + attachment.getName() + "\" updated.";
@@ -67,7 +68,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Exercise exercise, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             String notificationText) {
-        String title, text;
+        String title;
+        String text;
         switch (notificationType) {
             case EXERCISE_CREATED -> {
                 title = NotificationTitleTypeConstants.EXERCISE_CREATED_TITLE;
@@ -144,44 +146,41 @@ public class GroupNotificationFactory {
      * @param notificationType      type of the notification that should be created
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
-        String title, text;
-        Course course;
+    public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType, Course course) {
+        String title;
+        String text;
         GroupNotification notification;
         switch (notificationType) {
             case NEW_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NotificationTitleTypeConstants.NEW_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
-                notification = new GroupNotification(post.getCourse(), title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
             case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
-                notification = new GroupNotification(post.getCourse(), title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getLecturePostTarget(post));
             }
             case NEW_COURSE_POST -> {
-                course = post.getCourse();
                 title = NotificationTitleTypeConstants.NEW_COURSE_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getCoursePostTarget(post));
+                notification.setTarget(targetService.getCoursePostTarget(post, course));
             }
             case NEW_ANNOUNCEMENT_POST -> {
-                course = post.getCourse();
                 title = NotificationTitleTypeConstants.NEW_ANNOUNCEMENT_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new announcement.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getCoursePostTarget(post));
+                notification.setTarget(targetService.getCoursePostTarget(post, course));
             }
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
-                course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getExercisePostTarget(post));
             }
@@ -189,16 +188,14 @@ public class GroupNotificationFactory {
                 Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
-                course = lecture.getCourse();
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getLecturePostTarget(post));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
-                course = post.getCourse();
                 text = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getCoursePostTarget(post));
+                notification.setTarget(targetService.getCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -217,7 +214,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
-        String title, text;
+        String title;
+        String text;
         switch (notificationType) {
             case COURSE_ARCHIVE_STARTED -> {
                 title = NotificationTitleTypeConstants.COURSE_ARCHIVE_STARTED_TITLE;
@@ -255,7 +253,8 @@ public class GroupNotificationFactory {
      */
     public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
-        String title, text;
+        String title;
+        String text;
         switch (notificationType) {
             case EXAM_ARCHIVE_STARTED -> {
                 title = NotificationTitleTypeConstants.EXAM_ARCHIVE_STARTED_TITLE;

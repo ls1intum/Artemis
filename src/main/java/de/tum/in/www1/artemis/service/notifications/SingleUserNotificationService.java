@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationF
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
@@ -23,21 +24,38 @@ public class SingleUserNotificationService {
     }
 
     /**
+     * Auxiliary method to call the correct factory method and start the process to save & sent the notification
+     * @param post that will be used to create the notification
+     * @param notificationType is the discriminator for the factory
+     */
+    public void notifyGroupsWithNotificationType(Post post, NotificationType notificationType, Course course) {
+        SingleUserNotification resultingGroupNotification;
+        resultingGroupNotification = switch (notificationType) {
+            // Post Types
+            case NEW_REPLY_FOR_EXERCISE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
+            case NEW_REPLY_FOR_LECTURE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
+            case NEW_REPLY_FOR_COURSE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
+            default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
+        };
+        saveAndSend(resultingGroupNotification);
+    }
+
+    /**
      * Notify author of a post for an exercise that there is a new answer.
      *
      * @param post that is answered
      */
-    public void notifyUserAboutNewAnswerForExercise(Post post) {
-        saveAndSend(createNotification(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST));
+    public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
+        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
     }
 
     /**
      * Notify author of a post for a lecture that there is a new answer.
      *
-     * @param post that is answe3red
+     * @param post that is answered
      */
-    public void notifyUserAboutNewAnswerForLecture(Post post) {
-        saveAndSend(createNotification(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST));
+    public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
+        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
     }
 
     /**
@@ -45,8 +63,8 @@ public class SingleUserNotificationService {
      *
      * @param post that is answered
      */
-    public void notifyUserAboutNewAnswerForCoursePost(Post post) {
-        saveAndSend(createNotification(post, NotificationType.NEW_REPLY_FOR_COURSE_POST));
+    public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
+        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
     }
 
     /**

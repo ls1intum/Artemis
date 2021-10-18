@@ -82,12 +82,12 @@ public class PostService extends PostingService {
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
-            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost);
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
             return savedPost;
         }
         Post savedPost = postRepository.save(post);
 
-        sendNotification(savedPost);
+        sendNotification(savedPost, course);
 
         return savedPost;
     }
@@ -361,22 +361,22 @@ public class PostService extends PostingService {
      *
      * @param post post that triggered the notification
      */
-    void sendNotification(Post post) {
+    void sendNotification(Post post, Course course) {
         // notify via course
         if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post);
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
             return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
         }
     }
 
