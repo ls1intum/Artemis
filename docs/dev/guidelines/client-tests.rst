@@ -252,7 +252,7 @@ Here is an example of a test for `exercise-update-warning component <https://git
 
 9. We try to use as few expectation functions as possible so new developers don't need to learn many functions (i.e. :code:`.toBe(true)` instead of :code:`.toBeTrue()`).
 
-9. For situations described below, only use the uniform solution to keep the codebase as consistent as possible. Otherwise refer to the standard `Jest API <https://jestjs.io/docs/expect>`_ or the `Jest Extended API <https://github.com/jest-community/jest-extended#api>`_.
+10. For situations described below, only use the uniform solution to keep the codebase as consistent as possible. Otherwise refer to the standard `Jest API <https://jestjs.io/docs/expect>`_ or the `Jest Extended API <https://github.com/jest-community/jest-extended#api>`_.
 
   +--------------------------------------------------------+----------------------------------------------------------------+
   | Situation                                              | Solution                                                       |
