@@ -8,7 +8,7 @@
                 <fa-icon [icon]="resultIcon(result)"></fa-icon>
             </div>
             <div class="result-score-info text-center">
-                <div>{{ round(result.score) }}%</div>
+                <div>{{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(result.participation!.exercise!)) }}%</div>
                 <div *ngIf="maxScore && absoluteResult(result)">{{ absoluteResult(result) }} of {{ maxScore }} pts.</div>
                 <div *ngIf="!maxScore || !absoluteResult(result)">{{ result.resultString }}</div>
             </div>

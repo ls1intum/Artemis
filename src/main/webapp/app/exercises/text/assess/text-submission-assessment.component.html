@@ -33,7 +33,8 @@
     <div class="row">
         <jhi-resizeable-container class="col-12">
             <!--region Left Panel-->
-            <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore"></jhi-score-display>
+            <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore" [course]="course">
+            </jhi-score-display>
             <jhi-text-assessment-area
                 left-body
                 [submission]="submission!"
