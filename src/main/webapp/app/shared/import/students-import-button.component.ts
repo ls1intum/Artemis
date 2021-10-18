@@ -12,7 +12,7 @@ import { Exam } from 'app/entities/exam.model';
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
             [icon]="'plus'"
-            [title]="'artemisApp.examManagement.examStudents.importStudents.buttonLabel'"
+            [title]="'importStudents.buttonLabel'"
             (onClick)="openStudentsImportDialog($event)"
         ></jhi-button>
     `,

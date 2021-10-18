@@ -317,7 +317,6 @@
                     "buttonLabel": "Import users",
                     "dialogTitle": "Import users",
                     "introText": "This dialog can be used to import users.",
-                    "examText": "into this exam",
                     "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
                     "csvFile": {
                         "label": "Select .csv file",

@@ -260,7 +260,7 @@ export class StudentsImportDialogComponent implements OnDestroy {
      * Callback method that is called when the import request failed
      */
     onSaveError() {
-        this.alertService.error('artemisApp.examManagement.examStudents.importStudents.genericErrorMessage');
+        this.alertService.error('importStudents.genericErrorMessage');
         this.isImporting = false;
     }
 

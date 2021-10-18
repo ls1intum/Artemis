@@ -311,24 +311,6 @@
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Teilnahme und Abgaben in der zugehörigen Klausur löschen?"
-                },
-                "importStudents": {
-                    "buttonLabel": "Studierende importieren",
-                    "dialogTitle": "Studierende importieren nach:",
-                    "introText": "Mit diesem Dialog können Studierende in diese Klausur importiert werden.",
-                    "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikel Nummer oder den Login beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
-                    "csvFile": {
-                        "label": ".csv Datei auswählen",
-                        "tooltip": "Bitte wähle die .csv Datei mit den Studierenden zum Import aus. Pro Eintrag muss entweder die 'LOGIN' oder 'REGISTRATION_NUMBER' Spalte ausgefüllt sein."
-                    },
-                    "studentsForImport": {
-                        "label": "Studierende zum Importieren",
-                        "tooltip": "Diese Studierenden werden importiert beim Klicken auf \"Importieren\"."
-                    },
-                    "numberOfStudents": "Anzahl an Studierenden:",
-                    "numberOfStudentsImported": "Importiert:",
-                    "numberOfStudentsNotImported": "Nicht gefunden:",
-                    "genericErrorMessage": "Der Import von Studierenden in die Klausur ist gescheitert!"
                 }
             },
             "exerciseGroups": "Aufgabengruppen",

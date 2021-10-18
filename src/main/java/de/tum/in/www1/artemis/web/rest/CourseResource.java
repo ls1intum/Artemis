@@ -1512,7 +1512,7 @@ public class CourseResource {
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}/statistics")
+    @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
