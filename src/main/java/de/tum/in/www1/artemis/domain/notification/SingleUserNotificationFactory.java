@@ -28,12 +28,12 @@ public class SingleUserNotificationFactory {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getExercisePostTarget(post));
+                notification.setTarget(targetService.getExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getLecturePostTarget(post));
+                notification.setTarget(targetService.getLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;

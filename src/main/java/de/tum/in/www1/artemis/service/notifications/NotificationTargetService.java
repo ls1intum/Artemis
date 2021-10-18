@@ -173,12 +173,13 @@ public class NotificationTargetService {
     /**
      * Get the needed target for "LecturePost" notifications
      * @param post which contains the needed lecture
+     * @param course the post belongs to
      * @return the final target property
      */
-    public String getLecturePostTarget(Post post) {
+    public String getLecturePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
-        target.addProperty(LECTURE_ID_TEXT, post.getLecture().getId());
+        target.addProperty(LECTURE_ID_TEXT, course.getId());
         target.addProperty(COURSE_TEXT, post.getCourse().getId());
         return target.toString();
     }
@@ -186,12 +187,13 @@ public class NotificationTargetService {
     /**
      * Get the needed target for "ExercisePost" notifications
      * @param post which contains the needed exercise
+     * @param course the post belongs to
      * @return the final target property
      */
-    public String getExercisePostTarget(Post post) {
+    public String getExercisePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
-        target.addProperty(EXERCISE_ID_TEXT, post.getExercise().getId());
+        target.addProperty(EXERCISE_ID_TEXT, course.getId());
         target.addProperty(COURSE_TEXT, post.getCourse().getId());
         return target.toString();
     }
@@ -199,7 +201,7 @@ public class NotificationTargetService {
     /**
      * Get the needed target for "CoursePost" notifications
      * @param post course-wide post
-     * @param course the posts belongs to
+     * @param course the post belongs to
      * @return the final target property
      */
     public String getCoursePostTarget(Post post, Course course) {

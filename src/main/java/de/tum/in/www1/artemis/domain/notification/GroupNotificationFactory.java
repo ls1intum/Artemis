@@ -157,14 +157,14 @@ public class GroupNotificationFactory {
                 title = NotificationTitleTypeConstants.NEW_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getExercisePostTarget(post));
+                notification.setTarget(targetService.getExercisePostTarget(post, course));
             }
             case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getLecturePostTarget(post));
+                notification.setTarget(targetService.getLecturePostTarget(post, course));
             }
             case NEW_COURSE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_COURSE_POST_TITLE;
@@ -183,14 +183,14 @@ public class GroupNotificationFactory {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getExercisePostTarget(post));
+                notification.setTarget(targetService.getExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getLecturePostTarget(post));
+                notification.setTarget(targetService.getLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
