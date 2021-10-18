@@ -164,6 +164,7 @@ public class GroupNotificationService {
      * Notify all groups about a new post in an exercise.
      *
      * @param post that has been posted
+     * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewPostForExercise(Post post, Course course) {
         notifyGroupsWithNotificationType(
@@ -266,9 +267,9 @@ public class GroupNotificationService {
     /**
      * Notify tutor and instructor groups about a new answer post for a lecture.
      *
-     * @param course           The course
-     * @param notificationType The state of the archiving process
-     * @param archiveErrors    a list of errors that happened during archiving
+     * @param course           course the answered post belongs to
+     * @param notificationType state of the archiving process
+     * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutCourseArchiveState(Course course, NotificationType notificationType, List<String> archiveErrors) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, notificationType,
@@ -278,9 +279,9 @@ public class GroupNotificationService {
     /**
      * Notify instructor groups about the archive state of the exam.
      *
-     * @param exam           The exam
-     * @param notificationType The state of the archiving process
-     * @param archiveErrors    a list of errors that happened during archiving
+     * @param exam             exam that is archived
+     * @param notificationType state of the archiving process
+     * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutExamArchiveState(Exam exam, NotificationType notificationType, List<String> archiveErrors) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, notificationType,

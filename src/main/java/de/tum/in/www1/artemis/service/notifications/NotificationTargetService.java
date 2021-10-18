@@ -73,9 +73,9 @@ public class NotificationTargetService {
     /**
      * Create JSON representation for a GroupNotification for an ProgrammingExercise in an Exam or if duplicated test cases were detected.
      *
-     * @param programmingExercise for which to create the notification.
-     * @param message             to use for the notification.
-     * @return the stringified JSON of the target.
+     * @param programmingExercise for which to create the notification
+     * @param message             to use for the notification
+     * @return the stringified JSON of the target
      */
     public String getExamProgrammingExerciseOrTestCaseTarget(ProgrammingExercise programmingExercise, String message) {
         JsonObject target = new JsonObject();
@@ -90,8 +90,8 @@ public class NotificationTargetService {
     /**
      * Create JSON representation for a GroupNotification for an Exercise in an Exam including the updated Problem Statement.
      *
-     * @param exercise for which to create the notification.
-     * @return the stringified JSON of the target with the updated problem statement of exercise.
+     * @param exercise for which to create the notification
+     * @return the stringified JSON of the target with the updated problem statement of exercise
      */
     public String getExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
         JsonObject target = new JsonObject();
@@ -107,9 +107,9 @@ public class NotificationTargetService {
     /**
      * Create JSON representation for a GroupNotification for an Exercise.
      *
-     * @param exercise for which to create the notification.
-     * @param message to use for the notification.
-     * @return the stringified JSON of the target.
+     * @param exercise for which to create the notification
+     * @param message to use for the notification
+     * @return the stringified JSON of the target
      */
     public String getExerciseTarget(Exercise exercise, String message) {
         JsonObject target = new JsonObject();
@@ -126,9 +126,9 @@ public class NotificationTargetService {
     /**
      * Create JSON representation for a GroupNotification for a Lecture.
      *
-     * @param lecture for which to create the notification.
-     * @param message to use for the notification.
-     * @return the stringified JSON of the target.
+     * @param lecture for which to create the notification
+     * @param message to use for the notification
+     * @return the stringified JSON of the target
      */
     public String getLectureTarget(Lecture lecture, String message) {
         JsonObject target = new JsonObject();
@@ -154,9 +154,9 @@ public class NotificationTargetService {
     /**
      * Create JSON representation for a GroupNotification for a Course.
      *
-     * @param course for which to create the notification.
-     * @param message to use for the notification.
-     * @return the stringified JSON of the target.
+     * @param course for which to create the notification
+     * @param message to use for the notification
+     * @return the stringified JSON of the target
      */
     public String getCourseTarget(Course course, String message) {
         JsonObject target = new JsonObject();
@@ -198,7 +198,8 @@ public class NotificationTargetService {
 
     /**
      * Get the needed target for "CoursePost" notifications
-     * @param post which contains the needed course
+     * @param post course-wide post
+     * @param course course the posts belongs to
      * @return the final target property
      */
     public String getCoursePostTarget(Post post, Course course) {

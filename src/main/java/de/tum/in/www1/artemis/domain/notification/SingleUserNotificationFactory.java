@@ -17,6 +17,7 @@ public class SingleUserNotificationFactory {
      *
      * @param post which is answered
      * @param notificationType type of the notification that should be created
+     * @param course that the post belongs to
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(Post post, NotificationType notificationType, Course course) {
