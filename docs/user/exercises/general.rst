@@ -30,7 +30,7 @@ So a student can submit as many complaints as he wants, as long as they are acce
 More Feedback Requests
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Another possibility after receiving an assessment is the more feedback request.
+Another possibility after receiving an assessment is the "More Feedback Request".
 They do not cost a token in comparison to the complaints, but the score cannot be changed by the tutor after a feedback request.
 
 .. warning::
