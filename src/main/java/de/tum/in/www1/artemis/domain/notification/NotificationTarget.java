@@ -6,13 +6,13 @@ import com.google.gson.Gson;
  * Class representing the target property of a notification
  * e.g. used for JSON/GSON (de)serialization
  */
-public class NotificationTarget {
+public final class NotificationTarget {
 
-    private int id;
+    private final int id;
 
-    private String entity;
+    private final String entity;
 
-    private int course;
+    private final int course;
 
     // public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
     public NotificationTarget(int id, String entity, int course) {

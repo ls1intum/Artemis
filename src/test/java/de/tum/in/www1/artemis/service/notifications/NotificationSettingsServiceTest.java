@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.notifications;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.service.NotificationSettingsService;
 
 public class NotificationSettingsServiceTest {
 
@@ -20,7 +21,7 @@ public class NotificationSettingsServiceTest {
 
     @Autowired
     private static NotificationSettingRepository notificationSettingRepository;
-  
+
     private static User student1;
 
     private static NotificationSetting unsavedNotificationSettingA;
