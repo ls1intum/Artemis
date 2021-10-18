@@ -160,7 +160,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
-                exercise, notificationText, userRepository.getUser());
+                exercise, notificationText, null);
     }
 
     /**
