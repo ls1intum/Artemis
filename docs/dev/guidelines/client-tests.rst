@@ -263,9 +263,9 @@ Here is an example of a test for `exercise-update-warning component <https://git
   +--------------------------------------------------------+----------------------------------------------------------------+
   | Two objects should be the same reference               | :code:`expect(object).toBe(referenceObject);`                  |
   +--------------------------------------------------------+----------------------------------------------------------------+
-  | A CSS element should exit                              | :code:`expect(element).toBe(null);`                            |
+  | A CSS element should exist                             | :code:`expect(element).not.toBe(null);`                        |
   |                                                        |                                                                |
-  | A CSS element should not exists                        | :code:`expect(element).not.toBe(null);`                        |
+  | A CSS element should not exists                        | :code:`expect(element).toBe(null);`                            |
   +--------------------------------------------------------+----------------------------------------------------------------+
   | A value should be undefined                            | :code:`expect(value).toBe(undefined);`                         |
   +--------------------------------------------------------+----------------------------------------------------------------+
