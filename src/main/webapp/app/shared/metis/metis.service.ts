@@ -335,23 +335,23 @@ export class MetisService {
      */
     getLinkForPost(post?: Post): (string | number)[] {
         if (post?.lecture) {
-            return this.getLinkForLecturePost(this.courseId, post.lecture.id!);
+            return MetisService.getLinkForLecturePost(this.courseId, post.lecture.id!);
         }
         if (post?.exercise) {
-            return this.getLinkForExercisePost(this.courseId, post.exercise.id!);
+            return MetisService.getLinkForExercisePost(this.courseId, post.exercise.id!);
         }
-        return this.getLinkForCoursePost(this.courseId);
+        return MetisService.getLinkForCoursePost(this.courseId);
     }
 
-    getLinkForLecturePost(courseId: number, lectureId: number): (string | number)[] {
+    static getLinkForLecturePost(courseId: number, lectureId: number): (string | number)[] {
         return ['/courses', courseId, 'lectures', lectureId];
     }
 
-    getLinkForExercisePost(courseId: number, exerciseId: number): (string | number)[] {
+    static getLinkForExercisePost(courseId: number, exerciseId: number): (string | number)[] {
         return ['/courses', courseId, 'exercises', exerciseId];
     }
 
-    getLinkForCoursePost(courseId: number): (string | number)[] {
+    static getLinkForCoursePost(courseId: number): (string | number)[] {
         return ['/courses', courseId, 'discussion'];
     }
 
@@ -362,19 +362,19 @@ export class MetisService {
      */
     getQueryParamsForPost(post: Post): Params {
         if (post.courseWideContext) {
-            return this.getQueryParamsForCoursePost(post.id!);
+            return MetisService.getQueryParamsForCoursePost(post.id!);
         } else {
-            return this.getQueryParamsForLectureOrExercisePost(post.id!);
+            return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
         }
     }
 
-    getQueryParamsForCoursePost(postId: number): Params {
+    static getQueryParamsForCoursePost(postId: number): Params {
         const params: Params = {};
         params.searchText = `#${postId}`;
         return params;
     }
 
-    getQueryParamsForLectureOrExercisePost(postId: number): Params {
+    static getQueryParamsForLectureOrExercisePost(postId: number): Params {
         const params: Params = {};
         params.postId = postId;
         return params;

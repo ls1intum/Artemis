@@ -80,14 +80,19 @@ export class NotificationService {
                 notification.title === NEW_COURSE_POST_TITLE ||
                 notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE
             ) {
-                const queryParams: Params = this.metisService.getQueryParamsForCoursePost(target.id);
-                this.router.navigate(this.metisService.getLinkForCoursePost(courseId), { queryParams });
+                const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
+                // TODO: add this
+                // read course id from url
+                // if current course id not defined or not equal to course id saved in notification
+                // use window with reload
+                // else use router.navigate
+                this.router.navigate(MetisService.getLinkForCoursePost(courseId), { queryParams });
             } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE) {
-                const queryParams: Params = this.metisService.getQueryParamsForLectureOrExercisePost(target.id);
-                this.router.navigate(this.metisService.getLinkForExercisePost(courseId, target.exerciseId), { queryParams });
+                const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
+                this.router.navigate(MetisService.getLinkForExercisePost(courseId, target.exerciseId), { queryParams });
             } else if (notification.title === NEW_LECTURE_POST_TITLE || notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE) {
-                const queryParams: Params = this.metisService.getQueryParamsForLectureOrExercisePost(target.id);
-                this.router.navigate(this.metisService.getLinkForLecturePost(courseId, target.lectureId), { queryParams });
+                const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
+                this.router.navigate(MetisService.getLinkForLecturePost(courseId, target.lectureId), { queryParams });
             } else {
                 this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
             }
