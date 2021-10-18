@@ -64,8 +64,8 @@ public class GroupNotificationService {
                 case EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_PRACTICE, (String) typeSpecificInformation);
                 case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, NotificationType.QUIZ_EXERCISE_STARTED,
                         (String) typeSpecificInformation);
-                case EXERCISE_UPDATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_UPDATED, (String) typeSpecificInformation);
-                case EXERCISE_CREATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_CREATED, (String) typeSpecificInformation);
+                case EXERCISE_UPDATED -> createNotification((Exercise) notificationSubject, null, group, NotificationType.EXERCISE_UPDATED, (String) typeSpecificInformation);
+                case EXERCISE_CREATED -> createNotification((Exercise) notificationSubject, null, group, NotificationType.EXERCISE_CREATED, (String) typeSpecificInformation);
                 // Archive Types
                 case COURSE_ARCHIVE_STARTED -> createNotification((Course) notificationSubject, author, group, NotificationType.COURSE_ARCHIVE_STARTED,
                         (List<String>) typeSpecificInformation);
@@ -110,7 +110,8 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.EXERCISE_PRACTICE, exercise, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.EXERCISE_PRACTICE, exercise, null,
+                userRepository.getUser());
     }
 
     /**
@@ -160,7 +161,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
-                exercise, null, userRepository.getUser());
+                exercise, null, null);
     }
 
     /**
