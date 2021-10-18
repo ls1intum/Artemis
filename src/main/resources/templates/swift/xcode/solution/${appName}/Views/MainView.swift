@@ -37,7 +37,7 @@ struct MainView: View {
                             .bold()
                         Picker("Sorting Algorithm", selection: $sortAlgorithm) {
                             ForEach(sortAlgorithms, id: \.self) {
-                                Text($0)
+                                Text($0.rawValue)
                             }
                         }.pickerStyle(WheelPickerStyle())
                     }.padding()

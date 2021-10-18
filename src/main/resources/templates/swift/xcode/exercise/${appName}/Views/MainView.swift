@@ -14,7 +14,7 @@ import SwiftUI
 
 struct MainView: View {
     let context = Context()
-    var sortAlgorithm: String = ""
+    var sortAlgorithm: SortAlgorithm = SortAlgorithm.BubbleSort
     
     var body: some View {
         Text("MainView")
