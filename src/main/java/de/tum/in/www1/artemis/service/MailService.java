@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -9,6 +10,7 @@ import javax.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -39,6 +41,9 @@ public class MailService {
     private static final String USER = "user";
 
     private static final String BASE_URL = "baseUrl";
+
+    @Value("${server.url}")
+    private URL artemisServerUrl;
 
     private final JHipsterProperties jHipsterProperties;
 
@@ -164,8 +169,10 @@ public class MailService {
         context.setVariable(TIME_SERVICE, this.timeService);
 
         // replace with (e.g.) "http://localhost:9000" for local testing
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, jHipsterProperties.getMail().getBaseUrl()));
-        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        // context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, jHipsterProperties.getMail().getBaseUrl()));
+        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
+        // context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = createContentForNotificationEmailByType(notificationType, context);
         String subject = notification.getTitle();
