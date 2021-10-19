@@ -41,6 +41,7 @@ public class GroupNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
+     * @param author is the user who initiated the process of this notifications. Can be null if not specified
      */
     public void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
