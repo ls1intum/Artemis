@@ -28,6 +28,7 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -253,6 +254,11 @@ describe('ExamScoresComponent', () => {
                     },
                 }),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
+                MockProvider(CourseManagementService, {
+                    find: () => {
+                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
             ],
         })
             .compileComponents()
