@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +27,7 @@ export class AssessmentDashboardInformationEntry {
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
 })
-export class AssessmentDashboardInformationComponent implements OnInit {
+export class AssessmentDashboardInformationComponent implements OnInit, OnChanges {
     @Input() isExamMode: boolean;
     @Input() courseId: number;
     @Input() examId?: number;
@@ -66,12 +66,18 @@ export class AssessmentDashboardInformationComponent implements OnInit {
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
-        this.setupLinks();
-        this.setupGraph();
-
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
+    }
+
+    ngOnChanges(): void {
+        this.setup();
+    }
+
+    setup() {
+        this.setupLinks();
+        this.setupGraph();
     }
 
     setupLinks() {
