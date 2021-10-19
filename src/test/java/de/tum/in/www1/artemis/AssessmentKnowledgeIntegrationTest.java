@@ -214,7 +214,8 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     }
 
     /**
-     * Tests that a ModelAssessmentKnowledge is correctly set to text blocks
+     * Tests that a TextAssessmentKnowledge is correctly set to text blocks
+     * based on the TextAssessmentKnowledge of the respective exercise
      */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
