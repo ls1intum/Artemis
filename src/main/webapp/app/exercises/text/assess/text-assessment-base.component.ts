@@ -5,7 +5,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -13,6 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     template: '',
@@ -30,9 +30,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     unusedTextBlockRefs: TextBlockRef[];
     submission?: TextSubmission;
 
-    protected get course(): Course | undefined {
-        return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
-    }
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     protected constructor(
         protected alertService: AlertService,
