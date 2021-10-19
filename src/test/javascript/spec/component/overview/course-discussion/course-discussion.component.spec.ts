@@ -211,7 +211,7 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
-        expect(component.filterToUnresolved).toBeTruthy();
+        expect(component.filterToUnresolved).toEqual(true);
         // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
         expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
     }));
@@ -234,9 +234,9 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
-        expect(component.filterToUnresolved).toBeTruthy();
-        expect(component.filterToOwn).toBeTruthy();
-        expect(component.filterToAnsweredOrReactedByUser).toBeFalsy();
+        expect(component.filterToUnresolved).toEqual(true);
+        expect(component.filterToOwn).toEqual(true);
+        expect(component.filterToAnsweredOrReactedByUser).toEqual(false);
         // determine expected posts
         const expectedPosts = metisCoursePosts.filter(
             (post: Post) => post.author === currentUser && !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
@@ -260,9 +260,9 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
-        expect(component.filterToUnresolved).toBeFalsy();
-        expect(component.filterToOwn).toBeTruthy();
-        expect(component.filterToAnsweredOrReactedByUser).toBeFalsy();
+        expect(component.filterToUnresolved).toEqual(false);
+        expect(component.filterToOwn).toEqual(true);
+        expect(component.filterToAnsweredOrReactedByUser).toEqual(false);
         // determine expected posts
         const expectedPosts = metisCoursePosts.filter((post: Post) => post.author === currentUser);
         expect(component.posts).toHaveLength(expectedPosts.length);
@@ -287,9 +287,9 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
-        expect(component.filterToUnresolved).toBeTruthy();
-        expect(component.filterToOwn).toBeFalsy();
-        expect(component.filterToAnsweredOrReactedByUser).toBeTruthy();
+        expect(component.filterToUnresolved).toEqual(true);
+        expect(component.filterToOwn).toEqual(false);
+        expect(component.filterToAnsweredOrReactedByUser).toEqual(true);
         // determine expected posts
         const expectedPosts = metisCoursePosts.filter(
             (post: Post) =>
