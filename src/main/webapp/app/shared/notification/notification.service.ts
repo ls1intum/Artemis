@@ -114,7 +114,7 @@ export class NotificationService {
             window.location.href = this.serializer.serialize(tree);
         } else {
             // navigate with router when staying in same course context when clicking on notification
-            this.router.navigate(routeComponents);
+            this.router.navigate(routeComponents, { queryParams });
         }
     }
 
