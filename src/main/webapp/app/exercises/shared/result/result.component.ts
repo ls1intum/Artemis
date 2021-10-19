@@ -19,6 +19,7 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { captureException } from '@sentry/browser';
 
 /**
  * Enumeration object representing the possible options that
@@ -125,10 +126,10 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     ngOnInit(): void {
         if (!this.result && this.participation) {
-            if (this.participation.results && this.participation.results.length > 0) {
-                this.exercise = this.exercise || getExercise(this.participation);
-                this.participation.exercise = this.exercise;
+            this.exercise = this.exercise || getExercise(this.participation);
+            this.participation.exercise = this.exercise;
 
+            if (this.participation.results && this.participation.results.length > 0) {
                 if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
@@ -149,16 +150,20 @@ export class ResultComponent implements OnInit, OnChanges {
                 }
                 this.result.participation = this.participation;
             }
-        }
-        // make sure this.participation is initialized in case it was not passed
-        if (!this.participation && this.result && this.result.participation) {
+        } else if (!this.participation && this.result && this.result.participation) {
+            // make sure this.participation is initialized in case it was not passed
             this.participation = this.result.participation;
             this.exercise = this.exercise || getExercise(this.participation);
             this.participation.exercise = this.exercise;
+        } else if (this.participation) {
+            this.exercise = this.exercise || getExercise(this.participation);
+            this.participation.exercise = this.exercise;
+        } else {
+            captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
+            return;
         }
-        if (this.result) {
-            this.submission = this.result.submission;
-        }
+
+        this.submission = this.result!.submission;
         this.evaluate();
     }
 
