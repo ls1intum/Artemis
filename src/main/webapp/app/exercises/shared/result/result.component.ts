@@ -205,8 +205,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     private evaluateTemplateStatus() {
         // Fallback if participation is not set
-        const exercise = getExercise(this.participation);
-        if (!this.participation || !exercise) {
+        if (!this.participation || !this.exercise) {
             if (!this.result) {
                 return ResultTemplateStatus.NO_RESULT;
             } else {
@@ -223,9 +222,9 @@ export class ResultComponent implements OnInit, OnChanges {
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
-            const inDueTime = isParticipationInDueTime(this.participation, exercise);
-            const dueDate = ResultComponent.dateAsDayjs(exercise.dueDate);
-            const assessmentDueDate = ResultComponent.dateAsDayjs(exercise.assessmentDueDate);
+            const inDueTime = isParticipationInDueTime(this.participation, this.exercise);
+            const dueDate = ResultComponent.dateAsDayjs(this.exercise.dueDate);
+            const assessmentDueDate = ResultComponent.dateAsDayjs(this.exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
@@ -292,11 +291,7 @@ export class ResultComponent implements OnInit, OnChanges {
         const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
         const resultStringCompiledMessage = this.result!.resultString?.replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
 
-        if (
-            this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
-            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
-        ) {
+        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)) {
             const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
             return `${resultStringCompiledMessage} ${preliminary}`;
         } else {
@@ -309,7 +304,7 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
+        const programmingExercise = this.exercise as ProgrammingExercise;
         if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
@@ -341,10 +336,10 @@ export class ResultComponent implements OnInit, OnChanges {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
-        const exercise = getExercise(this.participation);
-        componentInstance.showTestDetails = (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
-        if (exercise) {
-            componentInstance.exerciseType = exercise.type!;
+        componentInstance.showTestDetails =
+            (this.exercise?.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
+        if (this.exercise) {
+            componentInstance.exerciseType = this.exercise.type!;
             componentInstance.showScoreChart = true;
         }
         if (this.templateStatus === ResultTemplateStatus.MISSING) {
