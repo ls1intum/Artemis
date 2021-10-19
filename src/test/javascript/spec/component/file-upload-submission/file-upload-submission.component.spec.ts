@@ -1,8 +1,6 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
@@ -23,27 +21,26 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import dayjs from 'dayjs';
 import { of } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -58,24 +55,22 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                NgxDatatableModule,
-                ArtemisResultModule,
-                ArtemisSharedModule,
-                ArtemisComplaintsModule,
-                TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([routes[0]]),
-                ArtemisSharedComponentModule,
-                ArtemisHeaderExercisePageWithDetailsModule,
-                RatingModule,
-            ],
+            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]]), FontAwesomeModule],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(AlertComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(ButtonComponent),
+                MockComponent(RatingComponent),
+                MockComponent(ComplaintInteractionsComponent),
+                MockComponent(HeaderParticipationPageComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
@@ -112,19 +107,19 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
         // check if properties where assigned correctly on init
-        expect(comp.acceptedFileExtensions.replace(/\./g, '')).to.be.equal(fileUploadExercise.filePattern);
-        expect(comp.fileUploadExercise).to.be.equal(fileUploadExercise);
-        expect(comp.isAfterAssessmentDueDate).to.be.true;
+        expect(comp.acceptedFileExtensions.replace(/\./g, '')).toEqual(fileUploadExercise.filePattern);
+        expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
+        expect(comp.isAfterAssessmentDueDate).toBe(true);
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
+        expect(fileUploadInput).not.toBe(null);
+        expect(fileUploadInput.nativeElement.disabled).toBe(false);
 
         // check if extension elements are set
         const extension = debugElement.query(By.css('.ms-1.badge.bg-info'));
-        expect(extension).to.exist;
-        expect(extension.nativeElement.textContent.replace(/\s/g, '')).to.be.equal(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
+        expect(extension).toBeDefined();
+        expect(extension.nativeElement.textContent.replace(/\s/g, '')).toEqual(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
     }));
 
     it('Submission and file uploaded', fakeAsync(() => {
@@ -146,10 +141,10 @@ describe('FileUploadSubmissionComponent', () => {
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.not.exist;
+        expect(fileUploadInput).toBe(null);
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
-        expect(submitFileButton).to.be.null;
+        expect(submitFileButton).toBe(null);
     }));
 
     it('Too big file can not be submitted', fakeAsync(() => {
@@ -162,21 +157,21 @@ describe('FileUploadSubmissionComponent', () => {
         const submissionFile = new File([''], 'exampleSubmission.png');
         Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
         comp.submission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(alertService, 'error');
+        const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy.callCount).to.be.equal(1);
-        expect(comp.submissionFile).to.be.undefined;
-        expect(comp.submission!.filePath).to.be.undefined;
+        expect(jhiErrorSpy).toBeCalledTimes(1);
+        expect(comp.submissionFile).toBe(undefined);
+        expect(comp.submission!.filePath).toBe(undefined);
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
-        expect(fileUploadInput.nativeElement.value).to.be.equal('');
+        expect(fileUploadInput).toBeDefined();
+        expect(fileUploadInput.nativeElement.disabled).toBe(false);
+        expect(fileUploadInput.nativeElement.value).toEqual('');
     }));
 
     it('Incorrect file type can not be submitted', fakeAsync(() => {
@@ -189,21 +184,21 @@ describe('FileUploadSubmissionComponent', () => {
         // Only png and pdf types are allowed
         const submissionFile = new File([''], 'exampleSubmission.jpg');
         comp.submission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(alertService, 'error');
+        const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy.callCount).to.be.equal(1);
-        expect(comp.submissionFile).to.be.undefined;
-        expect(comp.submission!.filePath).to.be.undefined;
+        expect(jhiErrorSpy).toBeCalledTimes(1);
+        expect(comp.submissionFile).toBe(undefined);
+        expect(comp.submission!.filePath).toBe(undefined);
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
-        expect(fileUploadInput.nativeElement.value).to.be.equal('');
+        expect(fileUploadInput).toBeDefined();
+        expect(fileUploadInput.nativeElement.disabled).toBe(false);
+        expect(fileUploadInput.nativeElement.value).toEqual('');
 
         tick();
         fixture.destroy();
@@ -214,15 +209,15 @@ describe('FileUploadSubmissionComponent', () => {
         const submission = createFileUploadSubmission();
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
-        stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
         fixture.detectChanges();
         tick();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).to.exist;
-        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+        expect(submitButton).toBeDefined();
+        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('true');
 
         tick();
         fixture.destroy();
@@ -233,16 +228,16 @@ describe('FileUploadSubmissionComponent', () => {
         const submission = createFileUploadSubmission();
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
-        stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLate).to.be.true;
+        expect(comp.isLate).toBe(true);
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).to.exist;
-        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+        expect(submitButton).toBeDefined();
+        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('false');
 
         tick();
         fixture.destroy();
@@ -250,7 +245,7 @@ describe('FileUploadSubmissionComponent', () => {
     }));
 
     it('should not allow to submit if there is a result and no due date', fakeAsync(() => {
-        stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(createFileUploadSubmission()));
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(createFileUploadSubmission()));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
         fixture.detectChanges();
@@ -260,8 +255,8 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).to.exist;
-        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+        expect(submitButton).toBeDefined();
+        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('true');
 
         tick();
         fixture.destroy();
@@ -271,21 +266,21 @@ describe('FileUploadSubmissionComponent', () => {
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
-        stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
         fixture.detectChanges();
         tick();
         comp.participation.initializationDate = dayjs();
 
-        expect(comp.isActive).to.be.true;
+        expect(comp.isActive).toBe(true);
 
         comp.fileUploadExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isActive).to.be.false;
+        expect(comp.isActive).toBe(false);
 
         tick();
         fixture.destroy();
