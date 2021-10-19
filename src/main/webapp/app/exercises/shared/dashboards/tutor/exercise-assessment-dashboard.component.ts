@@ -139,9 +139,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     exerciseForGuidedTour?: Exercise;
 
-    complaintsDashboardInfo: AssessmentDashboardInformationEntry;
-    moreFeedbackRequestsDashboardInfo: AssessmentDashboardInformationEntry;
-    ratingsDashboardInfo: AssessmentDashboardInformationEntry;
+    complaintsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
+    moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
+    ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
     unassessessedSubmissions: string;
@@ -151,6 +151,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     legendPosition = LegendPosition.Below;
     assessments: any[];
     customColors: any[];
+
+    // links
+    submissionsLink: any[];
+    complaintsLink: any[];
+    moreFeedbackRequestsLink: any[];
 
     // extension points, see shared/extension-point
     @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
@@ -234,6 +239,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         ];
     }
 
+    setupLinks() {
+        this.submissionsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'submissions'];
+        this.complaintsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'complaints'];
+        this.moreFeedbackRequestsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'more-feedback-requests'];
+    }
+
     /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
@@ -306,7 +317,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
 
-                this.setupGraph();
+                this.setupLinks();
             },
             (response: string) => this.onError(response),
         );
@@ -335,6 +346,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                     const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
                     this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
+
+                    // Prepare the table data for the side table
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.complaintsDashboardInfo = new AssessmentDashboardInformationEntry(
