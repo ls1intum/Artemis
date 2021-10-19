@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -12,10 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -47,9 +48,11 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final AuthorizationCheckService authCheckService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
@@ -60,6 +63,7 @@ public class ResultService {
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -180,6 +184,40 @@ public class ResultService {
         List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
+    }
+
+    /**
+     * Returns a list of feedbacks that is filtered for students depending on the settings and the time.
+     *
+     * @param result    the result for which the feedback elements should be returned
+     * @return the list of filtered feedbacks
+     */
+    public List<Feedback> getFeedbacksForResult(Result result) {
+        Exercise exercise = result.getParticipation().getExercise();
+        // Filter feedbacks marked with visibility afterDueDate or never
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
+
+        List<Feedback> feedbacks = result.getFeedbacks();
+        if (filterForStudent) {
+            if (exercise.isExamExercise()) {
+                Exam exam = exercise.getExerciseGroup().getExam();
+                result.filterSensitiveFeedbacks(exam.resultsPublished());
+            }
+            else {
+                result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
+            }
+            feedbacks = result.getFeedbacks();
+
+            // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
+            if (!exercise.isExamExercise() && AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exercise.getAssessmentDueDate() != null
+                    && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
+                // filter all non-automatic feedbacks
+                feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
+            }
+        }
+        return feedbacks;
     }
 
     @NotNull
