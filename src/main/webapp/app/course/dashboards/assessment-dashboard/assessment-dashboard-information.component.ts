@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +27,7 @@ export class AssessmentDashboardInformationEntry {
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
 })
-export class AssessmentDashboardInformationComponent implements OnInit {
+export class AssessmentDashboardInformationComponent implements OnInit, OnChanges {
     @Input() isExamMode: boolean;
     @Input() courseId: number;
     @Input() examId?: number;
@@ -58,14 +58,35 @@ export class AssessmentDashboardInformationComponent implements OnInit {
     view: [number, number] = [320, 150];
     legendPosition = LegendPosition.Below;
 
+    complaintsLink: any[];
+    moreFeedbackRequestsLink: any[];
+    assessmentLocksLink: any[];
+    ratingsLink: any[];
+
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
-        this.setupGraph();
-
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
+    }
+
+    ngOnChanges(): void {
+        this.setup();
+    }
+
+    setup() {
+        this.setupLinks();
+        this.setupGraph();
+    }
+
+    setupLinks() {
+        const examRouteIfNeeded = this.isExamMode ? ['exams', this.examId!] : [];
+
+        this.complaintsLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['complaints']);
+        this.moreFeedbackRequestsLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
+        this.assessmentLocksLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['assessment-locks']);
+        this.ratingsLink = ['/course-management', this.courseId, 'ratings'];
     }
 
     setupGraph() {
