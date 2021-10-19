@@ -194,25 +194,24 @@ public class ResultService {
      */
     public List<Feedback> getFeedbacksForResult(Result result) {
         Exercise exercise = result.getParticipation().getExercise();
-        // Filter feedbacks marked with visibility afterDueDate or never
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
+        boolean filterForStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise);
 
         List<Feedback> feedbacks = result.getFeedbacks();
         if (filterForStudent) {
             if (exercise.isExamExercise()) {
                 Exam exam = exercise.getExerciseGroup().getExam();
-                result.filterSensitiveFeedbacks(exam.resultsPublished());
+                result.filterSensitiveFeedbacks(!exam.resultsPublished());
             }
             else {
                 result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
             }
             feedbacks = result.getFeedbacks();
 
+            boolean resultSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
+            boolean dueDateNotSetOrNotOver = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
+
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
-            if (!exercise.isExamExercise() && AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exercise.getAssessmentDueDate() != null
-                    && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
+            if (!exercise.isExamExercise() && resultSetAndNonAutomatic && dueDateNotSetOrNotOver) {
                 // filter all non-automatic feedbacks
                 feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
             }
