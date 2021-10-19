@@ -127,22 +127,22 @@ describe('UsersImportButtonComponent', () => {
     });
 
     it('should compute invalid student entries', function () {
-        let rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }]);
+        let rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }]);
         expect(rowNumbersOrNull).to.equal('2');
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }, { registrationnumber: '1' }, { login: 'username' }]);
+        rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { registrationnumber: '1' }, { login: 'username' }]);
         expect(rowNumbersOrNull).to.equal('2');
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
+        rowNumbersOrNull = component.computeInvalidUserEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
         expect(rowNumbersOrNull).to.be.null;
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
+        rowNumbersOrNull = component.computeInvalidUserEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
         expect(rowNumbersOrNull).to.be.null;
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
+        rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
         expect(rowNumbersOrNull).to.equal('2, 3');
 
-        rowNumbersOrNull = component.computeInvalidStudentEntries([]);
+        rowNumbersOrNull = component.computeInvalidUserEntries([]);
         expect(rowNumbersOrNull).to.be.null;
     });
 
@@ -162,8 +162,8 @@ describe('UsersImportButtonComponent', () => {
         importedStudents.forEach((student) => expect(component.wasImported(student)).to.be.true);
         notImportedStudents.forEach((student) => expect(component.wasImported(student)).to.be.false);
 
-        expect(component.numberOfStudentsImported).to.equal(importedStudents.length);
-        expect(component.numberOfStudentsNotImported).to.equal(notImportedStudents.length);
+        expect(component.numberOfUsersImported).to.equal(importedStudents.length);
+        expect(component.numberOfUsersNotImported).to.equal(notImportedStudents.length);
     });
 
     it('should invoke REST call on "Import" but not on "Finish"', function () {
