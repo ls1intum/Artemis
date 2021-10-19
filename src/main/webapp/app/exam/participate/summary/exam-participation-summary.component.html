@@ -42,7 +42,7 @@
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
             </div>
             <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
-                <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
+                <jhi-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise"> </jhi-result>
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
