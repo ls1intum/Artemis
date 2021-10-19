@@ -36,7 +36,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
@@ -53,9 +53,9 @@ describe('FileUploadSubmissionComponent', () => {
 
     const result = { id: 1 } as Result;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]]), FontAwesomeModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]])],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
@@ -67,6 +67,7 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintInteractionsComponent),
                 MockComponent(HeaderParticipationPageComponent),
+                MockComponent(FaIconComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
@@ -122,7 +123,7 @@ describe('FileUploadSubmissionComponent', () => {
         expect(extension.nativeElement.textContent.replace(/\s/g, '')).toEqual(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
     }));
 
-    it('Submission and file uploaded', fakeAsync(() => {
+    it('Submission and file uploaded', () => {
         // Ignore window confirm
         window.confirm = () => {
             return false;
@@ -145,7 +146,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
         expect(submitFileButton).toBe(null);
-    }));
+    });
 
     it('Too big file can not be submitted', fakeAsync(() => {
         // Ignore console errors
