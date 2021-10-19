@@ -104,7 +104,6 @@ dependencies {
     implementation "io.dropwizard.metrics:metrics-core"
     implementation "commons-beanutils:commons-beanutils:${commons_beanutils_version}"
     implementation "org.apache.commons:commons-lang3"
-    implementation "io.projectreactor.kafka:reactor-kafka"
     implementation("org.springframework.boot:spring-boot-starter-webflux:${spring_boot_version}") {
         exclude module: "spring-boot-starter-tomcat"
     }
@@ -124,7 +123,6 @@ dependencies {
     implementation("io.springfox:springfox-oas")
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}")
 
-    testImplementation "org.testcontainers:kafka"
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
