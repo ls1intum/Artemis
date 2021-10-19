@@ -29,6 +29,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     baseResource: string;
     shortBaseResource: string;
     readonly ExerciseType = ExerciseType;
+
     readonly AssessmentType = AssessmentType;
 
     constructor(
