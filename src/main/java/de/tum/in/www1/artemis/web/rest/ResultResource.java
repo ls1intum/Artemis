@@ -354,20 +354,24 @@ public class ResultResource {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
-        if (filterForStudent) {
-            result.filterSensitiveInformation();
-            result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
-        }
 
-        List<Feedback> feedbacks;
-        // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && result.getAssessmentType() != null && AssessmentType.AUTOMATIC != result.getAssessmentType()
-                && exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
-            // filter all non-automatic feedbacks
-            feedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
-        }
-        else {
+        List<Feedback> feedbacks = result.getFeedbacks();
+        if (filterForStudent) {
+            if (exercise.isExamExercise()) {
+                Exam exam = exercise.getExerciseGroup().getExam();
+                result.filterSensitiveFeedbacks(exam.resultsPublished());
+            }
+            else {
+                result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
+            }
             feedbacks = result.getFeedbacks();
+
+            // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
+            if (!exercise.isExamExercise() && AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exercise.getAssessmentDueDate() != null
+                    && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
+                // filter all non-automatic feedbacks
+                feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
+            }
         }
 
         return new ResponseEntity<>(feedbacks, HttpStatus.OK);
