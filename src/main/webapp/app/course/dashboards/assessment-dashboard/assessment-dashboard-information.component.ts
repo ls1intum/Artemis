@@ -58,14 +58,29 @@ export class AssessmentDashboardInformationComponent implements OnInit {
     view: [number, number] = [320, 150];
     legendPosition = LegendPosition.Below;
 
+    complaintsLink: any[];
+    moreFeedbackRequestsLink: any[];
+    assessmentLocksLink: any[];
+    ratingsLink: any[];
+
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
+        this.setupLinks();
         this.setupGraph();
 
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
+    }
+
+    setupLinks() {
+        const examRouteIfNeeded = this.isExamMode ? ['exams', this.examId!] : [];
+
+        this.complaintsLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['complaints']);
+        this.moreFeedbackRequestsLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
+        this.assessmentLocksLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['assessment-locks']);
+        this.ratingsLink = ['/course-management', this.courseId, 'ratings'];
     }
 
     setupGraph() {
