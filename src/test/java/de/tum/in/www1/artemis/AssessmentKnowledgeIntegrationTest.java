@@ -18,9 +18,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.modeling.ModelCluster;
+import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 
@@ -263,5 +268,34 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
             assertThat(textBlock.getKnowledge().getId()).isEqualTo(exercise2.getKnowledge().getId());
         }
         assertThat(exercise1.getKnowledge().getId()).isNotEqualTo(exercise2.getKnowledge().getId());
+    }
+
+    /**
+     * Tests that a ModelAssessmentKnowledge is correctly set to model elements
+     * based on the ModelAssessmentKnowledge of the respective exercise
+     */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSetModelAssessmentKnowledgeToModelElements() throws Exception {
+        ModelingSubmission submission1 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        submission1.setId(1L);
+        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        submission2.setId(2L);
+        ModelingSubmission submission3 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        submission3.setId(3L);
+        ModelingSubmission submission4 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        submission4.setId(4L);
+
+        Course course = database.addEmptyCourse();
+        ModelingExercise exercise = modelingExerciseUtilService.createModelingExercise(course.getId());
+        System.out.println(exercise.getKnowledge().getId());
+        ModelClusterFactory modelClusterFactory = new ModelClusterFactory();
+        List<ModelCluster> modelClusters = modelClusterFactory.buildClusters(List.of(submission1, submission2), exercise);
+
+        ModelCluster modelCluster = modelClusters.get(0);
+        System.out.println(modelCluster.getModelElements().size());
+        for (ModelElement element : modelCluster.getModelElements()) {
+            assertThat(element.getKnowledge().getId()).isEqualTo(exercise.getKnowledge().getId());
+        }
     }
 }
