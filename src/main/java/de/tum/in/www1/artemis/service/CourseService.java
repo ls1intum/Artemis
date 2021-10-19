@@ -291,11 +291,11 @@ public class CourseService {
     }
 
     /**
-     * Add multiple users to the students of the course so that they can access the course
+     * Add multiple users to the course so that they can access the course
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
      * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
+     * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
      * @param courseId      the id of the course

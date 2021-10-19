@@ -42,7 +42,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     @Input() courseId: number;
     @Input() courseGroup: String;
-    @Input() exam: Exam;
+    @Input() exam: Exam | undefined;
 
     usersToImport: StudentDTO[] = [];
     notFoundUsers: StudentDTO[] = [];
@@ -139,9 +139,9 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Returns a comma separated list of row numbers that contains invalid student entries
      * @param csvUsers Parsed list of users
      */
-    computeInvalidUserEntries(csvUser: CsvUser[]): string | null {
+    computeInvalidUserEntries(csvUsers: CsvUser[]): string | null {
         const invalidList: number[] = [];
-        for (const [i, user] of csvUser.entries()) {
+        for (const [i, user] of csvUsers.entries()) {
             if (
                 !user[csvColumns.registrationNumber] &&
                 !user[csvColumns.matrikelNummer] &&

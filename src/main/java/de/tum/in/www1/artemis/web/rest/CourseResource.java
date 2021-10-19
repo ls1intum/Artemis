@@ -1515,6 +1515,7 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));
     }
@@ -1535,6 +1536,7 @@ public class CourseResource {
     @PostMapping("courses/{courseId}/{courseGroup}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);

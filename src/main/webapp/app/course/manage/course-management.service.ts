@@ -413,10 +413,10 @@ export class CourseManagementService {
     }
 
     /**
-     * Add students to the registered users for an exam
+     * Add users to the registered users for an course.
      * @param courseId The course id.
-     * @param studentDtos Student DTOs of student to add to the exam
-     * @return studentDtos of students that were not found in the system
+     * @param studentDtos Student DTOs of users to add to the course.
+     * @return studentDtos of users that were not found in the system.
      */
     addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, studentDtos, { observe: 'response' });
