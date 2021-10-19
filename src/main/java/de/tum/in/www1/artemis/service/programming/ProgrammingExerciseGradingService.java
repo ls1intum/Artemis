@@ -149,7 +149,7 @@ public class ProgrammingExerciseGradingService {
                 // exercise exists.
                 SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
                 if (submissionPolicy instanceof LockRepositoryPolicy policy) {
-                    submissionPolicyService.handleLockRepositoryPolicy(newResult, policy);
+                    submissionPolicyService.handleLockRepositoryPolicy(newResult, (Participation) participation, policy);
                 }
 
                 if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
@@ -548,16 +548,16 @@ public class ProgrammingExerciseGradingService {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())
                     && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
                 successfulTestPoints -= calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
-
-                if (successfulTestPoints < 0) {
-                    successfulTestPoints = 0;
-                }
             }
 
             // If the submission policy should be enforced, we deduct the calculated deduction
             // from the overall score
             if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy()instanceof SubmissionPenaltyPolicy penaltyPolicy) {
                 successfulTestPoints -= submissionPolicyService.calculateSubmissionPenalty(result.getParticipation(), penaltyPolicy);
+            }
+
+            if (successfulTestPoints < 0) {
+                successfulTestPoints = 0;
             }
 
             // The score is calculated as a percentage of the maximum points

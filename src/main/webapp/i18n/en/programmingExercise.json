@@ -321,7 +321,6 @@
                 "submissionPolicyAlreadyEnabled": "The submission policy could not be enabled, because it is already active.",
                 "submissionPolicyAlreadyDisabled": "The submission policy could not be disabled, because it is already inactive.",
                 "submissionPolicyToggleFailedPolicyNotExist": "The submission policy could not be toggled, because the programming exercise does not have a submission policy.",
-                "updatedSubmissionPolicyIncorrectType": "The submission policy could not be updated, because the new type is different from the old type.",
                 "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
                 "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
                 "submissionsAllowed": "allowed Submissions",
@@ -333,15 +332,14 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
-                    "penaltyInputFieldTitle": "Penalty after Exceeding Submission Limit",
-                    "exceedingLimitDescription": "The permanent penalty the system imposes on the maximum achievable participation score when exceeding the submission limit.",
+                    "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
+                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "The penalty must be between 0 and 100 percent!",
-                        "max": "The penalty must be between 0 and 100 percent!",
+                        "min": "The penalty must be greater than 0!",
                         "required": "The penalty must be set!"
                     },
                     "penaltyInfoLabel": "Exceeding Penalty",
-                    "triggerAllInformation": "Unlike for lock repository policies, all changes regarding submission penalty policies do not take effect immediately after updating, activating or deactivating the policy. Use the Trigger all functionality to update scores and result strings."
+                    "triggerAllInformation": "Unlike for lock repository policies, all changes regarding submission penalty policies do not take effect immediately after updating or (de)activating the policy. Use the Trigger all functionality to update scores and result strings."
                 },
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
@@ -354,12 +352,12 @@
                     },
                     "submission_penalty": {
                         "title": "Submission Penalty",
-                        "tooltip": "For each submission exceeding the limit, a permanent penalty is imposed on your maximum achievable score. This penalty increases with every submission exceeding the limit."
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
                     }
                 },
                 "submissionLimitTitle": "Submission Limit",
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
-                "editInGradingInformation": "The submission policy can only be edited, toggled and removed on the grading page of the programming exercise!",
+                "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
                     "pattern": "The submission limit must be between 1 and 500!",
                     "required": "The submission limit must be set!"

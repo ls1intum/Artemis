@@ -31,7 +31,7 @@ public class Feedback extends DomainObject {
 
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
-    public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "Submission Policy";
+    public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
 
     @Size(max = 500)
     @Column(name = "text", length = 500)

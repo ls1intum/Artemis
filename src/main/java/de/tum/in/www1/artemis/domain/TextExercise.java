@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@SecondaryTable(name = "text_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
@@ -24,6 +25,11 @@ public class TextExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<TextCluster> clusters;
+
+    @ManyToOne
+    @JoinColumn(table = "text_exercise_details")
+    @JsonIgnore
+    private TextAssessmentKnowledge knowledge;
 
     public String getSampleSolution() {
         return sampleSolution;
@@ -49,6 +55,14 @@ public class TextExercise extends Exercise {
     @Override
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
+    }
+
+    public TextAssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(TextAssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 
 }

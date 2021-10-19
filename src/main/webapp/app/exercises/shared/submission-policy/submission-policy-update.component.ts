@@ -82,7 +82,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             type="number"
                             class="form-control"
                             [customMin]="0"
-                            [customMax]="100"
                             name="submissionLimitExceededPenalty"
                             id="field_submissionLimitExceededPenalty"
                             [disabled]="!editable"
@@ -153,7 +152,6 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
         const previousSubmissionPolicyType = this.programmingExercise?.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
-        console.log(submissionPolicyType + ', ' + previousSubmissionPolicyType);
         if (submissionPolicyType === SubmissionPolicyType.NONE) {
             if (previousSubmissionPolicyType !== SubmissionPolicyType.NONE) {
                 this.programmingExercise.submissionPolicy!.type = SubmissionPolicyType.NONE;

@@ -321,7 +321,6 @@
                 "submissionPolicyAlreadyEnabled": "Die Abgaberichtlinie konnte nicht aktiviert werden, da diese bereits aktiviert ist.",
                 "submissionPolicyAlreadyDisabled": "Die Abgaberichtlinie konnte nicht deaktiviert werden, da diese bereits deaktiviert ist.",
                 "submissionPolicyToggleFailedPolicyNotExist": "Für diese Programmieraufgabe konnte die Abgaberichtlinie nicht (de)aktiviert werden, da die Programmieraufgabe keine Abgaberichtlinie hat. ",
-                "updatedSubmissionPolicyIncorrectType": "Die Abgaberichtlinie konnte nicht gespeichert werden, da sich der Typ geändert hat.",
                 "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
                 "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
                 "submissionsAllowed": "erlaubte Abgaben",
@@ -333,12 +332,11 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Strafe für Überzug",
-                    "penaltyInputFieldTitle": "Abzug für Überschreitung des Abgabelimits",
-                    "exceedingLimitDescription": "Der permanente prozentuale Abzug von der maximal erreichbaren Punktzahl.",
+                    "penaltyInputFieldTitle": "Punktabzug für Überschreitung des Abgabelimits",
+                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "Der Abzug muss zwischen 0 und 100 Prozent liegen!",
-                        "max": "Der Abzug muss zwischen 0 und 100 Prozent liegen!",
-                        "required": "Der Abzug muss gesetzt sein!"
+                        "min": "Der Punktabzug muss größer als 0 sein!",
+                        "required": "Der Punktabzug muss gesetzt sein!"
                     },
                     "penaltyInfoLabel": "Strafe für Überzug",
                     "triggerAllInformation": "Anders als für Abgaberichtlinien mit Repository Sperre, tritt die Auswirkung von Abgaberichtlinien mit Überzugsstrafen bei Aktualisierungen nicht sofort ein. Alle Abgaben müssen erneut ausgeführt werden, damit das Ergebnis aktualisiert wird."
@@ -354,12 +352,12 @@
                     },
                     "submission_penalty": {
                         "title": "Strafe für Überzug",
-                        "tooltip": "Für jede Abgabe über dem Abgabelimit wird die maximal erreichbare Punktzahl der Aufgabe verringert. Dieser Abzug steigt linear mit jeder Abgabe, die das Abgabelimit überschreitet."
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
                     }
                 },
                 "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
-                "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet, (de)aktiviert und entfernt werden.",
+                "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
                 "submissionLimitWarning": {
                     "pattern": "Das Abgabelimit muss zwischen 1 und 500 liegen!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
