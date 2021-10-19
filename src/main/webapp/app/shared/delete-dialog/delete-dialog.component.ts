@@ -19,6 +19,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     entityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
+    requireConfirmationOnlyForAdditionalChecks: boolean;
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
     actionType: ActionType;
@@ -67,5 +68,12 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     confirmDelete(): void {
         this.submitDisabled = true;
         this.delete.emit(this.additionalChecksValues);
+    }
+
+    /**
+     * Check if at least one additionalCheck is selected
+     */
+    get atLeastOneAdditionalCheckSelected(): boolean {
+        return Object.values(this.additionalChecksValues).some((check) => check);
     }
 }
