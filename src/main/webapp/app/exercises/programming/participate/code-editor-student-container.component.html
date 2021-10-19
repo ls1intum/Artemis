@@ -33,12 +33,16 @@
                 [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span
 
 
+
+
+
+
         ><br />
         <span *ngIf="exercise.submissionPolicy"
             >{{ exercise.submissionPolicy.submissionLimit }} {{ 'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed' | artemisTranslate }}</span
         >
         <span *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-            ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}: {{ exercise.submissionPolicy.exceedingPenalty }})</span
+            ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}: {{ exercise.submissionPolicy.exceedingPenalty }}P)</span
         >
     </div>
     <!-- prettier-ignore -->

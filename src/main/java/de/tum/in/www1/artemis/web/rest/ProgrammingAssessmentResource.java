@@ -82,7 +82,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             result.getParticipation().setResults(null);
         }
 
-        if (result.getParticipation() != null && result.getParticipation()instanceof StudentParticipation studentParticipation
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation studentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
             studentParticipation.filterSensitiveInformation();
         }

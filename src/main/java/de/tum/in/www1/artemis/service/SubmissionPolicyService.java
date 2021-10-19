@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.apache.commons.lang.NotImplementedException;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +12,11 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.SubmissionPolicyResource;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class SubmissionPolicyService {
@@ -36,8 +36,8 @@ public class SubmissionPolicyService {
     private final SubmissionRepository submissionRepository;
 
     public SubmissionPolicyService(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
-                                   ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-                                   FeedbackRepository feedbackRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            FeedbackRepository feedbackRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -341,7 +341,8 @@ public class SubmissionPolicyService {
      */
     private int getParticipationSubmissionCount(Participation participation) {
         final Long participationId = participation.getId();
-        participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         int submissionCompensation = participation.getSubmissions().iterator().next().getResults().isEmpty() ? 1 : 0;
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()

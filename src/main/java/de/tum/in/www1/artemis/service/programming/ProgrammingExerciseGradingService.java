@@ -390,7 +390,7 @@ public class ProgrammingExerciseGradingService {
             boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
 
             // Add feedback if submission penalty policy is active
-            if (exercise.getSubmissionPolicy()instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+            if (exercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
                 submissionPolicyService.createFeedbackForPenaltyPolicy(result, penaltyPolicy);
             }
 
@@ -552,7 +552,7 @@ public class ProgrammingExerciseGradingService {
 
             // If the submission policy should be enforced, we deduct the calculated deduction
             // from the overall score
-            if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy()instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+            if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
                 successfulTestPoints -= submissionPolicyService.calculateSubmissionPenalty(result.getParticipation(), penaltyPolicy);
             }
 
