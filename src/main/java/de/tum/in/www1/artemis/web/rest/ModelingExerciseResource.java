@@ -78,12 +78,14 @@ public class ModelingExerciseResource {
 
     private final ModelClusterRepository modelClusterRepository;
 
+    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository) {
+            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -100,6 +102,7 @@ public class ModelingExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.modelClusterRepository = modelClusterRepository;
+        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -126,6 +129,9 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         // validates general settings: points, dates
         exerciseService.validateGeneralSettings(modelingExercise);
+
+        // if exercise is created from scratch we create a new knowledge instance
+        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
