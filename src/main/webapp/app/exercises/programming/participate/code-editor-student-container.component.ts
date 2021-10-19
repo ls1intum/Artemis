@@ -9,7 +9,7 @@ import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -32,6 +32,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
