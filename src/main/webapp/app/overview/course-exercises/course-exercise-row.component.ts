@@ -85,6 +85,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             this.exercise = quizExercise;
         }
         this.exerciseCategories = this.exercise.categories || [];
+        this.exercise.course = this.course;
     }
 
     ngOnDestroy() {

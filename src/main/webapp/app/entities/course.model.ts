@@ -39,6 +39,7 @@ export class Course implements BaseEntity {
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
+    public accuracyOfScores?: number;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;
@@ -78,6 +79,7 @@ export class Course implements BaseEntity {
         this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
+        this.accuracyOfScores = 1; // default value
     }
 
     /**

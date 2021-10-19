@@ -47,7 +47,7 @@ export class GradingKeyOverviewComponent implements OnInit {
                         if (!this.isExam) {
                             // calculate course max points based on exercises
                             const course = this.courseCalculationService.getCourse(this.courseId!);
-                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!).get(REACHABLE_POINTS);
+                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(REACHABLE_POINTS);
                             this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
                         } else {
                             // for exams the max points filed should equal the total max points (otherwise exams can't be started)
