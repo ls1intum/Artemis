@@ -207,15 +207,27 @@ export class GradingSystemService {
     }
 
     /**
-     * Finds a matching grade step inside a grade step set for the given percentage or returns undefined
+     * Finds a matching grade step inside a grade step set for the given percentage
+     * or returns the highest step if the score is above all steps.
+     * Returns undefined if the score is below all grade steps
      *
      * @param gradeSteps the grade step set
      * @param percentage the percentage to be matched
      */
     findMatchingGradeStep(gradeSteps: GradeStep[], percentage: number) {
-        return gradeSteps.find((gradeStep) => {
+        const matchingGradeStep = gradeSteps.find((gradeStep) => {
             return this.matchGradePercentage(gradeStep, percentage);
         });
+
+        if (matchingGradeStep) {
+            return matchingGradeStep;
+        }
+
+        let sortedGradeSteps: GradeStep[] = [];
+        gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
+        sortedGradeSteps = this.sortGradeSteps(sortedGradeSteps);
+
+        return percentage > sortedGradeSteps.last()!.upperBoundPercentage ? sortedGradeSteps.last()! : undefined;
     }
 
     /**

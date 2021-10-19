@@ -136,7 +136,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
+        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
