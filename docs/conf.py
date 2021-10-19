@@ -24,7 +24,7 @@ author = 'Technical University of Munich, Chair for Applied Software Engineering
 
 # -- General configuration ---------------------------------------------------
 
-# The document name of the “master” document, that is, the document
+# The document name of the “main” document, that is, the document
 # that contains the root toctree directive.
 master_doc = "index"
 
