@@ -124,7 +124,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * participation and displays the corresponding message.
      */
     ngOnInit(): void {
-        if (!this.result && this.participation && this.participation.id) {
+        if (!this.result && this.participation) {
             if (this.participation.results && this.participation.results.length > 0) {
                 this.exercise = this.exercise || getExercise(this.participation);
                 this.participation.exercise = this.exercise;
@@ -142,12 +142,12 @@ export class ResultComponent implements OnInit, OnChanges {
                         }
                         return 0;
                     });
-                    // Make sure result and participation are connected
-                    if (!this.result) {
-                        this.result = this.participation.results[0];
-                    }
-                    this.result.participation = this.participation;
                 }
+                // Make sure result and participation are connected
+                if (!this.result) {
+                    this.result = this.participation.results[0];
+                }
+                this.result.participation = this.participation;
             }
         }
         // make sure this.participation is initialized in case it was not passed
