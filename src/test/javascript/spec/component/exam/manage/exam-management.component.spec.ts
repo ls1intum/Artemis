@@ -86,7 +86,7 @@ describe('Exam Management Component', () => {
         sinon.restore();
     });
 
-    it('Should call courseService on init', () => {
+    it('Should call find of courseManagementService to get course on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
@@ -112,36 +112,6 @@ describe('Exam Management Component', () => {
         // THEN
         expect(service.findAllExamsForCourse).to.have.been.calledOnce;
         expect(comp.exams).to.deep.eq([exam]);
-    });
-
-    it('Should call isAtLeastInstructorInCourse on init', () => {
-        // GIVEN
-        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
-        const expectedAtLeastInstructor = true;
-        sinon.replace(accountService, 'isAtLeastInstructorInCourse', sinon.fake.returns(expectedAtLeastInstructor));
-
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(accountService.isAtLeastInstructorInCourse).to.have.been.calledOnce;
-        expect(course.isAtLeastInstructor).to.eq(expectedAtLeastInstructor);
-    });
-
-    it('Should call isAtLeastTutorInCourse on init', () => {
-        // GIVEN
-        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
-        const expectedAtLeastTutor = true;
-        sinon.replace(accountService, 'isAtLeastTutorInCourse', sinon.fake.returns(expectedAtLeastTutor));
-
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(accountService.isAtLeastTutorInCourse).to.have.been.calledOnce;
-        expect(course.isAtLeastTutor).to.eq(expectedAtLeastTutor);
     });
 
     it('Should call getLatestIndividualDate on init', () => {

@@ -29,7 +29,6 @@ import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/as
 import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('TeamComponent', () => {
     let comp: TeamComponent;
@@ -81,8 +80,6 @@ describe('TeamComponent', () => {
             .then(() => {
                 accountService = TestBed.inject(AccountService);
                 identityStub = stub(accountService, 'identity').returns(Promise.resolve(user));
-                stub(accountService, 'isAtLeastTutorInCourse').returns(true);
-                stub(accountService, 'isAtLeastInstructorInCourse').returns(true);
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 alertService = TestBed.inject(AlertService);
@@ -103,13 +100,13 @@ describe('TeamComponent', () => {
             restore();
         });
 
-        it('should set team and exercise from services', () => {
+        it('Should set team and exercise from services and call find on exerciseService to retreive exercise', () => {
+            jest.spyOn(exerciseService, 'find');
             comp.ngOnInit();
-            expect(comp.exercise).to.deep.equal(mockExercise);
-            expect(comp.team).to.deep.equal(mockTeam);
-            expect(comp.exercise.isAtLeastTutor).equal(true);
-            expect(comp.exercise.isAtLeastInstructor).equal(true);
-            expect(comp.isTeamOwner).to.equal(false);
+            chai.expect(comp.exercise).to.deep.equal(mockExercise);
+            chai.expect(comp.team).to.deep.equal(mockTeam);
+            chai.expect(comp.isTeamOwner).to.equal(false);
+            expect(exerciseService['find']).toHaveBeenCalled();
         });
 
         it('should call alert service error when exercise service fails', () => {
@@ -117,9 +114,11 @@ describe('TeamComponent', () => {
             alertServiceStub = stub(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
-                expect(exerciseStub).to.have.been.called;
-                expect(alertServiceStub).to.have.been.called;
-                expect(comp.isLoading).to.equal(false);
+                // tslint:disable-next-line:no-unused-expression-chai
+                chai.expect(exerciseStub).to.have.been.called;
+                // tslint:disable-next-line:no-unused-expression-chai
+                chai.expect(alertServiceStub).to.have.been.called;
+                chai.expect(comp.isLoading).to.equal(false);
             });
         });
 
@@ -128,9 +127,11 @@ describe('TeamComponent', () => {
             alertServiceStub = stub(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
-                expect(teamStub).to.have.been.called;
-                expect(alertServiceStub).to.have.been.called;
-                expect(comp.isLoading).to.equal(false);
+                // tslint:disable-next-line:no-unused-expression-chai
+                chai.expect(teamStub).to.have.been.called;
+                // tslint:disable-next-line:no-unused-expression-chai
+                chai.expect(alertServiceStub).to.have.been.called;
+                chai.expect(comp.isLoading).to.equal(false);
             });
         });
     });
@@ -142,7 +143,7 @@ describe('TeamComponent', () => {
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 comp.ngOnInit();
-                expect(comp.isTeamOwner).to.equal(true);
+                chai.expect(comp.isTeamOwner).to.equal(true);
             });
         });
     });
@@ -150,7 +151,7 @@ describe('TeamComponent', () => {
     describe('onTeamUpdate', () => {
         it('should update team to given team', () => {
             comp.onTeamUpdate(mockTeams[1]);
-            expect(comp.team).to.deep.equal(mockTeams[1]);
+            chai.expect(comp.team).to.deep.equal(mockTeams[1]);
         });
     });
 
@@ -159,7 +160,7 @@ describe('TeamComponent', () => {
             comp.ngOnInit();
             const routerSpy = spy(router, 'navigate');
             comp.onTeamDelete();
-            expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', mockExercise.course?.id, mockExercise.type + '-exercises', mockExercise.id, 'teams']);
+            chai.expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', mockExercise.course?.id, mockExercise.type + '-exercises', mockExercise.id, 'teams']);
         });
     });
 });

@@ -29,7 +29,7 @@ const expect = chai.expect;
 
 describe('Course Management Service', () => {
     let injector: TestBed;
-    let service: CourseManagementService;
+    let courseManagementService: CourseManagementService;
     let accountService: AccountService;
     let exerciseService: ExerciseService;
     let lectureService: LectureService;
@@ -56,7 +56,7 @@ describe('Course Management Service', () => {
             ],
         });
         injector = getTestBed();
-        service = injector.get(CourseManagementService);
+        courseManagementService = injector.get(CourseManagementService);
         httpMock = injector.get(HttpTestingController);
         accountService = injector.get(AccountService);
         exerciseService = injector.get(ExerciseService);
@@ -103,7 +103,7 @@ describe('Course Management Service', () => {
     it('should create course', fakeAsync(() => {
         delete course.id;
 
-        service
+        courseManagementService
             .create({ ...course })
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal({ ...course, id: 1234 }));
@@ -114,7 +114,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should update course', fakeAsync(() => {
-        service
+        courseManagementService
             .update({ ...course })
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -125,7 +125,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find the course', fakeAsync(() => {
-        service
+        courseManagementService
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -133,9 +133,18 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('Should set accessRights with by using the AccountService', fakeAsync(() => {
+        courseManagementService
+            .find(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).to.deep.equal(course));
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course, true);
+        tick();
+    }));
+
     it('should get title of the course', fakeAsync(() => {
         returnedFromService = course.title!;
-        service
+        courseManagementService
             .getTitle(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course.title));
@@ -146,7 +155,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find course with exercises', fakeAsync(() => {
-        service
+        courseManagementService
             .findWithExercises(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -155,7 +164,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find course with exercises and participations', fakeAsync(() => {
-        service
+        courseManagementService
             .findWithExercisesAndParticipations(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -166,7 +175,7 @@ describe('Course Management Service', () => {
     it('should find course with organizations', fakeAsync(() => {
         course.organizations = [new Organization()];
         returnedFromService = { ...course };
-        service
+        courseManagementService
             .findWithOrganizations(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -176,7 +185,7 @@ describe('Course Management Service', () => {
 
     it('should find all courses for dashboard', fakeAsync(() => {
         returnedFromService = [{ ...course }];
-        service
+        courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -185,13 +194,13 @@ describe('Course Management Service', () => {
     }));
 
     it('should find one course for dashboard', fakeAsync(() => {
-        service
+        courseManagementService
             .getCourseUpdates(course.id!)
             .pipe(take(1))
             .subscribe((updatedCourse) => {
                 expect(updatedCourse).to.deep.equal(course);
             });
-        service
+        courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -201,7 +210,7 @@ describe('Course Management Service', () => {
 
     it('should find participations for the course', fakeAsync(() => {
         returnedFromService = [...participations];
-        service
+        courseManagementService
             .findAllParticipationsWithResults(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res).to.deep.equal(participations));
@@ -210,8 +219,8 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should find reults for the course', fakeAsync(() => {
-        service.findAllResultsOfCourseForExerciseAndCurrentUser(course.id!).subscribe((res) => expect(res).to.deep.equal(course));
+    it('Should find results for the course', fakeAsync(() => {
+        courseManagementService.findAllResultsOfCourseForExerciseAndCurrentUser(course.id!).subscribe((res) => expect(res).to.deep.equal(course));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/results` });
         req.flush(returnedFromService);
         tick();
@@ -219,7 +228,7 @@ describe('Course Management Service', () => {
 
     it('should find all courses to register', fakeAsync(() => {
         returnedFromService = [{ ...course }];
-        service
+        courseManagementService
             .findAllToRegister()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -228,7 +237,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find course with interesting exercises', fakeAsync(() => {
-        service
+        courseManagementService
             .getCourseWithInterestingExercisesForTutors(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
@@ -239,7 +248,7 @@ describe('Course Management Service', () => {
     it('should get stats of course', fakeAsync(() => {
         const stats = new StatsForDashboard();
         returnedFromService = { ...stats };
-        service
+        courseManagementService
             .getStatsForTutors(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(stats));
@@ -250,7 +259,7 @@ describe('Course Management Service', () => {
 
     it('should register for the course', fakeAsync(() => {
         const user = new User(1, 'name');
-        service
+        courseManagementService
             .registerForCourse(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(user));
@@ -263,7 +272,7 @@ describe('Course Management Service', () => {
     it('should get all courses', fakeAsync(() => {
         returnedFromService = [{ ...course }];
         const params = { testParam: 'testParamValue' };
-        service
+        courseManagementService
             .getAll(params)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -273,7 +282,7 @@ describe('Course Management Service', () => {
 
     it('should get all courses with quiz exercises', fakeAsync(() => {
         returnedFromService = [{ ...course }];
-        service
+        courseManagementService
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -284,7 +293,7 @@ describe('Course Management Service', () => {
     it('should get all courses together with user stats', fakeAsync(() => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
-        service
+        courseManagementService
             .getWithUserStats(params)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -295,7 +304,7 @@ describe('Course Management Service', () => {
     it('should get all courses for overview', fakeAsync(() => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
-        service
+        courseManagementService
             .getCourseOverview(params)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -306,7 +315,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should delete a course ', fakeAsync(() => {
-        service
+        courseManagementService
             .delete(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal({}));
@@ -318,7 +327,7 @@ describe('Course Management Service', () => {
     it('should get stats of instructor', fakeAsync(() => {
         const stats = new StatsForDashboard();
         returnedFromService = { ...stats };
-        service
+        courseManagementService
             .getStatsForInstructors(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(stats));
@@ -329,7 +338,7 @@ describe('Course Management Service', () => {
 
     it('should get all exercise details ', fakeAsync(() => {
         returnedFromService = [{ ...course }] as Course[];
-        service
+        courseManagementService
             .getExercisesForManagementOverview(true)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([{ ...course }]));
@@ -340,7 +349,7 @@ describe('Course Management Service', () => {
     it('should get all stats for overview', fakeAsync(() => {
         const stats = [new CourseManagementOverviewStatisticsDto()];
         returnedFromService = [...stats];
-        service
+        courseManagementService
             .getStatsForManagementOverview(true)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(stats));
@@ -352,7 +361,7 @@ describe('Course Management Service', () => {
     it('should find all categories of course', fakeAsync(() => {
         const categories = ['category1', 'category2'];
         returnedFromService = [...categories];
-        service
+        courseManagementService
             .findAllCategoriesOfCourse(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(categories));
@@ -365,7 +374,7 @@ describe('Course Management Service', () => {
         const users = [new User(1, 'user1'), new User(2, 'user2')];
         returnedFromService = [...users];
         const courseGroup = CourseGroup.STUDENTS;
-        service
+        courseManagementService
             .getAllUsersInCourseGroup(course.id!, courseGroup)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(users));
@@ -376,7 +385,7 @@ describe('Course Management Service', () => {
 
     it('should find all users of course group', fakeAsync(() => {
         const expectedBlob = new Blob(['abc', 'cfe']);
-        service.downloadCourseArchive(course.id!).subscribe((resp) => {
+        courseManagementService.downloadCourseArchive(course.id!).subscribe((resp) => {
             expect(resp.body).to.equal(expectedBlob);
         });
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/download-archive` });
@@ -385,14 +394,14 @@ describe('Course Management Service', () => {
     }));
 
     it('should archive the course', fakeAsync(() => {
-        service.archiveCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(course));
+        courseManagementService.archiveCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(course));
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${course.id}/archive` });
         req.flush(returnedFromService);
         tick();
     }));
 
     it('should clean up the course', fakeAsync(() => {
-        service.cleanupCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(course));
+        courseManagementService.cleanupCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(course));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/cleanup` });
         req.flush(returnedFromService);
         tick();
@@ -402,7 +411,7 @@ describe('Course Management Service', () => {
         const submission = new ModelingSubmission();
         const submissions = [submission];
         returnedFromService = [...submissions];
-        service.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(submissions));
+        courseManagementService.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(submissions));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/lockedSubmissions` });
         req.flush(returnedFromService);
         tick();
@@ -411,7 +420,7 @@ describe('Course Management Service', () => {
     it('should add user to course group', fakeAsync(() => {
         const user = new User(1, 'name');
         const courseGroup = CourseGroup.STUDENTS;
-        service
+        courseManagementService
             .addUserToCourseGroup(course.id!, courseGroup, user.login!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal({}));
@@ -423,7 +432,7 @@ describe('Course Management Service', () => {
     it('should remove user from course group', fakeAsync(() => {
         const user = new User(1, 'name');
         const courseGroup = CourseGroup.STUDENTS;
-        service
+        courseManagementService
             .removeUserFromCourseGroup(course.id!, courseGroup, user.login!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal({}));
