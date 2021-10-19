@@ -16,13 +16,14 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * REST controller for managing TextAssessmentEventResource.
  */
 @RestController
-@RequestMapping("/analytics/text-assessment")
+@RequestMapping("/api/analytics/text-assessment")
 public class TextAssessmentEventResource {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
@@ -59,11 +60,11 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * This function retrieves all of the events from the 'text_assessment_event' table by course id
+     * Get events/{courseId} : Retrieve all of the events from the 'text_assessment_event' table by course id
      * @param courseId the id of the course to filter by
      * @return returns a List of TextAssessmentEvent's
      */
-    @GetMapping("/events/{courseId}")
+    @GetMapping("events/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
@@ -71,11 +72,11 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * This function adds an assessment event into the text_assessment_event table.
+     * POST events : Adds an assessment event into the text_assessment_event table.
      * @param event to be added
      * @return the status of the finished request
      */
-    @PostMapping("/events")
+    @PostMapping("events")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) {
         log.debug("REST request to save assessmentEvent : {}", event);
@@ -87,6 +88,23 @@ public class TextAssessmentEventResource {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * GET courses/{courseId}/text-exercises/{exerciseId}/tutors-involved : get the number of the tutors involved in the list of events
+     * @param courseId the id of the course to query events for
+     * @param exerciseId the id of the exercise to query events for
+     * @return an integer representing the number of tutors involved for the respective course and exercise
+     */
+    @GetMapping("courses/{courseId}/text-exercises/{exerciseId}/tutors-involved")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        Integer numberOfTutors = textAssessmentEventRepository.getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(courseId, exerciseId);
+        log.debug("REST request to get number of tutors involved : {}", numberOfTutors);
+        return ResponseEntity.ok().body(numberOfTutors);
     }
 
     /**
