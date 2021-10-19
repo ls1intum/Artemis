@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -19,12 +19,10 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { getElement } from '../../helpers/utils/general.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
 import {
@@ -44,12 +42,9 @@ import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/moc
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
-import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
@@ -59,12 +54,9 @@ import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
@@ -73,7 +65,6 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programm
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'ngx-treeview';
 
 chai.use(sinonChai);
@@ -106,10 +97,13 @@ describe('CodeEditorStudentIntegration', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [
                 CodeEditorStudentContainerComponent,
-                MockDirective(AlertComponent),
-                MockDirective(CodeEditorContainerComponent),
-                MockDirective(IncludedInScoreBadgeComponent),
+                CodeEditorContainerComponent,
+                CodeEditorFileBrowserComponent,
+                CodeEditorInstructionsComponent,
                 CodeEditorRepositoryIsLockedComponent,
+                KeysPipe,
+                MockDirective(AlertComponent),
+                MockDirective(IncludedInScoreBadgeComponent),
                 MockDirective(UpdatingResultComponent),
                 MockDirective(ProgrammingExerciseStudentTriggerBuildButtonComponent),
                 MockDirective(ExerciseHintStudentComponent),
@@ -117,30 +111,18 @@ describe('CodeEditorStudentIntegration', () => {
                 MockDirective(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
-                // CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
-                MockComponent(CodeEditorInstructionsComponent),
-                KeysPipe,
-                MockDirective(FeatureToggleDirective),
-                MockDirective(FeatureToggleLinkDirective),
-                // MockPipe(ArtemisTranslatePipe),
-                CodeEditorActionsComponent,
-                CodeEditorFileBrowserComponent,
-                CodeEditorBuildOutputComponent,
-                // CodeEditorAceComponent,
+                MockDirective(CodeEditorActionsComponent),
+                MockDirective(CodeEditorBuildOutputComponent),
+                MockDirective(CodeEditorAceComponent),
                 MockComponent(CodeEditorFileBrowserCreateNodeComponent),
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
                 MockComponent(TreeviewComponent),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
             ],
             providers: [
                 JhiLanguageHelper,
-                MockProvider(ChangeDetectorRef),
-                MockProvider(DeviceDetectorService),
-                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -155,7 +137,6 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
-                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
