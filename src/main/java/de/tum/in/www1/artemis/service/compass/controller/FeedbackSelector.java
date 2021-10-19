@@ -74,15 +74,14 @@ public class FeedbackSelector {
     /**
      * Round credits to avoid machine precision errors, make the credits more readable and give a slight advantage which makes 100% scores easier reachable.
      * <p>
-     * Positive values > [x.0, x.15[ gets rounded to x.0 > [x.15, x.65[ gets rounded to x.5 > [x.65, x + 1[ gets rounded to x + 1
+     * Positive values > [x.0, x.15) gets rounded to x.0 > [x.15, x.65) gets rounded to x.5 > [x.65, x + 1) gets rounded to x + 1
      * <p>
-     * Negative values > [-x - 1, -x.85[ gets rounded to -x - 1 > [-x.85, -x.35[ gets rounded to -x.5 > [-x.35, -x.0[ gets rounded to -x.0
+     * Negative values > [-x - 1, -x.85) gets rounded to -x - 1 > [-x.85, -x.35) gets rounded to -x.5 > [-x.35, -x.0) gets rounded to -x.0
      *
      * @param credits to round
      * @return the rounded compass credits
      */
     private static double roundCredits(double credits) {
-
         BigDecimal point = new BigDecimal(String.valueOf(credits));
         boolean isNegative = point.doubleValue() < 0;
         // get the fractional part of the entry score and subtract 0.15 (e.g. 1.5 -> 0.35 or -1.5 -> -0.65)
@@ -98,7 +97,7 @@ public class FeedbackSelector {
         }
 
         if (fractionalPart >= 0.5) {
-            point = point.add(new BigDecimal(String.valueOf(1)));
+            point = point.add(BigDecimal.ONE);
         }
         else if (fractionalPart >= 0) {
             point = point.add(new BigDecimal(String.valueOf(0.5)));

@@ -238,7 +238,7 @@ describe('Grading System Service', () => {
     it('should find matching grade step', () => {
         expect(service.findMatchingGradeStep(gradeSteps, 30)).toEqual(gradeStep1);
         expect(service.findMatchingGradeStep(gradeSteps, 90)).toEqual(gradeStep3);
-        expect(service.findMatchingGradeStep(gradeSteps, 150)).toEqual(undefined);
+        expect(service.findMatchingGradeStep(gradeSteps, 150)).toEqual(gradeStep3);
         expect(service.findMatchingGradeStep(gradeSteps, -10)).toEqual(undefined);
     });
 

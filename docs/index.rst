@@ -1,7 +1,3 @@
-.. Artemis documentation master file, created by
-   sphinx-quickstart on Tue May 12 19:12:15 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 .. _artemis:
 
 ======================================================
@@ -28,6 +24,7 @@ All these exercises are supposed to be run either live in the lecture with insta
 
    user/exercises
    user/exam_mode
+   user/orion
 
 
 .. toctree::
