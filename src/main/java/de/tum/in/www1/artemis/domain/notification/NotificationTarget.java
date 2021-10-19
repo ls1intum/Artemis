@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 
 /**
  * Class representing the target property of a notification
+ * Do not convert it into a java record. This does not work currently and will break the (de)serialization
  * e.g. used for JSON/GSON (de)serialization
  */
 public final class NotificationTarget {
