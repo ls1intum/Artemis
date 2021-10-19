@@ -108,6 +108,10 @@ public class ExerciseService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
+    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService,
             QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository,
@@ -117,7 +121,8 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingAssessmentService programmingAssessmentService) {
+            ProgrammingAssessmentService programmingAssessmentService, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
+            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -147,6 +152,8 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
+        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
     }
 
     /**
@@ -445,6 +452,14 @@ public class ExerciseService {
         }
         else {
             exerciseRepository.delete(exercise);
+            // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
+            if (exercise instanceof TextExercise) {
+                textAssessmentKnowledgeService.deleteKnowledge(((TextExercise) exercise).getKnowledge().getId());
+            }
+            // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
+            else if (exercise instanceof ModelingExercise) {
+                modelAssessmentKnowledgeService.deleteKnowledge(((ModelingExercise) exercise).getKnowledge().getId());
+            }
         }
     }
 
