@@ -8,8 +8,8 @@ openApiGenerate {
     generatorName = "spring"
     inputSpec = "$rootDir/gateway/src/main/resources/swagger/api.yml".toString()
     outputDir = "$buildDir/openapi".toString()
-    apiPackage = "de.tum.in.www1.artemis.web.api"
-    modelPackage = "de.tum.in.www1.artemis.service.api.dto"
+    apiPackage = "de.tum.in.www1.artemis.gateway.web.api"
+    modelPackage = "de.tum.in.www1.artemis.gateway.service.api.dto"
     apiFilesConstrainedTo = [""]
     modelFilesConstrainedTo = [""]
     supportingFilesConstrainedTo = ["ApiUtil.java"]

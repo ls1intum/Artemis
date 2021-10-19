@@ -28,6 +28,7 @@ plugins {
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
+group = "de.tum.in.www1.artemis.gateway"
 
 apply from: "gradle/docker.gradle"
 apply from: "gradle/swagger.gradle"
@@ -72,7 +73,7 @@ spotless {
 defaultTasks "bootRun"
 
 springBoot {
-    mainClass = "de.tum.in.www1.artemis.GatewayApp"
+    mainClass = "de.tum.in.www1.artemis.gateway.GatewayApp"
 }
 
 modernizer {

@@ -4,7 +4,7 @@
 <configuration scan="true">
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
-    <logger name="de.tum.in.www1.artemis" level="INFO"/>
+    <logger name="de.tum.in.www1.artemis.gateway" level="INFO"/>
 
     <logger name="tech.jhipster" level="WARN"/>
 

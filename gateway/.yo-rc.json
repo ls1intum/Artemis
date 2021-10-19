@@ -19,7 +19,7 @@
     "serviceDiscoveryType": "eureka",
     "reactive": true,
     "authenticationType": "jwt",
-    "packageName": "de.tum.in.www1.artemis",
+    "packageName": "de.tum.in.www1.artemis.gateway",
     "serverPort": "8089",
     "cacheProvider": "no",
     "enableHibernateCache": false,

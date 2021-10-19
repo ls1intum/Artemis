@@ -18,7 +18,7 @@ logging:
         ROOT: DEBUG
         tech.jhipster: DEBUG
         org.hibernate.SQL: DEBUG
-        de.tum.in.www1.artemis: DEBUG
+        de.tum.in.www1.artemis.gateway: DEBUG
 
 eureka:
     instance:
