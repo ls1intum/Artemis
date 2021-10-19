@@ -124,12 +124,15 @@ export class ResultComponent implements OnInit, OnChanges {
      * participation and displays the corresponding message.
      */
     ngOnInit(): void {
-        if (this.participation) {
-            this.exercise = this.exercise || getExercise(this.participation);
-        }
-
         if (!this.result && this.participation && this.participation.id) {
             if (this.participation.results && this.participation.results.length > 0) {
+                // Make sure result and participation are connected
+                if (!this.result) {
+                    this.result = this.participation.results[0];
+                }
+                this.result.participation = this.participation;
+                this.exercise = this.exercise || getExercise(this.participation);
+
                 if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
@@ -144,16 +147,12 @@ export class ResultComponent implements OnInit, OnChanges {
                         return 0;
                     });
                 }
-                // Make sure result and participation are connected
-                if (!this.result) {
-                    this.result = this.participation.results[0];
-                }
-                this.result.participation = this.participation;
             }
         }
         // make sure this.participation is initialized in case it was not passed
         if (!this.participation && this.result && this.result.participation) {
             this.participation = this.result.participation;
+            this.exercise = this.exercise || getExercise(this.participation);
         }
         if (this.result) {
             this.submission = this.result.submission;
