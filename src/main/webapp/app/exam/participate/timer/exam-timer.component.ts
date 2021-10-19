@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-timer',
@@ -71,7 +72,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         if (timeDiff.asMilliseconds() < 0) {
             return this.timePipe.transform(0, true);
         } else {
-            return this.timePipe.transform(Math.round(timeDiff.asSeconds()), true);
+            return this.timePipe.transform(round(timeDiff.asSeconds()), true);
         }
     }
 

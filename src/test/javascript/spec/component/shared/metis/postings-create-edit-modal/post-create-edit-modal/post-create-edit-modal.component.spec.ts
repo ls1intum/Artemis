@@ -149,7 +149,7 @@ describe('PostCreateEditModalComponent', () => {
             exercise: undefined,
             lecture: undefined,
         });
-        tick();
+        tick(800);
         expect(component.isLoading).toEqual(false);
         expect(onCreateSpy).toHaveBeenCalled();
     }));
