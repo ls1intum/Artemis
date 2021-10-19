@@ -117,7 +117,7 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    - name: Install vpnc
+    - name: Install OpenVPN
       run: sudo apt-get --assume-yes --no-install-recommends install openvpn
     # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
     - name: Configure LRZ eduVPN
@@ -126,6 +126,7 @@ jobs:
       run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
     - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
       run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
+      timeout-minutes: 2
 
     # Configure SSH Key
     - name: Setup SSH Keys and known_hosts
