@@ -24,7 +24,7 @@ public class NotificationSettingsService {
 
     // TODO add the templates step by step to create small PRs
     private final Set<NotificationType> notificationTypesWithNoEmailSupportYet = Set.of(EXERCISE_UPDATED, NEW_POST_FOR_EXERCISE, NEW_ANSWER_POST_FOR_EXERCISE, NEW_POST_FOR_LECTURE,
-            NEW_ANSWER_POST_FOR_LECTURE, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED);
+            NEW_ANSWER_POST_FOR_LECTURE, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED);
 
     private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION);
 

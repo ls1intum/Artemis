@@ -116,7 +116,7 @@ public class MailService {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
         Context context = new Context(locale);
         context.setVariable(USER, user);
-        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(BASE_URL, artemisServerUrl);
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
         sendEmail(user, subject, content, false, true);

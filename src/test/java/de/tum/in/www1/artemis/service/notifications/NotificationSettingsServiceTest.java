@@ -1,16 +1,22 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.*;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.service.NotificationSettingsService;
 
@@ -19,8 +25,11 @@ public class NotificationSettingsServiceTest {
     @Autowired
     private static NotificationSettingsService notificationSettingsService;
 
-    @Autowired
+    @Mock
     private static NotificationSettingRepository notificationSettingRepository;
+
+    @Mock
+    private static Notification notification;
 
     private static User student1;
 
@@ -45,26 +54,25 @@ public class NotificationSettingsServiceTest {
      */
     @BeforeAll
     public static void setUp() {
-        notificationSettingsService = new NotificationSettingsService(notificationSettingRepository);
-
         student1 = new User();
         student1.setId(555L);
 
-        unsavedNotificationSettingA = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
-
-        unsavedNotificationSettingB = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
-
-        unsavedNotificationSettingC = new NotificationSetting(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
-
+        unsavedNotificationSettingA = new NotificationSetting(false, true, "notification.exercise-notification.exercise-open-for-practice");
+        unsavedNotificationSettingB = new NotificationSetting(true, true, "notification.lecture-notification.attachment-changes");
+        unsavedNotificationSettingC = new NotificationSetting(false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
-        completeNotificationSettingA = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
-
-        completeNotificationSettingB = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
-
+        completeNotificationSettingA = new NotificationSetting(student1, false, true, "notification.exercise-notification.exercise-open-for-practice");
+        completeNotificationSettingB = new NotificationSetting(student1, true, true, "notification.lecture-notification.attachment-changes");
         completeNotificationSettingC = new NotificationSetting(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
-
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
+
+        notificationSettingRepository = mock(NotificationSettingRepository.class);
+        when(notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(student1.getId())).thenReturn(new HashSet<>(Arrays.asList(savedNotificationSettings)));
+
+        notificationSettingsService = new NotificationSettingsService(notificationSettingRepository);
+
+        notification = mock(Notification.class);
     }
 
     /**
@@ -101,5 +109,47 @@ public class NotificationSettingsServiceTest {
         assertThat(resultingTypeSet).contains(NotificationType.COURSE_ARCHIVE_STARTED);
         assertThat(resultingTypeSet).contains(NotificationType.COURSE_ARCHIVE_STARTED);
         assertThat(!resultingTypeSet.contains(NotificationType.ATTACHMENT_CHANGE));
+    }
+
+    /**
+     * Tests the method checkIfNotificationEmailIsAllowedBySettingsForGivenUser
+     * Checks if the given user should receive an email based on the specific notification (type) or not based on the user's notification settings
+     */
+    @Test
+    public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
+        when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
+        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+
+        when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
+        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+
+        when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
+        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isFalse();
+    }
+
+    /**
+     * Tests the method checkNotificationTypeForEmailSupport
+     * Makes sure that no notification type without email support passed and creates an internal server error
+     */
+    @Test
+    public void testCheckNotificationTypeForEmailSupport() {
+        Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(COURSE_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED, QUIZ_EXERCISE_STARTED);
+        Set<NotificationType> notificationTypesWithNoEmailSupportYet = Set.of(EXERCISE_UPDATED, NEW_POST_FOR_EXERCISE, NEW_ANSWER_POST_FOR_EXERCISE, NEW_POST_FOR_LECTURE,
+                NEW_ANSWER_POST_FOR_LECTURE, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED);
+
+        // Check all notification types that should never have email support (e.g. due to redundancy, no real need)
+        notificationTypesWithNoEmailSupport.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailSupport(type)).isFalse());
+        // Check all notification types that should have email support in the future but lack a template as of now
+        notificationTypesWithNoEmailSupportYet.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailSupport(type)).isFalse());
+    }
+
+    /**
+     * Tests the method checkNotificationTypeForEmailUrgency
+     * The emails based on these types should always be created and sent the respective users
+     */
+    @Test
+    public void testCheckNotificationTypeForEmailUrgency() {
+        Set<NotificationType> urgentEmailNotificationTypes = Set.of(DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION);
+        urgentEmailNotificationTypes.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailUrgency(type)).isTrue());
     }
 }

@@ -37,7 +37,7 @@ public class NotificationSetting extends DomainObject {
         // Default empty constructor
     }
 
-    // used to creat default settings
+    // used to create default settings
     public NotificationSetting(boolean webapp, boolean email, String settingId) {
         this.setWebapp(webapp);
         this.setEmail(email);
