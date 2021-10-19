@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, OnDestroy, Output, ViewChild, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -7,10 +7,11 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-e
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
-    styleUrls: ['../posting-header.component.scss'],
+    styleUrls: ['../../metis.component.scss'],
 })
 export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnInit, OnChanges, OnDestroy {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
+    @Input() previewMode: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     numberOfAnswerPosts: number;
     showAnswers = false;

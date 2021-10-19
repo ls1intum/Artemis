@@ -39,6 +39,10 @@ public class TextCluster extends DomainObject {
     @JsonIgnore
     private TextExercise exercise;
 
+    @Column(name = "disabled")
+    @JsonIgnore
+    private boolean disabled;
+
     public double[] getProbabilities() {
         return castFromBinary(probabilities);
     }
@@ -168,6 +172,14 @@ public class TextCluster extends DomainObject {
 
     public int openTextBlockCount() {
         return (int) blocks.stream().filter(textBlock -> !textBlock.isAssessable()).count();
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
     // endregion
 }

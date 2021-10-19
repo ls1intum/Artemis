@@ -6,6 +6,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
 import $ from 'jquery';
 import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+
+export interface DropInfo {
+    instruction: GradingInstruction;
+    tooltipMessage: string;
+    removeMessage: string;
+}
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -27,6 +35,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() elementCounts?: OtherModelElementCount[];
+    @Input() course?: Course;
 
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {
@@ -182,8 +191,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 }
                 feedback.credits = assessment.score;
                 feedback.text = assessment.feedback;
-                if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
+                if (assessment.dropInfo && assessment.dropInfo.instruction?.id) {
                     feedback.gradingInstruction = assessment.dropInfo.instruction;
+                }
+                if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
+                    feedback.gradingInstruction = undefined;
                 }
             } else {
                 feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
@@ -317,6 +329,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 label: this.calculateLabel(feedback),
                 labelColor: this.calculateLabelColor(feedback),
                 correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                dropInfo: this.calculateDropInfo(feedback),
             };
         });
         if (this.apollonEditor) {
@@ -372,5 +385,17 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             description: correctionStatusDescription,
             status: correctionStatus,
         };
+    }
+
+    private calculateDropInfo(feedback: Feedback) {
+        if (feedback.gradingInstruction) {
+            const dropInfo = <DropInfo>{};
+            dropInfo.instruction = feedback.gradingInstruction;
+            dropInfo.removeMessage = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.removeAssessmentInstructionLink');
+            dropInfo.tooltipMessage = this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + feedback!.gradingInstruction!.instructionDescription;
+            return dropInfo;
+        }
+
+        return undefined;
     }
 }

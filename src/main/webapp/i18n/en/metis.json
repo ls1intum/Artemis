@@ -16,10 +16,9 @@
             "createModalTitlePost": "Create post",
             "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
-            "postMarkedAsResolvedTooltip": "Post has been resolved",
             "markAsResolvingAnswerTooltip": "Confirm that this reply resolves the original post",
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original post",
-            "resolvingAnswerTooltip": "This answer resolves the original post",
+            "resolvingAnswerTooltip": "This reply resolves the original post",
             "today": "Today",
             "pinnedPostTooltip": "This post was pinned by a tutor",
             "archivedPostTooltip": "This post was archived by a tutor",
@@ -49,7 +48,8 @@
                 "VOTES": "Upvotes",
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
-                "RANDOM": "Random"
+                "RANDOM": "Random",
+                "ANNOUNCEMENT": "Announcement"
             },
             "post": {
                 "context": "Context",
@@ -58,12 +58,17 @@
                 "courseWideContext": "Course-wide Topics",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
+                "announcementHint": "Announcements are pinned per default and listed at the top of the course overview. Possible replies cannot be marked as resolving. Only instructors can create announcements.",
                 "title": "Title",
+                "postMarkedAsResolvedTooltip": "Post has been resolved",
+                "postMarkedAsAnnouncementTooltip": "Announcement",
                 "titleTooltip": "Add a precise and summarizing title to your post",
                 "tags": "Tags",
                 "tagPlaceholder": "+ Tag",
                 "tagSecondaryPlaceholder": "Add tag(s)",
                 "tagsTooltip": "Add up to three descriptive and reusable tags to your post. Type in the input field and confirm with Enter to add a tag.",
+                "similarPosts": "Similar Posts",
+                "similarPostsTooltip": "The automatic post comparison has found the following posts that might be similar to your request - please check if your question has already been asked and/or answered. Click on the title or the displayed exercise/lecture to navigate to a post of the list.",
                 "content": "Content",
                 "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
                 "created": "New post successfully created",
@@ -75,7 +80,9 @@
                 "answers": "Replies",
                 "approvedAnswerPosts": "Approved replies",
                 "exerciseOrLecture": "Exercise / Lecture",
-                "showAllPosts": "Show all posts"
+                "showAllPosts": "Show all posts",
+                "showContent": "Show content",
+                "collapseContent": "Collapse content"
             },
             "answerPost": {
                 "created": "New reply successfully created",

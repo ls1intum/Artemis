@@ -149,6 +149,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -170,6 +171,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -191,6 +193,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -212,6 +215,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -233,6 +237,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -254,6 +259,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
