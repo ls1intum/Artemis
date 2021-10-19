@@ -126,12 +126,8 @@ export class ResultComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         if (!this.result && this.participation && this.participation.id) {
             if (this.participation.results && this.participation.results.length > 0) {
-                // Make sure result and participation are connected
-                if (!this.result) {
-                    this.result = this.participation.results[0];
-                }
-                this.result.participation = this.participation;
                 this.exercise = this.exercise || getExercise(this.participation);
+                this.participation.exercise = this.exercise;
 
                 if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
@@ -146,6 +142,11 @@ export class ResultComponent implements OnInit, OnChanges {
                         }
                         return 0;
                     });
+                    // Make sure result and participation are connected
+                    if (!this.result) {
+                        this.result = this.participation.results[0];
+                    }
+                    this.result.participation = this.participation;
                 }
             }
         }
@@ -153,6 +154,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!this.participation && this.result && this.result.participation) {
             this.participation = this.result.participation;
             this.exercise = this.exercise || getExercise(this.participation);
+            this.participation.exercise = this.exercise;
         }
         if (this.result) {
             this.submission = this.result.submission;
@@ -332,9 +334,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!result.participation) {
             result.participation = this.participation;
         }
-        if (!result.participation.exercise) {
-            result.participation.exercise = this.exercise;
-        }
+
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
