@@ -325,31 +325,41 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         testCaseRepository.saveAll(testCases.values());
 
+        Participation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
         var result1 = new Result();
+        result1.setParticipation(participation);
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
         var result2 = new Result();
+        result2.setParticipation(participation);
         result2 = updateAndSaveAutomaticResult(result2, true, false, false);
 
         var result3 = new Result();
+        result3.setParticipation(participation);
         result3 = updateAndSaveAutomaticResult(result3, false, true, false);
 
         var result4 = new Result();
+        result4.setParticipation(participation);
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
         var result5 = new Result();
+        result5.setParticipation(participation);
         result5 = updateAndSaveAutomaticResult(result5, true, true, true);
 
         var result6 = new Result();
+        result6.setParticipation(participation);
         result6 = updateAndSaveAutomaticResult(result6, false, false, false);
 
         // Build failure
         var resultBF = new Result().feedbacks(List.of()).rated(true).score(0D).hasFeedback(false).resultString("Build Failed").completionDate(ZonedDateTime.now())
                 .assessmentType(AssessmentType.AUTOMATIC);
+        resultBF.setParticipation(participation);
         gradingService.calculateScoreForResult(resultBF, programmingExercise, true);
 
         // Missing feedback
         var resultMF = new Result();
+        resultMF.setParticipation(participation);
         var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0D).hasFeedback(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
@@ -427,16 +437,22 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         programmingExercise.setBonusPoints(programmingExercise.getMaxPoints());
         programmingExerciseRepository.save(programmingExercise);
 
+        Participation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
         var result1 = new Result();
+        result1.setParticipation(participation);
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
         var result2 = new Result();
+        result2.setParticipation(participation);
         result2 = updateAndSaveAutomaticResult(result2, true, false, true);
 
         var result3 = new Result();
+        result3.setParticipation(participation);
         result3 = updateAndSaveAutomaticResult(result3, true, true, false);
 
         var result4 = new Result();
+        result4.setParticipation(participation);
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
         // Assertions result1 - calculated
@@ -527,8 +543,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
-        // Set programming exercise due date in past.
+        // Set programming exercise due date in the past.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
+        result.getParticipation().setExercise(programmingExercise);
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));

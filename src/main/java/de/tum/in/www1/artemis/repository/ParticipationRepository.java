@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -59,4 +60,12 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     default Participation findByIdElseThrow(long participationId) {
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
+
+    @Query("""
+                SELECT max(p.individualDueDate)
+                FROM Participation p
+                WHERE p.exercise.id = :#{#exerciseId}
+                    AND p.individualDueDate IS NOT null
+            """)
+    Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
 }

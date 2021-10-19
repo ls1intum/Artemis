@@ -70,6 +70,9 @@ public class ExamDateService {
         if (exercise.isExamExercise()) {
             return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
         }
+        // ToDo: this function should not be used for regular course exercises
+        // just adding a dependency on ExerciseDateService would introduce a circular dependency
+        // ⇒ Throw an IllegalArgumentException at least for testing to make sure the correct service is used everywhere
         return !exercise.isBeforeDueDate();
     }
 

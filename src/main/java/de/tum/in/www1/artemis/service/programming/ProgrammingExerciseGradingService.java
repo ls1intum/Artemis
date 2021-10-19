@@ -27,11 +27,11 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -67,7 +67,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
-    private final ExamDateService examDateService;
+    private final ExerciseDateService exerciseDateService;
 
     private final SubmissionPolicyService submissionPolicyService;
 
@@ -78,7 +78,7 @@ public class ProgrammingExerciseGradingService {
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService,
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -93,9 +93,9 @@ public class ProgrammingExerciseGradingService {
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
         this.resultService = resultService;
-        this.examDateService = examDateService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -259,10 +259,13 @@ public class ProgrammingExerciseGradingService {
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases;
+        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate;
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+            testCasesForCurrentDate = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
+        }
+        else {
+            testCasesForCurrentDate = testCases;
         }
         return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
     }
@@ -294,30 +297,47 @@ public class ProgrammingExerciseGradingService {
                     updatedResults.add(result);
                 });
 
-        // filter the test cases for the student results if necessary
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        // filter test cases before/after due date only once
+        Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
+        Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
+
         // We only update the latest automatic results here, later manual assessments are not affected
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
-
         for (StudentParticipation studentParticipation : participations) {
-            Result result = studentParticipation.findLatestLegalResult();
-            if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, true);
-                updatedResults.add(result);
-            }
+            updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true).ifPresent(updatedResults::add);
         }
 
         // Update also manual results
         List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            Result result = studentParticipation.findLatestLegalResult();
-            if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, false);
-                updatedResults.add(result);
-            }
+            updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, false).ifPresent(updatedResults::add);
         }
 
         return updatedResults;
+    }
+
+    /**
+     * Updates the score for the latest result of the given participation.
+     * @param exercise the participation belongs to.
+     * @param participation of a student in the exercise.
+     * @param allTestCases of this exercise.
+     * @param testCasesBeforeDueDate the test cases that are visible to the student before the due date.
+     * @param testCasesAfterDueDate the test cases that are visible to the student after the due date.
+     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
+     * @return the latest result with an updated score, or nothing if the participation had no results.
+     */
+    private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
+            Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
+        Result result = participation.findLatestLegalResult();
+        if (result == null) {
+            return Optional.empty();
+        }
+
+        boolean isBeforeDueDate = !exerciseDateService.isAfterDueDate(participation);
+        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
+
+        calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
+        return Optional.of(result);
     }
 
     public void logReEvaluate(User user, ProgrammingExercise exercise, Course course, List<Result> results) {
@@ -329,12 +349,21 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
-     * @param exercise to which the test cases belong to.
      * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
-    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean isBeforeDueDate = !examDateService.isExerciseWorkingPeriodOver(exercise);
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(Participation participation, Set<ProgrammingExerciseTestCase> testCases) {
+        boolean isBeforeDueDate = !exerciseDateService.isAfterDueDate(participation);
+        return filterTestCasesForStudents(testCases, isBeforeDueDate);
+    }
+
+    /**
+     * Filters the test cases to only include the ones a student should be able to see.
+     * @param testCases all test cases of an exercise.
+     * @param isBeforeDueDate true, if the due date has not yet passed.
+     * @return a set of test cases that are visible to the student.
+     */
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForStudents(final Set<ProgrammingExerciseTestCase> testCases, boolean isBeforeDueDate) {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
@@ -344,6 +373,7 @@ public class ProgrammingExerciseGradingService {
      * @param testCasesForCurrentDate Test cases for the exercise for the current date
      * @param result The result to be updated
      * @param exercise The current exercise
+     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
      * @return The updated result
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
