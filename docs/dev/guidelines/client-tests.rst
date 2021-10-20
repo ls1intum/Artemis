@@ -198,73 +198,73 @@ Some guidelines:
 5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected template changes have occurred.
 
-Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
+    Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
 
-.. code:: ts
+    .. code:: ts
 
-    it('should trigger saveExerciseWithoutReevaluation once', () => {
-        const emitSpy = jest.spyOn(comp.confirmed, 'emit');
-        const saveExerciseWithoutReevaluationSpy = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
+        it('should trigger saveExerciseWithoutReevaluation once', () => {
+            const emitSpy = jest.spyOn(comp.confirmed, 'emit');
+            const saveExerciseWithoutReevaluationSpy = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
-        const button = fixture.debugElement.nativeElement.querySelector('#save-button');
-        button.click();
+            const button = fixture.debugElement.nativeElement.querySelector('#save-button');
+            button.click();
 
-        fixture.detectChanges();
+            fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
-        expect(emitSpy).toHaveBeenCalled();
-    });
+            expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
+            expect(emitSpy).toHaveBeenCalled();
+        });
 
 6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:
 
-.. code:: ts
+    .. code:: ts
 
-    describe('SomeComponent', () => {
-        let someComponentFixture: ComponentFixture<SomeComponent>;
-        let someComponent: SomeComponent;
+        describe('SomeComponent', () => {
+            let someComponentFixture: ComponentFixture<SomeComponent>;
+            let someComponent: SomeComponent;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [],
-                declarations: [
-                    SomeComponent,
-                ],
-                providers: [
-                ],
-            })
-                .overrideTemplate(SomeComponent, '') // DO NOT DO THIS
-                .compileComponents()
-                .then(() => {
-                    someComponentFixture = TestBed.createComponent(SomeComponent);
-                    someComponent = someComponentFixture.componentInstance;
-                });
+            beforeEach(() => {
+                TestBed.configureTestingModule({
+                    imports: [],
+                    declarations: [
+                        SomeComponent,
+                    ],
+                    providers: [
+                    ],
+                })
+                    .overrideTemplate(SomeComponent, '') // DO NOT DO THIS
+                    .compileComponents()
+                    .then(() => {
+                        someComponentFixture = TestBed.createComponent(SomeComponent);
+                        someComponent = someComponentFixture.componentInstance;
+                    });
+            });
         });
-    });
 
 7. Name the variables properly for test doubles:
 
-.. code:: ts
+    .. code:: ts
 
-    const clearSpy = jest.spyOn(someComponent, 'clear');
-    const getNumberStub = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42); // This always returns 42
+        const clearSpy = jest.spyOn(someComponent, 'clear');
+        const getNumberStub = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42); // This always returns 42
 
 8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
 
 9. When expecting results use :code:`expect` for client tests. That call **must** be followed by another assertion statement like :code:`toBe(true)`. It is best practice to use more specific expect statements rather than always expecting boolean values. It is also recommended to extract as much as possible from the `expect` statement.
 
-For example, instead of
+    For example, instead of
 
-.. code:: ts
+    .. code:: ts
 
-    expect(course == undefined).toBe(true);
-    expect(courseList.length).toBe(4);
+        expect(course == undefined).toBe(true);
+        expect(courseList.length).toBe(4);
 
-extract as much as possible:
+    extract as much as possible:
 
-.. code:: ts
+    .. code:: ts
 
-    expect(course).toBe(undefined);
-    expect(courseList).toHaveLength(4);
+        expect(course).toBe(undefined);
+        expect(courseList).toHaveLength(4);
 
 10. If you have minimized :code:`expect` and can choose between multiple verification functions providing the same functionality, choose the most generic one. This way we will use as few functions as possible. For example prefer :code:`toBe(true)` and :code:`toBe(false)` over :code:`toBeTrue()` and :code:`toBeFalse()`.
 
@@ -293,13 +293,18 @@ extract as much as possible:
   |                                                        | :code:`expect(value).toBe(null);` and if not avoidable          |
   |                                                        | :code:`expect(value).not.toBe(null);`.                          |
   |                                                        |                                                                 |
-  |                                                        | **Important:** Never use :code:`expect(value).toBeDefined()` or |
-  |                                                        | :code:`expect(value).toBeNil()` as they might not catch all     |
+  |                                                        | **Important:** Never use :code:`expect(value).not.toBeDefined()`|
+  |                                                        | or :code:`expect(value).toBeNil()` as they might not catch all  |
   |                                                        | failures under certain conditions.                              |
   +--------------------------------------------------------+-----------------------------------------------------------------+
-  | A class object should be defined                       | :code:`expect(classObject).toContainEntries([[key, value]]);`   |
+  | A class object should be defined                       | Always try to test for certain properties or entries.           |
   |                                                        |                                                                 |
-  |                                                        | :code:`expect(classObject).toEqual(referenceClassObject);`      |
+  |                                                        | :code:`expect(classObject).toContainEntries([[key, value]]);`   |
+  |                                                        |                                                                 |
+  |                                                        | :code:`expect(classObject).toEqual(expectedClassObject);`       |
+  |                                                        |                                                                 |
+  |                                                        | **Important:** Never use :code:`expect(value).toBeDefined()` as |
+  |                                                        | it might not catch all failures under certain conditions.       |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A class object should not be undefined                 | Try to test for a defined value by testing the entries.         |
   +--------------------------------------------------------+-----------------------------------------------------------------+
