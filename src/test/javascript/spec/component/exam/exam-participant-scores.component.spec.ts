@@ -14,6 +14,8 @@ import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,6 +38,8 @@ class ParticipantScoresTableContainerStubComponent {
     avgRatedGrade?: string;
     @Input()
     isBonus = false;
+    @Input()
+    course?: Course;
     @Output()
     reload = new EventEmitter<void>();
 }
@@ -51,6 +55,7 @@ describe('ExamParticipantScores', () => {
                 MockProvider(GradingSystemService),
                 MockProvider(ParticipantScoresService),
                 MockProvider(AlertService),
+                MockProvider(CourseManagementService),
                 {
                     provide: ActivatedRoute,
                     useValue: { params: of({ courseId: 1, examId: 1 }) },
@@ -76,6 +81,11 @@ describe('ExamParticipantScores', () => {
     it('should load date when initialized', () => {
         const participantScoreService = TestBed.inject(ParticipantScoresService);
         const gradingSystemService = TestBed.inject(GradingSystemService);
+        const courseManagementService = TestBed.inject(CourseManagementService);
+
+        const course = new Course();
+        course.accuracyOfScores = 1;
+        sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ body: course })));
 
         // stub find all of exam
         const participantScoreDTO = new ParticipantScoreDTO();

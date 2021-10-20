@@ -26,7 +26,7 @@ import dayjs from 'dayjs';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Logs Service', () => {
+describe('Notification Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
@@ -109,11 +109,11 @@ describe('Logs Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should call correct URL', () => {
-            notificationService.query().subscribe(() => {});
+        it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
+            notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET' });
-            const infoUrl = SERVER_API_URL + 'api/notifications';
-            expect(req.request.url).to.equal(infoUrl);
+            const url = SERVER_API_URL + 'api/notifications';
+            expect(req.request.url).to.equal(url);
         });
 
         it('should navigate to notification target', () => {
@@ -131,7 +131,7 @@ describe('Logs Service', () => {
             const serverResponse = notificationArray;
             const expectedResult = notificationArray.sort();
 
-            notificationService.query().subscribe((resp) => {
+            notificationService.queryNotificationsFilteredBySettings().subscribe((resp) => {
                 expect(resp.body).to.equal(expectedResult);
             });
 
