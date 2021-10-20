@@ -1,15 +1,18 @@
-import { StudentParticipation } from './../../../../../main/webapp/app/entities/participation/student-participation.model';
-import {
-    isProgrammingExerciseStudentParticipation,
-    isProgrammingExerciseParticipation,
-    hasDeadlinePassed,
-} from './../../../../../main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils';
-import { SolutionProgrammingExerciseParticipation } from './../../../../../main/webapp/app/entities/participation/solution-programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { TemplateProgrammingExerciseParticipation } from './../../../../../main/webapp/app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { isLegacyResult, createBuildPlanUrl, createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import {
+    isLegacyResult,
+    createBuildPlanUrl,
+    createCommitUrl,
+    isProgrammingExerciseStudentParticipation,
+    hasDeadlinePassed,
+    isProgrammingExerciseParticipation,
+} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs';
 
@@ -191,6 +194,45 @@ describe('Programming Exercise Utils', () => {
             const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
 
             expect(isProgrammingStudentParticipation).toBe(false);
+        });
+    });
+
+    describe('hasDeadlinePassed', () => {
+        let exercise: ProgrammingExercise;
+
+        beforeEach(() => {
+            exercise = new ProgrammingExercise(undefined, undefined);
+        });
+
+        it('returns false if no due date is set', () => {
+            const deadlinePassed = hasDeadlinePassed(exercise);
+
+            expect(deadlinePassed).toBe(false);
+        });
+
+        it('buildAndTestDate takes precedence over normal exercise due date', () => {
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
+            exercise.dueDate = dayjs().subtract(5, 'hours');
+
+            const deadlinePassed = hasDeadlinePassed(exercise);
+
+            expect(deadlinePassed).toBe(false);
+        });
+
+        it('returns true on date in the past', () => {
+            exercise.dueDate = dayjs().subtract(1, 'hour');
+
+            const deadlinePassed = hasDeadlinePassed(exercise);
+
+            expect(deadlinePassed).toBe(true);
+        });
+
+        it('returns false on date in the future', () => {
+            exercise.dueDate = dayjs().add(1, 'hour');
+
+            const deadlinePassed = hasDeadlinePassed(exercise);
+
+            expect(deadlinePassed).toBe(false);
         });
     });
 });
