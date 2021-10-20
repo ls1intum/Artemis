@@ -339,7 +339,7 @@
                         "required": "The penalty must be set!"
                     },
                     "penaltyInfoLabel": "Exceeding Penalty",
-                    "triggerAllInformation": "Unlike for lock repository policies, all changes regarding submission penalty policies do not take effect immediately after updating or (de)activating the policy. Use the Trigger all functionality to update scores and result strings."
+                    "triggerAllInformation": "Unlike for lock repository policies, all changes regarding submission penalty policies do not take effect immediately after updating or (de)activating the policy. Use the Re-evaluate all functionality to update scores and result strings."
                 },
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
