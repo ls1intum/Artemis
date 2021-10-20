@@ -2,8 +2,6 @@
 //  MainView.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 12.10.21.
-//
 
 import SwiftUI
 
@@ -21,7 +19,7 @@ struct MainView: View {
     }
 }
 
-/// The preview..
+/// The preview.
 struct MainView_Previews: PreviewProvider {
     static var previews: some View {
         MainView()

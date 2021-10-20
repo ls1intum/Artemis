@@ -2,8 +2,6 @@
 //  ${appName}TestUITests.swift
 //  ${appName}TestUITests
 //
-//  Created by Daniel Kainz on 06.08.21.
-//
 
 import XCTest
 @testable import ${appName}
@@ -38,7 +36,7 @@ class ${appName}UITest: XCTestCase {
     }
     
     func testReCreateAndDisplayUnsortedDates() {
-        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is not button to create random dates!")
+        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is no button to create random dates!")
         app.buttons["Create Random Dates"].tap()
         XCTAssertTrue(app.staticTexts["Unsorted Dates"].exists, "The unsorted dates should be displayed after creation!")
         XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is no button to recreate random dates!")
@@ -47,7 +45,7 @@ class ${appName}UITest: XCTestCase {
     }
     
     func testCreateSortAndDisplaySortedDates() {
-        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is not button to create random dates!")
+        XCTAssertTrue(app.buttons["Create Random Dates"].exists, "There is no button to create random dates!")
         app.buttons["Create Random Dates"].tap()
         XCTAssertTrue(app.staticTexts["Unsorted Dates"].exists, "The unsorted dates should be displayed after creation!")
         XCTAssertTrue(app.buttons["Sort"].exists, "There is no button to sort the dates!")

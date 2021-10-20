@@ -2,8 +2,6 @@
 //  BubbleSort.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 12.10.21.
-//
 
 import Foundation
 
@@ -16,7 +14,7 @@ public class BubbleSort: SortStrategy {
     
     /*
      Task 1.1:
-     Implement Bubble Sort
+     Implement the Bubble Sort algorithm
     */
     public func performSort(_ input: [Date]) -> [Date] {
         return input

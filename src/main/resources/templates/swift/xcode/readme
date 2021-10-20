@@ -36,17 +36,17 @@ Create and implement a `Policy` class following the below class diagram to use t
 
 ### Part 3:
 
-We want to implement a UI to enable that the user selects a sorting algorithm at runtime of the app, generate dates to get sorted and display the result.
+We want to implement a UI to enable that the user selects a sorting algorithm at runtime of the app, generate dates to be sorted and display the result.
 
 **You have the following tasks:**
 
 1. [task][Implement the main view](testStartScreen, testCreateAndDisplayUnsortedDates, testReCreateAndDisplayUnsortedDates, testCreateSortAndDisplaySortedDates, testSwitchSortingAlgorithm, testMainViewLogic, testMainViewContextSort)
-The user should be able to select his favourite `sorting algorithm` at runtime. Use a suitable `UI element` for this.
-The `View` should also display two `Button`s. One for `generating` an unnsorted list with random dates and one for `sorting` this list with the selected sorting algorithm. The `Sort` button should configure the `Policy` and call `sort` on the `Context`.
-Last but not least the (un-) sorted list should be displayed using a `ScrollView`.
+The users should be able to select their favourite `sorting algorithm` at runtime. Use a suitable `UI element` for this.
+The `View` should also display two `Button`s. One for `generating` an unsorted list with random dates and one for `sorting` this list with the selected sorting algorithm. The `Sort` button should configure the `Policy` and call `sort` on the `Context`.
+Last but not least the (un-)sorted list should be displayed using a `ScrollView`.
 
 2. List Items
-Implement the view for the listed date items for a clean displaying.
+Implement the view for the listed date items for a clean display.
 Hint: Use the `DateFormatterExtension` we provide.
 
 3. Custom View Modifier

@@ -2,8 +2,6 @@
 //  Context.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 12.10.21.
-//
 
 import Foundation
 
@@ -44,18 +42,18 @@ public class Context {
         return list
     }
     
-    /// Creates a random Date within given Range
+    /// Creates a random Date within given range
     private func randomDateWithin(_ low: Date, _ high: Date) -> Date {
         let randomSeconds: Double = self.randomDoubleWithin(low.timeIntervalSince1970, high.timeIntervalSince1970)
         return Date(timeIntervalSince1970: randomSeconds)
     }
     
-    /// Creates a random Double within given Range
+    /// Creates a random Double within given range
     private func randomDoubleWithin(_ low: Double, _ high: Double) -> Double {
         return Double.random(in: low...high)
     }
     
-    /// Creates a random Integer within given Range
+    /// Creates a random Integer within given range
     private func randomIntegerWithin(_ low: Int, _ high: Int) -> Int {
         return Int.random(in: low...high)
     }

@@ -2,8 +2,6 @@
 //  MergeSort.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 12.10.21.
-//
 
 import Foundation
 
@@ -16,7 +14,7 @@ public class MergeSort: SortStrategy {
     
     /*
      Task 1.2:
-     Implement Merge Sort
+     Implement the Merge Sort algorithm
     */
     public func performSort(_ input: [Date]) -> [Date] {
         return input

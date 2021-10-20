@@ -2,14 +2,12 @@
 //  ListItemModifier.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 12.10.21.
-//
 
 import SwiftUI
 
 /*
  Task 3.3:
- Implement the Custom View Modifier
+ Implement the Custom View Modifier Struct
 */
 
 /// Custom modifier to surround listed dates with a rounded rectangle with blue stroke.

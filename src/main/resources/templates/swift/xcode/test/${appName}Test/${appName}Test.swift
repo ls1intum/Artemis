@@ -2,8 +2,6 @@
 //  ${appName}Tests.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 06.08.21.
-//
 
 import XCTest
 @testable import ${appName}

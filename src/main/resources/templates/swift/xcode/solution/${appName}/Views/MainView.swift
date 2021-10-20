@@ -2,8 +2,6 @@
 //  MainView.swift
 //  ${appName}
 //
-//  Created by Daniel Kainz on 12.10.21.
-//
 
 import SwiftUI
 
@@ -61,7 +59,7 @@ struct MainView: View {
                 .background(RoundedRectangle(cornerRadius: 25).fill(buttonColor).frame(width: UIScreen.main.bounds.size.width - 45.0, height: .infinity, alignment: .center))
                 Spacer()
                 Divider()
-                /// The list of (un-) sorted dates.
+                /// The list of (un-)sorted dates.
                 if displayDates {
                     Group {
                         Text(sorted ? "Sorted Dates" : "Unsorted Dates").bold().font(.title2)
