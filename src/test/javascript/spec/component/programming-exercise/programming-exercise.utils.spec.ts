@@ -145,27 +145,27 @@ describe('Programming Exercise Utils', () => {
     describe('isProgrammingExerciseParticipation', () => {
         it('returns false for an undefined participation', () => {
             const participation = undefined;
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(false);
+            expect(isProgrammingExerciseParticipation(participation)).toBe(false);
         });
 
         it('returns true for a student programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
         });
 
         it('returns true for a template programming exercise participation', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
         });
 
         it('returns true for a solution programming exercise participation', () => {
             const participation = new SolutionProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
         });
 
         it('returns false for a normal student participation', () => {
             const participation = new StudentParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(false);
+            expect(isProgrammingExerciseParticipation(participation)).toBe(false);
         });
     });
 
