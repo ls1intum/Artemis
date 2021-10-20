@@ -1,3 +1,4 @@
+import { isProgrammingExerciseStudentParticipation } from './../../../../../main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils';
 import { SolutionProgrammingExerciseParticipation } from './../../../../../main/webapp/app/entities/participation/solution-programming-exercise-participation.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { TemplateProgrammingExerciseParticipation } from './../../../../../main/webapp/app/entities/participation/template-programming-exercise-participation.model';
@@ -125,6 +126,24 @@ describe('Programming Exercise Utils', () => {
 
             const expectedUrl = '/projects/pk/repos/pk-solution/commits/';
             expect(url).toBe(expectedUrl);
+        });
+    });
+
+    describe('isProgrammingExerciseStudentParticipation', () => {
+        it('returns true for a programming exercise participation', () => {
+            const participation = new ProgrammingExerciseStudentParticipation();
+
+            const isProgrammingStudentParticipation = isProgrammingExerciseStudentParticipation(participation);
+
+            expect(isProgrammingStudentParticipation).toBe(true);
+        });
+
+        it('returns false for another participation', () => {
+            const participation = new TemplateProgrammingExerciseParticipation();
+
+            const isProgrammingStudentParticipation = isProgrammingExerciseStudentParticipation(participation);
+
+            expect(isProgrammingStudentParticipation).toBe(false);
         });
     });
 });
