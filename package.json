@@ -54,7 +54,7 @@
         "ng2-ace-editor": "0.3.9",
         "ng2-charts": "2.3.0",
         "ng2-dnd": "5.0.2",
-        "@swimlane/ngx-charts": "^19.0.1",
+        "@swimlane/ngx-charts": "19.1.0",
         "ngx-chips": "2.2.2",
         "ngx-clipboard": "14.0.1",
         "ngx-cookie-service": "12.0.3",
