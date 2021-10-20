@@ -291,7 +291,7 @@ public class CourseService {
     }
 
     /**
-     * Add multiple users to the course so that they can access the course
+     * Add multiple users to the course so that they can access it
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
      * <p>
