@@ -73,7 +73,21 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     /**
      * Check if at least one additionalCheck is selected
      */
-    get atLeastOneAdditionalCheckSelected(): boolean {
+    get isAnyAdditionalCheckSelected(): boolean {
         return Object.values(this.additionalChecksValues).some((check) => check);
+    }
+
+    /**
+     * Check if all security checks are fulfilled
+     * if deleteConfirmationText is passed the entityTitle and entered confirmation have to match
+     * if requireConfirmationOnlyForAdditionalChecks is passed:
+     *   if at least one additional check is selected the entityTitle and entered confirmation also have to match
+     */
+    get areSecurityChecksFulfilled(): boolean {
+        return !(
+            this.deleteConfirmationText &&
+            this.confirmEntityName !== this.entityTitle &&
+            (!this.requireConfirmationOnlyForAdditionalChecks || this.isAnyAdditionalCheckSelected)
+        );
     }
 }
