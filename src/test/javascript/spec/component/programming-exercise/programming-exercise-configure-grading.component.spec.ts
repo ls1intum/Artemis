@@ -1,4 +1,4 @@
-import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -191,7 +191,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         return getElement(debugElement, testCasesNoUpdated);
     };
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule],
             declarations: [
@@ -263,7 +263,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 loadStatisticsStub.mockReturnValue(of(gradingStatistics));
                 loadExerciseStub.mockReturnValue(of({ body: exercise }));
             });
-    }));
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -307,6 +307,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         tick();
         fixture.destroy();
+        flush();
     }));
 
     it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', fakeAsync(() => {
@@ -326,6 +327,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         tick();
         fixture.destroy();
+        flush();
     }));
 
     it('should update test case when an input field is updated', fakeAsync(() => {
@@ -497,11 +499,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         checkBehaviourForZeroWeight(AssessmentType.MANUAL);
     });
 
-    it('should be able to update the value of the visibility', async () => {
+    it('should be able to update the value of the visibility', fakeAsync(() => {
         initGradingComponent({ showInactive: true });
 
         fixture.detectChanges();
-        await fixture.whenStable();
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
@@ -511,7 +512,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         dropdowns[0].nativeElement.value = Visibility.AfterDueDate;
         dropdowns[0].nativeElement.dispatchEvent(new Event('change'));
 
-        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
@@ -533,23 +533,25 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
 
-        await new Promise((resolve) => setTimeout(resolve));
+        tick();
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should also be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
+    it('should also be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', fakeAsync(() => {
         initGradingComponent({ hasBuildAndTestAfterDueDate: false, showInactive: true });
 
         fixture.detectChanges();
-        await fixture.whenStable();
 
         const table = debugElement.query(By.css(testCaseTableId));
         const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
         // three options for each test case should still be available
         expect(options).toHaveLength(testCases1.length * 3);
 
+        tick();
         fixture.destroy();
-    });
+        flush();
+    }));
 
     it('should show the updatedTests badge when the exercise is released and has student results', fakeAsync(() => {
         initGradingComponent();
