@@ -368,4 +368,8 @@ public class SubmissionPolicyService {
             }
         }
     }
+
+    public boolean isParticipationLocked(LockRepositoryPolicy policy, Participation programmingParticipation) {
+        return policy.getSubmissionLimit() <= getParticipationSubmissionCount(programmingParticipation);
+    }
 }

@@ -169,6 +169,7 @@ public class SubmissionPolicyResource {
             throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.", ENTITY_NAME,
                     "submissionPolicyToggleFailedPolicyNotExist");
         }
+        submissionPolicy.setProgrammingExercise(exercise);
         if (activate == submissionPolicy.isActive()) {
             String errorKey = activate ? "submissionPolicyAlreadyEnabled" : "submissionPolicyAlreadyDisabled";
             String defaultMessage = activate ? "The submission policy could not be enabled, because it is already active."
@@ -217,7 +218,7 @@ public class SubmissionPolicyResource {
         }
 
         submissionPolicyService.validateSubmissionPolicy(updatedSubmissionPolicy);
-
+        submissionPolicy.setProgrammingExercise(exercise);
         submissionPolicy = submissionPolicyService.updateSubmissionPolicy(exercise, updatedSubmissionPolicy);
 
         responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
