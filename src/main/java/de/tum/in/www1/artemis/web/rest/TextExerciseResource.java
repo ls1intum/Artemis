@@ -235,6 +235,12 @@ public class TextExerciseResource {
             groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 
+        // The update might have changed the release date
+        // -> the scheduled notification informing the users about the release of this exercise has to be updated
+        if (textExercise.isCourseExercise() && textExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(textExercise.getId());
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
     }
 

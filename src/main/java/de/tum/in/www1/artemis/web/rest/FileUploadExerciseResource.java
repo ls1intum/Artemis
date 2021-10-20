@@ -198,6 +198,12 @@ public class FileUploadExerciseResource {
         if ((notificationText != null && fileUploadExercise.isCourseExercise()) || fileUploadExercise.isExamExercise()) {
             groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
         }
+        // The update might have changed the release date
+        // -> the scheduled notification informing the users about the release of this exercise has to be updated
+        if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }
 

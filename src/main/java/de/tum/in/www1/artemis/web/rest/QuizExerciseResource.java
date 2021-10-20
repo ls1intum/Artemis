@@ -203,6 +203,11 @@ public class QuizExerciseResource {
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
+        // The update might have changed the release date
+        // -> the scheduled notification informing the users about the release of this exercise has to be updated
+        if (quizExercise.isCourseExercise() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 

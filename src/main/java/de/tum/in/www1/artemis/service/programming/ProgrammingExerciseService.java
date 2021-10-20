@@ -652,7 +652,6 @@ public class ProgrammingExerciseService {
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
@@ -662,6 +661,11 @@ public class ProgrammingExerciseService {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        }
+        // The update might have changed the release date
+        // -> the scheduled notification informing the users about the release of this exercise has to be updated
+        if (programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
         }
         return savedProgrammingExercise;
     }

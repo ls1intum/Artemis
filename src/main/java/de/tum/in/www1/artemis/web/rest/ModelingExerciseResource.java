@@ -205,6 +205,13 @@ public class ModelingExerciseResource {
         if ((notificationText != null && modelingExercise.isCourseExercise()) || modelingExercise.isExamExercise()) {
             groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(modelingExercise, notificationText);
         }
+
+        // The update might have changed the release date
+        // -> the scheduled notification informing the users about the release of this exercise has to be updated
+        if (modelingExercise.isCourseExercise() && modelingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);
     }
