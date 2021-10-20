@@ -94,4 +94,6 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     default List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
         return findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
     }
+
+    Set<TextExercise> findAllByKnowledgeId(Long knowledgeId);
 }
