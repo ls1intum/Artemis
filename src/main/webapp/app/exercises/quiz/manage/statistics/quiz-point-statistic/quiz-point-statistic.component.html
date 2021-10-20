@@ -23,14 +23,12 @@
                     </p>
                 </div>
             </div>
-            <canvas baseChart [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
             <ngx-charts-bar-vertical
                 [view]="[containerRef.offsetWidth, 500]"
                 [results]="ngxData"
                 [scheme]="color"
-                [xAxisLabel]="'Amount of Points reached'"
-                [legendTitle]="''"
-                [yAxisLabel]="'# of Participants'"
+                [xAxisLabel]="xAxisLabel"
+                [yAxisLabel]="yAxisLabel"
                 [legend]="false"
                 [showXAxisLabel]="true"
                 [showYAxisLabel]="true"

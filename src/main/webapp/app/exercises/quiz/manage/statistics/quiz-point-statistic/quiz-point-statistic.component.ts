@@ -1,8 +1,7 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ChartOptions, ChartType } from 'chart.js';
-import { calculateHeightOfChart, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { calculateHeightOfChartData } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -14,25 +13,19 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { BaseChartDirective, Color } from 'ng2-charts';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
 })
-export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
-
+export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
     private sub: Subscription;
 
     labels: string[] = [];
     data: number[] = [];
-    colors: Color[] = [];
-    chartType: ChartType = 'bar';
-    datasets: DataSet[] = [];
 
     label: string[] = [];
     ratedData: number[] = [];
@@ -45,14 +38,11 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     websocketChannelForData: string;
     quizExerciseChannel: string;
 
-    // options for chart.js style
-    options: ChartOptions;
-
     // variables for ngx-charts
     ngxData: any[] = []; // data presented by the chart
-    height: number; // height of the chart
-    xAxisLabel: string; // Label of the xAxis
-    yAxisLabel: string; // label of the yAxis
+    height: number;
+    xAxisLabel: string;
+    yAxisLabel: string;
     color: any;
     totalParticipants: number;
 
@@ -157,10 +147,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
-    getDataSets() {
-        return this.datasets;
-    }
-
     getParticipants() {
         return this.participants;
     }
@@ -234,7 +220,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         });
 
         this.labels = this.label;
-        this.colors = this.backgroundColor.map((backgroundColor) => ({ backgroundColor }));
         this.color = { domain: this.backgroundColor };
 
         // load data into the chart
@@ -256,27 +241,19 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         }
         // this reset is necessary in order to switch between rated and unrated results
         this.ngxData = [];
-
         this.totalParticipants = 0;
 
         this.data.forEach((data) => (this.totalParticipants += data));
 
-        this.datasets = [{ data: this.data, backgroundColor: this.colors.map((color) => color.backgroundColor as string) }];
         this.labels.forEach((label, index) => {
             this.ngxData.push({ name: label, value: this.data[index] });
         });
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
-        this.height = calculateHeightOfChart(this);
+        this.height = calculateHeightOfChartData(this.data);
 
         // add Axes-labels based on selected language
-        const xLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
-        const yLabel = this.translateService.instant('showStatistic.quizPointStatistic.yAxes');
         this.xAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
         this.yAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.yAxes');
-        this.options = createOptions(this, this.height, this.height / 5, xLabel, yLabel);
-        if (this.chart) {
-            this.chart.update(0);
-        }
     }
 
     /**
