@@ -27,14 +27,15 @@
                     <div class="col-7">{{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}</div>
                     <div class="col-5">
                         <div *ngIf="isAtLeastInstructor">
-                            <a [routerLink]="['/course-management', courseId, 'complaints']">
-                                {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
+                            <a [routerLink]="complaintsLink"> {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) </a>
+                            |
+                            <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
+                                {{ complaints.tutor }}
                             </a>
-                            | {{ complaints.tutor }}
                         </div>
                         <div *ngIf="!isAtLeastInstructor">
                             {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) |
-                            <a [routerLink]="['/course-management', courseId, 'complaints']" [queryParams]="{ tutorId: tutorId }">
+                            <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
                                 {{ complaints.tutor }}
                             </a>
                         </div>
@@ -46,14 +47,17 @@
                     </div>
                     <div class="col-5">
                         <div *ngIf="isAtLeastInstructor">
-                            <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', courseId, 'more-feedback-requests']">
+                            <a *ngIf="isAtLeastInstructor" [routerLink]="moreFeedbackRequestsLink">
                                 {{ moreFeedbackRequests.done }} / {{ moreFeedbackRequests.total }} ({{ moreFeedbackRequests.doneToTotalPercentage }})
                             </a>
-                            | {{ moreFeedbackRequests.tutor }}
+                            |
+                            <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId }">
+                                {{ moreFeedbackRequests.tutor }}
+                            </a>
                         </div>
                         <div *ngIf="!isAtLeastInstructor">
                             {{ moreFeedbackRequests.done }} / {{ moreFeedbackRequests.total }} ({{ moreFeedbackRequests.doneToTotalPercentage }}) |
-                            <a [routerLink]="['/course-management', courseId, 'more-feedback-requests']" [queryParams]="{ tutorId: tutorId }">
+                            <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId }">
                                 {{ moreFeedbackRequests.tutor }}
                             </a>
                         </div>
@@ -64,22 +68,16 @@
                         {{ 'artemisApp.assessmentDashboard.assessmentLocks' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        <div *ngIf="isAtLeastInstructor">
-                            <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', courseId, 'assessment-lock']"> {{ assessmentLocks.total }} </a>
-                            | {{ assessmentLocks.tutor }}
-                        </div>
-                        <div *ngIf="!isAtLeastInstructor">
-                            {{ assessmentLocks.tutor }} |
-                            <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutorId }">
-                                {{ assessmentLocks.tutor }}
-                            </a>
-                        </div>
+                        {{ assessmentLocks.tutor }} |
+                        <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId }">
+                            {{ assessmentLocks.tutor }}
+                        </a>
                     </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-7">{{ 'artemisApp.exerciseAssessmentDashboard.ratings' | artemisTranslate }}</div>
                     <div class="col-5">
-                        <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', courseId, 'ratings']"> {{ ratings.total }} </a>
+                        <a *ngIf="isAtLeastInstructor" [routerLink]="ratingsLink"> {{ ratings.total }} </a>
                         <span *ngIf="!isAtLeastInstructor"> {{ ratings.total }} </span> |
                         {{ ratings.tutor }}
                     </div>
@@ -101,17 +99,15 @@
                         {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        <a
-                            [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']"
-                            [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }"
-                            [class.disabled]="!isAtLeastInstructor"
-                        >
-                            {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
-                        </a>
-                        | -
+                        <div *ngIf="isAtLeastInstructor">
+                            <a [routerLink]="complaintsLink" [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }">
+                                {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
+                            </a>
+                            | -
+                        </div>
                         <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                         <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ complaints.tutor }} -->
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true"> </a>
+                        <div *ngIf="!isAtLeastInstructor">{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
                     </div>
                 </div>
                 <div class="row mb-1">
@@ -119,11 +115,9 @@
                         {{ 'artemisApp.assessmentDashboard.assessmentLocks' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']">
-                            {{ assessmentLocks.total }}
-                        </a>
+                        {{ assessmentLocks.total }}
                         |
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
+                        <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId }">
                             {{ assessmentLocks.tutor }}
                         </a>
                     </div>

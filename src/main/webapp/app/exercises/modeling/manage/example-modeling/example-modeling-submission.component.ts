@@ -22,6 +22,8 @@ import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/ex
 import { onError } from 'app/shared/util/global.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -49,6 +51,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     totalScore: number;
     invalidError?: string;
     exercise: ModelingExercise;
+    course?: Course;
     isAtLeastEditor = false;
     isAtLeastInstructor = false;
     readOnly: boolean;
@@ -122,6 +125,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
+            this.course = getCourseFromExercise(this.exercise);
             this.isExamMode = this.exercise.exerciseGroup != undefined;
             this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);

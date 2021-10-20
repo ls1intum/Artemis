@@ -9,7 +9,7 @@ import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -24,6 +24,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -39,6 +40,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     participation: StudentParticipation;
     exercise: ProgrammingExercise;
+    course?: Course;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -84,6 +86,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
+                        this.course = getCourseFromExercise(this.exercise);
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();

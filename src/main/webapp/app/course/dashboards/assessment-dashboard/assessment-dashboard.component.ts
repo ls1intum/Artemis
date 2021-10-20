@@ -46,10 +46,10 @@ export class AssessmentDashboardComponent implements OnInit {
     numberOfCorrectionRounds = 1;
     numberOfTutorAssessments = 0;
 
-    complaints: AssessmentDashboardInformationEntry;
-    moreFeedbackRequests: AssessmentDashboardInformationEntry;
-    assessmentLocks: AssessmentDashboardInformationEntry;
-    ratings: AssessmentDashboardInformationEntry;
+    complaints = new AssessmentDashboardInformationEntry(0, 0);
+    moreFeedbackRequests = new AssessmentDashboardInformationEntry(0, 0);
+    assessmentLocks = new AssessmentDashboardInformationEntry(0, 0);
+    ratings = new AssessmentDashboardInformationEntry(0, 0);
 
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
