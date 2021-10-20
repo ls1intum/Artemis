@@ -66,6 +66,8 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
+        this.setup();
+
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
