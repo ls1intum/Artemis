@@ -6,11 +6,8 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
 import * as ace from 'brace';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -42,7 +39,7 @@ import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/moc
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -67,9 +64,6 @@ import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/sh
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { TreeviewComponent } from 'ngx-treeview';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('CodeEditorStudentIntegration', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist');
@@ -82,10 +76,10 @@ describe('CodeEditorStudentIntegration', () => {
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let route: ActivatedRoute;
 
-    let checkIfRepositoryIsCleanStub: SinonStub;
-    let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let getFeedbackDetailsForResultStub: SinonStub;
-    let getStudentParticipationWithLatestResultStub: SinonStub;
+    let checkIfRepositoryIsCleanStub: jest.SpyInstance;
+    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
+    let getFeedbackDetailsForResultStub: jest.SpyInstance;
+    let getStudentParticipationWithLatestResultStub: jest.SpyInstance;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let routeSubject: Subject<Params>;
@@ -98,23 +92,23 @@ describe('CodeEditorStudentIntegration', () => {
             declarations: [
                 CodeEditorStudentContainerComponent,
                 CodeEditorContainerComponent,
-                CodeEditorFileBrowserComponent,
-                CodeEditorInstructionsComponent,
-                CodeEditorRepositoryIsLockedComponent,
+                MockComponent(CodeEditorFileBrowserComponent),
+                MockComponent(CodeEditorInstructionsComponent),
+                MockComponent(CodeEditorRepositoryIsLockedComponent),
                 KeysPipe,
-                MockDirective(AlertComponent),
-                MockDirective(IncludedInScoreBadgeComponent),
-                MockDirective(UpdatingResultComponent),
-                MockDirective(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockDirective(ExerciseHintStudentComponent),
-                MockDirective(ProgrammingExerciseInstructionComponent),
-                MockDirective(AdditionalFeedbackComponent),
+                MockComponent(AlertComponent),
+                MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(UpdatingResultComponent),
+                MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                MockComponent(ExerciseHintStudentComponent),
+                MockComponent(ProgrammingExerciseInstructionComponent),
+                MockComponent(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
+                MockComponent(NgbTooltip),
                 MockComponent(CodeEditorGridComponent),
-                MockDirective(CodeEditorActionsComponent),
-                MockDirective(CodeEditorBuildOutputComponent),
-                MockDirective(CodeEditorAceComponent),
+                MockComponent(CodeEditorActionsComponent),
+                MockComponent(CodeEditorBuildOutputComponent),
+                MockComponent(CodeEditorAceComponent),
                 MockComponent(CodeEditorFileBrowserCreateNodeComponent),
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
@@ -145,11 +139,11 @@ describe('CodeEditorStudentIntegration', () => {
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
 
-                codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-                resultService = containerDebugElement.injector.get(ResultService);
-                programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-                route = containerDebugElement.injector.get(ActivatedRoute);
+                codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+                resultService = TestBed.inject(ResultService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                route = TestBed.inject(ActivatedRoute);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
@@ -157,23 +151,20 @@ describe('CodeEditorStudentIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-                checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
-                subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
-                    subscribeForLatestResultOfParticipationSubject,
-                );
-                getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
-                getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+                checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
+                subscribeForLatestResultOfParticipationStub = jest
+                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+                    .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
+                getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
             });
     });
 
     afterEach(() => {
-        checkIfRepositoryIsCleanStub.restore();
-        subscribeForLatestResultOfParticipationStub.restore();
-        getFeedbackDetailsForResultStub.restore();
-        getStudentParticipationWithLatestResultStub.restore();
+        jest.restoreAllMocks();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
-        subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();
         // @ts-ignore
@@ -186,21 +177,21 @@ describe('CodeEditorStudentIntegration', () => {
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
-        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+        getFeedbackDetailsForResultStub.mockReturnValue(getFeedbackDetailsForResultSubject);
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).to.be.true;
+        expect(container.loadingParticipation).toBe(true);
 
         findWithLatestResultSubject.next(participation);
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
-        expect(getStudentParticipationWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(participation.id, result.id);
-        expect(container.loadingParticipation).to.be.false;
-        expect(container.participationCouldNotBeFetched).to.be.false;
-        expect(container.participation).to.deep.equal({ ...participation, results: [{ ...result, feedbacks }] });
+        expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result.id);
+        expect(container.loadingParticipation).toBe(false);
+        expect(container.participationCouldNotBeFetched).toBe(false);
+        expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
     it('should show the repository locked badge and disable the editor actions if the exercises buildAndTestAfterDueDate is set and the due date has passed', () => {
@@ -214,9 +205,9 @@ describe('CodeEditorStudentIntegration', () => {
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         const isCleanSubject = new Subject();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
-        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
-        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+        getFeedbackDetailsForResultStub.mockReturnValue(getFeedbackDetailsForResultSubject);
+        checkIfRepositoryIsCleanStub.mockReturnValue(isCleanSubject);
 
         routeSubject.next({ participationId: 1 });
         findWithLatestResultSubject.next(participation);
@@ -226,26 +217,26 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
 
         // Repository should be locked, the student can't write into it anymore.
-        expect(container.repositoryIsLocked).to.be.true;
-        expect(getElement(containerDebugElement, '.locked-container')).to.exist;
-        expect(container.codeEditorContainer.fileBrowser.disableActions).to.be.true;
-        expect(container.codeEditorContainer.actions.disableActions).to.be.true;
+        expect(container.repositoryIsLocked).toBe(true);
+        expect(getElement(containerDebugElement, '.locked-container')).toBeDefined();
+        expect(container.codeEditorContainer.fileBrowser.disableActions).toBeDefined();
+        expect(container.codeEditorContainer.actions.disableActions).toBeDefined();
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
         container.ngOnInit();
         const findWithLatestResultSubject = new Subject<{ body: Participation }>();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).to.be.true;
+        expect(container.loadingParticipation).toBe(true);
 
         findWithLatestResultSubject.error('fatal error');
 
-        expect(container.loadingParticipation).to.be.false;
-        expect(container.participationCouldNotBeFetched).to.be.true;
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(container.participation).to.be.undefined;
+        expect(container.loadingParticipation).toBe(false);
+        expect(container.participationCouldNotBeFetched).toBe(true);
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(container.participation).toBe(undefined);
     });
 });
