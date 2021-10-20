@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { roundScoreSpecifiedByCourseSettings } from '../util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-additional-feedback',
@@ -13,6 +14,8 @@ export class AdditionalFeedbackComponent {
     feedback: Feedback[];
     @Input()
     additional: boolean;
+    @Input()
+    course?: Course;
 
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;

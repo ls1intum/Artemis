@@ -14,7 +14,7 @@
         [class.neutral-feedback]="singleFeedback?.credits && singleFeedback.credits! === 0"
     >
         <strong>
-            <span> {{ roundScoreSpecifiedByCourseSettings(singleFeedback.credits, getCourseFromExercise(singleFeedback.result!.participation!.exercise!)) + ' Points: ' }} </span>
+            <span> {{ roundScoreSpecifiedByCourseSettings(singleFeedback.credits, course) + ' Points: ' }} </span>
         </strong>
         <span> {{ singleFeedback.detailText }} </span>
     </div>
