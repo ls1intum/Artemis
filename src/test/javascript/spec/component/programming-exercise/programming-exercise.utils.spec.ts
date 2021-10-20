@@ -24,28 +24,19 @@ describe('Programming Exercise Utils', () => {
 
         it('returns false when the completion date is not set', () => {
             const result = new Result();
-
-            const isLegacy = isLegacyResult(result);
-
-            expect(isLegacy).toBe(false);
+            expect(isLegacyResult(result)).toBe(false);
         });
 
         it('returns true on legacy result', () => {
             const result = new Result();
             result.completionDate = legacyDate;
-
-            const isLegacy = isLegacyResult(result);
-
-            expect(isLegacy).toBe(true);
+            expect(isLegacyResult(result)).toBe(true);
         });
 
         it('returns false on non legacy result', () => {
             const result = new Result();
             result.completionDate = legacyDate.add(1, 'second');
-
-            const isLegacy = isLegacyResult(result);
-
-            expect(isLegacy).toBe(false);
+            expect(isLegacyResult(result)).toBe(false);
         });
     });
 
@@ -142,60 +133,39 @@ describe('Programming Exercise Utils', () => {
     describe('isProgrammingExerciseStudentParticipation', () => {
         it('returns true for a programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-
-            const isProgrammingStudentParticipation = isProgrammingExerciseStudentParticipation(participation);
-
-            expect(isProgrammingStudentParticipation).toBe(true);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
         });
 
         it('returns false for another participation', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
-
-            const isProgrammingStudentParticipation = isProgrammingExerciseStudentParticipation(participation);
-
-            expect(isProgrammingStudentParticipation).toBe(false);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(false);
         });
     });
 
     describe('isProgrammingExerciseParticipation', () => {
         it('returns false for an undefined participation', () => {
             const participation = undefined;
-
-            const isProgrammingParticipation = isProgrammingExerciseParticipation(participation);
-
-            expect(isProgrammingParticipation).toBe(false);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(false);
         });
 
         it('returns true for a student programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-
-            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
-
-            expect(isProgrammingStudentParticipation).toBe(true);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
         });
 
         it('returns true for a template programming exercise participation', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
-
-            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
-
-            expect(isProgrammingStudentParticipation).toBe(true);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
         });
 
         it('returns true for a solution programming exercise participation', () => {
             const participation = new SolutionProgrammingExerciseParticipation();
-
-            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
-
-            expect(isProgrammingStudentParticipation).toBe(true);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
         });
 
         it('returns false for a normal student participation', () => {
             const participation = new StudentParticipation();
-
-            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
-
-            expect(isProgrammingStudentParticipation).toBe(false);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(false);
         });
     });
 
@@ -207,34 +177,23 @@ describe('Programming Exercise Utils', () => {
         });
 
         it('returns false if no due date is set', () => {
-            const deadlinePassed = hasDeadlinePassed(exercise);
-
-            expect(deadlinePassed).toBe(false);
+            expect(hasDeadlinePassed(exercise)).toBe(false);
         });
 
         it('buildAndTestDate takes precedence over normal exercise due date', () => {
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
             exercise.dueDate = dayjs().subtract(5, 'hours');
-
-            const deadlinePassed = hasDeadlinePassed(exercise);
-
-            expect(deadlinePassed).toBe(false);
+            expect(hasDeadlinePassed(exercise)).toBe(false);
         });
 
         it('returns true on date in the past', () => {
             exercise.dueDate = dayjs().subtract(1, 'hour');
-
-            const deadlinePassed = hasDeadlinePassed(exercise);
-
-            expect(deadlinePassed).toBe(true);
+            expect(hasDeadlinePassed(exercise)).toBe(true);
         });
 
         it('returns false on date in the future', () => {
             exercise.dueDate = dayjs().add(1, 'hour');
-
-            const deadlinePassed = hasDeadlinePassed(exercise);
-
-            expect(deadlinePassed).toBe(false);
+            expect(hasDeadlinePassed(exercise)).toBe(false);
         });
     });
 
@@ -258,7 +217,6 @@ describe('Programming Exercise Utils', () => {
 
         it('return true on invalid date', () => {
             result.completionDate = dayjs('Invalid date');
-
             expect(isResultPreliminary(result, exercise)).toBe(true);
         });
 
