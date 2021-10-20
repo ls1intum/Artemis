@@ -315,14 +315,6 @@
                 "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
                 "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
                 "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
-                "programmingExercisePolicyPresent": "Die Abgaberichtlinie konnte nicht zu der Programmieraufgabe hinzugefügt werden, da diese bereits eine Abgaberichtlinie hat.",
-                "submissionPolicyHasId": "Die Abgaberichtlinie konnte nicht zu der Programmieraufgabe hinzugefügt werden, da die Abgaberichtlinie bereits eine ID hat.",
-                "programmingExercisePolicyNotPresent": "Von der Programmieraufgabe konnte keine Abgaberichtlinie entfernt werden, da die Programmieraufgabe keine Richtlinie hat.",
-                "submissionPolicyAlreadyEnabled": "Die Abgaberichtlinie konnte nicht aktiviert werden, da diese bereits aktiviert ist.",
-                "submissionPolicyAlreadyDisabled": "Die Abgaberichtlinie konnte nicht deaktiviert werden, da diese bereits deaktiviert ist.",
-                "submissionPolicyToggleFailedPolicyNotExist": "Für diese Programmieraufgabe konnte die Abgaberichtlinie nicht (de)aktiviert werden, da die Programmieraufgabe keine Abgaberichtlinie hat. ",
-                "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
-                "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
                 "submissionsAllowed": "erlaubte Abgaben",
                 "none": {
                     "optionLabel": "Keine"

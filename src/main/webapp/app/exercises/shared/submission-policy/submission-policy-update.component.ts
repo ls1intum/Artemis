@@ -46,8 +46,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             id="field_submissionLimit"
                             [pattern]="submissionLimitPattern"
                             [disabled]="!editable"
-                            [ngModel]="this.programmingExercise.submissionPolicy!.submissionLimit"
-                            (ngModelChange)="updateSubmissionLimit(submissionLimitInput.value)"
+                            [(ngModel)]="this.programmingExercise.submissionPolicy!.submissionLimit"
                             #penalty="ngModel"
                         />
                     </div>
@@ -73,9 +72,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                         ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription' | artemisTranslate }}"
                     ></fa-icon>
                     <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">%</span>
-                        </div>
                         <input
                             #exceedingPenaltyInput
                             required
@@ -85,8 +81,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
                             name="submissionLimitExceededPenalty"
                             id="field_submissionLimitExceededPenalty"
                             [disabled]="!editable"
-                            [ngModel]="this.programmingExercise.submissionPolicy!.exceedingPenalty"
-                            (ngModelChange)="updateExceedingPenalty(exceedingPenaltyInput.value)"
+                            [(ngModel)]="this.programmingExercise.submissionPolicy!.exceedingPenalty"
                             #penalty="ngModel"
                         />
                     </div>
@@ -116,22 +111,6 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     ngOnInit(): void {
         this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
-        if (!this.isNonePolicy) {
-            this.updateSubmissionLimit(String(this.programmingExercise.submissionPolicy!.submissionLimit ?? 5));
-            if (this.isSubmissionPenaltyPolicy) {
-                this.updateExceedingPenalty(String((this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 10));
-            }
-        }
-    }
-
-    updateSubmissionLimit(limit: string) {
-        this.programmingExercise.submissionPolicy!.submissionLimit = +limit;
-        return limit;
-    }
-
-    updateExceedingPenalty(penalty: string) {
-        this.programmingExercise.submissionPolicy!.exceedingPenalty = +penalty;
-        return penalty;
     }
 
     private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {
