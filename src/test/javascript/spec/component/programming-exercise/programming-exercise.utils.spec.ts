@@ -1,4 +1,9 @@
-import { isProgrammingExerciseStudentParticipation } from './../../../../../main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils';
+import { StudentParticipation } from './../../../../../main/webapp/app/entities/participation/student-participation.model';
+import {
+    isProgrammingExerciseStudentParticipation,
+    isProgrammingExerciseParticipation,
+    hasDeadlinePassed,
+} from './../../../../../main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils';
 import { SolutionProgrammingExerciseParticipation } from './../../../../../main/webapp/app/entities/participation/solution-programming-exercise-participation.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { TemplateProgrammingExerciseParticipation } from './../../../../../main/webapp/app/entities/participation/template-programming-exercise-participation.model';
@@ -142,6 +147,48 @@ describe('Programming Exercise Utils', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
 
             const isProgrammingStudentParticipation = isProgrammingExerciseStudentParticipation(participation);
+
+            expect(isProgrammingStudentParticipation).toBe(false);
+        });
+    });
+
+    describe('isProgrammingExerciseParticipation', () => {
+        it('returns false for an undefined participation', () => {
+            const participation = undefined;
+
+            const isProgrammingParticipation = isProgrammingExerciseParticipation(participation);
+
+            expect(isProgrammingParticipation).toBe(false);
+        });
+
+        it('returns true for a student programming exercise participation', () => {
+            const participation = new ProgrammingExerciseStudentParticipation();
+
+            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
+
+            expect(isProgrammingStudentParticipation).toBe(true);
+        });
+
+        it('returns true for a template programming exercise participation', () => {
+            const participation = new TemplateProgrammingExerciseParticipation();
+
+            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
+
+            expect(isProgrammingStudentParticipation).toBe(true);
+        });
+
+        it('returns true for a solution programming exercise participation', () => {
+            const participation = new SolutionProgrammingExerciseParticipation();
+
+            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
+
+            expect(isProgrammingStudentParticipation).toBe(true);
+        });
+
+        it('returns false for a normal student participation', () => {
+            const participation = new StudentParticipation();
+
+            const isProgrammingStudentParticipation = isProgrammingExerciseParticipation(participation);
 
             expect(isProgrammingStudentParticipation).toBe(false);
         });
