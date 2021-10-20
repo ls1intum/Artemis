@@ -147,7 +147,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 !user[csvColumns.matrikelNummer] &&
                 !user[csvColumns.matriculationNumber] &&
                 !user[csvColumns.login] &&
-                user[csvColumns.user] &&
+                !user[csvColumns.user] &&
                 !user[csvColumns.username] &&
                 !user[csvColumns.benutzer] &&
                 !user[csvColumns.benutzerName]
