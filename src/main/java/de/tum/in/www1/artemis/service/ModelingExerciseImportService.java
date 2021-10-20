@@ -41,7 +41,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise);
-
+        newExercise.setKnowledge(templateExercise.getKnowledge());
         modelingExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;
