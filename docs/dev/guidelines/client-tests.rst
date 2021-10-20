@@ -268,7 +268,7 @@ extract as much as possible:
 
 10. If you have minimized :code:`expect` and can choose between multiple verification functions providing the same functionality, choose the most generic one. This way we will use as few functions as possible. For example prefer :code:`toBe(true)` and :code:`toBe(false)` over :code:`toBeTrue()` and :code:`toBeFalse()`.
 
-11. Use `Jest<https://jestjs.io/docs/expect>`_ whenever possible. Use `Jest Extended<https://github.com/jest-community/jest-extended#api>`_ only if it shortens the expect statements considerably and makes it more readable.
+11. Use `Jest <https://jestjs.io/docs/expect>`_ whenever possible. Use `Jest Extended <https://github.com/jest-community/jest-extended#api>`_ only if it shortens the expect statements considerably and makes it more readable.
 
 12. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
 
