@@ -21,7 +21,8 @@ import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue.model';
+import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-courses',
@@ -80,6 +81,7 @@ export class AssessmentDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
         private sortService: SortService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -235,25 +237,52 @@ export class AssessmentDashboardComponent implements OnInit {
      * Computes the performance issues for every tutor based on its rating, score, complaints number comparing to the average tutor numbers
      */
     computeIssuesWithTutorPerformance() {
+        const complaintsToAssessmentsRatio = function (entry: TutorLeaderboardElement) {
+            if (entry.numberOfAssessments === 0) {
+                return 0;
+            }
+
+            return entry.numberOfTutorComplaints / entry.numberOfAssessments;
+        };
+
         const courseInformation = this.stats.tutorLeaderboardEntries.reduce(
             (accumulator, entry) => {
                 return {
                     summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
                     summedAverageScore: accumulator.summedAverageScore + entry.averageScore,
-                    numberOfComplaints: accumulator.numberOfComplaints,
+                    summedComplaintsToAssessmentsRatio: accumulator.summedComplaintsToAssessmentsRatio + complaintsToAssessmentsRatio(entry),
                 };
             },
-            { summedAverageRatings: 0, summedAverageScore: 0, numberOfComplaints: this.stats.numberOfComplaints },
+            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaintsToAssessmentsRatio: 0 },
         );
 
-        const tutorCount = this.stats.tutorLeaderboardEntries.length;
+        const numberOfTutorsWithNonZeroRatings = this.stats.tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
+        const numberOfTutorsNonZeroAssessments = this.stats.tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
 
         this.stats.tutorLeaderboardEntries
             // create the tutor issue checkers for rating, score and complaints
             .flatMap((entry) => [
-                new TutorIssueRatingChecker(entry.numberOfTutorRatings, entry.averageRating, courseInformation.summedAverageRatings / tutorCount, entry.name),
-                new TutorIssueScoreChecker(entry.numberOfAssessments, entry.averageScore, courseInformation.summedAverageScore / tutorCount, entry.name),
-                new TutorIssueComplaintsChecker(entry.numberOfAssessments, entry.numberOfTutorComplaints, courseInformation.numberOfComplaints / tutorCount, entry.name),
+                new TutorIssueRatingChecker(
+                    entry.numberOfTutorRatings,
+                    entry.averageRating,
+                    courseInformation.summedAverageRatings / numberOfTutorsWithNonZeroRatings,
+                    entry.name,
+                    this.translateService,
+                ),
+                new TutorIssueScoreChecker(
+                    entry.numberOfAssessments,
+                    entry.averageScore,
+                    courseInformation.summedAverageScore / numberOfTutorsNonZeroAssessments,
+                    entry.name,
+                    this.translateService,
+                ),
+                new TutorIssueComplaintsChecker(
+                    entry.numberOfAssessments,
+                    complaintsToAssessmentsRatio(entry),
+                    courseInformation.summedComplaintsToAssessmentsRatio / numberOfTutorsNonZeroAssessments,
+                    entry.name,
+                    this.translateService,
+                ),
             ])
             // run every checker to see if the tutor value is within the allowed threshold
             .filter((checker) => checker.isWorseThanAverage)

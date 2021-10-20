@@ -37,6 +37,11 @@
                 "title": "Exercise Table",
                 "courseInformation": "Exercise table displays all exercises in this course. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions.",
                 "examInformation": "Exercise table displays all exercises in this exam. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions."
+            },
+            "tutorPerformanceIssues": {
+                "ratings": "{{tutorName}} has received {{ratingsCount}} rating(s) with an average of {{averageTutorRating}} ⭐️️ which is below {{averageCourseRating}} ⭐.",
+                "score": "{{tutorName}} has assessed {{assessmentsCount}} submission(s) with an average score of {{averageTutorScore}}% which is below {{averageCourseScore}}%",
+                "complaints": "{{tutorName}} has assessed {{assessmentsCount}} submission(s) with the ratio of {{complaintsTutorRatio}} complaints per assessment which is below {{complaintsCourseRatio}}"
             }
         }
     }
