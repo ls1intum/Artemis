@@ -49,9 +49,9 @@ public class MailServiceTest {
 
     private static User student1;
 
-    private static final String emailAddressA = "benige8246@omibrown.com";
+    private static final String EMAIL_ADDRESS_A = "benige8246@omibrown.com";
 
-    private static final String emailAddressB = "alex2713@gmail.com";
+    private static final String EMAIL_ADDRESS_B = "alex2713@gmail.com";
 
     private static String subject;
 
@@ -64,7 +64,7 @@ public class MailServiceTest {
     public static void setUp() {
         student1 = new User();
         student1.setId(555L);
-        student1.setEmail(emailAddressA);
+        student1.setEmail(EMAIL_ADDRESS_A);
 
         subject = "subject";
         content = "content";
@@ -75,7 +75,7 @@ public class MailServiceTest {
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         mail = mock(JHipsterProperties.Mail.class);
-        when(mail.getFrom()).thenReturn(emailAddressB);
+        when(mail.getFrom()).thenReturn(EMAIL_ADDRESS_B);
 
         jHipsterProperties = mock(JHipsterProperties.class);
         when(jHipsterProperties.getMail()).thenReturn(mail);
