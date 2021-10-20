@@ -1,6 +1,13 @@
-import { TranslateService } from '@ngx-translate/core';
-
-export type TutorIssue = string;
+export class TutorIssue {
+    constructor(
+        public tutorId: number,
+        public tutorName: string,
+        public numberOfTutorItems: number,
+        public averageTutorValue: number,
+        public threshold: number,
+        public translationKey: string,
+    ) {}
+}
 
 enum TutorValueAllowedThreshold {
     AboveAverage,
@@ -12,13 +19,7 @@ enum TutorValueAllowedThreshold {
  * The subclasses need to provide the `TutorValueAllowedThreshold` value as well as method to create `TutorIssue`.
  */
 abstract class TutorValueChecker {
-    constructor(
-        public numberOfTutorItems: number,
-        public averageTutorValue: number,
-        public averageCourseValue: number,
-        public tutorName: string,
-        protected translateService: TranslateService,
-    ) {}
+    constructor(public numberOfTutorItems: number, public averageTutorValue: number, public averageCourseValue: number, public tutorName: string, public tutorId: number) {}
 
     get thresholdValue(): number {
         const twentyPercentThreshold = this.averageCourseValue / 5;
@@ -53,9 +54,16 @@ abstract class TutorValueChecker {
     abstract get allowedThreshold(): TutorValueAllowedThreshold;
 
     /**
+     * The key to use in case of the translation.
+     */
+    abstract get translationKey(): string;
+
+    /**
      * Creates tutor issue object out of the validation information.
      */
-    abstract toIssue(): TutorIssue;
+    toIssue(): TutorIssue {
+        return new TutorIssue(this.tutorId, this.tutorName, this.numberOfTutorItems, this.averageTutorValue, this.thresholdValue, this.translationKey);
+    }
 }
 
 /**
@@ -66,13 +74,8 @@ export class TutorIssueRatingChecker extends TutorValueChecker {
         return TutorValueAllowedThreshold.AboveAverage;
     }
 
-    toIssue(): TutorIssue {
-        return this.translateService.instant('artemisApp.assessmentDashboard.tutorPerformanceIssues.ratings', {
-            tutorName: this.tutorName,
-            ratingsCount: this.numberOfTutorItems,
-            averageTutorRating: this.averageTutorValue.toFixed(2),
-            averageCourseRating: this.thresholdValue.toFixed(2),
-        });
+    get translationKey(): string {
+        return 'artemisApp.assessmentDashboard.tutorPerformanceIssues.ratings';
     }
 }
 
@@ -84,13 +87,8 @@ export class TutorIssueScoreChecker extends TutorValueChecker {
         return TutorValueAllowedThreshold.AboveAverage;
     }
 
-    toIssue(): TutorIssue {
-        return this.translateService.instant('artemisApp.assessmentDashboard.tutorPerformanceIssues.score', {
-            tutorName: this.tutorName,
-            assessmentsCount: this.numberOfTutorItems,
-            averageTutorScore: this.averageTutorValue.toFixed(2),
-            averageCourseScore: this.thresholdValue.toFixed(2),
-        });
+    get translationKey(): string {
+        return 'artemisApp.assessmentDashboard.tutorPerformanceIssues.score';
     }
 }
 
@@ -102,12 +100,7 @@ export class TutorIssueComplaintsChecker extends TutorValueChecker {
         return TutorValueAllowedThreshold.BelowAverage;
     }
 
-    toIssue(): TutorIssue {
-        return this.translateService.instant('artemisApp.assessmentDashboard.tutorPerformanceIssues.complaints', {
-            tutorName: this.tutorName,
-            assessmentsCount: this.numberOfTutorItems,
-            complaintsTutorRatio: this.averageTutorValue.toFixed(2),
-            complaintsCourseRatio: this.thresholdValue.toFixed(2),
-        });
+    get translationKey(): string {
+        return 'artemisApp.assessmentDashboard.tutorPerformanceIssues.complaints';
     }
 }

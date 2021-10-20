@@ -176,9 +176,20 @@
     </div>
 
     <div *ngIf="isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid">
-        <h4>Issues with tutor performance</h4>
+        <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
         <ul *ngFor="let issue of tutorIssues">
-            <li>{{ issue }}</li>
+            <li>
+                {{
+                    issue.translationKey
+                        | artemisTranslate
+                            : {
+                                  tutorName: issue.tutorName,
+                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                  averageTutorValue: issue.averageTutorValue.toFixed(2),
+                                  threshold: issue.threshold.toFixed(2)
+                              }
+                }}
+            </li>
         </ul>
     </div>
 

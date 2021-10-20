@@ -267,28 +267,35 @@ export class AssessmentDashboardComponent implements OnInit {
                     entry.averageRating,
                     courseInformation.summedAverageRatings / numberOfTutorsWithNonZeroRatings,
                     entry.name,
-                    this.translateService,
+                    entry.userId,
                 ),
                 new TutorIssueScoreChecker(
                     entry.numberOfAssessments,
                     entry.averageScore,
                     courseInformation.summedAverageScore / numberOfTutorsNonZeroAssessments,
                     entry.name,
-                    this.translateService,
+                    entry.userId,
                 ),
                 new TutorIssueComplaintsChecker(
                     entry.numberOfAssessments,
                     complaintsToAssessmentsRatio(entry),
                     courseInformation.summedComplaintsToAssessmentsRatio / numberOfTutorsNonZeroAssessments,
                     entry.name,
-                    this.translateService,
+                    entry.userId,
                 ),
             ])
             // run every checker to see if the tutor value is within the allowed threshold
             .filter((checker) => checker.isWorseThanAverage)
-            // create tutor issue and add it to the `tutorIssues` array
+            // create tutor issue
             .map((checker) => checker.toIssue())
-            .forEach((issue) => this.tutorIssues.push(issue));
+            .forEach((issue) => {
+                // mark tutor with performance issues
+                const tutorEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === issue.tutorId);
+                tutorEntry!.hasIssuesWithPerformance = true;
+
+                // add issue to the issues list
+                this.tutorIssues.push(issue);
+            });
     }
 
     /**

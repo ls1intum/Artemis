@@ -39,9 +39,11 @@
                 "examInformation": "Übung Tabelle listet alle Übungen des aktuellen Klausur auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen."
             },
             "tutorPerformanceIssues": {
-                "ratings": "{{tutorName}} hat {{ratingsCount}} Rating(s) mit dem durchschnittlichen Wert von {{averageTutorRating}} ⭐️ bekommen. Das ist weniger als {{averageCourseRating}} ⭐.",
-                "score": "{{tutorName}} has {{assessmentsCount}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorScore}}% bewertet. Das ist weniger als {{averageCourseScore}}%",
-                "complaints": "{{tutorName}} hat {{assessmentsCount}} Abgabe(n) mit der durchschnittlichen Ratio von {{complaintsTutorRatio}} Beschwerden pro Abgabe bewertet. Das ist weniger als {{complaintsCourseRatio}}"
+                "title": "Probleme mit der Leistung von Tutor:innen",
+                "tutor": "Tutor:in {{ tutorName }} hat Probleme mit der Leistung",
+                "ratings": "{{tutorName}} hat {{numberOfTutorItems}} Rating(s) mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als {{threshold}} ⭐.",
+                "score": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%.",
+                "complaints": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Ratio von {{averageTutorValue}} Beschwerden pro Abgabe bewertet. Das ist größer als {{threshold}}."
             }
         }
     }

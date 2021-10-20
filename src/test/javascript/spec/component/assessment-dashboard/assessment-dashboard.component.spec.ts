@@ -62,8 +62,6 @@ describe('AssessmentDashboardInformationComponent', () => {
     let accountService: AccountService;
     let isAtLeastInstructorInCourseStub: jest.SpyInstance;
 
-    let translateService: TranslateService;
-
     const programmingExercise = {
         id: 16,
         type: ExerciseType.PROGRAMMING,
@@ -150,7 +148,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(TranslateService),
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -164,7 +161,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
                 accountService = TestBed.inject(AccountService);
-                translateService = TestBed.inject(TranslateService);
 
                 getExamWithInterestingExercisesForAssessmentDashboardStub = jest.spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard');
                 getStatsForExamAssessmentDashboardStub = jest.spyOn(examManagementService, 'getStatsForExamAssessmentDashboard');
@@ -280,6 +276,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 1,
                         numberOfTutorRatings: 1,
+                        hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
                     {
                         userId: 2,
@@ -288,6 +285,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 5,
                         numberOfTutorRatings: 1,
+                        hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
                     {
                         userId: 3,
@@ -296,6 +294,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 0,
                         numberOfTutorRatings: 0,
+                        hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
                 ];
                 getStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ status: 200, body: stats })));
@@ -305,6 +304,9 @@ describe('AssessmentDashboardInformationComponent', () => {
 
                 // then
                 expect(comp.tutorIssues).toHaveLength(2);
+                expect(comp.stats.tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
+                expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints
+                expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(false);
             });
 
             it('do not compute issues if in exam mode', () => {
@@ -328,20 +330,22 @@ describe('AssessmentDashboardInformationComponent', () => {
         });
 
         describe('tutor issue checkers', () => {
+            const tutorId = 1;
+            const tutorName = 'TutorA';
+
             describe('rating checker', () => {
                 it('tutors value is significantly less than the course average value', () => {
-                    const tutorName = 'TutorA';
                     const ratingsCount = 1;
                     const tutorAverageValue = 2.25;
                     const courseAverageValue = 4;
-                    const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName, translateService);
+                    const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
                     expect(ratingChecker.isWorseThanAverage).toEqual(true);
                 });
 
                 it('tutors value is within allowed range', () => {
-                    const ratingCheckerA = new TutorIssueRatingChecker(1, 0, 0, 'TutorA', translateService);
-                    const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, 'TutorA', translateService);
-                    const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, 'TutorA', translateService);
+                    const ratingCheckerA = new TutorIssueRatingChecker(1, 0, 0, tutorName, tutorId);
+                    const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, tutorName, tutorId);
+                    const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, tutorName, tutorId);
                     expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
                     expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
                     expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
@@ -350,18 +354,17 @@ describe('AssessmentDashboardInformationComponent', () => {
 
             describe('score checker', () => {
                 it('tutors value is significantly less than the course average value', () => {
-                    const tutorName = 'TutorA';
                     const submissionsCount = 5;
                     const tutorAverageValue = 40;
                     const courseAverageValue = 80;
-                    const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, translateService);
+                    const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
                     expect(ratingChecker.isWorseThanAverage).toEqual(true);
                 });
 
                 it('tutors value is within allowed range', () => {
-                    const ratingCheckerA = new TutorIssueScoreChecker(1, 0, 0, 'TutorA', translateService);
-                    const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, 'TutorA', translateService);
-                    const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, 'TutorA', translateService);
+                    const ratingCheckerA = new TutorIssueScoreChecker(1, 0, 0, tutorName, tutorId);
+                    const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
+                    const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
                     expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
                     expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
                     expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
@@ -370,18 +373,17 @@ describe('AssessmentDashboardInformationComponent', () => {
 
             describe('complaints checker', () => {
                 it('tutors value is significantly bigger than the course average value', () => {
-                    const tutorName = 'TutorA';
                     const submissionsCount = 5;
                     const tutorAverageValue = 14;
                     const courseAverageValue = 10;
-                    const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, translateService);
+                    const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
                     expect(ratingChecker.isWorseThanAverage).toEqual(true);
                 });
 
                 it('tutors value is within allowed range', () => {
-                    const ratingCheckerA = new TutorIssueComplaintsChecker(1, 0, 0, 'TutorA', translateService);
-                    const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, 'TutorA', translateService);
-                    const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, 'TutorA', translateService);
+                    const ratingCheckerA = new TutorIssueComplaintsChecker(1, 0, 0, tutorName, tutorId);
+                    const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
+                    const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
                     expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
                     expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
                     expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
