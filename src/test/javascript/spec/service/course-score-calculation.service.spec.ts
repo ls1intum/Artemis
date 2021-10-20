@@ -35,7 +35,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise2, true, 0, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
         addParticipationAndResultToExercise(exercise4, true, 50, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 35, 87.5, 87.5, 40, 0, 40);
     });
 
@@ -50,7 +50,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise2, true, 0, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
         addParticipationAndResultToExercise(exercise4, true, 50, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 25, 0, 0, 0, 0, 0);
     });
 
@@ -65,7 +65,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise2, true, 0, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
         addParticipationAndResultToExercise(exercise4, true, 50, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 0, 0, 0, 0, 0, 0);
     });
 
@@ -78,7 +78,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise1, true, 200, true);
         addParticipationAndResultToExercise(exercise2, true, 100, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 30, 300, 300, 10, 0, 10);
     });
 
@@ -106,7 +106,7 @@ describe('CourseScoreCalculationService', () => {
         newResult.rated = true;
         participation.results.push(newResult);
 
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 0, 0, 0, 10, 0, 10);
     });
 

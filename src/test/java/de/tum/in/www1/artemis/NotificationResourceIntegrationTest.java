@@ -15,10 +15,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -36,6 +39,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private SystemNotificationRepository systemNotificationRepository;
+
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
 
     private Exercise exercise;
 
@@ -241,6 +247,32 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         request.put("/api/notifications", notification, HttpStatus.OK);
         request.get("/api/notifications/" + notification.getId(), HttpStatus.OK, Notification.class);
         request.get("/api/notifications/" + notification.getId() + 1, HttpStatus.NOT_FOUND, Notification.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllNotificationsForCurrentUserFilteredBySettings() throws Exception {
+        NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
+        NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
+
+        NotificationSetting allowedSetting = new NotificationSetting(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
+        NotificationSetting blockedSetting = new NotificationSetting(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
+
+        notificationSettingRepository.save(allowedSetting);
+        notificationSettingRepository.save(blockedSetting);
+
+        GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+        allowedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(allowedType));
+        notificationRepository.save(allowedNotification);
+
+        GroupNotification blockedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+        blockedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(blockedType));
+        notificationRepository.save(blockedNotification);
+
+        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+
+        assertThat(notifications).as("Notification that is allowed by Settings is returned").contains(allowedNotification);
+        assertThat(notifications).as("Notification that is blocked by Settings is not returned").doesNotContain(blockedNotification);
     }
 
     @Test

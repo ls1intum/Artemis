@@ -21,6 +21,7 @@
     [showEditorInstructions]="showEditorInstructions"
     [isTutorAssessment]="hasTutorAssessment"
     [readOnlyManualFeedback]="true"
+    [course]="course"
 >
     <div editorTitle>
         <span>{{ exercise?.title }}</span>
@@ -64,6 +65,12 @@
     ></jhi-programming-exercise-instructions>
 </jhi-code-editor-container>
 <div class="row ms-0">
-    <jhi-additional-feedback *ngIf="unreferencedFeedback.length > 0" class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true">
+    <jhi-additional-feedback
+        *ngIf="unreferencedFeedback.length > 0"
+        class="col-xl-8 mt-3 alert unreferencedFeedback"
+        [feedback]="unreferencedFeedback"
+        [additional]="true"
+        [course]="course"
+    >
     </jhi-additional-feedback>
 </div>

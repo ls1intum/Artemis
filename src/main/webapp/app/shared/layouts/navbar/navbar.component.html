@@ -173,6 +173,13 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
+                        <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'cog'" [fixedWidth]="true"></fa-icon>
+                            <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
+                        </a>
+                    </li>
+                    <div class="dropdown-divider"></div>
+                    <li>
                         <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
                     </li>
                     <div *ngIf="languages && languages.length > 1">
