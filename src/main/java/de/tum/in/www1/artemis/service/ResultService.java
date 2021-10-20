@@ -213,7 +213,7 @@ public class ResultService {
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (!exercise.isExamExercise() && resultSetAndNonAutomatic && dueDateNotSetOrNotOver) {
                 // filter all non-automatic feedbacks
-                feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
+                feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && feedback.getType() == FeedbackType.AUTOMATIC).toList();
             }
         }
         return feedbacks;
