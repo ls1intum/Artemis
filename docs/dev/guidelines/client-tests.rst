@@ -250,9 +250,27 @@ Here is an example of a test for `exercise-update-warning component <https://git
 
 8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
 
-9. We try to use as few expectation functions as possible so new developers don't need to learn many functions (i.e. :code:`.toBe(true)` instead of :code:`.toBeTrue()`).
+9. When expecting results use :code:`expect` for client tests. That call **must** be followed by another assertion statement like :code:`toBe(true)`. It is best practice to use more specific expect statements rather than always expecting boolean values. It is also recommended to extract as much as possible from the `expect` statement.
 
-10. For situations described below, only use the uniform solution to keep the codebase as consistent as possible. Otherwise refer to the standard `Jest API <https://jestjs.io/docs/expect>`_ or the `Jest Extended API <https://github.com/jest-community/jest-extended#api>`_.
+For example, instead of
+
+.. code:: ts
+
+    expect(course == undefined).toBe(true);
+    expect(courseList.length).toBe(4);
+
+extract as much as possible:
+
+.. code:: ts
+
+    expect(course).toBe(undefined);
+    expect(courseList).toHaveLength(4);
+
+10. If you have minimized :code:`expect` and can choose between multiple verification functions providing the same functionality, choose the most generic one. This way we will use as few functions as possible. For example prefer :code:`toBe(true)` and :code:`toBe(false)` over :code:`toBeTrue()` and :code:`toBeFalse()`.
+
+11. Use `Jest<https://jestjs.io/docs/expect>`_ whenever possible. Use `Jest Extended<https://github.com/jest-community/jest-extended#api>`_ only if it shortens the expect statements considerably and makes it more readable.
+
+12. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
 
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | Situation                                              | Solution                                                        |
