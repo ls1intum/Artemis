@@ -20,12 +20,14 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -62,6 +64,8 @@ public class MailService {
     private static final String NOTIFICATION_SUBJECT = "notificationSubject";
 
     private static final String NOTIFICATION_URL = "notificationUrl";
+
+    private static final String EXERCISE_TYPE = "exerciseType";
 
     // time related variables
     private static final String TIME_SERVICE = "timeService";
@@ -167,6 +171,24 @@ public class MailService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
+
+        if (notificationSubject instanceof Exercise) {
+            if (notificationSubject instanceof QuizExercise) {
+                context.setVariable(EXERCISE_TYPE, "quiz");
+            }
+            else if (notificationSubject instanceof ModelingExercise) {
+                context.setVariable(EXERCISE_TYPE, "modeling");
+            }
+            else if (notificationSubject instanceof TextExercise) {
+                context.setVariable(EXERCISE_TYPE, "text");
+            }
+            else if (notificationSubject instanceof ProgrammingExercise) {
+                context.setVariable(EXERCISE_TYPE, "programming");
+            }
+            else if (notificationSubject instanceof FileUploadExercise) {
+                context.setVariable(EXERCISE_TYPE, "upload");
+            }
+        }
 
         // replace with (e.g.) "http://localhost:9000" for local testing
         context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));

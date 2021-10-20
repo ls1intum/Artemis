@@ -7,6 +7,7 @@
     <div id="message-body">
         <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
         <div class="notification-content">
+            <th:block th:replace="mail/notification/fragments :: exerciseTypeTranslation"/>
             <span th:text="#{email.notification.title.exercise.created(
                 ${notificationSubject.getTitle()},
                 ${notificationSubject.getCourseViaExerciseGroupOrCourseMember().getTitle()}
@@ -14,7 +15,7 @@
             <p class="bold-text" th:text="#{email.notification.title.exercise.information}">Information about this exercise:</p>
             <ul>
                 <th:block th:if="${notificationSubject.getDifficulty()}">
-                    <li th:text="#{email.notification.title.exercise.information.difficulty(${notificationSubject.getDifficulty()})}">Difficulty</li>
+                    <li th:include="mail/notification/fragments :: difficultyTranslation"/>
                 </th:block>
                 <th:block th:if="${notificationSubject.getReleaseDate()}">
                     <li th:text="#{email.notification.aux.information.release.date(${timeService.convertToHumanReadableDate(notificationSubject.getReleaseDate())})}">Release Date</li>
