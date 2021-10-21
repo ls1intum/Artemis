@@ -189,14 +189,14 @@ Some guidelines:
                 }));
             });
 
-2. Do not use ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
+2. Do not use ``NO_ERRORS_SCHEMA`` (`angular documentation <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
 3. Calling `jest.restoreAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests. This will only work if the mocks were created with `jest.spyOn`. Manually assigning `jest.fn()` should be avoided with this configuration.
 
-4. Make sure to have at least 80% line test coverage. Run ``npm test`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+4. Make sure to have at least 80% line test coverage. Run ``npm test`` to create a coverage report. You can also simply `run the tests in IntelliJ IDEA with coverage activated <https://www.jetbrains.com/help/idea/running-test-with-coverage.html>`_.
 
 5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
-   For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected template changes have occurred.
+   For example, if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
 
     Here is an example of such a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
 
@@ -252,7 +252,7 @@ Some guidelines:
     - `Mock`: Spy + returns a specific implementation for a certain input
     - `Stub`: Spy + returns a default implementation independent of the input parameters.
 
-8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
+8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the codebase without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
 
 9. When expecting results use :code:`expect` for client tests. That call **must** be followed by another assertion statement like :code:`toBe(true)`. It is best practice to use more specific expect statements rather than always expecting boolean values. It is also recommended to extract as much as possible from the `expect` statement.
 
@@ -297,7 +297,7 @@ Some guidelines:
   |                                                        | :code:`expect(value).toBe(null);` and if not avoidable          |
   |                                                        | :code:`expect(value).not.toBe(null);`.                          |
   |                                                        |                                                                 |
-  |                                                        | **Important:** Never use :code:`expect(value).not.toBeDefined()`|
+  |                                                        | **Never use** :code:`expect(value).not.toBeDefined()`           |
   |                                                        | or :code:`expect(value).toBeNil()` as they might not catch all  |
   |                                                        | failures under certain conditions.                              |
   +--------------------------------------------------------+-----------------------------------------------------------------+
@@ -307,7 +307,7 @@ Some guidelines:
   |                                                        |                                                                 |
   |                                                        | :code:`expect(classObject).toEqual(expectedClassObject);`       |
   |                                                        |                                                                 |
-  |                                                        | **Important:** Never use :code:`expect(value).toBeDefined()` as |
+  |                                                        | **Never use** :code:`expect(value).toBeDefined()` as            |
   |                                                        | it might not catch all failures under certain conditions.       |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A class object should not be undefined                 | Try to test for a defined object as described above.            |
