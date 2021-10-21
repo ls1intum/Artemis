@@ -7,6 +7,7 @@
             "userSettings": "Benutzereinstellungen",
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
+            "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "accountInformationPage": {
                 "fullName": "Vollständiger Name",
                 "login": "Login",
@@ -23,7 +24,7 @@
                 "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
             },
             "settingNames": {
-                "exerciseCreatedOrStarted": "(Neue) Aufgabe erstellt oder gestartet",
+                "exerciseReleased": "Neue Aufgabe veröffentlicht",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
                 "newExercisePost": "Neue Beiträge für Aufgaben",
                 "newReplyForExercisePost": "Neue Antworten für Aufgaben",
@@ -35,7 +36,7 @@
                 "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
             },
             "settingDescriptions": {
-                "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung, wenn eine (neue) Aufgabe erstellt oder gestartet wurde",
+                "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschalten wurde (z.B. ein Quiz)",
                 "newExercisePostDescription": "Erhalte eine Mitteilung, wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
                 "newReplyForExercisePostDescription": "Erhalte eine Mitteilung, wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",

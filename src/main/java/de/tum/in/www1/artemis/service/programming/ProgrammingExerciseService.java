@@ -151,7 +151,12 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         scheduleOperations(programmingExercise.getId());
-        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
+        if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
+        }
+        else {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
+        }
 
         return programmingExercise;
     }

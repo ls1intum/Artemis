@@ -28,7 +28,7 @@ export class Notification implements BaseEntity {
  */
 export const ATTACHMENT_CHANGE_TITLE = 'Attachment updated';
 
-export const EXERCISE_CREATED_TITLE = 'Exercise created';
+export const EXERCISE_RELEASED_TITLE = 'Exercise released';
 
 export const EXERCISE_PRACTICE_TITLE = 'Exercise open for practice';
 

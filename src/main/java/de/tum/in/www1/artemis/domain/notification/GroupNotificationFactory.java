@@ -71,9 +71,9 @@ public class GroupNotificationFactory {
         String title;
         String text;
         switch (notificationType) {
-            case EXERCISE_CREATED -> {
-                title = NotificationTitleTypeConstants.EXERCISE_CREATED_TITLE;
-                text = "A new exercise \"" + exercise.getTitle() + "\" got created.";
+            case EXERCISE_RELEASED -> {
+                title = NotificationTitleTypeConstants.EXERCISE_RELEASED_TITLE;
+                text = "A new exercise \"" + exercise.getTitle() + "\" got released.";
             }
             case EXERCISE_PRACTICE -> {
                 title = NotificationTitleTypeConstants.EXERCISE_PRACTICE_TITLE;
@@ -124,8 +124,8 @@ public class GroupNotificationFactory {
             }
         }
         // Exercises for courses (not for exams)
-        else if (notificationType == NotificationType.EXERCISE_CREATED) {
-            notification.setTarget(targetService.getExerciseCreatedTarget(exercise));
+        else if (notificationType == NotificationType.EXERCISE_RELEASED) {
+            notification.setTarget(targetService.getExerciseReleasedTarget(exercise));
         }
         else if (notificationType == NotificationType.DUPLICATE_TEST_CASE) {
             notification.setTarget(targetService.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
@@ -140,7 +140,7 @@ public class GroupNotificationFactory {
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
      *
-     * @param post                  for which a notification should be created (either if created or answered)
+     * @param post              for which a notification should be created
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
