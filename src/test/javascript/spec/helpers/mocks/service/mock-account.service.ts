@@ -19,6 +19,8 @@ export class MockAccountService implements IAccountService {
     isAtLeastTutorForExercise = (exercise?: Exercise) => true;
     isAtLeastEditorForExercise = (exercise?: Exercise) => true;
     isAtLeastInstructorForExercise = (exercise?: Exercise) => true;
+    setAccessRightsForExercise = (exercise?: Exercise) => ({} as any);
+    setAccessRightsForCourse = (course?: Course) => ({} as any);
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;
     isAdmin = () => true;
