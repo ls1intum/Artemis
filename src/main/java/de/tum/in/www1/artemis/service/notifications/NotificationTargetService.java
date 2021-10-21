@@ -55,11 +55,11 @@ public class NotificationTargetService {
     // EXERCISE related targets
 
     /**
-     * Get the needed target for "ExerciseCreated" notifications
-     * @param exercise that was created
+     * Get the needed target for "ExerciseReleased" notifications
+     * @param exercise that was released
      * @return the final target property
      */
-    public String getExerciseCreatedTarget(Exercise exercise) {
+    public String getExerciseReleasedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, EXERCISE_CREATED_TEXT);
     }
 

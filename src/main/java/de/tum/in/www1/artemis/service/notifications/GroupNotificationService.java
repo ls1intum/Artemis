@@ -66,7 +66,7 @@ public class GroupNotificationService {
                 case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, NotificationType.QUIZ_EXERCISE_STARTED,
                         (String) typeSpecificInformation);
                 case EXERCISE_UPDATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_UPDATED, (String) typeSpecificInformation);
-                case EXERCISE_CREATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_CREATED, (String) typeSpecificInformation);
+                case EXERCISE_RELEASED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_RELEASED, (String) typeSpecificInformation);
                 // Archive Types
                 case COURSE_ARCHIVE_STARTED -> createNotification((Course) notificationSubject, author, group, NotificationType.COURSE_ARCHIVE_STARTED,
                         (List<String>) typeSpecificInformation);
@@ -142,16 +142,16 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
+     * Notify all groups about a newly released exercise at the moment of its release date.
+     *
+     * This notification can be deactivated in the notification settings
      *
      * @param exercise that has been created
      */
-    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
-        // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-        if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA }, NotificationType.EXERCISE_CREATED, exercise,
-                    null, null);
-        }
+    public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
+        notifyGroupsWithNotificationType(
+                new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
+                NotificationType.EXERCISE_RELEASED, exercise, null, null);
     }
 
     /**

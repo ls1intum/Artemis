@@ -24,7 +24,7 @@
                 "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
             "settingNames": {
-                "exerciseCreatedOrStarted": "Exercise released",
+                "exerciseReleased": "Exercise released",
                 "exerciseOpenForPractice": "Exercise Open for Practice",
                 "attachmentChanges": "Attachment Changes",
                 "newExercisePost": "New Exercise Post",
