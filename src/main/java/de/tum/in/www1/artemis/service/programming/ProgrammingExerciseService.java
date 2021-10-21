@@ -378,7 +378,6 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
-
         setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
         connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
@@ -390,6 +389,11 @@ public class ProgrammingExerciseService {
         // Only send notification for course exercises
         if (notificationText != null && programmingExercise.isCourseExercise()) {
             groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
+        }
+        // The update might have changed the release date
+        // -> the scheduled notification informing the users about the release of this exercise has to be updated
+        if (programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
         }
 
         return savedProgrammingExercise;
