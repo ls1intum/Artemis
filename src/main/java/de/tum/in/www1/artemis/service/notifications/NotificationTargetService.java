@@ -48,7 +48,7 @@ public class NotificationTargetService {
 
     private static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
-    private static final String EXERCISE_CREATED_TEXT = "exerciseCreated";
+    private static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
 
     private static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
 
@@ -60,7 +60,7 @@ public class NotificationTargetService {
      * @return the final target property
      */
     public String getExerciseReleasedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, EXERCISE_CREATED_TEXT);
+        return getExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
     }
 
     /**
