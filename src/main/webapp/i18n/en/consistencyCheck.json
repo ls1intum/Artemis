@@ -7,6 +7,7 @@
             "warning": "For courses with many programming exercises this will take some time.",
             "error": {
                 "type": "Error Type",
+                "VCS_PROJECT_MISSING": "Missing VCS project",
                 "TEMPLATE_REPO_MISSING": "Missing template repository",
                 "SOLUTION_REPO_MISSING": "Missing solution repository",
                 "TEST_REPO_MISSING": "Missing test repository",

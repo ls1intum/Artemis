@@ -7,6 +7,7 @@
             "warning": "Bei Kursen mit vielen Programmierübungen wird dies einige Zeit in Anspruch nehmen.",
             "error": {
                 "type": "Fehlertyp",
+                "VCS_PROJECT_MISSING": "Fehlendes VCS Projekt",
                 "TEMPLATE_REPO_MISSING": "Fehlendes Vorlagen-Repository",
                 "SOLUTION_REPO_MISSING": "Fehlendes Lösung-Repository",
                 "TEST_REPO_MISSING": "Fehlendes Test-Repository",
