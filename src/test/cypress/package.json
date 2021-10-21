@@ -18,5 +18,8 @@
         "cypress:open": "cypress open",
         "cypress:run": "cypress run --browser=chrome",
         "update": "npm-upgrade"
+    },
+    "dependencies": {
+        "cypress-file-upload": "5.0.8"
     }
 }

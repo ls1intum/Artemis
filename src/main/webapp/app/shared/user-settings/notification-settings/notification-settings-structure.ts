@@ -15,9 +15,9 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             restrictionLevel: Authority.USER,
             settings: [
                 {
-                    key: 'exerciseCreatedOrStarted',
-                    descriptionKey: 'exerciseCreatedOrStartedDescription',
-                    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
+                    key: 'exerciseReleased',
+                    descriptionKey: 'exerciseReleasedDescription',
+                    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,
                 },
                 {
                     key: 'exerciseOpenForPractice',
