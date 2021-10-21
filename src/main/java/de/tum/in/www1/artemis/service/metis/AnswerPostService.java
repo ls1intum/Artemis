@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -20,6 +21,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class AnswerPostService extends PostingService {
@@ -38,8 +41,8 @@ public class AnswerPostService extends PostingService {
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate) {
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
@@ -75,6 +78,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
+        broadcastForPost(new MetisPostDTO(savedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
         sendNotification(savedAnswerPost);
 
         return savedAnswerPost;
@@ -114,6 +118,9 @@ public class AnswerPostService extends PostingService {
             existingAnswerPost.setContent(answerPost.getContent());
             updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
+
+        broadcastForPost(new MetisPostDTO(updatedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
+
         return updatedAnswerPost;
     }
 
@@ -125,7 +132,9 @@ public class AnswerPostService extends PostingService {
      */
     public void updateWithReaction(AnswerPost answerPost, Reaction reaction) {
         answerPost.addReaction(reaction);
-        answerPostRepository.save(answerPost);
+        AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+
+        broadcastForPost(new MetisPostDTO(updatedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
     }
 
     /**
@@ -143,8 +152,12 @@ public class AnswerPostService extends PostingService {
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
+        Post updatedPost = answerPost.getPost();
+        updatedPost.removeAnswerPost(answerPost);
+
         // delete
         answerPostRepository.deleteById(answerPostId);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
     }
 
     /**

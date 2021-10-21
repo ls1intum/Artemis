@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
@@ -25,6 +26,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class PostService extends PostingService {
@@ -43,8 +46,8 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostContentCompareStrategy postContentCompareStrategy) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
+            PostContentCompareStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
@@ -82,6 +85,7 @@ public class PostService extends PostingService {
         }
         Post savedPost = postRepository.save(post);
 
+        broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST));
         sendNotification(savedPost);
 
         return savedPost;
@@ -131,6 +135,7 @@ public class PostService extends PostingService {
             updatedPost.getExercise().filterSensitiveInformation();
         }
 
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
         return updatedPost;
     }
 
@@ -157,7 +162,8 @@ public class PostService extends PostingService {
      */
     public void updateWithReaction(Post post, Reaction reaction) {
         post.addReaction(reaction);
-        postRepository.save(post);
+        Post updatedPost = postRepository.save(post);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
     }
 
     /**
@@ -302,6 +308,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
+        broadcastForPost(new MetisPostDTO(post, MetisPostAction.DELETE_POST));
     }
 
     /**

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -12,6 +14,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 public abstract class PostingService {
 
@@ -25,13 +28,30 @@ public abstract class PostingService {
 
     final AuthorizationCheckService authorizationCheckService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.postRepository = postRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    void broadcastForPost(MetisPostDTO postDTO) {
+        String topicName = "/topic/metis/";
+        if (postDTO.getPost().getCourseWideContext() != null) {
+            topicName += "courses/" + postDTO.getPost().getCourse().getId();
+        }
+        else if (postDTO.getPost().getExercise() != null) {
+            topicName += "exercises/" + postDTO.getPost().getExercise().getId();
+        }
+        else if (postDTO.getPost().getLecture() != null) {
+            topicName += "lectures/" + postDTO.getPost().getLecture().getId();
+        }
+        messagingTemplate.convertAndSend(topicName, postDTO);
     }
 
     /**

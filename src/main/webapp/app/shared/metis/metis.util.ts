@@ -36,6 +36,12 @@ export enum PostSortCriterion {
     ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
+export enum MetisPostAction {
+    CREATE_POST,
+    UPDATE_POST,
+    DELETE_POST,
+}
+
 export interface PostContextFilter {
     courseId?: number;
     courseWideContext?: CourseWideContext;

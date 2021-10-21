@@ -1,25 +1,27 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, map, Observable, ReplaySubject, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, ReplaySubject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { ContextInformation, CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, CourseWideContext, DisplayPriority, MetisPostAction, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 
 @Injectable()
-export class MetisService {
+export class MetisService implements OnDestroy {
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private currentPostContextFilter: PostContextFilter = {};
@@ -28,6 +30,7 @@ export class MetisService {
     private course: Course;
     private courseId: number;
     private cachedPosts: Post[];
+    private subscriptionChannel?: string;
 
     constructor(
         protected postService: PostService,
@@ -36,10 +39,17 @@ export class MetisService {
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
         private translateService: TranslateService,
+        private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.subscriptionChannel) {
+            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+        }
     }
 
     get posts(): Observable<Post[]> {
@@ -115,6 +125,7 @@ export class MetisService {
         ) {
             // if the context changed, we need to fetch posts before doing the content filtering and sorting
             this.currentPostContextFilter = postContextFilter;
+            this.createSubscriptionFromPostContextFilter();
             this.postService.getPosts(this.courseId, this.currentPostContextFilter).subscribe((res) => {
                 // cache the fetched posts, that can be emitted on next call of this `getFilteredPosts`
                 // that does not require to send a request to actually fetch posts from the DB
@@ -135,13 +146,7 @@ export class MetisService {
      * @return {Observable<Post>} created post
      */
     createPost(post: Post): Observable<Post> {
-        return this.postService.create(this.courseId, post).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-                this.updateCoursePostTags();
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
+        return this.postService.create(this.courseId, post).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -151,12 +156,7 @@ export class MetisService {
      * @return {Observable<AnswerPost>} created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
-        return this.answerPostService.create(this.courseId, answerPost).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
+        return this.answerPostService.create(this.courseId, answerPost).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -166,13 +166,7 @@ export class MetisService {
      * @return {Observable<Post>} updated post
      */
     updatePost(post: Post): Observable<Post> {
-        return this.postService.update(this.courseId, post).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-                this.updateCoursePostTags();
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
+        return this.postService.update(this.courseId, post).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -182,12 +176,7 @@ export class MetisService {
      * @return {Observable<AnswerPost>} updated answer post
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
-        return this.answerPostService.update(this.courseId, answerPost).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
+        return this.answerPostService.update(this.courseId, answerPost).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -197,12 +186,7 @@ export class MetisService {
      * @return {Observable<Post>} updated post
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
-        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
+        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -211,10 +195,7 @@ export class MetisService {
      * @param {Post} post to be deleted
      */
     deletePost(post: Post): void {
-        this.postService.delete(this.courseId, post).subscribe(() => {
-            this.getFilteredPosts(this.currentPostContextFilter);
-            this.updateCoursePostTags();
-        });
+        this.postService.delete(this.courseId, post).subscribe();
     }
 
     /**
@@ -223,9 +204,7 @@ export class MetisService {
      * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
-            this.getFilteredPosts(this.currentPostContextFilter);
-        });
+        this.answerPostService.delete(this.courseId, answerPost).subscribe();
     }
 
     /**
@@ -235,12 +214,7 @@ export class MetisService {
      * @return {Observable<Reaction>} created reaction
      */
     createReaction(reaction: Reaction): Observable<Reaction> {
-        return this.reactionService.create(this.courseId, reaction).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
+        return this.reactionService.create(this.courseId, reaction).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -249,12 +223,7 @@ export class MetisService {
      * @param {Reaction} reaction to be deleted
      */
     deleteReaction(reaction: Reaction): Observable<void> {
-        return this.reactionService.delete(this.courseId, reaction).pipe(
-            tap(() => {
-                this.getFilteredPosts(this.currentPostContextFilter);
-            }),
-            map((res: HttpResponse<void>) => res.body!),
-        );
+        return this.reactionService.delete(this.courseId, reaction).pipe(map((res: HttpResponse<void>) => res.body!));
     }
 
     /**
@@ -386,5 +355,50 @@ export class MetisService {
      */
     getSimilarPosts(tempPost: Post): Observable<Post[]> {
         return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
+    }
+
+    private createWebsocketSubscription(channel: string): void {
+        // if channel subscription does not change, do nothing
+        if (this.subscriptionChannel === channel) {
+            return;
+        }
+        // unsubscribe from existing channel subscription
+        if (this.subscriptionChannel) {
+            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+        }
+        // create new subscription
+        this.subscriptionChannel = channel;
+        this.jhiWebsocketService.subscribe(this.subscriptionChannel);
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
+            switch (postDTO.action) {
+                case MetisPostAction.CREATE_POST:
+                    this.cachedPosts.push(postDTO.post);
+                    this.getFilteredPosts(this.currentPostContextFilter, false);
+                    this.updateCoursePostTags();
+                    break;
+                case MetisPostAction.UPDATE_POST:
+                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    this.cachedPosts[indexToUpdate] = postDTO.post;
+                    break;
+                case MetisPostAction.DELETE_POST:
+                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    this.cachedPosts.splice(indexToDelete, 1);
+                    break;
+                default:
+                    break;
+            }
+        });
+    }
+
+    private createSubscriptionFromPostContextFilter(): void {
+        let channel = '/topic/metis/';
+        if (this.currentPostContextFilter.courseId && this.currentPostContextFilter.courseWideContext) {
+            channel += `courses/${this.courseId}`;
+        } else if (this.currentPostContextFilter.exerciseId) {
+            channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
+        } else if (this.currentPostContextFilter.lectureId) {
+            channel += `lectures/${this.currentPostContextFilter.lectureId}`;
+        }
+        this.createWebsocketSubscription(channel);
     }
 }

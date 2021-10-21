@@ -125,6 +125,10 @@ public class Post extends Posting {
         this.answers.add(answerPost);
     }
 
+    public void removeAnswerPost(AnswerPost answerPost) {
+        this.answers.remove(answerPost);
+    }
+
     public Set<String> getTags() {
         return tags;
     }
