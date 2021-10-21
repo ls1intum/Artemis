@@ -156,7 +156,7 @@ Exercise Creation
     .. figure:: programming/programming-options-timeline-manual.png
               :align: center
     .. figure:: programming/programming-options-timeline-automatic.png
-    :align: center
+              :align: center
 
     - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
     - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
