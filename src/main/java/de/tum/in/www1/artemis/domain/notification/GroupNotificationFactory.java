@@ -194,7 +194,7 @@ public class GroupNotificationFactory {
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
-                text = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
+                text = "Course-wide post in course \"" + course.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTarget(targetService.getCoursePostTarget(post, course));
             }

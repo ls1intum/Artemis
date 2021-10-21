@@ -413,7 +413,7 @@ public class GroupNotificationFactoryTest {
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForCoursePost() {
         notificationType = NotificationType.NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
-        expectedText = "Course-wide post in course\"" + course.getTitle() + "\" got a new reply.";
+        expectedText = "Course-wide post in course \"" + course.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
