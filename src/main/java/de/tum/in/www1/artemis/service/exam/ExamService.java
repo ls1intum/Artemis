@@ -196,7 +196,7 @@ public class ExamService {
      * </ul>
      * @param examId the ID of the exam to be reset
      */
-    public void reset(@NotNull long examId) {
+    public void reset(@NotNull Long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
