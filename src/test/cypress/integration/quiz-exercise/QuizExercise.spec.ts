@@ -16,26 +16,20 @@ const quizCreation = artemis.pageobjects.quizExercise.creation;
 
 // Common primitives
 let uid: string;
-let courseName: string;
-let courseShortName: string;
 let quizExerciseName: string;
+let course: any;
 
 describe('Quiz Exercise Management', () => {
-    let course: any;
-
     before('Set up course', () => {
         uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = response.body;
         });
     });
 
     beforeEach('New UID', () => {
-        uid = generateUUID();
-        quizExerciseName = 'Cypress Quiz ' + uid;
+        quizExerciseName = 'Cypress Quiz ' + generateUUID();
     });
 
     after('Delete Course', () => {
@@ -49,8 +43,11 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
-        it('Creates a Quiz with Multiple Choice', () => {
+        beforeEach(() => {
             beginQuizCreation();
+        });
+
+        it('Creates a Quiz with Multiple Choice', () => {
             quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
             quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
@@ -60,12 +57,20 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Creates a Quiz with Short Answer', () => {
-            beginQuizCreation();
             quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
             quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('SA Quiz' + uid).should('be.visible');
+            });
+        });
+
+        it('Creates a Quiz with Drag and Drop', () => {
+            quizCreation.addDragAndDropQuestion('DnD Quiz' + uid);
+            quizCreation.saveQuiz().then((quizResponse) => {
+                quizExercise = quizResponse.response?.body;
+                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
+                cy.contains('DnD Quiz' + uid).should('be.visible');
             });
         });
     });
@@ -82,7 +87,7 @@ describe('Quiz Exercise Management', () => {
         it('Deletes a Quiz Exercise', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagement.openExercisesOfCourse(courseName, courseShortName);
+            courseManagement.openExercisesOfCourse(course.title, course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
@@ -97,7 +102,7 @@ describe('Quiz Exercise Management', () => {
 function beginQuizCreation() {
     cy.login(admin, '/');
     navigationBar.openCourseManagement();
-    courseManagement.openExercisesOfCourse(courseName, courseShortName);
+    courseManagement.openExercisesOfCourse(course.title, course.shortName);
     cy.get('#create-quiz-button').click();
     quizCreation.setTitle(quizExerciseName);
 }

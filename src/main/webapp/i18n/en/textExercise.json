@@ -30,6 +30,16 @@
             "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise. You will be redirected automatically.",
             "saveSuccessful": "Your answer was saved successfully!",
             "error": "An error occurred. Please try again later.",
+            "tutorEffortStatistics": {
+                "title": "Tutor Effort Statistics",
+                "numberOfSubmissionsAssessed": "Number of total submissions involved",
+                "totalTimeSpent": "Total time spent grading (Minutes)",
+                "averageTime": "Grading Speed (Submissions/Minute)",
+                "noData": "No data records currently present for this exercise. Please try again later.",
+                "minutes": "Minutes",
+                "tutors": "Tutors",
+                "numberOfTutorsInvolved": "Number of tutors involved"
+            },
             "clusterStatistics": {
                 "title": "Cluster Statistics",
                 "description": "A text cluster represents a group of text blocks from student submissions that are identified to be similar.<br/> Once there is tutor feedback on a text block, this feedback is propagated to all other text blocks in that cluster.<br/> The following table shows an overview of all generated text clusters for this exercise.<br/> You can see how many of the automatic feedback suggestions were reused within a cluster. You can also disable a cluster, for example, if a low usage rate of automatic feedback indicates that clustering has not resulted in reusable feedback being suggested during text exercise assessment.",
