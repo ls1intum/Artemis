@@ -40,14 +40,14 @@ import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-e
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
@@ -201,7 +201,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule, NgbModule],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
@@ -218,8 +218,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 CategoryIssuesChartComponent,
                 MockComponent(ScaCategoryDistributionChartComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbPopover),
                 MockDirective(NgModel),
             ],
             providers: [

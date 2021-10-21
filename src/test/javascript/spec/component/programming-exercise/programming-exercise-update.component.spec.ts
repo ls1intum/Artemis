@@ -212,7 +212,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
 
-            expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
+            expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(SubmissionPolicyType.NONE);
         }));
 
         it('Should set submission limit correctly for all policy types', fakeAsync(() => {
@@ -292,8 +292,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
             const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
 
-            expect(submissionLimitInputField.value).toBe('0');
-            expect(submissionLimitExceededPenaltyInputField.value).toBe('0');
+            expect(submissionLimitInputField.value).toBe('');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('');
         }));
     });
 
