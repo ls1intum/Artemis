@@ -23,6 +23,10 @@ describe('Delete Dialog Service', () => {
         modalService = TestBed.inject(NgbModal);
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('should open delete dialog', () => {
         expect(service.modalRef).toBe(undefined);
         const data: DeleteDialogData = {
