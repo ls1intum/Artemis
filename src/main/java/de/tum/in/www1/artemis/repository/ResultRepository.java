@@ -453,7 +453,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 count(r),
                 sum(e.maxPoints),
                 avg(r.score),
-                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end),
+                sum(case when rating.rating is not null then 1 else 0 end)
                 )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
@@ -474,7 +475,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 count(r),
                 sum(e.maxPoints),
                 avg(r.score),
-                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end),
+                sum(case when rating.rating is not null then 1 else 0 end)
             )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
@@ -493,7 +495,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 count(r),
                 sum(e.maxPoints),
                 avg(r.score),
-                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end),
+                sum(case when rating.rating is not null then 1 else 0 end)
             )
             FROM
                 Result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a
@@ -543,8 +546,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
         double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);
         // Set score and resultString according to maxPoints, to establish results with score > 100%
-        result.setScore(totalPoints, maxPoints);
-        result.setResultString(totalPoints, maxPoints);
+        result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setResultString(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();

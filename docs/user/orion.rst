@@ -22,12 +22,17 @@ General Usage
 
 After installation, Orion provides a custom tool window at *View -> Tool Windows -> Artemis*. This window contains an integrated browser displaying Artemis.
 
-At the top of the tool window is a back button |back-button|. Clicking it returns to the initial page, that is:
+At the top of the tool window are the following buttons:
 
-- The exercise details page if an exercise is opened as a student.
-- The exercise edit in editor page if an exercise is opened as an instructor.
-- The assessment dashboard if an exercise is opened as a tutor, or, if a submission is downloaded, the assessment details page of that submission.
-- The Artemis home page if no Artemis project is opened.
+- A help button |help-button|, which opens this documentation page.
+- A back button |back-button|. Clicking it returns to the initially opened page, that is:
+
+   - The exercise details page if an exercise is opened as a student.
+   - The exercise edit in editor page if an exercise is opened as an instructor.
+   - The assessment dashboard if an exercise is opened as a tutor, or, if a submission is downloaded, the assessment details page of that submission.
+   - The Artemis home page if no Artemis project is opened.
+
+  If you opened this page in Orion, use the back button to return to Artemis.
 
 Settings
 ^^^^^^^^
@@ -82,13 +87,16 @@ Tutors can assess programming exercises via Orion by performing the following st
  1. Navigate to the assessment dashboard of the exercise using the integrated browser.
  2. Click |assess-in-orion-button| to automatically set up the assessment project.
  3. After downloading or opening the project in IntelliJ, the submission overview is shown in the integrated browser. Each submission can be opened in Orion. To start a new submission, click |start-assessment-in-orion-button|. This downloads the submission files and overwrites the previous submission.
- 4. The student's code is in the directory ``assignment``. The tests are in the directory ``tests``. Additionally, there are two directories ``template`` and ``studentSubmission`` that contain internal files and should be ignored.
- 5. Opening a file in the ``assignment`` directory opens the editor with two available modes, which can be switched using the tabs at the bottom of the editor.
+ 4. The student's code is located in the directories ``assignment`` and ``studentSubmission`` (``assignment`` contains the files that can be edited, ``studentSubmission`` contains an uneditable copy that can be assessed). The tests are in the directory ``tests``.
+ 5. Opening a file in either ``assignment`` or ``studentSubmission`` opens the editor with two available modes that can be switched using the tabs at the bottom of the editor.
+
    - In edit mode ("Text" tab), the files can be edited regularly, e.g. to try out fixes.
-   - In assessment mode ("Assessment" tab), the files are read-only, but assessment comments can be added, similar to the assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment.
+   - In assessment mode ("Assessment" tab), the student's submission without the local changes is displayed in read-only mode. In this mode, assessment comments can be added, similar to the assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment.
+
  6. The integrated browser displays the problem statement, the assessment instructions, and the buttons to edit the general feedback.
 
 .. |back-button| image:: orion/back-button.png
+.. |help-button| image:: orion/help-button.png
 .. |submit-button| image:: orion/submit-button.png
 .. |test-locally-button| image:: orion/test-locally-button.png
 .. |open-in-intellij-button| image:: orion/open-in-intellij-button.png

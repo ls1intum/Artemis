@@ -45,6 +45,7 @@ export class CourseUpdateComponent implements OnInit {
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
+    accuracyOfScores = 1; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
 
@@ -125,6 +126,9 @@ export class CourseUpdateComponent implements OnInit {
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
+                    validators: [Validators.min(1)],
+                }),
+                accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],
                 }),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
