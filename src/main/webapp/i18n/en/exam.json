@@ -358,7 +358,7 @@
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
             },
             "reset": {
-                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
+                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
             },
             "checklist": {
