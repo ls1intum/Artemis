@@ -12,7 +12,6 @@ export const userSettingsState: Routes = [
         canActivate: [UserRouteAccessService],
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'artemisApp.userSettings.title',
         },
         children: [
             {
@@ -24,10 +23,16 @@ export const userSettingsState: Routes = [
             {
                 path: 'account',
                 component: AccountInformationComponent,
+                data: {
+                    pageTitle: 'artemisApp.userSettings.accountInformation',
+                },
             },
             {
                 path: 'notifications',
                 component: NotificationSettingsComponent,
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.NOTIFICATION_SETTINGS',
+                },
             },
         ],
     },

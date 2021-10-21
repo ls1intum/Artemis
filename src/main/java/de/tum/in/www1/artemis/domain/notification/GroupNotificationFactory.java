@@ -67,9 +67,9 @@ public class GroupNotificationFactory {
             String notificationText) {
         String title, text;
         switch (notificationType) {
-            case EXERCISE_CREATED -> {
-                title = NotificationTitleTypeConstants.EXERCISE_CREATED_TITLE;
-                text = "A new exercise \"" + exercise.getTitle() + "\" got created.";
+            case EXERCISE_RELEASED -> {
+                title = NotificationTitleTypeConstants.EXERCISE_RELEASED_TITLE;
+                text = "A new exercise \"" + exercise.getTitle() + "\" got released.";
             }
             case EXERCISE_PRACTICE -> {
                 title = NotificationTitleTypeConstants.EXERCISE_PRACTICE_TITLE;
@@ -120,8 +120,8 @@ public class GroupNotificationFactory {
             }
         }
         // Exercises for courses (not for exams)
-        else if (notificationType == NotificationType.EXERCISE_CREATED) {
-            notification.setTarget(notification.getExerciseCreatedTarget(exercise));
+        else if (notificationType == NotificationType.EXERCISE_RELEASED) {
+            notification.setTarget(notification.getExerciseReleasedTarget(exercise));
         }
         else if (notificationType == NotificationType.DUPLICATE_TEST_CASE) {
             notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
