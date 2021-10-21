@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.domain.Feedback.SUBMISSION_POLICY_FEEDBACK_IDENTIFIER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -207,13 +208,6 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void test_updateSubmissionPolicy_badRequest_policyTypeMismatch() throws Exception {
-        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
-        request.patch(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(9.8).policy(), HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(15).policy(), HttpStatus.OK);
@@ -403,9 +397,11 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().isRated()).isFalse();
+            assertThat(result.get().getResultString()).contains(", 3 Submissions");
         }
         else {
             assertThat(result.get().isRated()).isTrue();
+            assertThat(result.get().getResultString()).doesNotContain(", 3 Submissions");
         }
     }
 
@@ -413,8 +409,10 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_enforceSubmissionPenaltyPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {
+        programmingExercise.setMaxPoints(10.0);
+        programmingExerciseRepository.save(programmingExercise);
         if (type != EnforcePolicyTestType.POLICY_NULL) {
-            addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().limit(1).penalty(90.0).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
+            addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().limit(1).penalty(1.0).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
         }
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student1";
@@ -425,16 +423,17 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isPresent();
         assertThat(result.get().getScore()).isEqualTo(25);
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
         result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            assertThat(result.get().getScore()).isEqualTo(10);
-            assertThat(result.get().getResultString()).contains("90% Submission Penalty");
+            assertThat(result.get().getScore()).isEqualTo(15);
+            assertThat(result.get().getResultString()).contains(", 2 Submissions");
+            assertThat(result.get().getFeedbacks().stream().anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER))).isTrue();
         }
         else {
             assertThat(result.get().getScore()).isEqualTo(25);
-            assertThat(result.get().getResultString()).doesNotContain("90% Submission Penalty");
+            assertThat(result.get().getResultString()).doesNotContain(", 2 Submissions");
+            assertThat(result.get().getFeedbacks().stream().anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER))).isFalse();
         }
     }
 
