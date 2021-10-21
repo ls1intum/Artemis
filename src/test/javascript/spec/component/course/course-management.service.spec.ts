@@ -133,7 +133,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('Should set accessRights with by using the AccountService', fakeAsync(() => {
+    it('should set accessRights with by using the AccountService', fakeAsync(() => {
         courseManagementService
             .find(course.id!)
             .pipe(take(1))
@@ -219,7 +219,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('Should find results for the course', fakeAsync(() => {
+    it('should find results for the course', fakeAsync(() => {
         courseManagementService.findAllResultsOfCourseForExerciseAndCurrentUser(course.id!).subscribe((res) => expect(res).to.deep.equal(course));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/results` });
         req.flush(returnedFromService);
