@@ -1,11 +1,20 @@
 <jhi-alert></jhi-alert>
 <div class="d-flex justify-content-between">
-    <h1>
-        <!--UserSettingsCategory-->
-        {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
-    </h1>
+    <div>
+        <h1>
+            <!--UserSettingsCategory-->
+            {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
+        </h1>
+        <div class="d-inline-flex userSettings-info">
+            <fa-icon class="ng-fa-icon" [icon]="'info-circle'"></fa-icon>
+            <span class="ps-1">
+                <!-- Info text explaining that these settings also filter the notification sidebar -->
+                {{ 'artemisApp.userSettings.notificationSettingsFilterInfo' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
     <button type="button" class="btn btn-primary" *ngIf="settingsChanged" id="apply-changes-button" (click)="this.saveSettings()">
-        <fa-icon [icon]="'save'"></fa-icon>
+        <fa-icon class="ng" [icon]="'save'"></fa-icon>
         {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
     </button>
 </div>
