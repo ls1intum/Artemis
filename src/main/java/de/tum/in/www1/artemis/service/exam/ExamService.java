@@ -187,12 +187,13 @@ public class ExamService {
     }
 
     /**
-     * Fetches the exam and eagerly loads all required elements and deletes all elements associated with the
-     * exam in order to reset it including:
+     * Deletes all elements associated with the exam but not the exam itself in order to reset it.
+     *
+     * The deleted elements are:
      * <ul>
      *     <li>All StudentExams</li>
-     *     <li>All Exercises including:
-     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseService#reset}</li>
+     *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
+           but not the exercises themself. See {@link ExerciseService#reset}</li>
      * </ul>
      * @param examId the ID of the exam to be reset
      */
