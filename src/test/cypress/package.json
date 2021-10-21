@@ -8,14 +8,18 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.0.0",
-        "@types/node": "16.9.4",
-        "cypress": "8.4.1",
+        "@types/node": "16.10.3",
+        "cypress": "8.6.0",
         "cypress-wait-until": "1.7.1",
         "typescript": "4.4.3",
         "uuid": "8.3.2"
     },
     "scripts": {
         "cypress:open": "cypress open",
-        "cypress:run": "cypress run --browser=chrome"
+        "cypress:run": "cypress run --browser=chrome",
+        "update": "npm-upgrade"
+    },
+    "dependencies": {
+        "cypress-file-upload": "5.0.8"
     }
 }

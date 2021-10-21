@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -82,7 +83,12 @@ public class ProgrammingExerciseSimulationService {
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+        if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
+        }
+        else {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
+        }
 
         return programmingExercise;
     }

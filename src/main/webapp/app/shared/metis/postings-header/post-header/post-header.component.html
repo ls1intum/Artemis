@@ -9,8 +9,8 @@
             </span>
         </span>
         <fa-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
-            size="sm"
+            *ngIf="!previewMode && (isAtLeastTutorInCourse || isAuthorOfPosting)"
+            size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
@@ -19,25 +19,26 @@
         ></fa-icon>
         <jhi-post-create-edit-modal #createEditModal [posting]="posting"></jhi-post-create-edit-modal>
         <jhi-confirm-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
-            iconSize="sm"
+            *ngIf="!previewMode && (isAtLeastTutorInCourse || isAuthorOfPosting)"
+            iconSize="xs"
             (confirmEvent)="deletePosting()"
-            [ngClass]="'mx-1 deleteIcon clickable icon'"
+            [ngClass]="'deleteIcon clickable icon'"
             [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
         >
         </jhi-confirm-icon>
     </div>
-    <div
-        class="col-auto ps-0 pe-1 toggle-answer-element"
-        (click)="toggleAnswers()"
-        [ngClass]="numberOfAnswerPosts > 0 ? 'clickable' : ''"
-        [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
-        [disableTooltip]="numberOfAnswerPosts === 0"
-    >
-        <span class="answer-count"
-            >{{ numberOfAnswerPosts }}
-            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"> </fa-icon>
+    <div *ngIf="numberOfAnswerPosts > 0" class="col-auto ps-0 pe-1 toggle-answer-element clickable" (click)="toggleAnswers()" [ngClass]="previewMode ? '' : 'clickable'">
+        <span class="answer-count">
+            {{ numberOfAnswerPosts }}
+            <fa-icon
+                [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
+                [disableTooltip]="numberOfAnswerPosts === 0 || previewMode"
+                [icon]="'comments'"
+                class="icon"
+                [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"
+            >
+            </fa-icon>
         </span>
     </div>
 </div>

@@ -19,6 +19,9 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GroupNotification extends Notification {
 
+    /**
+     * Specifies the group : INSTRUCTOR, EDITOR, TA, STUDENT, ...
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
     private GroupNotificationType type;
@@ -67,8 +70,8 @@ public class GroupNotification extends Notification {
         this.course = course;
     }
 
-    public String getExerciseCreatedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "exerciseCreated");
+    public String getExerciseReleasedTarget(Exercise exercise) {
+        return getExerciseTarget(exercise, "exerciseReleased");
     }
 
     public String getExerciseUpdatedTarget(Exercise exercise) {

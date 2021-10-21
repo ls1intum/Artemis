@@ -14,7 +14,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
-import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -26,6 +26,8 @@ import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-b
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { PostingContentComponent } from './posting-content/posting-content.components';
+import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 
 @NgModule({
     imports: [
@@ -57,6 +59,8 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
         PostingsMarkdownEditorComponent,
         PostComponent,
         AnswerPostComponent,
+        PostingContentComponent,
+        PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
     ],
@@ -73,6 +77,8 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
         PostingsMarkdownEditorComponent,
         PostComponent,
         AnswerPostComponent,
+        PostingContentComponent,
+        PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
     ],

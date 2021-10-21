@@ -3,7 +3,6 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
-import dayjs from 'dayjs';
 import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
@@ -30,7 +29,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.creationDate = dayjs();
+        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
@@ -49,6 +48,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
+        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;

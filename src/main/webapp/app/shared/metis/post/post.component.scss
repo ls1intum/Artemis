@@ -1,4 +1,6 @@
+@import 'src/main/webapp/app/shared/metis/metis.component';
+
 .post-title {
-    font-weight: bold;
-    color: #0f6ab4;
+    font-weight: 600;
+    color: $metis-blue;
 }

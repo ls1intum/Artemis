@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.util.List;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
@@ -27,7 +26,7 @@ public class GroupNotificationFactory {
             String notificationText) {
         String title, text;
         if (notificationType == NotificationType.ATTACHMENT_CHANGE) {
-            title = "Attachment updated";
+            title = NotificationTitleTypeConstants.ATTACHMENT_CHANGE_TITLE;
             text = "Attachment \"" + attachment.getName() + "\" updated.";
         }
         else {
@@ -68,34 +67,34 @@ public class GroupNotificationFactory {
             String notificationText) {
         String title, text;
         switch (notificationType) {
-            case EXERCISE_CREATED -> {
-                title = "Exercise created";
-                text = "A new exercise \"" + exercise.getTitle() + "\" got created.";
+            case EXERCISE_RELEASED -> {
+                title = NotificationTitleTypeConstants.EXERCISE_RELEASED_TITLE;
+                text = "A new exercise \"" + exercise.getTitle() + "\" got released.";
             }
             case EXERCISE_PRACTICE -> {
-                title = "Exercise open for practice";
+                title = NotificationTitleTypeConstants.EXERCISE_PRACTICE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
             }
             case QUIZ_EXERCISE_STARTED -> {
-                title = "Quiz started";
+                title = NotificationTitleTypeConstants.QUIZ_EXERCISE_STARTED_TITLE;
                 text = "Quiz \"" + exercise.getTitle() + "\" just started.";
             }
             case EXERCISE_UPDATED -> {
                 if (exercise.isExamExercise()) {
-                    title = Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+                    title = NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
                     text = "Exam Exercise \"" + exercise.getTitle() + "\" updated.";
                 }
                 else {
-                    title = "Exercise updated";
+                    title = NotificationTitleTypeConstants.EXERCISE_UPDATED_TITLE;
                     text = "Exercise \"" + exercise.getTitle() + "\" updated.";
                 }
             }
             case DUPLICATE_TEST_CASE -> {
-                title = "Duplicate test case was found.";
+                title = NotificationTitleTypeConstants.DUPLICATE_TEST_CASE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
             }
             case ILLEGAL_SUBMISSION -> {
-                title = "Illegal submission of a student.";
+                title = NotificationTitleTypeConstants.ILLEGAL_SUBMISSION_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" has illegal submissions of students.";
             }
 
@@ -104,7 +103,7 @@ public class GroupNotificationFactory {
 
         // Catches 3 different use cases : notificationText exists for 1) non-exam exercise update & 2) live exam exercise update with a notification text
         // 3) hidden/silent live exam exercise update without a set notificationText, thus no pop-up will be visible for the students
-        if (notificationText != null || Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
+        if (notificationText != null || NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
             text = notificationText;
         }
 
@@ -112,12 +111,17 @@ public class GroupNotificationFactory {
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
-            notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
-            notification.setPriority(NotificationPriority.HIGH);
+            if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
+                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
+                notification.setPriority(NotificationPriority.HIGH);
+            }
+            else if (exercise instanceof ProgrammingExercise) {
+                notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+            }
         }
         // Exercises for courses (not for exams)
-        else if (notificationType == NotificationType.EXERCISE_CREATED) {
-            notification.setTarget(notification.getExerciseCreatedTarget(exercise));
+        else if (notificationType == NotificationType.EXERCISE_RELEASED) {
+            notification.setTarget(notification.getExerciseReleasedTarget(exercise));
         }
         else if (notificationType == NotificationType.DUPLICATE_TEST_CASE) {
             notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
@@ -144,13 +148,13 @@ public class GroupNotificationFactory {
         switch (notificationType) {
             case NEW_POST_FOR_EXERCISE -> {
                 Exercise exercise = post.getExercise();
-                title = "New Post";
+                title = NotificationTitleTypeConstants.NEW_POST_FOR_EXERCISE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
             }
             case NEW_POST_FOR_LECTURE -> {
                 Lecture lecture = post.getLecture();
-                title = "New Post";
+                title = NotificationTitleTypeConstants.NEW_POST_FOR_LECTURE_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 course = lecture.getCourse();
             }
@@ -184,13 +188,13 @@ public class GroupNotificationFactory {
         switch (notificationType) {
             case NEW_ANSWER_POST_FOR_EXERCISE -> {
                 Exercise exercise = answerPost.getPost().getExercise();
-                title = "New Reply";
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
             }
             case NEW_ANSWER_POST_FOR_LECTURE -> {
                 Lecture lecture = answerPost.getPost().getLecture();
-                title = "New Reply";
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 course = lecture.getCourse();
             }
@@ -216,7 +220,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
-     * @param archiveErrors         a list of errors that occured during archiving
+     * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -224,11 +228,11 @@ public class GroupNotificationFactory {
         String title, text;
         switch (notificationType) {
             case COURSE_ARCHIVE_STARTED -> {
-                title = "Course archival started";
+                title = NotificationTitleTypeConstants.COURSE_ARCHIVE_STARTED_TITLE;
                 text = "The course \"" + course.getTitle() + "\" is being archived.";
             }
             case COURSE_ARCHIVE_FINISHED -> {
-                title = "Course archival finished";
+                title = NotificationTitleTypeConstants.COURSE_ARCHIVE_FINISHED_TITLE;
                 text = "The course \"" + course.getTitle() + "\" has been archived.";
 
                 if (!archiveErrors.isEmpty()) {
@@ -236,7 +240,7 @@ public class GroupNotificationFactory {
                 }
             }
             case COURSE_ARCHIVE_FAILED -> {
-                title = "Course archival failed";
+                title = NotificationTitleTypeConstants.COURSE_ARCHIVE_FAILED_TITLE;
                 text = "The was a problem archiving course \"" + course.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -254,7 +258,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
-     * @param archiveErrors         a list of errors that occured during archiving
+     * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -262,11 +266,11 @@ public class GroupNotificationFactory {
         String title, text;
         switch (notificationType) {
             case EXAM_ARCHIVE_STARTED -> {
-                title = "Exam archival started";
+                title = NotificationTitleTypeConstants.EXAM_ARCHIVE_STARTED_TITLE;
                 text = "The exam \"" + exam.getTitle() + "\" is being archived.";
             }
             case EXAM_ARCHIVE_FINISHED -> {
-                title = "Exam archival finished";
+                title = NotificationTitleTypeConstants.EXAM_ARCHIVE_FINISHED_TITLE;
                 text = "The exam \"" + exam.getTitle() + "\" has been archived.";
 
                 if (!archiveErrors.isEmpty()) {
@@ -274,7 +278,7 @@ public class GroupNotificationFactory {
                 }
             }
             case EXAM_ARCHIVE_FAILED -> {
-                title = "Exam archival failed";
+                title = NotificationTitleTypeConstants.EXAM_ARCHIVE_FAILED_TITLE;
                 text = "The was a problem archiving exam \"" + exam.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);

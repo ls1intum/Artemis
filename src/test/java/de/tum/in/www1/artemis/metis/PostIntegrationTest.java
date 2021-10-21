@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.metis;
 
+import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -89,7 +88,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.resetDatabase();
     }
 
-    // CREATE
+    // POST
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
@@ -145,6 +144,32 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateAnnouncement() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        postToSave.setDisplayPriority(DisplayPriority.PINNED);
+        checkCreatedPost(postToSave, createdPost);
+
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
+        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateAnnouncement_forbidden() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateExistingPost_badRequest() throws Exception {
         Post existingPostToSave = existingPosts.get(0);
@@ -191,6 +216,16 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations.size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSimilarityCheck() throws Exception {
+        Post postToCheck = new Post();
+        postToCheck.setTitle("Title Post");
+
+        List<Post> similarPosts = request.postWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, List.class, HttpStatus.OK);
+        assertThat(similarPosts).size().isEqualTo(TOP_K_SIMILARITY_RESULTS);
     }
 
     // UPDATE
@@ -429,7 +464,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setContent("Content Post");
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         post.addTag("Tag");
         return post;
     }
@@ -450,7 +484,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // check if title, content, creation data, and tags are set correctly on creation
         assertThat(createdPost.getTitle()).isEqualTo(expectedPost.getTitle());
         assertThat(createdPost.getContent()).isEqualTo(expectedPost.getContent());
-        assertThat(createdPost.getCreationDate()).isEqualTo(expectedPost.getCreationDate());
+        assertThat(createdPost.getCreationDate()).isNotNull();
         assertThat(createdPost.getTags()).isEqualTo(expectedPost.getTags());
 
         // check if default values are set correctly on creation

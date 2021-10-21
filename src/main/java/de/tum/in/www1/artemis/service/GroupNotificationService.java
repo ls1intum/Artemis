@@ -8,7 +8,6 @@ import java.util.List;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -70,27 +70,34 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about an exercise update.
+     * Notify all groups but tutors about an exercise update.
+     * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
+     * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
-    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         // Do not send a notification before the release date of the exercise.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        // Create and send the notification.
         saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
     }
 
     /**
-     * Notify tutor groups about the creation of an exercise.
+     * Notify all groups about a newly released exercise at the moment of its release date.
+     *
+     * This notification can be deactivated in the notification settings
      *
      * @param exercise that has been created
      */
-    public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+    public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_RELEASED, null));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_RELEASED, null));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.EDITOR, NotificationType.EXERCISE_RELEASED, null));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_RELEASED, null));
     }
 
     /**
@@ -105,11 +112,12 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor, editor and instructor groups about a new post in an exercise.
+     * Notify all groups about a new post in an exercise.
      *
      * @param post that has been posted
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(Post post) {
+    public void notifyAllGroupsAboutNewPostForExercise(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_POST_FOR_EXERCISE));
@@ -138,11 +146,12 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor, editor and instructor groups about a new post in a lecture.
+     * Notify all groups about a new post in a lecture.
      *
      * @param post that has been posted
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(Post post) {
+    public void notifyAllGroupsAboutNewPostForLecture(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_POST_FOR_LECTURE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_POST_FOR_LECTURE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_POST_FOR_LECTURE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_POST_FOR_LECTURE));
@@ -198,7 +207,7 @@ public class GroupNotificationService {
      * @param notification that should be saved and sent
      */
     private void saveAndSend(GroupNotification notification) {
-        if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
+        if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
         }
         else {

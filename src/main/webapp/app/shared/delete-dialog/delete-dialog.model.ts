@@ -38,4 +38,7 @@ export class DeleteDialogData {
 
     // output event passed to the delete dialog component
     delete: EventEmitter<any>;
+
+    // require the confirmation security check only when at least one additional check is selected
+    requireConfirmationOnlyForAdditionalChecks: boolean;
 }

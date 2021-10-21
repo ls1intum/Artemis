@@ -1,0 +1,47 @@
+{
+    "artemisApp": {
+        "userSettings": {
+            "settings": "Benachrichtigungseinstellungen",
+            "saveChanges": "Änderungen speichern",
+            "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
+            "userSettings": "Benutzereinstellungen",
+            "accountInformation": "Account Informationen",
+            "notificationSettings": "Benachrichtigungen",
+            "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
+            "accountInformationPage": {
+                "fullName": "Vollständiger Name",
+                "login": "Login",
+                "email": "Email",
+                "joinedArtemis": "Artemis beigetreten am"
+            },
+            "categories": {
+                "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen"
+            },
+            "settingGroupNames": {
+                "exerciseNotifications": "Aufgabenbenachrichtigungen",
+                "lectureNotifications": "Vorlesungsbenachrichtigungen",
+                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+            },
+            "settingNames": {
+                "exerciseReleased": "Neue Aufgabe veröffentlicht",
+                "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
+                "newPostForExercises": "Neue Beiträge für Aufgaben",
+                "newReplyForExercises": "Neue Antworten für Aufgaben",
+                "attachmentChanges": "Änderungen von Anhängen",
+                "newPostForLecture": "Neue Beiträge für Vorlesungen",
+                "newReplyForLecture": "Neue Antworten für Vorlesungen",
+                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
+            },
+            "settingDescriptions": {
+                "exerciseReleasedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
+                "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)",
+                "newPostForExercisesDescription": "Erhalte eine Mitteilung wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
+                "newReplyForExercisesDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
+                "attachmentChangesDescription": "Erhalte eine Mitteilung wenn ein Anhang aktualisiert wurde",
+                "newPostForLectureDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "newReplyForLectureDescription": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
+            }
+        }
+    }
+}

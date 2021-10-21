@@ -45,7 +45,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Python               | yes                  | no                   | yes              | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | C                    | no                   | no                   | yes              | no           | no           | no                           |
+  | C                    | no                   | yes                  | yes              | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Haskell              | yes                  | no                   | no               | no           | no           | yes                          |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
@@ -57,7 +57,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Swift                | no                   | no                   | no               | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | OCaml                | no                   | no                   | no               | no           | no           | no                           |
+  | OCaml                | no                   | no                   | no               | no           | no           | yes                          |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
@@ -71,10 +71,12 @@ Instructors can still use those templates to generate programming exercises and 
   Only some ``templates`` for ``Bamboo`` support ``Sequential Test Runs`` at the moment.
 
 .. note::
+  Static Code Analysis for ``C`` exercises is only supported for ``Bamboo`` at the moment.
+
+.. note::
   Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
-
 
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
@@ -306,16 +308,81 @@ Exercise Creation
         # remove the .git folder from the assignment folder
         rm -r "$NAME/assignment/.git/"
 
+  - **Notes for OCaml:** The tests expect to be placed in a folder **tests** next to a folder **assignment** containing the submission to test and a folder **solution** with the solution repository.
+    You can use the following script to conveniently checkout an exercise and create the right folder structure:
+
+    .. code-block:: bash
+
+      #!/bin/sh
+      # Arguments:
+      # $1: exercise short name as specified on Artemis
+      # $2: (optional) output folder name
+      #
+      # Note: you might want to adapt the `BASE` variable below according to your needs
+
+      # shortname of the course to pick exercises from
+      PREFIX=
+
+      if [ -z "$1" ]; then
+        echo "No exercise short name supplied."
+        exit 1
+      fi
+
+      # full name of the exercise to load
+      EXERCISE="$PREFIX$1"
+
+      if [ -z "$2" ]; then
+        # use the exercise name if no output folder name is specified
+        NAME="$1"
+      else
+        NAME="$2"
+      fi
+
+      # default base URL to repositories; change this according to your needs
+      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+
+      # clone the test repository
+      git clone "$BASE-tests.git" "$NAME/tests"
+      # clone the template repository
+      git clone "$BASE-exercise.git" "$NAME/template"
+      # clone the solution repository
+      git clone "$BASE-solution.git" "$NAME/solution"
+
+      # hardlink the various assignment interfaces to ensure they stay in sync
+      # the version in the solution repositiory is authoritive in case of conflict
+      rm "$NAME/template/src/assignment.mli"
+      rm "$NAME/tests/assignment/assignment.mli"
+      rm "$NAME/tests/solution/solution.mli"
+      ln "$NAME/solution/src/assignment.mli" "$NAME/template/src/assignment.mli"
+      ln "$NAME/solution/src/assignment.mli" "$NAME/tests/assignment/assignment.mli"
+      ln "$NAME/solution/src/assignment.mli" "$NAME/tests/solution/solution.mli"
+
+    To run the tests run the following script in either the solution or template folder:
+
+    .. code-block:: bash
+
+      #!/bin/sh
+      dir="$(realpath ./)"
+
+      cd .. || exit 1
+      rm ./assignment
+      ln -s "$dir" ./assignment
+      cd tests || exit 1
+      ./run.sh
+
+    It is possible to checkout additional student repositories next to the solution and template folder to run tests on them for manual grading.
+
+
 - **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in online code editor
 
   - You can change between the different repos and submit the code when needed
-
-- **Alternative 3:** Use IntelliJ with the Orion plugin and change the code directly in IntelliJ
 
   **Edit in Editor**
 
   .. figure:: programming/instructor-editor.png
             :align: center
+
+- **Alternative 3:** Use IntelliJ with the Orion plugin and change the code directly in IntelliJ
 
 - Check the results of the template and the solution build plan
 - They should not have the status |build_failed|
@@ -351,9 +418,14 @@ Exercise Creation
 +----------------------+-------------------------+-------------------------------+------------------------------+
 | Swift                | Script                  | SwiftLint                     | .swiftlint.yml               |
 +----------------------+-------------------------+-------------------------------+------------------------------+
+| C                    | Script                  | GCC                           |                              |
++----------------------+-------------------------+-------------------------------+------------------------------+
 
 .. note::
   The Maven plugins for the Java static code analysis tools provide additional configuration options.
+
+.. note::
+    GCC can be configured by passing the desired flags in the tasks. For more information, see `GCC Documentation <https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html>`__.
 
 - The build plans use a special task/script for the execution of the tools
 
@@ -445,74 +517,77 @@ Exercise Creation
 
   - Code quality issues found during the automatic assessment of a submission are grouped into categories. Artemis maps categories defined by the static code analysis tools to Artemis categories according to the following table:
 
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-|                 |                                        | Mapping                                          |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Category        | Description                            | Java                     | Swift                 |
-+=================+========================================+==========================+=======================+
-| Bad Practice    | Code that violates recommended         | Spotbugs BAD_PRACTICE    |                       |
-|                 | and essential coding practices         +--------------------------+                       |
-|                 |                                        | Spotbugs I18N            |                       |
-|                 |                                        +--------------------------+                       |
-|                 |                                        | PMD Best Practices       |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Code Style      | Code that is confusing                 | Spotbugs STYLE           | Swiftlint (all rules) |
-|                 | and hard to maintain                   +--------------------------+                       |
-|                 |                                        | Checkstyle blocks        |                       |
-|                 |                                        +--------------------------+                       |
-|                 |                                        | Checkstyle coding        |                       |
-|                 |                                        +--------------------------+                       |
-|                 |                                        | Checkstyle modifier      |                       |
-|                 |                                        +--------------------------+                       |
-|                 |                                        | PMD Code Style           |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |                       |
-|                 | code or threading errors               +--------------------------+-----------------------+
-|                 |                                        | Spotbugs MT_CORRECTNESS  |                       |
-|                 |                                        +--------------------------+-----------------------+
-|                 |                                        | PMD Error Prone          |                       |
-|                 |                                        +--------------------------+-----------------------+
-|                 |                                        | PMD Multithreading       |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Duplicated Code | Code clones                            | PMD CPD                  |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Security        | Vulnerable code, unchecked             | Spotbugs MALICIOUS_CODE  |                       |
-|                 | inputs and security flaws              +--------------------------+-----------------------+
-|                 |                                        | Spotbugs SECURITY        |                       |
-|                 |                                        +--------------------------+-----------------------+
-|                 |                                        | PMD Security             |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Performance     | Inefficient code                       | Spotbugs PERFORMANCE     |                       |
-|                 |                                        +--------------------------+-----------------------+
-|                 |                                        | PMD Performance          |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Design          | Program structure/architecture         | Checkstyle design        |                       |
-|                 | and object design                      +--------------------------+-----------------------+
-|                 |                                        | PMD Design               |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Code Metrics    | Violations of code complexity          | Checkstyle metrics       |                       |
-|                 | metrics or size limitations            +--------------------------+-----------------------+
-|                 |                                        | Checkstyle sizes         |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Documentation   | Code with missing or flawed            | Checkstyle javadoc       |                       |
-|                 | documentation                          +--------------------------+-----------------------+
-|                 |                                        | Checkstyle annotation    |                       |
-|                 |                                        +--------------------------+-----------------------+
-|                 |                                        | PMD Documentation        |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Naming & Format | Rules that ensure the readability      | Checkstyle imports       |                       |
-|                 | of the source code (name conventions,  +--------------------------+-----------------------+
-|                 | imports, indentation, annotations,     | Checkstyle indentation   |                       |
-|                 | white spaces)                          +--------------------------+-----------------------+
-|                 |                                        | Checkstyle naming        |                       |
-|                 |                                        +--------------------------+-----------------------+
-|                 |                                        | Checkstyle whitespace    |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
-| Miscellaneous   | Uncategorized rules                    | Checkstyle miscellaneous |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+|                 |                                        | Mapping                                                                  |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Category        | Description                            | Java                     | Swift                 | C                     |
++=================+========================================+==========================+=======================+=======================+
+| Bad Practice    | Code that violates recommended         | Spotbugs BAD_PRACTICE    |                       | GCC BadPractice       |
+|                 | and essential coding practices         +--------------------------+                       |                       |
+|                 |                                        | Spotbugs I18N            |                       |                       |
+|                 |                                        +--------------------------+                       |                       |
+|                 |                                        | PMD Best Practices       |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Code Style      | Code that is confusing                 | Spotbugs STYLE           | Swiftlint (all rules) |                       |
+|                 | and hard to maintain                   +--------------------------+                       |                       |
+|                 |                                        | Checkstyle blocks        |                       |                       |
+|                 |                                        +--------------------------+                       |                       |
+|                 |                                        | Checkstyle coding        |                       |                       |
+|                 |                                        +--------------------------+                       |                       |
+|                 |                                        | Checkstyle modifier      |                       |                       |
+|                 |                                        +--------------------------+                       |                       |
+|                 |                                        | PMD Code Style           |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |                       | GCC Memory            |
+|                 | code or threading errors               +--------------------------+-----------------------+                       |
+|                 |                                        | Spotbugs MT_CORRECTNESS  |                       |                       |
+|                 |                                        +--------------------------+-----------------------+                       |
+|                 |                                        | PMD Error Prone          |                       |                       |
+|                 |                                        +--------------------------+-----------------------+                       |
+|                 |                                        | PMD Multithreading       |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Duplicated Code | Code clones                            | PMD CPD                  |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Security        | Vulnerable code, unchecked             | Spotbugs MALICIOUS_CODE  |                       | GCC Security          |
+|                 | inputs and security flaws              +--------------------------+-----------------------+                       |
+|                 |                                        | Spotbugs SECURITY        |                       |                       |
+|                 |                                        +--------------------------+-----------------------+                       |
+|                 |                                        | PMD Security             |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Performance     | Inefficient code                       | Spotbugs PERFORMANCE     |                       |                       |
+|                 |                                        +--------------------------+-----------------------+                       |
+|                 |                                        | PMD Performance          |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Design          | Program structure/architecture         | Checkstyle design        |                       |                       |
+|                 | and object design                      +--------------------------+-----------------------+                       |
+|                 |                                        | PMD Design               |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Code Metrics    | Violations of code complexity          | Checkstyle metrics       |                       |                       |
+|                 | metrics or size limitations            +--------------------------+-----------------------+                       |
+|                 |                                        | Checkstyle sizes         |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Documentation   | Code with missing or flawed            | Checkstyle javadoc       |                       |                       |
+|                 | documentation                          +--------------------------+-----------------------+                       |
+|                 |                                        | Checkstyle annotation    |                       |                       |
+|                 |                                        +--------------------------+-----------------------+                       |
+|                 |                                        | PMD Documentation        |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Naming & Format | Rules that ensure the readability      | Checkstyle imports       |                       |                       |
+|                 | of the source code (name conventions,  +--------------------------+-----------------------+                       |
+|                 | imports, indentation, annotations,     | Checkstyle indentation   |                       |                       |
+|                 | white spaces)                          +--------------------------+-----------------------+                       |
+|                 |                                        | Checkstyle naming        |                       |                       |
+|                 |                                        +--------------------------+-----------------------+                       |
+|                 |                                        | Checkstyle whitespace    |                       |                       |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
+| Miscellaneous   | Uncategorized rules                    | Checkstyle miscellaneous |                       | GCC Misc              |
++-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
 
   .. note::
     For Swift, only the category Code Style can contain code quality issues currently. All other categories displayed on the grading page are dummies.
+
+  .. note::
+    The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the :ref:`rules <c_sca_default_config>`.
 
   - On the left side of the page, instructors can configure the static code analysis categories.
 

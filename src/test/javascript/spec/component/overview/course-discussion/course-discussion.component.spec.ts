@@ -1,9 +1,5 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
-import * as sinon from 'sinon';
-import { SinonSpy, spy, stub } from 'sinon';
 import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -23,16 +19,18 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
+import dayjs from 'dayjs';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
 import {
-    metisAnswerPostUser1,
     metisCourse,
     metisCoursePosts,
     metisCoursePostsWithCourseWideContext,
@@ -44,19 +42,18 @@ import {
     metisPostExerciseUser2,
     metisPostLectureUser1,
     metisPostLectureUser2,
+    metisResolvingAnswerPostUser1,
     metisUpVoteReactionUser1,
+    metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import dayjs from 'dayjs';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
     let fixture: ComponentFixture<CourseDiscussionComponent>;
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
-    let metisServiceGetFilteredPostsSpy: SinonSpy;
+    let metisServiceGetFilteredPostsMock: jest.SpyInstance;
+    let metisServiceGetUserMock: jest.SpyInstance;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -66,6 +63,7 @@ describe('CourseDiscussionComponent', () => {
     const id = metisCourse.id;
     const parentRoute = {
         params: of({ id }),
+        queryParams: of({ searchText: '' }),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 
@@ -77,8 +75,8 @@ describe('CourseDiscussionComponent', () => {
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [
                 CourseDiscussionComponent,
@@ -97,25 +95,26 @@ describe('CourseDiscussionComponent', () => {
             .compileComponents()
             .then(() => {
                 courseManagementService = TestBed.inject(CourseManagementService);
-                stub(courseManagementService, 'findOneForDashboard').returns(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
+                jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(CourseDiscussionComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
-                metisServiceGetFilteredPostsSpy = spy(metisService, 'getFilteredPosts');
+                metisServiceGetFilteredPostsMock = jest.spyOn(metisService, 'getFilteredPosts');
+                metisServiceGetUserMock = jest.spyOn(metisService, 'getUser');
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should set course and posts for course on initialization', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        expect(component.course).to.deep.equal(metisCourse);
-        expect(component.createdPost).to.not.be.undefined;
-        expect(component.posts).to.be.deep.equal(metisCoursePosts);
-        expect(component.currentPostContextFilter).to.be.deep.equal({
+        expect(component.course).toEqual(metisCourse);
+        expect(component.createdPost).toBeDefined();
+        expect(component.posts).toEqual(metisCoursePosts);
+        expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
             courseWideContext: undefined,
             exerciseId: undefined,
@@ -126,54 +125,57 @@ describe('CourseDiscussionComponent', () => {
     it('should initialize formGroup correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        expect(component.formGroup.get('context')?.value).to.be.deep.equal({
+        expect(component.formGroup.get('context')?.value).toEqual({
             courseId: metisCourse.id,
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
         });
-        expect(component.formGroup.get('sortBy')?.value).to.be.equal(PostSortCriterion.CREATION_DATE);
-        expect(component.formGroup.get('sortDirection')?.value).to.be.equal(SortDirection.DESC);
+        expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
+        fixture.detectChanges();
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        expect(component.formGroup.get('context')?.value).to.be.deep.equal({
+        expect(component.formGroup.get('context')?.value).toEqual({
             courseId: metisCourse.id,
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
         });
-        expect(component.formGroup.get('sortBy')?.value).to.be.equal(PostSortCriterion.CREATION_DATE);
-        expect(component.formGroup.get('sortDirection')?.value).to.be.equal(SortDirection.DESC);
+        expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
+        expect(component.currentSortDirection).toEqual(SortDirection.DESC);
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-        expect(searchInput.textContent).to.be.equal('');
+        expect(searchInput.textContent).toEqual('');
         const contextOptions = getElement(fixture.debugElement, 'select[name=context]');
         // select should provide all context options
-        expect(contextOptions.textContent).contains(metisCourse.title);
-        expect(contextOptions.textContent).contains(metisLecture.title);
-        expect(contextOptions.textContent).contains(metisExercise.title);
+        expect(contextOptions.textContent).toContain(metisCourse.title);
+        expect(contextOptions.textContent).toContain(metisLecture.title);
+        expect(contextOptions.textContent).toContain(metisExercise.title);
         // course should be selected
         const selectedContextOption = getElement(fixture.debugElement, 'select[name=context]');
-        expect(selectedContextOption.value).contains(metisCourse.title);
+        expect(selectedContextOption.value).toContain(metisCourse.title);
         // creation date should be selected as sort criterion
         const selectedSortByOption = getElement(fixture.debugElement, 'select[name=sortBy]');
-        expect(selectedSortByOption.value).to.exist;
+        expect(selectedSortByOption.value).toBeDefined();
         // descending should be selected as sort direction
-        const selectedDirectionOption = getElement(fixture.debugElement, 'select[name=sortDirection]');
-        expect(selectedDirectionOption.value).to.exist;
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
-        expect(postCountInformation.innerHTML).to.not.be.empty;
+        expect(component.posts).toEqual(metisCoursePosts);
+        expect(postCountInformation.textContent).toBeDefined();
     }));
 
     it('should invoke metis service without forcing a reload when search text changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
         component.onSearch();
-        expect(metisServiceGetFilteredPostsSpy).to.have.been.calledWith(
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalledWith(
             {
                 courseId: metisCourse.id,
                 courseWideContext: undefined,
@@ -182,6 +184,120 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+    }));
+
+    it('should search for posts with certain id when pattern is used', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.searchText = '#1';
+        component.onSearch();
+        tick();
+        fixture.detectChanges();
+        expect(component.posts).toHaveLength(1);
+    }));
+
+    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved checkbox is checked', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterToUnresolved).toEqual(true);
+        // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
+        expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
+    }));
+
+    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved and filterToOwn checkbox is checked', fakeAsync(() => {
+        const currentUser = metisUser1;
+        metisServiceGetUserMock.mockReturnValue(currentUser);
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterToUnresolved).toEqual(true);
+        expect(component.filterToOwn).toEqual(true);
+        expect(component.filterToAnsweredOrReactedByUser).toEqual(false);
+        // determine expected posts
+        const expectedPosts = metisCoursePosts.filter(
+            (post: Post) => post.author === currentUser && !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
+        );
+        expect(component.posts).toHaveLength(expectedPosts.length);
+    }));
+
+    it('should invoke metis service, update filter setting and displayed posts when filterToOwn checkbox is checked', fakeAsync(() => {
+        const currentUser = metisUser1;
+        metisServiceGetUserMock.mockReturnValue(currentUser);
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: false,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterToUnresolved).toEqual(false);
+        expect(component.filterToOwn).toEqual(true);
+        expect(component.filterToAnsweredOrReactedByUser).toEqual(false);
+        // determine expected posts
+        const expectedPosts = metisCoursePosts.filter((post: Post) => post.author === currentUser);
+        expect(component.posts).toHaveLength(expectedPosts.length);
+    }));
+
+    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved and filterToAnsweredOrReactedByUser checkbox is checked', fakeAsync(() => {
+        const currentUser = metisUser1;
+        metisServiceGetUserMock.mockReturnValue(currentUser);
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: true,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.filterToUnresolved).toEqual(true);
+        expect(component.filterToOwn).toEqual(false);
+        expect(component.filterToAnsweredOrReactedByUser).toEqual(true);
+        // determine expected posts
+        const expectedPosts = metisCoursePosts.filter(
+            (post: Post) =>
+                ((post.answers && post.answers.some((answer: AnswerPost) => answer.author === currentUser)) ||
+                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user === currentUser))) &&
+                !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
+        );
+        expect(component.posts).toHaveLength(expectedPosts.length);
     }));
 
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
@@ -200,8 +316,8 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).to.have.been.called;
-        expect(component.posts).to.be.deep.equal(metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.ORGANIZATION));
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.posts).toEqual(metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.ORGANIZATION));
     }));
 
     it('should fetch new posts when context filter changes to exercise', fakeAsync(() => {
@@ -220,8 +336,8 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).to.have.been.called;
-        expect(component.posts).to.be.deep.equal(metisExercisePosts);
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.posts).toEqual(metisExercisePosts);
     }));
 
     it('should fetch new posts when context filter changes to lecture', fakeAsync(() => {
@@ -240,8 +356,8 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).to.have.been.called;
-        expect(component.posts).to.be.deep.equal(metisLecturePosts);
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled;
+        expect(component.posts).toEqual(metisLecturePosts);
     }));
 
     it('should invoke metis service without forcing a reload when sort criterion changed', fakeAsync(() => {
@@ -250,7 +366,7 @@ describe('CourseDiscussionComponent', () => {
         fixture.detectChanges();
         const sortByOptions = getElement(fixture.debugElement, 'select[name=sortBy]');
         sortByOptions.dispatchEvent(new Event('change'));
-        expect(metisServiceGetFilteredPostsSpy).to.have.been.calledWith(
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalledWith(
             {
                 courseId: metisCourse.id,
                 courseWideContext: undefined,
@@ -265,9 +381,9 @@ describe('CourseDiscussionComponent', () => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        const sortByOptions = getElement(fixture.debugElement, 'select[name=sortDirection]');
-        sortByOptions.dispatchEvent(new Event('change'));
-        expect(metisServiceGetFilteredPostsSpy).to.have.been.calledWith(
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        selectedDirectionOption.dispatchEvent(new Event('click'));
+        expect(metisServiceGetFilteredPostsMock).toHaveBeenCalledWith(
             {
                 courseId: metisCourse.id,
                 courseWideContext: undefined,
@@ -291,7 +407,7 @@ describe('CourseDiscussionComponent', () => {
             post3 = metisPostLectureUser1;
             post3.creationDate = dayjs().subtract(2, 'day');
             post3.reactions = [metisUpVoteReactionUser1];
-            post3.answers = [metisAnswerPostUser1];
+            post3.answers = [metisResolvingAnswerPostUser1];
             post3.displayPriority = DisplayPriority.NONE;
 
             post4 = metisPostLectureUser2;
@@ -307,7 +423,7 @@ describe('CourseDiscussionComponent', () => {
             component.currentSortDirection = SortDirection.DESC;
             posts = posts.sort(component.overviewSortFn);
             // pinned is first, archived is last independent of sort criterion
-            expect(posts).to.be.deep.equal([post1, post2, post3, post4]);
+            expect(posts).toEqual([post1, post2, post3, post4]);
         });
 
         it('should sort posts correctly by creation date asc', () => {
@@ -315,7 +431,7 @@ describe('CourseDiscussionComponent', () => {
             component.currentSortDirection = SortDirection.ASC;
             posts = posts.sort(component.overviewSortFn);
             // pinned is first, archived is last independent of sort criterion
-            expect(posts).to.be.deep.equal([post1, post3, post2, post4]);
+            expect(posts).toEqual([post1, post3, post2, post4]);
         });
 
         it('should sort posts correctly by votes desc', () => {
@@ -323,7 +439,7 @@ describe('CourseDiscussionComponent', () => {
             component.currentSortDirection = SortDirection.DESC;
             posts = posts.sort(component.overviewSortFn);
             // pinned is first, archived is last independent of sort criterion
-            expect(posts).to.be.deep.equal([post1, post3, post2, post4]);
+            expect(posts).toEqual([post1, post3, post2, post4]);
         });
 
         it('should sort posts correctly by votes asc', () => {
@@ -331,7 +447,7 @@ describe('CourseDiscussionComponent', () => {
             component.currentSortDirection = SortDirection.ASC;
             posts = posts.sort(component.overviewSortFn);
             // pinned is first, archived is last independent of sort criterion
-            expect(posts).to.be.deep.equal([post1, post2, post3, post4]);
+            expect(posts).toEqual([post1, post2, post3, post4]);
         });
 
         it('should sort posts correctly by answer count desc', () => {
@@ -339,7 +455,7 @@ describe('CourseDiscussionComponent', () => {
             component.currentSortDirection = SortDirection.DESC;
             posts = posts.sort(component.overviewSortFn);
             // pinned is first, archived is last independent of sort criterion
-            expect(posts).to.be.deep.equal([post1, post3, post2, post4]);
+            expect(posts).toEqual([post1, post3, post2, post4]);
         });
 
         it('should sort posts correctly by answer count asc', () => {
@@ -347,26 +463,26 @@ describe('CourseDiscussionComponent', () => {
             component.currentSortDirection = SortDirection.ASC;
             posts = posts.sort(component.overviewSortFn);
             // pinned is first, archived is last independent of sort criterion
-            expect(posts).to.be.deep.equal([post1, post2, post3, post4]);
+            expect(posts).toEqual([post1, post2, post3, post4]);
         });
 
         it('should distinguish context filter options for properly show them in form', () => {
             let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
-            expect(result).to.be.equal(true);
+            expect(result).toEqual(true);
             result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: 99 });
-            expect(result).to.be.equal(false);
+            expect(result).toEqual(false);
             result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: metisLecture.id });
-            expect(result).to.be.equal(true);
+            expect(result).toEqual(true);
             result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: 99 });
-            expect(result).to.be.equal(false);
+            expect(result).toEqual(false);
             result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: metisExercise.id });
-            expect(result).to.be.equal(true);
+            expect(result).toEqual(true);
             result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: 99 });
-            expect(result).to.be.equal(false);
+            expect(result).toEqual(false);
             result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.ORGANIZATION });
-            expect(result).to.be.equal(true);
+            expect(result).toEqual(true);
             result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.TECH_SUPPORT });
-            expect(result).to.be.equal(false);
+            expect(result).toEqual(false);
         });
     });
 });
