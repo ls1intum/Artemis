@@ -10,26 +10,26 @@
             <span jhiTranslate="artemisApp.consistencyCheck.text">Checks on programming exercises are performed and occurring consistency errors will be displayed below.</span>
             <br />
             <small jhiTranslate="artemisApp.consistencyCheck.warning">For courses with many programming exercises this will take some time.</small>
-            <div *ngIf="isLoadingResults()" class="d-flex justify-content-center m-5">
+            <div *ngIf="isLoading" class="d-flex justify-content-center m-5">
                 <div class="spinner-border" role="status">
                     <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
                 </div>
             </div>
-            <div class="table-responsive p-1 my-5" *ngIf="!isLoadingResults()">
+            <div class="table-responsive p-1 my-5" *ngIf="!isLoading">
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th *ngIf="checkType.localeCompare('COURSE') == 0"><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span></th>
+                            <th><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span></th>
                             <th><span jhiTranslate="artemisApp.consistencyCheck.error.type">Error type</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let error of inconsistencies">
-                            <td *ngIf="checkType.localeCompare('COURSE') == 0">
-                                <a [routerLink]="['/course-management', courseId, 'programming-exercises', error.programmingExercise!.id]">
+                            <td>
+                                <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
                                     <ngb-highlight [result]="error.programmingExercise!.title!"></ngb-highlight>
                                 </a>
-                                <ngb-highlight *ngIf="courseId == undefined" [result]="error.programmingExercise!.title!"></ngb-highlight>
+                                <ngb-highlight *ngIf="error.programmingExerciseCourseId == undefined" [result]="error.programmingExercise!.title!"></ngb-highlight>
                             </td>
                             <td>
                                 <ngb-highlight [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></ngb-highlight>
@@ -37,7 +37,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <div *ngIf="inconsistencies != undefined && inconsistencies.length == 0" class="text-center">
+                <div *ngIf="!isLoading && inconsistencies != undefined && inconsistencies.length == 0" class="text-center">
                     <span class="h1 text-success"><fa-icon [icon]="'check'"></fa-icon></span>
                     <br />
                     <span jhiTranslate="artemisApp.consistencyCheck.noErrors">No errors found</span>

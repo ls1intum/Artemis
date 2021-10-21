@@ -3,6 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
 
 @Component({
@@ -10,52 +11,35 @@ import { getCourseId } from 'app/entities/exercise.model';
     templateUrl: './consistency-check.component.html',
 })
 export class ConsistencyCheckComponent implements OnInit {
-    @Input() id: number;
-    @Input() checkType: CheckType;
+    @Input() exercisesToCheck: ProgrammingExercise[];
 
-    inconsistencies: ConsistencyCheckError[];
-    courseId: number | undefined;
+    inconsistencies: ConsistencyCheckError[] = [];
+    isLoading = true;
 
     constructor(private activeModal: NgbActiveModal, private consistencyCheckService: ConsistencyCheckService, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        if (this.checkType === CheckType.PROGRAMMING_EXERCISE) {
-            this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.id).subscribe(
+        this.isLoading = true;
+        let exercisesRemaining = this.exercisesToCheck.length;
+        this.exercisesToCheck.forEach((exercise) => {
+            const course = getCourseId(exercise);
+            this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe(
                 (inconsistencies) => {
-                    this.inconsistencies = inconsistencies;
-                    if (this.inconsistencies.length > 0) {
-                        this.courseId = getCourseId(this.inconsistencies[0].programmingExercise!);
+                    this.inconsistencies = this.inconsistencies.concat(inconsistencies);
+                    this.inconsistencies.map((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
+                    if (--exercisesRemaining === 0) {
+                        this.isLoading = false;
                     }
                 },
                 (err) => {
                     this.alertService.error(err);
+                    this.isLoading = false;
                 },
             );
-        } else if (this.checkType === CheckType.COURSE) {
-            this.consistencyCheckService.checkConsistencyForCourse(this.id).subscribe(
-                (inconsistencies) => {
-                    this.inconsistencies = inconsistencies;
-                },
-                (err) => {
-                    this.alertService.error(err);
-                },
-            );
-            this.courseId = this.id;
-        } else {
-            this.alertService.error('No check type specified');
-        }
-    }
-
-    isLoadingResults() {
-        return this.inconsistencies == undefined;
+        });
     }
 
     closeModal() {
         this.activeModal.close();
     }
-}
-
-export enum CheckType {
-    PROGRAMMING_EXERCISE = 'PROGRAMMING_EXERCISE',
-    COURSE = 'COURSE',
 }

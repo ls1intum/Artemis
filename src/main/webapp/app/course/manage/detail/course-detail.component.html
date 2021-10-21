@@ -65,10 +65,6 @@
                 <fa-icon [icon]="'chart-bar'"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
             </a>
-            <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies(course.id!)" class="tab-item btn btn-success btn-md ms-1">
-                <fa-icon [icon]="'check-double'"></fa-icon>
-                <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
-            </button>
             <div class="ms-auto">
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
