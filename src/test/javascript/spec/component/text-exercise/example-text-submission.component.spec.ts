@@ -154,7 +154,7 @@ describe('ExampleTextSubmissionComponent', () => {
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         await comp.ngOnInit();
         comp.exercise = exercise;
-        comp.exercise!.isAtLeastInstructor = true;
+        comp.exercise!.isAtLeastEditor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
