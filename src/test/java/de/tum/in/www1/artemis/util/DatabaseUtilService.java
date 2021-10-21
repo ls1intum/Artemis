@@ -1658,6 +1658,12 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
+        ProgrammingExercise programmingExercise = addCourseExamExerciseGroupWithOneProgrammingExercise();
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
@@ -1667,7 +1673,6 @@ public class DatabaseUtilService {
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        addTestCasesToProgrammingExercise(programmingExercise);
         return programmingExercise;
     }
 
