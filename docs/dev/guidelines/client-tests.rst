@@ -198,7 +198,7 @@ Some guidelines:
 5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected template changes have occurred.
 
-    Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
+    Here is an example of such a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
 
     .. code:: ts
 
@@ -247,6 +247,10 @@ Some guidelines:
 
         const clearSpy = jest.spyOn(someComponent, 'clear');
         const getNumberStub = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42); // This always returns 42
+
+    - `Spy`: Doesn't replace any functionality but records calls
+    - `Mock`: Spy + returns a specific implementation for a certain input
+    - `Stub`: Spy + returns a default implementation independent of the input parameters.
 
 8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the code base without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
 
@@ -306,7 +310,7 @@ Some guidelines:
   |                                                        | **Important:** Never use :code:`expect(value).toBeDefined()` as |
   |                                                        | it might not catch all failures under certain conditions.       |
   +--------------------------------------------------------+-----------------------------------------------------------------+
-  | A class object should not be undefined                 | Try to test for a defined value by testing the entries.         |
+  | A class object should not be undefined                 | Try to test for a defined object as described above.            |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A spy should not have been called                      | :code:`expect(spy).not.toHaveBeenCalled();`                     |
   +--------------------------------------------------------+-----------------------------------------------------------------+
