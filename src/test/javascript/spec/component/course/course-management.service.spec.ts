@@ -133,7 +133,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('Should set accessRights with by using the AccountService', fakeAsync(() => {
+    it('should set accessRights by using the AccountService', fakeAsync(() => {
         courseManagementService
             .find(course.id!)
             .pipe(take(1))
