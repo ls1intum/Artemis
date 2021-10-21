@@ -11,14 +11,6 @@ export class ConsistencyCheckService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Request consistency checks for a given course
-     * @param courseId id of the course to check
-     */
-    checkConsistencyForCourse(courseId: number) {
-        return this.http.get<ConsistencyCheckError[]>(`${this.consistencyCheckUrl}course/${courseId}`, { responseType: 'json' });
-    }
-
-    /**
      * Request consistency checks for a given programming exercise
      * @param exerciseId id of the programming exercise to check
      */

@@ -1,32 +1,31 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-
-import { CheckType, ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
+import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { ArtemisTestModule } from '../../test.module';
-import { of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
-import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
-import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { Course } from 'app/entities/course.model';
+import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
+import { ArtemisTestModule } from '../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { of } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent, MockDirective, MockProvider, MockPipe } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { MockRouterLinkDirective } from '../shared/navbar.component.spec';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;
     let fixture: ComponentFixture<ConsistencyCheckComponent>;
     let service: ConsistencyCheckService;
 
-    const course = { id: 123 } as Course;
+    const course = { id: 123, exercises: [] } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
-    course.exercises?.push(programmingExercise);
+    const programmingExercise2 = new ProgrammingExercise(course, undefined);
+    programmingExercise.id = 567;
     const error1 = new ConsistencyCheckError();
     error1.programmingExercise = programmingExercise;
     error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
@@ -35,54 +34,57 @@ describe('ConsistencyCheckComponent', () => {
     error2.type = ErrorType.SOLUTION_BUILD_PLAN_MISSING;
 
     const consistencyErrors = [error1, error2];
+    const programmingExercises = [programmingExercise, programmingExercise2];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ConsistencyCheckComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: JhiAlertService, useClass: MockAlertService },
+            declarations: [
+                ConsistencyCheckComponent,
+                MockDirective(TranslateDirective),
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbHighlight),
+                MockRouterLinkDirective,
             ],
+            providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(ConsistencyCheckService)],
         })
-            .overrideTemplate(ConsistencyCheckComponent, '')
-            .compileComponents();
-        fixture = TestBed.createComponent(ConsistencyCheckComponent);
-        component = fixture.componentInstance;
-        service = TestBed.inject(ConsistencyCheckService);
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ConsistencyCheckComponent);
+                component = fixture.componentInstance;
+                service = TestBed.inject(ConsistencyCheckService);
+            });
     });
 
-    afterEach(async () => {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should call checks for single programming exercise', () => {
         // GIVEN
-        const checkConsistencyForProgrammingExercise = sinon.stub(service, 'checkConsistencyForProgrammingExercise').returns(of(consistencyErrors));
+        const checkConsistencyForProgrammingExercise = jest.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
 
         // WHEN
-        component.checkType = CheckType.PROGRAMMING_EXERCISE;
-        component.id = programmingExercise.id!;
+        component.exercisesToCheck = Array.of(programmingExercise);
         fixture.detectChanges();
 
         // THEN
-        expect(checkConsistencyForProgrammingExercise).to.have.been.called;
-        expect(component.courseId).to.be.equal(programmingExercise.course!.id);
-        expect(component.inconsistencies).to.be.equal(consistencyErrors);
+        expect(checkConsistencyForProgrammingExercise).toBeCalledTimes(1);
+        expect(component.inconsistencies).toEqual(consistencyErrors);
     });
 
-    it('should call checks for course', () => {
+    it('should call checks for multiple programming exercises', () => {
         // GIVEN
-        const checkConsistencyForProgrammingExercise = sinon.stub(service, 'checkConsistencyForCourse').returns(of(consistencyErrors));
+        const checkConsistencyForProgrammingExercise = jest.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
 
         // WHEN
-        component.checkType = CheckType.COURSE;
-        component.id = course.id!;
+        component.exercisesToCheck = programmingExercises;
         fixture.detectChanges();
 
         // THEN
-        expect(checkConsistencyForProgrammingExercise).to.have.been.called;
-        expect(component.courseId).to.be.equal(course.id);
-        expect(component.inconsistencies).to.be.equal(consistencyErrors);
+        expect(checkConsistencyForProgrammingExercise).toBeCalledTimes(2);
+        expect(component.inconsistencies).toEqual(consistencyErrors.concat(consistencyErrors));
     });
 });
