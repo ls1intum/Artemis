@@ -18,6 +18,8 @@ import { CreateModelingExercisePage } from './CreateModelingExercisePage';
 import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEditor';
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
+import { ShortAnswerQuiz } from './ShortAnswerQuiz';
+import { DragAndDropQuiz } from './DragAndDropQuiz';
 import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
 import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
@@ -68,5 +70,7 @@ export class ArtemisPageobjects {
     quizExercise = {
         creation: new QuizExerciseCreationPage(),
         multipleChoice: new MultipleChoiceQuiz(),
+        shortAnswer: new ShortAnswerQuiz(),
+        dragAndDrop: new DragAndDropQuiz(),
     };
 }
