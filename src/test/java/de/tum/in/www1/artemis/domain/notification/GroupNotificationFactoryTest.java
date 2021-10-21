@@ -220,10 +220,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseCreated() {
-        notificationType = NotificationType.EXERCISE_CREATED;
-        expectedTitle = EXERCISE_CREATED_TITLE;
-        expectedText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-        expectedTarget = createDefaultExpectedTarget("exerciseCreated", "exercises", exerciseId);
+        notificationType = NotificationType.EXERCISE_RELEASED;
+        expectedTitle = EXERCISE_RELEASED_TITLE;
+        expectedText = "A new exercise \"" + exercise.getTitle() + "\" got released.";
+        expectedTarget = createDefaultExpectedTarget("exerciseReleased", "exercises", exerciseId);
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotification(Base.EXERCISE);

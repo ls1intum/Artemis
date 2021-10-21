@@ -46,9 +46,6 @@
                 [numberOfTutorAssessments]="numberOfTutorAssessments"
                 [courseId]="courseId"
                 [tutorId]="tutor.id!"
-                [numberOfTutorComplaints]="numberOfTutorComplaints"
-                [numberOfTutorMoreFeedbackRequests]="numberOfTutorMoreFeedbackRequests"
-                [numberOfAssessmentLocks]="numberOfAssessmentLocks"
                 [examId]="examId"
                 [totalNumberOfAssessments]="totalNumberOfAssessments"
                 [numberOfSubmissions]="numberOfSubmissions"
@@ -56,9 +53,10 @@
                 [totalAssessmentPercentage]="totalAssessmentPercentage"
                 [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
                 [isAtLeastInstructor]="course?.isAtLeastInstructor || false"
-                [numberOfComplaints]="numberOfComplaints"
-                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
-                [totalNumberOfAssessmentLocks]="totalNumberOfAssessmentLocks"
+                [complaints]="complaints"
+                [moreFeedbackRequests]="moreFeedbackRequests"
+                [assessmentLocks]="assessmentLocks"
+                [ratings]="ratings"
             >
             </jhi-assessment-dashboard-information>
         </div>

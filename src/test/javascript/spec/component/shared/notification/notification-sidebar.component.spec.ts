@@ -54,7 +54,7 @@ describe('Notification Sidebar Component', () => {
         webapp: true,
         email: false,
         changed: false,
-        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,
     };
     const receivedNotificationSettings: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
