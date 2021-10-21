@@ -17,7 +17,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -44,7 +43,6 @@ describe('Exam Management Component', () => {
     let service: ExamManagementService;
     let courseManagementService: CourseManagementService;
     let sortService: SortService;
-    let accountService: AccountService;
     let eventManager: EventManager;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
@@ -77,7 +75,6 @@ describe('Exam Management Component', () => {
         service = TestBed.inject(ExamManagementService);
         courseManagementService = TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
-        accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
     });
 
