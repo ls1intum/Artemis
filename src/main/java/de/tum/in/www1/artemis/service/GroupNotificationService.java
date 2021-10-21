@@ -103,10 +103,10 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_RELEASED, null));
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_RELEASED, null));
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.EDITOR, NotificationType.EXERCISE_RELEASED, null));
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_RELEASED, null));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_RELEASED, null), exercise);
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_RELEASED, null), exercise);
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.EDITOR, NotificationType.EXERCISE_RELEASED, null), exercise);
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_RELEASED, null), exercise);
     }
 
     /**
