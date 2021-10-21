@@ -5,7 +5,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 @Component({
     selector: 'jhi-submission-policy-update',
     template: `
-        <div class="form-group-narrow">
+        <div class="form-group-narrow mb-3">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
             <select
                 #policy

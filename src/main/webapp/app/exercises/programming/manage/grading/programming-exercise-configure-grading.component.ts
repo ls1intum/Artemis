@@ -195,7 +195,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             }
 
             if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy') {
-                this.activeTab = params['tab'];
+                this.selectTab(params['tab']);
             } else {
                 this.selectTab('test-cases');
             }

@@ -335,9 +335,13 @@ public class SubmissionPolicyService {
      */
     private int getParticipationSubmissionCount(Participation participation) {
         final Long participationId = participation.getId();
+        int submissionCompensation = 0;
         participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        int submissionCompensation = participation.getSubmissions().iterator().next().getResults().isEmpty() ? 1 : 0;
+        var submissions = participation.getSubmissions();
+        if (submissions != null && !submissions.isEmpty()) {
+            submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
+        }
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count() + submissionCompensation;

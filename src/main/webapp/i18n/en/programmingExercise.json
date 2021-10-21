@@ -351,7 +351,7 @@
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
-                    "pattern": "The submission limit must be between 1 and 500!",
+                    "pattern": "The submission limit must be and integer between 1 and 500!",
                     "required": "The submission limit must be set!"
                 }
             }
