@@ -29,22 +29,16 @@ public class SubmissionPolicyService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final ParticipationRepository participationRepository;
-
-    private final SubmissionRepository submissionRepository;
 
     public SubmissionPolicyService(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            FeedbackRepository feedbackRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            ParticipationRepository participationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
         this.participationRepository = participationRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -195,7 +189,7 @@ public class SubmissionPolicyService {
      * Updates the existing submission policy of a programming exercise with new values.
      * When a submission policy is updated, the effect on participations is updated as well.
      * The effect of submission penalty policies is NOT updated automatically. The user needs
-     * to trigger all builds for the policy to take action.
+     * to re-evaluate all results for the policy to take action.
      * <br>
      * Example:
      * When updating a lock repository policy from 5 allowed submissions to 10 allowed submissions,
@@ -329,7 +323,7 @@ public class SubmissionPolicyService {
         if (submissions <= allowedSubmissions) {
             return ", %d of %d Submissions".formatted(submissions, allowedSubmissions);
         }
-        return "";
+        return ", %d Submissions".formatted(submissions);
     }
 
     /**
@@ -354,6 +348,14 @@ public class SubmissionPolicyService {
         return submissionPolicyRepository.save(policy);
     }
 
+    /**
+     * Generates and adds Feedback to the result if the Submission Penalty Policy is enforced.
+     * The added feedback is negative and has negative credits depending on the number of
+     * submissions exceeding the submission limit.
+     *
+     * @param result to which the feedback item should be added
+     * @param penaltyPolicy that specifies the submission limit and penalty
+     */
     public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
         if (penaltyPolicy != null && penaltyPolicy.isActive()) {
             int presentSubmissions = getParticipationSubmissionCount(result.getParticipation());
@@ -369,7 +371,18 @@ public class SubmissionPolicyService {
         }
     }
 
+    /**
+     * Determines whether a participation repository is locked, depending on the active policy
+     * of a programming exercise. This method does NOT take any other factors into account.
+     *
+     * @param policy that determines the submission limit for the programming exercise
+     * @param programmingParticipation that is either locked or unlocked
+     * @return true when the repository should be locked, false if not
+     */
     public boolean isParticipationLocked(LockRepositoryPolicy policy, Participation programmingParticipation) {
+        if (policy == null || !policy.isActive()) {
+            return false;
+        }
         return policy.getSubmissionLimit() <= getParticipationSubmissionCount(programmingParticipation);
     }
 }

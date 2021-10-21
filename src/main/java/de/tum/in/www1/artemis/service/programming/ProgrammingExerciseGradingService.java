@@ -305,7 +305,7 @@ public class ProgrammingExerciseGradingService {
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, false);
+                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, true);
                 updatedResults.add(result);
             }
         }
@@ -315,7 +315,7 @@ public class ProgrammingExerciseGradingService {
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
             Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, true);
+                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, false);
                 updatedResults.add(result);
             }
         }

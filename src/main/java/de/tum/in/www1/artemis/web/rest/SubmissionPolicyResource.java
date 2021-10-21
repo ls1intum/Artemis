@@ -198,9 +198,9 @@ public class SubmissionPolicyResource {
      * @param updatedSubmissionPolicy that should replace the old submission policy
      * @return the ResponseEntity with status 200 (OK) and the updated submission policy in body. Status 404 when
      *         the programming exercise does not exist, status 403 when the requester is not at least an editor
-     *         in the course the programming exercise belongs to and 400 when the submission policy has a different type
-     *         than the previous submission policy or is invalid. More information on submission policy validation can be
-     *         found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
+     *         in the course the programming exercise belongs to and 400 when the submission policy is invalid.
+     *         More information on submission policy validation can be found at
+     *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PatchMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('EDITOR')")
