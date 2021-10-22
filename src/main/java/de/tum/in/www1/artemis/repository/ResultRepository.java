@@ -455,7 +455,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 count(r),
                 sum(e.maxPoints),
                 avg(r.score),
-                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end),
+                sum(case when rating.rating is not null then 1 else 0 end)
                 )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
@@ -476,7 +477,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 count(r),
                 sum(e.maxPoints),
                 avg(r.score),
-                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end),
+                sum(case when rating.rating is not null then 1 else 0 end)
             )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
@@ -495,7 +497,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 count(r),
                 sum(e.maxPoints),
                 avg(r.score),
-                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end)
+                cast(sum(rating.rating) as double) / sum(case when rating.rating is not null then 1 else 0 end),
+                sum(case when rating.rating is not null then 1 else 0 end)
             )
             FROM
                 Result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a

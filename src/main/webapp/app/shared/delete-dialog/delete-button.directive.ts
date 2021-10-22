@@ -15,6 +15,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() renderButtonStyle = true;
     @Input() renderButtonText = true;
+    @Input() requireConfirmationOnlyForAdditionalChecks = false;
     @Input() dialogError: Observable<string>;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
@@ -63,6 +64,7 @@ export class DeleteButtonDirective implements OnInit {
             actionType: this.actionType,
             delete: this.delete,
             dialogError: this.dialogError,
+            requireConfirmationOnlyForAdditionalChecks: this.requireConfirmationOnlyForAdditionalChecks,
         };
         this.deleteDialogService.openDeleteDialog(deleteDialogData);
     }

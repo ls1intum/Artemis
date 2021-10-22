@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -35,6 +34,8 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -367,49 +368,27 @@ public class ResultResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            return badRequest("participationId", "400",
-                    "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
+            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !",
+                    "participationId", "400");
         }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
         if (participation instanceof StudentParticipation) {
             if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
-                return forbidden();
+                throw new AccessForbiddenException("participation", participationId);
             }
         }
         else if (participation instanceof ProgrammingExerciseParticipation) {
             if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-                return forbidden();
+                throw new AccessForbiddenException("participation", participationId);
             }
         }
         else {
             // This would be the case that a new participation type is introduced, without this the user would have access to it regardless of the permissions.
-            return forbidden();
+            throw new AccessForbiddenException("participation", participationId);
         }
 
-        final Exercise exercise = participation.getExercise();
-
-        // Filter feedbacks marked with visibility afterDueDate or never
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
-        if (filterForStudent) {
-            result.filterSensitiveInformation();
-            result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
-        }
-
-        List<Feedback> feedbacks;
-        // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && result.getAssessmentType() != null && AssessmentType.AUTOMATIC != result.getAssessmentType()
-                && exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
-            // filter all non-automatic feedbacks
-            feedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
-        }
-        else {
-            feedbacks = result.getFeedbacks();
-        }
-
-        return new ResponseEntity<>(feedbacks, HttpStatus.OK);
+        return new ResponseEntity<>(resultService.getFeedbacksForResult(result), HttpStatus.OK);
     }
 
     /**

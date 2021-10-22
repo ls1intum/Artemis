@@ -70,8 +70,8 @@ public class GroupNotification extends Notification {
         this.course = course;
     }
 
-    public String getExerciseCreatedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "exerciseCreated");
+    public String getExerciseReleasedTarget(Exercise exercise) {
+        return getExerciseTarget(exercise, "exerciseReleased");
     }
 
     public String getExerciseUpdatedTarget(Exercise exercise) {

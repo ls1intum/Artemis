@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -184,125 +183,19 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         }
     }
 
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation() throws Exception {
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addSampleFeedbackToResults(result);
-
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
-
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_wrongParticipationId() throws Exception {
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addSampleFeedbackToResults(result);
-        long randomId = 1432;
-
-        List<Feedback> feedbacks = request.getList("/api/participations/" + randomId + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
-
-        assertThat(feedbacks).isNull();
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void shouldReturnTheResultDetailsWithStaticCodeAnalysisFeedbackForAProgrammingExerciseStudentParticipation() throws Exception {
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addSampleStaticCodeAnalysisFeedbackToResults(result);
-
-        List<Feedback> feedback = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
-
-        assertThat(feedback).isEqualTo(result.getFeedbacks());
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void shouldReturnOnlyAutomaticFeedbackForAProgrammingExerciseStudentParticipationBeforeAssessDueDate() throws Exception {
-        Result result = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation);
-        Feedback feedback1 = new Feedback().detailText("automatic1").type(FeedbackType.AUTOMATIC);
-        Feedback feedback2 = new Feedback().detailText("automatic2").type(FeedbackType.AUTOMATIC);
-        Feedback feedback3 = new Feedback().detailText("manual1").type(FeedbackType.MANUAL);
-        result = database.addFeedbackToResult(feedback1, result);
-        result = database.addFeedbackToResult(feedback2, result);
-        result = database.addFeedbackToResult(feedback3, result);
-
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
-
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks().stream().filter(f -> f.getType().equals(FeedbackType.AUTOMATIC)).collect(Collectors.toList()));
-        assertThat(feedbacks.size()).isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(value = "student2", roles = "USER")
-    public void shouldReturnTheResultDetailsForAStudentParticipation() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
-
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
-
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
-    }
-
-    @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(value = "student2", roles = "USER")
-    public void shouldReturnTheResultDetailsForAStudentParticipationWithSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
-        result = database.addVariousVisibilityFeedbackToResults(result);
-
-        if (isAfterDueDate) {
-            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().minusHours(10));
-        }
-        else {
-            // Set programming exercise due date in future.
-            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
-        }
-
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
-
-        assertThat(feedbacks.stream().filter(Feedback::isInvisible)).hasSize(0);
-
-        if (isAfterDueDate) {
-            assertThat(feedbacks.size()).isEqualTo(4);
-            assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(1);
-        }
-        else {
-            assertThat(feedbacks.size()).isEqualTo(3);
-            assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(0);
-        }
-    }
-
-    @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
+    public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
-        if (isAfterDueDate) {
-            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().minusHours(10));
-        }
-        else {
-            // Set programming exercise due date in future.
-            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
-        }
+        // Set programming exercise due date in future.
+        database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
                 Feedback.class);
 
-        assertThat(feedbacks.stream().filter(Feedback::isInvisible)).hasSize(1);
-        assertThat(feedbacks.size()).isEqualTo(5);
-        assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(1);
+        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
     }
 
     @Test
@@ -331,16 +224,11 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldNotFilterVisibilityNeverForInstructor() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
-        result = database.addVariousVisibilityFeedbackToResults(result);
-
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-                Feedback.class);
-        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.NEVER)).hasSize(1);
-        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnBadrequestForNonMatchingParticipationId() throws Exception {
+        Result result = database.addResultToParticipation(null, null, solutionParticipation);
+        database.addSampleFeedbackToResults(result);
+        request.getList("/api/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -357,7 +245,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         programmingExerciseRepository.save(programmingExercise);
 
         result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
-        assertThat(result.isRated() == shouldBeRated).isTrue();
+        assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 
     private static Stream<Arguments> setResultRatedPermutations() {
@@ -382,29 +270,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
                 Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultsForProgrammingExercise() throws Exception {
-        var now = ZonedDateTime.now();
-
-        for (int i = 1; i <= 10; i++) {
-            ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
-            programmingSubmission.submitted(true);
-            programmingSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(programmingExercise, programmingSubmission, "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + programmingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(5);
-        // TODO: check additional values
     }
 
     @Test

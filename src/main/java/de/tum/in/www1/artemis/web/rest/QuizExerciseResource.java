@@ -130,7 +130,12 @@ public class QuizExerciseResource {
         if (quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
+            if (quizExercise.getReleaseDate() == null || !quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(quizExercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
+            }
         }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
