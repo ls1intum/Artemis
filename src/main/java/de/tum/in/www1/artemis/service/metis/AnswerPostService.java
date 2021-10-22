@@ -120,9 +120,10 @@ public class AnswerPostService extends PostingService {
             updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
         // we need to explicitly update the answer post to the updated post
-        updatedAnswerPost.getPost().removeAnswerPost(updatedAnswerPost);
-        updatedAnswerPost.getPost().addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
+        Post updatedPost = updatedAnswerPost.getPost();
+        updatedPost.removeAnswerPost(updatedAnswerPost);
+        updatedPost.addAnswerPost(updatedAnswerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
 
         return updatedAnswerPost;
     }
@@ -138,9 +139,10 @@ public class AnswerPostService extends PostingService {
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
 
         // we need to explicitly update the answer post to the updated post
-        updatedAnswerPost.getPost().removeAnswerPost(updatedAnswerPost);
-        updatedAnswerPost.getPost().addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
+        Post updatedPost = updatedAnswerPost.getPost();
+        updatedPost.removeAnswerPost(updatedAnswerPost);
+        updatedPost.addAnswerPost(updatedAnswerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
     }
 
     /**

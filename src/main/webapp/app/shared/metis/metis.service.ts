@@ -386,7 +386,6 @@ export class MetisService implements OnDestroy {
                         this.cachedPosts[indexToUpdate] = postDTO.post;
                     }
                     if (postDTO.post.tags && postDTO.post.tags.length > 0) {
-                        // todo, what if tags are deleted or updated? -> maybe do not update tags (via websocket) on post update
                         const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));
                         this.tags$.next(updatedTags);
                     }
