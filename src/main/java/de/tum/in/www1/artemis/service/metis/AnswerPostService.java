@@ -77,8 +77,9 @@ public class AnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-
-        broadcastForPost(new MetisPostDTO(savedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
+        // we need to explicitly add the answer post to the updated post
+        post.addAnswerPost(savedAnswerPost);
+        broadcastForPost(new MetisPostDTO(post, MetisPostAction.UPDATE_POST));
         sendNotification(savedAnswerPost);
 
         return savedAnswerPost;
@@ -118,7 +119,9 @@ public class AnswerPostService extends PostingService {
             existingAnswerPost.setContent(answerPost.getContent());
             updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
-
+        // we need to explicitly update the answer post to the updated post
+        updatedAnswerPost.getPost().removeAnswerPost(updatedAnswerPost);
+        updatedAnswerPost.getPost().addAnswerPost(updatedAnswerPost);
         broadcastForPost(new MetisPostDTO(updatedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
 
         return updatedAnswerPost;
@@ -134,6 +137,9 @@ public class AnswerPostService extends PostingService {
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
 
+        // we need to explicitly update the answer post to the updated post
+        updatedAnswerPost.getPost().removeAnswerPost(updatedAnswerPost);
+        updatedAnswerPost.getPost().addAnswerPost(updatedAnswerPost);
         broadcastForPost(new MetisPostDTO(updatedAnswerPost.getPost(), MetisPostAction.UPDATE_POST));
     }
 

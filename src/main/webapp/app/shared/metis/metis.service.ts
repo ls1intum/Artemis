@@ -19,6 +19,7 @@ import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -370,34 +371,48 @@ export class MetisService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
+            postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
             switch (postDTO.action) {
                 case MetisPostAction.CREATE_POST:
                     this.cachedPosts.push(postDTO.post);
-                    this.getFilteredPosts(this.currentPostContextFilter, false);
-                    this.updateCoursePostTags();
+                    if (postDTO.post.tags && postDTO.post.tags.length > 0) {
+                        const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));
+                        this.tags$.next(updatedTags);
+                    }
                     break;
                 case MetisPostAction.UPDATE_POST:
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    this.cachedPosts[indexToUpdate] = postDTO.post;
+                    if (indexToUpdate > -1) {
+                        this.cachedPosts[indexToUpdate] = postDTO.post;
+                    }
+                    if (postDTO.post.tags && postDTO.post.tags.length > 0) {
+                        // todo, what if tags are deleted or updated? -> maybe do not update tags (via websocket) on post update
+                        const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));
+                        this.tags$.next(updatedTags);
+                    }
                     break;
                 case MetisPostAction.DELETE_POST:
                     const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    this.cachedPosts.splice(indexToDelete, 1);
+                    if (indexToDelete > -1) {
+                        this.cachedPosts.splice(indexToDelete, 1);
+                    }
                     break;
                 default:
                     break;
             }
+            this.getFilteredPosts(this.currentPostContextFilter, false);
         });
     }
 
     private createSubscriptionFromPostContextFilter(): void {
         let channel = '/topic/metis/';
-        if (this.currentPostContextFilter.courseId && this.currentPostContextFilter.courseWideContext) {
-            channel += `courses/${this.courseId}`;
-        } else if (this.currentPostContextFilter.exerciseId) {
+        if (this.currentPostContextFilter.exerciseId) {
             channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
         } else if (this.currentPostContextFilter.lectureId) {
             channel += `lectures/${this.currentPostContextFilter.lectureId}`;
+        } else {
+            // subscribe to course as this is topic that is emitted on in every case
+            channel += `courses/${this.courseId}`;
         }
         this.createWebsocketSubscription(channel);
     }

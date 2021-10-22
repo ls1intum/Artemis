@@ -113,6 +113,11 @@ public class Post extends Posting {
         this.reactions.add(reaction);
     }
 
+    @Override
+    public void removeReaction(Reaction reaction) {
+        this.reactions.remove(reaction);
+    }
+
     public Set<AnswerPost> getAnswers() {
         return answers;
     }

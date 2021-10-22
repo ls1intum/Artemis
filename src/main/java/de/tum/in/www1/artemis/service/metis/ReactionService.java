@@ -11,6 +11,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class ReactionService {
@@ -85,6 +87,21 @@ public class ReactionService {
         if (!user.equals(reaction.getUser())) {
             throw new AccessForbiddenException("Reaction", reaction.getId());
         }
+
+        // get affected post that will be sent as payload in according websocket message
+        Post updatedPost;
+        if (reaction.getPost() != null) {
+            updatedPost = reaction.getPost();
+            updatedPost.removeReaction(reaction);
+        }
+        else {
+            AnswerPost updatedAnswerPost = reaction.getAnswerPost();
+            updatedAnswerPost.removeReaction(reaction);
+            updatedPost = updatedAnswerPost.getPost();
+            updatedPost.removeAnswerPost(updatedAnswerPost);
+            updatedPost.addAnswerPost(updatedAnswerPost);
+        }
+        postService.broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
         reactionRepository.deleteById(reactionId);
     }
 }

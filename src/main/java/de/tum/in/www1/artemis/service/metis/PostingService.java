@@ -41,17 +41,22 @@ public abstract class PostingService {
     }
 
     void broadcastForPost(MetisPostDTO postDTO) {
-        String topicName = "/topic/metis/";
-        if (postDTO.getPost().getCourseWideContext() != null) {
-            topicName += "courses/" + postDTO.getPost().getCourse().getId();
-        }
-        else if (postDTO.getPost().getExercise() != null) {
-            topicName += "exercises/" + postDTO.getPost().getExercise().getId();
+        String specificTopicName = "/topic/metis/";
+        String genericTopicName = "/topic/metis/courses/";
+        if (postDTO.getPost().getExercise() != null) {
+            specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
+            genericTopicName += postDTO.getPost().getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+            messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.getPost().getLecture() != null) {
-            topicName += "lectures/" + postDTO.getPost().getLecture().getId();
+            specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
+            genericTopicName += postDTO.getPost().getLecture().getId();
+            messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        messagingTemplate.convertAndSend(topicName, postDTO);
+        else {
+            genericTopicName += postDTO.getPost().getCourse().getId();
+        }
+        messagingTemplate.convertAndSend(genericTopicName, postDTO);
     }
 
     /**
