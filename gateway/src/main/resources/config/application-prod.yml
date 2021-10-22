@@ -17,7 +17,7 @@ logging:
     level:
         ROOT: INFO
         tech.jhipster: INFO
-        de.tum.in.www1.artemis.gateway: INFO
+        de.tum.in.www1.artemis: INFO
 
 eureka:
     instance:

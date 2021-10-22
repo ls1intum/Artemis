@@ -14,7 +14,7 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.gateway.security.Role;
+import de.tum.in.www1.artemis.security.Role;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import reactor.core.publisher.Mono;

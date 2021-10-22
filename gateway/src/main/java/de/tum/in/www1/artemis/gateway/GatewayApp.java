@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.gateway.config.ApplicationProperties;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "de.tum.in.www1.artemis", "de.tum.in.www1.artemis.gateway" })
 @EnableConfigurationProperties({ ApplicationProperties.class })
 public class GatewayApp {
 

@@ -24,8 +24,9 @@ plugins {
     id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.1"
 }
 
+group = "de.tum.in.www1.artemis"
+
 allprojects {
-    group = "de.tum.in.www1.artemis"
     version = "5.2.3"
     description = "Interactive Learning with Individual Feedback"
 }

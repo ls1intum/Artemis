@@ -28,7 +28,7 @@ plugins {
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
-group = "de.tum.in.www1.artemis.gateway"
+group = "de.tum.in.www1.artemis"
 
 apply from: "gradle/docker.gradle"
 apply from: "gradle/swagger.gradle"
@@ -48,20 +48,42 @@ if (project.hasProperty("zipkin")) {
     apply from: "gradle/zipkin.gradle"
 }
 
+apply from: "../gradle/tasks.gradle"
+
+sourceSets {
+    external {
+        java {
+            srcDir file("../src/main/java")
+            include 'de/tum/in/www1/artemis/security/PBEPasswordEncoder.*'
+            include 'de/tum/in/www1/artemis/security/Role.*'
+        }
+    }
+    main {
+        compileClasspath += external.java
+        java {
+            srcDir external.java
+        }
+    }
+    test {
+        compileClasspath += external.java
+        java {
+            srcDir external.java
+        }
+    }
+}
+
 idea {
     module {
         excludeDirs += files("node_modules")
     }
 }
 
-apply from: "../gradle/tasks.gradle"
-
 spotless {
     // allows to execute the code formatting commands ./gradlew :gateway:spotlessApply and ./gradlew :gateway:spotlessCheck
     java {
         target project.fileTree(project.rootDir) {
             include "gateway/**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/exports/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/gateway/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/exports/**"
         }
         importOrderFile "../artemis-spotless.importorder"
         eclipse().configFile "../artemis-spotless-style.xml"
@@ -142,7 +164,7 @@ task executeTests (type: Exec) {
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", ":gateway:build", "-x", "webapp", "-x", ":gateway:test", "-x", "jacocoTestCoverageVerification"
+    commandLine "./gradlew", ":gateway:build", "-x", ":gateway:test", "-x", "jacocoTestCoverageVerification"
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain

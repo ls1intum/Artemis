@@ -20,11 +20,11 @@ import org.springframework.security.web.server.util.matcher.NegatedServerWebExch
 import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
 import org.zalando.problem.spring.webflux.advice.security.SecurityProblemSupport;
 
-import de.tum.in.www1.artemis.gateway.security.PBEPasswordEncoder;
-import de.tum.in.www1.artemis.gateway.security.Role;
 import de.tum.in.www1.artemis.gateway.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.gateway.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.gateway.web.filter.SpaWebFilter;
+import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import de.tum.in.www1.artemis.security.Role;
 import tech.jhipster.config.JHipsterProperties;
 
 @EnableWebFluxSecurity
@@ -82,24 +82,54 @@ public class SecurityConfiguration {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         // @formatter:off
-        http.securityMatcher(new NegatedServerWebExchangeMatcher(new OrServerWebExchangeMatcher(
+        http
+            .securityMatcher(new NegatedServerWebExchangeMatcher(new OrServerWebExchangeMatcher(
                 pathMatchers("/app/**", "/i18n/**", "/content/**", "/swagger-ui/**", "/swagger-resources/**", "/v2/api-docs", "/v3/api-docs", "/test/**"),
-                pathMatchers(HttpMethod.OPTIONS, "/**")))).csrf().disable().addFilterAt(new SpaWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
-                .addFilterAt(new JWTFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC).exceptionHandling().accessDeniedHandler(problemSupport)
-                .authenticationEntryPoint(problemSupport).and().headers().contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'").and()
-                .referrerPolicy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN).and()
-                .featurePolicy(
-                        "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen 'self'; payment 'none'")
-                .and().frameOptions().disable().and().authorizeExchange().pathMatchers("/").permitAll().pathMatchers("/*.*").permitAll().pathMatchers("/api/authenticate")
-                .permitAll().pathMatchers("/api/register").permitAll().pathMatchers("/api/activate").permitAll().pathMatchers("/api/account/reset-password/init").permitAll()
-                .pathMatchers("/api/account/reset-password/finish").permitAll().pathMatchers("/api/auth-info").permitAll().pathMatchers("/api/admin/**")
-                .hasAuthority(Role.ADMIN.getAuthority()).pathMatchers("/api/files/attachments/lecture/**").permitAll().pathMatchers("/api/files/attachments/attachment-unit/**")
-                .permitAll().pathMatchers("/api/files/file-upload-exercises/**").permitAll().pathMatchers("/api/files/markdown/**").permitAll().pathMatchers("/api/**")
-                .authenticated().pathMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority()).pathMatchers("/websocket/**").permitAll()
-                .pathMatchers("/services/artemis/api/authenticate").permitAll().pathMatchers("/services/artemis/public/**").permitAll().pathMatchers("/services/artemis/time")
-                .permitAll().pathMatchers("/services/**").authenticated().pathMatchers("/management/health").permitAll().pathMatchers("/management/health/**").permitAll()
-                .pathMatchers("/management/info").permitAll().pathMatchers("/management/prometheus").permitAll().pathMatchers("/management/**")
-                .hasAuthority(Role.ADMIN.getAuthority()).pathMatchers("/public/**").permitAll().pathMatchers("/time").permitAll();
+                pathMatchers(HttpMethod.OPTIONS, "/**"))))
+            .csrf()
+            .disable()
+                .addFilterAt(new SpaWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterAt(new JWTFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC)
+                .exceptionHandling().accessDeniedHandler(problemSupport).authenticationEntryPoint(problemSupport)
+            .and()
+                .headers()
+                .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
+            .and()
+                .referrerPolicy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+            .and()
+                .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen 'self'; payment 'none'")
+            .and()
+                .frameOptions()
+                .disable()
+            .and()
+                .authorizeExchange()
+                .pathMatchers("/").permitAll()
+                .pathMatchers("/*.*").permitAll()
+                .pathMatchers("/api/authenticate").permitAll()
+                .pathMatchers("/api/register").permitAll()
+                .pathMatchers("/api/activate").permitAll()
+                .pathMatchers("/api/account/reset-password/init").permitAll()
+                .pathMatchers("/api/account/reset-password/finish").permitAll()
+                .pathMatchers("/api/auth-info").permitAll()
+                .pathMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                .pathMatchers("/api/files/attachments/lecture/**").permitAll()
+                .pathMatchers("/api/files/attachments/attachment-unit/**").permitAll()
+                .pathMatchers("/api/files/file-upload-exercises/**").permitAll()
+                .pathMatchers("/api/files/markdown/**").permitAll()
+                .pathMatchers("/api/**").authenticated()
+                .pathMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
+                .pathMatchers("/websocket/**").permitAll()
+                .pathMatchers("/services/artemis/api/authenticate").permitAll()
+                .pathMatchers("/services/artemis/public/**").permitAll()
+                .pathMatchers("/services/artemis/time").permitAll()
+                .pathMatchers("/services/**").authenticated()
+                .pathMatchers("/management/health").permitAll()
+                .pathMatchers("/management/health/**").permitAll()
+                .pathMatchers("/management/info").permitAll()
+                .pathMatchers("/management/prometheus").permitAll()
+                .pathMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+                .pathMatchers("/public/**").permitAll()
+                .pathMatchers("/time").permitAll();
         // @formatter:on
         return http.build();
     }
