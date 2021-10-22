@@ -124,7 +124,7 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
     }
 
     /**
