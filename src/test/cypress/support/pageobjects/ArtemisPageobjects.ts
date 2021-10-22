@@ -1,3 +1,5 @@
+import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
+import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
 import { ExerciseResultPage } from './exercises/ExerciseResultPage';
 import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
 import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
@@ -46,6 +48,7 @@ export class ArtemisPageobjects {
     programmingExercise = {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
+        feedback: new ProgrammingExerciseFeedbackPage(),
         scaConfiguration: new CodeAnalysisGradingPage(),
         scaFeedback: new ScaFeedbackModal(),
     };
@@ -61,6 +64,7 @@ export class ArtemisPageobjects {
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
+        programming: new ProgrammingExerciseAssessmentPage(),
     };
     modelingExercise = {
         creation: new CreateModelingExercisePage(),

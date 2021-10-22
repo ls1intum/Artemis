@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.NotificationSettingsService;
+import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -52,7 +52,7 @@ public class NotificationSettingsResource {
      * GET notification-settings : Get all NotificationSettings for current user
      *
      * Fetches the NotificationSettings for the current user from the server.
-     * If the user has not yet modified the settings there will be none in the database, then 
+     * If the user has not yet modified the settings there will be none in the database, then
      *
      * @return the list of found NotificationSettings
      */
