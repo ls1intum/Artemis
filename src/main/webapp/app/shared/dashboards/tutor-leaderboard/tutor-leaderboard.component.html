@@ -48,7 +48,7 @@
                     {{ tutor.name }}
 
                     <fa-icon
-                        *ngIf="tutor.hasIssuesWithPerformance"
+                        *ngIf="isAtLeastInstructor && tutor.hasIssuesWithPerformance"
                         [icon]="'exclamation-triangle'"
                         class="text-warning"
                         ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
@@ -95,7 +95,7 @@
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
                 <td>{{ averageScorePercentage(tutor.averageScore) }}%</td>
-                <td>{{ tutor.averageRating.toFixed(1) }} ⭐</td>
+                <td>{{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }})</td>
             </tr>
         </tbody>
     </table>
