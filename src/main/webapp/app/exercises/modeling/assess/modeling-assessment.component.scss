@@ -25,9 +25,6 @@ $draggable-width: 15px;
         justify-content: center;
         min-width: $draggable-width;
     }
-    .card-header {
-        width: calc(100% - 15px);
-    }
 }
 
 .apollon-container {
