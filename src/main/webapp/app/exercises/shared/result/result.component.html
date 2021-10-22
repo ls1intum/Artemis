@@ -14,7 +14,7 @@
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass" class="guided-tour">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-                <span class="score">
+                <span *ngIf="exercise != undefined" class="score">
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
                     {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%,
                 </span>
