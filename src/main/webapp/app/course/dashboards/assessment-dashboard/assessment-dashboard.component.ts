@@ -20,7 +20,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
-import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 
 @Component({

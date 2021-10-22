@@ -2,12 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -266,7 +266,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
                 comp.tutor = new User(1);
 
-                let stats = new StatsForDashboard();
+                const stats = new StatsForDashboard();
                 stats.numberOfRatings = 2;
                 stats.tutorLeaderboardEntries = [
                     {
