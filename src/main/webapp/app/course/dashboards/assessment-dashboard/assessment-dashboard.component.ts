@@ -22,7 +22,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-courses',
@@ -81,7 +80,6 @@ export class AssessmentDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
         private sortService: SortService,
-        private translateService: TranslateService,
     ) {}
 
     /**
