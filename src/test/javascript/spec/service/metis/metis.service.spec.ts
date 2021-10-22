@@ -316,10 +316,10 @@ describe('Metis Service', () => {
     });
 
     it('should create empty post for a lecture context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture.id);
+        const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture);
         expect(emptyPost.courseWideContext).toEqual(undefined);
         expect(emptyPost.exercise).toEqual(undefined);
-        expect(emptyPost.lecture).toEqual({ id: metisLecture.id });
+        expect(emptyPost.lecture).toEqual(metisLecture);
     });
 
     it('should determine the link components for a reference to a post with course-wide context', () => {
