@@ -40,31 +40,32 @@ public abstract class PostingService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    void broadcastForPost(MetisPostDTO postDTO) {
+    void broadcastForPost(MetisPostDTO postDTO, Course course) {
         String specificTopicName = "/topic/metis/";
         String genericTopicName = "/topic/metis/courses/";
         if (postDTO.getPost().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
-            genericTopicName += postDTO.getPost().getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+            genericTopicName += course.getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.getPost().getLecture() != null) {
             specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
-            genericTopicName += postDTO.getPost().getLecture().getId();
+            genericTopicName += course.getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else {
-            genericTopicName += postDTO.getPost().getCourse().getId();
+            genericTopicName += course.getId();
         }
         messagingTemplate.convertAndSend(genericTopicName, postDTO);
     }
 
     /**
      * Checks if the requesting user is authorized in the course context,
-     * i.e. user has to be author of posting or at least teaching assistant
+     * i.e. a user has to be the author of posting or at least teaching assistant
      *
      * @param posting posting that is requested
      * @param user    requesting user
+     * @param course  course the posting belongs to
      */
     void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
         if (!user.getId().equals(posting.getAuthor().getId())) {
@@ -97,7 +98,6 @@ public abstract class PostingService {
         if (!course.getPostsEnabled()) {
             throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
         }
-
         return course;
     }
 

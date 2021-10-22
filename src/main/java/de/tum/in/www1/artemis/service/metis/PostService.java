@@ -70,7 +70,7 @@ public class PostService extends PostingService {
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
         // set author to current user
@@ -88,7 +88,7 @@ public class PostService extends PostingService {
         }
         Post savedPost = postRepository.save(post);
 
-        broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST));
+        broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
         sendNotification(savedPost, course);
 
         return savedPost;
@@ -138,7 +138,7 @@ public class PostService extends PostingService {
             updatedPost.getExercise().filterSensitiveInformation();
         }
 
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
         return updatedPost;
     }
 
@@ -162,11 +162,13 @@ public class PostService extends PostingService {
      *
      * @param post     post that is reacted on
      * @param reaction reaction that was added by a user
+     * @param courseId if of course the post belongs to
      */
-    public void updateWithReaction(Post post, Reaction reaction) {
+    public void updateWithReaction(Post post, Reaction reaction, Long courseId) {
+        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
@@ -210,7 +212,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
@@ -234,7 +236,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
@@ -311,7 +313,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new MetisPostDTO(post, MetisPostAction.DELETE_POST));
+        broadcastForPost(new MetisPostDTO(post, MetisPostAction.DELETE_POST), course);
     }
 
     /**

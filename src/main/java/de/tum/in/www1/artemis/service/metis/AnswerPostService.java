@@ -66,7 +66,7 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
 
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
         // use post from database rather than user input
@@ -79,7 +79,7 @@ public class AnswerPostService extends PostingService {
 
         // we need to explicitly add the answer post to the updated post
         post.addAnswerPost(savedAnswerPost);
-        broadcastForPost(new MetisPostDTO(post, MetisPostAction.UPDATE_POST));
+        broadcastForPost(new MetisPostDTO(post, MetisPostAction.UPDATE_POST), course);
         sendNotification(post, course);
 
         return savedAnswerPost;
@@ -102,7 +102,7 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerPost;
 
@@ -123,7 +123,7 @@ public class AnswerPostService extends PostingService {
         Post updatedPost = updatedAnswerPost.getPost();
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
 
         return updatedAnswerPost;
     }
@@ -133,8 +133,10 @@ public class AnswerPostService extends PostingService {
      *
      * @param answerPost answer post that is reacted on
      * @param reaction   reaction that was added by a user
+     * @param courseId   if of course the answer post belong to
      */
-    public void updateWithReaction(AnswerPost answerPost, Reaction reaction) {
+    public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
+        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
 
@@ -142,7 +144,7 @@ public class AnswerPostService extends PostingService {
         Post updatedPost = updatedAnswerPost.getPost();
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
@@ -165,7 +167,7 @@ public class AnswerPostService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerPostId);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**

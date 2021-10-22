@@ -96,7 +96,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToSave = createPostWithoutContext();
         Exercise exercise = existingExercisePosts.get(0).getExercise();
         postToSave.setExercise(exercise);
-        postToSave.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
@@ -110,7 +109,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToSave = createPostWithoutContext();
         Exercise examExercise = exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
         postToSave.setExercise(examExercise);
-        examExercise.setCourse(course);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
@@ -122,7 +120,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToSave = createPostWithoutContext();
         Lecture lecture = existingLecturePosts.get(0).getLecture();
         postToSave.setLecture(lecture);
-        postToSave.setCourse(lecture.getCourse());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);

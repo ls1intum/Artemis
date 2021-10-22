@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.service.metis;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -21,14 +23,18 @@ public class ReactionService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final ReactionRepository reactionRepository;
 
     private final PostService postService;
 
     private final AnswerPostService answerPostService;
 
-    public ReactionService(UserRepository userRepository, ReactionRepository reactionRepository, PostService postService, AnswerPostService answerPostService) {
+    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
+            AnswerPostService answerPostService) {
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
         this.postService = postService;
         this.answerPostService = answerPostService;
@@ -38,14 +44,15 @@ public class ReactionService {
      * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
+     * @param courseId if of course the according posting belongs to
      * @param reaction reaction to create
      * @return created reaction that was persisted
      */
-    public Reaction createReaction(Reaction reaction) {
+    public Reaction createReaction(Long courseId, Reaction reaction) {
         Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
 
         // checks
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (reaction.getId() != null) {
             throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idexists");
         }
@@ -61,7 +68,7 @@ public class ReactionService {
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save post
-            postService.updateWithReaction(post, reaction);
+            postService.updateWithReaction(post, reaction, courseId);
         }
         else {
             AnswerPost answerPost = answerPostService.findById(posting.getId());
@@ -69,7 +76,7 @@ public class ReactionService {
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save answer post
-            answerPostService.updateWithReaction(answerPost, reaction);
+            answerPostService.updateWithReaction(answerPost, reaction, courseId);
         }
         return savedReaction;
     }
@@ -77,10 +84,12 @@ public class ReactionService {
     /**
      * Determines authority to delete reaction and deletes the reaction
      *
-     * @param reactionId id of the reaction to delete
+     * @param reactionId    id of the reaction to delete
+     * @param courseId      id of the course the according posting belongs to
      */
-    public void deleteReactionById(Long reactionId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+    public void deleteReactionById(Long reactionId, Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 
         // check if user that wants to delete reaction is user that created the reaction
@@ -101,7 +110,7 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST));
+        postService.broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
         reactionRepository.deleteById(reactionId);
     }
 }
