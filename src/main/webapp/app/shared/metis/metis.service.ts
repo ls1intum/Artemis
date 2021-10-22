@@ -279,7 +279,7 @@ export class MetisService {
      * @return {boolean} author flag
      */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
-        return this.user ? posting?.author!.id === this.getUser().id : false;
+        return this.getUser() ? posting?.author!.id === this.getUser().id : false;
     }
 
     /**
