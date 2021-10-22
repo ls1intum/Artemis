@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.service.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
