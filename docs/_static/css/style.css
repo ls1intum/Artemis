@@ -1,0 +1,6 @@
+/* This import resolves when built */
+@import url("theme.css");
+
+.wy-body-for-nav .wy-nav-content {
+    max-width: none;
+}

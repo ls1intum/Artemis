@@ -51,7 +51,6 @@ export class AssessmentDashboardComponent implements OnInit {
 
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
-    isAtLeastInstructor = false;
 
     stats = new StatsForDashboard();
 
@@ -107,8 +106,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course!);
-                this.courseService.checkAndSetCourseRights(this.course);
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+                this.accountService.setAccessRightsForCourse(this.course);
 
                 // No exercises exist yet
                 if (!this.exam.exerciseGroups) {
@@ -173,9 +171,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
                 (res: HttpResponse<Course>) => {
                     this.course = Course.from(res.body!);
-                    this.courseService.checkAndSetCourseRights(this.course);
                     this.extractExercises(this.course.exercises);
-                    this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
                 },
                 (response: string) => this.onError(response),
             );
