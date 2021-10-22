@@ -7,8 +7,7 @@ services:
       - ./prometheus/:/etc/prometheus/
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-    # If you want to expose these ports outside your dev PC,
-    # remove the "127.0.0.1:" prefix
+    # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
     ports:
       - 127.0.0.1:9090:9090
     # On MacOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and

@@ -10,8 +10,7 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
       - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
       - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
-    # If you want to expose these ports outside your dev PC,
-    # remove the "127.0.0.1:" prefix
+    # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
     ports:
       - 127.0.0.1:8089:8089
 
@@ -26,7 +25,6 @@ services:
       - JHIPSTER_REGISTRY_PASSWORD=admin
       - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE=native
       - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS=file:./central-config/localhost-config/
-    # If you want to expose these ports outside your dev PC,
-    # remove the "127.0.0.1:" prefix
+    # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
     ports:
       - 127.0.0.1:8761:8761
