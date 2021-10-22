@@ -63,7 +63,7 @@ public class Post extends Posting {
     private Lecture lecture;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
     @Enumerated(EnumType.STRING)

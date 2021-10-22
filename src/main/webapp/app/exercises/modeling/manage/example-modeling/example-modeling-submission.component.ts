@@ -52,8 +52,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     invalidError?: string;
     exercise: ModelingExercise;
     course?: Course;
-    isAtLeastEditor = false;
-    isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
     assessmentExplanation: string;
@@ -127,8 +125,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.exercise = exerciseResponse.body!;
             this.course = getCourseFromExercise(this.exercise);
             this.isExamMode = this.exercise.exerciseGroup != undefined;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         });
 
         if (this.isNewSubmission) {

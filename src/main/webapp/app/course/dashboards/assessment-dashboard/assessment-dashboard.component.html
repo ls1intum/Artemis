@@ -52,7 +52,7 @@
                 [numberOfCorrectionRounds]="numberOfCorrectionRounds"
                 [totalAssessmentPercentage]="totalAssessmentPercentage"
                 [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                [isAtLeastInstructor]="isAtLeastInstructor"
+                [isAtLeastInstructor]="course?.isAtLeastInstructor || false"
                 [complaints]="complaints"
                 [moreFeedbackRequests]="moreFeedbackRequests"
                 [assessmentLocks]="assessmentLocks"
@@ -156,7 +156,7 @@
                         <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <ng-container
                                 class="col-lg-3 col-md-6 col-sm-6"
-                                *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
+                                *ngIf="course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
                             >
                                 <jhi-second-correction-enable-button
                                     class="me-1"
@@ -165,7 +165,7 @@
                                     [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                            <a class="btn btn-primary btn-sm" *ngIf="isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                            <a class="btn btn-primary btn-sm" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                 <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                             </a>
                         </ng-container>

@@ -134,6 +134,7 @@
         "jest-junit": "13.0.0",
         "jest-preset-angular": "10.0.1",
         "jest-sinon": "1.0.4",
+        "jest-extended": "1.0.0",
         "lint-staged": "11.2.2",
         "merge-jsons-webpack-plugin": "2.0.0-alpha",
         "mini-css-extract-plugin": "2.4.2",

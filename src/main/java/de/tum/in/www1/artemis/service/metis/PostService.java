@@ -23,8 +23,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
@@ -82,11 +82,14 @@ public class PostService extends PostingService {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
+            Post savedPost = postRepository.save(post);
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
+            return savedPost;
         }
         Post savedPost = postRepository.save(post);
 
         broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST));
-        sendNotification(savedPost);
+        sendNotification(savedPost, course);
 
         return savedPost;
     }
@@ -363,22 +366,22 @@ public class PostService extends PostingService {
      *
      * @param post post that triggered the notification
      */
-    void sendNotification(Post post) {
+    void sendNotification(Post post, Course course) {
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
+            return;
+        }
         // notify via exercise
         if (post.getExercise() != null) {
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
-            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
-            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
         }
     }
 

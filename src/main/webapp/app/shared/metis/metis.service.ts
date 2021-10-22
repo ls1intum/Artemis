@@ -11,7 +11,7 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { ContextInformation, CourseWideContext, DisplayPriority, MetisPostAction, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, CourseWideContext, DisplayPriority, MetisPostAction, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -256,10 +256,10 @@ export class MetisService implements OnDestroy {
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
      * @param {Exercise | undefined} exercise optional exercise as default context
-     * @param {number | undefined} lectureId id of optional lecture as default context
+     * @param {Lecture | undefined} lecture optional lecture as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
@@ -267,8 +267,8 @@ export class MetisService implements OnDestroy {
         } else if (exercise) {
             const exercisePost = this.exerciseService.convertExerciseForServer(exercise);
             emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
-        } else if (lectureId) {
-            emptyPost.lecture = { id: lectureId } as Lecture;
+        } else if (lecture) {
+            emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
         } else {
             // set default
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
@@ -301,16 +301,28 @@ export class MetisService implements OnDestroy {
     /**
      * determines the router link components required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
-     * @return {(string | number)[]} array of router link components
+     * @return {RouteComponents} array of router link components
      */
-    getLinkForPost(post?: Post): (string | number)[] {
+    getLinkForPost(post?: Post): RouteComponents {
         if (post?.lecture) {
-            return ['/courses', this.courseId, 'lectures', post.lecture.id!];
+            return MetisService.getLinkForLecturePost(this.courseId, post.lecture.id!);
         }
         if (post?.exercise) {
-            return ['/courses', this.courseId, 'exercises', post.exercise.id!];
+            return MetisService.getLinkForExercisePost(this.courseId, post.exercise.id!);
         }
-        return ['/courses', this.courseId, 'discussion'];
+        return MetisService.getLinkForCoursePost(this.courseId);
+    }
+
+    static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
+        return ['/courses', courseId, 'lectures', lectureId];
+    }
+
+    static getLinkForExercisePost(courseId: number, exerciseId: number): RouteComponents {
+        return ['/courses', courseId, 'exercises', exerciseId];
+    }
+
+    static getLinkForCoursePost(courseId: number): RouteComponents {
+        return ['/courses', courseId, 'discussion'];
     }
 
     /**
@@ -319,12 +331,22 @@ export class MetisService implements OnDestroy {
      * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
-        const params: Params = {};
         if (post.courseWideContext) {
-            params.searchText = `#${post.id}`;
+            return MetisService.getQueryParamsForCoursePost(post.id!);
         } else {
-            params.postId = post.id;
+            return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
         }
+    }
+
+    static getQueryParamsForCoursePost(postId: number): Params {
+        const params: Params = {};
+        params.searchText = `#${postId}`;
+        return params;
+    }
+
+    static getQueryParamsForLectureOrExercisePost(postId: number): Params {
+        const params: Params = {};
+        params.postId = postId;
         return params;
     }
 
