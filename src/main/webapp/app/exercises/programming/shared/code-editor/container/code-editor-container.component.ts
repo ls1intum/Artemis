@@ -25,6 +25,7 @@ import { CodeEditorAceComponent, Annotation } from 'app/exercises/programming/sh
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-code-editor-container',
@@ -67,6 +68,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onUpdateFeedback = new EventEmitter<Feedback[]>();
     @Output()
     onFileLoad = new EventEmitter<string>();
+    @Input()
+    course?: Course;
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 

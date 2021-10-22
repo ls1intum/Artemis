@@ -31,6 +31,8 @@ import { Subject, Subscription } from 'rxjs';
 import { omit } from 'lodash-es';
 import dayjs from 'dayjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -48,6 +50,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     participation: StudentParticipation;
     modelingExercise: ModelingExercise;
+    course?: Course;
     result?: Result;
     resultWithComplaint?: Result;
 
@@ -146,6 +149,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
 
         this.modelingExercise = this.participation.exercise as ModelingExercise;
+        this.course = getCourseFromExercise(this.modelingExercise);
         this.modelingExercise.studentParticipations = [this.participation];
         this.examMode = !!this.modelingExercise.exerciseGroup;
         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);

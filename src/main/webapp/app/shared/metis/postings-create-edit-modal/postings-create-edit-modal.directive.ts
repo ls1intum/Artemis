@@ -51,7 +51,6 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     confirm(): void {
         if (this.formGroup.valid) {
             this.isLoading = true;
-            this.posting.content = this.formGroup.get('content')?.value;
             if (this.editType === PostingEditType.UPDATE) {
                 this.updatePosting();
             } else if (this.editType === PostingEditType.CREATE) {
@@ -60,6 +59,9 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
         }
     }
 
+    /**
+     * opens the modal to edit or create a posting
+     */
     open(): void {
         this.modalRef = this.modalService.open(this.postingEditor, {
             size: 'lg',

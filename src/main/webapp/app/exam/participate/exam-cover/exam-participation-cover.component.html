@@ -23,13 +23,7 @@
 <div class="container d-flex flex-column align-items-center justify-content-center">
     <h2 style="text-align: center; font-weight: normal" *ngIf="startView">
         <span>
-            {{
-                'artemisApp.examParticipation.greeting'
-                    | artemisTranslate
-                        : {
-                              title: exam.title
-                          }
-            }}
+            {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
         </span>
         <br />
     </h2>

@@ -5,15 +5,26 @@ import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request-util';
-import { Router } from '@angular/router';
+import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
-import { Notification } from 'app/entities/notification.model';
+import {
+    NEW_ANNOUNCEMENT_POST_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_COURSE_POST_TITLE,
+    NEW_EXERCISE_POST_TITLE,
+    NEW_LECTURE_POST_TITLE,
+    Notification,
+} from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { RouteComponents } from 'app/shared/metis/metis.util';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -28,16 +39,17 @@ export class NotificationService {
         private http: HttpClient,
         private accountService: AccountService,
         private courseManagementService: CourseManagementService,
+        private serializer: UrlSerializer,
     ) {
         this.initNotificationObserver();
     }
 
     /**
-     * Query all notifications.
+     * Query all notifications with respect to the current user's notification settings.
      * @param req request options
      * @return Observable<HttpResponse<Notification[]>>
      */
-    query(req?: any): Observable<HttpResponse<Notification[]>> {
+    queryNotificationsFilteredBySettings(req?: any): Observable<HttpResponse<Notification[]>> {
         const options = createRequestOption(req);
         return this.http
             .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -54,20 +66,62 @@ export class NotificationService {
     }
 
     /**
-     * Navigate to notification target.
+     * Navigate to notification target or build router components and params for post related notifications
      * @param {GroupNotification} notification
      */
     interpretNotification(notification: GroupNotification): void {
         if (notification.target) {
             const target = JSON.parse(notification.target);
-            const courseId = target.course || notification.course?.id;
+            const targetCourseId = target.course || notification.course?.id;
 
             if (notification.title === 'Quiz started') {
-                this.router.navigate([target.mainPage, courseId, 'quiz-exercises', target.id, 'live']);
+                this.router.navigate([target.mainPage, targetCourseId, 'quiz-exercises', target.id, 'live']);
+            } else if (
+                notification.title === NEW_ANNOUNCEMENT_POST_TITLE ||
+                notification.title === NEW_COURSE_POST_TITLE ||
+                notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE
+            ) {
+                const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
+                const routeComponents: any[] = MetisService.getLinkForCoursePost(targetCourseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE) {
+                const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
+                const routeComponents: RouteComponents = MetisService.getLinkForExercisePost(targetCourseId, target.exerciseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (notification.title === NEW_LECTURE_POST_TITLE || notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE) {
+                const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
+                const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lectureId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {
-                this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+                this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }
         }
+    }
+
+    /**
+     * Navigate to post related targets, decide if reload is required, i.e. when switching course context
+     * @param {number} targetCourseId
+     * @param {RouteComponents} routeComponents
+     * @param {Params} queryParams
+     */
+    navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
+        const currentCourseId = NotificationService.getCurrentCourseId();
+        // determine if reload is required when notification is clicked
+        // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
+        if (currentCourseId === undefined || currentCourseId !== targetCourseId) {
+            const tree = this.router.createUrlTree(routeComponents, { queryParams });
+            // navigate by string url to force reload when switching the course context
+            window.location.href = this.serializer.serialize(tree);
+        } else {
+            // navigate with router when staying in same course context when clicking on notification
+            this.router.navigate(routeComponents, { queryParams });
+        }
+    }
+
+    private static getCurrentCourseId(): number | undefined {
+        // read course id from url
+        const matchCourseIdInURL = window.location.pathname.match(/.*\/courses\/(\d+)\/.*/);
+        return matchCourseIdInURL ? +matchCourseIdInURL[1] : undefined;
     }
 
     /**
