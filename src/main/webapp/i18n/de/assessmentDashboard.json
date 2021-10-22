@@ -41,9 +41,16 @@
             "tutorPerformanceIssues": {
                 "title": "Probleme mit der Leistung von Tutor:innen",
                 "tutor": "Tutor:in {{ tutorName }} hat Probleme mit der Leistung",
-                "ratings": "{{tutorName}} hat {{numberOfTutorItems}} Rating(s) mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als {{threshold}} ⭐.",
-                "score": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%.",
-                "complaints": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Ratio von {{averageTutorValue}} Beschwerden pro Abgabe bewertet. Das ist größer als {{threshold}}."
+                "ratings": {
+                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Rating(s) mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als {{threshold}} ⭐."
+                },
+                "score": {
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist größer als {{threshold}}%.",
+                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%."
+                },
+                "complaints": {
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerde(n) bekommen. Das ist größer als {{threshold}}."
+                }
             }
         }
     }

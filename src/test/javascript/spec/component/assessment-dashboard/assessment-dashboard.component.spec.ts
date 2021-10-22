@@ -275,15 +275,17 @@ describe('AssessmentDashboardInformationComponent', () => {
                         numberOfTutorComplaints: 1,
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 1,
+                        averageScore: 60,
                         numberOfTutorRatings: 1,
                         hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
                     {
                         userId: 2,
                         numberOfAssessments: 1,
-                        numberOfTutorComplaints: 1,
+                        numberOfTutorComplaints: 5,
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 5,
+                        averageScore: 80,
                         numberOfTutorRatings: 1,
                         hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
@@ -293,6 +295,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                         numberOfTutorComplaints: 0,
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 0,
+                        averageScore: 0,
                         numberOfTutorRatings: 0,
                         hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
@@ -339,16 +342,16 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 2.25;
                     const courseAverageValue = 4;
                     const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isWorseThanAverage).toEqual(true);
+                    expect(ratingChecker.isPerformanceIssue).toEqual(true);
                 });
 
                 it('tutors value is within allowed range', () => {
-                    const ratingCheckerA = new TutorIssueRatingChecker(1, 0, 0, tutorName, tutorId);
+                    const ratingCheckerA = new TutorIssueRatingChecker(1, 3, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, tutorName, tutorId);
-                    expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
-                    expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
-                    expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
                 });
             });
 
@@ -358,16 +361,16 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 40;
                     const courseAverageValue = 80;
                     const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isWorseThanAverage).toEqual(true);
+                    expect(ratingChecker.isPerformanceIssue).toEqual(true);
                 });
 
                 it('tutors value is within allowed range', () => {
                     const ratingCheckerA = new TutorIssueScoreChecker(1, 0, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
-                    expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
-                    expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
-                    expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
                 });
             });
 
@@ -377,16 +380,16 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 14;
                     const courseAverageValue = 10;
                     const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isWorseThanAverage).toEqual(true);
+                    expect(ratingChecker.isPerformanceIssue).toEqual(true);
                 });
 
                 it('tutors value is within allowed range', () => {
                     const ratingCheckerA = new TutorIssueComplaintsChecker(1, 0, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
-                    expect(ratingCheckerA.isWorseThanAverage).toEqual(false);
-                    expect(ratingCheckerB.isWorseThanAverage).toEqual(false);
-                    expect(ratingCheckerC.isWorseThanAverage).toEqual(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
                 });
             });
         });

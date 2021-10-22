@@ -104,6 +104,23 @@ jobs:
               path: junit.xml
               numFailures: 99
 
+  client-tests-selected:
+      runs-on: ubuntu-latest
+      timeout-minutes: 45
+      steps:
+          - uses: actions/checkout@v2
+            with:
+                fetch-depth: 0
+          - name: Setup Node.js
+            uses: actions/setup-node@v2.4.1
+            with:
+                node-version: '${{ env.node }}'
+                cache: 'npm'
+          - name: Install Dependencies
+            run: npm install
+          - name: TypeScript Test (Selection) With Typechecking
+            run: npm run test-diff:ci
+
   client-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30

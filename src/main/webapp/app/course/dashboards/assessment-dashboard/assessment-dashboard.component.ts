@@ -237,23 +237,18 @@ export class AssessmentDashboardComponent implements OnInit {
      * Computes the performance issues for every tutor based on its rating, score, complaints number comparing to the average tutor numbers
      */
     computeIssuesWithTutorPerformance() {
-        const complaintsToAssessmentsRatio = function (entry: TutorLeaderboardElement) {
-            if (entry.numberOfAssessments === 0) {
-                return 0;
-            }
-
-            return entry.numberOfTutorComplaints / entry.numberOfAssessments;
-        };
+        // clear the tutor issues array
+        this.tutorIssues = [];
 
         const courseInformation = this.stats.tutorLeaderboardEntries.reduce(
             (accumulator, entry) => {
                 return {
                     summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
                     summedAverageScore: accumulator.summedAverageScore + entry.averageScore,
-                    summedComplaintsToAssessmentsRatio: accumulator.summedComplaintsToAssessmentsRatio + complaintsToAssessmentsRatio(entry),
+                    summedComplaints: accumulator.summedComplaints + entry.numberOfTutorComplaints,
                 };
             },
-            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaintsToAssessmentsRatio: 0 },
+            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaints: 0 },
         );
 
         const numberOfTutorsWithNonZeroRatings = this.stats.tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
@@ -277,15 +272,15 @@ export class AssessmentDashboardComponent implements OnInit {
                     entry.userId,
                 ),
                 new TutorIssueComplaintsChecker(
-                    entry.numberOfAssessments,
-                    complaintsToAssessmentsRatio(entry),
-                    courseInformation.summedComplaintsToAssessmentsRatio / numberOfTutorsNonZeroAssessments,
+                    entry.numberOfTutorComplaints,
+                    entry.numberOfTutorComplaints,
+                    courseInformation.summedComplaints / numberOfTutorsNonZeroAssessments,
                     entry.name,
                     entry.userId,
                 ),
             ])
             // run every checker to see if the tutor value is within the allowed threshold
-            .filter((checker) => checker.isWorseThanAverage)
+            .filter((checker) => checker.isPerformanceIssue)
             // create tutor issue
             .map((checker) => checker.toIssue())
             .forEach((issue) => {
