@@ -8,7 +8,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
@@ -29,7 +28,6 @@ export class SubmissionExportDialogComponent implements OnInit {
         private submissionExportService: SubmissionExportService,
         public activeModal: NgbActiveModal,
         private alertService: AlertService,
-        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -46,10 +44,6 @@ export class SubmissionExportDialogComponent implements OnInit {
             .pipe(
                 tap(({ body: exercise }) => {
                     this.exercise = exercise!;
-                    // TODO workaround since find does not support exam exercise permissions properly
-                    if (this.exercise.exerciseGroup?.exam?.course) {
-                        this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
-                    }
                 }),
                 catchError((err) => {
                     this.alertService.error(err);

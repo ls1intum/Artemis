@@ -20,17 +20,17 @@ describe('Programming exercise participations', () => {
         setupCourseAndProgrammingExercise();
     });
 
-    it('Makes a failing submission', function () {
+    it('Makes a failing submission', () => {
         startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
         makeFailingSubmission();
     });
 
-    it('Makes a partially successful submission', function () {
+    it('Makes a partially successful submission', () => {
         startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentTwo());
         makePartiallySuccessfulSubmission();
     });
 
-    it('Makes a successful submission', function () {
+    it('Makes a successful submission', () => {
         startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentThree());
         makeSuccessfulSubmission();
     });

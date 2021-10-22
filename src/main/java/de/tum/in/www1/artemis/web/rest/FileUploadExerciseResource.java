@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -113,7 +115,12 @@ public class FileUploadExerciseResource {
 
         // Only notify students and tutors when the exercise is created for a course
         if (fileUploadExercise.isCourseExercise()) {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
+            if (fileUploadExercise.getReleaseDate() == null || !fileUploadExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(fileUploadExercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
+            }
         }
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
