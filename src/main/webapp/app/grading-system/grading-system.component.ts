@@ -816,6 +816,10 @@ export class GradingSystemComponent implements OnInit {
         this.exportAsCSV(rows, headers);
     }
 
+    /**
+     * Convert a grade step to a csv row. Undefined values are mapped to empty strings
+     * @param gradeStep
+     */
     convertToCsvRow(gradeStep: GradeStep): any {
         return {
             id: gradeStep.id ?? '',
