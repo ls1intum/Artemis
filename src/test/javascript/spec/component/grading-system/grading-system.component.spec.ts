@@ -70,6 +70,8 @@ describe('Grading System Component', () => {
     const course = new Course();
     course.maxPoints = 100;
 
+    global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule, FormsModule, RouterTestingModule.withRoutes([])],
@@ -577,4 +579,185 @@ describe('Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).to.be.undefined;
         expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).to.be.undefined;
     });
+
+    const csvColumns = 'id,gradeName,lowerBoundPercentage,lowerBoundPoints,upperBoundPercentage,upperBoundPoints,lowerBoundInclusive,upperBoundInclusive,isPassingGrade';
+
+    it('should read no students from csv file', async () => {
+        const event = { target: { files: [csvColumns] } };
+        await comp.onCSVFileSelect(event);
+
+        expect(comp.gradingScale.gradeSteps).lengthOf(0);
+    });
+
+    it('should have validation error for csv without header', async () => {
+        // Csv without header
+        const invalidCsv = `1,"2.3",75,75,80,80,TRUE,TRUE,TRUE`;
+
+        const event = { target: { files: [invalidCsv] } };
+        await comp.onCSVFileSelect(event);
+
+        expect(comp.gradingScale.gradeSteps).lengthOf(0);
+    });
+
+    it('should have validation error for undefined bound inclusivity', async () => {
+        const invalidGradeStep: any = {
+            id: 4,
+            gradeName: '2.0',
+            lowerBoundPercentage: 80,
+            lowerBoundPoints: 80,
+            upperBoundPercentage: 85,
+            upperBoundPoints: 85,
+            isPassingGrade: true,
+        };
+
+        expect(comp.validateImportedCsvGradeStepsForInclusivity([invalidGradeStep])).to.be.false;
+        expect(comp.invalidImportMessage).to.not.equal(undefined);
+    });
+
+    it('should have validation error for inconsistent bound inclusivity', async () => {
+        const step4: any = {
+            id: 4,
+            gradeName: '2.0',
+            lowerBoundPercentage: 80,
+            lowerBoundPoints: 80,
+            upperBoundPercentage: 85,
+            upperBoundPoints: 85,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: false,
+        };
+        const step3: any = {
+            id: 3,
+            gradeName: '1.7',
+            lowerBoundPercentage: 85,
+            lowerBoundPoints: 85,
+            upperBoundPercentage: 90,
+            upperBoundPoints: 90,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: false,
+        };
+        const step2: any = {
+            id: 2,
+            gradeName: '1.3',
+            lowerBoundPercentage: 90,
+            lowerBoundPoints: 90,
+            upperBoundPercentage: 95,
+            upperBoundPoints: 95,
+            lowerBoundInclusive: false,
+            upperBoundInclusive: true, // inconsistent with step 3
+            isPassingGrade: true,
+        };
+        const step1: any = {
+            id: 1,
+            gradeName: '1.0',
+            lowerBoundPercentage: 95,
+            lowerBoundPoints: 95,
+            upperBoundPercentage: 100,
+            upperBoundPoints: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+
+        expect(comp.validateImportedCsvGradeStepsForInclusivity([step4, step3, step2, step1])).to.be.false;
+        expect(comp.invalidImportMessage).to.not.equal(undefined);
+    });
+
+    it('should have validation error for doubled bound inclusivity for inner grade steps', async () => {
+        const step3: any = {
+            id: 3,
+            gradeName: '1.7',
+            lowerBoundPercentage: 85,
+            lowerBoundPoints: 85,
+            upperBoundPercentage: 90,
+            upperBoundPoints: 90,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: false,
+        };
+        const step2: any = {
+            id: 2,
+            gradeName: '1.3',
+            lowerBoundPercentage: 90,
+            lowerBoundPoints: 90,
+            upperBoundPercentage: 95,
+            upperBoundPoints: 95,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true, // lower and upper bound inclusivity set
+            isPassingGrade: true,
+        };
+        const step1: any = {
+            gradeName: '1.0',
+            lowerBoundPercentage: 95,
+            lowerBoundPoints: 95,
+            upperBoundPercentage: 100,
+            upperBoundPoints: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+
+        expect(comp.validateImportedCsvGradeStepsForInclusivity([step3, step2, step1])).to.be.false;
+        expect(comp.invalidImportMessage).to.not.equal(undefined);
+    });
+
+    it('should import csv correctly', async () => {
+        // csv representation of gradeSteps
+        const csvRows = [csvColumns, ',"Fail",0,,40,,TRUE,FALSE,FALSE', ',"Pass",40,,80,,TRUE,FALSE,TRUE', ',"Excellent",80,,100,,TRUE,TRUE,TRUE'];
+        const event = { target: { files: [csvRows.join('\n')] } };
+
+        await comp.onCSVFileSelect(event);
+        expect(comp.gradingScale.gradeSteps).to.deep.equal(gradeSteps);
+    });
+
+    it('should generate csv correctly', () => {
+        comp.gradingScale.gradeSteps = gradeSteps;
+        const numberOfGradeSteps = gradeSteps.length;
+        const exportAsCsvStub = sinon.stub(comp, 'exportAsCSV');
+
+        comp.exportGradingStepsToCsv();
+
+        const generatedRows = exportAsCsvStub.getCall(0).args[0];
+        expect(generatedRows.length).to.equal(numberOfGradeSteps);
+
+        for (let index = 0; index < numberOfGradeSteps; index++) {
+            const gradeStepRow = generatedRows[index];
+            validateGradeStepRow(gradeStepRow, gradeSteps[index]);
+        }
+    });
+
+    it('should export as csv', () => {
+        comp.exportGradingStepsToCsv();
+
+        expect(comp).to.be.ok;
+    });
 });
+
+// validating grade step rows. if optional values are undefined, they should be represented in the csv row as an empty string
+function validateGradeStepRow(actualGradeStepRow: any, expectedGradeStepRow: GradeStep) {
+    if (expectedGradeStepRow.id) {
+        expect(actualGradeStepRow.id).to.equal(expectedGradeStepRow.id);
+    } else {
+        expect(actualGradeStepRow.id).to.equal('');
+    }
+
+    if (expectedGradeStepRow.lowerBoundPoints) {
+        expect(actualGradeStepRow.lowerBoundPoints).to.equal(expectedGradeStepRow.lowerBoundPoints);
+    } else {
+        expect(actualGradeStepRow.lowerBoundPoints).to.equal('');
+    }
+
+    if (expectedGradeStepRow.lowerBoundPoints) {
+        expect(actualGradeStepRow.upperBoundPoints).to.equal(expectedGradeStepRow.upperBoundPoints);
+    } else {
+        expect(actualGradeStepRow.upperBoundPoints).to.equal('');
+    }
+
+    expect(actualGradeStepRow.gradeName).to.equal(expectedGradeStepRow.gradeName);
+    expect(actualGradeStepRow.lowerBoundPercentage).to.equal(expectedGradeStepRow.lowerBoundPercentage);
+    expect(actualGradeStepRow.upperBoundPercentage).to.equal(expectedGradeStepRow.upperBoundPercentage);
+    expect(actualGradeStepRow.lowerBoundInclusive).to.equal(expectedGradeStepRow.lowerBoundInclusive);
+    expect(actualGradeStepRow.upperBoundInclusive).to.equal(expectedGradeStepRow.upperBoundInclusive);
+    expect(actualGradeStepRow.isPassingGrade).to.equal(expectedGradeStepRow.isPassingGrade);
+}
