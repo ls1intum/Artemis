@@ -298,10 +298,14 @@
                     </div>
                 </dd>
                 <dt>
-                    <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories">Auxiliary Repositories</span>
+                    <span
+                        *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories"
+                        jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories"
+                        >Auxiliary Repositories</span
+                    >
                 </dt>
                 <dd></dd>
-                <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
+                <div *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
                     <ul>
                         <li *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <dt>

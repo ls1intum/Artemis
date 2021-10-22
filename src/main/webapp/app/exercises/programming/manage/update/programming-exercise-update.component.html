@@ -63,7 +63,7 @@
                 [columnMode]="'force'"
                 [rowHeight]="'auto'"
                 [rows]="programmingExercise.auxiliaryRepositories"
-                *ngIf="programmingExercise.auxiliaryRepositories"
+                *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0"
             >
                 <ngx-datatable-column name="Repository Name" prop="repositoryName">
                     <ng-template ngx-datatable-cell-template let-row="row">
@@ -73,8 +73,7 @@
                             [onValueUpdate]="updateRepositoryName(row)"
                             [pattern]="invalidRepositoryNamePattern"
                             [isRequired]="true"
-                            [translationRequiredMessage]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
-                            [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidRepositoryName'"
+                            [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
                         >
                         </jhi-table-editable-field>
                     </ng-template>
@@ -86,7 +85,7 @@
                             [value]="row.checkoutDirectory || ''"
                             [onValueUpdate]="updateCheckoutDirectory(row)"
                             [pattern]="invalidDirectoryNamePattern"
-                            [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
+                            [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
                         >
                         </jhi-table-editable-field>
                     </ng-template>
@@ -97,7 +96,7 @@
                         </jhi-table-editable-field>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column name="RemoveButton" prop="removeButton">
+                <ngx-datatable-column name="" prop="removeButton">
                     <ng-template ngx-datatable-cell-template let-row="row">
                         <jhi-remove-auxiliary-repository-button
                             placement="right"
@@ -105,19 +104,16 @@
                             [row]="row"
                             class="ml-2"
                         ></jhi-remove-auxiliary-repository-button>
-                        <span *ngIf="isEdit">
-                            <fa-icon
-                                [icon]="'exclamation-triangle'"
-                                class="text-warning mr-1"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-                            ></fa-icon>
-                            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
-                                >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
-                            >
-                        </span>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>
+            <ngb-alert [dismissible]="false" [type]="'warning'" *ngIf="auxiliaryRepositoryDuplicateNames || auxiliaryRepositoryDuplicateDirectories">
+                <span *ngIf="auxiliaryRepositoryDuplicateNames">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate }}</span>
+                <span *ngIf="auxiliaryRepositoryDuplicateDirectories">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate }}</span>
+            </ngb-alert>
+            <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="isEdit">
+                <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
+            </ngb-alert>
             <jhi-add-auxiliary-repository-button [programmingExercise]="programmingExercise" class="ml-2"></jhi-add-auxiliary-repository-button>
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
@@ -539,20 +535,12 @@
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [disabled]="editForm.form.invalid || !validIdeSelection()"
+            [disabled]="editForm.form.invalid || !validIdeSelection() || auxiliaryRepositoryDuplicateDirectories || auxiliaryRepositoryDuplicateNames"
             [isLoading]="isSaving"
             [icon]="'save'"
             [title]="submitButtonTitle"
             (click)="save()"
         >
         </jhi-button>
-        <span *ngIf="isEdit && invalidWarnings">
-            <fa-icon
-                [icon]="'exclamation-triangle'"
-                class="text-warning mr-1"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-            ></fa-icon>
-            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning">This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span>
-        </span>
     </div>
 </form>
