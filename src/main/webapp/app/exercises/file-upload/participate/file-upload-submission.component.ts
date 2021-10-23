@@ -25,6 +25,8 @@ import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/enti
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { Feedback } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -40,6 +42,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     result: Result;
     resultWithComplaint?: Result;
     submissionFile?: File;
+    course?: Course;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isSaving: boolean;
@@ -97,6 +100,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.examMode = !!this.fileUploadExercise.exerciseGroup;
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
+                this.course = getCourseFromExercise(this.fileUploadExercise);
 
                 // checks if the student started the exercise after the due date
                 this.isLate =

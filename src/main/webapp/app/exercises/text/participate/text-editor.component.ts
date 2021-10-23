@@ -27,6 +27,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -40,6 +42,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     result: Result;
     resultWithComplaint?: Result;
     submission: TextSubmission;
+    course?: Course;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
@@ -101,6 +104,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             !!this.textExercise.exerciseGroup.exam &&
             !!this.textExercise.exerciseGroup.exam.publishResultsDate &&
             dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
+        this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions && participation.submissions.length > 0) {
             this.submission = participation.submissions[0] as TextSubmission;

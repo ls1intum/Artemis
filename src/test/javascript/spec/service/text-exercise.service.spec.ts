@@ -16,6 +16,7 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import * as chai from 'chai';
 import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 const expect = chai.expect;
@@ -108,6 +109,23 @@ describe('TextExercise Service', () => {
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             expect(requestResult.status).to.equal(200);
+        });
+
+        it('should calculate and return tutor efforts', () => {
+            const exerciseId = 1;
+            const courseId = 1;
+            service.calculateTutorEffort(exerciseId, courseId).subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            const returnedFromService: TutorEffort[] = [
+                {
+                    courseId,
+                    exerciseId,
+                    numberOfSubmissionsAssessed: 1,
+                    totalTimeSpentMinutes: 1,
+                },
+            ];
+            req.flush(returnedFromService);
+            expect(requestResult).to.equal(returnedFromService);
         });
 
         it('should import a text exercise', () => {

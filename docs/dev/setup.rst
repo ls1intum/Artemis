@@ -137,6 +137,7 @@ information about the setup for programming exercises provided:
    Jenkins and Gitlab <setup/jenkins-gitlab>
    Multiple instances <setup/distributed>
    Programming Exercise adjustments <setup/programming-exercises>
+   Kubernetes <setup/kubernetes>
 
 
 .. note::
@@ -379,7 +380,7 @@ to
 
 If you still face the issue, you can try to set a higher value than 5120. Possible values are 6144, 7168, and 8192.
 
-The same change could be applied to each **ng** command as in the example above. 
+The same change could be applied to each **ng** command as in the example above.
 
 Make sure to **not commit this change** in ``package.json``.
 

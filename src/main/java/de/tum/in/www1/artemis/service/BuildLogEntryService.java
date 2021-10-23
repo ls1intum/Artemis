@@ -82,7 +82,7 @@ public class BuildLogEntryService {
      * @return boolean indicating an unnecessary build log or not
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
-        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString);
+        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString) || isDockerImageLog(logString);
         if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
             return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
                     || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]") || logString.startsWith("$ docker");
@@ -107,6 +107,16 @@ public class BuildLogEntryService {
         return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
                 || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
                 || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR] ".equals(log);
+    }
+
+    private boolean isDockerImageLog(String log) {
+        return (log.startsWith("Unable to find image '") && log.endsWith("' locally")) || (log.startsWith("Digest: sha256:") && log.length() == 79)
+                || log.startsWith("Status: Downloaded newer image for ") || "Jenkins does not seem to be running inside a container".equals(log)
+                || log.startsWith("Jenkins seems to be running inside container ") || ".".equals(log)
+                // Each of the following is prefixed by a 12 character hash, so the length is the length of the suffix + 12
+                || (log.endsWith(": Pulling fs layer") && log.length() == 30) || (log.endsWith(": Waiting") && log.length() == 21)
+                || (log.endsWith(": Verifying Checksum") && log.length() == 32) || (log.endsWith(": Download complete") && log.length() == 31)
+                || (log.endsWith(": Pull complete") && log.length() == 27);
     }
 
     /**
