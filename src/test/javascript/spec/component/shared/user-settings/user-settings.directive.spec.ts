@@ -51,7 +51,7 @@ describe('User Settings Directive', () => {
 
     const notificationSettingA: NotificationSetting = {
         settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
-        webApp: false,
+        webapp: false,
         email: false,
     };
     const notificationSettingB: NotificationSetting = {
