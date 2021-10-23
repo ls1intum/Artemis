@@ -32,6 +32,8 @@ import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -49,6 +51,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     participation: StudentParticipation;
     modelingExercise: ModelingExercise;
+    course?: Course;
     result?: Result;
     resultWithComplaint?: Result;
 
@@ -145,6 +148,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
 
         this.modelingExercise = this.participation.exercise as ModelingExercise;
+        this.course = getCourseFromExercise(this.modelingExercise);
         this.modelingExercise.studentParticipations = [this.participation];
         this.examMode = !!this.modelingExercise.exerciseGroup;
         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);

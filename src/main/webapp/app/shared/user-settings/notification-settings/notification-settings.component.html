@@ -1,0 +1,53 @@
+<jhi-alert></jhi-alert>
+<div class="d-flex justify-content-between">
+    <div>
+        <h1>
+            <!--UserSettingsCategory-->
+            {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
+        </h1>
+        <div class="d-inline-flex userSettings-info">
+            <fa-icon class="ng-fa-icon" [icon]="'info-circle'"></fa-icon>
+            <span class="ps-1">
+                <!-- Info text explaining that these settings also filter the notification sidebar -->
+                {{ 'artemisApp.userSettings.notificationSettingsFilterInfo' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
+    <button type="button" class="btn btn-primary" *ngIf="settingsChanged" id="apply-changes-button" (click)="this.saveSettings()">
+        <fa-icon class="ng" [icon]="'save'"></fa-icon>
+        {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
+    </button>
+</div>
+<div class="list-group d-block" *ngIf="userSettings">
+    <div *ngFor="let settingGroup of userSettings.groups">
+        <div *jhiHasAnyAuthority="[settingGroup.restrictionLevel]" class="list-group-item">
+            <h3>
+                <!--GroupName-->
+                <!-- please look at the README.md file to understand how the translation works -->
+                {{ 'artemisApp.userSettings.settingGroupNames.' + settingGroup.key | artemisTranslate }}
+            </h3>
+            <div *ngFor="let setting of settingGroup.settings">
+                <dt>
+                    <!--SettingName-->
+                    {{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}
+                </dt>
+                <span>
+                    <!--SettingDescription-->
+                    {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
+                </span>
+                <!--Setting Specific Properties-->
+                <div class="form-check border-bottom">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="setting.webapp"
+                        id="{{ setting.settingId }}"
+                        value="{{ setting.webapp }}"
+                        (click)="toggleSetting($event)"
+                    />
+                    <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
