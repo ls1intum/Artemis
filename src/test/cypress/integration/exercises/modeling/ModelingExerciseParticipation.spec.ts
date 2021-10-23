@@ -32,7 +32,6 @@ describe('Modeling Exercise Spec', () => {
     });
 
     it('Student can start and submit their model', () => {
-        cy.login(student);
         cy.intercept(BASE_API + 'courses/*/exercises/*/participations').as('createModelingParticipation');
         cy.login(student, `/courses/${course.id}`);
         cy.get('.col-lg-8').contains(modelingExercise.title);
