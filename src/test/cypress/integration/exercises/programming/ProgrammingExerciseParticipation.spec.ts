@@ -78,7 +78,7 @@ describe('Programming exercise participations', () => {
      */
     function makePartiallySuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName, partiallySuccessful, () => {
-            editorPage.getResultPanel().contains('46%').should('be.visible');
+            editorPage.getResultPanel().contains('46.2%').should('be.visible');
             editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
             editorPage.getBuildOutput().contains('No build results available').should('be.visible');
             editorPage.getInstructionSymbols().each(($el, $index) => {
