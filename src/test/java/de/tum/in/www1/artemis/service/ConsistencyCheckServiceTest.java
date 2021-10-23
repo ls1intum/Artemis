@@ -59,7 +59,7 @@ public class ConsistencyCheckServiceTest {
      * inconsistencies
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
+    public void testCheckConsistencyOfProgrammingExercise_noErrors() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
@@ -79,7 +79,7 @@ public class ConsistencyCheckServiceTest {
      * with missing VCS project
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
+    public void testCheckConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
@@ -97,7 +97,7 @@ public class ConsistencyCheckServiceTest {
      * with missing VCS repositories
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
+    public void testCheckConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
@@ -123,7 +123,7 @@ public class ConsistencyCheckServiceTest {
      * with missing Build Plans
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
+    public void testCheckConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
@@ -149,7 +149,7 @@ public class ConsistencyCheckServiceTest {
      * of a programming exercise
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
+    public void testCheckConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise.setTestRepositoryUrl("artemislocalhost/to/set/localSimulation/to/true");
         exercise = programmingExerciseRepository.save(exercise);
@@ -164,7 +164,7 @@ public class ConsistencyCheckServiceTest {
      *
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
+    public void testCheckConsistencyOfProgrammingExercise_forbidden() throws Exception {
         // remove user from course group to simulate an unauthorized situation
         User notAuthorizedUser = userRepository.getUser();
         notAuthorizedUser.setGroups(new HashSet<>());
@@ -179,7 +179,7 @@ public class ConsistencyCheckServiceTest {
      *
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfCourse_forbidden() throws Exception {
+    public void testCheckConsistencyOfCourse_forbidden() throws Exception {
         // remove user from course group to simulate an unauthorized situation
         User notAuthorizedUser = userRepository.getUser();
         notAuthorizedUser.setGroups(new HashSet<>());
@@ -193,7 +193,7 @@ public class ConsistencyCheckServiceTest {
      * containing errors
      * @throws Exception if an error occurs
      */
-    public void checkConsistencyOfCourse() throws Exception {
+    public void testCheckConsistencyOfCourse() throws Exception {
         var newExercise = ModelFactory.generateProgrammingExercise(null, null, course);
         newExercise.setShortName("Test2");
         newExercise.setTitle("Test2");

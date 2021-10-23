@@ -35,48 +35,48 @@ public class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpri
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_noErrors();
+        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_noErrors();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_missingVCSProject();
+        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_missingVCSProject();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_missingVCSRepos();
+        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_missingVCSRepos();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_buildPlansMissing();
+        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_buildPlansMissing();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_isLocalSimulation();
+        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_isLocalSimulation();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_forbidden();
+        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_forbidden();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfCourse_forbidden() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfCourse_forbidden();
+        consistencyCheckServiceTest.testCheckConsistencyOfCourse_forbidden();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfCourse() throws Exception {
-        consistencyCheckServiceTest.checkConsistencyOfCourse();
+        consistencyCheckServiceTest.testCheckConsistencyOfCourse();
     }
 }
