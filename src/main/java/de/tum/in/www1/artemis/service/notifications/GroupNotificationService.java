@@ -318,8 +318,9 @@ public class GroupNotificationService {
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
 
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
-        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(type);
-        if (hasEmailSupport) {
+
+        // checks if this notification type has email support
+        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
             prepareSendingGroupEmail(notification, notificationSubject);
         }
     }
@@ -362,13 +363,7 @@ public class GroupNotificationService {
      * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)
      */
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
-        boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(type);
-        if (isUrgentEmail) {
-            mailService.sendNotificationEmailForMultipleUsers(notification, users, notificationSubject);
-            return;
-        }
-
+        // find the users that have this notification type & email communication channel activated
         List<User> usersThatShouldReceiveAnEmail = users.stream()
                 .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
 

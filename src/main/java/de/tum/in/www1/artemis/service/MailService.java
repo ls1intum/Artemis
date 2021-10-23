@@ -22,6 +22,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -191,7 +192,13 @@ public class MailService {
         }
 
         // replace with (e.g.) "http://localhost:9000" for local testing
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
+        if (notificationSubject instanceof Post) {
+            // posts use a different mechanism for the url
+            context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+        }
+        else {
+            context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
+        }
         context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = createContentForNotificationEmailByType(notificationType, context);
@@ -211,6 +218,7 @@ public class MailService {
             case ATTACHMENT_CHANGE -> templateEngine.process("mail/notification/attachmentChangedEmail", context);
             case EXERCISE_RELEASED -> templateEngine.process("mail/notification/exerciseReleasedEmail", context);
             case EXERCISE_PRACTICE -> templateEngine.process("mail/notification/exerciseOpenForPracticeEmail", context);
+            case NEW_ANNOUNCEMENT_POST -> templateEngine.process("mail/notification/announcementPostEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

@@ -37,7 +37,7 @@
                 </span>
                 <!--Setting Specific Properties-->
                 <div class="d-flex border-bottom">
-                    <div class="form-check pe-3">
+                    <div *ngIf="setting.webapp != undefined && (setting.webappSupport == undefined || setting.webappSupport)" class="form-check pe-3">
                         <input
                             type="checkbox"
                             class="form-check-input"
@@ -48,7 +48,7 @@
                         />
                         <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                     </div>
-                    <div *ngIf="setting.email != undefined && checkIfNotificationSettingHasEmailSupport(setting)" class="form-check">
+                    <div *ngIf="setting.email != undefined && setting.emailSupport" class="form-check">
                         <input
                             type="checkbox"
                             class="form-check-input"

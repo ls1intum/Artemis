@@ -141,14 +141,4 @@ public class NotificationSettingsServiceTest {
         // Check all notification types that should have email support in the future but lack a template as of now
         notificationTypesWithNoEmailSupportYet.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailSupport(type)).isFalse());
     }
-
-    /**
-     * Tests the method checkNotificationTypeForEmailUrgency
-     * The emails based on these types should always be created and sent the respective users
-     */
-    @Test
-    public void testCheckNotificationTypeForEmailUrgency() {
-        Set<NotificationType> urgentEmailNotificationTypes = Set.of(DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION);
-        urgentEmailNotificationTypes.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailUrgency(type)).isTrue());
-    }
 }

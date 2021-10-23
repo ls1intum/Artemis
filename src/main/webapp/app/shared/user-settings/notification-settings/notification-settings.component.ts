@@ -7,7 +7,6 @@ import { NotificationSetting } from 'app/shared/user-settings/notification-setti
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 @Component({
     selector: 'jhi-notification-settings',
@@ -49,13 +48,5 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
             foundSetting!.email = !foundSetting!.email;
         }
         foundSetting.changed = true;
-    }
-
-    /**
-     * Checks if the provided NotificationSetting has email support
-     * @param setting which settingId will be checked
-     */
-    public checkIfNotificationSettingHasEmailSupport(setting: NotificationSetting): boolean {
-        return !NotificationSettingsService.NOTIFICATION_SETTINGS_WITHOUT_EMAIL_SUPPORT.has(setting.settingId);
     }
 }

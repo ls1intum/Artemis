@@ -167,18 +167,15 @@
 <th:block th:fragment="footer">
     <footer>
         <span th:text="#{email.notification.aux.footer}"/>
-        <a th:href="@{|${baseUrl}/user-settings/notifications|}">Artemis</a>
+        <a th:href="@{|${baseUrl}/user-settings/notifications|}">
+            <span th:text="#{email.notification.aux.footer.link}"/>
+        </a>
     </footer>
 </th:block>
 
 <!--
     ADDITIONAL AUXILIARY FRAGMENTS
 -->
-
-<!-- Fragment displaying full course title -->
-<th:block th:fragment="courseTitle">
-    <span th:utext="${not}">Course Title</span>
-</th:block>
 
 <!-- Fragment displaying the translated exerciseType (e.g. -> "Quiz") -->
 <th:block th:fragment="exerciseTypeTranslation">

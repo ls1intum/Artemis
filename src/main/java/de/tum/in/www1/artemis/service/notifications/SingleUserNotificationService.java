@@ -103,14 +103,10 @@ public class SingleUserNotificationService {
      */
     private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
-        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(type);
-        if (hasEmailSupport) {
-            boolean isAllowedBySettings = false;
-            boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(type);
-            if (!isUrgentEmail) {
-                isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
-            }
-            if (isUrgentEmail || isAllowedBySettings) {
+        // checks if this notification type has email support
+        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
+            boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
+            if (isAllowedBySettings) {
                 mailService.sendNotificationEmail(notification, notification.getRecipient(), notificationSubject);
             }
         }

@@ -37,15 +37,6 @@ export class NotificationSettingsService {
         [SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
     ]);
 
-    // TODO remove the settings when the corresponding email template is implemented
-    static NOTIFICATION_SETTINGS_WITHOUT_EMAIL_SUPPORT: Set<SettingId> = new Set<SettingId>([
-        SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
-        SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST,
-        SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST,
-        SettingId.NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST,
-        SettingId.NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST,
-    ]);
-
     /**
      * Creates an updates map that indicates which notifications (titles) are (de)activated in the current notification settings
      * @param notificationSettings will be mapped to their respective title and create a new updated map

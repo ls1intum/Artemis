@@ -45,13 +45,13 @@ describe('Notification Sidebar Component', () => {
     const notifications = [notificationNow, notificationPast] as Notification[];
 
     const notificationSettingA: NotificationSetting = {
-        webapp: true,
+        webApp: true,
         email: false,
         changed: false,
         settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
     };
     const notificationSettingB: NotificationSetting = {
-        webapp: true,
+        webApp: true,
         email: false,
         changed: false,
         settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,

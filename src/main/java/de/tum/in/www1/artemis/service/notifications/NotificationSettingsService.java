@@ -20,36 +20,8 @@ public class NotificationSettingsService {
 
     private NotificationSettingRepository notificationSettingRepository;
 
-    private final Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(COURSE_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED, QUIZ_EXERCISE_STARTED);
-
-    // TODO add the templates step by step to create small PRs
-    private final Set<NotificationType> notificationTypesWithNoEmailSupportYet = Set.of(EXERCISE_UPDATED, NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST,
-            NEW_REPLY_FOR_LECTURE_POST, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED);
-
-    private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION);
-
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
-    }
-
-    /**
-     * Checks if the notification type has email support
-     * For some types there is no need for email support so they will be filtered out here.
-     * @param type of the notification
-     * @return true if the type has email support else false
-     */
-    public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
-        return !(notificationTypesWithNoEmailSupport.contains(type) || notificationTypesWithNoEmailSupportYet.contains(type));
-    }
-
-    /**
-     * Checks if the notification type indicates an urgent email
-     * i.e. an email should always be send (e.g. ILLEGAL_SUBMISSION) (users can not deactivate it via settings)
-     * @param type of the notification
-     * @return true if the type indicated an urgent case else false
-     */
-    public boolean checkNotificationTypeForEmailUrgency(NotificationType type) {
-        return urgentEmailNotificationTypes.contains(type);
     }
 
     /**
@@ -81,6 +53,13 @@ public class NotificationSettingsService {
     }
 
     // notification settings settingIds analogous to client side
+    // course wide discussion notification setting group
+    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST = "notification.course-wide-discussion.new-course-post";
+
+    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST = "notification.course-wide-discussion.new-reply-for-course-post";
+
+    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST = "notification.course-wide-discussion.new-announcement-post";
+
     // exercise notification setting group
     private final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED = "notification.exercise-notification.exercise-released";
 
@@ -97,29 +76,27 @@ public class NotificationSettingsService {
 
     private final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = "notification.lecture-notification.new-reply-for-lecture-post";
 
-    // course wide discussion notification setting group
-    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST = "notification.course-wide-discussion.new-course-post";
-
-    private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST = "notification.course-wide-discussion.new-reply-for-course-post";
-
     // instructor exclusive notification setting group
     private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-exclusive-notification.course-and-exam-archiving-started";
 
+    // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
+    // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
+            // course wide discussion notification setting group
+            new NotificationSetting(true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
+            new NotificationSetting(true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
+            new NotificationSetting(true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
             // exercise notification setting group
             new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
             new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
+            new NotificationSetting(true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
+            new NotificationSetting(true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
             // lecture notification settings group
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
-            // course wide discussion notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
+            new NotificationSetting(true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
+            new NotificationSetting(true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
             // instructor exclusive notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
+            new NotificationSetting(true, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -134,8 +111,20 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
-            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }), Map.entry(
+            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
+            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }), Map.entry(
                     NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
+
+    /**
+     * Checks if the notification type has email support
+     * For some types there is no need for email support so they will be filtered out here.
+     * @param type of the notification
+     * @return true if the type has email support else false
+     */
+    public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
+        Boolean result = this.convertNotificationSettingsToNotificationTypesWithActivationStatus(false, DEFAULT_NOTIFICATION_SETTINGS).get(type);
+        return result == null ? false : result;
+    }
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationSettings
