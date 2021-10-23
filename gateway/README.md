@@ -1,19 +1,36 @@
-# gateway
+# Gateway
 
-This application was generated using JHipster 7.1.0, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v7.1.0](https://www.jhipster.tech/documentation-archive/v7.1.0).
+This application was generated using JHipster, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v7.1.0](https://www.jhipster.tech/documentation-archive/v7.1.0).
 
 This is a "gateway" application intended to be part of a microservice architecture, please refer to the [Doing microservices with JHipster][] page of the documentation for more information.
-This application is configured for Service Discovery and Configuration with the JHipster-Registry. On launch, it will refuse to start if it is not able to connect to the JHipster-Registry at [http://localhost:8761](http://localhost:8761). For more information, read our documentation on [Service Discovery and Configuration with the JHipster-Registry][].
+
+## Environment preparation
+
+This application is configured for Service Discovery and Configuration with the JHipster-Registry. On launch, it will refuse to start if it is not able to connect to the JHipster-Registry at [http://localhost:8761](http://localhost:8761).
+You can start the JHipster Registry using Docker, by running:
+```bash
+docker-compose -f src/main/docker/jhipster-registry.yml up
+```
+
+or you can clone it from the [GitHub repostory of the JHipster Registry](https://github.com/jhipster/jhipster-registry).
+
+Important part for the connection is to make sure that `jhipster.registry.password` in `application-dev.yml/application-prod.yml` and 
+`JHIPSTER_REGISTRY_PASSWORD` in the Docker Compose file are the same. If not the Gateway will not be able to register to the Registry.
+
+The JHipster Registry is a Spring Cloud Config server and holds the configuration for the applications. 
+When application (gateway or microservice) connects to the registry it gets configuration data which should be shared among all of the application.
+An example is `base64-secret` used to verify JWT tokens. It can be changed in `docker/central-server-config/docker-config/application.yml` for production environments or 
+`docker/central-server-config/localhost-config/application.yml` for development environments.
+
+**It is recommended to change the base64 secret and the JHipster Registry password for production environment.**
 
 ## Development
 
 To start your application in the dev profile, run:
 
-```
+```bash
 ./gradlew :gateway:bootRun
 ```
-
-For further instructions on how to develop with JHipster, have a look at [Using JHipster in development][].
 
 ### Doing API-First development using openapi-generator
 
@@ -35,14 +52,14 @@ Refer to [Doing API-First development][] for more details.
 
 To build the final jar and optimize the gateway application for production, run:
 
-```
+```bash
 ./gradlew -Pprod clean :gateway:bootJar
 ```
 
 This will concatenate and minify the client CSS and JavaScript files. It will also modify `index.html` so it references these new files.
 To ensure everything worked, run:
 
-```
+```bash
 java -jar build/libs/*.jar
 ```
 
@@ -54,7 +71,7 @@ Refer to [Using JHipster in production][] for more details.
 
 To package your application as a war in order to deploy it to an application server, run:
 
-```
+```bash
 ./gradlew -Pprod -Pwar clean :gateway:bootWar
 ```
 
@@ -62,7 +79,7 @@ To package your application as a war in order to deploy it to an application ser
 
 To launch your application's tests, run:
 
-```
+```bash
 ./gradlew :gateway:executeTests :gateway:jacocoTestReport -x webapp -x copyClientBuildFiles
 ```
 
@@ -73,21 +90,28 @@ You can use Docker to improve your JHipster development experience. A number of 
 You can also fully dockerize your application and all the services that it depends on.
 To achieve this, first build a docker image of your app by running:
 
-```
+```bash
 ./gradlew bootJar -Pprod :gateway:jibDockerBuild
 ```
 
 Then run:
 
-```
+```bash
 docker-compose -f src/main/docker/app.yml up -d
 ```
-
-For more information refer to [Using Docker and Docker-Compose][], this page also contains information on the docker-compose sub-generator (`jhipster docker-compose`), which is able to generate docker configurations for one or several JHipster applications.
 
 ## Continuous Integration (optional)
 
 To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
+
+## Monitoring
+
+Docker Compose files are provided for Prometheus and Grafana. The configuration is intended for development, therefore it
+must be hardened for production environments.
+
+**In case you are using MacOS, you need to modify the `docker/monitoring.yml` and `docker/prometheus/prometheus.yml` by removing
+`network_mode` and replacing `localhost`.**
+
 
 [doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/
 [using jhipster in development]: https://www.jhipster.tech/documentation-archive/v7.1.0/development/

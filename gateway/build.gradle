@@ -83,7 +83,9 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "gateway/**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/gateway/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/exports/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/gateway/config/SecurityConfiguration.java", "**/node_modules/**",
+                "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**",
+                "**/exports/**", "src/main/java/de/tum/in/www1/artemis/**"
         }
         importOrderFile "../artemis-spotless.importorder"
         eclipse().configFile "../artemis-spotless-style.xml"
