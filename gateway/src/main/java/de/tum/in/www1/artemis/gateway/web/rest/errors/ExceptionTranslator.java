@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.gateway.web.rest.errors;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
