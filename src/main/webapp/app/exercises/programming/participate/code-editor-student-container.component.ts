@@ -24,6 +24,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -32,7 +33,6 @@ import { Participation } from 'app/entities/participation/participation.model';
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly getCourseFromExercise = getCourseFromExercise;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -40,6 +40,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     participation: StudentParticipation;
     exercise: ProgrammingExercise;
+    course?: Course;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -85,6 +86,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
+                        this.course = getCourseFromExercise(this.exercise);
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();

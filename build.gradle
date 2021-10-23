@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.2.3"
+    version = "5.2.6"
     description = "Interactive Learning with Individual Feedback"
 }
 

@@ -58,9 +58,9 @@
                     </div>
                     <div class="col-5">
                         <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
-                        <span *ngIf="numberOfSubmissions.late > 0"> | </span>
+                        <span *ngIf="numberOfSubmissions.late > 0"> / </span>
                         <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
-                        /
+                        |
                         <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']" [queryParams]="{ tutorId: tutor?.id }"
                             >{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</a
                         >
@@ -72,7 +72,7 @@
                         {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        {{ numberOfComplaints }} /
+                        {{ numberOfComplaints }} |
                         <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
                             numberOfTutorComplaints
                         }}</a>
@@ -84,7 +84,7 @@
                         {{ 'artemisApp.assessmentDashboard.moreFeedbackRequests' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        {{ numberOfMoreFeedbackRequests }} /
+                        {{ numberOfMoreFeedbackRequests }} |
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
                             [queryParams]="{ tutorId: tutor?.id }"
