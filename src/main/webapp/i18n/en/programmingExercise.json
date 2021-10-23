@@ -297,10 +297,10 @@
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
                 "warning": "Auxiliary repositories can be edited and removed. Changes do not cascade to the VCS and CIS and must be carried out manually.",
                 "repositoryNameRequired": {
-                    "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'."
+                    "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
                 },
                 "invalidDirectoryName": {
-                    "pattern": "Checkout directory paths must only contain words, '-', and '/' characterts."
+                    "pattern": "Checkout directory paths must only contain words, '-', and '/' characters."
                 }
             }
         },

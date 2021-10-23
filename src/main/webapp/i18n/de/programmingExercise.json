@@ -296,7 +296,7 @@
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen manuell durchgeführt werden.",
                 "repositoryNameRequired": {
-                    "pattern": "Hilfs-Repositories dürfen nicht 'exercise', 'solution', 'tests', oder 'auxiliary' heißen."
+                    "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '-', und '/' Zeichen beinhalten."

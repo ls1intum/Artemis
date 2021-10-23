@@ -5,7 +5,7 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
  */
 @Component({
     selector: 'jhi-table-editable-field',
-    styles: ['.table-editable-field {display: flex; align-items: center}', '.table-editable-field__input {flex: 2 1 auto;}'],
+    styles: ['.table-editable-field {display: flex; align-items: center}', '.table-editable-field__input {flex: 2 1 auto; margin-left: 0.25rem}'],
     templateUrl: './table-editable-field.component.html',
 })
 export class TableEditableFieldComponent {
