@@ -12,10 +12,7 @@ export class ModelingEditor {
      * Adds a Modeling Component to the Example Solution
      * */
     addComponentToModel(componentNumber: number) {
-        cy.get(`${COMPONENT_CONTAINER} > :nth-child(${componentNumber}) > :nth-child(1) > :nth-child(1)`).drag(`${MODELING_SPACE}`, {
-            position: 'bottomLeft',
-            force: true,
-        });
+        cy.get(`${COMPONENT_CONTAINER} > :nth-child(${componentNumber}) > :nth-child(1) > :nth-child(1)`).drag(`${MODELING_SPACE}`);
     }
 
     save() {
