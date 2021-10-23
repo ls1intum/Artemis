@@ -8,7 +8,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -46,9 +46,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     // reconnect exercise with course
                     this.fileUploadExercises.forEach((exercise) => {
                         exercise.course = this.course;
-                        exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
-                        exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
-                        exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                        this.accountService.setAccessRightsForExercise(exercise);
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                 },

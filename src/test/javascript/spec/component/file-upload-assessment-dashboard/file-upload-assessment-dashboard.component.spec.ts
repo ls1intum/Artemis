@@ -97,7 +97,6 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
         const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
-        jest.spyOn<any, any>(component, 'setPermissions');
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -111,7 +110,6 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
         // check
         expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
-        expect(component['setPermissions']).toHaveBeenCalled();
         expect(component.exercise).toEqual(fileUploadExercise1 as FileUploadExercise);
     }));
 
@@ -123,13 +121,11 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
-        jest.spyOn<any, any>(component, 'setPermissions');
 
         // call
         component.ngOnInit();
         tick(100);
         // check
-        expect(component['setPermissions']).toHaveBeenCalled();
         expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise1.id, { submittedOnly: true });
         expect(component.submissions).toEqual([fileUploadSubmission1]);
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);

@@ -10,7 +10,6 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 
@@ -23,8 +22,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      */
 
     exercise?: TextExercise;
-    isAtLeastEditor: boolean;
-    isAtLeastInstructor: boolean;
     protected userId?: number;
     textBlockRefs: TextBlockRef[];
     unusedTextBlockRefs: TextBlockRef[];
@@ -43,8 +40,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;
-        this.isAtLeastEditor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR]);
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
@@ -86,7 +81,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
             // last iteration, nextIndex = lastIndex. PreviousIndex > lastIndex is a sign for illegal state.
             if (!ref && previousIndex > nextIndex) {
-                console.error('Illegal State: previous index cannot be greated than the last index!');
+                console.error('Illegal State: previous index cannot be greater than the last index!');
 
                 // new text block starts before previous one ended (overlap)
             } else if (previousIndex > nextIndex) {

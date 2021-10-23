@@ -177,7 +177,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             ...currentContextSelectorOption,
         };
         if (currentContextSelectorOption.courseWideContext) {
-            this.posting.course = { id: this.course.id };
+            this.posting.course = { id: this.course.id, title: this.course.title };
         }
     }
 
