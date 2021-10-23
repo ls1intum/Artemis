@@ -47,10 +47,18 @@
     <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
         <div class="form-group col-md-10">
             <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
+            <div *ngIf="feedback.gradingInstruction!">
+                <jhi-help-icon placement="top" text="artemisApp.assessment.feedbackHint"></jhi-help-icon>
+                <span>{{ feedback.gradingInstruction!.feedback }}</span>
+            </div>
             <textarea
                 class="form-control"
                 rows="1"
-                [placeholder]="'artemisApp.textAssessment.feedbackEditor.feedbackCommentPlaceholder' | artemisTranslate"
+                [placeholder]="
+                    feedback.gradingInstruction!
+                        ? 'artemisApp.assessment.additionalFeedbackCommentPlaceholder'
+                        : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                "
                 id="detailText-{{ textBlock.id }}"
                 [(ngModel)]="feedback.detailText"
                 #detailText

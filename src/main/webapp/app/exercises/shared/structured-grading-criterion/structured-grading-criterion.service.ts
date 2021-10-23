@@ -16,7 +16,6 @@ export class StructuredGradingCriterionService {
         const instruction = JSON.parse(data);
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
-        feedback.detailText = instruction.feedback;
     }
     computeTotalScore(assessments: Feedback[]) {
         let score = 0;
