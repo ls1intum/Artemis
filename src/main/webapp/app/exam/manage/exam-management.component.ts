@@ -22,9 +22,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
     exams: Exam[];
-    isAtLeastInstructor = false;
-    isAtLeastEditor = false;
-    isAtLeastTutor = false;
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
@@ -53,9 +50,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
             (res: HttpResponse<Course>) => {
                 this.course = res.body!;
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-                this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course);
-                this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
             },

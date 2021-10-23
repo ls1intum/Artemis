@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 
 public class NotificationSettingsServiceTest {
 

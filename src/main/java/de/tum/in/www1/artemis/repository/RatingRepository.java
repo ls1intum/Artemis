@@ -29,4 +29,11 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     void deleteByResult_Id(long resultId);
 
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
+
+    /**
+     * Count all ratings given to submissions for the given course.
+     * @param courseId the Id of the course for which the ratings are counted
+     * @return number of total ratings given for the course
+     */
+    long countByResult_Participation_Exercise_Course_Id(Long courseId);
 }

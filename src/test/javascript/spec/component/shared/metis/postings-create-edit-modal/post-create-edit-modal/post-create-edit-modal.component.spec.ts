@@ -149,7 +149,8 @@ describe('PostCreateEditModalComponent', () => {
             exercise: undefined,
             lecture: undefined,
         });
-        tick();
+        // debounce time of title input field
+        tick(800);
         expect(component.isLoading).toEqual(false);
         expect(onCreateSpy).toHaveBeenCalled();
     }));
