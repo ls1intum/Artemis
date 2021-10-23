@@ -6,7 +6,6 @@ import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ArtemisTestModule } from '../../test.module';
 import { PostService } from 'app/shared/metis/post.service';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,8 +14,14 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockProvider } from 'ng-mocks';
 import {
-    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePostsWithCourseWideContext,
     metisExercise,
@@ -25,6 +30,7 @@ import {
     metisLecturePosts,
     metisPostExerciseUser1,
     metisReactionUser2,
+    metisResolvingAnswerPostUser1,
     metisUser1,
     metisUser2,
 } from '../../helpers/sample/metis-sample-data';
@@ -46,13 +52,17 @@ describe('Metis Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, ArtemisTestModule],
+            imports: [HttpClientTestingModule],
             providers: [
+                MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         });
         injector = getTestBed();
@@ -84,7 +94,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             createdPostSub.unsubscribe();
         }));
 
@@ -93,7 +103,7 @@ describe('Metis Service', () => {
             metisService.deletePost(post);
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
         }));
 
         it('should update a post', fakeAsync(() => {
@@ -103,7 +113,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
         }));
 
@@ -114,7 +124,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
         }));
 
@@ -125,7 +135,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
         }));
 
@@ -159,7 +169,14 @@ describe('Metis Service', () => {
             expect(postServiceSpy).toBeCalledTimes(2);
 
             // change filter
-            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: undefined, courseId: metisCourse.id }, false);
+            metisService.getFilteredPosts(
+                {
+                    lectureId: undefined,
+                    exerciseId: undefined,
+                    courseId: metisCourse.id,
+                },
+                false,
+            );
             expect(postServiceSpy).toBeCalledTimes(3);
         });
 
@@ -177,7 +194,14 @@ describe('Metis Service', () => {
             expect(postServiceSpy).toBeCalledTimes(2);
 
             // change filter
-            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: undefined, courseWideContext: CourseWideContext.RANDOM }, false);
+            metisService.getFilteredPosts(
+                {
+                    lectureId: undefined,
+                    exerciseId: undefined,
+                    courseWideContext: CourseWideContext.RANDOM,
+                },
+                false,
+            );
             expect(postServiceSpy).toBeCalledTimes(3);
         });
 
@@ -208,7 +232,7 @@ describe('Metis Service', () => {
             });
             expect(answerPostServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             createdAnswerPostSub.unsubscribe();
         }));
 
@@ -217,7 +241,7 @@ describe('Metis Service', () => {
             metisService.deleteAnswerPost(answerPost);
             expect(answerPostServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
         }));
 
         it('should update an answer post', fakeAsync(() => {
@@ -227,7 +251,7 @@ describe('Metis Service', () => {
             });
             expect(answerPostServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             updatedAnswerPostSub.unsubscribe();
         }));
     });
@@ -240,14 +264,14 @@ describe('Metis Service', () => {
             });
             expect(reactionServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             createdReactionSub.unsubscribe();
         }));
 
         it('should delete a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'delete');
             metisService.deleteReaction(reaction).subscribe(() => {
-                expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+                expect(metisServiceGetFilteredPostsMock).not.toHaveBeenCalled();
             });
             tick();
             expect(reactionServiceSpy).toHaveBeenCalled();
@@ -311,7 +335,11 @@ describe('Metis Service', () => {
     it('should create empty post for a exercise context', () => {
         const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
         expect(emptyPost.courseWideContext).toEqual(undefined);
-        expect(emptyPost.exercise).toEqual({ id: metisExercise.id, title: metisExercise.title, type: metisExercise.type });
+        expect(emptyPost.exercise).toEqual({
+            id: metisExercise.id,
+            title: metisExercise.title,
+            type: metisExercise.type,
+        });
         expect(emptyPost.lecture).toEqual(undefined);
     });
 
