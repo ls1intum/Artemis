@@ -43,6 +43,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
+    auxiliaryRepositoriesValid: boolean;
     submitButtonTitle: string;
     isImport: boolean;
     isEdit: boolean;
@@ -136,13 +137,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.name = newValue;
-            let nameCount = 0;
-            this.programmingExercise.auxiliaryRepositories!.forEach((auxiliaryRepository) => {
-                if (auxiliaryRepository.name === newValue) {
-                    nameCount++;
-                }
-            });
-            this.auxiliaryRepositoryDuplicateNames = nameCount >= 2;
+            this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.name;
         };
     }
@@ -155,13 +150,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.checkoutDirectory = newValue;
-            let directoryCount = 0;
-            this.programmingExercise.auxiliaryRepositories!.forEach((auxiliaryRepository) => {
-                if (auxiliaryRepository.checkoutDirectory === newValue) {
-                    directoryCount++;
-                }
-            });
-            this.auxiliaryRepositoryDuplicateDirectories = directoryCount >= 2;
+            this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.checkoutDirectory;
         };
     }
@@ -176,6 +165,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             editedAuxiliaryRepository.description = newValue;
             return editedAuxiliaryRepository.description;
         };
+    }
+
+    /**
+     * Refreshes auxiliary variables for auxiliary repository checks. Those variables are
+     * used in the template to display warnings.
+     */
+    refreshAuxiliaryRepositoryChecks() {
+        // Check that there are no duplicate names.
+        let names = new Set<string | undefined>();
+        let auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        auxReposWithName.forEach((auxiliaryRepository) => names.add(auxiliaryRepository.name));
+        this.auxiliaryRepositoryDuplicateNames = names.size === auxReposWithName.length;
+
+        // Check that there are no duplicate checkout directories
+        let directories = new Set<string | undefined>();
+        let auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
+        auxReposWithDirectory.forEach((auxiliaryRepository) => directories.add(auxiliaryRepository.checkoutDirectory));
+        this.auxiliaryRepositoryDuplicateDirectories = directories.size === auxReposWithDirectory.length;
+
+        // Check that there are no empty repository names
+        this.auxiliaryRepositoriesValid = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length;
     }
 
     /**
@@ -564,6 +574,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     validIdeSelection() {
         return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
+    }
+
+    /**
+     * checking if all auxiliary preconditions are met
+     */
+    validAuxiliaryRepositorySettings(): boolean {
+        return this.auxiliaryRepositoriesValid && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
     }
 
     isEventInsideTextArea(event: Event): boolean {

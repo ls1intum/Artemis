@@ -101,6 +101,7 @@
                         <jhi-remove-auxiliary-repository-button
                             placement="right"
                             [programmingExercise]="programmingExercise"
+                            [onRefresh]="refreshAuxiliaryRepositoryChecks"
                             [row]="row"
                             class="ml-2"
                         ></jhi-remove-auxiliary-repository-button>
@@ -535,7 +536,7 @@
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [disabled]="editForm.form.invalid || !validIdeSelection() || auxiliaryRepositoryDuplicateDirectories || auxiliaryRepositoryDuplicateNames"
+            [disabled]="editForm.form.invalid || !validIdeSelection() || !validAuxiliaryRepositorySettings()"
             [isLoading]="isSaving"
             [icon]="'save'"
             [title]="submitButtonTitle"
