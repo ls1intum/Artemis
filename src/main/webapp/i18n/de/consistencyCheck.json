@@ -4,7 +4,7 @@
             "button": "Konsistenzprüfung",
             "title": "Konsistenzprüfung",
             "text": "Die Überprüfung der Programmieraufgaben wird durchgeführt. Gefundene Inkonsistenzen werden nachfolgend angezeigt.",
-            "warning": "Bei Kursen mit vielen Programmierübungen wird dies einige Zeit in Anspruch nehmen.",
+            "warning": "Bei Kursen mit vielen Programmieraufgaben wird dies einige Zeit in Anspruch nehmen.",
             "error": {
                 "type": "Fehlertyp",
                 "VCS_PROJECT_MISSING": "Fehlendes VCS Projekt",
