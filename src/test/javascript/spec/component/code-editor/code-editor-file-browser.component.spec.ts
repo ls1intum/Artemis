@@ -32,10 +32,10 @@ describe('CodeEditorFileBrowserComponent', () => {
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let conflictService: CodeEditorConflictStateService;
-    let getRepositoryContentMock: jest.SpyInstance;
-    let getStatusMock: jest.SpyInstance;
-    let createFileMock: jest.SpyInstance;
-    let renameFileMock: jest.SpyInstance;
+    let getRepositoryContenStub: jest.SpyInstance;
+    let getStatusStub: jest.SpyInstance;
+    let createFileStub: jest.SpyInstance;
+    let renameFileStub: jest.SpyInstance;
 
     const createFileRoot = '#create_file_root';
     const createFolderRoot = '#create_folder_root';
@@ -71,10 +71,10 @@ describe('CodeEditorFileBrowserComponent', () => {
                 codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
                 codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
                 conflictService = TestBed.inject(CodeEditorConflictStateService);
-                getStatusMock = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContentMock = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-                createFileMock = jest.spyOn(codeEditorRepositoryFileService, 'createFile').mockReturnValue(of(undefined));
-                renameFileMock = jest.spyOn(codeEditorRepositoryFileService, 'renameFile').mockReturnValue(of(undefined));
+                getStatusStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
+                getRepositoryContenStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+                createFileStub = jest.spyOn(codeEditorRepositoryFileService, 'createFile').mockReturnValue(of(undefined));
+                renameFileStub = jest.spyOn(codeEditorRepositoryFileService, 'renameFile').mockReturnValue(of(undefined));
             });
     });
 
@@ -85,8 +85,8 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         const expectedFileTreeItems: TreeviewItem[] = [];
-        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
-        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -103,8 +103,8 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
         const repositoryContent: { [fileName: string]: string } = { file: 'FILE', folder: 'FOLDER' };
-        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
-        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -175,8 +175,8 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'file1',
             } as any),
         ].map((x) => x.toString());
-        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
-        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
@@ -193,7 +193,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const isCleanSubject = new Subject<{ isClean: boolean }>();
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         const loadFilesSpy = jest.spyOn(comp, 'loadFiles');
-        getStatusMock.mockReturnValue(isCleanSubject);
+        getStatusStub.mockReturnValue(isCleanSubject);
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
@@ -218,8 +218,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         const isCleanSubject = new Subject<{ isClean: boolean }>();
         const getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
-        getStatusMock.mockReturnValue(isCleanSubject);
-        getRepositoryContentMock.mockReturnValue(getRepositoryContentSubject);
+        getStatusStub.mockReturnValue(isCleanSubject);
+        getRepositoryContenStub.mockReturnValue(getRepositoryContentSubject);
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
@@ -324,8 +324,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(createFileMock).toHaveBeenCalledTimes(1);
-        expect(createFileMock).toHaveBeenCalledWith(filePath);
+        expect(createFileStub).toHaveBeenCalledTimes(1);
+        expect(createFileStub).toHaveBeenCalledWith(filePath);
         expect(comp.creatingFile).toBeUndefined();
         expect(setupTreeviewSpy).toHaveBeenCalledTimes(1);
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
@@ -357,7 +357,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const onFileChangeSpy = jest.spyOn(comp.onFileChange, 'emit');
         const setupTreeviewSpy = jest.spyOn(comp, 'setupTreeview');
-        let createFolderMock = jest.spyOn(codeEditorRepositoryFileService, 'createFolder').mockReturnValue(of(undefined));
+        const createFolderStub = jest.spyOn(codeEditorRepositoryFileService, 'createFolder').mockReturnValue(of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FOLDER];
@@ -376,8 +376,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(createFolderMock).toHaveBeenCalledTimes(1);
-        expect(createFolderMock).toHaveBeenCalledWith(filePath);
+        expect(createFolderStub).toHaveBeenCalledTimes(1);
+        expect(createFolderStub).toHaveBeenCalledWith(filePath);
         expect(comp.creatingFile).toBeUndefined();
         expect(setupTreeviewSpy).toHaveBeenCalledTimes(1);
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
@@ -394,7 +394,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.onCreateFile(fileName);
         fixture.detectChanges();
         expect(onErrorSpy).toHaveBeenCalledTimes(1);
-        expect(createFileMock).not.toHaveBeenCalled();
+        expect(createFileStub).not.toHaveBeenCalled();
     });
 
     it('should not be able to create node that already exists', () => {
@@ -406,7 +406,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.onCreateFile(fileName);
         fixture.detectChanges();
         expect(onErrorSpy).toHaveBeenCalledTimes(1);
-        expect(createFileMock).not.toHaveBeenCalled();
+        expect(createFileStub).not.toHaveBeenCalled();
     });
 
     it('should update repository file entry on rename', fakeAsync(() => {
@@ -452,8 +452,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).toHaveBeenCalledTimes(1);
-        expect(renameFileMock).toHaveBeenCalledWith(fileName, afterRename);
+        expect(renameFileStub).toHaveBeenCalledTimes(1);
+        expect(renameFileStub).toHaveBeenCalledWith(fileName, afterRename);
         expect(comp.renamingFile).toBeUndefined();
         expect(onFileChangeSpy).toHaveBeenCalledTimes(1);
         expect(comp.repositoryFiles).toEqual({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
@@ -525,8 +525,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
 
-        expect(renameFileMock).toHaveBeenCalledTimes(1);
-        expect(renameFileMock).toHaveBeenCalledWith(folderName, afterRename);
+        expect(renameFileStub).toHaveBeenCalledTimes(1);
+        expect(renameFileStub).toHaveBeenCalledWith(folderName, afterRename);
         expect(comp.renamingFile).toBeUndefined();
         expect(onFileChangeSpy).toHaveBeenCalledTimes(1);
         expect(comp.repositoryFiles).toEqual({
@@ -567,7 +567,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).not.toHaveBeenCalled();
+        expect(renameFileStub).not.toHaveBeenCalled();
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
@@ -600,7 +600,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).not.toHaveBeenCalled();
+        expect(renameFileStub).not.toHaveBeenCalled();
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
@@ -630,7 +630,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
-        expect(renameFileMock).not.toHaveBeenCalled();
+        expect(renameFileStub).not.toHaveBeenCalled();
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
@@ -640,8 +640,8 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should disable action buttons if there is a git conflict', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CONFLICT }));
-        getRepositoryContentMock.mockReturnValue(of(repositoryContent));
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CONFLICT }));
+        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -655,7 +655,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         // Resolve conflict.
         conflictService.notifyConflictState(GitConflictState.OK);
-        getStatusMock.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
 
         comp.commitState = CommitState.UNDEFINED;
 
@@ -668,7 +668,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(false);
         expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
 
-        expect(getRepositoryContentMock).toHaveBeenCalledTimes(1);
+        expect(getRepositoryContenStub).toHaveBeenCalledTimes(1);
         expect(comp.selectedFile).toBeUndefined();
     });
 });
