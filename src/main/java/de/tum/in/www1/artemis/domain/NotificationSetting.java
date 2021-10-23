@@ -44,18 +44,6 @@ public class NotificationSetting extends DomainObject {
         this.setSettingId(settingId);
     }
 
-    // used to create default settings with only webapp support (no email setting will be shown to the user)
-    public NotificationSetting(boolean webapp, String settingId) {
-        this.setWebapp(webapp);
-        this.setSettingId(settingId);
-    }
-
-    // used to create default settings with only email support (no webapp setting will be shown to the user)
-    public NotificationSetting(String settingId, boolean email) {
-        this.setEmail(email);
-        this.setSettingId(settingId);
-    }
-
     public NotificationSetting(User user, boolean webapp, boolean email, String settingId) {
         this.setUser(user);
         this.setWebapp(webapp);

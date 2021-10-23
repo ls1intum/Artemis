@@ -125,20 +125,4 @@ public class NotificationSettingsServiceTest {
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
         assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isFalse();
     }
-
-    /**
-     * Tests the method checkNotificationTypeForEmailSupport
-     * Makes sure that no notification type without email support passed and creates an internal server error
-     */
-    @Test
-    public void testCheckNotificationTypeForEmailSupport() {
-        Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(COURSE_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED, QUIZ_EXERCISE_STARTED);
-        Set<NotificationType> notificationTypesWithNoEmailSupportYet = Set.of(EXERCISE_UPDATED, NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST,
-                NEW_REPLY_FOR_LECTURE_POST, DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED);
-
-        // Check all notification types that should never have email support (e.g. due to redundancy, no real need)
-        notificationTypesWithNoEmailSupport.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailSupport(type)).isFalse());
-        // Check all notification types that should have email support in the future but lack a template as of now
-        notificationTypesWithNoEmailSupportYet.forEach((type) -> assertThat(notificationSettingsService.checkNotificationTypeForEmailSupport(type)).isFalse());
-    }
 }
