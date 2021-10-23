@@ -153,11 +153,13 @@
                                 [actionType]="ActionType.Remove"
                                 [entityTitle]="value.login"
                                 deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+                                deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
                                 (delete)="removeFromExam(value, $event)"
                                 [additionalChecks]="{
                                     deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission'
                                 }"
                                 [dialogError]="dialogError$"
+                                [requireConfirmationOnlyForAdditionalChecks]="true"
                             >
                                 <fa-icon [icon]="'user-slash'" class="me-1"></fa-icon>
                             </button>
