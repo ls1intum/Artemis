@@ -19,7 +19,9 @@ type Threshold = [number, number];
  * The subclasses need to provide the `TutorValueAllowedThreshold` value as well as method to create `TutorIssue`.
  */
 abstract class TutorValueChecker {
-    constructor(public numberOfTutorItems: number, public averageTutorValue: number, public averageCourseValue: number, public tutorName: string, public tutorId: number) {}
+    constructor(public numberOfTutorItems: number, public averageTutorValue: number, public averageCourseValue: number, public tutorName: string, public tutorId: number) {
+        this.averageTutorValue = this.round(this.averageTutorValue);
+    }
 
     /**
      * Checks if the tutor value is within an allowed range.
@@ -41,7 +43,7 @@ abstract class TutorValueChecker {
      */
     get allowedThreshold(): Threshold {
         const twentyPercent = this.averageCourseValue / 5;
-        return [this.averageCourseValue - twentyPercent, this.averageCourseValue + twentyPercent];
+        return [this.round(this.averageCourseValue - twentyPercent), this.round(this.averageCourseValue + twentyPercent)];
     }
 
     /**
@@ -54,6 +56,13 @@ abstract class TutorValueChecker {
      */
     toIssue(): TutorIssue {
         return new TutorIssue(this.tutorId, this.tutorName, this.numberOfTutorItems, this.averageTutorValue, this.allowedThreshold, this.translationKey);
+    }
+
+    /**
+     * Rounds the value up to one digit after comma
+     */
+    protected round(value: number) {
+        return Math.round(value * 10) / 10;
     }
 }
 
@@ -87,7 +96,7 @@ export class TutorIssueComplaintsChecker extends TutorValueChecker {
     get allowedThreshold(): Threshold {
         // Tutor complaints count should be less than average number of complaints in the course + 20%
         const twentyPercent = this.averageCourseValue / 5;
-        return [0, this.averageCourseValue + twentyPercent];
+        return [0, this.round(this.averageCourseValue + twentyPercent)];
     }
 
     get translationKey(): string {

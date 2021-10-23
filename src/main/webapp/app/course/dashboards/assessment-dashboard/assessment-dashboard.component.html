@@ -175,7 +175,7 @@
         </table>
     </div>
 
-    <div *ngIf="isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
+    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
         <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
         <ul *ngFor="let issue of tutorIssues">
             <li *ngIf="issue.averageTutorValue < issue.threshold[0]">
@@ -185,8 +185,8 @@
                             : {
                                   tutorName: issue.tutorName,
                                   numberOfTutorItems: issue.numberOfTutorItems,
-                                  averageTutorValue: issue.averageTutorValue.toFixed(2),
-                                  threshold: issue.threshold[0].toFixed(2)
+                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                  threshold: issue.threshold[0].toFixed(1)
                               }
                 }}
             </li>
@@ -197,8 +197,8 @@
                             : {
                                   tutorName: issue.tutorName,
                                   numberOfTutorItems: issue.numberOfTutorItems,
-                                  averageTutorValue: issue.averageTutorValue.toFixed(2),
-                                  threshold: issue.threshold[1].toFixed(2)
+                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                  threshold: issue.threshold[1].toFixed(1)
                               }
                 }}
             </li>

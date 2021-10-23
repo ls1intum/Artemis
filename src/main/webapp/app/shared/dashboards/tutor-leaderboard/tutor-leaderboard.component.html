@@ -94,7 +94,7 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
-                <td>{{ averageScorePercentage(tutor.averageScore) }}%</td>
+                <td>{{ tutor.averageScore.toFixed(1) }}%</td>
                 <td>{{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }})</td>
             </tr>
         </tbody>

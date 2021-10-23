@@ -368,9 +368,11 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerA = new TutorIssueScoreChecker(1, 0, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
+                    const ratingCheckerD = new TutorIssueScoreChecker(1, 96.009, 80, tutorName, tutorId);
                     expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
                     expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
                     expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toEqual(false);
                 });
             });
 
@@ -387,9 +389,11 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerA = new TutorIssueComplaintsChecker(1, 0, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
+                    const ratingCheckerD = new TutorIssueComplaintsChecker(1, 12.001, 10, tutorName, tutorId);
                     expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
                     expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
                     expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toEqual(false);
                 });
             });
         });
