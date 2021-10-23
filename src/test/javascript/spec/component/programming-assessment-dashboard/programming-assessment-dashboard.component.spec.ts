@@ -98,7 +98,6 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         // setup
         const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
         exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
-        jest.spyOn<any, any>(component, 'setPermissions');
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -112,7 +111,6 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
         // check
         expect(exerciseServiceFindMock).toHaveBeenCalledWith(programmingExercise2.id);
-        expect(component['setPermissions']).toHaveBeenCalled();
         expect(component.exercise).toEqual(programmingExercise1 as ProgrammingExercise);
     }));
 
@@ -124,14 +122,12 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
         getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [programmingSubmission1] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
-        jest.spyOn<any, any>(component, 'setPermissions');
         jest.spyOn<any, any>(component, 'getSubmissions');
 
         // call
         component.ngOnInit();
         tick(500);
         // check
-        expect(component['setPermissions']).toHaveBeenCalled();
         expect(component['getSubmissions']).toHaveBeenCalled();
         expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalled();
         expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalledWith(programmingExercise2.id, { submittedOnly: true });
