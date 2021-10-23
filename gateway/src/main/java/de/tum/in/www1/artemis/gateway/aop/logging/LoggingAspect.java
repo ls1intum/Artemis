@@ -65,16 +65,16 @@ public class LoggingAspect {
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
-     * @param e exception.
+     * @param exception exception.
      */
-    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
-    public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "exception")
+    public void logAfterThrowing(JoinPoint joinPoint, Throwable exception) {
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
             logger(joinPoint).error("Exception in {}() with cause = \'{}\' and exception = \'{}\'", joinPoint.getSignature().getName(),
-                    e.getCause() != null ? e.getCause() : "NULL", e.getMessage(), e);
+                    exception.getCause() != null ? exception.getCause() : "NULL", exception.getMessage(), exception);
         }
         else {
-            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), e.getCause() != null ? e.getCause() : "NULL");
+            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), exception.getCause() != null ? exception.getCause() : "NULL");
         }
     }
 

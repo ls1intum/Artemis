@@ -88,25 +88,25 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @Override
-    public Mono<ResponseEntity<Problem>> handleBindingResult(WebExchangeBindException ex, @Nonnull ServerWebExchange request) {
-        BindingResult result = ex.getBindingResult();
+    public Mono<ResponseEntity<Problem>> handleBindingResult(WebExchangeBindException exception, @Nonnull ServerWebExchange request) {
+        BindingResult result = exception.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(),
                 StringUtils.isNotBlank(f.getDefaultMessage()) ? f.getDefaultMessage() : f.getCode())).collect(Collectors.toList());
 
         Problem problem = Problem.builder().withType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE).withTitle("Data binding and validation failure").withStatus(Status.BAD_REQUEST)
                 .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION).with(FIELD_ERRORS_KEY, fieldErrors).build();
-        return create(ex, problem, request);
+        return create(exception, problem, request);
     }
 
     @ExceptionHandler
-    public Mono<ResponseEntity<Problem>> handleBadRequestAlertException(BadRequestAlertException ex, ServerWebExchange request) {
-        return create(ex, request, HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
+    public Mono<ResponseEntity<Problem>> handleBadRequestAlertException(BadRequestAlertException exception, ServerWebExchange request) {
+        return create(exception, request, HeaderUtil.createFailureAlert(applicationName, true, exception.getEntityName(), exception.getErrorKey(), exception.getMessage()));
     }
 
     @ExceptionHandler
-    public Mono<ResponseEntity<Problem>> handleConcurrencyFailure(ConcurrencyFailureException ex, ServerWebExchange request) {
+    public Mono<ResponseEntity<Problem>> handleConcurrencyFailure(ConcurrencyFailureException exception, ServerWebExchange request) {
         Problem problem = Problem.builder().withStatus(Status.CONFLICT).with(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE).build();
-        return create(ex, problem, request);
+        return create(exception, problem, request);
     }
 
     @Override
@@ -129,7 +129,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     private boolean containsPackageName(String message) {
-        // This list is for sure not complete
         return StringUtils.containsAny(message, "org.", "java.", "net.", "javax.", "com.", "io.", "de.", "de.tum.in.www1.artemis.gateway");
     }
 }

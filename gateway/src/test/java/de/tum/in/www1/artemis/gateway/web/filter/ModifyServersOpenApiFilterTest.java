@@ -41,33 +41,33 @@ class ModifyServersOpenApiFilterTest {
     @Test
     void shouldCallCreateModifyServersOpenApiInterceptorWhenGetOpenApiSpec() {
         // dummy api url to filter
-        String sample_url = "/services/service-test/instance-test/v3/api-docs";
+        String sampleUrl = "/services/service-test/instance-test/v3/api-docs";
 
         // create request
-        MockServerHttpRequest request = MockServerHttpRequest.get(sample_url).build();
+        MockServerHttpRequest request = MockServerHttpRequest.get(sampleUrl).build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         // apply the filter to the request
         ModifyServersOpenApiFilter modifyServersOpenApiFilter = spy(new ModifyServersOpenApiFilter());
         modifyServersOpenApiFilter.filter(exchange, filterChain).subscribe();
 
-        verify(modifyServersOpenApiFilter, times(1)).createModifyServersOpenApiInterceptor(sample_url, exchange.getResponse(), exchange.getResponse().bufferFactory());
+        verify(modifyServersOpenApiFilter, times(1)).createModifyServersOpenApiInterceptor(sampleUrl, exchange.getResponse(), exchange.getResponse().bufferFactory());
     }
 
     @Test
     void shouldNotCallCreateModifyServersOpenApiInterceptorWhenNotGetOpenApiSpec() {
         // dummy api url to filter
-        String sample_url = "/services/service-test/instance-test/api";
+        String sampleUrl = "/services/service-test/instance-test/api";
 
         // create request
-        MockServerHttpRequest request = MockServerHttpRequest.get(sample_url).build();
+        MockServerHttpRequest request = MockServerHttpRequest.get(sampleUrl).build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         // apply the filter to the request
         ModifyServersOpenApiFilter modifyServersOpenApiFilter = spy(new ModifyServersOpenApiFilter());
         modifyServersOpenApiFilter.filter(exchange, filterChain).subscribe();
 
-        verify(modifyServersOpenApiFilter, times(0)).createModifyServersOpenApiInterceptor(sample_url, exchange.getResponse(), exchange.getResponse().bufferFactory());
+        verify(modifyServersOpenApiFilter, times(0)).createModifyServersOpenApiInterceptor(sampleUrl, exchange.getResponse(), exchange.getResponse().bufferFactory());
     }
 
     @Test
@@ -79,9 +79,9 @@ class ModifyServersOpenApiFilterTest {
     @Nested
     class ModifyServersOpenApiInterceptorTest {
 
-        private final String path = "/services/service-test/instance-test/v3/api-docs";
+        private final static String PATH = "/services/service-test/instance-test/v3/api-docs";
 
-        private final MockServerHttpRequest request = MockServerHttpRequest.get(path).build();
+        private final MockServerHttpRequest request = MockServerHttpRequest.get(PATH).build();
 
         private final ServerWebExchange exchange = MockServerWebExchange.from(request);
 
@@ -89,7 +89,7 @@ class ModifyServersOpenApiFilterTest {
 
         @Test
         void shouldRewriteBodyWhenBodyIsFluxAndResponseIsNotZipped() {
-            ModifyServersOpenApiFilter.ModifyServersOpenApiInterceptor interceptor = modifyServersOpenApiFilter.createModifyServersOpenApiInterceptor(path, exchange.getResponse(),
+            ModifyServersOpenApiFilter.ModifyServersOpenApiInterceptor interceptor = modifyServersOpenApiFilter.createModifyServersOpenApiInterceptor(PATH, exchange.getResponse(),
                     exchange.getResponse().bufferFactory());
 
             byte[] bytes = "{}".getBytes();
@@ -102,7 +102,7 @@ class ModifyServersOpenApiFilterTest {
         @Test
         void shouldRewriteBodyWhenBodyIsFluxAndResponseIsZipped() {
             exchange.getResponse().getHeaders().set(HttpHeaders.CONTENT_ENCODING, "gzip");
-            ModifyServersOpenApiFilter.ModifyServersOpenApiInterceptor interceptor = modifyServersOpenApiFilter.createModifyServersOpenApiInterceptor(path, exchange.getResponse(),
+            ModifyServersOpenApiFilter.ModifyServersOpenApiInterceptor interceptor = modifyServersOpenApiFilter.createModifyServersOpenApiInterceptor(PATH, exchange.getResponse(),
                     exchange.getResponse().bufferFactory());
 
             byte[] bytes = zipContent();
@@ -114,7 +114,7 @@ class ModifyServersOpenApiFilterTest {
 
         @Test
         void shouldNotRewriteBodyWhenBodyIsNotFlux() {
-            ModifyServersOpenApiFilter.ModifyServersOpenApiInterceptor interceptor = modifyServersOpenApiFilter.createModifyServersOpenApiInterceptor(path, exchange.getResponse(),
+            ModifyServersOpenApiFilter.ModifyServersOpenApiInterceptor interceptor = modifyServersOpenApiFilter.createModifyServersOpenApiInterceptor(PATH, exchange.getResponse(),
                     exchange.getResponse().bufferFactory());
 
             byte[] bytes = "{}".getBytes();
@@ -133,7 +133,7 @@ class ModifyServersOpenApiFilterTest {
                 return byteArrayOutputStream.toByteArray();
             }
             catch (IOException e) {
-                LOGGER.error("Error in test when zip content during modify servers from api-doc of {}: {}", path, e.getMessage());
+                LOGGER.error("Error in test when zip content during modify servers from api-doc of {}: {}", PATH, e.getMessage());
             }
             return "{}".getBytes();
         }
