@@ -29,16 +29,18 @@ class TokenProviderTest {
 
     private TokenProvider tokenProvider;
 
+    private MockTokenProvider mockTokenProvider;
+
     @BeforeEach
     public void setup() {
         JHipsterProperties jHipsterProperties = new JHipsterProperties();
         String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
+        jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE);
         tokenProvider = new TokenProvider(jHipsterProperties);
-        key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
+        mockTokenProvider = new MockTokenProvider(jHipsterProperties);
 
-        ReflectionTestUtils.setField(tokenProvider, "key", key);
-        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", ONE_MINUTE);
+        key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
     }
 
     @Test
@@ -51,7 +53,7 @@ class TokenProviderTest {
     @Test
     void testReturnFalseWhenJWTisMalformed() {
         Authentication authentication = createAuthentication();
-        String token = tokenProvider.createToken(authentication, false);
+        String token = mockTokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken);
 
@@ -60,10 +62,10 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWTisExpired() {
-        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
+        ReflectionTestUtils.setField(mockTokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
 
         Authentication authentication = createAuthentication();
-        String token = tokenProvider.createToken(authentication, false);
+        String token = mockTokenProvider.createToken(authentication, false);
 
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(token);
 
@@ -125,4 +127,5 @@ class TokenProviderTest {
 
         return Jwts.builder().setSubject("anonymous").signWith(otherKey, SignatureAlgorithm.HS512).setExpiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
     }
+
 }

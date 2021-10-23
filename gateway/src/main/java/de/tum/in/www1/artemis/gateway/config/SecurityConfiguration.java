@@ -25,14 +25,11 @@ import de.tum.in.www1.artemis.gateway.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.gateway.web.filter.SpaWebFilter;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.Role;
-import tech.jhipster.config.JHipsterProperties;
 
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 @Import(SecurityProblemSupport.class)
 public class SecurityConfiguration {
-
-    private final JHipsterProperties jHipsterProperties;
 
     private final TokenProvider tokenProvider;
 
@@ -41,9 +38,8 @@ public class SecurityConfiguration {
     @Value("${artemis.encryption-password}")
     private String encryptionPassword;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, JHipsterProperties jHipsterProperties, SecurityProblemSupport problemSupport) {
+    public SecurityConfiguration(TokenProvider tokenProvider, SecurityProblemSupport problemSupport) {
         this.tokenProvider = tokenProvider;
-        this.jHipsterProperties = jHipsterProperties;
         this.problemSupport = problemSupport;
     }
 
@@ -74,7 +70,7 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Configures accepted http options, add filters for specific paths relatedto the user authentication and/or Role
+     * Configures accepted http options, add filters for specific paths related to the user authentication and/or Role
      *
      * @param http
      * @return the configured filter

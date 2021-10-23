@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
 
 class ModifyServersOpenApiFilterTest {
 
-    private static final Logger log = LoggerFactory.getLogger(ModifyServersOpenApiFilterTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModifyServersOpenApiFilterTest.class);
 
     private final GatewayFilterChain filterChain = mock(GatewayFilterChain.class);
 
@@ -133,7 +133,7 @@ class ModifyServersOpenApiFilterTest {
                 return byteArrayOutputStream.toByteArray();
             }
             catch (IOException e) {
-                log.error("Error in test when zip content during modify servers from api-doc of {}: {}", path, e.getMessage());
+                LOGGER.error("Error in test when zip content during modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return "{}".getBytes();
         }

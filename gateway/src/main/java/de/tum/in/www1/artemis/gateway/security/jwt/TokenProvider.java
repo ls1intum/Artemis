@@ -29,12 +29,6 @@ public class TokenProvider {
 
     private final Key key;
 
-    private final JwtParser jwtParser;
-
-    private final long tokenValidityInMilliseconds;
-
-    private final long tokenValidityInMillisecondsForRememberMe;
-
     public TokenProvider(JHipsterProperties jHipsterProperties) {
         byte[] keyBytes;
         String secret = jHipsterProperties.getSecurity().getAuthentication().getJwt().getBase64Secret();
@@ -48,30 +42,6 @@ public class TokenProvider {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
         key = Keys.hmacShaKeyFor(keyBytes);
-        jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
-        this.tokenValidityInMilliseconds = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSeconds();
-        this.tokenValidityInMillisecondsForRememberMe = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
-    }
-
-    /**
-     * Create JWT Token a fully populated <code>Authentication</code> object.
-     * @param authentication Authentication Object
-     * @param rememberMe Determines Token lifetime (30 minutes vs 30 days)
-     * @return JWT Token
-     */
-    public String createToken(Authentication authentication, boolean rememberMe) {
-        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
-
-        long now = (new Date()).getTime();
-        Date validity;
-        if (rememberMe) {
-            validity = new Date(now + this.tokenValidityInMillisecondsForRememberMe);
-        }
-        else {
-            validity = new Date(now + this.tokenValidityInMilliseconds);
-        }
-
-        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
     /**

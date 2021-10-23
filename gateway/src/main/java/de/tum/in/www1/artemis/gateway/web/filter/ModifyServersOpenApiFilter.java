@@ -37,7 +37,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
 
-    private static final Logger log = LoggerFactory.getLogger(ModifyServersOpenApiFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModifyServersOpenApiFilter.class);
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -124,7 +124,7 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
                 return rewritedBodyToDataBuffer();
             }
             catch (JsonProcessingException e) {
-                log.error("Error when modify servers from api-doc of {}: {}", path, e.getMessage());
+                LOGGER.error("Error when modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return join;
         }
@@ -160,7 +160,7 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
                 return unzippedContent;
             }
             catch (IOException e) {
-                log.error("Error when unzip content during modify servers from api-doc of {}: {}", path, e.getMessage());
+                LOGGER.error("Error when unzip content during modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return content;
         }
@@ -175,7 +175,7 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
                 return byteArrayOutputStream.toByteArray();
             }
             catch (IOException e) {
-                log.error("Error when zip content during modify servers from api-doc of {}: {}", path, e.getMessage());
+                LOGGER.error("Error when zip content during modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return content.getBytes();
         }
