@@ -45,7 +45,7 @@ describe('NotificationSettingsComponent', () => {
         const webappStatus = true;
         const notificationSettingA: NotificationSetting = {
             settingId,
-            webApp: webappStatus,
+            webapp: webappStatus,
             email: false,
             changed: false,
         };

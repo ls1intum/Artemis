@@ -8,12 +8,12 @@ import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 export const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
-    webApp: false,
+    webapp: false,
     email: false,
 };
 export const notificationSettingB: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
-    webApp: true,
+    webapp: true,
     email: false,
 };
 
