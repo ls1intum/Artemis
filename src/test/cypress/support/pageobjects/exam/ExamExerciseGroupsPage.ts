@@ -6,7 +6,7 @@ export class ExamExerciseGroupsPage {
         cy.get('[jhitranslate="artemisApp.examManagement.exerciseGroup.create"]').click();
     }
 
-    showsNumberOfExerciseGroups(numberOfGroups: number) {
+    shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
         cy.contains(`Number of exercise groups: ${numberOfGroups}`).should('be.visible');
     }
 

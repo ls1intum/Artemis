@@ -15,6 +15,7 @@ const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
 const textCreation = artemis.pageobjects.textExercise.creation;
 const exerciseGroups = artemis.pageobjects.examExerciseGroups;
+const exerciseGroupCreation = artemis.pageobjects.examExerciseGroupCreation;
 
 // Common primitives
 const uid = generateUUID();
@@ -45,15 +46,13 @@ describe('Exam management', () => {
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.title, course.shortName);
         examManagement.getExamRow(examTitle).openExerciseGroups();
-        exerciseGroups.showsNumberOfExerciseGroups(0);
+        exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();
         const groupName = 'group 1';
-        cy.get('#title').clear().type(groupName);
-        cy.get('#isMandatory').should('be.checked');
-        cy.intercept({ method: POST, url: `/api/courses/${course.id}/exams/*/exerciseGroups` }).as('createExerciseGroup');
-        cy.get('[jhitranslate="entity.action.save"]').click();
-        cy.wait('@createExerciseGroup');
-        cy.contains('Number of exercise groups: 1').should('be.visible');
+        exerciseGroupCreation.typeTitle(groupName);
+        exerciseGroupCreation.isMandatoryBoxShouldBeChecked();
+        exerciseGroupCreation.clickSave();
+        exerciseGroups.shouldShowNumberOfExerciseGroups(1);
         // Add text exercise
         exerciseGroups.clickAddTextExercise();
         const textExerciseTitle = 'text' + uid;
