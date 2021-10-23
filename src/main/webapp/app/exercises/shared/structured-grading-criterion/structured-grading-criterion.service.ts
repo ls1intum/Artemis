@@ -21,7 +21,7 @@ export class StructuredGradingCriterionService {
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {
-                throw err
+                throw err;
             }
         }
     }
