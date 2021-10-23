@@ -1,4 +1,4 @@
-import { BASE_API, PUT } from '../../../support/constants';
+import { BASE_API } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
 
 // pageobjects
@@ -41,9 +41,7 @@ describe('Modeling Exercise Spec', () => {
         modelingEditor.addComponentToModel(1);
         modelingEditor.addComponentToModel(2);
         modelingEditor.addComponentToModel(3);
-        cy.intercept(PUT, BASE_API + 'exercises/' + modelingExercise.id + '/modeling-submissions').as('createModelingSubmission');
-        cy.get('.submission-button').click();
-        cy.wait('@createModelingSubmission');
+        modelingEditor.submit();
         cy.get('.alerts').should('contain.text', 'Your submission was successful! You can change your submission or wait for your feedback.');
         cy.contains('No graded result').should('be.visible');
     });
