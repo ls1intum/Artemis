@@ -926,7 +926,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = 'This is an example hint';
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should be valid if MC question explanation is <= 500 characters', () => {
@@ -934,7 +934,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = 'This is an example explanation';
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should be valid if MC question hint has exactly 255 characters', () => {
@@ -942,7 +942,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = new Array(255 + 1).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should be valid if MC question explanation has exactly 500 characters', () => {
@@ -950,7 +950,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = new Array(500 + 1).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should not be valid if MC question hint has more than 255 characters', () => {
@@ -958,7 +958,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = new Array(255 + 2).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(false);
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should not be valid if MC question explanation has more than 500 characters', () => {
@@ -966,7 +966,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = new Array(500 + 2).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(false);
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should be valid if MC answer option hint has exactly 255 characters', () => {
@@ -974,7 +974,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.hint = new Array(255 + 1).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should be valid if MC answer option explanation has exactly 500 characters', () => {
@@ -982,7 +982,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.explanation = new Array(500 + 1).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should not be valid if MC answer option hint has more than 255 characters', () => {
@@ -990,7 +990,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.hint = new Array(255 + 2).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(false);
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
@@ -998,7 +998,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.explanation = new Array(500 + 2).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(false);
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should be valid with valid DnD question', () => {
@@ -1023,7 +1023,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = new Array(255 + 1).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should be valid if DnD question explanation has exactly 500 characters', () => {
@@ -1031,7 +1031,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = new Array(500 + 1).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(true);
+                expect(comp.quizIsValid).toEqual(true);
             });
 
             it('should not be valid if DnD question hint has more than 255 characters', () => {
@@ -1039,7 +1039,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = new Array(255 + 2).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(false);
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should not be valid if DnD question explanation has more than 500 characters', () => {
@@ -1047,7 +1047,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = new Array(500 + 2).join('f');
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).to.equal(false);
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should be valid with valid SA question', () => {
@@ -1531,7 +1531,7 @@ describe('QuizExercise Management Detail Component', () => {
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerExplanationLength');
-                    expect(invalidReasonsAnswerOptions.length).to.be.equal(1);
+                    expect(invalidReasonsAnswerOptions.length).toEqual(1);
                 });
 
                 it('should put reason exactly once if more than one answer option hint is too long', () => {
@@ -1540,7 +1540,7 @@ describe('QuizExercise Management Detail Component', () => {
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerHintLength');
-                    expect(invalidReasonsAnswerOptions.length).to.be.equal(1);
+                    expect(invalidReasonsAnswerOptions.length).toEqual(1);
                 });
             });
 

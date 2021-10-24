@@ -32,8 +32,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     isSaving: boolean;
     duration: Duration;
-    // Create Backup Quiz for resets
-    backupQuiz: QuizExercise;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
