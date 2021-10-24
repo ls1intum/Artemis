@@ -1492,6 +1492,11 @@ describe('QuizExercise Management Detail Component', () => {
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue');
                 });
 
+                it('should put reason for too long answer option', () => {
+                    shortAnswerSolution1.text = new Array(251).join('a');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength')
+                })
+
                 it('should put reason when duplicate mappings', () => {
                     jest.spyOn(shortAnswerQuestionUtil, 'hasMappingDuplicateValues').mockReturnValue(true);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping');
