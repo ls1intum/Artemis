@@ -38,6 +38,8 @@ public class StatsForDashboardDTO {
 
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries = new ArrayList<>();
 
+    private Long numberOfRatings;
+
     /**
      * Empty constructor is needed by Jackson
      */
@@ -162,5 +164,13 @@ public class StatsForDashboardDTO {
 
     public void setFeedbackRequestEnabled(Boolean feedbackRequestEnabled) {
         this.feedbackRequestEnabled = feedbackRequestEnabled;
+    }
+
+    public long getNumberOfRatings() {
+        return numberOfRatings == null ? 0L : numberOfRatings;
+    }
+
+    public void setNumberOfRatings(long numberOfRatings) {
+        this.numberOfRatings = numberOfRatings;
     }
 }

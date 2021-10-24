@@ -1,33 +1,47 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
 
 public class SingleUserNotificationFactory {
+
+    private static NotificationTargetService targetService = new NotificationTargetService();
+
+    private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
     /**
      * Creates an instance of SingleUserNotification.
      *
-     * @param answerPost answer for which a notification should be created
+     * @param post which is answered
      * @param notificationType type of the notification that should be created
+     * @param course that the post belongs to
      * @return an instance of SingleUserNotification
      */
-    public static SingleUserNotification createNotification(AnswerPost answerPost, NotificationType notificationType) {
-        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE || notificationType == NotificationType.NEW_ANSWER_POST_FOR_LECTURE) {
-            User recipient = answerPost.getPost().getAuthor();
-            User author = answerPost.getAuthor();
-            String title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
-            String text = "Your post got replied.";
-            SingleUserNotification notification = new SingleUserNotification(recipient, author, title, text);
-            if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
-                notification.setTarget(notification.answerPostTargetForExercise(answerPost));
+    public static SingleUserNotification createNotification(Post post, NotificationType notificationType, Course course) {
+        User recipient = post.getAuthor();
+        String title;
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case NEW_REPLY_FOR_EXERCISE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
+                notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
+                notification.setTarget(targetService.getExercisePostTarget(post, course));
             }
-            else {
-                notification.setTarget(notification.answerPostTargetForLecture(answerPost));
+            case NEW_REPLY_FOR_LECTURE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
+                notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
+                notification.setTarget(targetService.getLecturePostTarget(post, course));
             }
-            return notification;
+            case NEW_REPLY_FOR_COURSE_POST -> {
+                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
+                notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
+                notification.setTarget(targetService.getCoursePostTarget(post, course));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-        throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        return notification;
     }
 }

@@ -8,6 +8,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
@@ -143,6 +144,17 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
+    }
+
+    /**
+     * Retrieves the tutor effort in assessing a specific text exercise
+     * @param exerciseId the id of the exercise to check for
+     * @param courseId the id of the course to check for
+     */
+    public calculateTutorEffort(exerciseId: number, courseId: number): Observable<TutorEffort[]> {
+        return this.http
+            .get<TutorEffort[]>(`api/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<TutorEffort[]>) => res.body!));
     }
 
     /**
