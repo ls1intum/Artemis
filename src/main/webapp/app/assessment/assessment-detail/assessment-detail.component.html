@@ -22,16 +22,36 @@
             />
         </div>
         <div class="form-group row">
-            <label class="col-3 assessment-label" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
-            <textarea
-                class="col form-control"
-                rows="2"
-                [(ngModel)]="assessment.detailText"
-                (ngModelChange)="emitChanges()"
-                [readOnly]="readOnly"
-                [disabled]="disabled"
-                required
-            ></textarea>
+            <div class="col-3 assessment-label d-flex">
+                <label jhiTranslate="artemisApp.assessment.detail.feedback"></label>
+                <div *ngIf="assessment.gradingInstruction!">
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary p-1"
+                        [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"
+                        container="body"
+                    ></fa-icon>
+                </div>
+            </div>
+            <div class="col p-0">
+                <div *ngIf="assessment.gradingInstruction!">
+                    <span>{{ assessment.gradingInstruction!.feedback }}</span>
+                </div>
+                <textarea
+                    class="form-control"
+                    rows="2"
+                    [(ngModel)]="assessment.detailText"
+                    (ngModelChange)="emitChanges()"
+                    [readOnly]="readOnly"
+                    [disabled]="disabled"
+                    [placeholder]="
+                        assessment.gradingInstruction!
+                            ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
+                            : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                    "
+                    required
+                ></textarea>
+            </div>
         </div>
 
         <jhi-assessment-correction-round-badge [feedback]="assessment" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>

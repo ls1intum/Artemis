@@ -6,7 +6,7 @@
         </span>
         <div class="feedback-text mt-1" [ngClass]="block.feedbackCssClass" *ngIf="block.feedback.detailText">
             <b><fa-icon *ngIf="block.circleIcon" [icon]="['far', block.circleIcon]"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
-            <div [innerHTML]="buildFeedbackTextForReview(block.feedback)"></div>
+            <span [innerHTML]="buildFeedbackTextForReview(block.feedback)"></span>
         </div>
     </ng-container>
 </ng-container>
