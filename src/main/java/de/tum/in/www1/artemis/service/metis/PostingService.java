@@ -42,19 +42,15 @@ public abstract class PostingService {
 
     void broadcastForPost(MetisPostDTO postDTO, Course course) {
         String specificTopicName = "/topic/metis/";
-        String genericTopicName = "/topic/metis/courses/";
+        String genericTopicName = "/topic/metis/courses/" + course.getId();
+        ;
         if (postDTO.getPost().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
-            genericTopicName += course.getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.getPost().getLecture() != null) {
             specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
-            genericTopicName += course.getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
-        }
-        else {
-            genericTopicName += course.getId();
         }
         messagingTemplate.convertAndSend(genericTopicName, postDTO);
     }
