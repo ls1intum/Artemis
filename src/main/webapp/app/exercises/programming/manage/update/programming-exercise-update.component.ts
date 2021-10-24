@@ -78,7 +78,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     // Auxiliary Repository checkout directories must be valid directory paths. Those must only include words,
     // '-' or '/' characters.
-    invalidDirectoryNamePattern = RegExp('^(\\b)\\b(\\w|-|/)+$');
+    invalidDirectoryNamePattern = RegExp('^(\\w|-|/)*$');
 
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'

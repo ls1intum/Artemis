@@ -29,7 +29,10 @@ export class AddAuxiliaryRepositoryButtonComponent {
         if (this.programmingExercise.auxiliaryRepositories === undefined) {
             this.programmingExercise.auxiliaryRepositories = [];
         }
-        this.programmingExercise.auxiliaryRepositories?.push(new AuxiliaryRepository());
+        const newAuxiliaryRepository = new AuxiliaryRepository();
+        newAuxiliaryRepository.name = '';
+        newAuxiliaryRepository.checkoutDirectory = '';
+        this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
         this.onRefresh();
     }
