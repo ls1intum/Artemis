@@ -11,11 +11,13 @@ import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/d
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
 @NgModule({
     imports: [
+        NgxChartsModule,
         ArtemisSharedModule,
         ArtemisSidePanelModule,
         ArtemisResultModule,

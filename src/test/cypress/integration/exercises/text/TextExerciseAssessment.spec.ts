@@ -63,7 +63,7 @@ describe('Text exercise assessment', () => {
         cy.contains('Number of characters: 591').should('be.visible');
         textAssessment.provideFeedbackOnTextSection('sed diam voluptua', tutorTextFeedbackPoints, tutorTextFeedback);
         textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        textAssessment.submit();
+        textAssessment.submit().its('response.statusCode').should('eq', 200);
     });
 
     describe('Feedback', () => {
