@@ -46,11 +46,21 @@
 
     <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
         <div class="form-group col-md-10">
-            <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
-            <div *ngIf="feedback.gradingInstruction!">
-                <jhi-help-icon placement="top" text="artemisApp.assessment.feedbackHint"></jhi-help-icon>
+            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
+            <div class="d-inline" *ngIf="feedback.gradingInstruction!">
+                <jhi-help-icon placement="bottom" text="artemisApp.assessment.feedbackHint"></jhi-help-icon>
                 <span>{{ feedback.gradingInstruction!.feedback }}</span>
             </div>
+        </div>
+        <div class="form-group col-md-1 text-end">
+            <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
+        </div>
+        <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
+            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
+        </div>
+    </div>
+    <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+        <div class="form-group col-md-10">
             <textarea
                 class="form-control"
                 rows="1"
@@ -82,7 +92,6 @@
             </div>
         </div>
         <div class="form-group col-md-1 text-end">
-            <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
             <input
                 class="form-control"
                 type="number"
@@ -95,9 +104,6 @@
                 (ngModelChange)="didChange()"
                 [readOnly]="disableEditScore || (readOnly && !isConflictingFeedbackEditable)"
             />
-        </div>
-        <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
-            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
         </div>
     </div>
 

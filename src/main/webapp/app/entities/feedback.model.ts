@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -158,5 +159,12 @@ export class Feedback implements BaseEntity {
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
+    }
+
+    public static buildFeedbackTextForReview(feedback: Feedback): string | undefined {
+        if (feedback.gradingInstruction) {
+            return convertToHtmlLinebreaks(feedback.gradingInstruction.feedback + '\n' + feedback.detailText);
+        }
+        return feedback.detailText;
     }
 }
