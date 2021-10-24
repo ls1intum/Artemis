@@ -174,8 +174,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     refreshAuxiliaryRepositoryChecks() {
         let legalNameAndDirs = false;
         // Check that there are no duplicate names.
-        let names = new Set<string | undefined>();
-        let auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        const names = new Set<string | undefined>();
+        const auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
         auxReposWithName.forEach((auxiliaryRepository) => {
             names.add(auxiliaryRepository.name);
             legalNameAndDirs ||= !this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
@@ -183,8 +183,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
 
         // Check that there are no duplicate checkout directories
-        let directories = new Set<string | undefined>();
-        let auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
+        const directories = new Set<string | undefined>();
+        const auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
         auxReposWithDirectory.forEach((auxiliaryRepository) => {
             directories.add(auxiliaryRepository.checkoutDirectory);
             legalNameAndDirs ||= !this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);

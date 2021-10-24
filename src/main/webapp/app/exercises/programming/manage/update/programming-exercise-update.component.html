@@ -101,7 +101,7 @@
                         <jhi-remove-auxiliary-repository-button
                             placement="right"
                             [programmingExercise]="programmingExercise"
-                            [onRefresh]="refreshAuxiliaryRepositoryChecks"
+                            (onRefresh)="refreshAuxiliaryRepositoryChecks()"
                             [row]="row"
                             class="ml-2"
                         ></jhi-remove-auxiliary-repository-button>
@@ -117,7 +117,7 @@
             </ngb-alert>
             <jhi-add-auxiliary-repository-button
                 [programmingExercise]="programmingExercise"
-                [onRefresh]="refreshAuxiliaryRepositoryChecks"
+                (onRefresh)="refreshAuxiliaryRepositoryChecks()"
                 class="ml-2"
             ></jhi-add-auxiliary-repository-button>
         </div>

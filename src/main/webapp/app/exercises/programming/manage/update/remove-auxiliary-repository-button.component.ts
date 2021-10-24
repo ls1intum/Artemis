@@ -23,7 +23,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
 
     @Input() row: AuxiliaryRepository;
 
-    @Input() onRefresh: () => void;
+    @Output() onRefresh: EventEmitter<any>;
 
     /**
      * Removes the auxiliary repository of the selected row from the respective programming exercise.
@@ -31,7 +31,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
     removeAuxiliaryRepository() {
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
         this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
-        this.onRefresh();
+        this.onRefresh.emit();
         // This activates the angular change detection
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
