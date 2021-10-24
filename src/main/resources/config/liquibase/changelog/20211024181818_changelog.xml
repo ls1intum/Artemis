@@ -1,0 +1,20 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="argertboja" id="20211024181818">
+        <sql>
+            <!--This query finds all feedbacks which need a migration and prepares all the required
+            information to create all the missing text blocks such as text, first_index, end_index,
+            submission_id to which these text blocks belong to, type defined as MANUAL, the feedback_id
+            which is used to update the reference and the text block id which is computed as follows:
+            sha1(submission_id;start_index-end_index;text)
+            -->
+            UPDATE
+                text_block tb
+                INNER JOIN feedback f ON tb.id = f.reference
+            SET
+                tb.feedback_id = f.id
+            WHERE
+                tb.id = f.reference;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
