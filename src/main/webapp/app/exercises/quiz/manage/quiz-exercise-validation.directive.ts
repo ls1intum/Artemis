@@ -358,6 +358,9 @@ export abstract class QuizExerciseValidationDirective {
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
+        if (!this.quizExercise || !this.savedEntity) {
+            return false;
+        }
         return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
     }
     checkForInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {

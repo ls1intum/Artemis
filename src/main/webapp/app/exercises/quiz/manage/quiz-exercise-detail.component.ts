@@ -922,6 +922,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     computeInvalidReasons(): Reason[] {
         const invalidReasons = new Array<Reason>();
+        if (!this.quizExercise) {
+            return [];
+        }
         // Release Date valid but lies in the past
         if (this.quizExercise.isPlannedToStart) {
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
@@ -943,6 +946,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         return super.computeInvalidReasons().concat(invalidReasons);
     }
     validQuiz(): boolean {
+        if (!this.quizExercise) {
+            return false;
+        }
         // Release date is valid if it's not null/undefined and a valid date; Precondition: isPlannedToStart is set
         // Release date should also not be in the past
         const releaseDateValidAndNotInPastCondition =
