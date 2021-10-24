@@ -8,9 +8,12 @@ import { PatternMatch, PostingContentPart } from '../metis.util';
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
+    styleUrls: ['./posting-content.component.scss'],
 })
 export class PostingContentComponent implements OnInit, OnDestroy {
     @Input() content?: string;
+    @Input() previewMode?: boolean;
+    showContent = false;
     currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];
 
