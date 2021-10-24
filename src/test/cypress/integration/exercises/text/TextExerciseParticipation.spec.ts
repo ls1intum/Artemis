@@ -9,6 +9,7 @@ const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
 const textEditor = artemis.pageobjects.textExercise.editor;
+const courseOverview = artemis.pageobjects.courseOverview;
 
 describe('Text exercise participation', () => {
     let course: any;
@@ -25,20 +26,21 @@ describe('Text exercise participation', () => {
 
     it('Creates a text exercise in the UI', () => {
         cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
-        cy.contains('Start exercise').click();
-        cy.get('[data-icon="folder-open"]').click();
+        courseOverview.startExercise(exerciseTitle);
+        courseOverview.openRunningExercise(exerciseTitle);
 
         // Verify the initial state of the text editor
-        cy.get('jhi-header-participation-page').contains(exerciseTitle).should('be.visible');
-        cy.get('[jhitranslate="artemisApp.exercise.problemStatement"]').should('be.visible');
-        cy.get('.exercise-details-table').should('be.visible');
-        cy.contains('No Submission').should('be.visible');
+        textEditor.shouldShowExerciseTitleInHeader(exerciseTitle);
+        textEditor.shouldShowProblemStatement();
+        textEditor.getHeaderElement().contains('No Submission').should('be.visible');
 
         // Make a submission
         cy.fixture('loremIpsum.txt').then((submission) => {
+            textEditor.shouldShowNumberOfWords(0);
+            textEditor.shouldShowNumberOfCharacters(0);
             textEditor.typeSubmission(submission);
-            cy.contains('Number of words: 100').should('be.visible');
-            cy.contains('Number of characters: 591').should('be.visible');
+            textEditor.shouldShowNumberOfWords(100);
+            textEditor.shouldShowNumberOfCharacters(591);
             textEditor
                 .submit()
                 .its('response')
@@ -47,8 +49,8 @@ describe('Text exercise participation', () => {
                     expect(response.body.submitted).equals(true);
                     expect(response.statusCode).equals(200);
                 });
-            cy.get('.alert-success').should('be.visible');
-            cy.get('[jhitranslate="artemisApp.result.noResult"]').should('be.visible');
+            textEditor.shouldShowAlert();
+            textEditor.shouldShowNoGradedResultAvailable();
         });
     });
 
