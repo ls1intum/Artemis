@@ -43,7 +43,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
-    auxiliaryRepositoriesValid: boolean;
     submitButtonTitle: string;
     isImport: boolean;
     isEdit: boolean;
@@ -104,6 +103,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
+    public auxiliaryRepositoriesValid = true;
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -176,13 +176,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         let names = new Set<string | undefined>();
         let auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
         auxReposWithName.forEach((auxiliaryRepository) => names.add(auxiliaryRepository.name));
-        this.auxiliaryRepositoryDuplicateNames = names.size === auxReposWithName.length;
+        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
 
         // Check that there are no duplicate checkout directories
         let directories = new Set<string | undefined>();
         let auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
         auxReposWithDirectory.forEach((auxiliaryRepository) => directories.add(auxiliaryRepository.checkoutDirectory));
-        this.auxiliaryRepositoryDuplicateDirectories = directories.size === auxReposWithDirectory.length;
+        this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty repository names
         this.auxiliaryRepositoriesValid = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length;
