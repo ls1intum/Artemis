@@ -18,9 +18,13 @@ export abstract class AbstractExerciseAssessmentPage {
         }
     }
 
+    submitWithoutInterception() {
+        cy.get('[jhitranslate="entity.action.submit"]').click();
+    }
+
     submit() {
         cy.intercept(PUT, BASE_API + 'participations/*/manual-results?submit=true').as('submitAssessment');
-        cy.get('[jhitranslate="entity.action.submit"]').click();
+        this.submitWithoutInterception();
         return cy.wait('@submitAssessment');
         // TODO: The alert is currently broken
         // cy.contains('Your assessment was submitted successfully!').should('be.visible');
