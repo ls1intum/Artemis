@@ -56,11 +56,6 @@ export interface Reason {
     encapsulation: ViewEncapsulation.None,
 })
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
-    // Make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     @ViewChildren('editMultipleChoice')
     editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent>;
 

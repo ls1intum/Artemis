@@ -3,9 +3,10 @@ import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
@@ -14,20 +15,16 @@ import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
     styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [],
+    providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
-    // Make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     private subscription: Subscription;
 
     modalService: NgbModal;
@@ -41,6 +38,8 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     constructor(
         private quizExerciseService: QuizExerciseService,
         private route: ActivatedRoute,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalServiceC: NgbModal,
         private quizExercisePopupService: QuizExercisePopupService,
         public changeDetector: ChangeDetectorRef,

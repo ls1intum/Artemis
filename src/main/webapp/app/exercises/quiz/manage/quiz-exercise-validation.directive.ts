@@ -12,7 +12,6 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { captureException } from '@sentry/browser';
 
 interface Warning {
@@ -26,6 +25,7 @@ export interface Reason {
 
 @Directive()
 export abstract class QuizExerciseValidationDirective {
+    // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -360,39 +360,6 @@ export abstract class QuizExerciseValidationDirective {
     pendingChanges(): boolean {
         return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
     }
-
-    /**
-     * Checks whether the used and saved categories are the same.
-     * @param categoriesUsed the categories currently used
-     * @param categoriesSaved the categories that are saved
-     * @returns {boolean} true if the used and saved categories are identical.
-     */
-    areCategoriesIdentical(categoriesUsed?: ExerciseCategory[], categoriesSaved?: ExerciseCategory[]): boolean {
-        return JSON.stringify(categoriesUsed || []).toLowerCase() === JSON.stringify(categoriesSaved || []).toLowerCase();
-    }
-
-    /**
-     * Compares the provided question array objects
-     * @param QA1 {QuizQuestion[]} First question array to compare
-     * @param QA2 {QuizQuestion[]} Second question array to compare against
-     * @return {boolean} true if the provided Question[] objects are identical, false otherwise
-     */
-    areQuizExerciseEntityQuestionsIdentical(QA1?: QuizQuestion[], QA2?: QuizQuestion[]): boolean {
-        return JSON.stringify(QA1 || []) === JSON.stringify(QA2 || []);
-    }
-
-    /**
-     * This function compares the provided dates with help of the dayjs library
-     * Since we might be receiving an string instead of a dayjs object (e.g. when receiving it from the server)
-     * we wrap both dates in a dayjs object. If it's already a dayjs object, this will just be ignored.
-     * @param date1 {string|dayjs.Dayjs} First date to compare
-     * @param date2 {string|dayjs.Dayjs} Second date to compare to
-     * @return {boolean} True if the dates are identical, false otherwise
-     */
-    areDatesIdentical(date1: string | dayjs.Dayjs, date2: string | dayjs.Dayjs): boolean {
-        return dayjs(date1).isSame(dayjs(date2));
-    }
-
     checkForInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {
         if (!this.quizExercise) {
             return;
