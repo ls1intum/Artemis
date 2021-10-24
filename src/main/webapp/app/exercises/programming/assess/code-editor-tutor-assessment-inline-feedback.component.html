@@ -8,15 +8,35 @@
     <div class="m-2">
         <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
             <div class="form-group col-8 p-2">
-                <label jhiTranslate="artemisApp.assessment.detail.feedback"></label>
-                <textarea class="form-control" rows="5" [(ngModel)]="feedback.detailText" [readOnly]="viewOnly"></textarea>
+                <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
+                <div class="d-inline" *ngIf="feedback.gradingInstruction!">
+                    <fa-icon [icon]="'question-circle'" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
+                    <span>{{ feedback.gradingInstruction!.feedback }}</span>
+                </div>
             </div>
             <div class="form-group col-3 p-2">
                 <label jhiTranslate="artemisApp.exercise.score"></label>
-                <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || disableEditScore" />
             </div>
             <div class="form-group col-1 p-2" *ngIf="feedback.gradingInstruction!">
                 <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
+            </div>
+        </div>
+        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
+            <div class="form-group col-8 p-2">
+                <textarea
+                    class="form-control"
+                    rows="5"
+                    [(ngModel)]="feedback.detailText"
+                    [readOnly]="viewOnly"
+                    [placeholder]="
+                        feedback.gradingInstruction!
+                            ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
+                            : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                    "
+                ></textarea>
+            </div>
+            <div class="form-group col-3 p-2">
+                <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || feedback.gradingInstruction" />
             </div>
         </div>
         <div *ngIf="!viewOnly">
@@ -53,6 +73,6 @@
                 </button>
             </div>
         </div>
-        <div class="row ms-4 mt-2">{{ feedback.detailText }}</div>
+        <div class="row ms-4 mt-2"><span [innerHTML]="buildFeedbackTextForReview(feedback)"></span></div>
     </div>
 </ng-template>

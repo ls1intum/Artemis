@@ -28,7 +28,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Output() onConflictsClicked = new EventEmitter<number>();
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
-    @Input() disableEditScore = false;
     @Input() readOnly: boolean;
     @Input() isConflictingFeedback: boolean;
     @Input() conflictMode: boolean;
@@ -77,7 +76,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
         setTimeout(() => this.textareaAutogrow());
-        this.disableEditScore = !!this.feedback.gradingInstruction;
     }
 
     /**
@@ -157,7 +155,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     connectFeedbackWithInstruction(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        this.disableEditScore = !!this.feedback.gradingInstruction;
 
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
         this.feedback.correctionStatus = undefined;

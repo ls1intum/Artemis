@@ -20,11 +20,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
-        if (this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
     }
     private _feedback: Feedback;
     @Input()
@@ -52,7 +47,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     viewOnly: boolean;
     oldFeedback: Feedback;
-    disableEditScore = false;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
@@ -109,12 +103,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     updateFeedbackOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
+    }
+
+    public buildFeedbackTextForReview(feedback: Feedback): string | undefined {
+        return Feedback.buildFeedbackTextForReview(feedback);
     }
 }
