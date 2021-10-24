@@ -8,13 +8,15 @@ import dayjs from 'dayjs';
         <label class="form-control-label" *ngIf="labelName">
             {{ labelName }}
         </label>
-        <fa-icon
+        <fa-stack
             *ngIf="shouldDisplayTimeZoneWarning"
-            [icon]="'exclamation-triangle'"
-            class="text-warning"
             placement="top"
             ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}"
-        ></fa-icon>
+            style="height: 1em; width: 1em;"
+        >
+            <fa-icon [icon]="'globe'" stackItemSize="1x" class="text-lightgrey"></fa-icon>
+            <fa-icon [icon]="'clock'" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
+        </fa-stack>
         <div class="d-flex">
             <input
                 #dateInput="ngModel"
