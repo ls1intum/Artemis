@@ -25,14 +25,15 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
         database.addCourseWithFileUploadExercise();
         Exercise exercise = exerciseRepository.findAll().get(0);
         long delayInSeconds = 1;
+        long timeMultiplicityToReduceTestFlakiness = 2;
         ZonedDateTime exerciseReleaseDate = ZonedDateTime.now().plusSeconds(delayInSeconds);
         exercise.setReleaseDate(exerciseReleaseDate);
         exerciseRepository.save(exercise);
 
         instanceMessageReceiveService.processScheduleNotification(exercise.getId());
 
-        Thread.sleep(delayInSeconds * 1000);
+        Thread.sleep(delayInSeconds * timeMultiplicityToReduceTestFlakiness * 1000);
 
-        verify(groupNotificationService, times(1)).notifyStudentAndTutorGroupAboutStartedExercise(exercise);
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 }

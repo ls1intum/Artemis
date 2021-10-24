@@ -125,6 +125,8 @@ public class CourseResource {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final RatingService ratingService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -132,7 +134,7 @@ public class CourseResource {
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            ParticipantScoreRepository participantScoreRepository) {
+            ParticipantScoreRepository participantScoreRepository, RatingService ratingService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -156,6 +158,7 @@ public class CourseResource {
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.ratingService = ratingService;
     }
 
     /**
@@ -660,13 +663,13 @@ public class CourseResource {
         // 2.2s - slow
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
-        log.info("Finished >submissionRepository.countByCourseIdSubmittedBeforeDueDate< call for course {} in {}ms", course.getId(), end - start);
+        log.info("Finished > submissionRepository.countByCourseIdSubmittedBeforeDueDate< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 2.3s - slow
         numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
-        log.info("Finished >programmingExerciseRepository.countSubmissionsByCourseIdSubmitted< call for course {} in {}ms", course.getId(), end - start);
+        log.info("Finished > programmingExerciseRepository.countSubmissionsByCourseIdSubmitted< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 3.0s - slow
@@ -712,12 +715,25 @@ public class CourseResource {
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         start = System.currentTimeMillis();
+        // 10ms - fast
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(courseId);
+        end = System.currentTimeMillis();
+        log.info("Finished > submissionRepository.countLockedSubmissionsByCourseId < call for course {} in {}ms", course.getId(), end - start);
+        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
+
+        start = System.currentTimeMillis();
         // 8s - very slow
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
         end = System.currentTimeMillis();
         log.info("Finished > tutorLeaderboardService.getCourseLeaderboard < call for course {} in {}ms", course.getId(), end - start);
 
         stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        start = System.currentTimeMillis();
+        // 9ms - fast
+        stats.setNumberOfRatings(ratingService.countRatingsByCourse(courseId));
+        end = System.currentTimeMillis();
+        log.info("Finished > ratingService.countRatingsByCourse < call for course {} in {}ms", course.getId(), end - start);
 
         log.info("Finished > getStatsForAssessmentDashboard < call for course {} in {}", course.getId(), TimeLogUtil.formatDurationFrom(startRestCall));
         return ResponseEntity.ok(stats);
