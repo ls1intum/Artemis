@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
@@ -13,9 +13,19 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { NgModel, NgForm } from '@angular/forms';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,10 +55,22 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingAssessmentModule],
+            imports: [ArtemisTestModule],
+            declarations: [
+                ProgrammingAssessmentRepoExportDialogComponent,
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(AlertErrorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+                MockDirective(FeatureToggleDirective),
+                MockDirective(NgModel),
+                MockDirective(NgForm),
+                MockDirective(MockHasAnyAuthorityDirective),
+            ],
             providers: [
-                ExerciseService,
-                ProgrammingAssessmentRepoExportService,
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
