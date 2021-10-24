@@ -11,10 +11,15 @@ import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { getElement } from '../../../helpers/utils/general.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('ExerciseDetailsComponent', () => {
     let component: ExerciseDetailsComponent;
     let fixture: ComponentFixture<ExerciseDetailsComponent>;
+    let accountService: AccountService;
+    let isAtLeastTutor: jest.SpyInstance;
+    let isAtLeastEditor: jest.SpyInstance;
+    let isAtLeastInstructor: jest.SpyInstance;
 
     const exercise: Exercise = {
         id: 1,
@@ -41,24 +46,42 @@ describe('ExerciseDetailsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseDetailsComponent);
                 component = fixture.componentInstance;
+                accountService = TestBed.inject(AccountService);
                 component.exercise = exercise;
+                isAtLeastTutor = jest.spyOn(accountService, 'isAtLeastTutorForExercise');
+                isAtLeastTutor.mockReturnValue(true);
+                isAtLeastEditor = jest.spyOn(accountService, 'isAtLeastEditorForExercise');
+                isAtLeastEditor.mockReturnValue(true);
+                isAtLeastInstructor = jest.spyOn(accountService, 'isAtLeastInstructorForExercise');
+                isAtLeastInstructor.mockReturnValue(true);
             });
     });
 
-    it('should initialize', () => {
+    it('should initialize programming exercise', () => {
         fixture.detectChanges();
-        expect(component).toBeDefined();
-        expect(component.programmingExercise).toBeDefined();
+        expect(component).not.toBe(null);
+        expect(component.programmingExercise).not.toBe(null);
+        expect(isAtLeastTutor).toHaveBeenCalledTimes(1);
+        expect(isAtLeastEditor).toHaveBeenCalledTimes(1);
+        expect(isAtLeastInstructor).toHaveBeenCalledTimes(1);
     });
 
     it('should show timeline', () => {
+        fixture.detectChanges();
         const timeline = getElement(fixture.debugElement, 'jhi-programming-exercise-lifecycle');
-        expect(timeline).not.toBeNull;
+        expect(timeline).not.toBe(null);
     });
 
     it('should show instructions', () => {
+        fixture.detectChanges();
         const instructions = getElement(fixture.debugElement, 'jhi-programming-exercise-instructions');
-        expect(instructions).not.toBeNull;
+        expect(instructions).not.toBe(null);
+    });
+
+    it('should not show grading criteria', () => {
+        fixture.detectChanges();
+        const gradingCriteria = getElement(fixture.debugElement, 'jhi-structured-grading-instructions-assessment-layout');
+        expect(gradingCriteria).toBe(null);
     });
 
     describe('ExerciseDetailsComponent with Text Exercise', () => {
@@ -71,15 +94,20 @@ describe('ExerciseDetailsComponent', () => {
             gradingCriteria: [{ title: 'criterion', structuredGradingInstructions: [] }],
         };
 
-        it('should initialize', () => {
+        it('should initialize text exercise', () => {
             component.exercise = textExercise;
             fixture.detectChanges();
-            expect(component.programmingExercise).toBeUndefined();
+            expect(component.programmingExercise).toBe(undefined);
+            expect(isAtLeastTutor).toHaveBeenCalledTimes(1);
+            expect(isAtLeastEditor).toHaveBeenCalledTimes(1);
+            expect(isAtLeastInstructor).toHaveBeenCalledTimes(1);
         });
 
         it('should show grading criteria', () => {
+            component.exercise = textExercise;
+            fixture.detectChanges();
             const gradingCriteria = getElement(fixture.debugElement, 'jhi-structured-grading-instructions-assessment-layout');
-            expect(gradingCriteria).not.toBeNull;
+            expect(gradingCriteria).not.toBe(null);
         });
     });
 });
