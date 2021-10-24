@@ -47,18 +47,42 @@ export class MetisService implements OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {
-        if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
-        }
-    }
-
     get posts(): Observable<Post[]> {
         return this.posts$.asObservable();
     }
 
     get tags(): Observable<string[]> {
         return this.tags$.asObservable();
+    }
+
+    static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
+        return ['/courses', courseId, 'lectures', lectureId];
+    }
+
+    static getLinkForExercisePost(courseId: number, exerciseId: number): RouteComponents {
+        return ['/courses', courseId, 'exercises', exerciseId];
+    }
+
+    static getLinkForCoursePost(courseId: number): RouteComponents {
+        return ['/courses', courseId, 'discussion'];
+    }
+
+    static getQueryParamsForCoursePost(postId: number): Params {
+        const params: Params = {};
+        params.searchText = `#${postId}`;
+        return params;
+    }
+
+    static getQueryParamsForLectureOrExercisePost(postId: number): Params {
+        const params: Params = {};
+        params.postId = postId;
+        return params;
+    }
+
+    ngOnDestroy(): void {
+        if (this.subscriptionChannel) {
+            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+        }
     }
 
     getPageType(): PageType {
@@ -313,18 +337,6 @@ export class MetisService implements OnDestroy {
         return MetisService.getLinkForCoursePost(this.courseId);
     }
 
-    static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
-        return ['/courses', courseId, 'lectures', lectureId];
-    }
-
-    static getLinkForExercisePost(courseId: number, exerciseId: number): RouteComponents {
-        return ['/courses', courseId, 'exercises', exerciseId];
-    }
-
-    static getLinkForCoursePost(courseId: number): RouteComponents {
-        return ['/courses', courseId, 'discussion'];
-    }
-
     /**
      * determines the routing params required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
@@ -336,18 +348,6 @@ export class MetisService implements OnDestroy {
         } else {
             return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
         }
-    }
-
-    static getQueryParamsForCoursePost(postId: number): Params {
-        const params: Params = {};
-        params.searchText = `#${postId}`;
-        return params;
-    }
-
-    static getQueryParamsForLectureOrExercisePost(postId: number): Params {
-        const params: Params = {};
-        params.postId = postId;
-        return params;
     }
 
     /**
@@ -405,7 +405,16 @@ export class MetisService implements OnDestroy {
                 case MetisPostAction.UPDATE_POST:
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToUpdate > -1) {
-                        this.cachedPosts[indexToUpdate] = postDTO.post;
+                        // if context has changed, we need to remove the post from the current list of posts
+                        if (
+                            this.cachedPosts[indexToUpdate].lecture?.id !== postDTO.post.lecture?.id ||
+                            this.cachedPosts[indexToUpdate].exercise?.id !== postDTO.post.exercise?.id ||
+                            this.cachedPosts[indexToUpdate].courseWideContext !== postDTO.post.courseWideContext
+                        ) {
+                            this.cachedPosts.splice(indexToUpdate, 1);
+                        } else {
+                            this.cachedPosts[indexToUpdate] = postDTO.post;
+                        }
                     }
                     if (postDTO.post.tags && postDTO.post.tags.length > 0) {
                         const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));

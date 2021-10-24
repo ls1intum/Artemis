@@ -186,6 +186,19 @@ public class Post extends Posting {
         this.displayPriority = displayPriority;
     }
 
+    public boolean hasSameContext(Post otherPost) {
+        if (getExercise() != null && otherPost.getExercise() != null && getExercise().getId().equals(otherPost.getExercise().getId())) {
+            return true;
+        }
+        else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
+            return true;
+        }
+        else if (getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext()) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()

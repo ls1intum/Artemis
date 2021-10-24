@@ -115,6 +115,12 @@ public class PostService extends PostingService {
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
+        boolean contextHasChanged = false;
+        if (!existingPost.hasSameContext(post)) {
+            contextHasChanged = true;
+            broadcastForPost(new MetisPostDTO(existingPost, MetisPostAction.DELETE_POST), course);
+        }
+
         // update: allow overwriting of values only for depicted fields if user is at least student
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
@@ -138,7 +144,12 @@ public class PostService extends PostingService {
             updatedPost.getExercise().filterSensitiveInformation();
         }
 
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        if (contextHasChanged) {
+            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.CREATE_POST), course);
+        }
+        else {
+            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        }
         return updatedPost;
     }
 
