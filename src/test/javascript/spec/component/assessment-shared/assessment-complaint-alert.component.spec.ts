@@ -12,11 +12,13 @@ describe('AssessmentComplaintAlertComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [AssessmentComplaintAlertComponent, ArtemisTranslatePipe],
-        }).compileComponents().then(() => {
-            fixture = TestBed.createComponent(AssessmentComplaintAlertComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-        });
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(AssessmentComplaintAlertComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     it('should create', () => {

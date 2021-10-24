@@ -62,8 +62,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbModule, FeatureToggleModule, ClipboardModule],
-            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent), MockPipe(ArtemisTranslatePipe), ExtensionPointDirective,
-                MockRouterLinkDirective],
+            declarations: [
+                ExerciseDetailsStudentActionsComponent,
+                MockComponent(ExerciseActionButtonComponent),
+                MockComponent(CloneRepoButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                ExtensionPointDirective,
+                MockRouterLinkDirective,
+            ],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AlertService, useClass: MockAlertService },

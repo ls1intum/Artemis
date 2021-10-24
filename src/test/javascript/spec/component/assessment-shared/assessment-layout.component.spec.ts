@@ -24,13 +24,26 @@ describe('AssessmentLayoutComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
-            declarations: [AssessmentLayoutComponent, AssessmentHeaderComponent, MockComponent(ComplaintsForTutorComponent), MockComponent(AssessmentComplaintAlertComponent), MockComponent(AlertComponent), MockComponent(NgbAlert), MockComponent(AssessmentWarningComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(NgbTooltip)],
+            declarations: [
+                AssessmentLayoutComponent,
+                AssessmentHeaderComponent,
+                MockComponent(ComplaintsForTutorComponent),
+                MockComponent(AssessmentComplaintAlertComponent),
+                MockComponent(AlertComponent),
+                MockComponent(NgbAlert),
+                MockComponent(AssessmentWarningComponent),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(NgbTooltip),
+            ],
             providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
-        }).compileComponents().then(() => {
-            fixture = TestBed.createComponent(AssessmentLayoutComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-        });
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(AssessmentLayoutComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     it('should create', () => {

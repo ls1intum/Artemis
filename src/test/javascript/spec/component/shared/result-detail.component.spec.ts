@@ -162,7 +162,14 @@ describe('ResultDetailComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ResultDetailComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(ChartComponent), MockComponent(FeedbackCollapseComponent), MockDirective(NgbTooltip)],
+            declarations: [
+                ResultDetailComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(ChartComponent),
+                MockComponent(FeedbackCollapseComponent),
+                MockDirective(NgbTooltip),
+            ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

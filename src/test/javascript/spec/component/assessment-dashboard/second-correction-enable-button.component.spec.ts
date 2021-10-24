@@ -31,7 +31,8 @@ describe('SecondCorrectionEnableButtonComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
-        }).compileComponents()
+        })
+            .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(SecondCorrectionEnableButtonComponent);
                 comp = fixture.componentInstance;
