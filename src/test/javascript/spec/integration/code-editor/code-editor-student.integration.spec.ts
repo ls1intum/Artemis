@@ -86,9 +86,9 @@ describe('CodeEditorStudentIntegration', () => {
 
     const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CodeEditorStudentContainerComponent,
                 CodeEditorContainerComponent,
@@ -219,8 +219,8 @@ describe('CodeEditorStudentIntegration', () => {
         // Repository should be locked, the student can't write into it anymore.
         expect(container.repositoryIsLocked).toBe(true);
         expect(getElement(containerDebugElement, '.locked-container')).toBeDefined();
-        expect(container.codeEditorContainer.fileBrowser.disableActions).toBeDefined();
-        expect(container.codeEditorContainer.actions.disableActions).toBeDefined();
+        expect(container.codeEditorContainer.fileBrowser.disableActions).toBe(true);
+        expect(container.codeEditorContainer.actions.disableActions).toBe(true);
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
