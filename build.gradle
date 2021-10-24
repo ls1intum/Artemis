@@ -61,7 +61,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
@@ -71,7 +71,7 @@ spotless {
 }
 
 defaultTasks "bootRun"
-
+    
 springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
 }
@@ -231,7 +231,6 @@ gradle.taskGraph.whenReady { graph ->
 
     if (!hasRootGatewayTask) {
         graph.getAllTasks().each { task ->
-            // look for :abc:run, :def:run etc
             def subGatewayTask = (task.path =~ /:gateway.+/)
             if (subGatewayTask) {
                 println "TRACER skipping task ${task.path}"
