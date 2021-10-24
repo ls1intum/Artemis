@@ -16,4 +16,4 @@ services:
 
 networks:
     artemis:
-        driver: "nat"
+        driver: "bridge"
