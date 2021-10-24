@@ -1,4 +1,4 @@
-import { BASE_API, POST, PUT } from '../../../support/constants';
+import { BASE_API, PUT } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
 import day from 'dayjs';
 
@@ -6,6 +6,8 @@ import day from 'dayjs';
 const assessmentEditor = artemis.pageobjects.modelingExercise.assessmentEditor;
 const courseAssessmentDashboard = artemis.pageobjects.assessment.course;
 const exerciseAssessmentDashboard = artemis.pageobjects.assessment.exercise;
+const exerciseResult = artemis.pageobjects.exerciseResult;
+const modelingFeedback = artemis.pageobjects.modelingExercise.feedback;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -79,15 +81,13 @@ describe('Modeling Exercise Spec', () => {
 
         it('Student can view the assessment and complain', () => {
             cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
-            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 10 points');
-            cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
-            cy.url().should('contain', `/courses/${course.id}/modeling-exercises/${modelingExercise.id}/participate/`);
-            cy.get('.col-xl-8').should('contain.text', 'Thanks, good job.');
-            cy.get('jhi-complaint-interactions > :nth-child(1) > .mt-4 > :nth-child(1)').click();
-            cy.get('#complainTextArea').type('Thanks i hate you :^)');
-            cy.intercept(POST, BASE_API + 'complaints').as('complaintCreated');
-            cy.get('.col-6 > .btn').click();
-            cy.wait('@complaintCreated');
+            exerciseResult.shouldShowExerciseTitle(modelingExercise.title);
+            exerciseResult.shouldShowScore(20);
+            exerciseResult.clickViewSubmission();
+            modelingFeedback.shouldShowScore(2, 10, 20);
+            modelingFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
+            modelingFeedback.shouldShowComponentFeedback(1, 2, 'Good');
+            modelingFeedback.complain('I am not happy with your assessment.');
         });
 
         it('Instructor can see complaint and reject it', () => {
