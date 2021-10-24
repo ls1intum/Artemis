@@ -172,29 +172,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * used in the template to display warnings.
      */
     refreshAuxiliaryRepositoryChecks() {
-        return () => {
-            let legalNameAndDirs = false;
-            // Check that there are no duplicate names.
-            let names = new Set<string | undefined>();
-            let auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
-            auxReposWithName.forEach((auxiliaryRepository) => {
-                names.add(auxiliaryRepository.name);
-                legalNameAndDirs ||= this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
-            });
-            this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
+        let legalNameAndDirs = false;
+        // Check that there are no duplicate names.
+        let names = new Set<string | undefined>();
+        let auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        auxReposWithName.forEach((auxiliaryRepository) => {
+            names.add(auxiliaryRepository.name);
+            legalNameAndDirs ||= this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
+        });
+        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
 
-            // Check that there are no duplicate checkout directories
-            let directories = new Set<string | undefined>();
-            let auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
-            auxReposWithDirectory.forEach((auxiliaryRepository) => {
-                directories.add(auxiliaryRepository.checkoutDirectory);
-                legalNameAndDirs ||= this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
-            });
-            this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
+        // Check that there are no duplicate checkout directories
+        let directories = new Set<string | undefined>();
+        let auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
+        auxReposWithDirectory.forEach((auxiliaryRepository) => {
+            directories.add(auxiliaryRepository.checkoutDirectory);
+            legalNameAndDirs ||= this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
+        });
+        this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
-            // Check that there are no empty/incorrect repository names and directories
-            this.auxiliaryRepositoriesValid = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
-        };
+        // Check that there are no empty/incorrect repository names and directories
+        this.auxiliaryRepositoriesValid = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
     }
 
     /**
