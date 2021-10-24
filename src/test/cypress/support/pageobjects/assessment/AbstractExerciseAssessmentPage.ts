@@ -1,4 +1,4 @@
-import { PUT, BASE_API, POST } from '../../constants';
+import { PUT, BASE_API } from '../../constants';
 import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 /**
  * Parent class for all exercise assessment pages.
