@@ -13,12 +13,13 @@ import { getExercise, Participation, ParticipationType } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { captureException } from '@sentry/browser';
 
 /**
  * Enumeration object representing the possible options that
@@ -87,7 +88,8 @@ export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInfo;
-    readonly round = round;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -97,6 +99,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
     @Input() missingResultInfo = MissingResultInfo.NONE;
+    @Input() exercise?: Exercise;
 
     ParticipationType = ParticipationType;
     textColorClass: string;
@@ -122,11 +125,12 @@ export class ResultComponent implements OnInit, OnChanges {
      * participation and displays the corresponding message.
      */
     ngOnInit(): void {
-        if (!this.result && this.participation && this.participation.id) {
-            const exercise = getExercise(this.participation);
+        if (!this.result && this.participation) {
+            this.exercise = this.exercise || getExercise(this.participation);
+            this.participation.exercise = this.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise && exercise.type === ExerciseType.MODELING) {
+                if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
@@ -146,14 +150,20 @@ export class ResultComponent implements OnInit, OnChanges {
                 }
                 this.result.participation = this.participation;
             }
-        }
-        // make sure this.participation is initialized in case it was not passed
-        if (!this.participation && this.result && this.result.participation) {
+        } else if (!this.participation && this.result && this.result.participation) {
+            // make sure this.participation is initialized in case it was not passed
             this.participation = this.result.participation;
+            this.exercise = this.exercise || getExercise(this.participation);
+            this.participation.exercise = this.exercise;
+        } else if (this.participation) {
+            this.exercise = this.exercise || getExercise(this.participation);
+            this.participation.exercise = this.exercise;
+        } else {
+            captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
+            return;
         }
-        if (this.result) {
-            this.submission = this.result.submission;
-        }
+
+        this.submission = this.result!.submission;
         this.evaluate();
     }
 
@@ -201,8 +211,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     private evaluateTemplateStatus() {
         // Fallback if participation is not set
-        const exercise = getExercise(this.participation);
-        if (!this.participation || !exercise) {
+        if (!this.participation || !this.exercise) {
             if (!this.result) {
                 return ResultTemplateStatus.NO_RESULT;
             } else {
@@ -219,9 +228,9 @@ export class ResultComponent implements OnInit, OnChanges {
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
-            const inDueTime = isParticipationInDueTime(this.participation, exercise);
-            const dueDate = ResultComponent.dateAsDayjs(exercise.dueDate);
-            const assessmentDueDate = ResultComponent.dateAsDayjs(exercise.assessmentDueDate);
+            const inDueTime = isParticipationInDueTime(this.participation, this.exercise);
+            const dueDate = ResultComponent.dateAsDayjs(this.exercise.dueDate);
+            const assessmentDueDate = ResultComponent.dateAsDayjs(this.exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
@@ -288,11 +297,7 @@ export class ResultComponent implements OnInit, OnChanges {
         const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
         const resultStringCompiledMessage = this.result!.resultString?.replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
 
-        if (
-            this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
-            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
-        ) {
+        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)) {
             const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
             return `${resultStringCompiledMessage} ${preliminary}`;
         } else {
@@ -305,7 +310,7 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
+        const programmingExercise = this.exercise as ProgrammingExercise;
         if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
@@ -334,13 +339,14 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!result.participation) {
             result.participation = this.participation;
         }
+
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
-        const exercise = getExercise(this.participation);
-        componentInstance.showTestDetails = (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
-        if (exercise) {
-            componentInstance.exerciseType = exercise.type!;
+        componentInstance.showTestDetails =
+            (this.exercise?.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
+        if (this.exercise) {
+            componentInstance.exerciseType = this.exercise.type!;
             componentInstance.showScoreChart = true;
         }
         if (this.templateStatus === ResultTemplateStatus.MISSING) {

@@ -139,6 +139,12 @@
                     ></fa-icon>
                     <input type="number" class="form-control" name="maxPoints" id="field_maxPoints" min="1" formControlName="maxPoints" />
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores">
+                        Amount of decimal places used for calculating the scores
+                    </label>
+                    <input type="number" class="form-control" name="accuracyOfScores" id="field_accuracyOfScores" min="0" formControlName="accuracyOfScores" />
+                </div>
                 <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
                     <div *ngIf="!course.id" class="form-check">
                         <input

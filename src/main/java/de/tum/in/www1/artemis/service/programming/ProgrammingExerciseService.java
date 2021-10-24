@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -150,10 +151,11 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         scheduleOperations(programmingExercise.getId());
-
-        // Notify tutors only if this a course exercise
-        if (programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+        if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
+        }
+        else {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
         }
 
         return programmingExercise;

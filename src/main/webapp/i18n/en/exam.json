@@ -18,9 +18,9 @@
                 "points": {
                     "exercise": "Exercise",
                     "overview": "Overview",
-                    "yourPoints": "Your points",
+                    "yourPoints": "Your Points",
                     "maxPoints": "Points",
-                    "bonus": "Bonus points",
+                    "bonus": "Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
@@ -157,8 +157,8 @@
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
-            "points": "points",
-            "bonus": "bonus points",
+            "points": "Points",
+            "bonus": "Bonus Points",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
@@ -311,7 +311,8 @@
                 "registerAllFromCourseTooltip": "Register all students enrolled in this course",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
-                    "deleteParticipationsAndSubmission": "Delete this student's participation and submissions in the associated exam?"
+                    "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
+                    "typeNameToConfirm": "Please type in the login of the student to confirm."
                 },
                 "importStudents": {
                     "buttonLabel": "Import students",

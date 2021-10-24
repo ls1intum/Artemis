@@ -1,4 +1,7 @@
-import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import {
+    GradingInstructionsDetailsComponent,
+    GradingInstructionTableColumn,
+} from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -8,21 +11,43 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
+import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
+import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
-    const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
-    const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
+    let gradingInstruction: GradingInstruction;
+    let gradingCriterion: GradingCriterion;
+    let gradingInstructionWithoutId: GradingInstruction;
+    let gradingCriterionWithoutId: GradingCriterion;
     const exercise = { id: 1 } as Exercise;
     const backupExercise = { id: 1 } as Exercise;
+
+    const criterionMarkdownText =
+        '[criterion]' +
+        'testCriteria' +
+        '\n' +
+        '\t' +
+        '[instruction]\n' +
+        '\t' +
+        '[credits]' +
+        ' 1\n' +
+        '\t' +
+        '[gradingScale] scale\n' +
+        '\t' +
+        '[description] description\n' +
+        '\t' +
+        '[feedback] feedback\n' +
+        '\t' +
+        '[maxCountInScore] 0\n\n';
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -40,41 +65,19 @@ describe('Grading Instructions Management Component', () => {
         component = fixture.componentInstance;
         component.exercise = exercise;
         component.backupExercise = backupExercise;
+        gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
+        gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
+        gradingInstructionWithoutId = { credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
+        gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
     });
 
     describe('OnInit', function () {
-        it('should Set the default grading criteria', fakeAsync(() => {
+        it('should initialize the component', fakeAsync(() => {
             // WHEN
             component.ngOnInit();
-            tick(); // simulate async
 
             // THEN
-            expect(component.backupExercise.id).to.equal(component.exercise.id);
-            expect(component.markdownEditorText).to.equal(
-                'Add Assessment Instruction text here\n\n' +
-                    '[instruction]\n' +
-                    '\t[credits] 0\n' +
-                    '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t[description] Add grading instruction here (only visible for tutors)\n' +
-                    '\t[feedback] Add feedback for students here (visible for students)\n' +
-                    '\t[maxCountInScore] 0\n' +
-                    '\n' +
-                    '[criterion]This is an example criterion\n' +
-                    '\t[instruction]\n' +
-                    '\t[credits] 0\n' +
-                    '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t[description] Add grading instruction here (only visible for tutors)\n' +
-                    '\t[feedback] Add feedback for students here (visible for students)\n' +
-                    '\t[maxCountInScore] 0\n' +
-                    '\n' +
-                    '[instruction]\n' +
-                    '\t[credits] 0\n' +
-                    '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t[description] Add grading instruction here (only visible for tutors)\n' +
-                    '\t[feedback] Add feedback for students here (visible for students)\n' +
-                    '\t[maxCountInScore] 0\n' +
-                    '\n',
-            );
+            expect(component).toBeTruthy();
         }));
         it('should set the grading criteria based on the exercise', fakeAsync(() => {
             component.exercise.gradingCriteria = [gradingCriterion];
@@ -82,25 +85,7 @@ describe('Grading Instructions Management Component', () => {
             component.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(component.markdownEditorText).to.equal(
-                'Add Assessment Instruction text here\n\n' +
-                    '[criterion]' +
-                    'testCriteria' +
-                    '\n' +
-                    '\t' +
-                    '[instruction]\n' +
-                    '\t' +
-                    '[credits]' +
-                    ' 1\n' +
-                    '\t' +
-                    '[gradingScale] scale\n' +
-                    '\t' +
-                    '[description] description\n' +
-                    '\t' +
-                    '[feedback] feedback\n' +
-                    '\t' +
-                    '[maxCountInScore] 0\n\n',
-            );
+            expect(component.markdownEditorText).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
         }));
     });
 
@@ -109,7 +94,7 @@ describe('Grading Instructions Management Component', () => {
         const index = component.findCriterionIndex(gradingCriterion, component.exercise);
         fixture.detectChanges();
 
-        expect(index).to.equal(0);
+        expect(index).toEqual(0);
     });
 
     it('should return grading instruction index', () => {
@@ -117,7 +102,7 @@ describe('Grading Instructions Management Component', () => {
         const index = component.findInstructionIndex(gradingInstruction, component.exercise, 0);
         fixture.detectChanges();
 
-        expect(index).to.equal(0);
+        expect(index).toEqual(0);
     });
 
     it('should add new grading instruction to criteria', () => {
@@ -125,7 +110,7 @@ describe('Grading Instructions Management Component', () => {
         component.addNewInstruction(gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions.length).to.equal(2);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions.length).toEqual(2);
     });
 
     it('should delete the grading criterion', () => {
@@ -133,7 +118,7 @@ describe('Grading Instructions Management Component', () => {
         component.deleteGradingCriterion(gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria.length).to.equal(0);
+        expect(component.exercise.gradingCriteria.length).toEqual(0);
     });
 
     it('should reset the grading criterion', () => {
@@ -142,7 +127,7 @@ describe('Grading Instructions Management Component', () => {
         component.resetCriterionTitle(gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria).to.deep.equal(component.backupExercise.gradingCriteria);
+        expect(component.exercise.gradingCriteria).toEqual(component.backupExercise.gradingCriteria);
     });
 
     it('should add new grading criteria to corresponding exercise', () => {
@@ -150,7 +135,7 @@ describe('Grading Instructions Management Component', () => {
         component.addNewGradingCriterion();
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria.length).to.equal(2);
+        expect(component.exercise.gradingCriteria.length).toEqual(2);
     });
 
     it('should change grading criteria title', () => {
@@ -159,7 +144,7 @@ describe('Grading Instructions Management Component', () => {
         component.onCriterionTitleChange(event, gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].title).to.equal(event.target.value);
+        expect(component.exercise.gradingCriteria[0].title).toEqual(event.target.value);
     });
 
     it('should change grading instruction', () => {
@@ -170,7 +155,7 @@ describe('Grading Instructions Management Component', () => {
         component.onInstructionChange(domainCommands, gradingInstruction);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).to.equal(newDescription);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(newDescription);
     });
 
     it('should delete a grading instruction', () => {
@@ -178,7 +163,7 @@ describe('Grading Instructions Management Component', () => {
         component.deleteInstruction(gradingInstruction, gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).to.equal(undefined);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).toEqual(undefined);
     });
 
     it('should set grading instruction text for exercise', () => {
@@ -188,6 +173,79 @@ describe('Grading Instructions Management Component', () => {
         component.setExerciseGradingInstructionText(domainCommands);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingInstructions).to.equal(markdownText);
+        expect(component.exercise.gradingInstructions).toEqual(markdownText);
+    });
+
+    it('should set grading instruction without criterion command when markdown-change triggered', () => {
+        const domainCommands = [
+            ['', new GradingInstructionCommand()],
+            ['1', new CreditsCommand()],
+            ['scale', new GradingScaleCommand()],
+            ['description', new InstructionDescriptionCommand()],
+            ['feedback', new FeedbackCommand()],
+            ['0', new UsageCountCommand()],
+        ] as [string, DomainCommand | null][];
+
+        component.domainCommandsFound(domainCommands);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria).not.toBeUndefined();
+        const gradingCriteria = component.exercise.gradingCriteria![0];
+        expect(gradingCriteria.structuredGradingInstructions[0]).toEqual(gradingInstructionWithoutId);
+    });
+
+    it('should set grading instruction with criterion command when markdown-change triggered', () => {
+        const domainCommands = [
+            ['testCriteria', new GradingCriterionCommand()],
+            ['', new GradingInstructionCommand()],
+            ['1', new CreditsCommand()],
+            ['scale', new GradingScaleCommand()],
+            ['description', new InstructionDescriptionCommand()],
+            ['feedback', new FeedbackCommand()],
+            ['0', new UsageCountCommand()],
+        ] as [string, DomainCommand | null][];
+
+        component.domainCommandsFound(domainCommands);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria).not.toBeUndefined();
+        const gradingCriteria = component.exercise.gradingCriteria![0];
+        expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
+    });
+
+    it('should update properties for grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const instruction = gradingInstruction;
+        const criterion = gradingCriterion;
+
+        const eventCredit = { target: { value: 5 } };
+        component.updateGradingInstructionProperty(eventCredit, instruction, criterion, GradingInstructionTableColumn.CREDITS);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits).toEqual(eventCredit.target.value);
+
+        const eventGradingScale = { target: { value: 'changed grading scale' } };
+        component.updateGradingInstructionProperty(eventGradingScale, instruction, criterion, GradingInstructionTableColumn.SCALE);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale).toEqual(eventGradingScale.target.value);
+
+        const eventDescription = { target: { value: 'changed instruction description' } };
+        component.updateGradingInstructionProperty(eventDescription, instruction, criterion, GradingInstructionTableColumn.DESCRIPTION);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(eventDescription.target.value);
+
+        const eventFeedback = { target: { value: 'changed feedback' } };
+        component.updateGradingInstructionProperty(eventFeedback, instruction, criterion, GradingInstructionTableColumn.FEEDBACK);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback).toEqual(eventFeedback.target.value);
+
+        const eventUsageCount = { target: { value: 2 } };
+        component.updateGradingInstructionProperty(eventUsageCount, instruction, criterion, GradingInstructionTableColumn.LIMIT);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount).toEqual(eventUsageCount.target.value);
     });
 });

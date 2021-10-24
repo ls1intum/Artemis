@@ -58,9 +58,9 @@
                     </div>
                     <div class="col-5">
                         <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
-                        <span *ngIf="numberOfSubmissions.late > 0"> | </span>
+                        <span *ngIf="numberOfSubmissions.late > 0"> / </span>
                         <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
-                        /
+                        |
                         <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']" [queryParams]="{ tutorId: tutor?.id }"
                             >{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</a
                         >
@@ -72,7 +72,7 @@
                         {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        {{ numberOfComplaints }} /
+                        {{ numberOfComplaints }} |
                         <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
                             numberOfTutorComplaints
                         }}</a>
@@ -84,7 +84,7 @@
                         {{ 'artemisApp.assessmentDashboard.moreFeedbackRequests' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        {{ numberOfMoreFeedbackRequests }} /
+                        {{ numberOfMoreFeedbackRequests }} |
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
                             [queryParams]="{ tutorId: tutor?.id }"
@@ -285,10 +285,11 @@
                         <table
                             class="table table-striped exercise-table"
                             *ngIf="
-                                (unassessedSubmissionByCorrectionRound &&
+                                ((unassessedSubmissionByCorrectionRound &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0) ||
-                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0);
+                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0)) &&
+                                    !exercise.allowComplaintsForAutomaticAssessments;
                                 else noSubmissions
                             "
                         >
@@ -311,6 +312,7 @@
                                         <jhi-result
                                             [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                             [participation]="submission.participation!"
+                                            [exercise]="exercise"
                                         ></jhi-result>
                                     </td>
                                     <td>
@@ -321,7 +323,7 @@
                                             *ngIf="
                                                 !!submission.results && submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined
                                             "
-                                            >{{ round(submission.results![correctionRound]!.score) }} %</span
+                                            >{{ roundScoreSpecifiedByCourseSettings(submission.results![correctionRound]!.score, getCourseFromExercise(exercise)) }} %</span
                                         >
                                     </td>
                                     <td *ngIf="exercise.type === ExerciseType.TEXT">

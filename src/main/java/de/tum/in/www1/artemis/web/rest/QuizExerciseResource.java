@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -66,10 +68,12 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
             GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRepository userRepository, ExamDateService examDateService,
-            QuizMessagingService quizMessagingService) {
+            QuizMessagingService quizMessagingService, InstanceMessageSendService instanceMessageSendService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
@@ -82,6 +86,7 @@ public class QuizExerciseResource {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.quizMessagingService = quizMessagingService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -126,7 +131,12 @@ public class QuizExerciseResource {
         if (quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
+            if (quizExercise.getReleaseDate() == null || !quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(quizExercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
+            }
         }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
