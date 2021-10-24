@@ -1,26 +1,22 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;
     let fixture: ComponentFixture<AssessmentComplaintAlertComponent>;
 
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [AssessmentComplaintAlertComponent],
-        }).compileComponents();
-    }));
-
     beforeEach(() => {
-        fixture = TestBed.createComponent(AssessmentComplaintAlertComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [AssessmentComplaintAlertComponent, ArtemisTranslatePipe],
+        }).compileComponents().then(() => {
+            fixture = TestBed.createComponent(AssessmentComplaintAlertComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+        });
     });
 
     it('should create', () => {

@@ -1,15 +1,12 @@
 import * as chai from 'chai';
-
 import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { SinonStub, stub } from 'sinon';
-import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, of } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -23,7 +20,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { Team } from 'app/entities/team.model';
-import { RouterModule } from '@angular/router';
 import { ClipboardModule } from 'ngx-clipboard';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
@@ -36,6 +32,9 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,10 +59,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     } as unknown as ProgrammingExercise;
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, RouterModule, ClipboardModule],
-            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent)],
+            imports: [ArtemisTestModule, NgbModule, FeatureToggleModule, ClipboardModule],
+            declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent), MockPipe(ArtemisTranslatePipe), ExtensionPointDirective,
+                MockRouterLinkDirective],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AlertService, useClass: MockAlertService },
@@ -73,7 +73,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);

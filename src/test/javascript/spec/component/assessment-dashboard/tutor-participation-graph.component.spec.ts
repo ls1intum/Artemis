@@ -5,9 +5,7 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { Exercise } from 'app/entities/exercise.model';
@@ -18,6 +16,9 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 
 import * as sinon from 'sinon';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,10 +31,10 @@ describe('TutorParticipationGraphComponent', () => {
     const router = new MockRouter();
     const navigateSpy = sinon.spy(router, 'navigate');
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot()],
-            declarations: [TutorParticipationGraphComponent, ProgressBarComponent],
+            imports: [ArtemisTestModule],
+            declarations: [TutorParticipationGraphComponent, ProgressBarComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
             providers: [
                 JhiLanguageHelper,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -41,7 +42,6 @@ describe('TutorParticipationGraphComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorParticipationGraphComponent);

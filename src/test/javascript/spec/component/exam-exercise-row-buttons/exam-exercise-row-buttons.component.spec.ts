@@ -10,7 +10,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { Course } from 'app/entities/course.model';
@@ -31,6 +30,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import * as sinon from 'sinon';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,7 +71,6 @@ describe('ExamExerciseRowButtonsComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                ArtemisSharedModule,
                 RouterTestingModule.withRoutes([
                     {
                         path: 'courses',
@@ -76,8 +78,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                     },
                 ]),
             ],
-            declarations: [ExamExerciseRowButtonsComponent],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [ExamExerciseRowButtonsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockDirective(DeleteButtonDirective)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -86,7 +87,6 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 { provide: DeviceDetectorService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);

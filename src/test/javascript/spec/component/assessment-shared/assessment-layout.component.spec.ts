@@ -1,36 +1,36 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Complaint } from 'app/entities/complaint.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
     let fixture: ComponentFixture<AssessmentLayoutComponent>;
 
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule],
-            declarations: [],
-            providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
-        }).compileComponents();
-    }));
-
     beforeEach(() => {
-        fixture = TestBed.createComponent(AssessmentLayoutComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [AssessmentLayoutComponent, AssessmentHeaderComponent, MockComponent(ComplaintsForTutorComponent), MockComponent(AssessmentComplaintAlertComponent), MockComponent(AlertComponent), MockComponent(NgbAlert), MockComponent(AssessmentWarningComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(NgbTooltip)],
+            providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
+        }).compileComponents().then(() => {
+            fixture = TestBed.createComponent(AssessmentLayoutComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+        });
     });
 
     it('should create', () => {
