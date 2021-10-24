@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.ModelAssesmentKnowledgeRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextAssesmentKnowledgeRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.FileUtils;
@@ -58,6 +59,9 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     private AtheneService atheneService;
+
+    @Autowired
+    private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     @BeforeEach
     public void initTestCase() {
@@ -277,6 +281,8 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     /**
      * Tests that a ModelAssessmentKnowledge is correctly set to model elements
      * based on the ModelAssessmentKnowledge of the respective exercise
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
@@ -291,15 +297,26 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         submission4.setId(4L);
 
         Course course = database.addEmptyCourse();
-        ModelingExercise exercise = modelingExerciseUtilService.createModelingExercise(course.getId());
-        System.out.println(exercise.getKnowledge().getId());
-        ModelClusterFactory modelClusterFactory = new ModelClusterFactory();
-        List<ModelCluster> modelClusters = modelClusterFactory.buildClusters(List.of(submission1, submission2), exercise);
+        ModelingExercise exercise1 = modelingExerciseUtilService.createModelingExercise(course.getId());
+        ModelingExercise exercise2 = modelingExerciseUtilService.createModelingExercise(course.getId());
+        modelAssessmentKnowledgeService = new ModelAssessmentKnowledgeService(modelAssesmentKnowledgeRepository, modelingExerciseRepository);
+        exercise1.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
+        exercise2.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
 
-        ModelCluster modelCluster = modelClusters.get(0);
-        System.out.println(modelCluster.getModelElements().size());
+        ModelClusterFactory modelClusterFactory = new ModelClusterFactory();
+        List<ModelCluster> modelClusters1 = modelClusterFactory.buildClusters(List.of(submission1, submission2), exercise1);
+        List<ModelCluster> modelClusters2 = modelClusterFactory.buildClusters(List.of(submission3, submission4), exercise2);
+
+        ModelCluster modelCluster = modelClusters1.get(0);
         for (ModelElement element : modelCluster.getModelElements()) {
-            assertThat(element.getKnowledge().getId()).isEqualTo(exercise.getKnowledge().getId());
+            assertThat(element.getKnowledge().getId()).isEqualTo(exercise1.getKnowledge().getId());
         }
+
+        modelCluster = modelClusters2.get(0);
+        for (ModelElement element : modelCluster.getModelElements()) {
+            assertThat(element.getKnowledge().getId()).isEqualTo(exercise2.getKnowledge().getId());
+        }
+
+        assertThat(exercise1.getKnowledge().getId()).isNotEqualTo(exercise2.getKnowledge().getId());
     }
 }
