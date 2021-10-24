@@ -93,7 +93,7 @@ describe('CodeEditorStudentIntegration', () => {
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorFileBrowserComponent),
                 MockComponent(CodeEditorInstructionsComponent),
-                MockComponent(CodeEditorRepositoryIsLockedComponent),
+                CodeEditorRepositoryIsLockedComponent,
                 KeysPipe,
                 MockComponent(AlertComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -217,7 +217,7 @@ describe('CodeEditorStudentIntegration', () => {
 
         // Repository should be locked, the student can't write into it anymore.
         expect(container.repositoryIsLocked).toBe(true);
-        expect(getElement(containerDebugElement, '.locked-container')).toBeDefined();
+        expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
         expect(container.codeEditorContainer.fileBrowser.disableActions).toBe(true);
         expect(container.codeEditorContainer.actions.disableActions).toBe(true);
     });
