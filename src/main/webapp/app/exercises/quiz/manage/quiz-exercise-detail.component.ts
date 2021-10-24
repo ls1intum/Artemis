@@ -964,7 +964,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= 250)) {
+                if (!(shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= 250).length === 0)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength',
                         translateValues: { index: index + 1 },
