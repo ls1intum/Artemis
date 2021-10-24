@@ -101,7 +101,7 @@
                         <jhi-remove-auxiliary-repository-button
                             placement="right"
                             [programmingExercise]="programmingExercise"
-                            [onRefresh]="refreshAuxiliaryRepositoryChecks"
+                            (onRefresh)="refreshAuxiliaryRepositoryChecks()"
                             [row]="row"
                             class="ml-2"
                         ></jhi-remove-auxiliary-repository-button>
@@ -526,7 +526,7 @@
         <div class="pt-4"></div>
         <div class="form-group" *ngIf="programmingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-            <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+            <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
     <div>
