@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -130,7 +131,12 @@ public class QuizExerciseResource {
         if (quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
+            if (quizExercise.getReleaseDate() == null || !quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(quizExercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
+            }
         }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
