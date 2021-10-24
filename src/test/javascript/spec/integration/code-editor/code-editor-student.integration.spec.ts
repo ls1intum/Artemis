@@ -94,7 +94,7 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(CodeEditorFileBrowserComponent),
                 MockComponent(CodeEditorInstructionsComponent),
                 CodeEditorRepositoryIsLockedComponent,
-                KeysPipe,
+                MockPipe(KeysPipe),
                 MockComponent(AlertComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(UpdatingResultComponent),
