@@ -56,7 +56,7 @@
                 rows="1"
                 [placeholder]="
                     feedback.gradingInstruction!
-                        ? 'artemisApp.assessment.additionalFeedbackCommentPlaceholder'
+                        ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                         : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                 "
                 id="detailText-{{ textBlock.id }}"
