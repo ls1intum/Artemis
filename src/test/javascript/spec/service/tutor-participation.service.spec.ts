@@ -34,7 +34,7 @@ describe('Rating Service', () => {
         service
             .create(new TutorParticipation(), exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+            .subscribe((resp) => expect(resp.body).toBe(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
@@ -46,7 +46,7 @@ describe('Rating Service', () => {
         service
             .assessExampleSubmission(new ExampleSubmission(), exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+            .subscribe((resp) => expect(resp.body).toBe(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
