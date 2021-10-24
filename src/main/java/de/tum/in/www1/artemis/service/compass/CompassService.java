@@ -72,10 +72,7 @@ public class CompassService {
         log.info("ModelClusterTimelog: building clusters of {} submissions for modeling exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
         modelClusterRepository.saveAll(modelClusters);
-        // List<ModelElement> exisitngModelElements = modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList());
-        // exisitngModelElements.forEach(modelElement -> modelElement.setKnowledge(modelingExercise.getKnowledge()));
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList()));
-        // modelElementRepository.saveAll(exisitngModelElements);
         log.info("ModelClusterTimelog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
 
