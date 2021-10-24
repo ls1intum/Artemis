@@ -23,7 +23,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
 
     @Input() row: AuxiliaryRepository;
 
-    @Output() onRefresh: EventEmitter<any>;
+    @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
 
     /**
      * Removes the auxiliary repository of the selected row from the respective programming exercise.
