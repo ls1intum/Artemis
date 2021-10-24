@@ -15,7 +15,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
 import { parse } from 'papaparse';
 
-const csvColumns = Object.freeze({
+const csvColumnsGrade = Object.freeze({
     id: 'id',
     gradeName: 'gradeName',
     lowerBoundPercentage: 'lowerBoundPercentage',
@@ -25,6 +25,17 @@ const csvColumns = Object.freeze({
     lowerBoundInclusive: 'lowerBoundInclusive',
     upperBoundInclusive: 'upperBoundInclusive',
     isPassingGrade: 'isPassingGrade',
+});
+
+const csvColumnsBonus = Object.freeze({
+    id: 'id',
+    bonusPoints: 'bonusPoints',
+    lowerBoundPercentage: 'lowerBoundPercentage',
+    lowerBoundPoints: 'lowerBoundPoints',
+    upperBoundPercentage: 'upperBoundPercentage',
+    upperBoundPoints: 'upperBoundPoints',
+    lowerBoundInclusive: 'lowerBoundInclusive',
+    upperBoundInclusive: 'upperBoundInclusive',
 });
 
 // needed to map from csv object to grade step
@@ -638,7 +649,7 @@ export class GradingSystemComponent implements OnInit {
      */
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
-            this.gradingScale.gradeSteps = await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
+            await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
             this.determineFirstPassingGrade();
             this.setBoundInclusivity();
         }
@@ -653,7 +664,7 @@ export class GradingSystemComponent implements OnInit {
      * @param csvFile the csv file
      * @private
      */
-    async readGradingStepsFromCSVFile(event: any, csvFile: File): Promise<GradeStep[]> {
+    async readGradingStepsFromCSVFile(event: any, csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
             this.invalidImportMessage = undefined;
@@ -663,31 +674,53 @@ export class GradingSystemComponent implements OnInit {
             return [];
         }
 
-        const result = this.mapCsvGradeStepsToGradeSteps(csvGradeSteps);
+        if (csvGradeSteps.length === 0) {
+            this.gradingScale.gradeSteps = [];
+            return;
+        }
+
+        // parse and set the grade type
+        const gradeType = csvGradeSteps[0]['bonusPoints'] === undefined ? GradeType.GRADE : GradeType.BONUS;
+        if (gradeType === GradeType.BONUS) {
+            this.gradingScale.gradeType = GradeType.BONUS;
+        } else {
+            this.gradingScale.gradeType = GradeType.GRADE;
+        }
+
+        const result = this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType);
 
         if (this.invalidImportMessage) {
             event.target.value = '';
         }
-        return result;
+
+        this.gradingScale.gradeSteps = result;
     }
 
     /**
-     * Map the imported csv objects to GradeStep object with validation
+     * Map the imported csv objects to GradeStep object with validation.
+     * In case that the grade type of the imported file is bonus, attribute gradeName will be set with the bonusPoints attribute
      * @param csvGradeSteps
      */
-    mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[]): GradeStep[] {
+    mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[], gradeType: GradeType): GradeStep[] {
         const result = csvGradeSteps.map(
             (csvGradeStep) =>
                 ({
-                    ...(csvGradeStep[csvColumns.id] !== '' && { id: Number(csvGradeStep[csvColumns.id]) }),
-                    gradeName: csvGradeStep[csvColumns.gradeName] ? String(csvGradeStep[csvColumns.gradeName]) : '',
-                    lowerBoundPercentage: csvGradeStep[csvColumns.lowerBoundPercentage] ? Number(csvGradeStep[csvColumns.lowerBoundPercentage]) : undefined,
-                    ...(csvGradeStep[csvColumns.lowerBoundPoints] !== '' && { lowerBoundPoints: Number(csvGradeStep[csvColumns.lowerBoundPoints]) }),
-                    upperBoundPercentage: csvGradeStep[csvColumns.upperBoundPercentage] ? Number(csvGradeStep[csvColumns.upperBoundPercentage]) : undefined,
-                    ...(csvGradeStep[csvColumns.upperBoundPoints] !== '' && { upperBoundPoints: Number(csvGradeStep[csvColumns.upperBoundPoints]) }),
-                    lowerBoundInclusive: csvGradeStep[csvColumns.lowerBoundInclusive] ? csvGradeStep[csvColumns.lowerBoundInclusive] === 'TRUE' : undefined,
-                    upperBoundInclusive: csvGradeStep[csvColumns.upperBoundInclusive] ? csvGradeStep[csvColumns.upperBoundInclusive] === 'TRUE' : undefined,
-                    isPassingGrade: csvGradeStep[csvColumns.isPassingGrade] === 'TRUE',
+                    ...(csvGradeStep[csvColumnsGrade.id] !== '' && { id: Number(csvGradeStep[csvColumnsGrade.id]) }),
+                    gradeName:
+                        gradeType === GradeType.GRADE
+                            ? csvGradeStep[csvColumnsGrade.gradeName]
+                                ? String(csvGradeStep[csvColumnsGrade.gradeName])
+                                : ''
+                            : csvGradeStep[csvColumnsBonus.bonusPoints]
+                            ? String(csvGradeStep[csvColumnsBonus.bonusPoints])
+                            : '',
+                    lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage]) : undefined,
+                    ...(csvGradeStep[csvColumnsGrade.lowerBoundPoints] !== '' && { lowerBoundPoints: Number(csvGradeStep[csvColumnsGrade.lowerBoundPoints]) }),
+                    upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage]) : undefined,
+                    ...(csvGradeStep[csvColumnsGrade.upperBoundPoints] !== '' && { upperBoundPoints: Number(csvGradeStep[csvColumnsGrade.upperBoundPoints]) }),
+                    lowerBoundInclusive: csvGradeStep[csvColumnsGrade.lowerBoundInclusive] ? csvGradeStep[csvColumnsGrade.lowerBoundInclusive] === 'TRUE' : undefined,
+                    upperBoundInclusive: csvGradeStep[csvColumnsGrade.upperBoundInclusive] ? csvGradeStep[csvColumnsGrade.upperBoundInclusive] === 'TRUE' : undefined,
+                    ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade] === 'TRUE' }),
                 } as GradeStep),
         );
 
@@ -809,7 +842,7 @@ export class GradingSystemComponent implements OnInit {
      * Download the current grade steps to a csv file to the client
      */
     exportGradingStepsToCsv(): void {
-        const headers = Object.keys(csvColumns);
+        const headers = this.gradingScale.gradeType === GradeType.GRADE ? Object.keys(csvColumnsGrade) : Object.keys(csvColumnsBonus);
 
         const rows = this.gradingScale.gradeSteps.map((gradeStep) => this.convertToCsvRow(gradeStep));
 
@@ -823,14 +856,15 @@ export class GradingSystemComponent implements OnInit {
     convertToCsvRow(gradeStep: GradeStep): any {
         return {
             id: gradeStep.id ?? '',
-            gradeName: gradeStep.gradeName ?? '',
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
+            ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
             lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '',
             lowerBoundPoints: gradeStep.lowerBoundPoints ?? '',
             upperBoundPercentage: gradeStep.upperBoundPercentage ?? '',
             upperBoundPoints: gradeStep.upperBoundPoints ?? '',
             lowerBoundInclusive: gradeStep.lowerBoundInclusive ?? '',
             upperBoundInclusive: gradeStep.upperBoundInclusive ?? '',
-            isPassingGrade: gradeStep.isPassingGrade ?? '',
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade ?? '' }),
         };
     }
 

@@ -580,10 +580,11 @@ describe('Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).to.be.undefined;
     });
 
-    const csvColumns = 'id,gradeName,lowerBoundPercentage,lowerBoundPoints,upperBoundPercentage,upperBoundPoints,lowerBoundInclusive,upperBoundInclusive,isPassingGrade';
+    const csvColumnsGrade = 'id,gradeName,lowerBoundPercentage,lowerBoundPoints,upperBoundPercentage,upperBoundPoints,lowerBoundInclusive,upperBoundInclusive,isPassingGrade';
+    const csvColumnsBonus = 'id,bonusPoints,lowerBoundPercentage,lowerBoundPoints,upperBoundPercentage,upperBoundPoints,lowerBoundInclusive,upperBoundInclusive';
 
     it('should read no students from csv file', async () => {
-        const event = { target: { files: [csvColumns] } };
+        const event = { target: { files: [csvColumnsGrade] } };
         await comp.onCSVFileSelect(event);
 
         expect(comp.gradingScale.gradeSteps).lengthOf(0);
@@ -702,13 +703,48 @@ describe('Grading System Component', () => {
         expect(comp.invalidImportMessage).to.not.equal(undefined);
     });
 
-    it('should import csv correctly', async () => {
+    it('should import csv with "grade" as grade type correctly', async () => {
         // csv representation of gradeSteps
-        const csvRows = [csvColumns, ',"Fail",0,,40,,TRUE,FALSE,FALSE', ',"Pass",40,,80,,TRUE,FALSE,TRUE', ',"Excellent",80,,100,,TRUE,TRUE,TRUE'];
+        const csvRows = [csvColumnsGrade, ',"Fail",0,,40,,TRUE,FALSE,FALSE', ',"Pass",40,,80,,TRUE,FALSE,TRUE', ',"Excellent",80,,100,,TRUE,TRUE,TRUE'];
         const event = { target: { files: [csvRows.join('\n')] } };
 
         await comp.onCSVFileSelect(event);
         expect(comp.gradingScale.gradeSteps).to.deep.equal(gradeSteps);
+        expect(comp.gradingScale.gradeType).to.equal(GradeType.GRADE);
+    });
+
+    it('should import csv with "bonus" as grade type correctly', async () => {
+        // csv representation of gradeSteps
+        const csvRows = [csvColumnsBonus, ',1,0,,40,,TRUE,FALSE', ',2,40,,80,,TRUE,FALSE', ',3,80,,100,,TRUE,TRUE'];
+        const event = { target: { files: [csvRows.join('\n')] } };
+
+        const gradeStepsBonus = [
+            {
+                gradeName: '1',
+                lowerBoundPercentage: 0,
+                upperBoundPercentage: 40,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: false,
+            },
+            {
+                gradeName: '2',
+                lowerBoundPercentage: 40,
+                upperBoundPercentage: 80,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: false,
+            },
+            {
+                gradeName: '3',
+                lowerBoundPercentage: 80,
+                upperBoundPercentage: 100,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: true,
+            },
+        ];
+
+        await comp.onCSVFileSelect(event);
+        expect(comp.gradingScale.gradeSteps).to.deep.equal(gradeStepsBonus);
+        expect(comp.gradingScale.gradeType).to.equal(GradeType.BONUS);
     });
 
     it('should generate csv correctly', () => {
