@@ -193,8 +193,8 @@ describe('AssessmentDashboardInformationComponent', () => {
             getStatsForTutorsStub.mockReturnValue(of(courseTutorStats));
 
             comp.ngOnInit();
-            expect(getCourseWithInterestingExercisesForTutorsStub).toBeCalled();
-            expect(getStatsForTutorsStub).toBeCalled();
+            expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
+            expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
         });
 
         it('should loadAll for exam', () => {
@@ -203,11 +203,11 @@ describe('AssessmentDashboardInformationComponent', () => {
             isAtLeastInstructorInCourseStub.mockReturnValue(of(true));
 
             comp.ngOnInit();
-            expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toBeCalled();
-            expect(getStatsForExamAssessmentDashboardStub).toBeCalled();
-            expect(comp.exam).toEqual(exam);
-            expect(comp.unfinishedExercises.length).toEqual(3);
-            expect(comp.finishedExercises.length).toEqual(1);
+            expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
+            expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
+            expect(comp.exam).toBe(exam);
+            expect(comp.unfinishedExercises).toHaveLength(3);
+            expect(comp.finishedExercises).toHaveLength(1);
         });
     });
 
@@ -216,11 +216,11 @@ describe('AssessmentDashboardInformationComponent', () => {
             comp.exercises = exercises;
             toggleSecondCorrectionStub.mockReturnValue(of(true));
             comp.toggleSecondCorrection(fileUploadExercise.id!);
-            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toEqual(true);
+            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
             toggleSecondCorrectionStub.mockReturnValue(of(false));
             comp.toggleSecondCorrection(fileUploadExercise.id!);
-            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toEqual(false);
-            expect(comp.toggelingSecondCorrectionButton).toEqual(false);
+            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
+            expect(comp.toggelingSecondCorrectionButton).toBe(false);
         });
     });
 
@@ -328,7 +328,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 comp.ngOnInit();
 
                 // then
-                expect(comp.tutorIssues).toEqual([]);
+                expect(comp.tutorIssues).toHaveLength(0);
             });
         });
 
@@ -342,16 +342,16 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 2.25;
                     const courseAverageValue = 4;
                     const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isPerformanceIssue).toEqual(true);
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
                 });
 
                 it('tutors value is within allowed range', () => {
                     const ratingCheckerA = new TutorIssueRatingChecker(1, 3, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
                 });
             });
 
@@ -361,7 +361,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 40;
                     const courseAverageValue = 80;
                     const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isPerformanceIssue).toEqual(true);
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
                 });
 
                 it('tutors value is within allowed range', () => {
@@ -369,10 +369,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
                     const ratingCheckerD = new TutorIssueScoreChecker(1, 96.009, 80, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerD.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
                 });
             });
 
@@ -382,7 +382,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 14;
                     const courseAverageValue = 10;
                     const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isPerformanceIssue).toEqual(true);
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
                 });
 
                 it('tutors value is within allowed range', () => {
@@ -390,10 +390,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
                     const ratingCheckerD = new TutorIssueComplaintsChecker(1, 12.001, 10, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerB.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerC.isPerformanceIssue).toEqual(false);
-                    expect(ratingCheckerD.isPerformanceIssue).toEqual(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
                 });
             });
         });
