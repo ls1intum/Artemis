@@ -457,7 +457,6 @@ public class ExerciseService {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
-            exerciseRepository.delete(exercise);
             // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
             if (exercise instanceof TextExercise textExercise) {
                 // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
@@ -474,6 +473,7 @@ public class ExerciseService {
                     modelAssessmentKnowledgeService.deleteKnowledge(modelingExercise.getKnowledge().getId(), modelingExercise.getId());
                 }
             }
+            exerciseRepository.delete(exercise);
         }
     }
 
