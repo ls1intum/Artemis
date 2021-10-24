@@ -71,7 +71,7 @@ spotless {
 }
 
 defaultTasks "bootRun"
-    
+
 springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
 }

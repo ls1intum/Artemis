@@ -1,8 +1,8 @@
 # Gateway
-
-This application was generated using JHipster, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v7.1.0](https://www.jhipster.tech/documentation-archive/v7.1.0).
-
-This is a "gateway" application intended to be part of a microservice architecture, please refer to the [Doing microservices with JHipster][] page of the documentation for more information.
+The Gateway is a JHipster application of application type gateway. It serves the client application and handles the Web traffic. 
+It will automatically proxy all requests sent to the microservices. The gateway also takes care for user authorization if such rules are defined.
+It can permit or deny requests if JWT is not available or cannot be verified. The JWT (if it exists) is also attached to the requests sent to the microservices,
+so it is checked by the microservice as well.
 
 ## Environment preparation
 
@@ -112,11 +112,7 @@ must be hardened for production environments.
 **In case you are using MacOS, you need to modify the `docker/monitoring.yml` and `docker/prometheus/prometheus.yml` by removing
 `network_mode` and replacing `localhost`.**
 
-
 [doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/
-[using jhipster in development]: https://www.jhipster.tech/documentation-archive/v7.1.0/development/
-[service discovery and configuration with the jhipster-registry]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/#jhipster-registry
-[using docker and docker-compose]: https://www.jhipster.tech/documentation-archive/v7.1.0/docker-compose
 [using jhipster in production]: https://www.jhipster.tech/documentation-archive/v7.1.0/production/
 [setting up continuous integration]: https://www.jhipster.tech/documentation-archive/v7.1.0/setting-up-ci/
 [openapi-generator]: https://openapi-generator.tech
