@@ -178,7 +178,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         let auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
         auxReposWithName.forEach((auxiliaryRepository) => {
             names.add(auxiliaryRepository.name);
-            legalNameAndDirs ||= this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
+            legalNameAndDirs ||= !this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
         });
         this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
 
@@ -187,7 +187,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         let auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
         auxReposWithDirectory.forEach((auxiliaryRepository) => {
             directories.add(auxiliaryRepository.checkoutDirectory);
-            legalNameAndDirs ||= this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
+            legalNameAndDirs ||= !this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
         });
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 

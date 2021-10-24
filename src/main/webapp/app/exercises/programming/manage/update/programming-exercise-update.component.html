@@ -115,7 +115,11 @@
             <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="isEdit">
                 <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
             </ngb-alert>
-            <jhi-add-auxiliary-repository-button [programmingExercise]="programmingExercise" [onRefresh]="refreshAuxiliaryRepositoryChecks" class="ml-2"></jhi-add-auxiliary-repository-button>
+            <jhi-add-auxiliary-repository-button
+                [programmingExercise]="programmingExercise"
+                [onRefresh]="refreshAuxiliaryRepositoryChecks"
+                class="ml-2"
+            ></jhi-add-auxiliary-repository-button>
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <div>
