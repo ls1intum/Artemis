@@ -22,6 +22,8 @@ import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import dayjs from 'dayjs';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -82,6 +84,7 @@ describe('Notification Service', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: MetisService, useClass: MockMetisService },
             ],
         })
             .compileComponents()

@@ -41,6 +41,8 @@ import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
 
 chai.use(sinonChai);
 
@@ -113,6 +115,7 @@ describe('GuidedTourService', () => {
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: MetisService, useClass: MockMetisService },
                     MockProvider(DeviceDetectorService),
                     MockProvider(TranslateService),
                 ],
@@ -177,6 +180,7 @@ describe('GuidedTourService', () => {
                     { provide: AccountService, useClass: MockAccountService },
                     MockProvider(DeviceDetectorService),
                     { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: MetisService, useClass: MockMetisService },
                 ],
             })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
@@ -772,6 +776,7 @@ describe('GuidedTourService', () => {
                     MockProvider(DeviceDetectorService),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: Router, useClass: MockRouterWithEvents },
+                    { provide: MetisService, useClass: MockMetisService },
                 ],
             })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
