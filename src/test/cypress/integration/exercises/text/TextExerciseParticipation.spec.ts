@@ -29,7 +29,7 @@ describe('Text exercise participation', () => {
         cy.get('[data-icon="folder-open"]').click();
 
         // Verify the initial state of the text editor
-        cy.contains(exerciseTitle).should('be.visible');
+        cy.get('jhi-header-participation-page').contains(exerciseTitle).should('be.visible');
         cy.get('[jhitranslate="artemisApp.exercise.problemStatement"]').should('be.visible');
         cy.get('.exercise-details-table').should('be.visible');
         cy.contains('No Submission').should('be.visible');
