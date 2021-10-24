@@ -10,7 +10,7 @@ export class ExamAssessmentPage extends AbstractExerciseAssessmentPage {
 
     submitTextAssessment() {
         cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
-        super.submit();
+        super.submitWithoutInterception();
         return cy.wait('@submitFeedback');
     }
 }
