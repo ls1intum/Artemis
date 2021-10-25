@@ -21,4 +21,32 @@ export class TextEditorPage {
         cy.get('.btn-primary').click();
         return cy.wait('@textSubmission');
     }
+
+    shouldShowExerciseTitleInHeader(exerciseTitle: string) {
+        cy.get('jhi-header-participation-page').contains(exerciseTitle).should('be.visible');
+    }
+
+    shouldShowProblemStatement() {
+        cy.get('[jhitranslate="artemisApp.exercise.problemStatement"]').should('be.visible');
+    }
+
+    getHeaderElement() {
+        return cy.get('jhi-header-participation-page');
+    }
+
+    shouldShowNumberOfWords(numberOfWords: number) {
+        cy.get('.badge').contains(`Number of words: ${numberOfWords}`).should('be.visible');
+    }
+
+    shouldShowNumberOfCharacters(numberOfWords: number) {
+        cy.get('.badge').contains(`Number of characters: ${numberOfWords}`).should('be.visible');
+    }
+
+    shouldShowAlert() {
+        cy.get('.alert-success').should('be.visible');
+    }
+
+    shouldShowNoGradedResultAvailable() {
+        cy.get('[jhitranslate="artemisApp.result.noResult"]').should('be.visible');
+    }
 }
