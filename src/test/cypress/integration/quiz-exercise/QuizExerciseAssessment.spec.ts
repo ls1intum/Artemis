@@ -59,7 +59,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             waitUntilBackendAssessmentIsAvailable();
-            cy.contains('Score 67%').should('be.visible');
+            cy.contains('Score 66.7%').should('be.visible');
         });
     });
 });

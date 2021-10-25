@@ -35,7 +35,6 @@ describe('Text exercise assessment', () => {
     before('Creates a text exercise and makes a student submission', () => {
         createCourseWithTextExercise().then(() => {
             makeTextSubmissionAsStudent();
-            updateExerciseDueDate();
         });
     });
 
@@ -67,12 +66,8 @@ describe('Text exercise assessment', () => {
     });
 
     describe('Feedback', () => {
-        before(() => {
-            updateExerciseAssessmentDueDate();
-            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
-        });
-
         it('Student sees feedback after assessment due date and complains', () => {
+            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title);
@@ -110,26 +105,6 @@ describe('Text exercise assessment', () => {
         courseManagement.startExerciseParticipation(course.id, exercise.id);
         cy.fixture('loremIpsum.txt').then((submission) => {
             courseManagement.makeTextExerciseSubmission(exercise.id, submission);
-        });
-    }
-
-    function updateExerciseDueDate() {
-        cy.login(admin);
-        cy.wait(1000).then(() => {
-            courseManagement
-                .updateTextExerciseDueDate(exercise)
-                .its('body')
-                .then((newExercise) => {
-                    // We need to save the returned dto. Otherwise we will overwrite the due date when we update the assessment date later.
-                    exercise = newExercise;
-                });
-        });
-    }
-
-    function updateExerciseAssessmentDueDate() {
-        cy.login(admin);
-        cy.wait(200).then(() => {
-            courseManagement.updateTextExerciseAssessmentDueDate(exercise);
         });
     }
 });
