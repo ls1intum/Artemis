@@ -43,7 +43,6 @@ public abstract class PostingService {
     void broadcastForPost(MetisPostDTO postDTO, Course course) {
         String specificTopicName = "/topic/metis/";
         String genericTopicName = "/topic/metis/courses/" + course.getId();
-        ;
         if (postDTO.getPost().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
