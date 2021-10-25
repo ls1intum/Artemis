@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -63,14 +65,14 @@ public class LectureUnitResource {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
-            return notFound();
+            throw new EntityNotFoundException("Lecture", lectureId);
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
             return conflict();
         }
         if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            return forbidden();
+            throw new AccessForbiddenException("You do not have sufficient define the order of lecture units!");
         }
 
         // Ensure that exactly as many lecture units have been received as are currently related to the lecture
@@ -110,7 +112,7 @@ public class LectureUnitResource {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnitId);
         if (lectureUnitOptional.isEmpty()) {
-            return notFound();
+            throw new EntityNotFoundException("LectureUnit", lectureUnitId);
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
 
@@ -120,8 +122,8 @@ public class LectureUnitResource {
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lectureUnit.getLecture().getCourse(), null)) {
-            return forbidden();
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
+            throw new AccessForbiddenException("You do not have sufficient to delete lecture units!");
         }
         String lectureUnitName;
 
