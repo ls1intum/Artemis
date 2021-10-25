@@ -157,7 +157,7 @@
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
             "points": "Punkte",
-            "bonus": "Bonus Punkte",
+            "bonus": "Bonuspunkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
@@ -240,6 +240,8 @@
             }
         },
         "examManagement": {
+            "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
+            "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
             "editExam": "Bearbeite eine existierende Klausur",
@@ -308,7 +310,8 @@
                 "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
-                    "deleteParticipationsAndSubmission": "Teilnahme und Abgaben in der zugehörigen Klausur löschen?"
+                    "deleteParticipationsAndSubmission": "Zusätzlich die Teilnahme und Abgaben in der zugehörigen Klausur löschen? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                    "typeNameToConfirm": "Bitte gib den Login der Person zur Bestätigung ein."
                 },
                 "importStudents": {
                     "buttonLabel": "Studierende importieren",

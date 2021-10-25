@@ -49,6 +49,15 @@ public class RatingService {
     }
 
     /**
+     * Get number of ratings for the "courseId" Course
+     * @param courseId - Id of the course that the ratings are fetched for
+     * @return number of Ratings given for exercises of this course
+     */
+    public long countRatingsByCourse(long courseId) {
+        return ratingRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    /**
      * Persist a new Rating
      *
      * @param resultId    - Id of the rating that should be persisted

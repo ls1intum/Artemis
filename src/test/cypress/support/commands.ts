@@ -25,7 +25,7 @@ import { CypressCredentials } from './users';
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { authTokenKey, GROUP_SYNCHRONIZATION } from './constants';
+import { authTokenKey } from './constants';
 
 export {};
 
@@ -36,7 +36,6 @@ declare global {
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
             getSettled(selector: string, options?: {}): Chainable<Cypress>;
-            waitForGroupSynchronization(): void;
         }
     }
 }
@@ -140,12 +139,4 @@ Cypress.Commands.add('getSettled', (selector, opts = {}) => {
             return cy.wrap(el);
         });
     });
-});
-
-/**
- * Servers that use bamboo and bitbucket need a sleep between creating a course and creating a programming exercise for group synchronization.
- * */
-Cypress.Commands.add('waitForGroupSynchronization', () => {
-    cy.log('Sleeping for group synchronization...');
-    cy.wait(GROUP_SYNCHRONIZATION);
 });

@@ -11,11 +11,12 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, CourseWideContext, DisplayPriority, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
 export class MetisService {
@@ -34,6 +35,7 @@ export class MetisService {
         protected reactionService: ReactionService,
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
+        private translateService: TranslateService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
@@ -65,10 +67,10 @@ export class MetisService {
     }
 
     /**
-     * Set course property before using metis service.
-     * @param course
+     * set course property before using metis service
+     * @param {Course} course in which the metis service is used
      */
-    setCourse(course: Course) {
+    setCourse(course: Course): void {
         if (this.courseId === undefined || this.courseId !== course.id) {
             this.courseId = course.id!;
             this.course = course;
@@ -78,7 +80,7 @@ export class MetisService {
 
     /**
      * to be used to set posts from outside
-     * @param posts
+     * @param {Post[]} posts that are managed by metis service
      */
     setPosts(posts: Post[]): void {
         this.posts$.next(posts);
@@ -99,8 +101,8 @@ export class MetisService {
     /**
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending the newly fetched posts
-     * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
-     * @param forceUpdate if true, forces a re-fetch even if filter property did not change
+     * @param {PostContextFilter} postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      */
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
         // check if the post context did change
@@ -129,7 +131,8 @@ export class MetisService {
     /**
      * creates a new post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
-     * @param post newly created post
+     * @param {Post} post to be created
+     * @return {Observable<Post>} created post
      */
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
@@ -144,7 +147,8 @@ export class MetisService {
     /**
      * creates a new answer post by invoking the answer post service
      * fetches the posts for the currently set filter on response
-     * @param answerPost newly created answer post
+     * @param {AnswerPost} answerPost to be created
+     * @return {Observable<AnswerPost>} created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.create(this.courseId, answerPost).pipe(
@@ -158,7 +162,8 @@ export class MetisService {
     /**
      * updates a given posts by invoking the post service,
      * fetches the posts for the currently set filter on response and updates course tags
-     * @param post post to update
+     * @param {Post} post to be updated
+     * @return {Observable<Post>} updated post
      */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(
@@ -173,7 +178,8 @@ export class MetisService {
     /**
      * updates a given answer posts by invoking the answer post service,
      * fetches the posts for the currently set filter on response
-     * @param answerPost answer post to update
+     * @param {AnswerPost} answerPost to be updated
+     * @return {Observable<AnswerPost>} updated answer post
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.update(this.courseId, answerPost).pipe(
@@ -186,8 +192,9 @@ export class MetisService {
 
     /**
      * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param postId            id of the post for which the displayPriority is changed
-     * @param displayPriority   new displayPriority
+     * @param {number} postId id of the post for which the displayPriority is changed
+     * @param {DisplayPriority} displayPriority new displayPriority
+     * @return {Observable<Post>} updated post
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
@@ -201,7 +208,7 @@ export class MetisService {
     /**
      * deletes a post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
-     * @param post post to delete
+     * @param {Post} post to be deleted
      */
     deletePost(post: Post): void {
         this.postService.delete(this.courseId, post).subscribe(() => {
@@ -213,7 +220,7 @@ export class MetisService {
     /**
      * deletes an answer post by invoking the post service
      * fetches the posts for the currently set filter on response
-     * @param answerPost answer post to delete
+     * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
@@ -224,7 +231,8 @@ export class MetisService {
     /**
      * creates a new reaction
      * fetches the posts for the currently set filter on response
-     * @param reaction reaction to create
+     * @param {Reaction} reaction to be created
+     * @return {Observable<Reaction>} created reaction
      */
     createReaction(reaction: Reaction): Observable<Reaction> {
         return this.reactionService.create(this.courseId, reaction).pipe(
@@ -238,7 +246,7 @@ export class MetisService {
     /**
      * deletes an existing reaction
      * fetches the posts for the currently set filter on response
-     * @param reaction reaction to create
+     * @param {Reaction} reaction to be deleted
      */
     deleteReaction(reaction: Reaction): Observable<void> {
         return this.reactionService.delete(this.courseId, reaction).pipe(
@@ -251,37 +259,46 @@ export class MetisService {
 
     /**
      * determines if the current user is at least tutor in the current course
-     * @return boolean tutor flag
+     * @return {boolean} tutor flag
      */
     metisUserIsAtLeastTutorInCourse(): boolean {
         return this.accountService.isAtLeastTutorInCourse(this.course);
     }
 
     /**
+     * determines if the current user is at least instructor in the current course
+     * @return boolean instructor flag
+     */
+    metisUserIsAtLeastInstructorInCourse(): boolean {
+        return this.accountService.isAtLeastInstructorInCourse(this.course);
+    }
+
+    /**
      * determines if the current user is the author of a given posting
-     * @param posting posting to be checked against
-     * @return boolean author flag
+     * @param {Posting} posting for which the author is determined
+     * @return {boolean} author flag
      */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
-        return this.user ? posting?.author!.id === this.getUser().id : false;
+        return this.getUser() ? posting?.author!.id === this.getUser().id : false;
     }
 
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @param courseWideContext optional course-wide context as default context
-     * @param exercise optional exercise as default context
-     * @param lectureId of optional lecture as default context
-     * @return Post created default Post object
+     * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
+     * @param {Exercise | undefined} exercise optional exercise as default context
+     * @param {Lecture | undefined} lecture optional lecture as default context
+     * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
             emptyPost.course = this.course;
         } else if (exercise) {
-            emptyPost.exercise = { ...this.exerciseService.convertExerciseForServer(exercise) };
-        } else if (lectureId) {
-            emptyPost.lecture = { id: lectureId } as Lecture;
+            const exercisePost = this.exerciseService.convertExerciseForServer(exercise);
+            emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
+        } else if (lecture) {
+            emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
         } else {
             // set default
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
@@ -290,32 +307,106 @@ export class MetisService {
     }
 
     /**
-     * determines the router link components required for navigating to the detail view of the given post
-     * @param post to be navigated to
-     * @return [] array of router link components
+     * counts the answer posts of a post, 0 if none exist
+     * @param {Post} post of which the answer posts are counted
+     * @return {number} amount of answer posts
      */
-    getLinkForPost(post?: Post): (string | number)[] {
+    getNumberOfAnswerPosts(post: Post): number {
+        return post.answers?.length! ? post.answers?.length! : 0;
+    }
+
+    /**
+     * determines if the post is resolved by searching for resolving answer posts
+     * @param {Post} post of which the state is determined
+     * @return {boolean} flag that indicates if the post is resolved
+     */
+    isPostResolved(post: Post): boolean {
+        if (this.getNumberOfAnswerPosts(post) > 0) {
+            return post.answers!.filter((answer: AnswerPost) => answer.resolvesPost === true).length > 0;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * determines the router link components required for navigating to the detail view of the given post
+     * @param {Post} post to be navigated to
+     * @return {RouteComponents} array of router link components
+     */
+    getLinkForPost(post?: Post): RouteComponents {
         if (post?.lecture) {
-            return ['/courses', this.courseId, 'lectures', post.lecture.id!];
+            return MetisService.getLinkForLecturePost(this.courseId, post.lecture.id!);
         }
         if (post?.exercise) {
-            return ['/courses', this.courseId, 'exercises', post.exercise.id!];
+            return MetisService.getLinkForExercisePost(this.courseId, post.exercise.id!);
         }
-        return ['/courses', this.courseId, 'discussion'];
+        return MetisService.getLinkForCoursePost(this.courseId);
+    }
+
+    static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
+        return ['/courses', courseId, 'lectures', lectureId];
+    }
+
+    static getLinkForExercisePost(courseId: number, exerciseId: number): RouteComponents {
+        return ['/courses', courseId, 'exercises', exerciseId];
+    }
+
+    static getLinkForCoursePost(courseId: number): RouteComponents {
+        return ['/courses', courseId, 'discussion'];
     }
 
     /**
      * determines the routing params required for navigating to the detail view of the given post
-     * @param post to be navigated to
-     * @return Params required parameter key-value pair
+     * @param {Post} post to be navigated to
+     * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
-        const params: Params = {};
         if (post.courseWideContext) {
-            params.searchText = `#${post.id}`;
+            return MetisService.getQueryParamsForCoursePost(post.id!);
         } else {
-            params.postId = post.id;
+            return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
         }
+    }
+
+    static getQueryParamsForCoursePost(postId: number): Params {
+        const params: Params = {};
+        params.searchText = `#${postId}`;
         return params;
+    }
+
+    static getQueryParamsForLectureOrExercisePost(postId: number): Params {
+        const params: Params = {};
+        params.postId = postId;
+        return params;
+    }
+
+    /**
+     * Creates an object to be used when a post context should be displayed and linked (for exercise and lecture)
+     * @param {Post} post for which the context is displayed and linked
+     * @return {ContextInformation} object containing the required router link components as well as the context display name
+     */
+    getContextInformation(post: Post): ContextInformation {
+        let routerLinkComponents = undefined;
+        let displayName;
+        if (post.exercise) {
+            displayName = post.exercise.title!;
+            routerLinkComponents = ['/courses', this.courseId, 'exercises', post.exercise.id!];
+        } else if (post.lecture) {
+            displayName = post.lecture.title!;
+            routerLinkComponents = ['/courses', this.courseId, 'lectures', post.lecture.id!];
+        } else {
+            // course-wide topics are not linked, only displayName is set
+            displayName = this.translateService.instant('artemisApp.metis.overview.' + post.courseWideContext);
+        }
+        return { routerLinkComponents, displayName };
+    }
+
+    /**
+     * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with a certain strategy
+     * @param {Post} tempPost that is currently created and compared against existing course posts on updates in the form group
+     * @return {Observable<Post[]>} array of similar posts that were found in the course
+     */
+    getSimilarPosts(tempPost: Post): Observable<Post[]> {
+        return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 }

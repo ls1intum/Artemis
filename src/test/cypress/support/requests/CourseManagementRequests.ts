@@ -8,6 +8,7 @@ import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
+import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
@@ -37,14 +38,24 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
+     * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
      * @returns <Chainable> request response
      */
-    createCourse(courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
-        const course = courseTemplate;
-        course.title = courseName;
-        course.shortName = courseShortName;
+    createCourse(customizeGroups = false, courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
+        let course = { ...courseTemplate, title: courseName, shortName: courseShortName };
+        const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
+        if (customizeGroups && allowGroupCustomization) {
+            course = {
+                ...course,
+                customizeGroupNames: true,
+                studentGroupName: Cypress.env('studentGroupName'),
+                teachingAssistantGroupName: Cypress.env('tutorGroupName'),
+                editorGroupName: Cypress.env('editorGroupName'),
+                instructorGroupName: Cypress.env('instructorGroupName'),
+            };
+        }
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,
@@ -71,6 +82,8 @@ export class CourseManagementRequests {
      * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param assessmentDate the due date of the assessment
+     * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
@@ -81,32 +94,77 @@ export class CourseManagementRequests {
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
+        assessmentDate = day().add(2, 'days'),
+        assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
-        programmingTemplate.title = title;
-        programmingTemplate.shortName = programmingShortName;
-        programmingTemplate.packageName = packageName;
+        const template = {
+            ...programmingExerciseTemplate,
+            title,
+            shortName: programmingShortName,
+            packageName,
+            assessmentType: CypressAssessmentType[assessmentType],
+        };
+        const exercise: any = Object.assign({}, template, body);
         if (!isExamExercise) {
-            programmingTemplate.releaseDate = dayjsToString(releaseDate);
-            programmingTemplate.dueDate = dayjsToString(dueDate);
-        } else {
-            programmingTemplate.allowComplaintsForAutomaticAssessments = true;
+            exercise.releaseDate = dayjsToString(releaseDate);
+            exercise.dueDate = dayjsToString(dueDate);
+            exercise.assessmentDueDate = dayjsToString(assessmentDate);
         }
 
         if (scaMaxPenalty) {
-            programmingTemplate.staticCodeAnalysisEnabled = true;
-            programmingTemplate.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
+            exercise.staticCodeAnalysisEnabled = true;
+            exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
-        const runsOnBamboo: boolean = Cypress.env('isBamboo');
-        if (runsOnBamboo) {
-            cy.waitForGroupSynchronization();
-        }
-
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
-            body: programmingTemplate,
+            body: exercise,
+        });
+    }
+
+    /**
+     * Submits the example submission to the specified repository.
+     * @param repositoryId the repository id. The repository id is equal to the participation id.
+     * @returns <Chainable> request
+     */
+    makeProgrammingExerciseSubmission(repositoryId: number) {
+        // TODO: For now it is enough to submit the one prepared json file, but in the future this method should support different package names and submissions.
+        return cy.request({
+            url: `${BASE_API}repository/${repositoryId}/files?commit=yes`,
+            method: PUT,
+            body: assessment_submission,
+        });
+    }
+
+    updateProgrammingExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
+    }
+
+    updateProgrammingExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
+    }
+
+    private updateExercise(exercise: any, type: CypressExerciseType) {
+        let url: string;
+        switch (type) {
+            case CypressExerciseType.PROGRAMMING:
+                url = PROGRAMMING_EXERCISE_BASE;
+                break;
+            case CypressExerciseType.TEXT:
+                url = TEXT_EXERCISE_BASE;
+                break;
+            case CypressExerciseType.MODELING:
+            case CypressExerciseType.QUIZ:
+            default:
+                throw new Error(`Exercise type '${type}' is not supported yet!`);
+        }
+        return cy.request({
+            url,
+            method: PUT,
+            body: exercise,
         });
     }
 
@@ -299,36 +357,11 @@ export class CourseManagementRequests {
         });
     }
 
-    startExerciseParticipation(courseId: number, exerciseId: number) {
-        return cy.request({
-            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
-            method: POST,
-        });
-    }
-
     makeTextExerciseSubmission(exerciseId: number, text: string) {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
             method: PUT,
             body: { submissionExerciseType: 'text', text, id: null },
-        });
-    }
-
-    updateTextExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
-        return this.updateTextExercise(exercise);
-    }
-
-    updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
-        return this.updateTextExercise(exercise);
-    }
-
-    private updateTextExercise(exercise: any) {
-        return cy.request({
-            url: TEXT_EXERCISE_BASE,
-            method: PUT,
-            body: exercise,
         });
     }
 
@@ -398,6 +431,16 @@ export class CourseManagementRequests {
             url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
             method: POST,
         });
+    }
+
+    updateTextExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.TEXT);
+    }
+
+    updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
     /**
@@ -524,4 +567,17 @@ export class CypressExamBuilder {
     build() {
         return this.template;
     }
+}
+
+export enum CypressAssessmentType {
+    AUTOMATIC,
+    SEMI_AUTOMATIC,
+    MANUAL,
+}
+
+export enum CypressExerciseType {
+    PROGRAMMING,
+    MODELING,
+    TEXT,
+    QUIZ,
 }
