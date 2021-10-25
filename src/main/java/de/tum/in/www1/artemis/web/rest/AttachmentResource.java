@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -23,6 +21,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
@@ -174,14 +173,14 @@ public class AttachmentResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastEditorInCourse(course, user);
+        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         if (hasCourseInstructorAccess) {
             log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
             attachmentRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
         else {
-            return forbidden();
+            throw new AccessForbiddenException("You do not have sufficient permissions to delete lecture attachments!");
         }
     }
 }
