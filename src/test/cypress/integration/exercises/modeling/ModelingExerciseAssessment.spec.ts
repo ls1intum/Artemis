@@ -63,7 +63,7 @@ describe('Modeling Exercise Spec', () => {
         assessmentEditor.openAssessmentForComponent(3);
         assessmentEditor.assessComponent(0, 'Unnecessary');
         cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitModelingAssessment');
-        assessmentEditor.submit();
+        assessmentEditor.submitWithoutInterception();
         cy.wait('@submitModelingAssessment').its('response.statusCode').should('eq', 200);
     });
 
@@ -92,10 +92,9 @@ describe('Modeling Exercise Spec', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            cy.get(`[href="/course-management/${course.id}/complaints"]`).click();
-            cy.get('tr > .text-center >').click();
-            cy.get('#responseTextArea').type('lorem ipsum...');
-            cy.get('#rejectComplaintButton').click();
+            courseAssessmentDashboard.openComplaints(course.id);
+            courseAssessmentDashboard.showTheComplaint();
+            assessmentEditor.rejectComplaint('You are wrong.');
             cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
         });
     });
