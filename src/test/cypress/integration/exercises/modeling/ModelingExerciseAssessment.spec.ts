@@ -34,9 +34,9 @@ describe('Modeling Exercise Spec', () => {
     before('Create modeling exercise and submission', () => {
         courseManagementRequests.createModelingExercise({ course }, undefined, undefined, day().add(5, 'seconds'), day().add(1, 'hour')).then((resp) => {
             modelingExercise = resp.body;
-            cy.login(student);
-            courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
+            cy.login(student).then(() => {courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
                 courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id, participationReponse.body);
+                });
             });
         });
     });
