@@ -13,6 +13,7 @@ const artemisRequests = artemis.requests;
 const courseManagementPage = artemis.pageobjects.courseManagement;
 const navigationBar = artemis.pageobjects.navigationBar;
 const programmingCreation = artemis.pageobjects.programmingExercise.creation;
+const courseExercises = artemis.pageobjects.courseManagementExercises;
 
 // Selectors
 const datepickerButtons = '.owl-dt-container-control-button';
@@ -67,7 +68,7 @@ describe('Programming Exercise Management', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
-            cy.get('#jh-create-entity').click();
+            courseExercises.clickCreateProgrammingExerciseButton();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
             const exerciseTitle = 'Cypress programming exercise ' + generateUUID();
@@ -87,7 +88,7 @@ describe('Programming Exercise Management', () => {
             programmingCreation.checkAllowOnlineEditor();
             programmingCreation.generate().its('response.statusCode').should('eq', 201);
             cy.url().should('include', '/exercises');
-            cy.contains(exerciseTitle).should('be.visible');
+            courseExercises.shouldContainExerciseWithName(exerciseTitle);
         });
     });
 
