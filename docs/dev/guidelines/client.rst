@@ -248,3 +248,51 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
+
+14. Chart instantiation
+=========================
+
+We are using the framework ngx-charts in order to instantiate charts and diagrams in Artemis.
+
+The following is an example HTML template for a vertical bar chart
+
+.. code-block:: ts
+
+    <div #containerRef class="col-md-9">
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 300]"
+                [results]="ngxData"
+                [scheme]="color"
+                [legend]="false"
+                [xAxis]="true"
+                [yAxis]="true"
+                [yScaleMax]="20"
+                [roundEdges]="true"
+                [showDataLabel]="true"
+            >
+                <ng-template #tooltipTemplate let-model="model">{{ labelTitle }}: {{ roundValue((model.value / totalValue) * 100) }}% </ng-template>
+            </ngx-charts-bar-vertical>
+
+There are a few tips when using this framework:
+
+1. In order to configure the content of the tooltips in the chart, declare a ng-templae with the reference ``#tooltipTemplate``
+containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
+the tooltips are configured in order to present the percentage value corresponding to the absolute value represented by the bar.
+Depending on the chart type, there is more than one type of tooltip configurable.
+For more information visit https://swimlane.gitbook.io/ngx-charts/
+
+2. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
+The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
+a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
+
+..code-block:: ts
+
+    ::ng-deep .textDataLabel {
+        font-weight: bolder;
+        font-size: 15px !important;
+    }
+
+3. In order to make the chart responsive in width, bind it to the width of its parent container.
+First, annotate the parent container with a reference (in the example ``#containerRef``).
+Then, when configuring the dimensions of the chart in ``[view]``, insert ``containerRef.offsetWidth`` instead
+of an specific value for the width.
