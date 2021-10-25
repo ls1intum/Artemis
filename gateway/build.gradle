@@ -56,6 +56,8 @@ sourceSets {
             srcDir file("../src/main/java")
             include 'de/tum/in/www1/artemis/security/PBEPasswordEncoder.*'
             include 'de/tum/in/www1/artemis/security/Role.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
         }
     }
     main {

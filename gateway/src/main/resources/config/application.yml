@@ -126,17 +126,17 @@ spring:
                                 regexp: "'/services/' + serviceId.toLowerCase() + '/(?<remaining>.*)'"
                                 replacement: "'/${remaining}'"
             routes:
-                -   id: gateway-api-route
-                    uri: lb://gateway
+                -   id: gateway
+                    uri: lb://GATEWAY
                     predicates:
                         - Path=/api/gateway/**
-                -   id: artemis-api-route
-                    uri: lb://artemis
+                -   id: artemis
+                    uri: lb://ARTEMIS
                     predicates:
                         - Path=/api/**,/time,/websocket/tracker/info,/websocket/tracker/info/**,/management/**,/public/**
                 # Normal Websocket route
-                -   id: websocket_route
-                    uri: lb:ws://artemis
+                -   id: artemis
+                    uri: lb:ws://ARTEMIS
                     predicates:
                         - Path=/websocket/**
             httpclient:

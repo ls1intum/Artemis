@@ -10,9 +10,9 @@ services:
     # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
     ports:
       - 127.0.0.1:9090:9090
-    # On MacOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
-    # grafana/provisioning/datasources/datasource.yml
+    # If starting error occurs, remove next line
     network_mode: 'host' # to test locally running service
+    # On MacOS replace 127.0.0.1 by host.docker.internal in prometheus/prometheus.yml and grafana/provisioning/datasources/datasource.yml
   gateway-grafana:
     image: grafana/grafana:8.0.1
     volumes:
@@ -24,6 +24,6 @@ services:
     # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
     ports:
       - 127.0.0.1:3000:3000
-    # On MacOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
-    # grafana/provisioning/datasources/datasource.yml
+    # If starting error occurs, remove next line
     network_mode: 'host' # to test locally running service
+    # On MacOS replace 127.0.0.1 by host.docker.internal in prometheus/prometheus.yml and grafana/provisioning/datasources/datasource.yml

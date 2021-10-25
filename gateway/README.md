@@ -110,9 +110,8 @@ Docker Compose files are provided for Prometheus and Grafana. The configuration 
 must be hardened for production environments.
 
 **In case you are using MacOS, you need to modify the `docker/monitoring.yml` and `docker/prometheus/prometheus.yml` by removing
-`network_mode` and replacing `localhost`.**
+`network_mode` and replacing `127.0.0.1`.**
 
-[doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/
 [using jhipster in production]: https://www.jhipster.tech/documentation-archive/v7.1.0/production/
 [setting up continuous integration]: https://www.jhipster.tech/documentation-archive/v7.1.0/setting-up-ci/
 [openapi-generator]: https://openapi-generator.tech

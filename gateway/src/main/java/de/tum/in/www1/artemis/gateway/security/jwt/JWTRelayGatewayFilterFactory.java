@@ -30,6 +30,12 @@ public class JWTRelayGatewayFilterFactory extends AbstractGatewayFilterFactory<O
         };
     }
 
+    /**
+     * Extract the JWT token from the request.
+     * Some requests (i.e. /time or public resources like logo) do not require authentication,
+     * therefore null is returned if the Authorization header is not set.
+     * Exception is thrown is the Authorization header is not set correctly.
+     */
     private String extractJWTToken(ServerHttpRequest request) {
         String bearerToken = request.getHeaders().getFirst(AUTHORIZATION_HEADER);
         if (bearerToken == null) {

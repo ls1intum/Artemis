@@ -45,7 +45,7 @@ public class GatewayResource {
         List<RouteVM> routeVMs = new ArrayList<>();
         routes.subscribe(route -> {
             RouteVM routeVM = new RouteVM();
-            // Manipulate strings to make Gateway routes look like Zuul's
+            // Set route details
             String predicate = route.getPredicate().toString();
             String path = predicate.substring(predicate.indexOf("[") + 1, predicate.indexOf("]"));
             routeVM.setPath(path);

@@ -19,7 +19,7 @@ import tech.jhipster.config.JHipsterProperties;
 
 class JWTFilterTest {
 
-    private static final long ONE_MINUTE = 60000;
+    private static final long ONE_MINUTE_MS = 60000;
 
     private MockTokenProvider mockTokenProvider;
 
@@ -30,7 +30,7 @@ class JWTFilterTest {
         JHipsterProperties jHipsterProperties = new JHipsterProperties();
         String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
-        jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE);
+        jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
         mockTokenProvider = new MockTokenProvider(jHipsterProperties);
         jwtFilter = new JWTFilter(tokenProvider);

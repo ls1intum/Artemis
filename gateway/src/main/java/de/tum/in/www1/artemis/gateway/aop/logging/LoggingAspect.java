@@ -17,7 +17,7 @@ import tech.jhipster.config.JHipsterConstants;
 
 /**
  * Aspect for logging execution of service and repository Spring components.
- *
+ * <p>
  * By default, it only runs with the "dev" profile.
  */
 @Aspect
@@ -31,24 +31,22 @@ public class LoggingAspect {
 
     /**
      * Pointcut that matches all repositories, services and Web REST endpoints.
-     *
+     * Method is empty as this is just a Pointcut, the implementations are in the advices
      * {@link #logAround(ProceedingJoinPoint)} and {@link #logAfterThrowing(JoinPoint, Throwable)}
      */
     @Pointcut("within(@org.springframework.stereotype.Repository *)" + " || within(@org.springframework.stereotype.Service *)"
-            + " || within(@org.springframework.web.bind.annotation.RestController *)")
+        + " || within(@org.springframework.web.bind.annotation.RestController *)")
     public void springBeanPointcut() {
-        // Method is empty as this is just a Pointcut, the implementations are in the advices linked in the documentation.
     }
 
     /**
      * Pointcut that matches all Spring beans in the application's main packages.
-     *
+     * Method is empty as this is just a Pointcut, the implementations are in the advices
      * {@link #logAround(ProceedingJoinPoint)} and {@link #logAfterThrowing(JoinPoint, Throwable)}
      */
     @Pointcut("within(de.tum.in.www1.artemis.gateway.repository..*)" + " || within(de.tum.in.www1.artemis.gateway.service..*)"
-            + " || within(de.tum.in.www1.artemis.gateway.web.rest..*)")
+        + " || within(de.tum.in.www1.artemis.gateway.web.rest..*)")
     public void applicationPackagePointcut() {
-        // Method is empty as this is just a Pointcut, the implementations are in the advices linked in the documentation.
     }
 
     /**
@@ -65,16 +63,15 @@ public class LoggingAspect {
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
-     * @param exception exception.
+     * @param throwable exception.
      */
-    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "exception")
-    public void logAfterThrowing(JoinPoint joinPoint, Throwable exception) {
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "throwable")
+    public void logAfterThrowing(JoinPoint joinPoint, Throwable throwable) {
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
             logger(joinPoint).error("Exception in {}() with cause = \'{}\' and exception = \'{}\'", joinPoint.getSignature().getName(),
-                    exception.getCause() != null ? exception.getCause() : "NULL", exception.getMessage(), exception);
-        }
-        else {
-            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), exception.getCause() != null ? exception.getCause() : "NULL");
+                throwable.getCause() != null ? throwable.getCause() : "NULL", throwable.getMessage(), throwable);
+        } else {
+            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), throwable.getCause() != null ? throwable.getCause() : "NULL");
         }
     }
 
@@ -97,8 +94,7 @@ public class LoggingAspect {
                 log.debug("Exit: {}() with result = {}", joinPoint.getSignature().getName(), result);
             }
             return result;
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             log.error("Illegal argument: {} in {}()", Arrays.toString(joinPoint.getArgs()), joinPoint.getSignature().getName());
             throw e;
         }

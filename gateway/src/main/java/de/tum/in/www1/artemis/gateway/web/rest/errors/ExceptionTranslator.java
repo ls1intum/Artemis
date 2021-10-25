@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -46,11 +47,9 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     private static final String PATH_KEY = "path";
 
     private static final String VIOLATIONS_KEY = "violations";
-
+    private final Environment env;
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
-    private final Environment env;
 
     public ExceptionTranslator(Environment env) {
         this.env = env;
@@ -70,12 +69,11 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         }
 
         ProblemBuilder builder = Problem.builder().withType(Problem.DEFAULT_TYPE.equals(problem.getType()) ? ErrorConstants.DEFAULT_TYPE : problem.getType())
-                .withStatus(problem.getStatus()).withTitle(problem.getTitle()).with(PATH_KEY, request.getRequest().getURI());
+            .withStatus(problem.getStatus()).withTitle(problem.getTitle()).with(PATH_KEY, request.getRequest().getURI());
 
         if (problem instanceof ConstraintViolationProblem) {
             builder.with(VIOLATIONS_KEY, ((ConstraintViolationProblem) problem).getViolations()).with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION);
-        }
-        else {
+        } else {
             builder.withCause(((DefaultProblem) problem).getCause()).withDetail(problem.getDetail()).withInstance(problem.getInstance());
             problem.getParameters().forEach(builder::with);
 
@@ -90,10 +88,10 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     public Mono<ResponseEntity<Problem>> handleBindingResult(WebExchangeBindException exception, @Nonnull ServerWebExchange request) {
         BindingResult result = exception.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(),
-                StringUtils.isNotBlank(f.getDefaultMessage()) ? f.getDefaultMessage() : f.getCode())).collect(Collectors.toList());
+            StringUtils.isNotBlank(f.getDefaultMessage()) ? f.getDefaultMessage() : f.getCode())).collect(Collectors.toList());
 
         Problem problem = Problem.builder().withType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE).withTitle("Data binding and validation failure").withStatus(Status.BAD_REQUEST)
-                .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION).with(FIELD_ERRORS_KEY, fieldErrors).build();
+            .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION).with(FIELD_ERRORS_KEY, fieldErrors).build();
         return create(exception, problem, request);
     }
 
@@ -115,16 +113,16 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             if (throwable instanceof HttpMessageConversionException) {
                 return Problem.builder().withType(type).withTitle(status.getReasonPhrase()).withStatus(status).withDetail("Unable to convert http message")
-                        .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
+                    .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
             }
             if (containsPackageName(throwable.getMessage())) {
                 return Problem.builder().withType(type).withTitle(status.getReasonPhrase()).withStatus(status).withDetail("Unexpected runtime exception")
-                        .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
+                    .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
             }
         }
 
         return Problem.builder().withType(type).withTitle(status.getReasonPhrase()).withStatus(status).withDetail(throwable.getMessage())
-                .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
+            .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
     }
 
     private boolean containsPackageName(String message) {
