@@ -158,7 +158,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         } else if (this.activeTab !== 'test-cases') {
                             this.selectTab('test-cases');
                         }
-                        this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
                     }),
                     catchError(() => of(null)),
                 );

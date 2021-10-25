@@ -5,7 +5,7 @@ import { debounceTime } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-loading-notification',
-    template: ` <div *ngIf="isLoading" class="spinner-border text-light ms-2" role="status" style="width: 1.5rem; height: 1.5rem;"></div> `,
+    template: ` <div *ngIf="isLoading" class="spinner-border text-light" role="status" style="width: 18px; height: 18px;"></div> `,
 })
 export class LoadingNotificationComponent implements OnInit, OnDestroy {
     isLoading = false;
