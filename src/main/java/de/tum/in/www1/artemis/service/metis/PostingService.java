@@ -40,6 +40,12 @@ public abstract class PostingService {
         this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * Broadcasts a posting related event in a course under a specific topic via websockets
+     *
+     * @param postDTO object including the affected post as well as the action
+     * @param course  course the posting belongs to
+     */
     void broadcastForPost(MetisPostDTO postDTO, Course course) {
         String specificTopicName = "/topic/metis/";
         String genericTopicName = "/topic/metis/courses/" + course.getId();

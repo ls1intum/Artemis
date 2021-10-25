@@ -77,7 +77,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
-        // we need to explicitly add the answer post to the updated post
+        // we need to explicitly add the answer post to the updated post before broadcasting
         post.addAnswerPost(savedAnswerPost);
         broadcastForPost(new MetisPostDTO(post, MetisPostAction.UPDATE_POST), course);
         sendNotification(post, course);
@@ -111,15 +111,14 @@ public class AnswerPostService extends PostingService {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
-            updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
             mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setContent(answerPost.getContent());
-            updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
-        // we need to explicitly update the answer post to the updated post
+        updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
+        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
@@ -140,7 +139,7 @@ public class AnswerPostService extends PostingService {
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
 
-        // we need to explicitly update the answer post to the updated post
+        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
@@ -162,6 +161,7 @@ public class AnswerPostService extends PostingService {
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
+        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedPost = answerPost.getPost();
         updatedPost.removeAnswerPost(answerPost);
 

@@ -396,7 +396,14 @@ export class MetisService implements OnDestroy {
             postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
             switch (postDTO.action) {
                 case MetisPostAction.CREATE_POST:
-                    this.cachedPosts.push(postDTO.post);
+                    // check that ensure that only posts with correct context are appended
+                    if (
+                        !this.currentPostContextFilter.courseWideContext ||
+                        !postDTO.post.courseWideContext ||
+                        this.currentPostContextFilter.courseWideContext === postDTO.post.courseWideContext
+                    ) {
+                        this.cachedPosts.push(postDTO.post);
+                    }
                     if (postDTO.post.tags && postDTO.post.tags.length > 0) {
                         const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));
                         this.tags$.next(updatedTags);
@@ -405,16 +412,7 @@ export class MetisService implements OnDestroy {
                 case MetisPostAction.UPDATE_POST:
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToUpdate > -1) {
-                        // if context has changed, we need to remove the post from the current list of posts
-                        if (
-                            this.cachedPosts[indexToUpdate].lecture?.id !== postDTO.post.lecture?.id ||
-                            this.cachedPosts[indexToUpdate].exercise?.id !== postDTO.post.exercise?.id ||
-                            this.cachedPosts[indexToUpdate].courseWideContext !== postDTO.post.courseWideContext
-                        ) {
-                            this.cachedPosts.splice(indexToUpdate, 1);
-                        } else {
-                            this.cachedPosts[indexToUpdate] = postDTO.post;
-                        }
+                        this.cachedPosts[indexToUpdate] = postDTO.post;
                     }
                     if (postDTO.post.tags && postDTO.post.tags.length > 0) {
                         const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));

@@ -144,7 +144,10 @@ public class PostService extends PostingService {
             updatedPost.getExercise().filterSensitiveInformation();
         }
 
+        // depending on if there is a context change we need to broadcast different information
         if (contextHasChanged) {
+            // in case the context changed, a post is moved from one context (page) to another
+            // i.e.,
             broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.CREATE_POST), course);
         }
         else {

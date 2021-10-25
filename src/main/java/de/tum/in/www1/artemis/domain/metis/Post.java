@@ -186,6 +186,11 @@ public class Post extends Posting {
         this.displayPriority = displayPriority;
     }
 
+    /**
+     * Helper method to determine if a given post has the same context, i.e. either same exercise, lecture or course-wide context
+     * @param otherPost post that is compared to
+     * @return boolean flag indicating if same context or not
+     */
     public boolean hasSameContext(Post otherPost) {
         if (getExercise() != null && otherPost.getExercise() != null && getExercise().getId().equals(otherPost.getExercise().getId())) {
             return true;
