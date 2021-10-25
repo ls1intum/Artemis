@@ -156,23 +156,32 @@ describe('AssessmentDashboardInformationComponent', () => {
                     providers: [{ provide: CourseManagementService, useClass: CourseManagementService }],
                 },
             })
-            .compileComponents().then(() => {
+            .compileComponents()
+            .then(() => {
                 fixture = TestBed.createComponent(AssessmentDashboardComponent);
                 comp = fixture.componentInstance;
-                courseService = fixture.debugElement.injector.get(CourseManagementService)
+                courseService = fixture.debugElement.injector.get(CourseManagementService);
 
                 sortService = TestBed.inject(SortService);
 
                 examManagementService = TestBed.inject(ExamManagementService);
-                getExamWithInterestingExercisesForAssessmentDashboardStub = jest.spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard').mockReturnValue(of({ body: exam }) as Observable<HttpResponse<Exam>>);
-                getStatsForExamAssessmentDashboardStub = jest.spyOn(examManagementService, 'getStatsForExamAssessmentDashboard').mockReturnValue(of({ body: courseTutorStats}) as Observable<HttpResponse<StatsForDashboard>>);
+                getExamWithInterestingExercisesForAssessmentDashboardStub = jest
+                    .spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard')
+                    .mockReturnValue(of({ body: exam }) as Observable<HttpResponse<Exam>>);
+                getStatsForExamAssessmentDashboardStub = jest
+                    .spyOn(examManagementService, 'getStatsForExamAssessmentDashboard')
+                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
 
                 exerciseService = TestBed.inject(ExerciseService);
                 toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
 
                 // courseService = TestBed.inject(CourseManagementService);
-                getCourseWithInterestingExercisesForTutorsStub = jest.spyOn(courseService, 'getCourseWithInterestingExercisesForTutors').mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
-                getStatsForTutorsStub = jest.spyOn(courseService, 'getStatsForTutors').mockReturnValue(of({ body: courseTutorStats}) as Observable<HttpResponse<StatsForDashboard>>);
+                getCourseWithInterestingExercisesForTutorsStub = jest
+                    .spyOn(courseService, 'getCourseWithInterestingExercisesForTutors')
+                    .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
+                getStatsForTutorsStub = jest
+                    .spyOn(courseService, 'getStatsForTutors')
+                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
 
                 accountService = TestBed.inject(AccountService);
                 isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
