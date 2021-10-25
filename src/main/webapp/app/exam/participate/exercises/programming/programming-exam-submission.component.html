@@ -18,6 +18,7 @@
         [editable]="!repositoryIsLocked"
         [participation]="studentParticipation"
         [showEditorInstructions]="showEditorInstructions"
+        [course]="getCourseFromExercise(exercise)"
         (onCommitStateChange)="onCommitStateChange($event)"
         (onFileChanged)="onFileChanged()"
     >

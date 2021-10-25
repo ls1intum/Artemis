@@ -1,0 +1,52 @@
+{
+    "artemisApp": {
+        "userSettings": {
+            "settings": "Settings",
+            "saveChanges": "Save Changes",
+            "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
+            "userSettings": "User Settings",
+            "accountInformation": "Account Information",
+            "notificationSettings": "Notifications",
+            "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
+            "accountInformationPage": {
+                "fullName": "Full Name",
+                "login": "Login",
+                "email": "Email",
+                "joinedArtemis": "Joined Artemis on"
+            },
+            "categories": {
+                "NOTIFICATION_SETTINGS": "Notification Settings"
+            },
+            "settingGroupNames": {
+                "exerciseNotifications": "Exercise Notifications",
+                "lectureNotifications": "Lecture Notifications",
+                "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
+                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
+            },
+            "settingNames": {
+                "exerciseReleased": "Exercise released",
+                "exerciseOpenForPractice": "Exercise Open for Practice",
+                "attachmentChanges": "Attachment Changes",
+                "newExercisePost": "New Exercise Post",
+                "newReplyForExercisePost": "New Reply for Exercise Post",
+                "newLecturePost": "New Lecture Post",
+                "newReplyForLecturePost": "New Reply for Lecture Post",
+                "newCoursePost": "New Course Post",
+                "newReplyForCoursePost": "New Reply for Course Post",
+                "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
+            },
+            "settingDescriptions": {
+                "exerciseReleasedDescription": "Get notified when a new exercise has been released",
+                "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
+                "attachmentChangesDescription": "Receive a notification when an attachment was changed",
+                "newExercisePostDescription": "Get notified when a new exercise post has been created",
+                "newReplyForExercisePostDescription": "Get notified when a new reply for an exercise post has been created",
+                "newLecturePostDescription": "Get notified when a new lecture post has been created",
+                "newReplyForLecturePostDescription": "Get notified when a new reply for a lecture post has been created",
+                "newCoursePostDescription": "Receive a notification when a new course-wide post has been created",
+                "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
+                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
+            }
+        }
+    }
+}

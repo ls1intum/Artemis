@@ -42,12 +42,14 @@ import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
+        NgxChartsModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
         ArtemisExamScoresModule,

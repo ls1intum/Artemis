@@ -4,7 +4,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
@@ -56,6 +56,10 @@ export class MockMetisService {
         return true;
     }
 
+    metisUserIsAtLeastInstructorInCourse(): boolean {
+        return true;
+    }
+
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return true;
     }
@@ -70,7 +74,7 @@ export class MockMetisService {
         return post.answers?.length! ? post.answers?.length! : 0;
     }
 
-    getLinkForPost(post?: Post): (string | number)[] {
+    getLinkForPost(post?: Post): RouteComponents {
         if (post?.lecture) {
             return ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
         }
@@ -80,13 +84,33 @@ export class MockMetisService {
         return ['/courses', metisCourse.id!, 'discussion'];
     }
 
-    getQueryParamsForPost(posting: Post): Params {
-        const params: Params = {};
-        if (posting.courseWideContext) {
-            params.searchText = `#${posting.id}`;
+    getContextInformation(post: Post): ContextInformation {
+        let routerLinkComponents = undefined;
+        let displayName;
+        if (post.exercise) {
+            displayName = post.exercise.title!;
+            routerLinkComponents = ['/courses', metisCourse.id!, 'exercises', post.exercise.id!];
+        } else if (post.lecture) {
+            displayName = post.lecture.title!;
+            routerLinkComponents = ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
+            // course-wide topics are not linked
         } else {
-            params.postId = posting.id;
+            displayName = 'some context';
+        }
+        return { routerLinkComponents, displayName };
+    }
+
+    getQueryParamsForPost(post: Post): Params {
+        const params: Params = {};
+        if (post.courseWideContext) {
+            params.searchText = `#${post.id}`;
+        } else {
+            params.postId = post.id;
         }
         return params;
+    }
+
+    getSimilarPosts(title: string): Observable<Post[]> {
+        return of(metisCoursePosts.slice(0, 5));
     }
 }

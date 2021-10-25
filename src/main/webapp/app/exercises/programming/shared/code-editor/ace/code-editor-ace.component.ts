@@ -26,6 +26,7 @@ import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
+import { Course } from 'app/entities/course.model';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -59,6 +60,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     feedbacks: Feedback[];
     @Input()
     highlightDifferences: boolean;
+    @Input()
+    course?: Course;
 
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
