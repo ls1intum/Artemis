@@ -1,3 +1,5 @@
+import { ExamExerciseGroupCreationPage } from './exam/ExamExerciseGroupCreationPage';
+import { ExamExerciseGroupsPage } from './exam/ExamExerciseGroupsPage';
 import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
 import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
 import { ExerciseResultPage } from './exercises/ExerciseResultPage';
@@ -45,6 +47,8 @@ export class ArtemisPageobjects {
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
     exerciseResult = new ExerciseResultPage();
+    examExerciseGroups = new ExamExerciseGroupsPage();
+    examExerciseGroupCreation = new ExamExerciseGroupCreationPage();
     programmingExercise = {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
