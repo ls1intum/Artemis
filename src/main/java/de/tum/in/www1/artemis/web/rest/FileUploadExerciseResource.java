@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -113,15 +112,8 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        // Only notify students and tutors when the exercise is created for a course
-        if (fileUploadExercise.isCourseExercise()) {
-            if (fileUploadExercise.getReleaseDate() == null || !fileUploadExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-                groupNotificationService.notifyAllGroupsAboutReleasedExercise(fileUploadExercise);
-            }
-            else {
-                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
-            }
-        }
+        groupNotificationService.checkNotificationForExerciseRelease(fileUploadExercise, instanceMessageSendService);
+
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -196,14 +188,7 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
-        if ((notificationText != null && fileUploadExercise.isCourseExercise()) || fileUploadExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
-        }
-        // The update might have changed the release date
-        // -> the scheduled notification informing the users about the release of this exercise has to be updated
-        if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(updatedExercise, notificationText, instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }

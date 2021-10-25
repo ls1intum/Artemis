@@ -151,12 +151,8 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         scheduleOperations(programmingExercise.getId());
-        if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
-        }
-        else {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
-        }
+
+        groupNotificationService.checkNotificationForExerciseRelease(programmingExercise, instanceMessageSendService);
 
         return programmingExercise;
     }
@@ -387,15 +383,7 @@ public class ProgrammingExerciseService {
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
-        // Only send notification for course exercises
-        if (notificationText != null && programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
-        }
-        // The update might have changed the release date
-        // -> the scheduled notification informing the users about the release of this exercise has to be updated
-        if (programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
 
         return savedProgrammingExercise;
     }
@@ -664,14 +652,9 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        }
-        // The update might have changed the release date
-        // -> the scheduled notification informing the users about the release of this exercise has to be updated
-        if (programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
-        }
+
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+
         return savedProgrammingExercise;
     }
 
@@ -689,9 +672,9 @@ public class ProgrammingExerciseService {
 
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        }
+
+        groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+
         return updatedProgrammingExercise;
     }
 

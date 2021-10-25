@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -138,12 +137,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        if (modelingExercise.getReleaseDate() == null || !modelingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyAllGroupsAboutReleasedExercise(modelingExercise);
-        }
-        else {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());
-        }
+        groupNotificationService.checkNotificationForExerciseRelease(modelingExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -209,15 +203,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
-        if ((notificationText != null && modelingExercise.isCourseExercise()) || modelingExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(modelingExercise, notificationText);
-        }
-
-        // The update might have changed the release date
-        // -> the scheduled notification informing the users about the release of this exercise has to be updated
-        if (modelingExercise.isCourseExercise() && modelingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExercise, notificationText, instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);
