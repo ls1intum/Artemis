@@ -5,8 +5,8 @@
     [class.alert-danger]="feedback.credits! < 0"
     [class.alert-warning]="!feedback.credits"
 >
-    <div class="m-2">
-        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start">
+    <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2">
+        <div class="row align-items-start">
             <div class="form-group col-8 p-2">
                 <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div class="d-inline" *ngIf="feedback.gradingInstruction!">
@@ -21,7 +21,7 @@
                 <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
             </div>
         </div>
-        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
+        <div class="row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
             <div class="form-group col-8 p-2">
                 <textarea
                     class="form-control"
@@ -39,7 +39,7 @@
                 <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || feedback.gradingInstruction" />
             </div>
         </div>
-        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start">
+        <div>
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
