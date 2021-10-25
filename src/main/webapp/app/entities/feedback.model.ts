@@ -165,14 +165,24 @@ export class Feedback implements BaseEntity {
         }
     }
 
-    public static buildFeedbackTextForReview(feedback: Feedback): string | undefined {
+    public static buildFeedbackTextForReview(feedback: Feedback): string {
+        let feedbackText = '';
         if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
-            let feedbackText = feedback.gradingInstruction.feedback;
+            feedbackText = feedback.gradingInstruction.feedback;
             if (feedback.detailText) {
                 feedbackText = feedbackText + '\n' + feedback.detailText;
             }
+            if (feedback.text) {
+                feedbackText = feedbackText + '\n' + feedback.text;
+            }
             return convertToHtmlLinebreaks(feedbackText);
         }
-        return feedback.detailText;
+        if (feedback.detailText) {
+            return feedback.detailText;
+        }
+        if (feedback.text) {
+            return feedback.text;
+        }
+        return feedbackText;
     }
 }

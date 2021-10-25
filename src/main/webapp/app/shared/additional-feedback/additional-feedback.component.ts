@@ -21,7 +21,7 @@ export class AdditionalFeedbackComponent {
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    public buildFeedbackTextForReview(feedback: Feedback): string | undefined {
+    public buildFeedbackTextForReview(feedback: Feedback): string {
         return Feedback.buildFeedbackTextForReview(feedback);
     }
 }

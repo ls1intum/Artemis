@@ -108,7 +108,7 @@ export class TextResultComponent {
         return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
     }
 
-    public buildFeedbackTextForReview(feedback: Feedback): string | undefined {
+    public buildFeedbackTextForReview(feedback: Feedback): string {
         return Feedback.buildFeedbackTextForReview(feedback);
     }
 }

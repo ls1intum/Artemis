@@ -569,4 +569,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         return 'entity.action.submitDeadlineMissedTooltip';
     }
+
+    public buildFeedbackTextForReview(feedback: Feedback): string {
+        return Feedback.buildFeedbackTextForReview(feedback);
+    }
 }

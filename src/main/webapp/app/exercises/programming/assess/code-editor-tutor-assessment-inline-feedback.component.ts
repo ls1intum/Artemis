@@ -107,7 +107,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
     }
 
-    public buildFeedbackTextForReview(feedback: Feedback): string | undefined {
+    public buildFeedbackTextForReview(feedback: Feedback): string {
         return Feedback.buildFeedbackTextForReview(feedback);
     }
 }
