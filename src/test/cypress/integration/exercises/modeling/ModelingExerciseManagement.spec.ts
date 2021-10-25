@@ -1,4 +1,3 @@
-import { BASE_API, PUT } from '../../../support/constants';
 import { dayjsToString } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
 import { MODELING_SPACE } from '../../../support/pageobjects/ModelingEditor';
@@ -62,9 +61,7 @@ describe('Modeling Exercise Spec', () => {
                     cy.contains(modelingExercise.title).should('exist');
 
                     cy.log('Create Example Solution');
-                    cy.visit(`/course-management/${course.id}/exercises`);
-                    cy.contains(modelingExercise.title).click();
-                    cy.get('.card-body').contains('Edit').click();
+                    cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
                     modelingEditor.addComponentToModel(1);
                     createModelingExercise.save();
                     cy.get('jhi-exercise-submission-export').should('be.visible');
@@ -72,22 +69,20 @@ describe('Modeling Exercise Spec', () => {
 
                     cy.log('Create Example Submission');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-                    cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
+                    modelingEditor.clickCreateExampleSubmission();
                     modelingEditor.addComponentToModel(1);
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
-                    cy.get('[jhitranslate="artemisApp.modelingExercise.createNewExampleSubmission"]').click();
+                    modelingEditor.clickCreateNewExampleSubmission();
                     cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-                    cy.get('[jhitranslate="artemisApp.modelingExercise.showExampleAssessment"]').click();
+                    modelingEditor.showExampleAssessment();
                     modelingExerciseExampleSubmission.openAssessmentForComponent(1);
                     modelingExerciseExampleSubmission.assessComponent(-1, 'False');
                     modelingExerciseExampleSubmission.openAssessmentForComponent(2);
                     modelingExerciseExampleSubmission.assessComponent(2, 'Good');
                     modelingExerciseExampleSubmission.openAssessmentForComponent(3);
                     modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-                    cy.intercept(PUT, BASE_API + 'modeling-submissions/*/example-assessment').as('createExampleSubmission');
-                    cy.contains('Save Example Assessment').click();
-                    cy.wait('@createExampleSubmission').its('response.statusCode').should('eq', 200);
+                    modelingExerciseExampleSubmission.submit();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
                     cy.get('.apollon-editor').should('exist');
                 });

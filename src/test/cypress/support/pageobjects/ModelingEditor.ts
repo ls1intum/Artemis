@@ -26,4 +26,16 @@ export class ModelingEditor {
         cy.get('.btn-primary').first().click();
         return cy.wait('@createModelingSubmission');
     }
+
+    clickCreateNewExampleSubmission() {
+        cy.get('[jhitranslate="artemisApp.modelingExercise.createNewExampleSubmission"]').click();
+    }
+
+    clickCreateExampleSubmission() {
+        cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
+    }
+
+    showExampleAssessment() {
+        cy.get('[jhitranslate="artemisApp.modelingExercise.showExampleAssessment"]').click();
+    }
 }
