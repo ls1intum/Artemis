@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -30,6 +28,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -85,7 +84,7 @@ public class LectureResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
-            return forbidden();
+            throw new AccessForbiddenException("You do not have sufficient permissions to create lectures!");
         }
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
@@ -109,7 +108,7 @@ public class LectureResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
-            return forbidden();
+            throw new AccessForbiddenException("You do not have sufficient permissions to delete lectures!");
         }
 
         // Make sure that the original references are preserved.
@@ -137,7 +136,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
+            throw new AccessForbiddenException("You do not have sufficient permissions load lectures for course administration purposes!");
         }
 
         Set<Lecture> lectures;
@@ -172,7 +171,7 @@ public class LectureResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
+            throw new AccessForbiddenException("You do not have sufficient permissions to load this lecture!");
         }
         lecture = filterLectureContentForUser(lecture, user);
 
@@ -245,8 +244,8 @@ public class LectureResource {
             return ResponseEntity.notFound().build();
         }
         Lecture lecture = optionalLecture.get();
-        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
-            return forbidden();
+        if (!authCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), user)) {
+            throw new AccessForbiddenException("You do not have sufficient permissions to delete this lecture!");
         }
         Course course = lecture.getCourse();
         if (course == null) {

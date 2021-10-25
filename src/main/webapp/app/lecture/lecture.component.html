@@ -3,7 +3,7 @@
         <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
         <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-lecture" [routerLink]="['new']">
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.lecture.home.createLabel">Create new Lecture</span>
+            <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
         </a>
     </h2>
     <jhi-alert></jhi-alert>
@@ -57,7 +57,7 @@
                                 </a>
                                 <button
                                     jhiDeleteButton
-                                    *ngIf="lecture.isAtLeastEditor"
+                                    *ngIf="lecture.isAtLeastInstructor"
                                     [entityTitle]="lecture.title || ''"
                                     deleteQuestion="artemisApp.lecture.delete.question"
                                     deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
