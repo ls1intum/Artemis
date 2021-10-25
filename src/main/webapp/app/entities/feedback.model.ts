@@ -106,6 +106,10 @@ export class Feedback implements BaseEntity {
     }
 
     public static hasCreditsAndComment(that: Feedback): boolean {
+        // if the feedback is associated with the grading instruction, detail-text would be additional, do not need to validate the detail-text
+        if (that.gradingInstruction && that.gradingInstruction.feedback) {
+            return that.credits != undefined;
+        }
         return that.credits != undefined && Feedback.hasDetailText(that);
     }
 
@@ -162,8 +166,12 @@ export class Feedback implements BaseEntity {
     }
 
     public static buildFeedbackTextForReview(feedback: Feedback): string | undefined {
-        if (feedback.gradingInstruction) {
-            return convertToHtmlLinebreaks(feedback.gradingInstruction.feedback + '\n' + feedback.detailText);
+        if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+            let feedbackText = feedback.gradingInstruction.feedback;
+            if (feedback.detailText) {
+                feedbackText = feedbackText + '\n' + feedback.detailText;
+            }
+            return convertToHtmlLinebreaks(feedbackText);
         }
         return feedback.detailText;
     }
