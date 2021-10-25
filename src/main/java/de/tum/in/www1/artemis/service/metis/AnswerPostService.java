@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.metis;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -17,8 +15,8 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -64,7 +62,8 @@ public class AnswerPostService extends PostingService {
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
+
+        Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
         // use post from database rather than user input
@@ -75,7 +74,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
-        sendNotification(savedAnswerPost);
+        sendNotification(post, course);
 
         return savedAnswerPost;
     }
@@ -150,31 +149,27 @@ public class AnswerPostService extends PostingService {
     /**
      * Sends notification to affected groups
      *
-     * @param answerPost answer post that triggered the notification
+     * @param post which is answered
      */
-    void sendNotification(AnswerPost answerPost) {
+    void sendNotification(Post post, Course course) {
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
+            return;
+        }
         // notify via exercise
-        if (answerPost.getPost().getExercise() != null) {
-            Post post = answerPost.getPost();
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
-            answerPost.setPost(post);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(answerPost);
-            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(answerPost);
-
+        if (post.getExercise() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
             // protect Sample Solution, Grading Instructions, etc.
-            answerPost.getPost().getExercise().filterSensitiveInformation();
+            post.getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
-        if (answerPost.getPost().getLecture() != null) {
-            Post post = answerPost.getPost();
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
-            answerPost.setPost(post);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(answerPost);
-            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(answerPost);
+        if (post.getLecture() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
         }
     }
 
