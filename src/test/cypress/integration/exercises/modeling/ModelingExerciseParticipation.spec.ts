@@ -1,9 +1,10 @@
-import { BASE_API } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
+import { CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 
 // pageobjects
 const courseManagement = artemis.pageobjects.courseManagement;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
+const courseOverview = artemis.pageobjects.courseOverview;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -33,10 +34,7 @@ describe('Modeling Exercise Spec', () => {
 
     it('Student can start and submit their model', () => {
         cy.login(student, `/courses/${course.id}`);
-        cy.get('.col-lg-8').contains(modelingExercise.title);
-        cy.intercept(BASE_API + 'courses/*/exercises/*/participations').as('createModelingParticipation');
-        cy.get('.btn-sm').should('contain.text', 'Start exercise').click();
-        cy.wait('@createModelingParticipation');
+        courseOverview.startExercise(modelingExercise.title, CypressExerciseType.MODELING);
         cy.get('.course-exercise-row').find('.btn-primary').should('contain.text', 'Open modelling editor').click();
         modelingEditor.addComponentToModel(1);
         modelingEditor.addComponentToModel(2);
