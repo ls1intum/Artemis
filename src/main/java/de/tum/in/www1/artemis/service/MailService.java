@@ -83,29 +83,29 @@ public class MailService {
     /**
      * Sends an e-mail to the specified sender
      *
-     * @param user who should be contacted.
+     * @param recipient who should be contacted.
      * @param subject The mail subject
      * @param content The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml Whether the mail should support HTML tags
      */
     @Async
-    public void sendEmail(User user, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, user, subject, content);
+    public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, recipient, subject, content);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            message.setTo(user.getEmail());
+            message.setTo(recipient.getEmail());
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
             javaMailSender.send(mimeMessage);
-            log.info("Sent email with subject '{}' to User '{}'", subject, user);
+            log.info("Sent email with subject '{}' to User '{}'", subject, recipient);
         }
         catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent to user '{}'", user, e);
+            log.warn("Email could not be sent to user '{}'", recipient, e);
         }
     }
 
@@ -154,7 +154,7 @@ public class MailService {
     // notification related
 
     /**
-     * Sends a notification based Email to one user
+     * Sends a notification based email to one user
      * @param notification which properties are used to create the email
      * @param user who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
@@ -190,8 +190,8 @@ public class MailService {
                 context.setVariable(EXERCISE_TYPE, "upload");
             }
         }
+        else
 
-        // replace with (e.g.) "http://localhost:9000" for local testing
         if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));

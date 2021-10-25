@@ -8,6 +8,11 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { AlertService } from 'app/core/util/alert.service';
 
+export enum NotificationSettingsCommunicationChannel {
+    WEBAPP,
+    EMAIL,
+}
+
 @Component({
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
@@ -21,6 +26,8 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     userSettings: UserSettingsStructure<NotificationSetting>;
     settings: Array<NotificationSetting>;
 
+    communicationChannel = NotificationSettingsCommunicationChannel;
+
     ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
         this.changeEventMessage = reloadNotificationSideBarMessage;
@@ -31,7 +38,7 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
      * Catches the toggle event from an user click
      * Toggles the respective setting and mark it as changed (only changed settings will be send to the server for saving)
      */
-    toggleSetting(event: any, webApp: boolean) {
+    toggleSetting(event: any, communicationChannel: NotificationSettingsCommunicationChannel) {
         this.settingsChanged = true;
         let settingId = event.currentTarget.id;
         // optionId String could have an appended (e.g.( " email" or " webapp" to specify which option to toggle
@@ -42,10 +49,15 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         if (!foundSetting) {
             return;
         }
-        if (webApp) {
-            foundSetting!.webapp = !foundSetting!.webapp;
-        } else {
-            foundSetting!.email = !foundSetting!.email;
+        switch (communicationChannel) {
+            case NotificationSettingsCommunicationChannel.WEBAPP: {
+                foundSetting!.webapp = !foundSetting!.webapp;
+                break;
+            }
+            case NotificationSettingsCommunicationChannel.EMAIL: {
+                foundSetting!.email = !foundSetting!.email;
+                break;
+            }
         }
         foundSetting.changed = true;
     }

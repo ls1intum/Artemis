@@ -97,7 +97,6 @@ public class SingleUserNotificationService {
     /**
      * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
      * If the checks are successful creates and sends a corresponding email
-     * If the notification type indicates an urgent (critical) email it will be sent regardless of settings
      * @param notification that should be checked
      * @param notificationSubject which information will be extracted to create the email
      */

@@ -37,6 +37,7 @@
                 </span>
                 <!--Setting Specific Properties-->
                 <div class="d-flex border-bottom">
+                    setting.webapp={{ setting.webapp }} hi settings.webappSupport={{ setting.webappSupport }}
                     <div *ngIf="setting.webapp != undefined && (setting.webappSupport == undefined || setting.webappSupport)" class="form-check pe-3">
                         <input
                             type="checkbox"
@@ -44,7 +45,7 @@
                             [checked]="setting.webapp"
                             id="{{ setting.settingId }}"
                             value="{{ setting.webapp }}"
-                            (click)="toggleSetting($event, true)"
+                            (click)="toggleSetting($event, communicationChannel.WEBAPP)"
                         />
                         <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                     </div>
@@ -55,7 +56,7 @@
                             [checked]="setting.email"
                             id="{{ setting.settingId }} email"
                             value="{{ setting.email }}"
-                            (click)="toggleSetting($event, false)"
+                            (click)="toggleSetting($event, communicationChannel.EMAIL)"
                         />
                         <label class="form-check-label" for="{{ setting.settingId }} email">Email</label>
                     </div>
