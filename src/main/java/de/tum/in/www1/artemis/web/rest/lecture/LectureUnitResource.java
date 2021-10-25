@@ -72,7 +72,7 @@ public class LectureUnitResource {
             return conflict();
         }
         if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            throw new AccessForbiddenException("You do not have sufficient define the order of lecture units!");
+            throw new AccessForbiddenException("You do not have sufficient permissions to define the order of lecture units!");
         }
 
         // Ensure that exactly as many lecture units have been received as are currently related to the lecture
@@ -123,7 +123,7 @@ public class LectureUnitResource {
             return conflict();
         }
         if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
-            throw new AccessForbiddenException("You do not have sufficient to delete lecture units!");
+            throw new AccessForbiddenException("You do not have sufficient permissions to delete lecture units!");
         }
         String lectureUnitName;
 
