@@ -1,4 +1,4 @@
-import { MODELING_EXERCISE_BASE } from '../requests/CourseManagementRequests';
+import { MODELING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Creation Page.

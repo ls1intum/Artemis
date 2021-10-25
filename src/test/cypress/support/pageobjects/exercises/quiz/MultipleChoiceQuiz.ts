@@ -1,4 +1,4 @@
-import { BASE_API, POST } from '../constants';
+import { BASE_API, POST } from '../../../constants';
 
 export class MultipleChoiceQuiz {
     getQuizBody() {
