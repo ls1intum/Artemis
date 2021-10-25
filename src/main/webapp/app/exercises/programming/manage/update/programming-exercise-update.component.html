@@ -92,8 +92,7 @@
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Description" prop="description">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <jhi-table-editable-field [id]="row.id + '-description'" [value]="row.description || ''" [onValueUpdate]="updateDescription(row)">
-                        </jhi-table-editable-field>
+                        <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description"> </textarea>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" prop="removeButton">
