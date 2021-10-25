@@ -300,7 +300,7 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService['currentExercise']).toBe(undefined);
             }
 
-            beforeEach(async () => {
+            beforeEach(() => {
                 guidedTourService.guidedTourMapping = guidedTourMapping;
                 prepareGuidedTour(tourWithCourseAndExercise);
                 resetCurrentTour();
