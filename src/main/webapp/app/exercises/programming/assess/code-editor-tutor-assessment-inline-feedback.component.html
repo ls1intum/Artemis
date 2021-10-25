@@ -39,7 +39,7 @@
                 <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || feedback.gradingInstruction" />
             </div>
         </div>
-        <div *ngIf="!viewOnly">
+        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start">
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
