@@ -5,7 +5,6 @@ import { ExportToCsv } from 'export-to-csv';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { downloadFile } from 'app/shared/util/download.util';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
@@ -76,15 +75,18 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            imports: [ArtemisTestModule, ArtemisPlagiarismModule],
+            declarations: [],
             providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService), MockProvider(TranslateService)],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(PlagiarismInspectorComponent);
-        comp = fixture.componentInstance;
-        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(PlagiarismInspectorComponent);
+                comp = fixture.componentInstance;
+                modelingExerciseService = TestBed.inject(ModelingExerciseService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
+            });
     });
 
     it('should register to topic and fetch latest results on init', fakeAsync(() => {
