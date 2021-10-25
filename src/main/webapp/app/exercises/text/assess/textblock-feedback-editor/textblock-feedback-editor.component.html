@@ -44,7 +44,7 @@
         </ng-template>
     </div>
 
-    <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+    <div class="row">
         <div class="form-group col-md-10">
             <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
             <div class="d-inline" *ngIf="feedback.gradingInstruction!">

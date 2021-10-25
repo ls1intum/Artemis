@@ -6,7 +6,7 @@
     [class.alert-warning]="!feedback.credits"
 >
     <div class="m-2">
-        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
+        <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start">
             <div class="form-group col-8 p-2">
                 <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div class="d-inline" *ngIf="feedback.gradingInstruction!">
