@@ -1,3 +1,7 @@
+import { ExamExerciseGroupCreationPage } from './exam/ExamExerciseGroupCreationPage';
+import { ExamExerciseGroupsPage } from './exam/ExamExerciseGroupsPage';
+import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
+import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
 import { ExerciseResultPage } from './exercises/ExerciseResultPage';
 import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
 import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
@@ -18,6 +22,8 @@ import { CreateModelingExercisePage } from './CreateModelingExercisePage';
 import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEditor';
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
+import { ShortAnswerQuiz } from './ShortAnswerQuiz';
+import { DragAndDropQuiz } from './DragAndDropQuiz';
 import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
 import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
@@ -42,9 +48,12 @@ export class ArtemisPageobjects {
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
     exerciseResult = new ExerciseResultPage();
+    examExerciseGroups = new ExamExerciseGroupsPage();
+    examExerciseGroupCreation = new ExamExerciseGroupCreationPage();
     programmingExercise = {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
+        feedback: new ProgrammingExerciseFeedbackPage(),
         scaConfiguration: new CodeAnalysisGradingPage(),
         scaFeedback: new ScaFeedbackModal(),
     };
@@ -60,6 +69,7 @@ export class ArtemisPageobjects {
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
+        programming: new ProgrammingExerciseAssessmentPage(),
     };
     modelingExercise = {
         creation: new CreateModelingExercisePage(),
@@ -70,5 +80,7 @@ export class ArtemisPageobjects {
     quizExercise = {
         creation: new QuizExerciseCreationPage(),
         multipleChoice: new MultipleChoiceQuiz(),
+        shortAnswer: new ShortAnswerQuiz(),
+        dragAndDrop: new DragAndDropQuiz(),
     };
 }
