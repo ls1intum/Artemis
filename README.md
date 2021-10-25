@@ -154,3 +154,8 @@ The following universities are actively using Artemis or are currently evaluatin
 
 * https://artemis.praktomat.cs.kit.edu
 * Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)
+
+##### Hochschule München
+
+* https://artemis.cs.hm.edu
+* Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)
