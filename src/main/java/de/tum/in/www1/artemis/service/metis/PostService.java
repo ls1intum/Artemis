@@ -84,6 +84,7 @@ public class PostService extends PostingService {
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
             groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
+            broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
             return savedPost;
         }
         Post savedPost = postRepository.save(post);

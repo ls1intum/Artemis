@@ -76,10 +76,7 @@ public class AnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-
-        // we need to explicitly add the answer post to the updated post before broadcasting
-        post.addAnswerPost(savedAnswerPost);
-        broadcastForPost(new MetisPostDTO(post, MetisPostAction.UPDATE_POST), course);
+        this.preparePostAndBroadcast(savedAnswerPost, course);
         sendNotification(post, course);
 
         return savedAnswerPost;
@@ -118,12 +115,7 @@ public class AnswerPostService extends PostingService {
             existingAnswerPost.setContent(answerPost.getContent());
         }
         updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
-        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
-        Post updatedPost = updatedAnswerPost.getPost();
-        updatedPost.removeAnswerPost(updatedAnswerPost);
-        updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
-
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }
 
@@ -138,12 +130,7 @@ public class AnswerPostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
-
-        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
-        Post updatedPost = updatedAnswerPost.getPost();
-        updatedPost.removeAnswerPost(updatedAnswerPost);
-        updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
     /**
@@ -195,6 +182,14 @@ public class AnswerPostService extends PostingService {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
         }
+    }
+
+    private void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
+        Post updatedPost = updatedAnswerPost.getPost();
+        updatedPost.removeAnswerPost(updatedAnswerPost);
+        updatedPost.addAnswerPost(updatedAnswerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
