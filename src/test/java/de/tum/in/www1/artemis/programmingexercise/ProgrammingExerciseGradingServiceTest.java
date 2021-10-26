@@ -577,7 +577,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // re-evaluate
         final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
-        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody(ROOT + "/" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
@@ -648,7 +648,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // re-evaluate
         final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
-        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody(ROOT + "/" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
@@ -1068,7 +1068,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // get statistics
         final var endpoint = ProgrammingExerciseGradingResource.STATISTICS.replace("{exerciseId}", programmingExerciseSCAEnabled.getId().toString());
-        final var statistics = request.get(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
+        final var statistics = request.get(ROOT + "/" + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.getNumParticipations()).isEqualTo(5);
 

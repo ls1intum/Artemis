@@ -22,12 +22,12 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  * PUT or DELETE.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ProgrammingExerciseGradingResource {
 
-    public static final String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
+    public static final String RE_EVALUATE = "programming-exercise/{exerciseId}/grading/re-evaluate";
 
-    public static final String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
+    public static final String STATISTICS = "programming-exercise/{exerciseId}/grading/statistics";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
@@ -51,12 +51,12 @@ public class ProgrammingExerciseGradingResource {
     }
 
     /**
-     * Use with care: Re-evaluates all latest automatic results for the given programming exercise.
+     * PUT programming-exercises/:exerciseId/grading/re-evaluate : Use with care: Re-evaluates all latest automatic results for the given programming exercise.
      *
      * @param exerciseId the id of the exercise to re-evaluate the test case weights of.
      * @return the number of results that were updated.
      */
-    @PutMapping(RE_EVALUATE)
+    @PutMapping("programming-exercises/{exerciseId}/grading/re-evaluate")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
@@ -74,12 +74,12 @@ public class ProgrammingExerciseGradingResource {
     }
 
     /**
-     * Get the exercise's test case statistics for the the given exercise id.
+     * GET programming-exercises/:exerciseId/grading/statistics : Get the exercise's test case statistics for the the given exercise id.
      *
-     * @param exerciseId of the the exercise.
+     * @param exerciseId the id of the exercise.
      * @return the test case statistics for the exercise.
      */
-    @GetMapping(STATISTICS)
+    @GetMapping("programming-exercises/{exerciseId}/grading/statistics")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);

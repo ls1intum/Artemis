@@ -119,7 +119,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      */
     public reEvaluate(exerciseId: number): Observable<number> {
-        return this.http.put<number>(`${this.resourceUrl}/${exerciseId}/grading/re-evaluate`, {});
+        return this.http.put<number>(`${this.resourceUrl}s/${exerciseId}/grading/re-evaluate`, {});
     }
 
     /**
