@@ -54,7 +54,7 @@ public class GroupNotificationServiceTest {
     private final static String NOTIFICATION_TEXT = "notificationText";
 
     private enum ExerciseStatus {
-        COURSE_EXERCISE_STATUS, EXAM_EXERCISE_STATUS;
+        COURSE_EXERCISE_STATUS, EXAM_EXERCISE_STATUS
     }
 
     /**
@@ -107,19 +107,18 @@ public class GroupNotificationServiceTest {
 
     /// NotifyAboutExerciseUpdate
 
-     /**
-     * Test for notifyAboutExerciseUpdate method with an undefined release date
-     */
+    /**
+    * Test for notifyAboutExerciseUpdate method with an undefined release date
+    */
     @Test
     public void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
-    
-     /**
-     * Test for notifyAboutExerciseUpdate method with an future release date
-     */
+    /**
+    * Test for notifyAboutExerciseUpdate method with an future release date
+    */
     @Test
     public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
@@ -141,7 +140,6 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
-    
     /**
     * Test for notifyAboutExerciseUpdate method with a correct release date (now) for course exercises
     */
@@ -168,7 +166,6 @@ public class GroupNotificationServiceTest {
         doNothing().when(groupNotificationService).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 
-    
     /**
     * Test for checkNotificationForExerciseRelease method with an undefined release date
     */
@@ -179,7 +176,6 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
-    
     /**
     * Test for checkNotificationForExerciseRelease method with a current or past release date
     */
@@ -191,7 +187,6 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
-    
     /**
     * Test for checkNotificationForExerciseRelease method with an future release date
     */
@@ -205,7 +200,6 @@ public class GroupNotificationServiceTest {
 
     /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
 
-    
     /**
     * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
     */
