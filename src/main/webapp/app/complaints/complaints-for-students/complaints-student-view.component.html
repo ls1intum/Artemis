@@ -1,5 +1,5 @@
-<div *ngIf="showComplaintsSection">
-    <div class="mt-4" *ngIf="result?.completionDate && isCurrentUserSubmissionAuthor && !complaint">
+<div *ngIf="complaint || showSection">
+    <div class="mt-4" *ngIf="isCorrectUserToFileAction && !complaint">
         <button
             *ngIf="isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)"
             class="btn btn-primary"
@@ -22,7 +22,7 @@
         </button>
     </div>
 
-    <div class="row" *ngIf="!complaint && result && formComplaintType">
+    <div class="row" *ngIf="!complaint && formComplaintType">
         <jhi-complaint-form
             class="flex-grow-1"
             [exercise]="exercise"
@@ -30,7 +30,7 @@
             [examId]="exam?.id!"
             [allowedComplaints]="numberOfAllowedComplaints"
             [complaintType]="formComplaintType"
-            [isCurrentUserSubmissionAuthor]="isCurrentUserSubmissionAuthor"
+            [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction"
             (submit)="loadPotentialComplaint()"
         ></jhi-complaint-form>
     </div>

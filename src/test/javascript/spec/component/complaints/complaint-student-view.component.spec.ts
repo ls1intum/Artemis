@@ -136,7 +136,7 @@ describe('ComplaintInteractionsComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showComplaintsSection).toBe(true);
+            expect(component.showSection).toBe(true);
             expect(serverDateStub).not.toHaveBeenCalled();
         }));
 
@@ -167,7 +167,7 @@ describe('ComplaintInteractionsComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showComplaintsSection).toBe(false);
+            expect(component.showSection).toBe(false);
         }
     });
 
@@ -252,10 +252,10 @@ describe('ComplaintInteractionsComponent', () => {
     function expectDefault() {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course).toStrictEqual(course);
-        expect(component.showComplaintsSection).toBe(true);
+        expect(component.showSection).toBe(true);
         expect(component.formComplaintType).toBeUndefined();
         expect(component.numberOfAllowedComplaints).toStrictEqual(numberOfComplaints);
-        expect(component.isCurrentUserSubmissionAuthor).toBe(true);
+        expect(component.isCorrectUserToFileAction).toBe(true);
         expect(result.participation).toStrictEqual(participation);
     }
 

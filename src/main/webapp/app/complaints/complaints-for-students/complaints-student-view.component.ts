@@ -33,9 +33,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
     formComplaintType?: ComplaintType;
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints = 0;
-    isCurrentUserSubmissionAuthor: boolean;
+    isCorrectUserToFileAction: boolean;
     isExamMode: boolean;
-    showComplaintsSection: boolean;
+    showSection: boolean;
     timeOfFeedbackRequestValid: boolean;
     timeOfComplaintValid: boolean;
 
@@ -59,39 +59,54 @@ export class ComplaintsStudentViewComponent implements OnInit {
             this.result = this.participation.results[0];
             this.result.participation = this.participation;
         }
-        if (this.participation.submissions && this.participation.submissions.length > 0) {
-            this.submission = this.participation.submissions[0];
-        }
-        // for course exercises we track the number of allowed complaints
-        if (this.course?.complaintsEnabled) {
-            this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
-                this.numberOfAllowedComplaints = allowedComplaints;
-            });
-        }
-        this.loadPotentialComplaint();
-        this.accountService.identity().then((user) => {
-            if (this.participation && this.participation.student && user?.id) {
-                this.isCurrentUserSubmissionAuthor = this.participation.student.id === user.id;
+        if (this.participation && this.result.completionDate) {
+            if (this.participation.submissions && this.participation.submissions.length > 0) {
+                this.submission = this.participation.submissions[0];
             }
-        });
+            // for course exercises we track the number of allowed complaints
+            if (this.course?.complaintsEnabled) {
+                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                    this.numberOfAllowedComplaints = allowedComplaints;
+                });
+            }
+            this.loadPotentialComplaint();
+            this.accountService.identity().then((user) => {
+                if (user?.id) {
+                    if (this.participation?.student) {
+                        this.isCorrectUserToFileAction = this.participation.student.id === user.id;
+                    } else if (this.participation.team?.students) {
+                        this.isCorrectUserToFileAction = !!this.participation.team.students.find((student) => student.id === user.id);
+                    }
+                }
+            });
 
-        this.timeOfFeedbackRequestValid = this.isFeedbackRequestAllowed();
-        this.timeOfComplaintValid = this.isComplaintAllowed();
-        this.showComplaintsSection = this.getComplaintsSectionVisibility();
+            this.timeOfFeedbackRequestValid = this.isFeedbackRequestAllowed();
+            this.timeOfComplaintValid = this.isComplaintAllowed();
+            this.showSection = this.getSectionVisibility();
+        }
+    }
+
+    /**
+     * Determines whether or not to show the section
+     */
+    private getSectionVisibility(): boolean {
+        if (this.isExamMode) {
+            return this.isComplaintAllowed();
+        } else {
+            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
+        }
     }
 
     /**
      * Sets the complaint if a complaint and a valid result exists
      */
     loadPotentialComplaint(): void {
-        if (this.result && this.result.completionDate) {
-            this.complaintService
-                .findBySubmissionId(this.submission.id!)
-                .pipe(filter((res) => !!res.body))
-                .subscribe((res: HttpResponse<Complaint>) => {
-                    this.complaint = res.body!;
-                });
-        }
+        this.complaintService
+            .findBySubmissionId(this.submission.id!)
+            .pipe(filter((res) => !!res.body))
+            .subscribe((res: HttpResponse<Complaint>) => {
+                this.complaint = res.body!;
+            });
     }
 
     /**
@@ -103,34 +118,20 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     private isComplaintAllowed(): boolean {
-        if (this.result?.completionDate) {
-            if (this.isExamMode) {
-                return this.isWithinExamReviewPeriod();
-            }
-            return this.canFileComplaintWithCompletionDate(this.result.completionDate);
+        if (this.isExamMode) {
+            return this.isWithinExamReviewPeriod();
         }
-        return false;
+        return this.canFileComplaintWithCompletionDate(this.result.completionDate!);
     }
 
     /**
      * Analogous to isComplaintAllowed but exams cannot have more feedback requests.
      */
     private isFeedbackRequestAllowed(): boolean {
-        if (!this.isExamMode && this.result?.completionDate) {
-            return this.canFileComplaintWithCompletionDate(this.result.completionDate);
+        if (!this.isExamMode) {
+            return this.canFileComplaintWithCompletionDate(this.result.completionDate!);
         }
         return false;
-    }
-
-    /**
-     * Determines whether or not to show the complaint section
-     */
-    private getComplaintsSectionVisibility(): boolean {
-        if (this.isExamMode) {
-            return this.isComplaintAllowed() || !!this.complaint;
-        } else {
-            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
-        }
     }
 
     /**
