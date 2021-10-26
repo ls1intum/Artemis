@@ -39,22 +39,22 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Exercise exercise;
 
-    private final static Long exerciseId = 13L;
+    private final static Long EXERCISE_ID = 13L;
 
     @Mock
     private static Course course;
 
-    private final static Long courseId = 27L;
+    private final static Long COURSE_ID = 27L;
 
     @Mock
     private static Exam exam;
 
-    private final static Long examId = 42L;
+    private final static Long EXAM_ID = 42L;
 
-    private final static String notificationText = "notificationText";
+    private final static String NOTIFICATION_TEXT = "notificationText";
 
     private enum ExerciseStatus {
-        courseExerciseStatus, examExerciseStatus;
+        COURSE_EXERCISE_STATUS, EXAM_EXERCISE_STATUS;
     }
 
     /**
@@ -62,8 +62,8 @@ public class GroupNotificationServiceTest {
      * @param exerciseStatus indicates if the exercise is a course or exam exercise
      */
     private void setExerciseStatus(ExerciseStatus exerciseStatus) {
-        when(exercise.isExamExercise()).thenReturn(exerciseStatus == ExerciseStatus.examExerciseStatus);
-        when(exercise.isCourseExercise()).thenReturn(exerciseStatus == ExerciseStatus.courseExerciseStatus);
+        when(exercise.isExamExercise()).thenReturn(exerciseStatus == ExerciseStatus.EXAM_EXERCISE_STATUS);
+        when(exercise.isCourseExercise()).thenReturn(exerciseStatus == ExerciseStatus.COURSE_EXERCISE_STATUS);
     }
 
     /**
@@ -82,15 +82,15 @@ public class GroupNotificationServiceTest {
         groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository));
 
         exam = mock(Exam.class);
-        when(exam.getId()).thenReturn(examId);
+        when(exam.getId()).thenReturn(EXAM_ID);
 
         course = mock(Course.class);
-        when(course.getId()).thenReturn(courseId);
+        when(course.getId()).thenReturn(COURSE_ID);
 
         exercise = mock(Exercise.class);
 
         instanceMessageSendService = mock(InstanceMessageSendService.class);
-        doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(exerciseId);
+        doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(EXERCISE_ID);
     }
 
     /**
@@ -109,22 +109,25 @@ public class GroupNotificationServiceTest {
 
     @Test
     public void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, notificationText);
-        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
     @Test
     public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, notificationText);
-        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
+    /**
+    * Test the notifyAboutExerciseUpdate method with a correct release date (now)
+    */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
-        setExerciseStatus(ExerciseStatus.examExerciseStatus);
-        doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+        setExerciseStatus(ExerciseStatus.EXAM_EXERCISE_STATUS);
+        doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
 
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
 
@@ -134,13 +137,13 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
-        setExerciseStatus(ExerciseStatus.courseExerciseStatus);
-        doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+        setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
+        doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
 
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
 
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, notificationText);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
@@ -150,7 +153,7 @@ public class GroupNotificationServiceTest {
      * Auxiliary methods for testing the checkNotificationForExerciseRelease
      */
     private void prepareMocksForCheckNotificationForExerciseReleaseTesting() {
-        setExerciseStatus(ExerciseStatus.courseExerciseStatus);
+        setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         doNothing().when(groupNotificationService).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 
@@ -181,9 +184,9 @@ public class GroupNotificationServiceTest {
 
     @Test
     public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
-        doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, notificationText);
+        doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         doNothing().when(groupNotificationService).checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, NOTIFICATION_TEXT, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
         verify(groupNotificationService, times(1)).checkNotificationForExerciseRelease(any(), any());
     }
