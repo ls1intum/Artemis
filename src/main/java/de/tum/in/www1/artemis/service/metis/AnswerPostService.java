@@ -193,6 +193,8 @@ public class AnswerPostService extends PostingService {
     private void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
+        // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
+        // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);

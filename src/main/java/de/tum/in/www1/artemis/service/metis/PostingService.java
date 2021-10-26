@@ -30,6 +30,8 @@ public abstract class PostingService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+
     protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate) {
         this.courseRepository = courseRepository;
@@ -47,8 +49,8 @@ public abstract class PostingService {
      * @param course  course the posting belongs to
      */
     void broadcastForPost(MetisPostDTO postDTO, Course course) {
-        String specificTopicName = "/topic/metis/";
-        String genericTopicName = "/topic/metis/courses/" + course.getId();
+        String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
+        String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
         if (postDTO.getPost().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);

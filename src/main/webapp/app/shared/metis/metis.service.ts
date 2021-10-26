@@ -421,6 +421,8 @@ export class MetisService implements OnDestroy {
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToUpdate > -1) {
                         this.cachedPosts[indexToUpdate] = postDTO.post;
+                    } else {
+                        console.error(`Post with id ${postDTO.post.id} could not be updated`);
                     }
                     this.addTags(postDTO.post.tags);
                     break;
@@ -428,6 +430,8 @@ export class MetisService implements OnDestroy {
                     const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToDelete > -1) {
                         this.cachedPosts.splice(indexToDelete, 1);
+                    } else {
+                        console.error(`Post with id ${postDTO.post.id} could not be deleted`);
                     }
                     break;
                 default:

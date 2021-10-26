@@ -116,10 +116,9 @@ public class PostService extends PostingService {
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
-        boolean contextHasChanged = false;
+        boolean contextHasChanged = !existingPost.hasSameContext(post);
         // depending on if there is a context change we need to broadcast different information
-        if (!existingPost.hasSameContext(post)) {
-            contextHasChanged = true;
+        if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
             broadcastForPost(new MetisPostDTO(existingPost, MetisPostAction.DELETE_POST), course);
@@ -181,7 +180,7 @@ public class PostService extends PostingService {
      *
      * @param post     post that is reacted on
      * @param reaction reaction that was added by a user
-     * @param courseId if of course the post belongs to
+     * @param courseId id of course the post belongs to
      */
     public void updateWithReaction(Post post, Reaction reaction, Long courseId) {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
