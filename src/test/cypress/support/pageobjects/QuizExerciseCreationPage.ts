@@ -1,4 +1,4 @@
-import { POST } from '../constants';
+import { POST, BASE_API } from '../constants';
 
 export class QuizExerciseCreationPage {
     setTitle(title: string) {
@@ -22,11 +22,37 @@ export class QuizExerciseCreationPage {
         });
     }
 
+    addDragAndDropQuestion(title: string) {
+        cy.get('#quiz-add-dnd-question').click();
+        cy.get('.question-title > .form-control').type(title);
+        this.uploadDragAndDropBackground().then(() => {
+            cy.wait(2000);
+            cy.get('.click-layer').trigger('mousedown', { x: 50, y: 50 }).trigger('mousemove', { x: 500, y: 300 }).trigger('mouseup');
+        });
+        this.createDragAndDropItem('Rick Astley');
+        cy.get('.drag-item').drag('.drop-location');
+        cy.fixture('quiz_exercise_fixtures/dragAndDropQuiz.txt').then((fileContent) => {
+            cy.get('.ace_text-input').focus().clear().type(fileContent);
+        });
+    }
+
+    createDragAndDropItem(text: string) {
+        cy.get('[jhitranslate="artemisApp.dragAndDropQuestion.addDragItemText"]').click();
+        cy.get('.drag-item').find('textarea').clear().type(text);
+    }
+
+    uploadDragAndDropBackground() {
+        cy.get('input[type="file"]').eq(1).attachFile('quiz_exercise_fixtures/dragAndDrop_background.jpg');
+        cy.intercept(POST, BASE_API + 'fileUpload*').as('uploadBackground');
+        cy.get('[jhitranslate="artemisApp.dragAndDropQuestion.upload"]').click();
+        return cy.wait('@uploadBackground');
+    }
+
     /**
      * @return <Chainable>  the response of the request
      */
     saveQuiz() {
-        cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
+        cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
         cy.contains('Save').click();
         return cy.wait('@createQuizExercise');
     }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -17,18 +17,13 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import * as chai from 'chai';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -53,8 +48,16 @@ describe('QuizExamSubmissionComponent', () => {
         shortAnswerQuestion.id = 3;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(ArtemisQuizQuestionTypesModule), MockModule(NgbModule)],
-            declarations: [QuizExamSubmissionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
+            imports: [RouterTestingModule.withRoutes([])],
+            declarations: [
+                QuizExamSubmissionComponent,
+                MockDirective(NgbTooltip),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+            ],
             providers: [MockProvider(ArtemisQuizService)],
         })
             .compileComponents()
@@ -65,23 +68,23 @@ describe('QuizExamSubmissionComponent', () => {
             });
     });
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const quizServiceSpy = sinon.spy(quizService, 'randomizeOrder');
+        const quizServiceSpy = jest.spyOn(quizService, 'randomizeOrder');
 
         exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
         component.exercise = exercise;
         fixture.detectChanges();
 
-        expect(fixture).to.be.ok;
-        expect(quizServiceSpy.calledOnce);
-        expect(component.selectedAnswerOptions.has(1)).to.equal(true);
-        expect(component.selectedAnswerOptions.size).to.equal(1);
-        expect(component.dragAndDropMappings.has(2)).to.equal(true);
-        expect(component.dragAndDropMappings.size).to.equal(1);
-        expect(component.shortAnswerSubmittedTexts.size).to.equal(0);
+        expect(fixture).toBeDefined();
+        expect(quizServiceSpy).toHaveBeenCalledTimes(1);
+        expect(component.selectedAnswerOptions.has(1)).toEqual(true);
+        expect(component.selectedAnswerOptions.size).toEqual(1);
+        expect(component.dragAndDropMappings.has(2)).toEqual(true);
+        expect(component.dragAndDropMappings.size).toEqual(1);
+        expect(component.shortAnswerSubmittedTexts.size).toEqual(0);
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
@@ -107,25 +110,25 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateViewFromSubmission();
         fixture.detectChanges();
 
-        expect(JSON.stringify(component.selectedAnswerOptions.get(1))).to.equal(JSON.stringify([multipleChoiceSelectedOptions]));
-        expect(JSON.stringify(component.dragAndDropMappings.get(2))).to.equal(JSON.stringify([dragAndDropMapping]));
-        expect(component.shortAnswerSubmittedTexts.size).to.equal(0);
+        expect(JSON.stringify(component.selectedAnswerOptions.get(1))).toEqual(JSON.stringify([multipleChoiceSelectedOptions]));
+        expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([dragAndDropMapping]));
+        expect(component.shortAnswerSubmittedTexts.size).toEqual(0);
 
         /**
          * Test the return value of the getSubmission and getExercise
          */
-        expect(component.getSubmission()).to.equal(quizSubmission);
-        expect(component.getExercise()).to.equal(exercise);
+        expect(component.getSubmission()).toEqual(quizSubmission);
+        expect(component.getExercise()).toEqual(exercise);
 
         /**
          * Change the isSynced value of studentSubmission to false when selection changed
          */
         component.onSelectionChanged();
-        expect(component.studentSubmission.isSynced).to.equal(false);
+        expect(component.studentSubmission.isSynced).toEqual(false);
         /**
          * Return the negated value of isSynced when there are unsaved changes
          */
-        expect(component.hasUnsavedChanges()).to.equal(true);
+        expect(component.hasUnsavedChanges()).toEqual(true);
     });
 
     it('should set answerOptions/mappings/submitted texts to empty array when not submitted answer', () => {
@@ -135,30 +138,30 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateViewFromSubmission();
         fixture.detectChanges();
 
-        expect(JSON.stringify(component.selectedAnswerOptions.get(1))).to.equal(JSON.stringify([]));
-        expect(component.selectedAnswerOptions.has(1)).to.equal(true);
-        expect(JSON.stringify(component.dragAndDropMappings.get(2))).to.equal(JSON.stringify([]));
-        expect(component.dragAndDropMappings.has(2)).to.equal(true);
+        expect(JSON.stringify(component.selectedAnswerOptions.get(1))).toEqual(JSON.stringify([]));
+        expect(component.selectedAnswerOptions.has(1)).toEqual(true);
+        expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([]));
+        expect(component.dragAndDropMappings.has(2)).toEqual(true);
 
-        expect(component.shortAnswerSubmittedTexts.size).to.equal(1);
-        expect(component.shortAnswerSubmittedTexts.has(3)).to.equal(true);
+        expect(component.shortAnswerSubmittedTexts.size).toEqual(1);
+        expect(component.shortAnswerSubmittedTexts.has(3)).toEqual(true);
     });
 
     it('should trigger navigation towards the corrensponding question of the quiz', () => {
         const element = document.createElement('exam-navigation-bar');
-        const getNavigationStub = stub(document, 'getElementById').returns(element);
+        const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(element);
 
         const yOffsetRect = element.getBoundingClientRect() as DOMRect;
-        const yOffsetStub = stub(element, 'getBoundingClientRect').returns(yOffsetRect);
+        const yOffsetStub = jest.spyOn(element, 'getBoundingClientRect').mockReturnValue(yOffsetRect);
 
-        const windowSpy = sinon.spy(window, 'scrollTo');
+        const windowSpy = jest.spyOn(window, 'scrollTo');
 
         component.navigateToQuestion(1);
         component.exercise = exercise;
         fixture.detectChanges();
-        expect(getNavigationStub).to.have.been.called;
-        expect(yOffsetStub).to.have.been.called;
-        expect(windowSpy).to.have.been.called;
+        expect(getNavigationStub).toHaveBeenCalled();
+        expect(yOffsetStub).toHaveBeenCalled();
+        expect(windowSpy).toHaveBeenCalled();
     });
 
     it('should create multiple choice submission from users selection ', () => {
@@ -194,8 +197,8 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateSubmissionFromView();
         fixture.detectChanges();
 
-        expect(component.studentSubmission.submittedAnswers?.length).to.equal(3);
-        expect(JSON.stringify(component.studentSubmission.submittedAnswers)).to.equal(
+        expect(component.studentSubmission.submittedAnswers?.length).toEqual(3);
+        expect(JSON.stringify(component.studentSubmission.submittedAnswers)).toEqual(
             JSON.stringify([multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer]),
         );
     });

@@ -1,8 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-
 import { AceEditorModule } from 'ng2-ace-editor';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -14,17 +10,18 @@ import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domain
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe, MockDirective } from 'ng-mocks';
+import { NgModel } from '@angular/forms';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
-describe('GradingInstructionCommand', () => {
+describe('Grading Instruction Command', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(NgModel)],
         })
             .compileComponents()
             .then(() => {
@@ -39,7 +36,7 @@ describe('GradingInstructionCommand', () => {
         comp.ngAfterViewInit();
 
         gradingInstructionCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal(
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual(
             '[instruction]' +
                 '\n' +
                 '\t' +
@@ -72,6 +69,6 @@ describe('GradingInstructionCommand', () => {
         comp.ngAfterViewInit();
 
         criterionCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText());
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText());
     });
 });

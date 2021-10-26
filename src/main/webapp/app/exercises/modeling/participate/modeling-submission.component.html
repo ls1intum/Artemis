@@ -58,6 +58,7 @@
                             [readOnly]="true"
                             [enablePopups]="false"
                             [displayPoints]="false"
+                            [course]="course"
                             (selectionChanged)="onSelectionChanged($event)"
                             [explanation]="explanation"
                         ></jhi-modeling-assessment>
@@ -108,6 +109,7 @@
                 class="col-xl-8 mt-3 alert unreferencedFeedback"
                 [feedback]="unreferencedFeedback || []"
                 [additional]="true"
+                [course]="course"
             >
             </jhi-additional-feedback>
         </div>

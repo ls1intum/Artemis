@@ -1422,7 +1422,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         database.changeUser("instructor1");
 
         var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Intructor get notified that lock operations were successful")
+        assertThat(notifications).as("Instructor get notified that lock operations were successful")
                 .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
     }

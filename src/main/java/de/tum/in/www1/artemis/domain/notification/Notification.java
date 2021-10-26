@@ -149,7 +149,7 @@ public abstract class Notification extends DomainObject {
 
     @Override
     public String toString() {
-        return "Notification{" + "id=" + getId() + ", title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\''
-                + ", priority=" + priority + ", outdated=" + outdated + ", author=" + author + '}';
+        return "Notification{" + "title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\'' + ", priority="
+                + priority + ", outdated=" + outdated + ", author=" + author + '}';
     }
 }

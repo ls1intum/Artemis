@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -77,12 +79,14 @@ public class ModelingExerciseResource {
 
     private final ModelClusterRepository modelClusterRepository;
 
+    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository) {
+            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -99,6 +103,7 @@ public class ModelingExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.modelClusterRepository = modelClusterRepository;
+        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -126,11 +131,20 @@ public class ModelingExerciseResource {
         // validates general settings: points, dates
         exerciseService.validateGeneralSettings(modelingExercise);
 
+        // if exercise is created from scratch we create a new knowledge instance
+        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
+        if (modelingExercise.getReleaseDate() == null || !modelingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(modelingExercise);
+        }
+        else {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());
+        }
+
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
