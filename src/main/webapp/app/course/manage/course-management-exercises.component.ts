@@ -2,6 +2,7 @@ import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute } from '@angular/router';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -10,11 +11,13 @@ import { ActivatedRoute } from '@angular/router';
 export class CourseManagementExercisesComponent implements OnInit {
     course: Course;
     courseId = 0;
+    showSearch = false;
     quizExercisesCount = 0;
     textExercisesCount = 0;
     programmingExercisesCount = 0;
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
+    exerciseFilter: ExerciseFilter;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
@@ -28,6 +31,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
         this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
+        this.exerciseFilter = new ExerciseFilter('');
     }
 
     /**
@@ -37,5 +41,12 @@ export class CourseManagementExercisesComponent implements OnInit {
      */
     setProgrammingExerciseCount(count: number) {
         this.programmingExercisesCount = count;
+    }
+
+    toggleSearch() {
+        this.showSearch = !this.showSearch;
+        if (!this.showSearch) {
+            this.exerciseFilter = new ExerciseFilter();
+        }
     }
 }

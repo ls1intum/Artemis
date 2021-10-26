@@ -90,6 +90,23 @@
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
+            "search": {
+                "searchButton": "Search",
+                "toggleButton": "Toggle Search Bar",
+                "cardTitle": "Search Exercises",
+                "fieldExerciseName": "Search by exercise name",
+                "labelExerciseCategory": "Category",
+                "fieldExerciseCategory": "Category",
+                "labelExerciseType": "Exercise Type",
+                "type": {
+                    "all": "All Exercises",
+                    "programming": "Programming Exercises",
+                    "quiz": "Quiz Exercises",
+                    "modeling": "Modelling Exercises",
+                    "text": "Text Exercises",
+                    "fileUpload": "File Upload Exercises"
+                }
+            },
             "students": "Students",
             "participations": "Participation",
             "tutors": "Tutors",

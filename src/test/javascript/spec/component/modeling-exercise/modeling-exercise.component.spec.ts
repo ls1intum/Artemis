@@ -18,6 +18,7 @@ import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,6 +34,7 @@ describe('ModelingExercise Management Component', () => {
     const course: Course = { id: 123 } as Course;
     const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
     modelingExercise.id = 456;
+    modelingExercise.title = 'UML Exercise';
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -56,6 +58,8 @@ describe('ModelingExercise Management Component', () => {
         sortService = fixture.debugElement.injector.get(SortService);
 
         eventManager = fixture.debugElement.injector.get(EventManager);
+
+        comp.modelingExercises = [modelingExercise];
     });
 
     afterEach(function () {
@@ -81,6 +85,26 @@ describe('ModelingExercise Management Component', () => {
         // THEN
         expect(findStub).to.have.been.called;
         expect(comp.modelingExercises[0]).to.deep.equal(modelingExercise);
+    });
+
+    describe('ModelingExercise Search Exercises', () => {
+        it('Should show all exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
+
+            // THEN
+            expect(comp.modelingExercises.length).to.equal(1);
+            expect(comp.filteredModelingExercises.length).to.equal(1);
+        });
+
+        it('Should show no exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+
+            // THEN
+            expect(comp.modelingExercises.length).to.equal(1);
+            expect(comp.filteredModelingExercises.length).to.equal(0);
+        });
     });
 
     it('should return items id when tracked', () => {

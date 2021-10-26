@@ -12,6 +12,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
@@ -21,6 +22,7 @@ describe('FileUploadExercise Management Component', () => {
     const course: Course = { id: 123 } as Course;
     const fileUploadExercise = new FileUploadExercise(course, undefined);
     fileUploadExercise.id = 456;
+    fileUploadExercise.title = 'PDF Upload';
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -40,6 +42,8 @@ describe('FileUploadExercise Management Component', () => {
         fixture = TestBed.createComponent(FileUploadExerciseComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(CourseExerciseService);
+
+        comp.fileUploadExercises = [fileUploadExercise];
     });
 
     it('Should call loadExercises on init', () => {
@@ -61,5 +65,25 @@ describe('FileUploadExercise Management Component', () => {
         // THEN
         expect(service.findAllFileUploadExercisesForCourse).toHaveBeenCalled();
         expect(comp.fileUploadExercises[0]).toEqual(fileUploadExercise);
+    });
+
+    describe('FileUploadExercise Search Exercises', () => {
+        it('Should show all exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
+
+            // THEN
+            expect(comp.fileUploadExercises.length).toEqual(1);
+            expect(comp.filteredFileUploadExercises.length).toEqual(1);
+        });
+
+        it('Should show no exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+
+            // THEN
+            expect(comp.fileUploadExercises.length).toEqual(1);
+            expect(comp.filteredFileUploadExercises.length).toEqual(0);
+        });
     });
 });

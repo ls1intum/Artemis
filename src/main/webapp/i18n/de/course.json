@@ -90,6 +90,23 @@
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Dateiupload-Aufgabe",
+            "search": {
+                "searchButton": "Suchen",
+                "toggleButton": "Suchleiste umschalten",
+                "cardTitle": "Aufgaben durchsuchen",
+                "fieldExerciseName": "Aufgaben nach Namen durchsuchen",
+                "labelExerciseCategory": "Kategorie",
+                "fieldExerciseCategory": "Kategorie",
+                "labelExerciseType": "Aufgabentyp",
+                "type": {
+                    "all": "Alle Aufgaben",
+                    "programming": "Programmieraufgaben",
+                    "quiz": "Quizaufgaben",
+                    "modeling": "Modellierungsaufgaben",
+                    "text": "Textaufgabe",
+                    "fileUpload": "Dateiupload-Aufgabe"
+                }
+            },
             "students": "Studierende",
             "participations": "Teilnahmen",
             "tutors": "Tutor:innen",

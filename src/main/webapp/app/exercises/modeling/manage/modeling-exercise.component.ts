@@ -21,6 +21,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
+    filteredModelingExercises: ModelingExercise[];
 
     constructor(
         public exerciseService: ExerciseService,
@@ -51,10 +52,15 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
+                this.applyFilter();
                 this.emitExerciseCount(this.modelingExercises.length);
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
+    }
+
+    protected applyFilter(): void {
+        this.filteredModelingExercises = this.modelingExercises.filter((exercise) => this.filter.includeExercise(exercise));
     }
 
     /**

@@ -20,6 +20,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
+    filteredFileUploadExercises: FileUploadExercise[] = [];
 
     constructor(
         public exerciseService: ExerciseService,
@@ -50,10 +51,15 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                         exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                         exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     });
+                    this.applyFilter();
                     this.emitExerciseCount(this.fileUploadExercises.length);
                 },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );
+    }
+
+    protected applyFilter(): void {
+        this.filteredFileUploadExercises = this.fileUploadExercises.filter((exercise) => this.filter.includeExercise(exercise));
     }
 
     /**

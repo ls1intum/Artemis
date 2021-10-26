@@ -23,6 +23,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
 
     @Input() quizExercises: QuizExercise[] = [];
+    filteredQuizExercises: QuizExercise[] = [];
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -49,11 +50,16 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
-                this.emitExerciseCount(this.quizExercises.length);
                 this.setQuizExercisesStatus();
+                this.applyFilter();
+                this.emitExerciseCount(this.quizExercises.length);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+    }
+
+    protected applyFilter(): void {
+        this.filteredQuizExercises = this.quizExercises.filter((exercise) => this.filter.includeExercise(exercise));
     }
 
     /**

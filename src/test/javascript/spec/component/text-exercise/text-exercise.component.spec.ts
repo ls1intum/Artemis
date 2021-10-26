@@ -12,6 +12,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
 describe('TextExercise Management Component', () => {
     let comp: TextExerciseComponent;
@@ -19,7 +20,7 @@ describe('TextExercise Management Component', () => {
     let courseExerciseService: CourseExerciseService;
 
     const course = { id: 123 } as Course;
-    const textExercise: TextExercise = { id: 456 } as TextExercise;
+    const textExercise: TextExercise = { id: 456, title: 'Text Exercise', type: 'text' } as TextExercise;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -39,6 +40,8 @@ describe('TextExercise Management Component', () => {
         fixture = TestBed.createComponent(TextExerciseComponent);
         comp = fixture.componentInstance;
         courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
+
+        comp.textExercises = [textExercise];
     });
 
     it('Should call loadExercises on init', () => {
@@ -59,5 +62,25 @@ describe('TextExercise Management Component', () => {
 
         // THEN
         expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalled();
+    });
+
+    describe('TextExercise Search Exercises', () => {
+        it('Should show all exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('EXT', '', 'text');
+
+            // THEN
+            expect(comp.textExercises.length).toEqual(1);
+            expect(comp.filteredTextExercises.length).toEqual(1);
+        });
+
+        it('Should show no exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+
+            // THEN
+            expect(comp.textExercises.length).toEqual(1);
+            expect(comp.filteredTextExercises.length).toEqual(0);
+        });
     });
 });

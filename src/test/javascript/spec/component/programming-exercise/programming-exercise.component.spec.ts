@@ -12,15 +12,19 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
+    programmingExercise.title = 'Exercise 1';
     const programmingExercise2 = new ProgrammingExercise(course, undefined);
     programmingExercise2.id = 457;
+    programmingExercise2.title = 'Exercise 2a';
     const programmingExercise3 = new ProgrammingExercise(course, undefined);
     programmingExercise3.id = 458;
+    programmingExercise3.title = 'Exercise 2b';
 
     let comp: ProgrammingExerciseComponent;
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
@@ -70,6 +74,45 @@ describe('ProgrammingExercise Management Component', () => {
         // THEN
         expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalled();
         expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+        expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+    });
+
+    describe('ProgrammingExercise Search Exercises', () => {
+        it('Should show all exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'programming');
+
+            // THEN
+            expect(comp.programmingExercises.length).toEqual(3);
+            expect(comp.filteredProgrammingExercises.length).toEqual(3);
+        });
+
+        it('Should show no exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'text');
+
+            // THEN
+            expect(comp.programmingExercises.length).toEqual(3);
+            expect(comp.filteredProgrammingExercises.length).toEqual(0);
+        });
+
+        it('Should show first exercise', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Exercise 1');
+
+            // THEN
+            expect(comp.programmingExercises.length).toEqual(3);
+            expect(comp.filteredProgrammingExercises.length).toEqual(1);
+        });
+
+        it('Should show last 2 exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('2');
+
+            // THEN
+            expect(comp.programmingExercises.length).toEqual(3);
+            expect(comp.filteredProgrammingExercises.length).toEqual(2);
+        });
     });
 
     describe('ProgrammingExercise Select Exercises', () => {

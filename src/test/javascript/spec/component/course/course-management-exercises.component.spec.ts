@@ -22,6 +22,7 @@ import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,6 +53,7 @@ describe('Course Management Exercises Component', () => {
                 MockComponent(ModelingExerciseComponent),
                 MockComponent(FileUploadExerciseComponent),
                 MockComponent(TextExerciseComponent),
+                MockComponent(CourseManagementExercisesSearchComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -81,5 +83,17 @@ describe('Course Management Exercises Component', () => {
         comp.ngOnInit();
         expect(comp.courseId).to.equal(course.id);
         expect(findStub).to.have.been.calledWith(course.id);
+    });
+
+    it('should open search bar on button click', () => {
+        fixture.detectChanges();
+        const button = fixture.debugElement.nativeElement.querySelector('#toggleSearchButton');
+        button.click();
+        fixture.detectChanges();
+
+        const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
+
+        expect(comp.showSearch).to.equal(true);
+        expect(searchBar).to.not.equal(null);
     });
 });

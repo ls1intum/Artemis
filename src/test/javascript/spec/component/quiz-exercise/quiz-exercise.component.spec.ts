@@ -12,6 +12,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;
@@ -21,6 +22,7 @@ describe('QuizExercise Management Component', () => {
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
     quizExercise.id = 456;
+    quizExercise.title = 'Quiz Exercise';
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -40,6 +42,8 @@ describe('QuizExercise Management Component', () => {
         fixture = TestBed.createComponent(QuizExerciseComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(QuizExerciseService);
+
+        comp.quizExercises = [quizExercise];
     });
 
     it('Should call loadExercises on init', () => {
@@ -61,5 +65,25 @@ describe('QuizExercise Management Component', () => {
         // THEN
         expect(service.findForCourse).toHaveBeenCalled();
         expect(comp.quizExercises[0]).toEqual(quizExercise);
+    });
+
+    describe('QuizExercise Search Exercises', () => {
+        it('Should show all exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Quiz', '', 'quiz');
+
+            // THEN
+            expect(comp.quizExercises.length).toEqual(1);
+            expect(comp.filteredQuizExercises.length).toEqual(1);
+        });
+
+        it('Should show no exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+
+            // THEN
+            expect(comp.quizExercises.length).toEqual(1);
+            expect(comp.filteredQuizExercises.length).toEqual(0);
+        });
     });
 });

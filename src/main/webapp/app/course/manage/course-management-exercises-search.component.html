@@ -1,0 +1,48 @@
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ 'artemisApp.course.search.cardTitle' | artemisTranslate }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="input-group form-group">
+            <input
+                id="exercise-search-input"
+                type="search"
+                class="form-control"
+                [placeholder]="'artemisApp.course.search.fieldExerciseName' | artemisTranslate"
+                [(ngModel)]="exerciseNameSearch"
+                (keydown.enter)="sendUpdate()"
+            />
+            <div class="input-group-append">
+                <button id="saveFilterButton" class="btn btn-primary" type="button" (click)="sendUpdate()">{{ 'artemisApp.course.search.searchButton' | artemisTranslate }}</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col">
+                <label for="exercise-search-category-input">
+                    {{ 'artemisApp.course.search.labelExerciseCategory' | artemisTranslate }}
+                </label>
+                <input
+                    id="exercise-search-category-input"
+                    type="text"
+                    class="form-control form-control"
+                    [placeholder]="'artemisApp.course.search.fieldExerciseCategory' | artemisTranslate"
+                    [(ngModel)]="exerciseCategorySearch"
+                    (keydown.enter)="sendUpdate()"
+                />
+            </div>
+            <div class="form-group col">
+                <label for="exercise-search-type-input">
+                    {{ 'artemisApp.course.search.labelExerciseType' | artemisTranslate }}
+                </label>
+                <select id="exercise-search-type-input" class="form-select" [(ngModel)]="exerciseTypeSearch" (ngModelChange)="sendUpdate()">
+                    <option value="all">{{ 'artemisApp.course.search.type.all' | artemisTranslate }}</option>
+                    <option value="programming">{{ 'artemisApp.course.search.type.programming' | artemisTranslate }}</option>
+                    <option value="quiz">{{ 'artemisApp.course.search.type.quiz' | artemisTranslate }}</option>
+                    <option value="modeling">{{ 'artemisApp.course.search.type.modeling' | artemisTranslate }}</option>
+                    <option value="text">{{ 'artemisApp.course.search.type.text' | artemisTranslate }}</option>
+                    <option value="file-upload">{{ 'artemisApp.course.search.type.fileUpload' | artemisTranslate }}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

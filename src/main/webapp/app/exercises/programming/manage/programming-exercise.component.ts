@@ -30,6 +30,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    filteredProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
     selectedProgrammingExercises: ProgrammingExercise[];
@@ -98,10 +99,15 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                         }
                     }
                 });
+                this.applyFilter();
                 this.emitExerciseCount(this.programmingExercises.length);
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
+    }
+
+    protected applyFilter(): void {
+        this.filteredProgrammingExercises = this.programmingExercises.filter((exercise) => this.filter.includeExercise(exercise));
     }
 
     trackId(index: number, item: ProgrammingExercise) {
