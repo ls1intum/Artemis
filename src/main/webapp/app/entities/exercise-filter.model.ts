@@ -12,10 +12,17 @@ export class ExerciseFilter {
         this.exerciseTypeSearch = exerciseTypeSearch;
     }
 
+    /**
+     * Check if the exercise filter is in its default state (no exercise will be filtered by it)
+     */
     isEmpty(): boolean {
         return this.exerciseNameSearch === '' && this.exerciseCategorySearch === '' && this.exerciseTypeSearch === 'all';
     }
 
+    /**
+     * Checks if an exercise should be included by this filter
+     * @param exercise The exercise to check
+     */
     includeExercise(exercise: Exercise): boolean {
         const nameMatches: boolean = this.exerciseNameSearch === '' || exercise.title!.toLowerCase().includes(this.exerciseNameSearch);
         const categoryMatches: boolean = this.exerciseCategorySearch === '' || (exercise.categories?.some((category) => this.matchesTag(category)) ?? false);

@@ -15,14 +15,22 @@ export class CourseManagementExercisesSearchComponent implements OnInit {
 
     constructor() {}
 
+    /**
+     * Initializes the attributes to match an empty filter
+     */
     ngOnInit(): void {
-        this.exerciseNameSearch = '';
-        this.exerciseCategorySearch = '';
-        this.exerciseTypeSearch = 'all';
+        const filter = new ExerciseFilter();
+        this.exerciseNameSearch = filter.exerciseNameSearch;
+        this.exerciseCategorySearch = filter.exerciseCategorySearch;
+        this.exerciseTypeSearch = filter.exerciseTypeSearch;
         this.typeOptions = ['all'];
         this.typeOptions.push(...exerciseTypes);
     }
 
+    /**
+     * Sends an updated filter through the event emitter
+     * Triggered every time the type dropdown is changed or when the user manually presses Enter or the search button
+     */
     sendUpdate() {
         this.exerciseFilter.emit(new ExerciseFilter(this.exerciseNameSearch, this.exerciseCategorySearch, this.exerciseTypeSearch));
     }
