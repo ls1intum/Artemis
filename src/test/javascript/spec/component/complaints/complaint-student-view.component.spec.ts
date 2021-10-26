@@ -87,6 +87,10 @@ describe('ComplaintInteractionsComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     describe('Exam mode', () => {
         it('should initialize', fakeAsync(() => {
             component.exercise = examExercise;
@@ -100,7 +104,7 @@ describe('ComplaintInteractionsComponent', () => {
             tick(100);
 
             expectExamDefault();
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint).toBe(undefined);
             expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
             expect(userMock).toHaveBeenCalledTimes(1);
@@ -174,7 +178,7 @@ describe('ComplaintInteractionsComponent', () => {
     describe('Course mode', () => {
         it('should initialize', fakeAsync(() => {
             testInitWithResultStub(of());
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint).toBe(undefined);
         }));
 
         it('should initialize with complaint', fakeAsync(() => {
@@ -253,7 +257,7 @@ describe('ComplaintInteractionsComponent', () => {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course).toStrictEqual(course);
         expect(component.showSection).toBe(true);
-        expect(component.formComplaintType).toBeUndefined();
+        expect(component.formComplaintType).toBe(undefined);
         expect(component.numberOfAllowedComplaints).toStrictEqual(numberOfComplaints);
         expect(component.isCorrectUserToFileAction).toBe(true);
         expect(result.participation).toStrictEqual(participation);

@@ -43,6 +43,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -95,7 +96,7 @@ const studentExam = { id: 1, exam, user, exercises } as StudentExam;
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), FontAwesomeTestingModule, MockModule(NgbModule), HttpClientModule],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientModule],
             declarations: [
                 ExamParticipationSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
@@ -109,6 +110,7 @@ function sharedSetup(url: string[]) {
                 MockComponent(TextExamSummaryComponent),
                 MockComponent(FileUploadExamSummaryComponent),
                 MockComponent(ComplaintsStudentViewComponent),
+                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
