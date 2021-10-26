@@ -42,14 +42,14 @@
                 "title": "Probleme mit der Leistung von Tutor:innen",
                 "tutor": "Tutor:in {{ tutorName }} hat Probleme mit der Leistung",
                 "ratings": {
-                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Rating(s) mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als {{threshold}} ⭐."
+                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Ratings mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als {{threshold}} ⭐."
                 },
                 "score": {
-                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist größer als {{threshold}}%.",
-                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Abgabe(n) mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%."
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist größer als {{threshold}}%.",
+                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%."
                 },
                 "complaints": {
-                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerde(n) bekommen. Das ist größer als {{threshold}}."
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerden mit der Beschwerdenratio von {{averageTutorValue}}% bekommen. Das ist größer als {{threshold}}."
                 }
             }
         }

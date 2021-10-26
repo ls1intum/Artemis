@@ -21,6 +21,7 @@ import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 
 @Component({
     selector: 'jhi-courses',
@@ -233,19 +234,26 @@ export class AssessmentDashboardComponent implements OnInit {
         // clear the tutor issues array
         this.tutorIssues = [];
 
+        const complaintRatio = (entry: TutorLeaderboardElement) => {
+            if (entry.numberOfAssessments == 0) {
+                return 0;
+            }
+            return (100 * entry.numberOfTutorComplaints) / entry.numberOfAssessments;
+        };
+
         const courseInformation = this.stats.tutorLeaderboardEntries.reduce(
             (accumulator, entry) => {
                 return {
                     summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
                     summedAverageScore: accumulator.summedAverageScore + entry.averageScore,
-                    summedComplaints: accumulator.summedComplaints + entry.numberOfTutorComplaints,
+                    summedComplaintRatio: accumulator.summedComplaintRatio + complaintRatio(entry),
                 };
             },
-            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaints: 0 },
+            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaintRatio: 0 },
         );
 
         const numberOfTutorsWithNonZeroRatings = this.stats.tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
-        const numberOfTutorsNonZeroAssessments = this.stats.tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
+        const numberOfTutorsWithNonZeroAssessments = this.stats.tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
 
         this.stats.tutorLeaderboardEntries
             // create the tutor issue checkers for rating, score and complaints
@@ -260,14 +268,14 @@ export class AssessmentDashboardComponent implements OnInit {
                 new TutorIssueScoreChecker(
                     entry.numberOfAssessments,
                     entry.averageScore,
-                    courseInformation.summedAverageScore / numberOfTutorsNonZeroAssessments,
+                    courseInformation.summedAverageScore / numberOfTutorsWithNonZeroAssessments,
                     entry.name,
                     entry.userId,
                 ),
                 new TutorIssueComplaintsChecker(
                     entry.numberOfTutorComplaints,
-                    entry.numberOfTutorComplaints,
-                    courseInformation.summedComplaints / numberOfTutorsNonZeroAssessments,
+                    complaintRatio(entry),
+                    courseInformation.summedComplaintRatio / numberOfTutorsWithNonZeroAssessments,
                     entry.name,
                     entry.userId,
                 ),

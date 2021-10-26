@@ -42,14 +42,14 @@
                 "title": "Issues with tutor performance",
                 "tutor": "Tutor {{ tutorName }} has performance issues",
                 "ratings": {
-                    "below": "{{tutorName}} has received {{numberOfTutorItems}} rating(s) with an average of {{averageTutorValue}} ⭐️️ which is below {{threshold}} ⭐."
+                    "below": "{{tutorName}} has received {{numberOfTutorItems}} ratings with an average of {{averageTutorValue}} ⭐️️ which is below {{threshold}} ⭐."
                 },
                 "score": {
-                    "above": "{{tutorName}} has reviewed {{numberOfTutorItems}} submission(s) with an average score of {{averageTutorValue}}% which is above {{threshold}}%.",
-                    "below": "{{tutorName}} has reviewed {{numberOfTutorItems}} submission(s) with an average score of {{averageTutorValue}}% which is below {{threshold}}%."
+                    "above": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is above {{threshold}}%.",
+                    "below": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is below {{threshold}}%."
                 },
                 "complaints": {
-                    "above": "{{tutorName}} has received {{numberOfTutorItems}} complaints which is above {{threshold}}."
+                    "above": "{{tutorName}} has received {{numberOfTutorItems}} complaints with a complaint ratio of {{averageTutorValue}}% which is above {{threshold}}."
                 }
             }
         }

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -123,7 +123,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, MockModule(RouterModule)],
             declarations: [
                 AssessmentDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
@@ -143,8 +143,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [
-                JhiLanguageHelper,
-                DeviceDetectorService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -262,7 +260,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 } as any as ActivatedRoute;
                 const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
                 activatedRoute.snapshot = newRoute.snapshot;
-                TestBed.inject(ActivatedRoute);
 
                 comp.tutor = new User(1);
 
@@ -281,7 +278,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                     } as TutorLeaderboardElement,
                     {
                         userId: 2,
-                        numberOfAssessments: 1,
+                        numberOfAssessments: 5,
                         numberOfTutorComplaints: 5,
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 5,
@@ -322,7 +319,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 } as any as ActivatedRoute;
                 const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
                 activatedRoute.snapshot = newRoute.snapshot;
-                TestBed.inject(ActivatedRoute);
 
                 // when
                 comp.ngOnInit();
