@@ -32,7 +32,7 @@ import dayjs from 'dayjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
-    public posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
+    private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private currentPostContextFilter: PostContextFilter = {};
     private user: User;
@@ -383,10 +383,10 @@ export class MetisService implements OnDestroy {
 
     /**
      * Creates (and updates) the websocket channel for receiving messages in dedicated channels;
-     * On Message reception, subsequent actions for updating the dependant components are defined based on the MetisPostAction encapsulated in the MetisPostDTO (message payload);
+     * On message reception, subsequent actions for updating the dependent components are defined based on the MetisPostAction encapsulated in the MetisPostDTO (message payload);
      * Updating the components is achieved by manipulating the cached (i.e., currently visible posts) accordingly,
      * and emitting those as new value for the `posts` observable via the getFilteredPosts method
-     * @param channel which the metis service is subscribed to
+     * @param channel which the metis service should subscribe to
      */
     createWebsocketSubscription(channel: string): void {
         // if channel subscription does not change, do nothing
@@ -415,20 +415,14 @@ export class MetisService implements OnDestroy {
                         // we can add the sent post to the cached posts without violating the current context filter setting
                         this.cachedPosts.push(postDTO.post);
                     }
-                    if (postDTO.post.tags && postDTO.post.tags.length > 0) {
-                        const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));
-                        this.tags$.next(updatedTags);
-                    }
+                    this.addTags(postDTO.post.tags);
                     break;
                 case MetisPostAction.UPDATE_POST:
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToUpdate > -1) {
                         this.cachedPosts[indexToUpdate] = postDTO.post;
                     }
-                    if (postDTO.post.tags && postDTO.post.tags.length > 0) {
-                        const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...postDTO.post.tags!]));
-                        this.tags$.next(updatedTags);
-                    }
+                    this.addTags(postDTO.post.tags);
                     break;
                 case MetisPostAction.DELETE_POST:
                     const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
@@ -461,5 +455,15 @@ export class MetisService implements OnDestroy {
             channel += `courses/${this.courseId}`;
         }
         this.createWebsocketSubscription(channel);
+    }
+
+    /**
+     * Helper method to add tags to currently stored course tags
+     */
+    private addTags(tags: string[] | undefined) {
+        if (tags && tags.length > 0) {
+            const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...tags]));
+            this.tags$.next(updatedTags);
+        }
     }
 }

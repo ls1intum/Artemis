@@ -148,12 +148,12 @@ public class AnswerPostService extends PostingService {
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
+        // delete
+        answerPostRepository.deleteById(answerPostId);
+
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedPost = answerPost.getPost();
         updatedPost.removeAnswerPost(answerPost);
-
-        // delete
-        answerPostRepository.deleteById(answerPostId);
         broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
