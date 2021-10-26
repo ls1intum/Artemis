@@ -49,7 +49,7 @@
                     "below": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is below {{threshold}}%."
                 },
                 "complaints": {
-                    "above": "{{tutorName}} has received {{numberOfTutorItems}} complaints with a complaint ratio of {{averageTutorValue}}% which is above {{threshold}}."
+                    "above": "{{tutorName}} has received {{numberOfTutorItems}} complaints with a complaint ratio of {{averageTutorValue}}% which is above {{threshold}}%."
                 }
             }
         }
