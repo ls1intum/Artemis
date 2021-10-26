@@ -1,7 +1,4 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -27,9 +24,6 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 const createBlobHttpResponse = () => {
     const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
     const headers = new HttpHeaders().set('filename', 'blob file');
@@ -53,7 +47,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     programmingExercise.releaseDate = dayjs();
     programmingExercise.dueDate = dayjs().add(7, 'days');
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
@@ -86,7 +80,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 repoExportService = fixture.debugElement.injector.get(ProgrammingAssessmentRepoExportService);
 
                 // stubs
-                stub(exerciseService, 'find').returns(of({ body: programmingExercise } as HttpResponse<Exercise>));
+                jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
 
                 comp.exerciseId = exerciseId;
                 comp.participationIdList = participationIdList;
@@ -96,39 +90,39 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     it('test initialization', () => {
         fixture.detectChanges();
-        expect(comp.exerciseId).to.be.equal(42);
+        expect(comp.exerciseId).toEqual(42);
     });
 
     it('Exercise service should find the correct programming exercise', () => {
         fixture.detectChanges();
-        expect(comp.exercise).to.be.equal(programmingExercise);
+        expect(comp.exercise).toEqual(programmingExercise);
     });
 
     it('Export a repo by participations should download a zipped file', fakeAsync(() => {
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos(exerciseId);
         tick();
-        expect(comp.repositoryExportOptions.addParticipantName).to.be.false;
-        expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).to.be.true;
-        expect(comp.exportInProgress).to.be.false;
-        expect(exportReposStub).to.be.calledOnce;
+        expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
+        expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
+        expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
     it('Export a repo by participant identifiers should download a zipped file', fakeAsync(() => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ALL';
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = stub(repoExportService, 'exportReposByParticipantIdentifiers').returns(of(httpResponse));
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos(exerciseId);
         tick();
-        expect(comp.repositoryExportOptions.addParticipantName).to.be.true;
-        expect(comp.exportInProgress).to.be.false;
-        expect(exportReposStub).to.be.calledOnce;
+        expect(comp.repositoryExportOptions.addParticipantName).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
+        expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
     it('Export of multiple repos download multiple files', fakeAsync(() => {
@@ -138,13 +132,13 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         fixture.componentInstance.exercise.isAtLeastInstructor = true;
         comp.selectedProgrammingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.bulkExportRepos();
         tick();
-        expect(comp.repositoryExportOptions.exportAllParticipants).to.be.true;
-        expect(comp.exportInProgress).to.be.false;
-        expect(exportReposStub).to.be.calledTwice;
+        expect(comp.repositoryExportOptions.exportAllParticipants).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
+        expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));
 });
