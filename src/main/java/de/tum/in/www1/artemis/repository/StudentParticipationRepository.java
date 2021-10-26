@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -337,6 +338,22 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     AND s.id = (SELECT max(id) FROM p.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM Participation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND NOT EXISTS
+                (SELECT prs FROM p.results prs
+                    WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                    AND s.submitted = true
+                    AND s.id = (SELECT max(id) FROM p.submissions)
+            """)
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(@Param("exerciseId") Long exerciseId,
+            @Param("now") ZonedDateTime now);
 
     @Query("""
             select p from Participation p

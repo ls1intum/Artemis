@@ -67,13 +67,12 @@ public class ExamDateService {
      * @throws EntityNotFoundException the given exercise is an exam exercise and the exam cannot be found
      */
     public boolean isExerciseWorkingPeriodOver(Exercise exercise) {
-        if (exercise.isExamExercise()) {
-            return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+        if (!exercise.isExamExercise()) {
+            // ToDo: keep the exception?
+            // should be caught in tests if the function is called with wrong exercises
+            throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
-        // ToDo: this function should not be used for regular course exercises
-        // just adding a dependency on ExerciseDateService would introduce a circular dependency
-        // ⇒ Throw an IllegalArgumentException at least for testing to make sure the correct service is used everywhere
-        return !exercise.isBeforeDueDate();
+        return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
     }
 
     /**

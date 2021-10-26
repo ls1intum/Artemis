@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -62,15 +63,25 @@ public class ExerciseDateService {
         }
 
         final ZonedDateTime now = ZonedDateTime.now();
+        return getDueDate(participation).map(now::isAfter).orElse(false);
+    }
+
+    /**
+     * Gets either the individual due date for a participation if present or else the exercise due date if present.
+     * @param participation of a student in an exercise.
+     * @return the individual due date, or the exercise due date, or nothing.
+     */
+    public Optional<ZonedDateTime> getDueDate(Participation participation) {
+        final Exercise exercise = participation.getExercise();
 
         if (participation.getIndividualDueDate() != null) {
-            return now.isAfter(participation.getIndividualDueDate());
+            return Optional.of(participation.getIndividualDueDate());
         }
         else if (exercise.getDueDate() != null) {
-            return now.isAfter(exercise.getDueDate());
+            return Optional.of(exercise.getDueDate());
         }
         else {
-            return false;
+            return Optional.empty();
         }
     }
 }
