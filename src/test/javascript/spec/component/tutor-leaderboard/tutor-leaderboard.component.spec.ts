@@ -51,8 +51,8 @@ describe('TutorLeaderboardComponent', () => {
     describe('ngOnInit', () => {
         it('sets isAtLeastInstructor if course is set', () => {
             const course = {} as Course;
-            testIsAtLeastInstructor((comp) => {
-                comp.course = course;
+            testIsAtLeastInstructor((component) => {
+                component.course = course;
             });
             expect(comp.isExerciseDashboard).toBe(false);
             expect(comp.course).toBe(course);
@@ -62,8 +62,8 @@ describe('TutorLeaderboardComponent', () => {
         it('sets isAtLeastInstructor if exercise.course is set', () => {
             const course = {} as Course;
             const exercise = { course } as Exercise;
-            testIsAtLeastInstructor((comp) => {
-                comp.exercise = exercise;
+            testIsAtLeastInstructor((component) => {
+                component.exercise = exercise;
             });
             expect(comp.isExerciseDashboard).toBe(true);
             expect(comp.course).toBe(course);
