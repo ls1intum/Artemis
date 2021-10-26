@@ -55,10 +55,8 @@ describe('AssessmentDashboardInformationComponent', () => {
     let getStatsForTutorsStub: jest.SpyInstance;
 
     let exerciseService: ExerciseService;
-    let toggleSecondCorrectionStub: jest.SpyInstance;
 
     let accountService: AccountService;
-    let isAtLeastInstructorInCourseStub: jest.SpyInstance;
 
     let sortService: SortService;
 
@@ -173,7 +171,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
 
                 exerciseService = TestBed.inject(ExerciseService);
-                toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
 
                 // courseService = TestBed.inject(CourseManagementService);
                 getCourseWithInterestingExercisesForTutorsStub = jest
@@ -184,7 +181,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
 
                 accountService = TestBed.inject(AccountService);
-                isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
+                jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
             });
     });
 
