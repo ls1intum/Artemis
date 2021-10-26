@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 
 public class GroupNotificationServiceTest {
 
@@ -35,6 +36,12 @@ public class GroupNotificationServiceTest {
 
     @Mock
     private static InstanceMessageSendService instanceMessageSendService;
+
+    @Mock
+    private static MailService mailService;
+
+    @Mock
+    private static NotificationSettingsService notificationSettingsService;
 
     @Mock
     private static Exercise exercise;
@@ -79,7 +86,7 @@ public class GroupNotificationServiceTest {
 
         messagingTemplate = mock(SimpMessageSendingOperations.class);
 
-        groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository));
+        groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository, mailService, notificationSettingsService));
 
         exam = mock(Exam.class);
         when(exam.getId()).thenReturn(EXAM_ID);
