@@ -107,12 +107,19 @@ public class GroupNotificationServiceTest {
 
     /// NotifyAboutExerciseUpdate
 
+     /**
+     * Test for notifyAboutExerciseUpdate method with an undefined release date
+     */
     @Test
     public void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
+    
+     /**
+     * Test for notifyAboutExerciseUpdate method with an future release date
+     */
     @Test
     public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
@@ -121,7 +128,7 @@ public class GroupNotificationServiceTest {
     }
 
     /**
-    * Test the notifyAboutExerciseUpdate method with a correct release date (now)
+    * Test for notifyAboutExerciseUpdate method with a correct release date (now) for exam exercises
     */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
@@ -134,6 +141,10 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
+    
+    /**
+    * Test for notifyAboutExerciseUpdate method with a correct release date (now) for course exercises
+    */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
@@ -157,6 +168,10 @@ public class GroupNotificationServiceTest {
         doNothing().when(groupNotificationService).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 
+    
+    /**
+    * Test for checkNotificationForExerciseRelease method with an undefined release date
+    */
     @Test
     public void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
         prepareMocksForCheckNotificationForExerciseReleaseTesting();
@@ -164,6 +179,10 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
+    
+    /**
+    * Test for checkNotificationForExerciseRelease method with a current or past release date
+    */
     @Test
     public void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         prepareMocksForCheckNotificationForExerciseReleaseTesting();
@@ -172,6 +191,10 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
+    
+    /**
+    * Test for checkNotificationForExerciseRelease method with an future release date
+    */
     @Test
     public void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         prepareMocksForCheckNotificationForExerciseReleaseTesting();
@@ -182,6 +205,10 @@ public class GroupNotificationServiceTest {
 
     /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
 
+    
+    /**
+    * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
+    */
     @Test
     public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
         doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
