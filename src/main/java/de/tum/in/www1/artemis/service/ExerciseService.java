@@ -474,7 +474,7 @@ public class ExerciseService {
             // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
             else if (exercise instanceof ModelingExercise) {
                 // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
-                ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+                ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
                 if (modelingExercise.getKnowledge() != null) {
                     modelAssessmentKnowledgeService.deleteKnowledge(modelingExercise.getKnowledge().getId(), modelingExercise.getId());
                 }
