@@ -300,7 +300,7 @@
                     "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
                 },
                 "invalidDirectoryName": {
-                    "pattern": "Checkout directory paths must only contain words, '-', and '/' characters."
+                    "pattern": "Checkout directory paths must only contain words, '-', and '/' characters, but must not start with a '/' character."
                 }
             }
         },

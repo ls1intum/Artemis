@@ -22,7 +22,7 @@ public class AuxiliaryRepositoryService {
 
     private static final String AUX_REPO_ENTITY_NAME = "programmingExercise";
 
-    private static final Pattern ALLOWED_BAMBOO_CHECKOUT_DIRECTORY = Pattern.compile("\\w+(/[\\w-]+)*$");
+    private static final Pattern ALLOWED_BAMBOO_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 

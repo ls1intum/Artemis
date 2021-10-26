@@ -299,7 +299,7 @@
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },
                 "invalidDirectoryName": {
-                    "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '-', und '/' Zeichen beinhalten."
+                    "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen."
                 }
             }
         },
