@@ -72,6 +72,17 @@ public class SingleUserNotificationService {
     }
 
     /**
+     * notifyUserAboutPlagiarismCase creates a plagiarismNotification saves it to the database and returns it.
+     * @param plagiarismNotification A singleUserNotification
+     * @return converted plagiarism notification
+     */
+    public SingleUserNotification notifyUserAboutPlagiarismCase(SingleUserNotification plagiarismNotification) {
+        var res = singleUserNotificationRepository.save(plagiarismNotification);
+        messagingTemplate.convertAndSend(plagiarismNotification.getTopic(), plagiarismNotification);
+        return res;
+    }
+
+    /**
      * Saves the given notification in database and sends it to the client via websocket.
      *
      * @param notification that should be saved and sent

@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.notification.*;
 import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismNotificationDTO;

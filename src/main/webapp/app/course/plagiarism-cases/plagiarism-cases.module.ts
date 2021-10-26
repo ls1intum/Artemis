@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MomentModule } from 'ngx-moment';
 import { PlagiarismCasesComponent } from './plagiarism-cases.component';
 import { PlagiarismCasesListComponent } from 'app/course/plagiarism-cases/plagiarism-cases-list.component';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
@@ -10,7 +9,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { PlagiarismCasesReviewComponent } from 'app/course/plagiarism-cases/plagiarism-cases-review.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisAppRoutingModule, MomentModule, ArtemisSharedComponentModule, ArtemisPlagiarismModule, ArtemisTutorParticipationGraphModule],
+    imports: [ArtemisSharedModule, ArtemisAppRoutingModule, ArtemisSharedComponentModule, ArtemisPlagiarismModule, ArtemisTutorParticipationGraphModule],
     declarations: [PlagiarismCasesComponent, PlagiarismCasesListComponent, PlagiarismCasesReviewComponent],
+    exports: [PlagiarismCasesComponent, PlagiarismCasesReviewComponent],
 })
 export class PlagiarismCasesModule {}

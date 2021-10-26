@@ -83,7 +83,10 @@ public class GroupNotificationService {
                 // Critical Types
                 case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
                         (String) typeSpecificInformation);
-                case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
+                case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION,
+                        (String) typeSpecificInformation);
+                case PLAGIARISM_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PLAGIARISM_CASE, (String) typeSpecificInformation);
+
             };
             saveAndSend(resultingGroupNotification);
         }
