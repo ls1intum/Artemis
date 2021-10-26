@@ -178,12 +178,12 @@ public class QuizExerciseResource {
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
+            throw new AccessForbiddenException("Insufficient Authorization!");
         }
 
         // Forbid conversion between normal course exercise and exam exercise
         var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExerciseElseThrow(quizExercise, originalQuiz, ENTITY_NAME);
 
         // check if quiz is has already started
 

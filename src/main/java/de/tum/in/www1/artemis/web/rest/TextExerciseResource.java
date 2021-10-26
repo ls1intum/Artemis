@@ -222,7 +222,7 @@ public class TextExerciseResource {
         }
 
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExerciseElseThrow(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);

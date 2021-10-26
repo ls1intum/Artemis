@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
@@ -541,7 +542,7 @@ public class ExerciseService {
      * @param entityName      name of the entity
      * @throws BadRequestAlertException if updated exercise was converted
      */
-    public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
+    public void checkForConversionBetweenExamAndCourseExerciseElseThrow(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
         if (updatedExercise.isExamExercise() != oldExercise.isExamExercise() || updatedExercise.isCourseExercise() != oldExercise.isCourseExercise()) {
             throw new BadRequestAlertException("Course exercise cannot be converted to exam exercise and vice versa", entityName, "conversionBetweenExamAndCourseExercise");
         }
@@ -895,14 +896,55 @@ public class ExerciseService {
                 double totalScore = programmingAssessmentService.calculateTotalScore(result);
                 result.setScore(totalScore, exercise.getMaxPoints());
                 /*
-                 * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
-                 * student has achieved have changed
+                 * Result string has the following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points
+                 * the student has achieved have changed
                  */
                 String[] resultStringParts = result.getResultString().split(", ");
                 resultStringParts[resultStringParts.length - 1] = result.createResultString(totalScore, exercise.getMaxPoints());
                 result.setResultString(String.join(", ", resultStringParts));
                 resultRepository.save(result);
             }
+        }
+    }
+
+    /**
+     * validates whether the filepattern for a fileUploadExercise has a valid filepattern
+     * @param fileUploadExercise the exercise for which the filepattern should be validated
+     * @return
+     */
+    private boolean isFilePatternValid(FileUploadExercise fileUploadExercise) {
+        // a file ending should consist of a comma separated list of 1-5 characters / digits
+        // when an empty string "" is passed in the exercise the file-pattern is null when it arrives in the rest endpoint
+        if (fileUploadExercise.getFilePattern() == null) {
+            return false;
+        }
+        var filePattern = fileUploadExercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var allowedFileEndings = filePattern.split(",");
+        var isValid = true;
+        for (var allowedFileEnding : allowedFileEndings) {
+            isValid = isValid && FILE_ENDING_PATTERN.matcher(allowedFileEnding).matches();
+        }
+
+        if (isValid) {
+            // use the lowercase version without whitespaces
+            fileUploadExercise.setFilePattern(filePattern);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * validates whether a fileUploadExercise is valid, else throws BadRequestAlertException
+     * @param fileUploadExercise the fileUploadExercise to be validated
+     * @throws BadRequestAlertException if invalid
+     */
+    public void validateNewOrUpdatedFileUploadExercise(FileUploadExercise fileUploadExercise) throws BadRequestAlertException {
+        // Valid exercises have set either a course or an exerciseGroup
+        fileUploadExercise.checkCourseAndExerciseGroupExclusivity("fileUploadExercise");
+
+        if (!isFilePatternValid(fileUploadExercise)) {
+            throw new BadRequestAlertException("The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').",
+                    "fileUploadExercise", "filePattern.invalid");
         }
     }
 

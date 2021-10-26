@@ -617,7 +617,7 @@ public class ProgrammingExerciseResource {
         // true --> false: remove access for students from all existing student participations
 
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExerciseElseThrow(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
