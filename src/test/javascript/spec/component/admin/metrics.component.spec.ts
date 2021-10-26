@@ -1,46 +1,34 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
-import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
-import { JhiMetricsService } from 'app/admin/metrics/metrics.service';
+import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { MetricsService } from 'app/admin/metrics/metrics.service';
 
-describe('JhiMetricsMonitoringComponent', () => {
-    let comp: JhiMetricsMonitoringComponent;
-    let fixture: ComponentFixture<JhiMetricsMonitoringComponent>;
-    let service: JhiMetricsService;
-
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [JhiMetricsMonitoringComponent],
-        })
-            .overrideTemplate(JhiMetricsMonitoringComponent, '')
-            .compileComponents();
-    }));
+describe('MetricsComponent', () => {
+    let comp: MetricsComponent;
+    let fixture: ComponentFixture<MetricsComponent>;
+    let service: MetricsService;
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(JhiMetricsMonitoringComponent);
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [MetricsComponent],
+        })
+            .overrideTemplate(MetricsComponent, '')
+            .compileComponents();
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(MetricsComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(JhiMetricsService);
+        service = fixture.debugElement.injector.get(MetricsService);
     });
 
     describe('refresh', () => {
         it('should call refresh on init', () => {
             // GIVEN
-            const response = {
-                timers: {
-                    service: 'test',
-                    unrelatedKey: 'test',
-                },
-                gauges: {
-                    'jcache.statistics': {
-                        value: 2,
-                    },
-                    unrelatedKey: 'test',
-                },
-            };
-            spyOn(service, 'getMetrics').and.returnValue(of(response));
+            jest.spyOn(service, 'getMetrics').mockReturnValue(of());
 
             // WHEN
             comp.ngOnInit();

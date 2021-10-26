@@ -68,7 +68,11 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Aufgabenhinweis",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
+                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
+                "metis": {
+                    "post": "Beitrag",
+                    "answerPost": "Antwort"
+                }
             },
             "account": {
                 "main": "Zugang",
@@ -98,6 +102,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
+            "settings": "Einstellungen",
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
             "restartTutorial": "Tutorial wiederholen",
@@ -234,7 +239,6 @@
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
-            "discussion": "Diskussion",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
         },
@@ -290,6 +294,7 @@
         "userexists": "Login bereits vergeben!",
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid.template.build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "missingname": "Ein neues {{entityName}} braucht einen namen",
         "invalid.solution.build.plan.id": "Die Lösungs-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
@@ -316,7 +321,8 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken",
-        "exams": "Klausuren"
+        "exams": "Klausuren",
+        "discussion": "Diskussion"
     },
     "connectionStatus": {
         "connected": "Verbunden",

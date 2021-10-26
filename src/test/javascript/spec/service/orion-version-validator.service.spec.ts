@@ -1,13 +1,15 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
-import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
-import { MockRouter } from '../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { TestBed } from '@angular/core/testing';
+import { ArtemisTestModule } from '../test.module';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,9 +34,6 @@ function setUserAgent(userAgent: string) {
 
 describe('OrionValidatorService', () => {
     let orionVersionValidator: OrionVersionValidator;
-    let profileService: ProfileService;
-    let router: Router;
-
     let profileInfoStub: SinonStub;
     let navigateSpy: SinonSpy;
 
@@ -46,21 +45,20 @@ describe('OrionValidatorService', () => {
     const legacy = 'IntelliJ';
 
     beforeEach(() => {
-        // @ts-ignore
-        profileService = new MockProfileService();
-        // @ts-ignore
-        router = new MockRouter();
-        orionVersionValidator = new OrionVersionValidator(profileService, router);
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            providers: [OrionVersionValidator, MockProvider(Router), MockProvider(ProfileService)],
+        });
+        orionVersionValidator = TestBed.inject(OrionVersionValidator);
 
-        profileInfoStub = stub(profileService, 'getProfileInfo');
-        navigateSpy = spy(router, 'navigateByUrl');
-
+        profileInfoStub = stub(TestBed.inject(ProfileService), 'getProfileInfo');
         profileInfoStub.returns(of(profileInfo));
+
+        navigateSpy = spy(TestBed.inject(Router), 'navigateByUrl');
     });
 
     afterEach(() => {
-        profileInfoStub.restore();
-        navigateSpy.restore();
+        sinon.restore();
     });
 
     it('should route to the error page if a legacy version is used', () => {

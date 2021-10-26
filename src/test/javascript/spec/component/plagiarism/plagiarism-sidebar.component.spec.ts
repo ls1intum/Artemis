@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 
 describe('Plagiarism Sidebar Component', () => {
     let comp: PlagiarismSidebarComponent;
@@ -11,7 +12,8 @@ describe('Plagiarism Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            imports: [ArtemisTestModule],
+            declarations: [PlagiarismSidebarComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -22,7 +24,7 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('displays the run details', () => {
-        spyOn(comp.showRunDetailsChange, 'emit');
+        jest.spyOn(comp.showRunDetailsChange, 'emit');
 
         comp.displayRunDetails();
         expect(comp.showRunDetailsChange.emit).toHaveBeenCalledWith(true);

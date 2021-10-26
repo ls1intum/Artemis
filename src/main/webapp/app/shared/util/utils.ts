@@ -1,7 +1,8 @@
-import { omit } from 'lodash';
-import { JhiAlert } from 'ng-jhipster';
-import * as Sentry from '@sentry/browser';
+import { omit } from 'lodash-es';
+import { captureException } from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
+import { Alert } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
@@ -79,6 +80,32 @@ export const round = (value: any, exp?: number) => {
 };
 
 /**
+ * Rounds the score to the specified amount in the course object.
+ * @param relativeScore The score of the student in the value range [0;1]
+ * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
+ * @returns The rounded percent of the score in the range [0;100]
+ */
+export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, course?: Course) => {
+    if (!course) {
+        captureException(new Error('The course object used for determining the rounding of scores was undefined'));
+    }
+    return round(relativeScore * 100, course ? course!.accuracyOfScores : 1);
+};
+
+/**
+ * Rounds the points to the specified amount in the course object
+ * @param points The points of the student
+ * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
+ * @returns The rounded points of the student
+ */
+export const roundScoreSpecifiedByCourseSettings = (points: any, course?: Course) => {
+    if (!course) {
+        captureException(new Error('The course object used for determining the rounding of scores was undefined'));
+    }
+    return round(points, course ? course!.accuracyOfScores : 1);
+};
+
+/**
  * finds the latest result based on the max id
  * @param results
  */
@@ -90,20 +117,20 @@ export const findLatestResult = (results?: Result[]) => {
  * This is a workaround to avoid translation not found issues.
  * Checks if the alert message could not be translated and removes the translation-not-found annotation.
  * Sending an alert to Sentry with the missing translation key.
- * @param alert which was sent to the jhiAlertService
+ * @param alert which was sent to the alertService
  */
-export const checkForMissingTranslationKey = (alert: JhiAlert) => {
-    if (alert?.msg?.startsWith('translation-not-found')) {
+export const checkForMissingTranslationKey = (alert: Alert) => {
+    if (alert?.message?.startsWith('translation-not-found')) {
         // In case a translation key is not found, remove the 'translation-not-found[...]' annotation
-        const alertMessageMatch = alert.msg.match(/translation-not-found\[(.*?)\]$/);
+        const alertMessageMatch = alert.message.match(/translation-not-found\[(.*?)\]$/);
         if (alertMessageMatch && alertMessageMatch.length > 1) {
-            alert.msg = alertMessageMatch[1];
+            alert.message = alertMessageMatch[1];
         } else {
             // Fallback, in case the bracket is missing
-            alert.msg = alert.msg.replace('translation-not-found', '');
+            alert.message = alert.message.replace('translation-not-found', '');
         }
         // Sent a sentry warning with the translation key
-        Sentry.captureException(new Error('Unknown translation key: ' + alert.msg));
+        captureException(new Error('Unknown translation key: ' + alert.message));
     }
 };
 /**
@@ -123,4 +150,8 @@ export const splitCamelCase = (word: string) => {
         }
     }
     return output.join('');
+};
+
+export const isDate = (input: any) => {
+    return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
 };

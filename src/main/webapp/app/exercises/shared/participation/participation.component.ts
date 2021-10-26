@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { Subject, Subscription } from 'rxjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -8,7 +7,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
@@ -16,10 +14,14 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -64,11 +66,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        private alertService: AlertService,
+        private eventManager: EventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
+        private profileService: ProfileService,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -100,6 +103,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 this.exercise = exerciseResponse.body!;
                 this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe((participationsResponse) => {
                     this.participations = participationsResponse.body!;
+                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                        const programmingExercise = this.exercise as ProgrammingExercise;
+                        if (programmingExercise.projectKey) {
+                            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                                setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
+                            });
+                        }
+                    }
                     this.isLoading = false;
                 });
                 if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -114,23 +125,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
-                this.hasAccessRights();
+                this.isAdmin = this.accountService.isAdmin();
             });
         });
     }
 
-    formatDate(date: Moment | Date | undefined) {
+    formatDate(date: dayjs.Dayjs | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
-    }
-
-    hasAccessRights() {
-        if (this.exercise.course) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
-        } else if (this.exercise.exerciseGroup) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup.exam?.course!);
-        }
-        this.isAdmin = this.accountService.isAdmin();
+        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
     }
 
     updateParticipationFilter(newValue: FilterProp) {
@@ -185,7 +187,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
+                this.alertService.error('artemisApp.participation.addPresentation.error');
             },
         );
     }
@@ -198,7 +200,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('artemisApp.participation.removePresentation.error');
+                this.alertService.error('artemisApp.participation.removePresentation.error');
             },
         );
     }
@@ -222,6 +224,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
+
     /**
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete
@@ -279,7 +282,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation Student participation
      * @param repoUrl original repository url
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUrl: String) => {
+    getRepositoryLink = (participation: StudentParticipation, repoUrl: string) => {
         if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
             return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
         }

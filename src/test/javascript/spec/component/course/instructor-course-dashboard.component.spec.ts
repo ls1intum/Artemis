@@ -6,11 +6,10 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiAlertService, JhiSortDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -31,10 +30,12 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { instructorCourseDashboardRoute } from 'app/course/dashboards/instructor-course-dashboard/instructor-course-dashboard.route';
 import { RouterTestingModule } from '@angular/router/testing';
+import { AlertService } from 'app/core/util/alert.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,13 +44,13 @@ describe('InstructorCourseDashboardComponent', () => {
     let component: InstructorCourseDashboardComponent;
     let fixture: ComponentFixture<InstructorCourseDashboardComponent>;
     let service: CourseManagementService;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let sortService: SortService;
     let accountService: AccountService;
 
-    const assessmentDueDate = moment().subtract(1, 'days');
+    const assessmentDueDate = dayjs().subtract(1, 'days');
     const textExercise = { id: 234, type: ExerciseType.TEXT, assessmentDueDate } as TextExercise;
-    const modelingExercise = { id: 234, type: ExerciseType.MODELING, assessmentDueDate: moment() } as ModelingExercise;
+    const modelingExercise = { id: 234, type: ExerciseType.MODELING, assessmentDueDate: dayjs() } as ModelingExercise;
     const expectedCourse = {
         complaintsEnabled: true,
         exercises: [textExercise, modelingExercise],
@@ -66,6 +67,7 @@ describe('InstructorCourseDashboardComponent', () => {
         registrationEnabled: false,
         requestMoreFeedbackEnabled: true,
         postsEnabled: true,
+        accuracyOfScores: 1,
     } as Course;
     const course = { id: 10, exercises: [textExercise, modelingExercise] } as Course;
     const user = { id: 99, name: 'admin' } as User;
@@ -92,7 +94,7 @@ describe('InstructorCourseDashboardComponent', () => {
                 InstructorCourseDashboardComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockDirective(AlertComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisDatePipe),
@@ -108,7 +110,7 @@ describe('InstructorCourseDashboardComponent', () => {
         fixture = TestBed.createComponent(InstructorCourseDashboardComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(CourseManagementService);
-        alertService = TestBed.inject(JhiAlertService);
+        alertService = TestBed.inject(AlertService);
         sortService = TestBed.inject(SortService);
         accountService = TestBed.inject(AccountService);
     });
@@ -118,10 +120,10 @@ describe('InstructorCourseDashboardComponent', () => {
     });
 
     it('should initialize', fakeAsync(() => {
-        spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(of(responseFakeCourse));
-        spyOn(service, 'getStatsForInstructors').and.returnValue(of(responseFakeStats));
+        jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(of(responseFakeCourse));
+        jest.spyOn(service, 'getStatsForInstructors').mockReturnValue(of(responseFakeStats));
         const sortByPropertySpy = sinon.spy(sortService, 'sortByProperty');
-        spyOn(accountService, 'identity').and.returnValue(Promise.resolve(user));
+        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
         component.ngOnInit();
         tick();
@@ -135,7 +137,7 @@ describe('InstructorCourseDashboardComponent', () => {
     describe('tests with failing server responses', () => {
         it('should initialize with failing server response for course fetching', () => {
             const error = { status: 404 };
-            spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(throwError(new HttpErrorResponse(error)));
+            jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(throwError(new HttpErrorResponse(error)));
             let alertServiceStub: SinonStub;
             alertServiceStub = stub(alertService, 'error');
 
@@ -145,10 +147,10 @@ describe('InstructorCourseDashboardComponent', () => {
 
         it('should initialize with failing server response for stats fetching', fakeAsync(() => {
             const error = { status: 404 };
-            spyOn(service, 'getStatsForInstructors').and.returnValue(throwError(new HttpErrorResponse(error)));
+            jest.spyOn(service, 'getStatsForInstructors').mockReturnValue(throwError(new HttpErrorResponse(error)));
             let alertServiceStub: SinonStub;
             alertServiceStub = stub(alertService, 'error');
-            spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(of(responseFakeCourse));
+            jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(of(responseFakeCourse));
 
             component.ngOnInit();
             tick();
@@ -168,9 +170,9 @@ describe('InstructorCourseDashboardComponent', () => {
     });
 
     it('should sort the exercises', fakeAsync(() => {
-        spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(of(responseFakeCourse));
-        spyOn(service, 'getStatsForInstructors').and.returnValue(of(responseFakeStats));
-        spyOn(accountService, 'identity').and.returnValue(Promise.resolve(user));
+        jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(of(responseFakeCourse));
+        jest.spyOn(service, 'getStatsForInstructors').mockReturnValue(of(responseFakeStats));
+        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
         const sortSpy = sinon.spy(sortService, 'sortByProperty');
 
         component.ngOnInit();

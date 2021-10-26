@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -46,7 +46,7 @@ describe('DoughnutChartComponent', () => {
     });
 
     beforeEach(() => {
-        component.courseId = 1;
+        component.course = { id: 1 };
         component.exerciseId = 2;
         component.exerciseType = ExerciseType.TEXT;
         component.currentPercentage = absolute;
@@ -70,21 +70,21 @@ describe('DoughnutChartComponent', () => {
             component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
             component.ngOnInit();
             expect(component.doughnutChartTitle).to.deep.equal('averageScore');
-            expect(component.titleLink).to.deep.equal([`/course-management/${component.courseId}/${component.exerciseType}-exercises/${component.exerciseId}/scores`]);
+            expect(component.titleLink).to.deep.equal([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/scores`]);
         });
 
         it('should set title for participations', () => {
             component.contentType = DoughnutChartType.PARTICIPATIONS;
             component.ngOnInit();
             expect(component.doughnutChartTitle).to.deep.equal('participationRate');
-            expect(component.titleLink).to.deep.equal([`/course-management/${component.courseId}/${component.exerciseType}-exercises/${component.exerciseId}/participations`]);
+            expect(component.titleLink).to.deep.equal([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/participations`]);
         });
 
         it('should set title for question chart', () => {
             component.contentType = DoughnutChartType.QUESTIONS;
             component.ngOnInit();
             expect(component.doughnutChartTitle).to.deep.equal('answered_posts');
-            expect(component.titleLink).to.deep.equal([`/courses/${component.courseId}/exercises/${component.exerciseId}`]);
+            expect(component.titleLink).to.deep.equal([`/courses/${component.course.id}/exercises/${component.exerciseId}`]);
         });
     });
 

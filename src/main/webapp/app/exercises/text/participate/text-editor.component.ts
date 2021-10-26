@@ -3,11 +3,11 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -27,6 +27,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -40,6 +42,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     result: Result;
     resultWithComplaint?: Result;
     submission: TextSubmission;
+    course?: Course;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
@@ -65,7 +68,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private artemisMarkdown: ArtemisMarkdownService,
         private location: Location,
         private translateService: TranslateService,
@@ -79,12 +82,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('artemisApp.textExercise.error');
+            return this.alertService.error('artemisApp.textExercise.error');
         }
 
         this.textService.get(participationId).subscribe(
             (data: StudentParticipation) => this.updateParticipation(data),
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -95,12 +98,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textExercise.studentParticipations = [this.participation];
         this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
-        this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate));
+        this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
         this.isAfterPublishDate =
             !!this.textExercise.exerciseGroup &&
             !!this.textExercise.exerciseGroup.exam &&
             !!this.textExercise.exerciseGroup.exam.publishResultsDate &&
-            moment().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
+            dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
+        this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions && participation.submissions.length > 0) {
             this.submission = participation.submissions[0] as TextSubmission;
@@ -141,7 +145,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
-            this.textExercise.dueDate && this.participation.initializationDate && moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
+            this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
         const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
         this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
@@ -153,9 +157,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get isActive(): boolean {
         const isActive =
-            !this.examMode &&
-            !this.result &&
-            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment())));
+            !this.examMode && !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && dayjs(this.textExercise.dueDate).isSameOrAfter(dayjs())));
         return !!isActive;
     }
 
@@ -234,13 +236,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.isSaving = false;
 
                 if (!this.isAllowedToSubmitAfterDeadline) {
-                    this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
+                    this.alertService.success('entity.action.submitSuccessfulAlert');
                 } else {
-                    this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
+                    this.alertService.warning('entity.action.submitDeadlineMissedAlert');
                 }
             },
             (err: HttpErrorResponse) => {
-                this.jhiAlertService.error(err.error.message);
+                this.alertService.error(err.error.message);
                 this.isSaving = false;
             },
         );

@@ -1,18 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -22,19 +18,19 @@ import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { StudentExam } from 'app/entities/student-exam.model';
-import * as sinon from 'sinon';
 import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { By } from '@angular/platform-browser';
-import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
@@ -136,8 +132,9 @@ describe('StudentExamsComponent', () => {
                 );
             },
         }),
-        MockProvider(JhiAlertService),
-        MockDirective(JhiTranslateDirective),
+        MockProvider(AlertService),
+        MockProvider(ArtemisTranslatePipe),
+        MockDirective(TranslateDirective),
         {
             provide: LocalStorageService,
             useClass: MockLocalStorageService,
@@ -160,6 +157,7 @@ describe('StudentExamsComponent', () => {
             },
         },
         { provide: AccountService, useClass: MockAccountService },
+        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
@@ -176,7 +174,7 @@ describe('StudentExamsComponent', () => {
         exam.course = course;
         exam.id = 1;
         exam.registeredUsers = [studentOne, studentTwo];
-        exam.endDate = moment();
+        exam.endDate = dayjs();
         exam.startDate = exam.endDate.subtract(60, 'seconds');
 
         studentExamOne = new StudentExam();
@@ -194,11 +192,12 @@ describe('StudentExamsComponent', () => {
         studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
             declarations: [
                 StudentExamsComponent,
                 MockComponent(StudentExamStatusComponent),
                 MockComponent(AlertComponent),
+                MockComponent(FaIconComponent),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
@@ -216,36 +215,37 @@ describe('StudentExamsComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.clearAllMocks();
     });
 
     it('should initialize', () => {
         const courseManagementService = TestBed.inject(CourseManagementService);
-
         const studentExamService = TestBed.inject(StudentExamService);
-        const findCourseSpy = sinon.spy(courseManagementService, 'find');
-        const findExamSpy = sinon.spy(examManagementService, 'find');
-        const findAllStudentExamsSpy = sinon.spy(studentExamService, 'findAllForExam');
+
+        const findCourseSpy = jest.spyOn(courseManagementService, 'find');
+        const findExamSpy = jest.spyOn(examManagementService, 'find');
+        const findAllStudentExamsSpy = jest.spyOn(studentExamService, 'findAllForExam');
+
         studentExamsComponentFixture.detectChanges();
 
-        expect(studentExamsComponentFixture).to.be.ok;
-        expect(findCourseSpy).to.have.been.calledOnce;
-        expect(findExamSpy).to.have.been.calledOnce;
-        expect(findAllStudentExamsSpy).to.have.been.calledOnce;
-        expect(studentExamsComponent.course).to.deep.equal(course);
-        expect(studentExamsComponent.studentExams).to.deep.equal(studentExams);
-        expect(studentExamsComponent.exam).to.deep.equal(exam);
-        expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(false);
-        expect(studentExamsComponent.longestWorkingTime).to.equal(studentExamOne!.workingTime);
-        expect(studentExamsComponent.isExamOver).to.equal(false);
-        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponentFixture).toBeDefined();
+        expect(findCourseSpy).toBeCalled();
+        expect(findExamSpy).toBeCalled();
+        expect(findAllStudentExamsSpy).toBeCalled();
+        expect(studentExamsComponent.course).toEqual(course);
+        expect(studentExamsComponent.studentExams).toEqual(studentExams);
+        expect(studentExamsComponent.exam).toEqual(exam);
+        expect(studentExamsComponent.hasStudentsWithoutExam).toEqual(false);
+        expect(studentExamsComponent.longestWorkingTime).toEqual(studentExamOne!.workingTime);
+        expect(studentExamsComponent.isExamOver).toEqual(false);
+        expect(studentExamsComponent.isLoading).toEqual(false);
     });
 
     it('should not show assess unsubmitted student exam modeling and text participations', () => {
         // user is not an instructor
         studentExamsComponentFixture.detectChanges();
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).to.not.exist;
+        expect(assessButton).toBeNull();
     });
 
     it('should disable show assess unsubmitted student exam modeling and text participations', () => {
@@ -254,221 +254,212 @@ describe('StudentExamsComponent', () => {
         // exam is not over
         studentExamsComponentFixture.detectChanges();
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).to.exist;
-        expect(assessButton.nativeElement.disabled).to.equal(true);
+        expect(assessButton).toBeTruthy();
+        expect(assessButton.nativeElement.disabled).toEqual(true);
     });
 
     it('should automatically assess modeling and text exercises of unsubmitted student exams', () => {
         studentExamOne!.workingTime = 10;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
         exam.gracePeriod = 0;
         course.isAtLeastInstructor = true;
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamOver).to.equal(true);
-        expect(course).to.exist;
-        const assessSpy = sinon.spy(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamOver).toEqual(true);
+        expect(course).toBeTruthy();
+        const assessSpy = jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).to.exist;
+        expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
-        expect(assessSpy).to.have.been.calledOnce;
+        expect(assessSpy).toBeCalled();
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         studentExamOne!.workingTime = 10;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
         exam.gracePeriod = 0;
         course.isAtLeastInstructor = true;
 
         studentExamsComponentFixture.detectChanges();
-        const alertServiceSpy = sinon.spy(alertService, 'error');
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamOver).to.equal(true);
-        expect(course).to.exist;
-        const assessStub = sinon.stub(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').returns(throwError(httpError));
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamOver).toEqual(true);
+        expect(course).toBeTruthy();
+        jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(httpError));
         const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).to.exist;
+        expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-
-        assessStub.restore();
+        expect(alertServiceSpy).toBeCalled();
     });
 
     it('should generate student exams if there are none', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         studentExams = [];
         studentExamsComponentFixture.detectChanges();
 
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamStarted).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamStarted).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
 
         studentExams = [studentExamOne!, studentExamTwo!];
 
-        const generateStudentExamsSpy = sinon.spy(examManagementService, 'generateStudentExams');
+        const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateStudentExams');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
-        expect(generateStudentExamsButton).to.exist;
-        expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(false);
+        expect(generateStudentExamsButton).toBeTruthy();
+        expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(false);
         generateStudentExamsButton.nativeElement.click();
-        expect(generateStudentExamsSpy).to.have.been.calledOnce;
-        expect(studentExamsComponent.studentExams.length).to.equal(2);
+        expect(generateStudentExamsSpy).toBeCalled();
+        expect(studentExamsComponent.studentExams.length).toEqual(2);
     });
 
     it('should correctly catch HTTPError and get additional error when generating student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
-        const translationService = TestBed.inject(TranslateService);
-        const errorDetailString = 'artemisApp.exam.validation.tooFewExerciseGroups';
+        const artemisTranslationPipe = TestBed.inject(ArtemisTranslatePipe);
+        const alertService = TestBed.inject(AlertService);
+        const errorDetailString = 'artemisApp.studentExams.missingStudentExamGenerationError';
         const httpError = new HttpErrorResponse({
             error: { errorKey: errorDetailString },
             status: 400,
         });
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         studentExams = [];
-        const generateStudentExamsStub = sinon.stub(examManagementService, 'generateStudentExams').returns(throwError(httpError));
+        jest.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(throwError(httpError));
 
         studentExamsComponentFixture.detectChanges();
 
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(false);
-        const alertServiceSpy = sinon.spy(alertService, 'error');
-        const translationServiceSpy = sinon.spy(translationService, 'instant');
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(false);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const translationSpy = jest.spyOn(artemisTranslationPipe, 'transform');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
-        expect(generateStudentExamsButton).to.exist;
-        expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
+        expect(generateStudentExamsButton).toBeTruthy();
+        expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
         generateStudentExamsButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-        expect(translationServiceSpy).to.have.been.calledOnceWithExactly(errorDetailString);
-
-        generateStudentExamsStub.restore();
+        expect(alertServiceSpy).toBeCalled();
+        expect(translationSpy).toHaveBeenCalledWith(errorDetailString);
     });
 
     it('should generate student exams after warning the user that the existing are deleted', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         studentExamsComponentFixture.detectChanges();
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });
 
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamStarted).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
-        const generateStudentExamsSpy = sinon.spy(examManagementService, 'generateStudentExams');
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamStarted).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
+        const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateStudentExams');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
-        expect(generateStudentExamsButton).to.exist;
-        expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(true);
+        expect(generateStudentExamsButton).toBeTruthy();
+        expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(true);
         generateStudentExamsButton.nativeElement.click();
-        expect(modalServiceOpenStub).to.have.been.called;
-        expect(generateStudentExamsSpy).to.have.been.calledOnce;
-        expect(studentExamsComponent.studentExams.length).to.equal(2);
-        modalServiceOpenStub.restore();
+        expect(modalServiceOpenStub).toBeCalled();
+        expect(generateStudentExamsSpy).toBeCalled();
+        expect(studentExamsComponent.studentExams.length).toEqual(2);
     });
 
     it('should generate missing student exams', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
         studentExams = [studentExamOne!];
         studentExamsComponentFixture.detectChanges();
         studentExams = [studentExamOne!, studentExamTwo!];
 
-        expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(true);
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamStarted).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(studentExamsComponent.studentExams.length).to.equal(1);
-        expect(course).to.exist;
-        const generateStudentExamsSpy = sinon.spy(examManagementService, 'generateMissingStudentExams');
+        expect(studentExamsComponent.hasStudentsWithoutExam).toEqual(true);
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamStarted).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(studentExamsComponent.studentExams.length).toEqual(1);
+        expect(course).toBeTruthy();
+        const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateMissingStudentExams');
         const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
-        expect(generateMissingStudentExamsButton).to.exist;
-        expect(generateMissingStudentExamsButton.nativeElement.disabled).to.equal(false);
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(true);
+        expect(generateMissingStudentExamsButton).toBeTruthy();
+        expect(generateMissingStudentExamsButton.nativeElement.disabled).toEqual(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(true);
         generateMissingStudentExamsButton.nativeElement.click();
-        expect(generateStudentExamsSpy).to.have.been.calledOnce;
-        expect(studentExamsComponent.studentExams.length).to.equal(2);
+        expect(generateStudentExamsSpy).toBeCalled();
+        expect(studentExamsComponent.studentExams.length).toEqual(2);
     });
 
     it('should correctly catch HTTPError when generating missing student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
-        const generateMissingStudentExamsStub = sinon.stub(examManagementService, 'generateMissingStudentExams').returns(throwError(httpError));
+        jest.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(throwError(httpError));
         studentExams = [studentExamOne!];
         studentExamsComponentFixture.detectChanges();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
-        expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(true);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        expect(studentExamsComponent.hasStudentsWithoutExam).toEqual(true);
         const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
-        expect(generateMissingStudentExamsButton).to.exist;
-        expect(generateMissingStudentExamsButton.nativeElement.disabled).to.equal(false);
+        expect(generateMissingStudentExamsButton).toBeTruthy();
+        expect(generateMissingStudentExamsButton.nativeElement.disabled).toEqual(false);
         generateMissingStudentExamsButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-
-        generateMissingStudentExamsStub.restore();
+        expect(alertServiceSpy).toBeCalled();
     });
 
     it('should start the exercises of students', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
         studentExamsComponentFixture.detectChanges();
 
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamStarted).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamStarted).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
 
-        const startExercisesSpy = sinon.spy(examManagementService, 'startExercises');
+        const startExercisesSpy = jest.spyOn(examManagementService, 'startExercises');
         const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
-        expect(startExercisesButton).to.exist;
-        expect(startExercisesButton.nativeElement.disabled).to.equal(false);
+        expect(startExercisesButton).toBeTruthy();
+        expect(startExercisesButton.nativeElement.disabled).toEqual(false);
 
         startExercisesButton.nativeElement.click();
-        expect(startExercisesSpy).to.have.been.calledOnce;
+        expect(startExercisesSpy).toBeCalled();
     });
 
     it('should correctly catch HTTPError when starting the exercises of the students', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
-        const startExercisesStub = sinon.stub(examManagementService, 'startExercises').returns(throwError(httpError));
+        jest.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(httpError));
         studentExamsComponentFixture.detectChanges();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
         const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
-        expect(startExercisesButton).to.exist;
-        expect(startExercisesButton.nativeElement.disabled).to.equal(false);
+        expect(startExercisesButton).toBeTruthy();
+        expect(startExercisesButton.nativeElement.disabled).toEqual(false);
         startExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-
-        startExercisesStub.restore();
+        expect(alertServiceSpy).toBeCalled();
     });
 
     it('should unlock all repositories of the students', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });
@@ -476,53 +467,49 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
-        const unlockAllRepositories = sinon.spy(examManagementService, 'unlockAllRepositories');
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
+        const unlockAllRepositories = jest.spyOn(examManagementService, 'unlockAllRepositories');
         const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
-        expect(unlockAllRepositoriesButton).to.exist;
-        expect(unlockAllRepositoriesButton.nativeElement.disabled).to.equal(false);
+        expect(unlockAllRepositoriesButton).toBeTruthy();
+        expect(unlockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
         unlockAllRepositoriesButton.nativeElement.click();
-        expect(modalServiceOpenStub).to.have.been.called;
-        expect(unlockAllRepositories).to.have.been.calledOnce;
-
-        modalServiceOpenStub.restore();
+        expect(modalServiceOpenStub).toBeCalled();
+        expect(unlockAllRepositories).toBeCalled();
     });
 
     it('should correctly catch HTTPError when unlocking all repositories', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });
 
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const unlockRepoStub = sinon.stub(examManagementService, 'unlockAllRepositories').returns(throwError(httpError));
+        jest.spyOn(examManagementService, 'unlockAllRepositories').mockReturnValue(throwError(httpError));
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
         const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
-        expect(unlockAllRepositoriesButton).to.exist;
-        expect(unlockAllRepositoriesButton.nativeElement.disabled).to.equal(false);
-        unlockAllRepositoriesButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
+        expect(unlockAllRepositoriesButton).toBeTruthy();
+        expect(unlockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
 
-        modalServiceOpenStub.restore();
-        unlockRepoStub.restore();
+        unlockAllRepositoriesButton.nativeElement.click();
+        expect(alertServiceSpy).toBeCalled();
     });
 
     it('should lock all repositories of the students', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });
@@ -530,91 +517,86 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
-        const lockAllRepositories = sinon.spy(examManagementService, 'lockAllRepositories');
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
+        const lockAllRepositories = jest.spyOn(examManagementService, 'lockAllRepositories');
         const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
-        expect(lockAllRepositoriesButton).to.exist;
-        expect(lockAllRepositoriesButton.nativeElement.disabled).to.equal(false);
-        lockAllRepositoriesButton.nativeElement.click();
-        expect(modalServiceOpenStub).to.have.been.called;
-        expect(lockAllRepositories).to.have.been.calledOnce;
+        expect(lockAllRepositoriesButton).toBeTruthy();
+        expect(lockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
 
-        modalServiceOpenStub.restore();
+        lockAllRepositoriesButton.nativeElement.click();
+        expect(modalServiceOpenStub).toBeCalled();
+        expect(lockAllRepositories).toBeCalled();
     });
 
     it('should correctly catch HTTPError when locking all repositories', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });
 
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const lockRepoStub = sinon.stub(examManagementService, 'lockAllRepositories').returns(throwError(httpError));
+        jest.spyOn(examManagementService, 'lockAllRepositories').mockReturnValue(throwError(httpError));
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
         const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
-        expect(lockAllRepositoriesButton).to.exist;
-        expect(lockAllRepositoriesButton.nativeElement.disabled).to.equal(false);
+        expect(lockAllRepositoriesButton).toBeTruthy();
+        expect(lockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
         lockAllRepositoriesButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-
-        modalServiceOpenStub.restore();
-        lockRepoStub.restore();
+        expect(alertServiceSpy).toBeCalled();
     });
 
     it('should evaluate Quiz exercises', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamOver).to.equal(true);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
-        const evaluateQuizExercises = sinon.spy(examManagementService, 'evaluateQuizExercises');
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamOver).toEqual(true);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
+        const evaluateQuizExercises = jest.spyOn(examManagementService, 'evaluateQuizExercises');
         const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
 
-        expect(evaluateQuizExercisesButton).to.exist;
-        expect(evaluateQuizExercisesButton.nativeElement.disabled).to.equal(false);
+        expect(evaluateQuizExercisesButton).toBeTruthy();
+        expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
+
         evaluateQuizExercisesButton.nativeElement.click();
-        expect(evaluateQuizExercises).to.have.been.calledOnce;
+        expect(evaluateQuizExercises).toBeCalled();
     });
 
     it('should correctly catch HTTPError when evaluating quiz exercises', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
-        const alertService = TestBed.inject(JhiAlertService);
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
+        const alertService = TestBed.inject(AlertService);
 
         studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).to.equal(false);
-        expect(studentExamsComponent.isExamOver).to.equal(true);
-        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
-        expect(course).to.exist;
+        expect(studentExamsComponent.isLoading).toEqual(false);
+        expect(studentExamsComponent.isExamOver).toEqual(true);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const evaluateQuizExercisesStub = sinon.stub(examManagementService, 'evaluateQuizExercises').returns(throwError(httpError));
+        jest.spyOn(examManagementService, 'evaluateQuizExercises').mockReturnValue(throwError(httpError));
         studentExamsComponentFixture.detectChanges();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
         const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
-        expect(evaluateQuizExercisesButton).to.exist;
-        expect(evaluateQuizExercisesButton.nativeElement.disabled).to.equal(false);
+        expect(evaluateQuizExercisesButton).toBeTruthy();
+        expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
         evaluateQuizExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-
-        evaluateQuizExercisesStub.restore();
+        expect(alertServiceSpy).toBeCalled();
     });
 });

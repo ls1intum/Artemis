@@ -498,6 +498,7 @@ public class ModelFactory {
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
+        course.setAccuracyOfScores(1);
         return course;
     }
 
@@ -691,6 +692,16 @@ public class ModelFactory {
         negativeFeedback.setText("bad");
         negativeFeedback.setType(type);
         return negativeFeedback;
+    }
+
+    @NotNull
+    public static Feedback createManualTextFeedback(Double credits, String textBlockReference) {
+        Feedback feedback = new Feedback();
+        feedback.setCredits(credits);
+        feedback.setText("bad");
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setReference(textBlockReference);
+        return feedback;
     }
 
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
@@ -1144,6 +1155,7 @@ public class ModelFactory {
             case CHECKSTYLE -> "coding";
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
+            case GCC -> "Memory";
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();

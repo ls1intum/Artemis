@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
@@ -14,7 +14,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
@@ -45,6 +45,7 @@ export class CourseUpdateComponent implements OnInit {
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
+    accuracyOfScores = 1; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
 
@@ -52,7 +53,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
@@ -125,6 +126,9 @@ export class CourseUpdateComponent implements OnInit {
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
+                    validators: [Validators.min(1)],
+                }),
+                accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],
                 }),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
@@ -269,8 +273,8 @@ export class CourseUpdateComponent implements OnInit {
         const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage) {
-            const jhiAlert = this.jhiAlertService.error(errorMessage);
-            jhiAlert.msg = errorMessage;
+            const jhiAlert = this.alertService.error(errorMessage);
+            jhiAlert.message = errorMessage;
         }
 
         this.isSaving = false;
@@ -379,7 +383,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     getSemesters() {
         // 2018 is the first year we offer semesters for and go one year into the future
-        const years = moment().year() - 2018 + 1;
+        const years = dayjs().year() - 2018 + 1;
         // Add an empty semester as default value
         const semesters: string[] = [''];
         for (let i = 0; i <= years; i++) {

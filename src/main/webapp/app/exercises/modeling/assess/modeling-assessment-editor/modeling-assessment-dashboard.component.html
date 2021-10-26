@@ -14,7 +14,7 @@
     <div class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr [(ascending)]="reverse" [(predicate)]="predicate" [callback]="sortRows.bind(this)" jhiSort>
+                <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>
                     <th>
                         <a class="th-link">#</a>
                     </th>
@@ -24,6 +24,10 @@
                     </th>
                     <th *ngIf="!exercise.teamMode && exercise.isAtLeastInstructor" jhiSortBy="participation.student.name">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th *ngIf="!exercise.teamMode && exercise.isAtLeastInstructor" jhiSortBy="participation.student.login">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentId">Student login</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
@@ -68,6 +72,9 @@
                     <td>{{ i + 1 }}</td>
                     <td *ngIf="exercise.isAtLeastInstructor">
                         {{ submission.participation?.participantName || '' }}
+                    </td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation?.participantIdentifier || '' }}
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -10,7 +10,7 @@ import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -20,13 +20,17 @@ import { concatMap, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { onError } from 'app/shared/util/global.utils';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     styleUrls: ['./example-modeling-submission.component.scss'],
 })
-export class ExampleModelingSubmissionComponent implements OnInit {
+export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     @ViewChild(ModelingAssessmentComponent, { static: false })
@@ -47,12 +51,38 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     totalScore: number;
     invalidError?: string;
     exercise: ModelingExercise;
-    isAtLeastEditor = false;
-    isAtLeastInstructor = false;
+    course?: Course;
     readOnly: boolean;
     toComplete: boolean;
     assessmentExplanation: string;
     isExamMode: boolean;
+
+    legend = [
+        {
+            text: 'artemisApp.exampleSubmission.legend.positiveScore',
+            icon: 'check' as IconProp,
+            color: 'green',
+            size: '2em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.negativeScore',
+            icon: 'times' as IconProp,
+            color: 'red',
+            size: '2em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
+            icon: 'exclamation' as IconProp,
+            color: 'blue',
+            size: '1.66em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
+            icon: 'exclamation-triangle' as IconProp,
+            color: 'yellow',
+            size: '2em',
+        },
+    ];
 
     private exampleSubmissionId: number;
 
@@ -61,7 +91,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
@@ -93,9 +123,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
+            this.course = getCourseFromExercise(this.exercise);
             this.isExamMode = this.exercise.exerciseGroup != undefined;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         });
 
         if (this.isNewSubmission) {
@@ -166,14 +195,14 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 }
                 this.isNewSubmission = false;
 
-                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                onError(this.jhiAlertService, error);
+                onError(this.alertService, error);
             },
         );
     }
@@ -211,10 +240,10 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 }
                 this.isNewSubmission = false;
 
-                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
-                onError(this.jhiAlertService, error);
+                onError(this.alertService, error);
             },
         );
     }
@@ -251,7 +280,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('modelingAssessment.invalidAssessments');
+            this.alertService.error('modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.feedbacks) {
@@ -280,10 +309,10 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     if (this.result) {
                         this.feedbacks = this.result.feedbacks!;
                     }
-                    this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                    this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
                 },
                 () => {
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+                    this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
             );
     }
@@ -306,10 +335,10 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 if (this.result) {
                     this.feedbacks = this.result.feedbacks!;
                 }
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
             () => {
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
         );
     }
@@ -367,7 +396,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         window.scroll(0, 0);
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
 
@@ -377,27 +406,30 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            () => {
-                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
-            },
-            (error: HttpErrorResponse) => {
-                const errorType = error.headers.get('x-artemisapp-error');
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        command.assessExampleSubmission(exampleSubmission, this.exerciseId);
+    }
 
-                if (errorType === 'error.tooLow') {
-                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                } else if (errorType === 'error.tooHigh') {
-                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
-                } else {
-                    onError(this.jhiAlertService, error);
-                }
-            },
-        );
+    markAllFeedbackToCorrect() {
+        this.feedbacks.forEach((feedback) => {
+            feedback.correctionStatus = 'CORRECT';
+        });
+        this.assessmentEditor.resultFeedbacks = this.feedbacks;
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const validatedFeedback = this.feedbacks.find((feedback) => feedback.reference === correctionError.reference);
+            if (validatedFeedback != undefined) {
+                validatedFeedback.correctionStatus = correctionError.type;
+            }
+        });
+        this.assessmentEditor.resultFeedbacks = this.feedbacks;
     }
 
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
+            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

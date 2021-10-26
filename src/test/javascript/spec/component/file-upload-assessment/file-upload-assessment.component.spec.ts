@@ -3,11 +3,8 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
-import { cloneDeep } from 'lodash';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
-import { SinonStub, stub } from 'sinon';
+import { cloneDeep } from 'lodash-es';
+import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -18,7 +15,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
@@ -36,19 +32,14 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import * as sinon from 'sinon';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-chai.use(sinonChai);
-
-const expect = chai.expect;
 
 describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
@@ -57,11 +48,11 @@ describe('FileUploadAssessmentComponent', () => {
     let fileUploadAssessmentService: FileUploadAssessmentService;
     let accountService: AccountService;
     let complaintService: ComplaintService;
-    let getFileUploadSubmissionForExerciseWithoutAssessmentStub: SinonStub;
+    let getFileUploadSubmissionForExerciseWithoutAssessmentStub: jest.SpyInstance;
     let debugElement: DebugElement;
     let router: Router;
-    let navigateByUrlStub: SinonStub;
-    let alertService: JhiAlertService;
+    let navigateByUrlStub: jest.SpyInstance;
+    let alertService: AlertService;
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
@@ -81,7 +72,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]]), TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
@@ -117,14 +108,14 @@ describe('FileUploadAssessmentComponent', () => {
                 fileUploadAssessmentService = fixture.componentRef.injector.get(FileUploadAssessmentService);
                 accountService = TestBed.inject(AccountService);
                 complaintService = TestBed.inject(ComplaintService);
-                alertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 submissionService = TestBed.inject(SubmissionService);
-                getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(
+                getFileUploadSubmissionForExerciseWithoutAssessmentStub = jest.spyOn(
                     fileUploadSubmissionService,
                     'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment',
                 );
-                stub(accountService, 'isAtLeastInstructorInCourse').returns(false);
-                navigateByUrlStub = stub(router, 'navigateByUrl');
+                jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
+                navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
                 fixture.ngZone!.run(() => {
                     router.initialNavigation();
                 });
@@ -132,12 +123,12 @@ describe('FileUploadAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.clearAllMocks();
     });
 
     describe('ngOnInit', () => {
         it('AssessNextButton should be visible', fakeAsync(() => {
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError({ status: 404 }));
 
             comp.ngOnInit();
 
@@ -154,11 +145,11 @@ describe('FileUploadAssessmentComponent', () => {
 
             fixture.detectChanges();
 
-            expect(getFirstResult(comp.submission)).to.equal(comp.result);
+            expect(getFirstResult(comp.submission)).toEqual(comp.result);
         }));
 
         it('should get correctionRound', fakeAsync(() => {
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError({ status: 404 }));
 
             // set all attributes for comp
             comp.ngOnInit();
@@ -176,8 +167,8 @@ describe('FileUploadAssessmentComponent', () => {
 
             fixture.detectChanges();
 
-            expect(getFirstResult(comp.submission)).to.equal(comp.result);
-            expect(comp.correctionRound).to.be.equal(1);
+            expect(getFirstResult(comp.submission)).toEqual(comp.result);
+            expect(comp.correctionRound).toEqual(1);
         }));
     });
 
@@ -189,19 +180,19 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new Complaint();
             complaint.id = 0;
             complaint.complaintText = 'complaint';
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+            jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
-            const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
             fixture.detectChanges();
-            expect(comp.result).to.equal(result);
-            expect(comp.submission).to.equal(submission);
-            expect(comp.complaint).to.equal(complaint);
-            expect(comp.result!.feedbacks?.length === 0).to.equal(true);
-            expect(comp.busy).to.be.false;
-            expect(handleFeedbackStub).to.have.been.called;
+            expect(comp.result).toEqual(result);
+            expect(comp.submission).toEqual(submission);
+            expect(comp.complaint).toEqual(complaint);
+            expect(comp.result!.feedbacks?.length === 0).toEqual(true);
+            expect(comp.busy).toEqual(false);
+            expect(handleFeedbackStub).toBeCalled();
         });
 
         it('should load optimal submission', () => {
@@ -210,46 +201,46 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             const submission = createSubmission(exercise);
             const result = createResult(submission);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(submission));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
 
             fixture.detectChanges();
-            expect(comp.result).to.not.equal(result);
-            expect(comp.submission).to.equal(submission);
-            expect(comp.busy).to.be.false;
+            expect(comp.result).not.toEqual(result);
+            expect(comp.submission).toEqual(submission);
+            expect(comp.busy).toEqual(false);
         });
 
         it('should get 404 error when loading optimal submission', () => {
-            navigateByUrlStub.returns(Promise.resolve(true));
+            navigateByUrlStub.mockReturnValue(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError({ status: 404 }));
             fixture.detectChanges();
-            expect(navigateByUrlStub).to.have.been.called;
-            expect(comp.busy).to.be.true;
+            expect(navigateByUrlStub).toBeCalled();
+            expect(comp.busy).toEqual(true);
         });
 
         it('should get lock limit reached error when loading optimal submission', () => {
-            navigateByUrlStub.returns(Promise.resolve(true));
+            navigateByUrlStub.mockReturnValue(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
             fixture.detectChanges();
-            expect(navigateByUrlStub).to.have.been.called;
-            expect(comp.busy).to.be.true;
+            expect(navigateByUrlStub).toBeCalled();
+            expect(comp.busy).toEqual(true);
         });
 
         it('should fail to load optimal submission', () => {
-            navigateByUrlStub.returns(Promise.resolve(true));
+            navigateByUrlStub.mockReturnValue(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 403 }));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError({ status: 403 }));
             fixture.detectChanges();
-            expect(navigateByUrlStub).to.have.been.called;
-            expect(comp.busy).to.be.true;
+            expect(navigateByUrlStub).toBeCalled();
+            expect(comp.busy).toEqual(true);
         });
     });
 
@@ -267,40 +258,40 @@ describe('FileUploadAssessmentComponent', () => {
         feedback2.detailText = 'Unreferenced Feedback 2';
         const feedbacks = [feedback1, feedback2];
         result.feedbacks = cloneDeep(feedbacks);
-        stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
+        jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
         comp.submission = submission;
         setLatestSubmissionResult(comp.submission, result);
 
         fixture.detectChanges();
-        expect(comp.unreferencedFeedback.length).to.equal(2);
-        expect(comp.busy).to.be.false;
-        expect(comp.totalScore).to.equal(15);
+        expect(comp.unreferencedFeedback.length).toEqual(2);
+        expect(comp.busy).toEqual(false);
+        expect(comp.totalScore).toEqual(15);
 
         // delete feedback
         comp.deleteAssessment(comp.unreferencedFeedback[0]);
-        expect(comp.unreferencedFeedback.length).to.equal(1);
-        expect(comp.totalScore).to.equal(10);
+        expect(comp.unreferencedFeedback.length).toEqual(1);
+        expect(comp.totalScore).toEqual(10);
 
         comp.deleteAssessment(comp.unreferencedFeedback[0]);
-        expect(comp.unreferencedFeedback.length).to.equal(0);
-        expect(comp.totalScore).to.equal(0);
+        expect(comp.unreferencedFeedback.length).toEqual(0);
+        expect(comp.totalScore).toEqual(0);
     });
 
     it('should add a feedback', () => {
-        expect(comp.unreferencedFeedback.length).to.equal(0);
-        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+        expect(comp.unreferencedFeedback.length).toEqual(0);
+        const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         comp.addFeedback();
-        expect(comp.unreferencedFeedback.length).to.equal(1);
-        expect(comp.totalScore).to.equal(0);
-        expect(handleFeedbackStub).to.have.been.called;
+        expect(comp.unreferencedFeedback.length).toEqual(1);
+        expect(comp.totalScore).toEqual(0);
+        expect(handleFeedbackStub).toBeCalled();
     });
 
     it('should delete a feedback', () => {
-        expect(comp.unreferencedFeedback.length).to.equal(0);
+        expect(comp.unreferencedFeedback.length).toEqual(0);
         comp.addFeedback();
-        expect(comp.unreferencedFeedback.length).to.equal(1);
-        expect(comp.totalScore).to.equal(0);
+        expect(comp.unreferencedFeedback.length).toEqual(1);
+        expect(comp.totalScore).toEqual(0);
     });
 
     it('should update assessment correctly', () => {
@@ -312,7 +303,7 @@ describe('FileUploadAssessmentComponent', () => {
         feedback2.type = FeedbackType.AUTOMATIC;
         comp.unreferencedFeedback = [feedback, feedback2];
         comp.updateAssessment();
-        expect(comp.totalScore).to.equal(100);
+        expect(comp.totalScore).toEqual(100);
     });
 
     describe('onSaveAssessment', () => {
@@ -328,21 +319,21 @@ describe('FileUploadAssessmentComponent', () => {
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback];
             changedResult.hasFeedback = true;
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentService, 'saveAssessment').returns(of(changedResult));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+            jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(changedResult));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
             comp.onSaveAssessment();
-            expect(comp.result).to.equal(changedResult);
-            expect(comp.isLoading).to.be.false;
+            expect(comp.result).toEqual(changedResult);
+            expect(comp.isLoading).toEqual(false);
         });
 
         it('should not save the assessment if error', () => {
             // errorResponse
             const errorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-            const alertServiceErrorSpy = sinon.spy(alertService, 'error');
+            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
             const submission = createSubmission(exercise);
             // initial result
             const initResult = createResult(submission);
@@ -354,15 +345,15 @@ describe('FileUploadAssessmentComponent', () => {
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback];
             changedResult.hasFeedback = true;
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentService, 'saveAssessment').returns(throwError(errorResponse));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+            jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(throwError(errorResponse));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
             comp.onSaveAssessment();
-            sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'artemisApp.assessment.messages.saveFailed');
-            expect(comp.isLoading).to.be.false;
+            expect(alertServiceErrorSpy).toBeCalledWith('artemisApp.assessment.messages.saveFailed');
+            expect(comp.isLoading).toEqual(false);
         });
     });
 
@@ -380,17 +371,17 @@ describe('FileUploadAssessmentComponent', () => {
         // changed result
         const changedResult = cloneDeep(initResult);
         changedResult.feedbacks = [feedback, feedback];
-        stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-        stub(fileUploadAssessmentService, 'saveAssessment').returns(of(changedResult));
+        jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+        jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(changedResult));
         comp.submission = submission;
         setLatestSubmissionResult(comp.submission, initResult);
 
         fixture.detectChanges();
         comp.onSubmitAssessment();
 
-        expect(comp.isLoading).to.be.false;
-        expect(comp.result).to.equal(changedResult);
-        expect(comp.participation.results![0]).to.equal(changedResult);
+        expect(comp.isLoading).toEqual(false);
+        expect(comp.result).toEqual(changedResult);
+        expect(comp.participation.results![0]).toEqual(changedResult);
     });
 
     describe('onUpdateAssessmentAfterComplaint', () => {
@@ -408,21 +399,21 @@ describe('FileUploadAssessmentComponent', () => {
             // changed result
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback, feedback];
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').returns(of({ body: changedResult } as EntityResponseType));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+            jest.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(of({ body: changedResult } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
             const complaintResponse = new ComplaintResponse();
             comp.onUpdateAssessmentAfterComplaint(complaintResponse);
-            expect(comp.isLoading).to.be.false;
-            expect(comp.result).to.equal(changedResult);
-            expect(comp.participation.results![0]).to.equal(changedResult);
+            expect(comp.isLoading).toEqual(false);
+            expect(comp.result).toEqual(changedResult);
+            expect(comp.participation.results![0]).toEqual(changedResult);
         });
 
         it('should not update assessment after complaint if already locked', () => {
-            const alertServiceErrorSpy = sinon.spy(alertService, 'error');
+            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
             const errorResponse = new HttpErrorResponse({
                 error: {
                     errorKey: 'complaintLock',
@@ -444,20 +435,20 @@ describe('FileUploadAssessmentComponent', () => {
             // changed result
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback, feedback];
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').returns(throwError(errorResponse));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+            jest.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(throwError(errorResponse));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
             const complaintResponse = new ComplaintResponse();
             comp.onUpdateAssessmentAfterComplaint(complaintResponse);
-            expect(comp.isLoading).to.be.false;
-            sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'errormessage', []);
+            expect(comp.isLoading).toEqual(false);
+            expect(alertServiceErrorSpy).toBeCalledWith('errormessage', []);
         });
 
         it('should not update assessment after complaint', () => {
-            const alertServiceErrorSpy = sinon.spy(alertService, 'error');
+            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
             const errorResponse = new HttpErrorResponse({
                 error: {
                     errorKey: 'notFound',
@@ -479,34 +470,34 @@ describe('FileUploadAssessmentComponent', () => {
             // changed result
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback, feedback];
-            stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').returns(throwError(errorResponse));
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
+            jest.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(throwError(errorResponse));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
             fixture.detectChanges();
             const complaintResponse = new ComplaintResponse();
             comp.onUpdateAssessmentAfterComplaint(complaintResponse);
-            expect(comp.isLoading).to.be.false;
-            sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'artemisApp.assessment.messages.updateAfterComplaintFailed');
+            expect(comp.isLoading).toEqual(false);
+            expect(alertServiceErrorSpy).toBeCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
         });
     });
 
     describe('attachmentExtension', () => {
         it('should get file extension', () => {
-            expect(comp.attachmentExtension('this/is/a/filepath/file.png')).to.equal('png');
+            expect(comp.attachmentExtension('this/is/a/filepath/file.png')).toEqual('png');
         });
 
         it('should get N/A if filepath is empty', () => {
-            expect(comp.attachmentExtension('')).to.equal('N/A');
+            expect(comp.attachmentExtension('')).toEqual('N/A');
         });
     });
 
     describe('assessNext', () => {
         it('should assess next result if there is one', () => {
-            const navigateStub = stub(router, 'navigate');
+            const navigateStub = jest.spyOn(router, 'navigate').mockImplementation();
             const returnedSubmission = createSubmission(exercise);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(returnedSubmission));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(returnedSubmission));
             comp.courseId = 77;
             comp.exerciseId = comp.exercise!.id!;
             comp.exerciseGroupId = 79;
@@ -527,30 +518,30 @@ describe('FileUploadAssessmentComponent', () => {
                 returnedSubmission.id!.toString(),
                 'assessment',
             ];
-            expect(navigateStub).to.have.been.calledWith(expectedUrl);
-            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
+            expect(navigateStub).toBeCalledWith(expectedUrl);
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toBeCalled();
         });
 
         it('should not alert when no next result is found', () => {
-            const alertServiceSpy = sinon.spy(alertService, 'error');
+            const alertServiceSpy = jest.spyOn(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: 'Not Found', status: 404 });
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError(errorResponse));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(errorResponse));
 
             comp.assessNext();
 
-            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
-            expect(alertServiceSpy).to.not.have.been.called;
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toBeCalled();
+            expect(alertServiceSpy).not.toBeCalled();
         });
 
         it('should alert when assess next is forbidden', () => {
-            const alertServiceSpy = sinon.spy(alertService, 'error');
+            const alertServiceSpy = jest.spyOn(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError(errorResponse));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(errorResponse));
 
             comp.assessNext();
 
-            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
-            expect(alertServiceSpy).to.have.been.calledOnce;
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toBeCalled();
+            expect(alertServiceSpy).toBeCalled();
         });
     });
 
@@ -559,16 +550,18 @@ describe('FileUploadAssessmentComponent', () => {
             comp.isAtLeastInstructor = false;
             comp.complaint = { id: 3 };
             comp.isAssessor = true;
-            expect(comp.canOverride).to.be.equal(false);
+            expect(comp.canOverride).toEqual(false);
         });
+
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
             comp.isAtLeastInstructor = false;
-            comp.exercise!.assessmentDueDate = moment().add(-100, 'seconds');
-            expect(comp.canOverride).to.be.equal(false);
+            comp.exercise!.assessmentDueDate = dayjs().add(-100, 'seconds');
+            expect(comp.canOverride).toEqual(false);
         });
+
         it('should not be able to override if exercise is undefined', () => {
             comp.exercise = undefined;
-            expect(comp.canOverride).to.be.equal(false);
+            expect(comp.canOverride).toEqual(false);
         });
     });
 
@@ -577,34 +570,35 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submissionWithResultsAndComplaint;
             comp.result = resultWithComplaint;
             const complaint = resultWithComplaint.complaint;
-            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
-            expect(comp.complaint).to.be.undefined;
+            jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
+            expect(comp.complaint).toBeUndefined();
             comp.getComplaint();
-            expect(comp.complaint).to.be.equal(complaint);
+            expect(comp.complaint).toEqual(complaint);
         });
 
         it('should get empty Complaint', () => {
+            comp.submission = submissionWithResultsAndComplaint;
             comp.result = createResult(comp.submission);
-            stub(complaintService, 'findByResultId').returns(of({} as EntityResponseType));
-            expect(comp.complaint).to.be.undefined;
+            jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
+            expect(comp.complaint).toBeUndefined();
             comp.getComplaint();
-            expect(comp.complaint).to.be.undefined;
+            expect(comp.complaint).toBeUndefined();
         });
+
         it('should get error', () => {
             comp.submission = submissionWithResultsAndComplaint;
             comp.result = resultWithComplaint;
-            const alertServiceSpy = sinon.spy(alertService, 'error');
+            const alertServiceSpy = jest.spyOn(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: { message: 'Forbidden' }, status: 403 });
-            stub(complaintService, 'findByResultId').returns(throwError(errorResponse));
+            jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(errorResponse));
             comp.getComplaint();
-            expect(alertServiceSpy).to.have.been.called;
+            expect(alertServiceSpy).toBeCalled();
         });
     });
 
     it('should cancel the current assessment', () => {
-        const windowFake = sinon.fake.returns(true);
-        const cancelAssessmentStub = stub(fileUploadAssessmentService, 'cancelAssessment').returns(of());
-        sinon.replace(window, 'confirm', windowFake);
+        const cancelAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
+        const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
 
         comp.submission = {
             id: 2,
@@ -612,16 +606,16 @@ describe('FileUploadAssessmentComponent', () => {
         fixture.detectChanges();
 
         comp.onCancelAssessment();
-        expect(windowFake).to.have.been.calledOnce;
-        expect(cancelAssessmentStub).to.have.been.calledOnce;
-        expect(comp.isLoading).to.be.false;
+        expect(windowConfirmStub).toBeCalled();
+        expect(cancelAssessmentStub).toBeCalled();
+        expect(comp.isLoading).toEqual(false);
     });
 
     it('should navigate back', () => {
         comp.submission = createSubmission(exercise);
-        navigateByUrlStub.returns(Promise.resolve(true));
+        navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         comp.navigateBack();
-        expect(navigateByUrlStub).to.have.been.called;
+        expect(navigateByUrlStub).toBeCalled();
     });
 });
 
@@ -631,7 +625,7 @@ const createSubmission = (exercise: FileUploadExercise) => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         participation: { type: ParticipationType.STUDENT, exercise } as unknown as Participation,
     } as FileUploadSubmission;
 };
@@ -640,7 +634,7 @@ const createResult = (submission: FileUploadSubmission) => {
     const result = new Result();
     result.id = 2374;
     result.resultString = '1 of 12 points';
-    result.completionDate = moment('2019-07-09T11:51:23.251Z');
+    result.completionDate = dayjs('2019-07-09T11:51:23.251Z');
     result.successful = false;
     result.score = 1;
     result.rated = true;

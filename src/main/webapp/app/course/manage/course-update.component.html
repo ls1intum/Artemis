@@ -38,7 +38,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName">Short Name</label>
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [readOnly]="course.id" />
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
-                        <div class="alert alert-danger">
+                        <div *ngIf="(shortName.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
                             <div *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
                                 <div [jhiTranslate]="'artemisApp.course.form.shortname' + '.' + e.key"></div>
                             </div>
@@ -138,6 +138,12 @@
                         ngbTooltip="{{ 'artemisApp.course.maxPoints.warning' | artemisTranslate }}"
                     ></fa-icon>
                     <input type="number" class="form-control" name="maxPoints" id="field_maxPoints" min="1" formControlName="maxPoints" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores">
+                        Amount of decimal places used for calculating the scores
+                    </label>
+                    <input type="number" class="form-control" name="accuracyOfScores" id="field_accuracyOfScores" min="0" formControlName="accuracyOfScores" />
                 </div>
                 <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
                     <div *ngIf="!course.id" class="form-check">

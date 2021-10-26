@@ -1,13 +1,11 @@
 import { NgModule } from '@angular/core';
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
-import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
@@ -31,9 +29,11 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
-import { PlagiarismCasesModule } from "app/course/plagiarism-cases/plagiarism-cases.module";
-import { PlagiarismCasesReviewComponent } from "app/course/plagiarism-cases/plagiarism-cases-review.component";
-import { PlagiarismCasesComponent } from "app/course/plagiarism-cases/plagiarism-cases.component";
+import { PlagiarismCasesModule } from 'app/course/plagiarism-cases/plagiarism-cases.module';
+import { PlagiarismCasesReviewComponent } from 'app/course/plagiarism-cases/plagiarism-cases-review.component';
+import { PlagiarismCasesComponent } from 'app/course/plagiarism-cases/plagiarism-cases.component';
+import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { MetisModule } from 'app/shared/metis/metis.module';
 
 @NgModule({
     imports: [
@@ -44,7 +44,6 @@ import { PlagiarismCasesComponent } from "app/course/plagiarism-cases/plagiarism
         ArtemisSharedComponentModule,
         ChartsModule,
         ClipboardModule,
-        MomentModule,
         ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisSidePanelModule,
@@ -53,10 +52,10 @@ import { PlagiarismCasesComponent } from "app/course/plagiarism-cases/plagiarism
         OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
-        ProgrammingExerciseUtilsModule,
         ArtemisTeamModule,
         RatingModule,
         ArtemisLearningGoalsModule,
+        MetisModule,
         CourseExerciseDetailsModule, // Important: at the moment, we cannot lazy load this module, because otherwise the LTI integration won't work any more
         PlagiarismCasesModule,
     ],
@@ -67,6 +66,7 @@ import { PlagiarismCasesComponent } from "app/course/plagiarism-cases/plagiarism
         CourseCardComponent,
         CourseStatisticsComponent,
         CourseExercisesComponent,
+        CourseDiscussionComponent,
         CourseLecturesComponent,
         CourseLectureRowComponent,
         CourseExamsComponent,

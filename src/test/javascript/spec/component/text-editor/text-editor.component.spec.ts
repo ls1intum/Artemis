@@ -1,23 +1,18 @@
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
 import * as ace from 'brace';
-import * as chai from 'chai';
 import { DebugElement } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
-import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
@@ -29,10 +24,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
-import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
 import { Language } from 'app/entities/tutor-group.model';
@@ -41,9 +32,16 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { NgModel } from '@angular/forms';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('TextEditorComponent', () => {
     // needed to make sure ace is defined
@@ -55,7 +53,7 @@ describe('TextEditorComponent', () => {
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
 
-    let getTextForParticipationStub: SinonStub;
+    let getTextForParticipationStub: jest.SpyInstance;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
@@ -69,18 +67,9 @@ describe('TextEditorComponent', () => {
         result.id = 1;
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisTeamModule,
-                ArtemisTeamSubmissionSyncModule,
-                ArtemisHeaderExercisePageWithDetailsModule,
-                RouterTestingModule.withRoutes([textEditorRoute[0]]),
-                RatingModule,
-            ],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -89,17 +78,26 @@ describe('TextEditorComponent', () => {
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
                 MockPipe(HtmlForMarkdownPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(HeaderParticipationPageComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(TeamParticipateInfoBoxComponent),
+                MockComponent(TeamSubmissionSyncComponent),
+                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(RatingComponent),
+                MockComponent(AlertComponent),
+                MockDirective(NgModel),
             ],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextEditorComponent);
@@ -107,24 +105,24 @@ describe('TextEditorComponent', () => {
                 debugElement = fixture.debugElement;
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
-                getTextForParticipationStub = stub(textService, 'get');
+                getTextForParticipationStub = jest.spyOn(textService, 'get');
             });
     });
 
     afterEach(() => {
-        getTextForParticipationStub.restore();
+        jest.restoreAllMocks();
     });
 
     it('should not allow to submit after the deadline if there is no due date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
+        getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
-        expect(comp.isAlwaysActive).to.be.true;
+        expect(comp.isAllowedToSubmitAfterDeadline).toBeFalsy();
+        expect(comp.isAlwaysActive).toBeTruthy();
 
         tick();
         fixture.destroy();
@@ -132,33 +130,33 @@ describe('TextEditorComponent', () => {
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
-        participation.initializationDate = moment();
-        textExercise.dueDate = moment().add(1, 'days');
+        participation.initializationDate = dayjs();
+        textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
+        getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
+        expect(comp.isAllowedToSubmitAfterDeadline).toBeFalsy();
 
         tick();
         fixture.destroy();
         flush();
     }));
 
-    it('should allow to submit after the deadline if the initilization date is after the due date', fakeAsync(() => {
-        participation.initializationDate = moment().add(1, 'days');
-        textExercise.dueDate = moment();
+    it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
+        participation.initializationDate = dayjs().add(1, 'days');
+        textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
+        getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAllowedToSubmitAfterDeadline).to.be.true;
+        expect(comp.isAllowedToSubmitAfterDeadline).toBeTruthy();
 
         tick();
         fixture.destroy();
@@ -167,14 +165,14 @@ describe('TextEditorComponent', () => {
 
     it('should not be always active if there is a result and no due date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
+        getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.result = result;
         comp.textExercise = textExercise;
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAlwaysActive).to.be.false;
+        expect(comp.isAlwaysActive).toBeFalsy();
 
         tick();
         fixture.destroy();
@@ -183,15 +181,15 @@ describe('TextEditorComponent', () => {
 
     it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
+        getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
-        comp.textExercise.dueDate = moment();
-        participation.initializationDate = moment().add(1, 'days');
+        comp.textExercise.dueDate = dayjs();
+        participation.initializationDate = dayjs().add(1, 'days');
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAlwaysActive).to.be.true;
+        expect(comp.isAlwaysActive).toBeTruthy();
 
         tick();
         fixture.destroy();
@@ -200,21 +198,21 @@ describe('TextEditorComponent', () => {
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
-        textExercise.dueDate = moment().add(1, 'days');
-        participation.initializationDate = moment();
+        getTextForParticipationStub.mockReturnValue(participationSubject);
+        textExercise.dueDate = dayjs().add(1, 'days');
+        participation.initializationDate = dayjs();
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isActive).to.be.true;
+        expect(comp.isActive).toBeTruthy();
 
-        comp.textExercise.dueDate = moment().subtract(1, 'days');
+        comp.textExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isActive).to.be.false;
+        expect(comp.isActive).toBeFalsy();
 
         tick();
         fixture.destroy();
@@ -223,34 +221,34 @@ describe('TextEditorComponent', () => {
 
     it('should not submit while saving', () => {
         comp.isSaving = true;
-        sinon.spy(textSubmissionService, 'update');
+        jest.spyOn(textSubmissionService, 'update');
         comp.submit();
-        expect(textSubmissionService.update).to.not.have.been.called;
+        expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should not submit without submission', () => {
         // @ts-ignore
         delete comp.submission;
-        sinon.spy(textSubmissionService, 'update');
+        jest.spyOn(textSubmissionService, 'update');
         comp.submit();
-        expect(textSubmissionService.update).to.not.have.been.called;
+        expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should submit', () => {
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
-        sinon.spy(textSubmissionService, 'update');
+        jest.spyOn(textSubmissionService, 'update');
         comp.submit();
-        expect(textSubmissionService.update).to.have.been.calledOnce;
-        expect(comp.isSaving).to.be.false;
+        expect(textSubmissionService.update).toHaveBeenCalledTimes(1);
+        expect(comp.isSaving).toBeFalsy();
     });
 
     it('should return submission for answer', () => {
-        sinon.spy(textService, 'predictLanguage');
+        jest.spyOn(textService, 'predictLanguage');
         const submissionForAnswer = comp['submissionForAnswer']('abc');
-        expect(submissionForAnswer.text).to.be.equal('abc');
-        expect(submissionForAnswer.language).to.be.equal(Language.ENGLISH);
+        expect(submissionForAnswer.text).toEqual('abc');
+        expect(submissionForAnswer.language).toEqual(Language.ENGLISH);
     });
 
     it('should return unreferenced feedback', () => {
@@ -265,7 +263,7 @@ describe('TextEditorComponent', () => {
             ],
         } as Result;
         const unreferencedFeedback = comp.unreferencedFeedback;
-        expect(unreferencedFeedback?.length).to.be.equal(1);
+        expect(unreferencedFeedback?.length).toEqual(1);
     });
 
     it('should receive submission from team', () => {
@@ -283,18 +281,18 @@ describe('TextEditorComponent', () => {
             text: 'abc',
         } as TextSubmission;
         // @ts-ignore
-        sinon.spy(comp, 'updateParticipation');
+        jest.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
-        expect(comp['updateParticipation']).to.have.been.calledOnce;
-        expect(comp.answer).to.equal('abc');
+        expect(comp['updateParticipation']).toHaveBeenCalledTimes(1);
+        expect(comp.answer).toEqual('abc');
     });
 
     it('should destroy', () => {
         comp.submission = { text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
-        sinon.spy(textSubmissionService, 'update');
+        jest.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
-        expect(textSubmissionService.update).to.not.have.been.called;
+        expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 });

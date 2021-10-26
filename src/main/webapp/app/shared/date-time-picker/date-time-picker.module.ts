@@ -5,7 +5,7 @@ import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule, OwlNativeDateTimeModule } fro
 import { FormDateTimePickerComponent } from './date-time-picker.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
-// It would be nice to use the moment adapter for ng-pick-datetime: https://danielykpan.github.io/date-time-picker/
+// It would be nice to use the dayjs adapter for ng-pick-datetime: https://danielykpan.github.io/date-time-picker/
 // However atm there is a compiler issue in angular 7 that conflicts with the compilation of this module: https://github.com/angular/angular/issues/23609
 export const MY_NATIVE_FORMATS = {
     fullPickerInput: { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' },

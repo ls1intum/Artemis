@@ -4,8 +4,16 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
-import * as $ from 'jquery';
-import { JhiAlertService } from 'ng-jhipster';
+import $ from 'jquery';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+
+export interface DropInfo {
+    instruction: GradingInstruction;
+    tooltipMessage: string;
+    removeMessage: string;
+}
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -27,6 +35,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() elementCounts?: OtherModelElementCount[];
+    @Input() course?: Course;
 
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {
@@ -49,7 +58,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
+    constructor(private alertService: AlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
@@ -173,24 +182,27 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * Returns an array containing all feedback entries from the mapping.
      */
     private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
+        const newElementFeedback = new Map();
         for (const assessment of assessments) {
-            const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
-            if (existingFeedback) {
-                if (existingFeedback.credits !== assessment.score && existingFeedback.gradingInstruction) {
-                    existingFeedback.gradingInstruction = undefined;
+            let feedback = this.elementFeedback.get(assessment.modelElementId);
+            if (feedback) {
+                if (feedback.credits !== assessment.score && feedback.gradingInstruction) {
+                    feedback.gradingInstruction = undefined;
                 }
-                existingFeedback.credits = assessment.score;
-                existingFeedback.text = assessment.feedback;
-                if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
-                    existingFeedback.gradingInstruction = assessment.dropInfo.instruction;
+                feedback.credits = assessment.score;
+                feedback.text = assessment.feedback;
+                if (assessment.dropInfo && assessment.dropInfo.instruction?.id) {
+                    feedback.gradingInstruction = assessment.dropInfo.instruction;
+                }
+                if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
+                    feedback.gradingInstruction = undefined;
                 }
             } else {
-                this.elementFeedback.set(
-                    assessment.modelElementId,
-                    Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo),
-                );
+                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
             }
+            newElementFeedback.set(assessment.modelElementId, feedback);
         }
+        this.elementFeedback = newElementFeedback;
         return [...this.elementFeedback.values()];
     }
 
@@ -275,7 +287,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return;
         }
 
-        const elementCountMap = new Map<String, Number>();
+        const elementCountMap = new Map<string, Number>();
 
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 
@@ -307,14 +319,19 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks || !this.model) {
             return;
         }
-        this.model.assessments = feedbacks.map<Assessment>((feedback) => ({
-            modelElementId: feedback.referenceId!,
-            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-            score: feedback.credits!,
-            feedback: feedback.text || undefined,
-            label: this.calculateLabel(feedback),
-            labelColor: this.calculateLabelColor(feedback),
-        }));
+
+        this.model.assessments = feedbacks.map<Assessment>((feedback) => {
+            return {
+                modelElementId: feedback.referenceId!,
+                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+                score: feedback.credits!,
+                feedback: feedback.text || undefined,
+                label: this.calculateLabel(feedback),
+                labelColor: this.calculateLabelColor(feedback),
+                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                dropInfo: this.calculateDropInfo(feedback),
+            };
+        });
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
         }
@@ -339,6 +356,44 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     private calculateNote(count: Number | undefined) {
         if (count) {
             return this.artemisTranslatePipe.transform('modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
+        }
+
+        return undefined;
+    }
+
+    private calculateCorrectionStatusForFeedback(feedback: Feedback) {
+        let correctionStatusDescription = feedback.correctionStatus
+            ? this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus)
+            : feedback.correctionStatus;
+        if (feedback.correctionStatus && feedback.correctionStatus !== 'CORRECT') {
+            // Adding a missing warning icon to the translation strings of incorrect feedbacks.
+            correctionStatusDescription += ' ⚠️';
+        }
+        let correctionStatus: 'CORRECT' | 'INCORRECT' | 'NOT_VALIDATED';
+        switch (feedback.correctionStatus) {
+            case 'CORRECT':
+                correctionStatus = 'CORRECT';
+                break;
+            case undefined:
+                correctionStatus = 'NOT_VALIDATED';
+                break;
+            default:
+                correctionStatus = 'INCORRECT';
+        }
+
+        return {
+            description: correctionStatusDescription,
+            status: correctionStatus,
+        };
+    }
+
+    private calculateDropInfo(feedback: Feedback) {
+        if (feedback.gradingInstruction) {
+            const dropInfo = <DropInfo>{};
+            dropInfo.instruction = feedback.gradingInstruction;
+            dropInfo.removeMessage = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.removeAssessmentInstructionLink');
+            dropInfo.tooltipMessage = this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + feedback!.gradingInstruction!.instructionDescription;
+            return dropInfo;
         }
 
         return undefined;

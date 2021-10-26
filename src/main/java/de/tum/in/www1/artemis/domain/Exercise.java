@@ -74,6 +74,9 @@ public abstract class Exercise extends DomainObject {
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
 
+    @Column(name = "allow_complaints_for_automatic_assessments")
+    private boolean allowComplaintsForAutomaticAssessments;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
@@ -157,7 +160,7 @@ public abstract class Exercise extends DomainObject {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exercise")
+    @JsonIncludeProperties({ "id" })
     private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -299,6 +302,14 @@ public abstract class Exercise extends DomainObject {
 
     public void setAssessmentType(AssessmentType assessmentType) {
         this.assessmentType = assessmentType;
+    }
+
+    public boolean getAllowComplaintsForAutomaticAssessments() {
+        return allowComplaintsForAutomaticAssessments;
+    }
+
+    public void setAllowComplaintsForAutomaticAssessments(boolean allowComplaintsForAutomaticAssessments) {
+        this.allowComplaintsForAutomaticAssessments = allowComplaintsForAutomaticAssessments;
     }
 
     public String getProblemStatement() {

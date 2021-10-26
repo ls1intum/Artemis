@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 import { SinonStub, stub } from 'sinon';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockCacheableImageService } from '../../helpers/mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';

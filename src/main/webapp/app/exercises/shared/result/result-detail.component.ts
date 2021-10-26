@@ -6,7 +6,8 @@ import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { getExercise } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -15,12 +16,15 @@ import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import {
+    createCommitUrl,
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export enum FeedbackItemType {
     Issue,
@@ -47,7 +51,9 @@ export class FeedbackItem {
 export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
-    readonly round = round;
+    readonly ExerciseType = ExerciseType;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
@@ -55,6 +61,10 @@ export class ResultDetailComponent implements OnInit {
     @Input() showTestDetails = false;
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
+    /**
+     * Translate key for a HTML message that is displayed at the top of the result details, if defined.
+     */
+    @Input() messageKey?: string = undefined;
 
     isLoading = false;
     loadingFailed = false;
@@ -65,7 +75,23 @@ export class ResultDetailComponent implements OnInit {
     scoreChartPreset: ScoreChartPreset;
     showScoreChartTooltip = false;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService) {
+    commitHashURLTemplate?: string;
+    commitHash?: string;
+    commitUrl?: string;
+
+    get exercise(): Exercise | undefined {
+        if (this.result.participation) {
+            return getExercise(this.result.participation);
+        }
+    }
+
+    constructor(
+        public activeModal: NgbActiveModal,
+        private resultService: ResultService,
+        private buildLogService: BuildLogService,
+        translateService: TranslateService,
+        private profileService: ProfileService,
+    ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
@@ -109,7 +135,7 @@ export class ResultDetailComponent implements OnInit {
                         this.result.participation &&
                         (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
                     ) {
-                        return this.fetchAndSetBuildLogs(this.result.participation.id!);
+                        return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
                     }
                     return of(null);
                 }),
@@ -121,6 +147,14 @@ export class ResultDetailComponent implements OnInit {
             .subscribe(() => {
                 this.isLoading = false;
             });
+
+        this.commitHash = this.getCommitHash().substr(0, 11);
+
+        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.commitHashURLTemplate = info?.commitHashURLTemplate;
+            this.commitUrl = this.getCommitUrl();
+        });
     }
 
     /**
@@ -220,9 +254,10 @@ export class ResultDetailComponent implements OnInit {
     /**
      * Fetches build logs for a participation
      * @param participationId The active participation
+     * @param resultId The current result
      */
-    private fetchAndSetBuildLogs = (participationId: number) => {
-        return this.buildLogService.getBuildLogs(participationId).pipe(
+    private fetchAndSetBuildLogs = (participationId: number, resultId?: number) => {
+        return this.buildLogService.getBuildLogs(participationId, resultId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
                 this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
             }),
@@ -293,7 +328,7 @@ export class ResultDetailComponent implements OnInit {
      * @private
      */
     private updateChart(feedbackList: FeedbackItem[]) {
-        if (!this.result.participation?.exercise || feedbackList.length === 0) {
+        if (!this.exercise || feedbackList.length === 0) {
             this.showScoreChart = false;
             return;
         }
@@ -308,28 +343,28 @@ export class ResultDetailComponent implements OnInit {
         const codeIssuePenalties = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
         const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
 
-        const exercise = this.result.participation.exercise;
-
         // cap test points
-        const maxPoints = exercise.maxPoints!;
-        const maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
+        const maxPoints = this.exercise.maxPoints!;
+        const maxPointsWithBonus = maxPoints + (this.exercise.bonusPoints || 0);
 
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
         }
 
         // cap sca penalty points
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = exercise as ProgrammingExercise;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.exercise as ProgrammingExercise;
             if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
             }
         }
 
-        const appliedNegativePoints = codeIssueCredits + negativeCredits;
-        const receivedNegativePoints = codeIssuePenalties + negativeCredits;
-        const positivePoints = testCaseCredits + positiveCredits;
+        const course = getCourseFromExercise(this.exercise!);
+
+        const appliedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
+        const receivedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
+        const positivePoints = roundScoreSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
@@ -346,7 +381,17 @@ export class ResultDetailComponent implements OnInit {
         return (
             this.result.participation &&
             isProgrammingExerciseStudentParticipation(this.result.participation) &&
-            isResultPreliminary(this.result!, this.result.participation.exercise as ProgrammingExercise)
+            isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)
         );
+    }
+
+    getCommitHash(): string {
+        return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
+    }
+
+    getCommitUrl(): string | undefined {
+        const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
+        const programmingSubmission = this.result.submission as ProgrammingSubmission;
+        return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
     }
 }

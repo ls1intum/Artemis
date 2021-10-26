@@ -15,11 +15,13 @@ import { AuditsService } from './audits.service';
 export class AuditsComponent implements OnInit {
     audits?: Audit[];
     fromDate = '';
-    itemsPerPage = ITEMS_PER_PAGE;
-    page!: number;
     predicate!: string;
     ascending!: boolean;
     toDate = '';
+
+    // page information
+    page = 1;
+    itemsPerPage = ITEMS_PER_PAGE;
     totalItems = 0;
 
     private dateFormat = 'yyyy-MM-dd';

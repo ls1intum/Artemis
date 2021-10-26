@@ -3,8 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
@@ -16,8 +17,7 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
-import { cloneDeep } from 'lodash';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { cloneDeep } from 'lodash-es';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { empty, of } from 'rxjs';
@@ -25,6 +25,10 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,7 +45,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 0,
         upperBoundInclusive: false,
         upperBoundPercentage: 40,
-        gradeName: 'D',
+        gradeName: '4',
     };
     const gradeStep2: GradeStep = {
         isPassingGrade: true,
@@ -49,7 +53,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 40,
         upperBoundInclusive: false,
         upperBoundPercentage: 60,
-        gradeName: 'C',
+        gradeName: '3',
     };
     const gradeStep3: GradeStep = {
         isPassingGrade: true,
@@ -57,7 +61,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 60,
         upperBoundInclusive: false,
         upperBoundPercentage: 80,
-        gradeName: 'B',
+        gradeName: '2',
     };
     const gradeStep4: GradeStep = {
         isPassingGrade: true,
@@ -65,7 +69,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 80,
         upperBoundInclusive: true,
         upperBoundPercentage: 100,
-        gradeName: 'A',
+        gradeName: '1',
     };
     const gradingScale = new GradingScale();
     gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
@@ -75,12 +79,35 @@ describe('ExamScoresComponent', () => {
         title: 'ex1_1',
         maxPoints: 100,
         numberOfParticipants: 1,
+        exerciseType: 'TextExercise',
     } as ExerciseInfo;
     const exInfo2 = {
         exerciseId: 12,
         title: 'ex1_2',
         maxPoints: 100,
         numberOfParticipants: 1,
+        exerciseType: 'ModelingExercise',
+    } as ExerciseInfo;
+    const exInfo3 = {
+        exerciseId: 13,
+        title: 'ex1_3',
+        maxPoints: 100,
+        numberOfParticipants: 1,
+        exerciseType: 'ProgrammingExercise',
+    } as ExerciseInfo;
+    const exInfo4 = {
+        exerciseId: 14,
+        title: 'ex1_4',
+        maxPoints: 100,
+        numberOfParticipants: 1,
+        exerciseType: 'FileUploadExercise',
+    } as ExerciseInfo;
+    const exInfo5 = {
+        exerciseId: 15,
+        title: 'ex1_5',
+        maxPoints: 100,
+        numberOfParticipants: 1,
+        exerciseType: 'QuizExercise',
     } as ExerciseInfo;
 
     const exGroup1Id = 1;
@@ -89,7 +116,7 @@ describe('ExamScoresComponent', () => {
         title: 'group',
         maxPoints: 100,
         numberOfParticipants: 2,
-        containedExercises: [exInfo1, exInfo2],
+        containedExercises: [exInfo1, exInfo2, exInfo3, exInfo4, exInfo5],
     } as ExerciseGroup;
 
     const exResult1ForGroup1 = {
@@ -197,9 +224,9 @@ describe('ExamScoresComponent', () => {
                 MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
-                MockDirective(JhiTranslateDirective),
-                MockDirective(JhiSortByDirective),
-                MockDirective(JhiSortDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExamScoresAverageScoresGraphComponent),
             ],
@@ -208,7 +235,7 @@ describe('ExamScoresComponent', () => {
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {
@@ -227,6 +254,11 @@ describe('ExamScoresComponent', () => {
                     },
                 }),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
+                MockProvider(CourseManagementService, {
+                    find: () => {
+                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
             ],
         })
             .compileComponents()
@@ -252,7 +284,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should not log error on sentry when correct participant score calculation', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
         const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -260,14 +292,14 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should log error on sentry when missing participant score calculation', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         findExamScoresSpy.returns(of(new HttpResponse({ body: [] })));
         const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).to.have.been.calledThrice;
     });
     it('should log error on sentry when wrong points calculation', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = cloneDeep(examScoreStudent1);
         cs1.pointsAchieved = 99;
         const cs2 = cloneDeep(examScoreStudent2);
@@ -281,7 +313,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should log error on sentry when wrong score calculation', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = cloneDeep(examScoreStudent1);
         cs1.scoreAchieved = 99;
         const cs2 = cloneDeep(examScoreStudent2);
@@ -295,7 +327,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should make duplicated titles unique', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
 
         const newExerciseGroup = new ExerciseGroup();
         newExerciseGroup.title = 'group';
@@ -312,8 +344,8 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should have correct entries', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
-        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         fixture.detectChanges();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
@@ -337,7 +369,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).to.equal((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).to.equal(2);
+        expect(groupResult1!.exerciseResults.length).to.equal(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -358,8 +390,8 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should skip not submitted exams', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
-        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
 
@@ -384,7 +416,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).to.equal((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).to.equal(2);
+        expect(groupResult1!.exerciseResults.length).to.equal(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -406,7 +438,7 @@ describe('ExamScoresComponent', () => {
 
     it('should generate csv correctly', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
         comp.gradingScale = gradingScale;
         comp.gradingScale.gradeSteps = [gradeStep1];
@@ -462,7 +494,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should export as csv', () => {
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
 
         comp.exportToCsv();
@@ -471,7 +503,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should find grade step index correctly', () => {
-        spyOn(gradingSystemService, 'matchGradePercentage').and.callThrough();
+        jest.spyOn(gradingSystemService, 'matchGradePercentage');
         comp.gradingScale = gradingScale;
 
         expect(comp.findGradeStepIndex(20)).to.equal(0);
@@ -480,9 +512,9 @@ describe('ExamScoresComponent', () => {
     it('should set grading scale properties', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
-        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
-        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ body: gradingScale })));
-        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradingScale.gradeSteps[0]);
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: gradingScale })));
+        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
         expect(comp.gradingScaleExists).to.be.true;
@@ -497,7 +529,7 @@ describe('ExamScoresComponent', () => {
         comp.gradingScaleExists = true;
         comp.exerciseGroups = examScoreDTO.exerciseGroups;
         comp.studentResults = examScoreDTO.studentResults;
-        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradingScale.gradeSteps[0]);
+        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();
 

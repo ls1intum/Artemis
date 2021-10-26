@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -13,7 +13,8 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -118,7 +119,7 @@ export class QuizExamSummaryComponent implements OnInit {
                 return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
             });
             if (submittedAnswer && submittedAnswer.scoreInPoints !== undefined) {
-                return round(submittedAnswer.scoreInPoints, 2);
+                return roundScoreSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, getCourseFromExercise(this.exercise));
             }
         }
         return 0;
@@ -130,7 +131,7 @@ export class QuizExamSummaryComponent implements OnInit {
     get showMissingResultsNotice(): boolean {
         if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             return (
-                moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&
+                dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&
                 (!this.exercise.studentParticipations[0].results || this.exercise.studentParticipations[0].results.length <= 0)
             );
         }

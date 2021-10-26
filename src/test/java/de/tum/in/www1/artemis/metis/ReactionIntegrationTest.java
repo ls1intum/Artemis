@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +62,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).collect(Collectors.toList());
 
-        courseId = existingPostsWithAnswers.get(0).getCourse().getId();
+        courseId = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @AfterEach
@@ -88,6 +86,21 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
+        // student 1 is the author of the post and reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
+
+        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnPost, createdReaction);
+        assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+
+        // try again
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testCreateOwnAnswerPostReaction() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -96,6 +109,21 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
         assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
+        // student 1 is the author of the answer post and reacts on this answer post
+        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+
+        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
+        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+
+        // try again
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -161,6 +189,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "student2", roles = "USER")
     public void testValidateReactionConstraintViolation() throws Exception {
         Reaction invalidReaction = createInvalidReaction();
+
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Reaction>> constraintViolations = validator.validate(invalidReaction);
         assertThat(constraintViolations.size()).isEqualTo(1);
@@ -195,7 +224,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-
         assertThat(answerPostReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()).size());
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
@@ -205,11 +233,10 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testDeletePostReactionOfOthers_forbidden() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
-        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn, "student2");
+        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn);
 
         // student 1 wants to delete the reaction of student 2
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionSaveOnPost.getId(), HttpStatus.FORBIDDEN);
-
         assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
     }
 
@@ -235,7 +262,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 2 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-
         assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
@@ -245,7 +271,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private Reaction createReactionOnPost(Post postReactedOn) {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
-        reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         reaction.setPost(postReactedOn);
         return reaction;
     }
@@ -253,19 +278,17 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private Reaction createInvalidReaction() {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
-        reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         reaction.setPost(existingPostsWithAnswers.get(0));
         reaction.setAnswerPost(existingAnswerPosts.get(0));
         return reaction;
     }
 
-    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn, String username) {
+    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn) {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
-        reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = this.userRepository.getUserWithGroupsAndAuthorities(username);
+        User user = this.userRepository.getUserWithGroupsAndAuthorities("student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;
@@ -274,7 +297,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private Reaction createReactionOnAnswerPost(AnswerPost answerPostReactedOn) {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
-        reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         reaction.setAnswerPost(answerPostReactedOn);
         return reaction;
     }
@@ -286,7 +308,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // check if emojiId and creation data are set correctly on creation
         assertThat(createdReaction.getEmojiId()).isEqualTo(expectedReaction.getEmojiId());
-        assertThat(createdReaction.getCreationDate()).isEqualTo(expectedReaction.getCreationDate());
+        assertThat(createdReaction.getCreationDate()).isNotNull();
 
         // check if association to post or answer post is correct
         assertThat(createdReaction.getPost()).isEqualTo(expectedReaction.getPost());

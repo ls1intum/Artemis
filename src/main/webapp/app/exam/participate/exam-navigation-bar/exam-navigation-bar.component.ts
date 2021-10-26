@@ -2,8 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
@@ -22,7 +21,7 @@ import { ExamSession } from 'app/entities/exam-session.model';
 export class ExamNavigationBarComponent implements OnInit {
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
-    @Input() endDate: Moment;
+    @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
@@ -32,7 +31,7 @@ export class ExamNavigationBarComponent implements OnInit {
     static itemsVisiblePerSideDefault = 4;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
-    criticalTime = moment.duration(5, 'minutes');
+    criticalTime = dayjs.duration(5, 'minutes');
 
     icon: IconProp;
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;

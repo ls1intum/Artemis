@@ -1,0 +1,80 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+@import 'src/main/webapp/app/shared/metis/metis.component';
+
+$draggable-width: 15px;
+$discussion-section-card-min-width: 360px;
+
+.postings-container {
+    display: flex;
+    height: 100%;
+    margin-left: auto;
+
+    .back-instruction {
+        font-size: 12px;
+    }
+}
+
+.expanded-discussion {
+    width: calc(#{$draggable-width} + #{$discussion-section-card-min-width});
+
+    .draggable-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+
+    .card {
+        width: inherit;
+        min-width: $discussion-section-card-min-width;
+
+        .card-header {
+            display: inline-flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: $artemis-dark;
+            cursor: pointer;
+
+            .card-title {
+                display: flex;
+            }
+
+            .row > .col-auto:last-child {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+    }
+}
+
+.collapsed-discussion {
+    width: 38px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    background-color: $artemis-dark;
+    margin-left: auto;
+    cursor: pointer;
+
+    span {
+        writing-mode: vertical-rl;
+        margin: auto;
+    }
+
+    .expand-postings-icon {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        place-self: center;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .expanded-discussion {
+        width: 94vw;
+
+        .draggable-left {
+            display: none;
+        }
+    }
+}

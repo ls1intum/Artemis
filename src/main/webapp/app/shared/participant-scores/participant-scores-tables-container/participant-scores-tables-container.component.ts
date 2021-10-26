@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-participant-scores-tables-container',
     templateUrl: './participant-scores-tables-container.component.html',
 })
 export class ParticipantScoresTablesContainerComponent {
-    readonly round = round;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
     @Input()
     isLoading: boolean;
@@ -20,11 +21,13 @@ export class ParticipantScoresTablesContainerComponent {
     @Input()
     avgRatedScore = 0;
     @Input()
-    avgGrade?: String;
+    avgGrade?: string;
     @Input()
-    avgRatedGrade?: String;
+    avgRatedGrade?: string;
     @Input()
     isBonus = false;
+    @Input()
+    course?: Course;
     @Output()
     reload = new EventEmitter<void>();
 

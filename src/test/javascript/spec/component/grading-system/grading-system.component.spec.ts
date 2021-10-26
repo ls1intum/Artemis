@@ -4,7 +4,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -16,7 +16,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { FormsModule } from '@angular/forms';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -237,6 +237,30 @@ describe('Grading System Component', () => {
         });
     });
 
+    it('should set inclusivity correctly for grade step where lowerBound=upperBound', () => {
+        comp.lowerBoundInclusivity = false;
+
+        comp.gradingScale.gradeSteps.push({
+            gradeName: 'Super Excellent',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        });
+
+        comp.setInclusivity(comp.gradingScale.gradeSteps);
+
+        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
+            expect(gradeStep.upperBoundInclusive).to.be.equal(true);
+            if (gradeStep.lowerBoundPercentage === 0) {
+                expect(gradeStep.lowerBoundInclusive).to.be.equal(true);
+            } else {
+                expect(gradeStep.lowerBoundInclusive).to.be.equal(false);
+            }
+        });
+    });
+
     it('should determine lower bound inclusivity correctly', () => {
         comp.setBoundInclusivity();
 
@@ -419,7 +443,7 @@ describe('Grading System Component', () => {
     it('should validate invalid grading scale with invalid points', () => {
         comp.maxPoints = 100;
         comp.gradingScale.gradeSteps[0].lowerBoundPoints = 0;
-        comp.gradingScale.gradeSteps[0].upperBoundPoints = 120;
+        comp.gradingScale.gradeSteps[0].upperBoundPoints = -120;
         comp.gradingScale.gradeSteps[1].lowerBoundPoints = 40;
         comp.gradingScale.gradeSteps[1].upperBoundPoints = 80;
         comp.gradingScale.gradeSteps[2].lowerBoundPoints = 80;

@@ -15,20 +15,22 @@ import {
 } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
-import { round } from 'app/shared/util/utils';
+import { AlertService } from 'app/core/util/alert.service';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import * as SimpleStatistics from 'simple-statistics';
-import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
+import { ChartDataSets, ChartOptions, ChartType, defaults, helpers, LinearTickOptions } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { declareExerciseType } from 'app/entities/exercise.model';
+import { mean, median, standardDeviation, sum } from 'simple-statistics';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -62,13 +64,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public barChartOptions: ChartOptions = {};
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
-    public barChartLegend = true;
+    public barChartLegend = false;
     public barChartData: ChartDataSets[] = [];
 
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
     hasSecondCorrectionAndStarted: boolean;
+    hasNumericGrades: boolean;
+
+    course?: Course;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -77,13 +82,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examService: ExamManagementService,
         private sortService: SortService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
         private translateService: TranslateService,
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit() {
@@ -96,6 +102,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const gradingScaleObservable = this.gradingSystemService
                 .findGradingScaleForExam(params['courseId'], params['examId'])
                 .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+
+            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe(
                 ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
@@ -130,6 +138,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScale = gradingScaleResponse.body!;
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
                         this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+                        this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
                     if (this.studentResults && this.exerciseGroups) {
@@ -142,7 +151,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                (res: HttpErrorResponse) => onError(this.alertService, res),
             );
         });
 
@@ -235,7 +244,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     const chartInstance = this.chart,
                         ctx = chartInstance.ctx;
 
-                    ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+                    ctx.font = helpers.fontString(defaults.global.defaultFontSize, defaults.global.defaultFontStyle, defaults.global.defaultFontFamily);
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
 
@@ -244,7 +253,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
                             ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
+                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered)}%)`, bar._model.x, bar._model.y - 5);
                         });
                     });
                 },
@@ -291,8 +300,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
-                const exResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants);
-                groupResult.exerciseResults.push(exResult);
+                const type = declareExerciseType(exerciseInfo);
+                const exerciseResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants, type!);
+                groupResult.exerciseResults.push(exerciseResult);
             });
             groupIdToGroupResults.set(exerciseGroup.id, groupResult);
         }
@@ -345,7 +355,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
+        this.noOfExamsFiltered = sum(this.histogramData);
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
@@ -369,6 +379,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const studentPointsSubmittedInFirstCorrectionRound: number[] = [];
         const studentPointsTotalInFirstCorrectionRound: number[] = [];
 
+        const studentGradesPassed: number[] = [];
+        const studentGradesSubmitted: number[] = [];
+        const studentGradesTotal: number[] = [];
+
+        const studentGradesPassedInFirstCorrectionRound: number[] = [];
+        const studentGradesSubmittedInFirstCorrectionRound: number[] = [];
+        const studentGradesTotalInFirstCorrectionRound: number[] = [];
+
         // Collect student points independent from the filter settings
         for (const studentResult of this.studentResults) {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
@@ -381,13 +399,46 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
                 }
             }
+
+            if (this.gradingScaleExists && this.hasNumericGrades) {
+                const grade = Number(studentResult.overallGrade);
+                const gradeInFirstCorrection = Number(studentResult.overallGradeInFirstCorrection);
+                studentGradesTotal.push(grade);
+                studentGradesTotalInFirstCorrectionRound.push(gradeInFirstCorrection);
+                if (studentResult.submitted) {
+                    studentGradesSubmitted.push(grade);
+                    studentGradesSubmittedInFirstCorrectionRound.push(gradeInFirstCorrection);
+                    if (studentResult.hasPassed) {
+                        studentGradesPassed.push(grade);
+                        studentGradesPassedInFirstCorrectionRound.push(gradeInFirstCorrection);
+                    }
+                }
+            }
         }
         // Calculate statistics for passed exams
-        let examStatistics = this.calculatePassedExamStatistics(new AggregatedExamResult(), studentPointsPassed, studentPointsPassedInFirstCorrectionRound);
+        let examStatistics = this.calculatePassedExamStatistics(
+            new AggregatedExamResult(),
+            studentPointsPassed,
+            studentPointsPassedInFirstCorrectionRound,
+            studentGradesPassed,
+            studentGradesPassedInFirstCorrectionRound,
+        );
         // Calculate statistics for submitted exams
-        examStatistics = this.calculateSubmittedExamStatistics(examStatistics, studentPointsSubmitted, studentPointsSubmittedInFirstCorrectionRound);
+        examStatistics = this.calculateSubmittedExamStatistics(
+            examStatistics,
+            studentPointsSubmitted,
+            studentPointsSubmittedInFirstCorrectionRound,
+            studentGradesSubmitted,
+            studentGradesSubmittedInFirstCorrectionRound,
+        );
         // Calculate total statistics
-        this.aggregatedExamResults = this.calculateTotalExamStatistics(examStatistics, studentPointsTotal, studentPointsTotalInFirstCorrectionRound);
+        this.aggregatedExamResults = this.calculateTotalExamStatistics(
+            examStatistics,
+            studentPointsTotal,
+            studentPointsTotalInFirstCorrectionRound,
+            studentGradesTotal,
+            studentGradesTotalInFirstCorrectionRound,
+        );
     }
 
     /**
@@ -397,23 +448,26 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         examStatistics: AggregatedExamResult,
         studentPointsPassed: number[],
         studentPointsPassedInFirstCorrectionRound: number[],
+        studentGradesPassed: number[],
+        studentGradesPassedInFirstCorrectionRound: number[],
     ): AggregatedExamResult {
         if (studentPointsPassed.length && this.gradingScaleExists && !this.isBonus) {
-            examStatistics.meanPointsPassed = SimpleStatistics.mean(studentPointsPassed);
-            examStatistics.medianPassed = SimpleStatistics.median(studentPointsPassed);
-            examStatistics.standardDeviationPassed = SimpleStatistics.standardDeviation(studentPointsPassed);
+            examStatistics.meanPointsPassed = mean(studentPointsPassed);
+            examStatistics.medianPassed = median(studentPointsPassed);
+            examStatistics.standardDeviationPassed = standardDeviation(studentPointsPassed);
             examStatistics.noOfExamsFilteredForPassed = studentPointsPassed.length;
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelativePassed = (examStatistics.meanPointsPassed / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelativePassed = (examStatistics.medianPassed / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
                 examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
+                examStatistics.standardGradeDeviationPassed = this.hasNumericGrades ? standardDeviation(studentGradesPassed) : undefined;
             }
             // Calculate statistics for the first assessments of passed exams if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
-                examStatistics.meanPointsPassedInFirstCorrection = SimpleStatistics.mean(studentPointsPassedInFirstCorrectionRound);
-                examStatistics.medianPassedInFirstCorrection = SimpleStatistics.median(studentPointsPassedInFirstCorrectionRound);
-                examStatistics.standardDeviationPassedInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.meanPointsPassedInFirstCorrection = mean(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.medianPassedInFirstCorrection = median(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.standardDeviationPassedInFirstCorrection = standardDeviation(studentPointsPassedInFirstCorrectionRound);
                 if (this.examScoreDTO.maxPoints) {
                     examStatistics.meanPointsRelativePassedInFirstCorrection = (examStatistics.meanPointsPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     examStatistics.medianRelativePassedInFirstCorrection = (examStatistics.medianPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
@@ -425,6 +479,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScale!.gradeSteps,
                         examStatistics.medianRelativePassedInFirstCorrection,
                     )!.gradeName;
+                    examStatistics.standardGradeDeviationPassedInFirstCorrection = this.hasNumericGrades ? standardDeviation(studentGradesPassedInFirstCorrectionRound) : undefined;
                 }
             }
         }
@@ -438,11 +493,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         examStatistics: AggregatedExamResult,
         studentPointsSubmitted: number[],
         studentPointsSubmittedInFirstCorrectionRound: number[],
+        studentGradesSubmitted: number[],
+        studentGradesSubmittedInFirstCorrectionRound: number[],
     ): AggregatedExamResult {
         if (studentPointsSubmitted.length) {
-            examStatistics.meanPoints = SimpleStatistics.mean(studentPointsSubmitted);
-            examStatistics.median = SimpleStatistics.median(studentPointsSubmitted);
-            examStatistics.standardDeviation = SimpleStatistics.standardDeviation(studentPointsSubmitted);
+            examStatistics.meanPoints = mean(studentPointsSubmitted);
+            examStatistics.median = median(studentPointsSubmitted);
+            examStatistics.standardDeviation = standardDeviation(studentPointsSubmitted);
             examStatistics.noOfExamsFiltered = studentPointsSubmitted.length;
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelative = (examStatistics.meanPoints / this.examScoreDTO.maxPoints) * 100;
@@ -450,13 +507,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (this.gradingScaleExists) {
                     examStatistics.meanGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelative)!.gradeName;
                     examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
+                    examStatistics.standardGradeDeviation = this.hasNumericGrades ? standardDeviation(studentGradesSubmitted) : undefined;
                 }
             }
             // Calculate statistics for the first assessments of submitted exams if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
-                examStatistics.meanPointsInFirstCorrection = SimpleStatistics.mean(studentPointsSubmittedInFirstCorrectionRound);
-                examStatistics.medianInFirstCorrection = SimpleStatistics.median(studentPointsSubmittedInFirstCorrectionRound);
-                examStatistics.standardDeviationInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.meanPointsInFirstCorrection = mean(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.medianInFirstCorrection = median(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.standardDeviationInFirstCorrection = standardDeviation(studentPointsSubmittedInFirstCorrectionRound);
                 if (this.examScoreDTO.maxPoints) {
                     examStatistics.meanPointsRelativeInFirstCorrection = (examStatistics.meanPointsInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     examStatistics.medianRelativeInFirstCorrection = (examStatistics.medianInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
@@ -469,6 +527,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             this.gradingScale!.gradeSteps,
                             examStatistics.medianRelativeInFirstCorrection,
                         )!.gradeName;
+                        examStatistics.standardGradeDeviationInFirstCorrection = this.hasNumericGrades
+                            ? standardDeviation(studentGradesSubmittedInFirstCorrectionRound)
+                            : undefined;
                     }
                 }
             }
@@ -483,11 +544,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         examStatistics: AggregatedExamResult,
         studentPointsTotal: number[],
         studentPointsTotalInFirstCorrectionRound: number[],
+        studentGradesTotal: number[],
+        studentGradesTotalInFirstCorrectionRound: number[],
     ): AggregatedExamResult {
         if (studentPointsTotal.length) {
-            examStatistics.meanPointsTotal = SimpleStatistics.mean(studentPointsTotal);
-            examStatistics.medianTotal = SimpleStatistics.median(studentPointsTotal);
-            examStatistics.standardDeviationTotal = SimpleStatistics.standardDeviation(studentPointsTotal);
+            examStatistics.meanPointsTotal = mean(studentPointsTotal);
+            examStatistics.medianTotal = median(studentPointsTotal);
+            examStatistics.standardDeviationTotal = standardDeviation(studentPointsTotal);
             examStatistics.noOfRegisteredUsers = this.studentResults.length;
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelativeTotal = (examStatistics.meanPointsTotal / this.examScoreDTO.maxPoints) * 100;
@@ -498,13 +561,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         examStatistics.meanPointsRelativeTotal,
                     )!.gradeName;
                     examStatistics.medianGradeTotal = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
+                    examStatistics.standardGradeDeviationTotal = this.hasNumericGrades ? standardDeviation(studentGradesTotal) : undefined;
                 }
             }
             // Calculate total statistics if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
-                examStatistics.meanPointsTotalInFirstCorrection = SimpleStatistics.mean(studentPointsTotalInFirstCorrectionRound);
-                examStatistics.medianTotalInFirstCorrection = SimpleStatistics.median(studentPointsTotalInFirstCorrectionRound);
-                examStatistics.standardDeviationTotalInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.meanPointsTotalInFirstCorrection = mean(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.medianTotalInFirstCorrection = median(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.standardDeviationTotalInFirstCorrection = standardDeviation(studentPointsTotalInFirstCorrectionRound);
                 if (this.examScoreDTO.maxPoints) {
                     examStatistics.meanPointsRelativeTotalInFirstCorrection = (examStatistics.meanPointsTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     examStatistics.medianRelativeTotalInFirstCorrection = (examStatistics.medianTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
@@ -517,6 +581,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             this.gradingScale!.gradeSteps,
                             examStatistics.medianRelativeTotalInFirstCorrection,
                         )!.gradeName;
+                        examStatistics.standardGradeDeviationTotalInFirstCorrection = this.hasNumericGrades
+                            ? standardDeviation(studentGradesTotalInFirstCorrectionRound)
+                            : undefined;
                     }
                 }
             }
@@ -597,12 +664,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Wrapper for round utility function so it can be used in the template.
-     * @param value
-     * @param exp
+     * Localizes a number, e.g. switching the decimal separator
      */
-    round(value: any, exp: number) {
-        return round(value, exp);
+    localize(numberToLocalize: number): string {
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
+    }
+
+    /**
+     * Localizes a percent number, e.g. switching the decimal separator
+     */
+    localizePercent(numberToLocalize: number): string {
+        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course!.accuracyOfScores!);
     }
 
     private convertToCSVRow(studentResult: StudentResult) {
@@ -618,9 +690,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localeConversionService.toLocaleString(round(exerciseResult.achievedPoints, 1));
+                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
                 csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localeConversionService.toLocaleString(round(exerciseResult.achievedScore, 2), 2);
+                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
             } else {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] = '';
@@ -628,8 +700,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
-        csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
+        csvRow.overAllPoints =
+            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
+        csvRow.overAllScore =
+            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow['Overall Bonus Points'] = studentResult.overallGrade;
@@ -644,12 +718,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return csvRow;
     }
 
-    toLocaleString(points: number) {
-        return this.localeConversionService.toLocaleString(points);
-    }
-
-    roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
-        return this.localeConversionService.toLocaleString(round(points, exp), fractions);
+    roundAndPerformLocalConversion(points: number | undefined) {
+        return this.localize(roundScoreSpecifiedByCourseSettings(points, this.course));
     }
 
     /**
@@ -666,8 +736,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults) {
-            const overAllPoints = round(studentResult.overallPointsAchieved, 1);
-            const overallScore = round(studentResult.overallScoreAchieved, 1);
+            const overAllPoints = roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
+            const overallScore = roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
 
             const regularCalculation = {
                 scoreAchieved: overallScore,
@@ -681,8 +751,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                examScoreDTO.scoreAchieved = round(examScoreDTO.scoreAchieved, 1);
-                examScoreDTO.pointsAchieved = round(examScoreDTO.pointsAchieved, 1);
+                examScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
+                examScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -701,6 +771,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     logErrorOnSentry(errorMessage: string) {
-        Sentry.captureException(new Error(errorMessage));
+        captureException(new Error(errorMessage));
     }
 }

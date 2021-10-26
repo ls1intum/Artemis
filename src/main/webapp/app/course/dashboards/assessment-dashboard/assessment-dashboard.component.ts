@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { partition } from 'lodash';
-import { ActivatedRoute, Router } from '@angular/router';
+import { partition } from 'lodash-es';
+import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
@@ -19,6 +19,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 
 @Component({
     selector: 'jhi-courses',
@@ -41,17 +42,14 @@ export class AssessmentDashboardComponent implements OnInit {
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfCorrectionRounds = 1;
     numberOfTutorAssessments = 0;
-    numberOfComplaints = 0;
-    numberOfOpenComplaints = 0;
-    numberOfTutorComplaints = 0;
-    numberOfMoreFeedbackRequests = 0;
-    numberOfOpenMoreFeedbackRequests = 0;
-    numberOfTutorMoreFeedbackRequests = 0;
-    numberOfAssessmentLocks = 0;
-    totalNumberOfAssessmentLocks = 0;
+
+    complaints = new AssessmentDashboardInformationEntry(0, 0);
+    moreFeedbackRequests = new AssessmentDashboardInformationEntry(0, 0);
+    assessmentLocks = new AssessmentDashboardInformationEntry(0, 0);
+    ratings = new AssessmentDashboardInformationEntry(0, 0);
+
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
-    isAtLeastInstructor = false;
 
     stats = new StatsForDashboard();
 
@@ -72,10 +70,9 @@ export class AssessmentDashboardComponent implements OnInit {
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
-        private router: Router,
         private guidedTourService: GuidedTourService,
         private sortService: SortService,
     ) {}
@@ -106,8 +103,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course!);
-                this.courseService.checkAndSetCourseRights(this.course);
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+                this.accountService.setAccessRightsForCourse(this.course);
 
                 // No exercises exist yet
                 if (!this.exam.exerciseGroups) {
@@ -142,19 +138,24 @@ export class AssessmentDashboardComponent implements OnInit {
                     }
                     this.numberOfCorrectionRounds = this.numberOfAssessmentsOfCorrectionRounds.length;
 
-                    this.numberOfComplaints = this.stats.numberOfComplaints;
-                    this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
-                    this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
-                    this.totalNumberOfAssessmentLocks = this.stats.totalNumberOfAssessmentLocks;
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor.id);
                     this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                        this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
+                        this.complaints = new AssessmentDashboardInformationEntry(
+                            this.stats.numberOfComplaints,
+                            tutorLeaderboardEntry.numberOfTutorComplaints,
+                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        );
                     } else {
                         this.numberOfTutorAssessments = 0;
-                        this.numberOfTutorComplaints = 0;
+                        this.complaints = new AssessmentDashboardInformationEntry(
+                            this.stats.numberOfComplaints,
+                            0,
+                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        );
                     }
+                    this.assessmentLocks = new AssessmentDashboardInformationEntry(this.stats.totalNumberOfAssessmentLocks, this.stats.numberOfAssessmentLocks);
 
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
@@ -166,9 +167,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
                 (res: HttpResponse<Course>) => {
                     this.course = Course.from(res.body!);
-                    this.courseService.checkAndSetCourseRights(this.course);
                     this.extractExercises(this.course.exercises);
-                    this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
                 },
                 (response: string) => this.onError(response),
             );
@@ -179,22 +178,37 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
-                    this.numberOfComplaints = this.stats.numberOfComplaints;
-                    this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
-                    this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
-                    this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
-                    this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
                     const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor.id);
                     this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                        this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
-                        this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
+
+                        this.complaints = new AssessmentDashboardInformationEntry(
+                            this.stats.numberOfComplaints,
+                            tutorLeaderboardEntry.numberOfTutorComplaints,
+                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        );
+                        this.moreFeedbackRequests = new AssessmentDashboardInformationEntry(
+                            this.stats.numberOfMoreFeedbackRequests,
+                            tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests,
+                            this.stats.numberOfMoreFeedbackRequests - this.stats.numberOfOpenMoreFeedbackRequests,
+                        );
+                        this.ratings = new AssessmentDashboardInformationEntry(this.stats.numberOfRatings, tutorLeaderboardEntry.numberOfTutorRatings);
                     } else {
                         this.numberOfTutorAssessments = 0;
-                        this.numberOfTutorComplaints = 0;
-                        this.numberOfTutorMoreFeedbackRequests = 0;
+                        this.complaints = new AssessmentDashboardInformationEntry(
+                            this.stats.numberOfComplaints,
+                            0,
+                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        );
+                        this.moreFeedbackRequests = new AssessmentDashboardInformationEntry(
+                            this.stats.numberOfMoreFeedbackRequests,
+                            0,
+                            this.stats.numberOfMoreFeedbackRequests - this.stats.numberOfOpenMoreFeedbackRequests,
+                        );
+                        this.ratings = new AssessmentDashboardInformationEntry(this.stats.numberOfRatings, 0);
                     }
+                    this.assessmentLocks = new AssessmentDashboardInformationEntry(this.stats.totalNumberOfAssessmentLocks, this.stats.numberOfAssessmentLocks);
 
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
@@ -219,10 +233,11 @@ export class AssessmentDashboardComponent implements OnInit {
                 exercises,
                 (exercise) =>
                     // finds if all assessments for all correctionRounds are finished
-                    exercise.numberOfAssessmentsOfCorrectionRounds
+                    ((exercise.numberOfAssessmentsOfCorrectionRounds
                         ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
                         .reduce((acc, current) => acc && current) &&
-                    exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                        exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime) ||
+                        exercise.allowComplaintsForAutomaticAssessments) &&
                     exercise.numberOfOpenComplaints === 0 &&
                     exercise.numberOfOpenMoreFeedbackRequests === 0,
             );
@@ -255,11 +270,11 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Pass on an error to the browser console and the jhiAlertService.
+     * Pass on an error to the browser console and the alertService.
      * @param error
      */
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 
     sortRows() {

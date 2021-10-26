@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,8 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -59,10 +62,12 @@ public class FileUploadExerciseResource {
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
-            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository) {
+            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, InstanceMessageSendService instanceMessageSendService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -73,6 +78,7 @@ public class FileUploadExerciseResource {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -107,9 +113,14 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        // Only notify tutors when the exercise is created for a course
+        // Only notify students and tutors when the exercise is created for a course
         if (fileUploadExercise.isCourseExercise()) {
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
+            if (fileUploadExercise.getReleaseDate() == null || !fileUploadExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                groupNotificationService.notifyAllGroupsAboutReleasedExercise(fileUploadExercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
+            }
         }
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -185,9 +196,8 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
-        // Only notify students about changes if a regular exercise was updated
-        if (notificationText != null && fileUploadExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
+        if ((notificationText != null && fileUploadExercise.isCourseExercise()) || fileUploadExercise.isExamExercise()) {
+            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }

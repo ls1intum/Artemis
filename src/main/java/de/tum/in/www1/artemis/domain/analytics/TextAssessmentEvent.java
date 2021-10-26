@@ -68,6 +68,10 @@ public class TextAssessmentEvent extends DomainObject {
         return timestamp;
     }
 
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public TextAssessmentEventType getEventType() {
         return eventType;
     }

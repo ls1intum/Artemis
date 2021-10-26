@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -18,7 +18,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     exerciseGroup: ExerciseGroup;
     isSaving = false;
 
-    constructor(private route: ActivatedRoute, private router: Router, private exerciseGroupService: ExerciseGroupService, private jhiAlertService: JhiAlertService) {}
+    constructor(private route: ActivatedRoute, private router: Router, private exerciseGroupService: ExerciseGroupService, private alertService: AlertService) {}
 
     /**
      * Initialize the courseId and exerciseGroup
@@ -63,7 +63,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isSaving = false;
     }
 }

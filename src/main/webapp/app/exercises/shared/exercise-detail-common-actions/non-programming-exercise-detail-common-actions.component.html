@@ -51,6 +51,26 @@
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
         </a>
 
+        <!-- Tutor Effort Statistics -->
+        <a
+            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT"
+            [routerLink]="baseResource + 'tutor-effort-statistics'"
+            class="btn btn-success btn-sm me-1 mb-2"
+        >
+            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
+        </a>
+
+        <!-- Cluster Statistics  -->
+        <a
+            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
+            [routerLink]="baseResource + 'text-cluster-statistics'"
+            class="btn btn-success btn-sm me-1 mb-2"
+        >
+            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.clusterStatistics.title">Cluster Statistics</span>
+        </a>
+
         <!-- Delete exercise -->
         <button
             *ngIf="exercise.isAtLeastInstructor"

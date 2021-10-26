@@ -1,17 +1,15 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockProvider, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockProvider, MockModule, MockPipe, MockDirective } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
@@ -23,12 +21,15 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,7 +46,8 @@ describe('Exam Update Component', function () {
     const exam = new Exam();
     exam.id = 1;
 
-    const course = { id: 1 } as Course;
+    const course = new Course();
+    course.id = 1;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -66,8 +68,7 @@ describe('Exam Update Component', function () {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(JhiAlertService),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -84,6 +85,7 @@ describe('Exam Update Component', function () {
                         },
                     },
                 },
+                MockProvider(AlertService),
                 MockProvider(CourseManagementService, {
                     find: () => {
                         return of(
@@ -144,21 +146,37 @@ describe('Exam Update Component', function () {
     });
 
     it('should validate the dates correctly', () => {
-        exam.visibleDate = moment().add(1, 'hours');
-        exam.startDate = moment().add(2, 'hours');
-        exam.endDate = moment().add(3, 'hours');
+        exam.visibleDate = dayjs().add(1, 'hours');
+        exam.startDate = dayjs().add(2, 'hours');
+        exam.endDate = dayjs().add(3, 'hours');
         fixture.detectChanges();
         expect(component.isValidConfiguration).is.true;
 
-        exam.publishResultsDate = moment().add(4, 'hours');
-        exam.examStudentReviewStart = moment().add(5, 'hours');
-        exam.examStudentReviewEnd = moment().add(6, 'hours');
+        exam.publishResultsDate = dayjs().add(4, 'hours');
+        exam.examStudentReviewStart = dayjs().add(5, 'hours');
+        exam.examStudentReviewEnd = dayjs().add(6, 'hours');
         fixture.detectChanges();
         expect(component.isValidConfiguration).is.true;
 
         exam.visibleDate = undefined;
         exam.startDate = undefined;
         exam.endDate = undefined;
+        fixture.detectChanges();
+        expect(component.isValidConfiguration).is.false;
+
+        exam.visibleDate = dayjs().add(1, 'hours');
+        exam.startDate = dayjs().add(2, 'hours');
+        exam.endDate = dayjs().add(3, 'hours');
+        exam.examStudentReviewEnd = undefined;
+        fixture.detectChanges();
+        expect(component.isValidConfiguration).is.false;
+
+        exam.examStudentReviewStart = dayjs().add(6, 'hours');
+        exam.examStudentReviewEnd = dayjs().add(5, 'hours');
+        fixture.detectChanges();
+        expect(component.isValidConfiguration).is.false;
+
+        exam.examStudentReviewStart = undefined;
         fixture.detectChanges();
         expect(component.isValidConfiguration).is.false;
     });
@@ -176,7 +194,7 @@ describe('Exam Update Component', function () {
     }));
 
     it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         fixture.detectChanges();
 
@@ -206,7 +224,7 @@ describe('Exam Update Component', function () {
     }));
 
     it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         fixture.detectChanges();
 

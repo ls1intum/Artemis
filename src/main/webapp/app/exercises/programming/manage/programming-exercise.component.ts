@@ -1,6 +1,5 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,10 +15,13 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -38,20 +40,22 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
+    private buildPlanLinkTemplate: string;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
         public exerciseService: ExerciseService,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
+        private profileService: ProfileService,
         courseService: CourseManagementService,
         translateService: TranslateService,
-        eventManager: JhiEventManager,
+        eventManager: EventManager,
         route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -67,16 +71,33 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
+                });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
-                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(getCourseFromExercise(exercise));
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
+                    this.accountService.setAccessRightsForExercise(exercise);
+                    if (exercise.projectKey) {
+                        if (exercise.solutionParticipation!.buildPlanId) {
+                            exercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
+                                this.buildPlanLinkTemplate,
+                                exercise.projectKey,
+                                exercise.solutionParticipation!.buildPlanId,
+                            );
+                        }
+                        if (exercise.templateParticipation!.buildPlanId) {
+                            exercise.templateParticipation!.buildPlanUrl = createBuildPlanUrl(
+                                this.buildPlanLinkTemplate,
+                                exercise.projectKey,
+                                exercise.templateParticipation!.buildPlanId,
+                            );
+                        }
+                    }
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
 

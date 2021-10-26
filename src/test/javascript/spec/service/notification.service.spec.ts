@@ -1,5 +1,4 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { SERVER_API_URL } from 'app/app.constants';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -20,14 +19,16 @@ import { SinonStub, stub } from 'sinon';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Logs Service', () => {
+describe('Notification Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
@@ -52,7 +53,7 @@ describe('Logs Service', () => {
         const generatedNotification = {
             title: 'Quiz started',
             text: 'Quiz "' + quizExercise.title + '" just started.',
-            notificationDate: moment(),
+            notificationDate: dayjs(),
         } as Notification;
         generatedNotification.target = JSON.stringify({ course: course.id, mainPage: 'courses', entity: 'exercises', id: quizExercise.id });
         return generatedNotification;
@@ -61,14 +62,14 @@ describe('Logs Service', () => {
 
     const generateSingleUserNotification = () => {
         const generatedNotification = { title: 'Single user notification', text: 'This is a notification for a single user' } as Notification;
-        generatedNotification.notificationDate = moment().subtract(3, 'days');
+        generatedNotification.notificationDate = dayjs().subtract(3, 'days');
         return generatedNotification;
     };
     const singleUserNotification = generateSingleUserNotification();
 
     const generateGroupNotification = () => {
         const generatedNotification = { title: 'simple group notification', text: 'This is a  simple group notification' } as Notification;
-        generatedNotification.notificationDate = moment();
+        generatedNotification.notificationDate = dayjs();
         return generatedNotification;
     };
     const groupNotification = generateGroupNotification();
@@ -83,6 +84,7 @@ describe('Logs Service', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: MetisService, useClass: MockMetisService },
             ],
         })
             .compileComponents()
@@ -110,11 +112,11 @@ describe('Logs Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should call correct URL', () => {
-            notificationService.query().subscribe(() => {});
+        it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
+            notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET' });
-            const infoUrl = SERVER_API_URL + 'api/notifications';
-            expect(req.request.url).to.equal(infoUrl);
+            const url = SERVER_API_URL + 'api/notifications';
+            expect(req.request.url).to.equal(url);
         });
 
         it('should navigate to notification target', () => {
@@ -127,12 +129,12 @@ describe('Logs Service', () => {
         });
 
         it('should convert date array from server', fakeAsync(() => {
-            // strange method, because notificationDate can only be of type Moment, I can not simulate an input with string for date
+            // strange method, because notificationDate can only be of type Dayjs, I can not simulate an input with string for date
             const notificationArray = [singleUserNotification, quizNotification];
             const serverResponse = notificationArray;
             const expectedResult = notificationArray.sort();
 
-            notificationService.query().subscribe((resp) => {
+            notificationService.queryNotificationsFilteredBySettings().subscribe((resp) => {
                 expect(resp.body).to.equal(expectedResult);
             });
 

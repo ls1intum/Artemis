@@ -1,21 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisTestModule } from '../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as sinon from 'sinon';
-import { TranslateModule } from '@ngx-translate/core';
-
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('Delete Dialog Service', () => {
     let service: DeleteDialogService;
@@ -23,16 +15,20 @@ describe('Delete Dialog Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule, TranslateModule.forRoot()],
-            providers: [DeleteDialogService, JhiAlertService],
+            imports: [],
+            providers: [DeleteDialogService, { provide: TranslateService, useClass: MockTranslateService }],
+            declarations: [MockComponent(DeleteDialogComponent)],
         });
-
         service = TestBed.inject(DeleteDialogService);
         modalService = TestBed.inject(NgbModal);
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('should open delete dialog', () => {
-        expect(service.modalRef).to.be.undefined;
+        expect(service.modalRef).toBe(undefined);
         const data: DeleteDialogData = {
             dialogError: new Observable<string>(),
             entityTitle: 'title',
@@ -40,12 +36,16 @@ describe('Delete Dialog Service', () => {
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
             actionType: ActionType.Delete,
             delete: new EventEmitter<any>(),
+            requireConfirmationOnlyForAdditionalChecks: false,
         };
-        const modalSpy = sinon.spy(modalService, 'open');
+        const componentInstance = {};
+        const result = new Promise((resolve) => resolve({}));
+        const openModalStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
         service.openDeleteDialog(data);
-        expect(modalSpy.callCount).to.be.equal(1);
-        const args = modalSpy.getCall(0).args;
-        expect(args[0].name).to.be.equal('DeleteDialogComponent');
-        expect(args[1]).to.be.not.null;
+        expect(openModalStub).toHaveBeenCalledTimes(1);
+        expect(openModalStub).toHaveBeenCalledWith(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
     });
 });

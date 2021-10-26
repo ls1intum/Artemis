@@ -45,7 +45,7 @@
             "continue": "Continue",
             "reviewingExampleSubmissions": "reviewing example submissions",
             "reviewExampleSubmission": "Review example submissions",
-            "tutorialSubmissions": "Tutorial submission",
+            "tutorialSubmissions": "Tutorial submissions",
             "assessingExampleSubmission": "assessing example submissions",
             "assessExampleSubmission": "Assess example submission",
             "studentsSubmissions": "Students' submissions",
@@ -78,14 +78,13 @@
             "showMoreFeedbackRequests": "Show the request",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
-            "totalYours": "Total / Yours",
+            "totalYours": "Total | Yours",
             "stats": {
                 "intime": "On time",
                 "late": "Late"
             },
             "numberOfSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
-            "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
             "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",
             "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
             "nextAssessment": "Assess next submission",
@@ -103,7 +102,10 @@
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
             "noSubmissionsInfo": "You may not assess any submissions this round. {{notYetAssessed}} submissions have yet to be assessed, of which {{lockedSubmissionsByOtherTutor}} are currently locked by other tutors ",
             "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round."
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
+            "openAssessments": "Open assessments",
+            "closedAssessments": "Closed assessments",
+            "ratings": "Ratings"
         }
     }
 }

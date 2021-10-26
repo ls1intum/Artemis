@@ -1,4 +1,4 @@
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
@@ -9,6 +9,7 @@ import { ParticipantScoresTablesContainerComponent } from 'app/shared/participan
 import { NgbButtonsModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -19,6 +20,8 @@ class ParticipantScoresTableStubComponent {
     participantScores: ParticipantScoreDTO[] = [];
     @Input()
     isLoading = false;
+    @Input()
+    course?: Course;
 }
 
 @Component({ selector: 'jhi-participant-scores-average-table', template: '<div></div>' })
@@ -29,6 +32,8 @@ class ParticipantScoresAverageTableStubComponent {
     isLoading = false;
     @Input()
     isBonus = false;
+    @Input()
+    course?: Course;
 }
 
 describe('ParticipantScoresTablesContainer', () => {

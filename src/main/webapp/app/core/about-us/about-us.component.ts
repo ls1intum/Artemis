@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { filter, tap } from 'rxjs/operators';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { SERVER_API_URL, VERSION } from 'app/app.constants';
+import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 
@@ -14,8 +14,8 @@ import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 })
 export class AboutUsComponent implements OnInit {
     private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
-    readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.md`;
-    readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
+    readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.yml`;
+    readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.yml`;
     readonly examFeatureOverviewUrlStudents = '../features/students/';
     readonly examFeatureOverviewUrlInstructors = '../features/instructors/';
     readonly examInstructionsUrlStudents = 'https://docs.artemis.ase.in.tum.de/user/exams/students_guide/';

@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,6 +12,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -25,14 +26,14 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         public exerciseService: ExerciseService,
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private sortService: SortService,
         private modalService: NgbModal,
         private router: Router,
         courseService: CourseManagementService,
         translateService: TranslateService,
-        eventManager: JhiEventManager,
+        eventManager: EventManager,
         route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -46,13 +47,11 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 // reconnect exercise with course
                 this.modelingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
-                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                    this.accountService.setAccessRightsForExercise(exercise);
                 });
                 this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
 

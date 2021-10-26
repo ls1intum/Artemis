@@ -1,17 +1,16 @@
 import * as sinon from 'sinon';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import * as sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
@@ -39,6 +38,11 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,12 +52,12 @@ let component: ExamParticipationSummaryComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const visibleDate = moment().subtract(6, 'hours');
-const startDate = moment().subtract(5, 'hours');
-const endDate = moment().subtract(4, 'hours');
-const publishResultsDate = moment().subtract(3, 'hours');
-const reviewStartDate = moment().subtract(2, 'hours');
-const reviewEndDate = moment().add(1, 'hours');
+const visibleDate = dayjs().subtract(6, 'hours');
+const startDate = dayjs().subtract(5, 'hours');
+const endDate = dayjs().subtract(4, 'hours');
+const publishResultsDate = dayjs().subtract(3, 'hours');
+const reviewStartDate = dayjs().subtract(2, 'hours');
+const reviewEndDate = dayjs().add(1, 'hours');
 
 const exam = {
     id: 1,
@@ -66,6 +70,10 @@ const exam = {
     reviewEndDate,
 } as Exam;
 
+const exerciseGroup = {
+    exam,
+} as ExerciseGroup;
+
 const textSubmission = { id: 1, submitted: true } as TextSubmission;
 const quizSubmission = { id: 1 } as QuizSubmission;
 const modelingSubmission = { id: 1 } as ModelingSubmission;
@@ -76,10 +84,10 @@ const quizParticipation = { id: 2, student: user, submissions: [quizSubmission] 
 const modelingParticipation = { id: 3, student: user, submissions: [modelingSubmission] } as StudentParticipation;
 const programmingParticipation = { id: 4, student: user, submissions: [programmingSubmission] } as StudentParticipation;
 
-const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation] } as TextExercise;
-const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation] } as QuizExercise;
-const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation] } as ModelingExercise;
-const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation] } as ProgrammingExercise;
+const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation], exerciseGroup } as TextExercise;
+const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation], exerciseGroup } as QuizExercise;
+const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation], exerciseGroup } as ModelingExercise;
+const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
 const studentExam = { id: 1, exam, user, exercises } as StudentExam;
@@ -101,7 +109,7 @@ function sharedSetup(url: string[]) {
                 MockComponent(TextExamSummaryComponent),
                 MockComponent(FileUploadExamSummaryComponent),
                 MockComponent(ComplaintInteractionsComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -118,6 +126,11 @@ function sharedSetup(url: string[]) {
                         },
                     },
                 },
+                MockProvider(CourseManagementService, {
+                    find: () => {
+                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
             ],
         })
             .compileComponents()

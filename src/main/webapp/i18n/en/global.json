@@ -68,7 +68,11 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Exercise Hint",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
+                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
+                "metis": {
+                    "post": "Post",
+                    "answerPost": "Reply"
+                }
             },
             "account": {
                 "main": "Account",
@@ -98,6 +102,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Language",
+            "settings": "Settings",
             "guidedTutorial": "Guided tutorial",
             "startTutorial": "Start tutorial",
             "restartTutorial": "Restart tutorial",
@@ -235,7 +240,6 @@
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
-            "discussion": "Discussions",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted"
         },
@@ -291,6 +295,7 @@
         "userexists": "Login name already in use!",
         "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
+        "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
         "missingname": "A new {{entityName}} needs a name",
         "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
         "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
@@ -316,7 +321,8 @@
         "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
-        "exams": "Exams"
+        "exams": "Exams",
+        "discussion": "Discussion"
     },
     "connectionStatus": {
         "connected": "Connected",

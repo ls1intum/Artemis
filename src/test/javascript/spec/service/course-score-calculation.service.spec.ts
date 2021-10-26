@@ -1,11 +1,11 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_POINTS, PRESENTATION_SCORE, REACHABLE_POINTS, RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -35,7 +35,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise2, true, 0, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
         addParticipationAndResultToExercise(exercise4, true, 50, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 35, 87.5, 87.5, 40, 0, 40);
     });
 
@@ -50,7 +50,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise2, true, 0, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
         addParticipationAndResultToExercise(exercise4, true, 50, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 25, 0, 0, 0, 0, 0);
     });
 
@@ -65,7 +65,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise2, true, 0, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
         addParticipationAndResultToExercise(exercise4, true, 50, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 0, 0, 0, 0, 0, 0);
     });
 
@@ -78,7 +78,7 @@ describe('CourseScoreCalculationService', () => {
         addParticipationAndResultToExercise(exercise1, true, 200, true);
         addParticipationAndResultToExercise(exercise2, true, 100, true);
         addParticipationAndResultToExercise(exercise3, true, 100, true);
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 30, 300, 300, 10, 0, 10);
     });
 
@@ -88,40 +88,40 @@ describe('CourseScoreCalculationService', () => {
         const exercise1 = addTextExerciseToCourse(course, 10, 10, IncludedInOverallScore.INCLUDED_COMPLETELY, true);
         const participation = new StudentParticipation(ParticipationType.STUDENT);
         participation.exercise = exercise1;
-        participation.initializationDate = moment();
+        participation.initializationDate = dayjs();
         participation.results = [];
         exercise1.studentParticipations!.push(participation);
 
         const oldResult = new Result();
-        oldResult.completionDate = moment(exercise1.dueDate!).subtract(1, 'days');
+        oldResult.completionDate = dayjs(exercise1.dueDate!).subtract(1, 'days');
         oldResult.participation = participation;
         oldResult.score = 200;
         oldResult.rated = true;
         participation.results.push(oldResult);
 
         const newResult = new Result();
-        newResult.completionDate = moment(oldResult.completionDate).add(1, 'hours');
+        newResult.completionDate = dayjs(oldResult.completionDate).add(1, 'hours');
         newResult.participation = participation;
         newResult.score = 0;
         newResult.rated = true;
         participation.results.push(newResult);
 
-        const result = courseScoreCalculationService.calculateTotalScores(course.exercises);
+        const result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
         expectCalculationResult(result, 0, 0, 0, 10, 0, 10);
     });
 
     function addParticipationAndResultToExercise(exercise: Exercise, finishedInTime: boolean, scoreAwarded: number, rated: boolean) {
         const participation = new StudentParticipation(ParticipationType.STUDENT);
         participation.exercise = exercise;
-        participation.initializationDate = moment();
+        participation.initializationDate = dayjs();
         participation.results = [];
         exercise.studentParticipations!.push(participation);
 
         const result = new Result();
         if (finishedInTime) {
-            result.completionDate = moment(exercise.dueDate!).subtract(1, 'days');
+            result.completionDate = dayjs(exercise.dueDate!).subtract(1, 'days');
         } else {
-            result.completionDate = moment(exercise.dueDate!).add(1, 'days');
+            result.completionDate = dayjs(exercise.dueDate!).add(1, 'days');
         }
         result.participation = participation;
         result.score = scoreAwarded;
@@ -136,16 +136,16 @@ describe('CourseScoreCalculationService', () => {
         exercise.bonusPoints = bonusPoints;
         exercise.studentParticipations = [];
         if (isFinished) {
-            exercise.dueDate = moment().subtract(1, 'days');
+            exercise.dueDate = dayjs().subtract(1, 'days');
         } else {
-            exercise.dueDate = moment().add(1, 'days');
+            exercise.dueDate = dayjs().add(1, 'days');
         }
         course.exercises!.push(exercise);
         return exercise;
     }
 
     function expectCalculationResult(
-        resultMap: Map<String, number>,
+        resultMap: Map<string, number>,
         expectedAbsoluteScore?: number,
         expectedRelativeScore?: number,
         expectedCurrentRelativeScore?: number,

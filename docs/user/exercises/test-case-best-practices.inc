@@ -197,7 +197,7 @@ General best practices
             }
         }
         String expected = "Dog:French";
-        String actual = testTranslationServer.runService("Dog", "French");
+        String actual = testTranslationServer.runService("French", "Dog");
         if(!expected.equals(actual)) fail("Descriptive fail message");
     }
 
@@ -328,8 +328,8 @@ Java best practices
            <artifactId>maven-compiler-plugin</artifactId>
            <version>3.8.1</version>
            <configuration>
-               <source>16</source>
-               <target>16</target>
+               <source>17</source>
+               <target>17</target>
            </configuration>
            <executions>
                <execution>
@@ -339,8 +339,8 @@ Java best practices
                        <goal>testCompile</goal>
                    </goals>
                    <configuration>
-                       <source>16</source>
-                       <target>16</target>
+                       <source>17</source>
+                       <target>17</target>
                        <compilerId>jdt</compilerId>
                        <optimize>true</optimize>
                        <failOnError>false</failOnError>
@@ -377,8 +377,8 @@ Java best practices
            <artifactId>maven-compiler-plugin</artifactId>
            <version>3.8.1</version>
            <configuration>
-               <source>16</source>
-               <target>16</target>
+               <source>17</source>
+               <target>17</target>
                <compilerId>jdt</compilerId>
                <optimize>true</optimize>
                <failOnError>false</failOnError>

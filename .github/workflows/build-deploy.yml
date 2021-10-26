@@ -41,32 +41,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.0
+      uses: actions/setup-node@v2.4.1
       with:
         node-version: '${{ env.node }}'
+        cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.2.0
+      uses: actions/setup-java@v2.3.1
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
-    - uses: actions/checkout@v2
-    - name: Cache Gradle dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: Cache node modules
-      uses: actions/cache@v2
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-node_modules-
+        cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
+      env:
+        NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -96,11 +86,11 @@ jobs:
       name: ${{ matrix.environment }}
     steps:
     - name: Check "lock:${{ matrix.environment }}" label
-      uses: actions/github-script@v4.0.2
+      uses: actions/github-script@v5
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const opts = github.issues.listForRepo.endpoint.merge({
+          const opts = github.rest.issues.listForRepo.endpoint.merge({
             owner: context.repo.owner,
             repo: context.repo.repo,
             labels: ['lock:${{ matrix.environment }}']
@@ -111,7 +101,7 @@ jobs:
           } else if (issues.length > 1) {
             core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
           } else if (context.issue && context.issue.number) {
-            await github.issues.addLabels({
+            await github.rest.issues.addLabels({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -127,22 +117,16 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    - name: Install vpnc
-      run: sudo apt-get install vpnc
-    # Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
-    - name: Configure LRZ VPN
-      run: |
-        echo "${{ secrets.LRZ_VPN_CONFIG }}" > lrz.conf
-        sudo mkdir -p /etc/vpnc
-        sudo mv lrz.conf /etc/vpnc/
-        sudo chmod 600 /etc/vpnc/lrz.conf
+    - name: Install OpenVPN
+      run: sudo apt-get --assume-yes --no-install-recommends install openvpn
+    # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
+    - name: Configure LRZ eduVPN
+      run: echo "${{ secrets.LRZ_OVPN_CONFIG }}" > lrz.ovpn
     - name: Connect VPN
-      run: sudo vpnc lrz
-    - name: Ping sophos.lrz.de (only accessible inside MWN)
-      id: vpn-test
-      run: |
-        ping -c 5 sophos.lrz.de
-        echo "::set-output name=success::true"
+      run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
+    - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
+      run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
+      timeout-minutes: 2
 
     # Configure SSH Key
     - name: Setup SSH Keys and known_hosts
@@ -179,6 +163,6 @@ jobs:
     # Always disconnect from VPN
     - name: Disconncet VPN
       run: |
-        sudo vpnc-disconnect
-        sudo rm /etc/vpnc/lrz.conf
-      if: ${{ always() && (steps.vpn-test.outputs.success == 'true') }}
+        sudo killall openvpn
+        rm lrz.ovpn
+      if: always()

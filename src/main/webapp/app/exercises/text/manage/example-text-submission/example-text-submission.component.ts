@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import { HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -21,16 +21,18 @@ import { Result } from 'app/entities/result.model';
 import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { notUndefined, onError } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter } from 'rxjs/operators';
+import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
 })
-export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     isNewSubmission: boolean;
     areNewAssessments = true;
     unsavedChanges = false;
@@ -49,7 +51,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     UIStates = UIStates;
 
     constructor(
-        jhiAlertService: JhiAlertService,
+        alertService: AlertService,
         accountService: AccountService,
         assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -64,7 +66,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         private resultService: ResultService,
         private guidedTourService: GuidedTourService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.submission = new TextSubmission();
@@ -105,8 +107,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
@@ -169,9 +169,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.resultService.createNewExampleResult(this.exerciseId!, this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.state.edit();
-                this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-            }, this.jhiAlertService.error);
-        }, this.jhiAlertService.error);
+                this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+            }, this.alertService.error);
+        }, this.alertService.error);
     }
 
     /**
@@ -182,8 +182,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.state.edit();
             this.unsavedChanges = false;
-            this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-        }, this.jhiAlertService.error);
+            this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
+        }, this.alertService.error);
     }
 
     public async startAssessment(): Promise<void> {
@@ -196,13 +196,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     public saveAssessments(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
         this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
-            this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
+            this.alertService.success('artemisApp.textAssessment.saveSuccessful');
             this.state.assess();
             if (this.unsavedChanges) {
                 this.exampleSubmissionService
@@ -210,7 +210,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                     .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                         this.exampleSubmission = exampleSubmissionResponse.body!;
                         this.unsavedChanges = false;
-                    }, this.jhiAlertService.error);
+                    }, this.alertService.error);
             }
         });
     }
@@ -220,7 +220,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back(): Promise<void> {
-        const courseId = this.course?.id;
+        const courseId = getCourseFromExercise(this.exercise!)?.id;
         // check if exam exercise
         if (!!this.exercise?.exerciseGroup) {
             const examId = this.exercise.exerciseGroup.exam?.id;
@@ -256,27 +256,30 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     checkAssessment(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
-            () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
-            (error: HttpErrorResponse) => {
-                const errorType = error.headers.get('x-artemisapp-error');
 
-                switch (errorType) {
-                    case 'error.tooLow':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                        break;
-                    case 'error.tooHigh':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
-                        break;
-                    default:
-                        onError(this.jhiAlertService, error);
-                        break;
-                }
-            },
-        );
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
+    }
+
+    markAllFeedbackToCorrect() {
+        this.textBlockRefs
+            .map((ref) => ref.feedback)
+            .filter((feedback) => feedback != undefined)
+            .forEach((feedback) => {
+                feedback!.correctionStatus = 'CORRECT';
+            });
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === correctionError.reference);
+            if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
+                textBlockRef.feedback.correctionStatus = correctionError.type;
+            }
+        });
     }
 
     private exampleSubmissionForNetwork() {
@@ -307,7 +310,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      */
     readAndUnderstood(): void {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
+            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

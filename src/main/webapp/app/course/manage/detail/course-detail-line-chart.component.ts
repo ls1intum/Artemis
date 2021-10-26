@@ -2,10 +2,11 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -14,7 +15,7 @@ import { round } from 'app/shared/util/utils';
 })
 export class CourseDetailLineChartComponent implements OnChanges {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     numberOfStudentsInCourse: number;
     @Input()
@@ -35,7 +36,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     lineChartLegend = false;
     // Data
     lineChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataSets[] = [{ data: [] }];
     data: number[] = [];
     absoluteData: number[] = [];
 
@@ -62,7 +63,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private reloadChart() {
         this.loading = true;
         this.createLabels();
-        this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
+        this.service.getStatisticsData(this.course.id!, this.currentPeriod).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
         });
     }
@@ -75,7 +76,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
             this.absoluteData = array;
             this.data = [];
             for (const value of array) {
-                this.data.push(round((value / this.numberOfStudentsInCourse) * 100));
+                this.data.push(roundScorePercentSpecifiedByCourseSettings(value / this.numberOfStudentsInCourse, this.course));
             }
         } else {
             this.absoluteData = array;
@@ -98,11 +99,11 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : moment();
+        const startDate = dayjs().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? dayjs().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : dayjs();
         let currentWeek;
         for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
-            currentWeek = moment()
+            currentWeek = dayjs()
                 .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();

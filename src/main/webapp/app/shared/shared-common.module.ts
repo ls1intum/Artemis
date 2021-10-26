@@ -4,10 +4,44 @@ import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule],
-    declarations: [FindLanguageFromKeyPipe, AlertComponent, AlertErrorComponent],
-    exports: [ArtemisSharedLibsModule, FindLanguageFromKeyPipe, AlertComponent, AlertErrorComponent],
+    declarations: [
+        ArtemisDatePipe,
+        FindLanguageFromKeyPipe,
+        AlertComponent,
+        AlertErrorComponent,
+        TranslateDirective,
+        SortByDirective,
+        SortDirective,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisDurationFromSecondsPipe,
+        DurationPipe,
+    ],
+    exports: [
+        ArtemisSharedLibsModule,
+        ArtemisDatePipe,
+        FindLanguageFromKeyPipe,
+        AlertComponent,
+        AlertErrorComponent,
+        TranslateDirective,
+        SortByDirective,
+        SortDirective,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisDurationFromSecondsPipe,
+        DurationPipe,
+    ],
+    providers: [ArtemisDatePipe],
 })
 export class ArtemisSharedCommonModule {}

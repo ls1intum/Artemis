@@ -1,0 +1,33 @@
+$metis-light-gray: #979797;
+$metis-gray: #6a737d;
+$metis-blue: #0f6ab4;
+$metis-light-blue: #e3ecf3;
+$metis-green: #3c763d;
+
+.post-result-information {
+    font-size: small;
+    font-style: italic;
+}
+
+.post-separation-line {
+    height: 1px;
+    background: $metis-light-gray;
+}
+
+.icon {
+    color: $metis-gray;
+}
+
+.posting-header {
+    font-size: x-small;
+}
+
+.resolved {
+    color: $metis-green;
+}
+
+.reference-hash {
+    font-weight: 200;
+    color: $metis-light-gray;
+    display: inline-flex;
+}

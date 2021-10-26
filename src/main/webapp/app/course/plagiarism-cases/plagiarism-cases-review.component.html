@@ -9,9 +9,9 @@
         <span *ngIf="!loading">{{ instructorMessage }}</span>
     </p>
     <p *ngIf="hasStatus()">
-        <span>{{'artemisApp.plagiarism.cases.status-changed' | artemisTranslate }}</span>
-        <span *ngIf="isConfirmed()" class="text-danger">{{'artemisApp.plagiarism.cases.finally-confirmed' | artemisTranslate }}</span>
-        <span *ngIf="!isConfirmed()" class="text-success">{{'artemisApp.plagiarism.cases.finally-denied' | artemisTranslate }}</span>
+        <span>{{ 'artemisApp.plagiarism.cases.status-changed' | artemisTranslate }}</span>
+        <span *ngIf="isConfirmed()" class="text-danger">{{ 'artemisApp.plagiarism.cases.finally-confirmed' | artemisTranslate }}</span>
+        <span *ngIf="!isConfirmed()" class="text-success">{{ 'artemisApp.plagiarism.cases.finally-denied' | artemisTranslate }}</span>
     </p>
     <div *ngIf="!loading">
         <jhi-plagiarism-split-view [exercise]="exercise" [comparison]="comparison" [splitControlSubject]="splitControlSubject"></jhi-plagiarism-split-view>

@@ -1,13 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -41,7 +42,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
-    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
+    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private courseManagementService: CourseManagementService) {}
 
     /**
      * Initialise the courseId from the current url
@@ -53,6 +54,13 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+        let course;
+        this.courseManagementService.find(this.courseId).subscribe((courseResponse) => (course = courseResponse.body!));
+        for (const exercise of this.studentExam.exercises!) {
+            exercise.studentParticipations!.first()!.exercise = exercise;
+            exercise.exerciseGroup!.exam = this.examWithOnlyIdAndStudentReviewPeriod;
+        }
+        this.examWithOnlyIdAndStudentReviewPeriod.course = course;
     }
 
     getIcon(exerciseType: ExerciseType) {
@@ -69,7 +77,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         } else if (this.isTestRun) {
             return true;
         }
-        return this.studentExam?.exam?.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
+        return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
     }
 
     /**

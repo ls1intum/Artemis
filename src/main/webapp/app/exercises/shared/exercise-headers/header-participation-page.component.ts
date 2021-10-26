@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -39,7 +39,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     get resultsPublished(): boolean {
         if (!!this.exercise.exerciseGroup && !!this.exercise.exerciseGroup.exam) {
             if (this.exercise.exerciseGroup.exam.publishResultsDate) {
-                return moment().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);
+                return dayjs().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);
             }
             // default to false if it is an exam exercise but the publishResultsDate is not set
             return false;
@@ -57,7 +57,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+            this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
         }
     }
 }
