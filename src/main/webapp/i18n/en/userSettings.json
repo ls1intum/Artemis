@@ -33,6 +33,7 @@
                 "newReplyForLecturePost": "New Reply for Lecture Post",
                 "newCoursePost": "New Course Post",
                 "newReplyForCoursePost": "New Reply for Course Post",
+                "newAnnouncementPost": "New Announcement",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
             "settingDescriptions": {
@@ -45,6 +46,7 @@
                 "newReplyForLecturePostDescription": "Get notified when a new reply for a lecture post has been created",
                 "newCoursePostDescription": "Receive a notification when a new course-wide post has been created",
                 "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
+                "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
                 "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
             }
         }

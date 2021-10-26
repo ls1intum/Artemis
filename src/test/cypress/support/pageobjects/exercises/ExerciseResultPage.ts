@@ -7,7 +7,7 @@ export class ExerciseResultPage {
     }
 
     shouldShowExerciseTitle(title: string) {
-        cy.contains(title).should('be.visible');
+        cy.get('jhi-header-exercise-page-with-details').contains(title).should('be.visible');
     }
 
     shouldShowScore(percentage: number) {
