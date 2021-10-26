@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
@@ -86,6 +86,9 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
                 SecurityUtils.setAuthorizationObject();
             }
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
+                if (!SecurityUtils.isAuthenticated()) {
+                    SecurityUtils.setAuthorizationObject();
+                }
                 // only send a notification if ReleaseDate is null or not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
                 if (exercise.getReleaseDate() == null
                         || !exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
