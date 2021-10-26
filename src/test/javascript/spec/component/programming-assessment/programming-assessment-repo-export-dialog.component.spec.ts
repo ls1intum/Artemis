@@ -88,6 +88,10 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('test initialization', () => {
         fixture.detectChanges();
         expect(comp.exerciseId).toEqual(42);
