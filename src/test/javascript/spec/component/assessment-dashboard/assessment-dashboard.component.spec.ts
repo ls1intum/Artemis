@@ -316,12 +316,13 @@ describe('AssessmentDashboardInformationComponent', () => {
                 } as any as ActivatedRoute;
                 const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
                 activatedRoute.snapshot = newRoute.snapshot;
+                const computeIssuesWithTutorPerformanceSpy = jest.spyOn(comp, 'computeIssuesWithTutorPerformance');
 
                 // when
                 comp.ngOnInit();
 
                 // then
-                expect(comp.tutorIssues).toHaveLength(0);
+                expect(computeIssuesWithTutorPerformanceSpy).not.toHaveBeenCalled();
             });
         });
 
