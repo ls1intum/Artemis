@@ -184,6 +184,12 @@ public class AnswerPostService extends PostingService {
         }
     }
 
+    /**
+     * Helper method to prepare the post included in the websocket message and initiate the broadcasting
+     *
+     * @param updatedAnswerPost answer post that was updated
+     * @param course            course the answer post belongs to
+     */
     private void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
