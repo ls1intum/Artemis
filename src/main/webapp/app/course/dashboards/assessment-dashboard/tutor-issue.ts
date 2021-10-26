@@ -94,7 +94,7 @@ export class TutorIssueScoreChecker extends TutorValueChecker {
  */
 export class TutorIssueComplaintsChecker extends TutorValueChecker {
     get allowedThreshold(): Threshold {
-        // Tutor complaints count should be less than average number of complaints in the course + 20%
+        // Tutor complaint ratio should be less than average course complaint ratio + 20%
         const twentyPercent = this.averageCourseValue / 5;
         return [0, this.round(this.averageCourseValue + twentyPercent)];
     }
