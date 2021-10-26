@@ -539,9 +539,7 @@
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [disabled]="
-                editForm.form.invalid || !validIdeSelection() || !(auxiliaryRepositoriesValid && !auxiliaryRepositoryDuplicateNames && !auxiliaryRepositoryDuplicateDirectories)
-            "
+            [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid"
             [isLoading]="isSaving"
             [icon]="'save'"
             [title]="submitButtonTitle"

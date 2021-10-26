@@ -43,6 +43,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
+    auxiliaryRepositoryNamedCorrectly: boolean;
     submitButtonTitle: string;
     isImport: boolean;
     isEdit: boolean;
@@ -180,7 +181,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty/incorrect repository names and directories
-        this.auxiliaryRepositoriesValid = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
+
+        // Combining auxiliary variables to one to keep the template readable
+        this.auxiliaryRepositoriesValid = this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
     }
 
     /**
