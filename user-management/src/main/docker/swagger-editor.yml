@@ -3,5 +3,6 @@ version: '3.8'
 services:
     swagger-editor:
         image: swaggerapi/swagger-editor:latest
+        # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
         ports:
             - 127.0.0.1:7742:8080

@@ -46,7 +46,6 @@ services:
             - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET=NjIxODMxZGJiNWU2MGUyMzFjMzhmOTdkZTFhZDlkNDE1YmU2ZmRlZTVlMTIxNmQ5MjU3YTQ4NTNlNGZjMjU3ZGNiMGI5NTM5Mzg1N2IwZWVjNDAxYzJhNjlhZWRjMDg2MTQ3OGQzZWNlNDYwMzI2YTFhOWM0MTFhZGYyMGE1MmU=
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:admin@host.docker.internal:8761/eureka/
             - LOGGING_FILE_NAME=/tmp/jhipster-control-center.log
-        # If you want to expose these ports outside your dev PC,
-        # remove the "127.0.0.1:" prefix
+        # If you want to expose these ports outside your dev PC, remove the "127.0.0.1:" prefix
         ports:
             - 127.0.0.1:7419:7419

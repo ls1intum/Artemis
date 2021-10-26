@@ -230,17 +230,6 @@ eureka:
             git-branch: ${git.branch:}
             context-path: ${server.servlet.context-path:}
 
-kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        group.id: user-management
-        auto.offset.reset: earliest
-    producer:
-        key.serializer: org.apache.kafka.common.serialization.StringSerializer
-        value.serializer: org.apache.kafka.common.serialization.StringSerializer
-
 feign:
     hystrix:
         enabled: true

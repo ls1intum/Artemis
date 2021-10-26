@@ -19,13 +19,13 @@ scrape_configs:
         scrape_interval: 5s
 
         # scheme defaults to 'http' enable https in case your application is server via https
-        #scheme: https
+        # scheme: https
         # basic auth is not needed by default. See https://www.jhipster.tech/monitoring/#configuring-metrics-forwarding for details
-        #basic_auth:
+        # basic_auth:
         # username: admin
         # password: admin
         metrics_path: /management/prometheus
         static_configs:
             -   targets:
-                    # On MacOS, replace localhost by host.docker.internal
-                    - localhost:8087
+                    # On MacOS, replace 127.0.0.1 by host.docker.internal
+                    - 127.0.0.1:8089
