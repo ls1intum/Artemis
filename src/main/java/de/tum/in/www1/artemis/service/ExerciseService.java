@@ -458,17 +458,17 @@ public class ExerciseService {
         }
         else {
             // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
-            if (exercise instanceof TextExercise textExercise) {
+            if (exercise instanceof textExercise) {
                 // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
-                textExercise = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+                TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
                 if (textExercise.getKnowledge() != null) {
                     textAssessmentKnowledgeService.deleteKnowledge(textExercise.getKnowledge().getId(), textExercise.getId());
                 }
             }
             // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
-            else if (exercise instanceof ModelingExercise modelingExercise) {
+            else if (exercise instanceof modelingExercise) {
                 // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
-                modelingExercise = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+                ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
                 if (modelingExercise.getKnowledge() != null) {
                     modelAssessmentKnowledgeService.deleteKnowledge(modelingExercise.getKnowledge().getId(), modelingExercise.getId());
                 }
