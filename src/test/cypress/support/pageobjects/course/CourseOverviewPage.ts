@@ -14,9 +14,13 @@ export class CourseOverviewPage {
         cy.wait('@participateInExerciseQuery');
     }
 
-    openRunningProgrammingExercise(exerciseName: string) {
+    openRunningExercise(exerciseTitle: string) {
+        this.getExerciseCardRootElement(exerciseTitle).find('[buttonicon="folder-open"]').click();
+    }
+
+    openRunningProgrammingExercise(exerciseTitle: string) {
         cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-        this.getExerciseCardRootElement(exerciseName).find('[buttonicon="folder-open"]').click();
+        this.openRunningExercise(exerciseTitle);
         cy.wait('@initialQuery').wait(2000);
     }
 
