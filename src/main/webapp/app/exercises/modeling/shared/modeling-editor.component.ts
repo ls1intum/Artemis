@@ -101,6 +101,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly,
                 type: this.diagramType || UMLDiagramType.ClassDiagram,
+                scale: 0.75,
             });
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
