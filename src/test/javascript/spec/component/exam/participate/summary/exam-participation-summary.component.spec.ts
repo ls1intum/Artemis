@@ -7,7 +7,6 @@ import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
