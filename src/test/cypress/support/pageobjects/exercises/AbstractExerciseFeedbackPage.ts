@@ -3,12 +3,15 @@ import { BASE_API, POST } from '../../constants';
  * Parent class for all exercise feedback pages (/course/./exercise/./participate/.)
  */
 export abstract class AbstractExerciseFeedback {
+    readonly resultSelector = 'jhi-result';
+
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         cy.get('.unreferencedFeedback').contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 
     shouldShowScore(achievedPoints: number, maxPoints: number, percentage: number) {
-        cy.get('jhi-result').contains(`Score ${percentage}%, ${achievedPoints} of ${maxPoints} points`);
+        cy.get(this.resultSelector).contains(`${percentage}%`);
+        cy.get(this.resultSelector).contains(`${achievedPoints} of ${maxPoints} points`);
     }
 
     complain(complaint: string) {

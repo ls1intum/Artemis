@@ -132,8 +132,8 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         await comp.ngOnInit();
-        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
+        comp.exercise!.isAtLeastInstructor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
@@ -153,8 +153,8 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         await comp.ngOnInit();
-        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
+        comp.exercise!.isAtLeastEditor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
@@ -187,8 +187,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
-        comp.isAtLeastEditor = true;
         comp.exercise = exercise;
+        comp.exercise!.isAtLeastEditor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
