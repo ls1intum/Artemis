@@ -97,23 +97,23 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
 
         this.customColors = [
             {
-                name: this.completedAssessmentsTitle,
-                value: '#98C7EF',
-            },
-            {
                 name: this.openedAssessmentsTitle,
                 value: '#F4A7B6',
+            },
+            {
+                name: this.completedAssessmentsTitle,
+                value: '#98C7EF',
             },
         ];
 
         this.assessments = [
             {
-                name: this.completedAssessmentsTitle,
-                value: this.totalNumberOfAssessments.total,
-            },
-            {
                 name: this.openedAssessmentsTitle,
                 value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+            },
+            {
+                name: this.completedAssessmentsTitle,
+                value: this.totalNumberOfAssessments.total,
             },
         ];
     }
