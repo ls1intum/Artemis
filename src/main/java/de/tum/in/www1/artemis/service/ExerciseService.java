@@ -108,6 +108,8 @@ public class ExerciseService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final RatingService ratingService;
+
     private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
@@ -122,7 +124,7 @@ public class ExerciseService {
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             ProgrammingAssessmentService programmingAssessmentService, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
-            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, RatingService ratingService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -152,6 +154,7 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.ratingService = ratingService;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
     }
@@ -272,6 +275,8 @@ public class ExerciseService {
                 ComplaintType.MORE_FEEDBACK);
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+
+        stats.setNumberOfRatings(ratingService.countRatingsByExerciseId(exerciseId));
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
