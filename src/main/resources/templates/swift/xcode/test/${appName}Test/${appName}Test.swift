@@ -92,11 +92,11 @@ class ${appName}Test: XCTestCase {
         let policy = Policy(context)
         policy.configure(sortAlgorithm: SortAlgorithm.MergeSort)
         
-        XCTAssertEqual("Sorting.MergeSort", String(describing: context.getSortAlgorithm()), "The Policy does not cofigure the Sorting Algorithm correctly!")
+        XCTAssertEqual("${appName}.MergeSort", String(describing: context.getSortAlgorithm()), "The Policy does not cofigure the Sorting Algorithm correctly!")
         
         policy.configure(sortAlgorithm: SortAlgorithm.BubbleSort)
         
-        XCTAssertEqual("Sorting.BubbleSort", String(describing: context.getSortAlgorithm()), "The Policy does not cofigure the Sorting Algorithm correctly!")
+        XCTAssertEqual("${appName}.BubbleSort", String(describing: context.getSortAlgorithm()), "The Policy does not cofigure the Sorting Algorithm correctly!")
     }
     
     func testMainViewLogic() {
@@ -105,7 +105,7 @@ class ${appName}Test: XCTestCase {
         XCTAssertEqual(mainView.sortAlgorithm, SortAlgorithm.MergeSort, "The default sorting algorithm should be Merge Sort!")
         Policy(mainView.context).configure(sortAlgorithm: mainView.sortAlgorithm)
         
-        XCTAssertEqual(String(describing: mainView.context.getSortAlgorithm()), "Sorting.MergeSort", "The sorting algorithm was not set correctly!")
+        XCTAssertEqual("${appName}.MergeSort", String(describing: mainView.context.getSortAlgorithm()), "The sorting algorithm was not set correctly!")
     }
     
     func testMainViewContextSort() {
