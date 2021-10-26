@@ -13,10 +13,6 @@ public class SpaWebFilter implements WebFilter {
     /**
      * In order to enhance security any unmapped paths that are not part of the api or public resources
      * will be forwarded to the client {@code index.html}
-     *
-     * Forwards any unmapped paths (except those containing a period) to the client {@code index.html}
-     * in order to enhance security and .
-     *
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
