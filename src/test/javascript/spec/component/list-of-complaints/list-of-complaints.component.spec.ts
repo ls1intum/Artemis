@@ -1,15 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { RouterTestingModule } from '@angular/router/testing';
-
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
-import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { NgModel } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
     let comp: ListOfComplaintsComponent;
@@ -17,52 +18,30 @@ describe('ListOfComplaintsComponent', () => {
 
     const complaints = [{ accepted: undefined }, { accepted: true }, { accepted: false }];
 
-    const subscribe = {
-        subscribe: (fn: (value: any) => void) => {
-            fn({
-                body: complaints,
-            });
-        },
-    };
-
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([])],
-            declarations: [ListOfComplaintsComponent],
-            providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ courseId: 123 }),
-                },
-                {
-                    provide: ComplaintService,
-                    useValue: {
-                        findAllByTutorIdForCourseId() {
-                            return subscribe;
-                        },
-                        findAllByTutorIdForExerciseId() {
-                            return subscribe;
-                        },
-                        findAllByCourseId() {
-                            return subscribe;
-                        },
-                        findAllByExerciseId() {
-                            return subscribe;
-                        },
-                    },
-                },
+            imports: [ArtemisTestModule],
+            declarations: [
+                ListOfComplaintsComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(AlertComponent),
+                MockDirective(NgModel),
+                MockDirective(SortDirective),
+                MockPipe(ArtemisDatePipe),
             ],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) }, MockProvider(ComplaintService), MockProvider(ArtemisDatePipe)],
         })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);
                 comp = fixture.componentInstance;
+
+                const complaintService = TestBed.inject(ComplaintService);
+                jest.spyOn(complaintService, 'findAllByTutorIdForCourseId').mockReturnValue(of({ body: complaints } as any));
+                jest.spyOn(complaintService, 'findAllByTutorIdForExerciseId').mockReturnValue(of({ body: complaints } as any));
+                jest.spyOn(complaintService, 'findAllByCourseId').mockReturnValue(of({ body: complaints } as any));
+                jest.spyOn(complaintService, 'findAllByExerciseId').mockReturnValue(of({ body: complaints } as any));
+
                 comp.ngOnInit();
             });
     });

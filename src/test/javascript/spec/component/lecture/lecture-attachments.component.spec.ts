@@ -1,14 +1,10 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import dayjs from 'dayjs';
-import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { TreeviewModule } from 'ngx-treeview';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { By } from '@angular/platform-browser';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Lecture } from 'app/entities/lecture.model';
@@ -17,9 +13,15 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { of } from 'rxjs';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { NgModel } from '@angular/forms';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -81,72 +83,50 @@ describe('LectureAttachmentsComponent', () => {
         attachmentType: 'FILE',
     } as Attachment;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, FormDateTimePickerModule],
-            declarations: [LectureAttachmentsComponent, MockPipe(HtmlForMarkdownPipe), MockPipe(ArtemisDatePipe)],
+            imports: [ArtemisTestModule, TreeviewModule.forRoot()],
+            declarations: [
+                LectureAttachmentsComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(AlertErrorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(DeleteButtonDirective),
+                MockComponent(FormDateTimePickerComponent),
+                MockDirective(NgModel),
+            ],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            data: {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        lecture,
-                                    }),
-                            },
-                        },
-                    },
-                },
+                { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
                 {
                     provide: AttachmentService,
                     useValue: {
                         create() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: newAttachment,
-                                    }),
-                            };
+                            return of({ body: newAttachment });
                         },
                         findAllByLectureId() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: [...attachments],
-                                    }),
-                            };
+                            return of({ body: [...attachments] });
                         },
                         update() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: {
-                                            id: 52,
-                                            name: 'TestFile',
-                                            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-                                            version: 2,
-                                            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
-                                            attachmentType: 'FILE',
-                                        } as Attachment,
-                                    }),
-                            };
+                            return of({
+                                body: {
+                                    id: 52,
+                                    name: 'TestFile',
+                                    link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                                    version: 2,
+                                    uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
+                                    attachmentType: 'FILE',
+                                } as Attachment,
+                            });
                         },
                         delete() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: newAttachment,
-                                    }),
-                            };
+                            return of({ body: newAttachment });
                         },
                     },
                 },
                 { provide: FileService, useClass: MockFileService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);

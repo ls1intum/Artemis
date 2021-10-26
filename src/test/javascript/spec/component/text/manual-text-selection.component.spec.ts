@@ -3,11 +3,7 @@ import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { SelectionRectangle, TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
@@ -24,9 +20,9 @@ describe('ManualTextSelectionComponent', () => {
     let component: ManualTextSelectionComponent;
     let fixture: ComponentFixture<ManualTextSelectionComponent>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule],
+            imports: [ArtemisTestModule],
             declarations: [ManualTextSelectionComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -34,19 +30,12 @@ describe('ManualTextSelectionComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
-            .compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ManualTextSelectionComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ManualTextSelectionComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     it('should select text and assess the text', () => {
