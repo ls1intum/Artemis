@@ -7,7 +7,7 @@ import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -70,6 +70,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -189,7 +190,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: sinon.SinonStub;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule, MockModule(NgxChartsModule)];
     const declarations = [
         ExerciseAssessmentDashboardComponent,
         MockComponent(TutorLeaderboardComponent),
@@ -344,8 +345,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).to.equal(2);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).to.equal(7);
-        expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
-        expect(comp.totalAssessmentPercentage.late).to.equal(20);
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
     });
 
