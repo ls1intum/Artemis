@@ -35,12 +35,12 @@ class GatewaySwaggerResourcesProviderTest {
     @Test
     void shouldGet() {
         // Given
-        ReflectionTestUtils.setField(gatewaySwaggerResourcesProvider, "gatewayName", "burger");
+        ReflectionTestUtils.setField(gatewaySwaggerResourcesProvider, "gatewayName", "gateway");
         when(swaggerResourcesProvider.get()).thenReturn(List.of(swaggerResource("default", "/v3/api-docs"), swaggerResource("default", "/v3/api-docs?group=management"),
                 swaggerResource("default", "/v3/api-docs?group=openapi")));
         when(routeLocator.getRoutes())
-                .thenReturn(Flux.just(Route.async().id("ReactiveCompositeDiscoveryClient_BURGER").uri(URI.create("lb://BURGER")).predicate(exchange -> true).build(),
-                        Route.async().id("ReactiveCompositeDiscoveryClient_BEER").uri(URI.create("lb://BEER")).predicate(exchange -> true).build()));
+                .thenReturn(Flux.just(Route.async().id("ReactiveCompositeDiscoveryClient_GATEWAY").uri(URI.create("lb://GATEWAY")).predicate(exchange -> true).build(),
+                        Route.async().id("ReactiveCompositeDiscoveryClient_ARTEMIS").uri(URI.create("lb://ARTEMIS")).predicate(exchange -> true).build()));
 
         // When
         List<SwaggerResource> result = gatewaySwaggerResourcesProvider.get();
@@ -49,13 +49,13 @@ class GatewaySwaggerResourcesProviderTest {
         assertThat(result).isNotEmpty();
         assertThat(result.size()).isEqualTo(3);
 
-        assertThat(result.get(0).getName()).isEqualTo("burger (default)");
+        assertThat(result.get(0).getName()).isEqualTo("gateway (default)");
         assertThat(result.get(0).getUrl()).isEqualTo("/v3/api-docs");
 
-        assertThat(result.get(1).getName()).isEqualTo("burger (management)");
+        assertThat(result.get(1).getName()).isEqualTo("gateway (management)");
         assertThat(result.get(1).getUrl()).isEqualTo("/v3/api-docs?group=management");
 
-        assertThat(result.get(2).getName()).isEqualTo("beer");
-        assertThat(result.get(2).getUrl()).isEqualTo("/services/beer/v3/api-docs");
+        assertThat(result.get(2).getName()).isEqualTo("artemis");
+        assertThat(result.get(2).getUrl()).isEqualTo("/services/artemis/v3/api-docs");
     }
 }
