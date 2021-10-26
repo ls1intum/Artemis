@@ -431,7 +431,7 @@ describe('Metis Service', () => {
         });
 
         it('should create websocket subscription when posts with lecture context are initially retrieved from DB', fakeAsync(() => {
-            let lecturePostWithTags = metisLecturePosts[0];
+            const lecturePostWithTags = metisLecturePosts[0];
             lecturePostWithTags.tags = ['tag1', 'tag2'];
             websocketServiceReceiveStub.mockReturnValue(of({ post: lecturePostWithTags, action: MetisPostAction.CREATE_POST } as MetisPostDTO));
             // setup subscription
@@ -455,7 +455,7 @@ describe('Metis Service', () => {
         }));
 
         it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
-            let courseWidePostWithTags = metisCoursePostsWithCourseWideContext[0];
+            const courseWidePostWithTags = metisCoursePostsWithCourseWideContext[0];
             courseWidePostWithTags.tags = ['tag1', 'tag2'];
             websocketServiceReceiveStub.mockReturnValue(of({ post: courseWidePostWithTags, action: MetisPostAction.UPDATE_POST } as MetisPostDTO));
             // setup subscription
