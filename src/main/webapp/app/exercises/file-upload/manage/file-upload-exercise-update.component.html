@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form name="editForm" role="form" novalidate #editForm="ngForm">
     <h4 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h4>
     <h4 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
         Create a new File Upload Exercise
@@ -163,6 +163,7 @@
         <button
             type="submit"
             id="save-entity"
+            (click)="save()"
             [disabled]="editForm.form.invalid || isSaving || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError"
             class="btn btn-primary"
         >
