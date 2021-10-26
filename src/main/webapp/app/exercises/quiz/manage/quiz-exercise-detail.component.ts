@@ -138,6 +138,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
     } = {};
 
+    /** Constant for indicating the maximum length of 250 characters **/
+    maxLength = 250;
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -662,7 +665,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
-            this.quizExercise.title.length < 250 &&
+            this.quizExercise.title.length < this.maxLength &&
             this.quizExercise.duration !== 0 &&
             releaseDateValidAndNotInPastCondition &&
             this.quizExercise.quizQuestions != undefined &&
@@ -674,14 +677,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                    return question.title && question.title !== '' && question.title.length < 250;
+                    return question.title && question.title !== '' && question.title.length < this.maxLength;
                 }
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
                     question.title &&
                     question.title !== '' &&
-                    question.title.length < 250 &&
+                    question.title.length < this.maxLength &&
                     dndQuestion.correctMappings &&
                     dndQuestion.correctMappings.length > 0 &&
                     this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -698,6 +701,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                     shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
+                    shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLength).length === 0 &&
                     !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
                     this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                 );
@@ -834,7 +838,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 translateValues: {},
             });
         }
-        if (this.quizExercise.title!.length >= 250) {
+        if (this.quizExercise.title!.length >= this.maxLength) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: {},
@@ -905,7 +909,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     });
                 }
             }
-            if (question.title && question.title.length >= 250) {
+            if (question.title && question.title.length >= this.maxLength) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
                     translateValues: { index: index + 1 },
@@ -964,7 +968,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!(shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= 250).length === 0)) {
+                if (!(shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLength).length === 0)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength',
                         translateValues: { index: index + 1 },
