@@ -156,18 +156,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Updates the description of the editedAuxiliaryRepository.
-     *
-     * @param editedAuxiliaryRepository
-     */
-    updateDescription(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
-            editedAuxiliaryRepository.description = newValue;
-            return editedAuxiliaryRepository.description;
-        };
-    }
-
-    /**
      * Refreshes auxiliary variables for auxiliary repository checks. Those variables are
      * used in the template to display warnings.
      */
@@ -581,13 +569,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     validIdeSelection() {
         return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
-    }
-
-    /**
-     * checking if all auxiliary preconditions are met
-     */
-    validAuxiliaryRepositorySettings(): boolean {
-        return this.auxiliaryRepositoriesValid && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
     }
 
     isEventInsideTextArea(event: Event): boolean {
