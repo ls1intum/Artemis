@@ -247,8 +247,6 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
-Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
-
 14. Chart instantiation
 =========================
 
@@ -259,19 +257,20 @@ The following is an example HTML template for a vertical bar chart
 .. code-block:: ts
 
     <div #containerRef class="col-md-9">
-            <ngx-charts-bar-vertical
-                [view]="[containerRef.offsetWidth, 300]"
-                [results]="ngxData"
-                [scheme]="color"
-                [legend]="false"
-                [xAxis]="true"
-                [yAxis]="true"
-                [yScaleMax]="20"
-                [roundEdges]="true"
-                [showDataLabel]="true"
-            >
-                <ng-template #tooltipTemplate let-model="model">{{ labelTitle }}: {{ roundValue((model.value / totalValue) * 100) }}% </ng-template>
-            </ngx-charts-bar-vertical>
+        <ngx-charts-bar-vertical
+            [view]="[containerRef.offsetWidth, 300]"
+            [results]="ngxData"
+            [scheme]="color"
+            [legend]="false"
+            [xAxis]="true"
+            [yAxis]="true"
+            [yScaleMax]="20"
+            [roundEdges]="true"
+            [showDataLabel]="true"
+        >
+            <ng-template #tooltipTemplate let-model="model">{{ labelTitle }}: {{ roundValue((model.value / totalValue) * 100) }}% </ng-template>
+        </ngx-charts-bar-vertical>
+    </div>
 
 There are a few tips when using this framework:
 
@@ -285,7 +284,7 @@ For more information visit https://swimlane.gitbook.io/ngx-charts/
 The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
 a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
 
-..code-block:: ts
+.. code-block:: ts
 
     ::ng-deep .textDataLabel {
         font-weight: bolder;
@@ -296,3 +295,5 @@ a corresponding style sheet. Adapting the font-size and weight of data labels wo
 First, annotate the parent container with a reference (in the example ``#containerRef``).
 Then, when configuring the dimensions of the chart in ``[view]``, insert ``containerRef.offsetWidth`` instead
 of an specific value for the width.
+
+Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
