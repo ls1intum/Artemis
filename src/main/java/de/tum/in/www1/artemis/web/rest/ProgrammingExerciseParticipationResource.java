@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -42,12 +43,12 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final GradingCriterionRepository gradingCriterionRepository;
+    private final ExerciseDateService exerciseDateService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            GradingCriterionRepository gradingCriterionRepository) {
+            ExerciseDateService exerciseDateService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -55,7 +56,7 @@ public class ProgrammingExerciseParticipationResource {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -77,7 +78,7 @@ public class ProgrammingExerciseParticipationResource {
             // hide details that should not be shown to the students
             participation.getExercise().filterSensitiveInformation();
 
-            final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
+            final boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
             for (Result result : participation.getResults()) {
                 result.filterSensitiveInformation();
                 result.filterSensitiveFeedbacks(isBeforeDueDate);
@@ -104,7 +105,7 @@ public class ProgrammingExerciseParticipationResource {
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-            final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
+            final boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
             result.get().filterSensitiveInformation();
             result.get().filterSensitiveFeedbacks(isBeforeDueDate);
         }

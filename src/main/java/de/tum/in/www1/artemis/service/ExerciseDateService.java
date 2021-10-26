@@ -67,6 +67,15 @@ public class ExerciseDateService {
     }
 
     /**
+     * Checks if the due date for the given participation is in the future.
+     * @param participation in a course or exam exercise.
+     * @return true, if the due date has not yet passed.
+     */
+    public boolean isBeforeDueDate(Participation participation) {
+        return !isAfterDueDate(participation);
+    }
+
+    /**
      * Gets either the individual due date for a participation if present or else the exercise due date if present.
      * @param participation of a student in an exercise.
      * @return the individual due date, or the exercise due date, or nothing.

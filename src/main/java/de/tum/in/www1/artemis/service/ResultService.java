@@ -49,9 +49,11 @@ public class ResultService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService) {
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
@@ -63,6 +65,7 @@ public class ResultService {
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
         this.authCheckService = authCheckService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -202,7 +205,7 @@ public class ResultService {
                 result.filterSensitiveFeedbacks(!exam.resultsPublished());
             }
             else {
-                result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
+                result.filterSensitiveFeedbacks(exerciseDateService.isBeforeDueDate(result.getParticipation()));
             }
             feedbacks = result.getFeedbacks();
 

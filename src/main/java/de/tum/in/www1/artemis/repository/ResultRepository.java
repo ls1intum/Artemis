@@ -46,6 +46,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "participation" })
+    List<Result> findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(Long exerciseId);
+
     /**
      * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
      *
@@ -525,12 +528,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * submit the result means it is saved with a calculated score, result string and a completion date.
+     * Submitting the result means it is saved with a calculated score, result string and a completion date.
      * @param result the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
+     * @param dueDate before which the result is considered to be rated
      * @return the saved result
      */
-    default Result submitResult(Result result, Exercise exercise) {
+    default Result submitResult(Result result, Exercise exercise, Optional<ZonedDateTime> dueDate) {
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
@@ -540,7 +544,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             result.setRated(true);
         }
         else {
-            result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+            result.setRatedIfNotExceeded(dueDate.orElse(null), result.getSubmission().getSubmissionDate());
         }
 
         result.setCompletionDate(ZonedDateTime.now());

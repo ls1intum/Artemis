@@ -333,7 +333,7 @@ public class ProgrammingExerciseGradingService {
             return Optional.empty();
         }
 
-        boolean isBeforeDueDate = !exerciseDateService.isAfterDueDate(participation);
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
         final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
 
         calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
@@ -353,7 +353,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(Participation participation, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean isBeforeDueDate = !exerciseDateService.isAfterDueDate(participation);
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }
 
