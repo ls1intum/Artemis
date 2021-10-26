@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { combineLatest, map, Subscription } from 'rxjs';
@@ -63,7 +63,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
         private router: Router,
-        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     /**
@@ -98,10 +97,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.filter(this.filterFn).sort(this.overviewSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
             this.isLoading = false;
-            console.log('posts: ', posts);
-            console.log(this.currentPostContextFilter);
-            this.changeDetectorRef.markForCheck();
-            this.changeDetectorRef.detectChanges();
         });
     }
 

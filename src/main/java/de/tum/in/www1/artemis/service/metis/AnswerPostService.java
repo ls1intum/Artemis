@@ -132,7 +132,7 @@ public class AnswerPostService extends PostingService {
      *
      * @param answerPost answer post that is reacted on
      * @param reaction   reaction that was added by a user
-     * @param courseId   if of course the answer post belong to
+     * @param courseId   id of the course the answer post belongs to
      */
     public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);

@@ -116,8 +116,11 @@ public class PostService extends PostingService {
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
         boolean contextHasChanged = false;
+        // depending on if there is a context change we need to broadcast different information
         if (!existingPost.hasSameContext(post)) {
             contextHasChanged = true;
+            // in case the context changed, a post is moved from one context (page) to another
+            // i.e., it has to be treated as deleted post in the old context
             broadcastForPost(new MetisPostDTO(existingPost, MetisPostAction.DELETE_POST), course);
         }
 
@@ -147,10 +150,11 @@ public class PostService extends PostingService {
         // depending on if there is a context change we need to broadcast different information
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
-            // i.e.,
+            // i.e., it has to be treated as newly created post in the new context
             broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.CREATE_POST), course);
         }
         else {
+            // in case the context did not change we emit with trigger a post update via websocket
             broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
         }
         return updatedPost;
@@ -244,7 +248,7 @@ public class PostService extends PostingService {
      *
      * @param courseId          id of the course the post belongs to
      * @param courseWideContext specific course-wide context to filter course get posts for
-     * @return list of posts for a cretain course-wide contex
+     * @return list of posts for a certain course-wide context
      */
     public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();

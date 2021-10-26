@@ -96,3 +96,5 @@ export interface ContextInformation {
  * each component is either a string or a number
  */
 export type RouteComponents = (string | number)[];
+
+export const MetisWebsocketChannelPrefix = '/topic/metis/';

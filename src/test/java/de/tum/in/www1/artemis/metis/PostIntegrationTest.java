@@ -238,6 +238,58 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext1_asTutor() throws Exception {
+        // update exercise post
+        Post postToUpdate = existingExercisePosts.get(0);
+        // change to context to lecture
+        postToUpdate.setExercise(null);
+        postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext2_asTutor() throws Exception {
+        // update lecture post
+        Post postToUpdate = existingLecturePosts.get(0);
+        // change to context to exercise
+        postToUpdate.setLecture(null);
+        postToUpdate.setExercise(this.existingExercisePosts.get(0).getExercise());
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext3_asTutor() throws Exception {
+        // update course-wide post
+        Post postToUpdate = existingCourseWidePosts.get(0);
+        // change to context to lecture
+        postToUpdate.setCourseWideContext(null);
+        postToUpdate.setCourse(null);
+        postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext4_asTutor() throws Exception {
+        // update course post
+        Post postToUpdate = existingCourseWidePosts.get(0);
+        // change to course post with different course-wide context
+        postToUpdate.setCourseWideContext(CourseWideContext.RANDOM);
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testEditPost_asStudent() throws Exception {
         // update own post (index 0)--> OK
@@ -251,6 +303,23 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testEditPostByChangingContext_asStudent() throws Exception {
+        // update exercise post
+        Post postToNotUpdate = existingExercisePosts.get(0);
+        // change to context to lecture
+        postToNotUpdate.setExercise(null);
+        postToNotUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
+
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.OK);
+        // no effect on post context
+        assertThat(notUpdatedPost.getCourseWideContext()).isEqualTo(null);
+        assertThat(notUpdatedPost.getCourse()).isEqualTo(null);
+        assertThat(notUpdatedPost.getLecture()).isEqualTo(null);
+        assertThat(notUpdatedPost.getExercise()).isEqualTo(existingExercisePosts.get(2).getExercise());
     }
 
     @Test

@@ -11,7 +11,16 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { ContextInformation, CourseWideContext, DisplayPriority, MetisPostAction, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
+import {
+    ContextInformation,
+    CourseWideContext,
+    DisplayPriority,
+    MetisPostAction,
+    MetisWebsocketChannelPrefix,
+    PageType,
+    PostContextFilter,
+    RouteComponents,
+} from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -23,7 +32,7 @@ import dayjs from 'dayjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
-    private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
+    public posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private currentPostContextFilter: PostContextFilter = {};
     private user: User;
@@ -150,12 +159,12 @@ export class MetisService implements OnDestroy {
         ) {
             // if the context changed, we need to fetch posts before doing the content filtering and sorting
             this.currentPostContextFilter = postContextFilter;
-            this.createSubscriptionFromPostContextFilter();
             this.postService.getPosts(this.courseId, this.currentPostContextFilter).subscribe((res) => {
                 // cache the fetched posts, that can be emitted on next call of this `getFilteredPosts`
                 // that does not require to send a request to actually fetch posts from the DB
                 this.cachedPosts = res.body!;
                 this.posts$.next(res.body!);
+                this.createSubscriptionFromPostContextFilter();
             });
         } else {
             // if we do not require force update, e.g. because only the sorting criterion changed,
@@ -166,7 +175,6 @@ export class MetisService implements OnDestroy {
 
     /**
      * creates a new post by invoking the post service
-     * fetches the posts for the currently set filter on response and updates course tags
      * @param {Post} post to be created
      * @return {Observable<Post>} created post
      */
@@ -176,7 +184,6 @@ export class MetisService implements OnDestroy {
 
     /**
      * creates a new answer post by invoking the answer post service
-     * fetches the posts for the currently set filter on response
      * @param {AnswerPost} answerPost to be created
      * @return {Observable<AnswerPost>} created answer post
      */
@@ -185,8 +192,7 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * updates a given posts by invoking the post service,
-     * fetches the posts for the currently set filter on response and updates course tags
+     * updates a given posts by invoking the post service
      * @param {Post} post to be updated
      * @return {Observable<Post>} updated post
      */
@@ -195,8 +201,7 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * updates a given answer posts by invoking the answer post service,
-     * fetches the posts for the currently set filter on response
+     * updates a given answer posts by invoking the answer post service
      * @param {AnswerPost} answerPost to be updated
      * @return {Observable<AnswerPost>} updated answer post
      */
@@ -216,7 +221,6 @@ export class MetisService implements OnDestroy {
 
     /**
      * deletes a post by invoking the post service
-     * fetches the posts for the currently set filter on response and updates course tags
      * @param {Post} post to be deleted
      */
     deletePost(post: Post): void {
@@ -225,7 +229,6 @@ export class MetisService implements OnDestroy {
 
     /**
      * deletes an answer post by invoking the post service
-     * fetches the posts for the currently set filter on response
      * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
@@ -234,7 +237,6 @@ export class MetisService implements OnDestroy {
 
     /**
      * creates a new reaction
-     * fetches the posts for the currently set filter on response
      * @param {Reaction} reaction to be created
      * @return {Observable<Reaction>} created reaction
      */
@@ -244,7 +246,6 @@ export class MetisService implements OnDestroy {
 
     /**
      * deletes an existing reaction
-     * fetches the posts for the currently set filter on response
      * @param {Reaction} reaction to be deleted
      */
     deleteReaction(reaction: Reaction): Observable<void> {
@@ -380,7 +381,14 @@ export class MetisService implements OnDestroy {
         return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 
-    private createWebsocketSubscription(channel: string): void {
+    /**
+     * Creates (and updates) the websocket channel for receiving messages in dedicated channels;
+     * On Message reception, subsequent actions for updating the dependant components are defined based on the MetisPostAction encapsulated in the MetisPostDTO (message payload);
+     * Updating the components is achieved by manipulating the cached (i.e., currently visible posts) accordingly,
+     * and emitting those as new value for the `posts` observable via the getFilteredPosts method
+     * @param channel which the metis service is subscribed to
+     */
+    createWebsocketSubscription(channel: string): void {
         // if channel subscription does not change, do nothing
         if (this.subscriptionChannel === channel) {
             return;
@@ -396,12 +404,15 @@ export class MetisService implements OnDestroy {
             postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
             switch (postDTO.action) {
                 case MetisPostAction.CREATE_POST:
-                    // check that ensure that only posts with correct context are appended
+                    // determine if either the current post context filter is not set to a specific course-wide topic
+                    // or the sent post has a different context,
+                    // or the sent post has a course-wide context which matches the current filter
                     if (
                         !this.currentPostContextFilter.courseWideContext ||
                         !postDTO.post.courseWideContext ||
                         this.currentPostContextFilter.courseWideContext === postDTO.post.courseWideContext
                     ) {
+                        // we can add the sent post to the cached posts without violating the current context filter setting
                         this.cachedPosts.push(postDTO.post);
                     }
                     if (postDTO.post.tags && postDTO.post.tags.length > 0) {
@@ -428,12 +439,19 @@ export class MetisService implements OnDestroy {
                 default:
                     break;
             }
+            // emit updated version of cachedPosts to subscribing components
+            // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
             this.getFilteredPosts(this.currentPostContextFilter, false);
         });
     }
 
+    /**
+     * Determines the channel to be used for websocket communication based on the current post context filter,
+     * i.e., when being on a lecture page, the context is a certain lectureId (e.g., 1), the channel is set to '/topic/metis/lectures/1';
+     * By calling the createWebsocketSubscription method with this channel as parameter, the metis service also subscribes to that messages in this channel
+     */
     private createSubscriptionFromPostContextFilter(): void {
-        let channel = '/topic/metis/';
+        let channel = MetisWebsocketChannelPrefix;
         if (this.currentPostContextFilter.exerciseId) {
             channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
         } else if (this.currentPostContextFilter.lectureId) {
