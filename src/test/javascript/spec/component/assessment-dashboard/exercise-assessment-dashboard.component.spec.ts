@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError, empty } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -66,6 +66,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
@@ -182,7 +183,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: jest.SpyInstance;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([])];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)];
+
     const declarations = [
         ExerciseAssessmentDashboardComponent,
         MockComponent(TutorLeaderboardComponent),
@@ -339,8 +341,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toEqual(8);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toEqual(2);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toEqual(7);
-        expect(comp.totalAssessmentPercentage.inTime).toEqual(75);
-        expect(comp.totalAssessmentPercentage.late).toEqual(20);
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 

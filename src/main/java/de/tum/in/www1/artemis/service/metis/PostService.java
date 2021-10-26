@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -63,20 +63,29 @@ public class PostService extends PostingService {
     public Post createPost(Long courseId, Post post) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        // check
+        // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
+        Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
+        // announcements can only be created by instructors
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+            // display priority of announcement is set to pinned per default
+            post.setDisplayPriority(DisplayPriority.PINNED);
+            Post savedPost = postRepository.save(post);
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
+            return savedPost;
+        }
         Post savedPost = postRepository.save(post);
 
-        sendNotification(savedPost);
+        sendNotification(savedPost, course);
 
         return savedPost;
     }
@@ -350,22 +359,22 @@ public class PostService extends PostingService {
      *
      * @param post post that triggered the notification
      */
-    void sendNotification(Post post) {
+    void sendNotification(Post post, Course course) {
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
+            return;
+        }
         // notify via exercise
         if (post.getExercise() != null) {
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
         }
     }
 

@@ -42,7 +42,7 @@
             <div class="col ps-0">
                 <h5 class="d-inline">
                     <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
-                        round(feedback.credits, 1) + 'P'
+                        roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P'
                     }}</span>
                 </h5>
                 <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>

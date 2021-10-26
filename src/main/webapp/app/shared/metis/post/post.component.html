@@ -3,13 +3,21 @@
     <div class="col">
         <div class="mb-1">
             <fa-icon
-                *ngIf="postIsResolved"
+                *ngIf="postIsResolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT"
                 [icon]="'check-square'"
                 iconSize="xs"
                 class="col-auto pe-0 resolved"
-                [ngbTooltip]="'artemisApp.metis.postMarkedAsResolvedTooltip' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
             >
             </fa-icon>
+            <fa-icon
+                *ngIf="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
+                [icon]="'bullhorn'"
+                iconSize="xs"
+                class="col-auto pe-0"
+                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
+                [styles]="{ color: '#0f6ab4' }"
+            ></fa-icon>
             <span class="col-auto">
                 <a
                     class="post-title"
