@@ -39,6 +39,8 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final ModelElementRepository modelElementRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
@@ -50,6 +52,7 @@ public class ModelingSubmissionService extends SubmissionService {
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
         this.modelElementRepository = modelElementRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -102,7 +105,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (modelingExercise.isExamExercise() || !modelingExercise.isEnded()) {
+        if (modelingExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             modelingSubmission.setSubmitted(true);
         }
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());

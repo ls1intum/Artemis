@@ -523,15 +523,6 @@ public abstract class Exercise extends DomainObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    // ToDo: QuizExercises do not use individual due dates
-    // ⇒ move to QuizExercise and replace other usages by exerciseDateService.latestIndividualDueDate
-    public Boolean isEnded() {
-        if (getDueDate() == null) {
-            return Boolean.FALSE;
-        }
-        return ZonedDateTime.now().isAfter(getDueDate());
-    }
-
     public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }

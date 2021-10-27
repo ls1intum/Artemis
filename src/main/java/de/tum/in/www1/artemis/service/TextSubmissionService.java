@@ -33,6 +33,8 @@ public class TextSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
@@ -43,6 +45,7 @@ public class TextSubmissionService extends SubmissionService {
         this.textSubmissionRepository = textSubmissionRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -69,7 +72,7 @@ public class TextSubmissionService extends SubmissionService {
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (textExercise.isExamExercise() || !textExercise.isEnded()) {
+        if (textExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
         textSubmission = save(textSubmission, participation, textExercise, principal);

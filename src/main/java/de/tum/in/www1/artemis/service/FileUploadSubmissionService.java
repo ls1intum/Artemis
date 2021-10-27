@@ -34,6 +34,8 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileService fileService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
@@ -42,6 +44,7 @@ public class FileUploadSubmissionService extends SubmissionService {
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -136,7 +139,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || !exercise.isEnded()) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             fileUploadSubmission.setSubmitted(true);
         }
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());

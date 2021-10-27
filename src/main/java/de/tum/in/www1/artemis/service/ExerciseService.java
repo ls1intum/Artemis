@@ -562,7 +562,7 @@ public class ExerciseService {
             Exercise exercise) {
         exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
 
-        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && !exercise.isEnded()) {
+        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && exerciseDateService.isBeforeLatestDueDate(exercise)) {
             if (exercise.getMode() == ExerciseMode.TEAM) {
                 Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
                 var participations = teamParticipations == null ? 0 : Math.toIntExact(teamParticipations);

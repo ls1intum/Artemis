@@ -30,11 +30,12 @@ public class ExerciseDateService {
     /**
      * Finds the latest individual due date for participants. If no individual due dates exist, then the exercise due date is returned.
      *
+     * Returns nothing if the exercise itself has no due date.
      * @param exerciseId of the exercise for which the latest due date should be returned.
      * @return the latest individual due date, or if not existing the exercise due date.
      * @throws EntityNotFoundException if no exercise with the given id can be found.
      */
-    public ZonedDateTime getLatestIndividualDueDate(Long exerciseId) {
+    public Optional<ZonedDateTime> getLatestIndividualDueDate(Long exerciseId) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         return getLatestIndividualDueDate(exercise);
     }
@@ -42,11 +43,17 @@ public class ExerciseDateService {
     /**
      * Finds the latest individual due date for participants. If no individual due dates exist, then the exercise due date is returned.
      *
+     * Returns nothing if the exercise itself has no due date.
      * @param exercise the exercise for which the latest due date should be returned.
      * @return the latest individual due date, or if not existing the exercise due date.
      */
-    public ZonedDateTime getLatestIndividualDueDate(Exercise exercise) {
-        return participationRepository.findLatestIndividualDueDate(exercise.getId()).orElse(exercise.getDueDate());
+    public Optional<ZonedDateTime> getLatestIndividualDueDate(Exercise exercise) {
+        if (exercise.getDueDate() == null) {
+            // early exit to avoid database call, same result would be produced
+            // in Optional.ofNullable(exercise.getDueDate()) below
+            return Optional.empty();
+        }
+        return participationRepository.findLatestIndividualDueDate(exercise.getId()).or(() -> Optional.ofNullable(exercise.getDueDate()));
     }
 
     /**
@@ -73,6 +80,18 @@ public class ExerciseDateService {
      */
     public boolean isBeforeDueDate(Participation participation) {
         return !isAfterDueDate(participation);
+    }
+
+    /**
+     * Checks if the current time is before the latest possible submission time.
+     *
+     * If no due date is set, returns true (a due date infinitely far in the future is assumed).
+     * @param exercise for which this should be checked.
+     * @return true, if the current time is before the due date.
+     */
+    public boolean isBeforeLatestDueDate(Exercise exercise) {
+        final ZonedDateTime now = ZonedDateTime.now();
+        return getLatestIndividualDueDate(exercise).map(now::isBefore).orElse(true);
     }
 
     /**
