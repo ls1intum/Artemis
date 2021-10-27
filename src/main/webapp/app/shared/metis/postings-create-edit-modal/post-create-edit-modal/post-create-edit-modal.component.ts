@@ -115,13 +115,17 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             .get('title')
             ?.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged())
             .subscribe((title: string) => {
-                console.log(title);
                 const tempPost = new Post();
                 this.setPostProperties(tempPost);
-                if (title) {
+                // determine if title is provided
+                if (title.length > 0) {
+                    // if title input field is not empty, invoke metis service to get similar posts
                     this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
                         this.similarPosts = similarPosts;
                     });
+                } else {
+                    // if title input field is empty, set similar posts to empty array to not show the list
+                    this.similarPosts = [];
                 }
             });
     }
