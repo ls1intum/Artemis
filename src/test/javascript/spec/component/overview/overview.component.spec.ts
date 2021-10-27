@@ -145,7 +145,7 @@ describe('Overview Component', () => {
             guidedTourService['startTour']();
 
             guidedTourComponentFixture.detectChanges();
-            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBeDefined();
+            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).not.toBe(null);
         }
 
         describe('Course Overview Tour', () => {
@@ -175,7 +175,7 @@ describe('Overview Component', () => {
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = navBarComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
-                        expect(selectedElement).toBeDefined();
+                        expect(selectedElement).not.toBe(null);
                     }
                 }
 
@@ -186,7 +186,7 @@ describe('Overview Component', () => {
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = courseCardComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
-                        expect(selectedElement).toBeDefined();
+                        expect(selectedElement).not.toBe(null);
                     }
                 }
 
@@ -197,7 +197,7 @@ describe('Overview Component', () => {
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = footerComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
-                        expect(selectedElement).toBeDefined();
+                        expect(selectedElement).not.toBe(null);
                     }
                 }
 
