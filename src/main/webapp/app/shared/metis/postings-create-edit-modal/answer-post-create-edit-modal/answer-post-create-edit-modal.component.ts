@@ -29,6 +29,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
+        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
@@ -47,6 +48,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
+        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;

@@ -26,12 +26,10 @@ export class CourseManagementPage {
 
     /**
      * Opens the students overview page of a course.
-     * @param courseName
-     * @param courseShortName
+     * @param courseId the id of the course
      */
-    openStudentOverviewOfCourse(courseName: string, courseShortName: string) {
-        // TODO: Generify the selector
-        this.getCourseCard(courseName, courseShortName).contains('0 Students').click();
+    openStudentOverviewOfCourse(courseId: number) {
+        cy.get(`[href="/course-management/${courseId}/groups/students"]`).click();
     }
 
     /**

@@ -168,7 +168,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 getExamWithInterestingExercisesForAssessmentDashboardStub = stub(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard');
                 getStatsForExamAssessmentDashboardStub = stub(examManagementService, 'getStatsForExamAssessmentDashboard');
                 toggleSecondCorrectionStub = stub(exerciseService, 'toggleSecondCorrection');
-                //
+
                 getCourseWithInterestingExercisesForTutorsStub = stub(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
                 getStatsForTutorsStub = stub(courseManagementService, 'getStatsForTutors');
 

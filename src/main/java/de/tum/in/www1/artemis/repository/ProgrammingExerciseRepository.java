@@ -429,15 +429,26 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
+    // Note: we have to use left join here to avoid issues in the where clause, there can be at most one indirection (e.g. c1.editorGroupName) in the WHERE clause when using "OR"
+    // Multiple different indirection in the WHERE clause (e.g. pe.course.instructorGroupName and ex.course.instructorGroupName) would not work
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            WHERE pe.course.instructorGroupName IN :#{#groupNames}
-                OR pe.course.editorGroupName IN :#{#groupNames}
-                OR pe.course.teachingAssistantGroupName IN :#{#groupNames}
-                    """)
+            SELECT pe FROM ProgrammingExercise pe LEFT JOIN pe.course c1 LEFT JOIN pe.exerciseGroup eg LEFT JOIN eg.exam ex LEFT JOIN ex.course c2
+            WHERE c1.instructorGroupName IN :#{#groupNames}
+                OR c1.editorGroupName IN :#{#groupNames}
+                OR c1.teachingAssistantGroupName IN :#{#groupNames}
+                OR c2.instructorGroupName IN :#{#groupNames}
+                OR c2.editorGroupName IN :#{#groupNames}
+                OR c2.teachingAssistantGroupName IN :#{#groupNames}
+            """)
     List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
-    List<ProgrammingExercise> findAllByCourse(Course course);
+    // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe LEFT JOIN pe.exerciseGroup eg LEFT JOIN eg.exam ex
+            WHERE pe.course = :#{#course}
+                OR ex.course = :#{#course}
+            """)
+    List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
     long countByShortNameAndCourse(String shortName, Course course);
 
@@ -448,7 +459,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
-     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in future.
+     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in the future.
      *
      * @return List<ProgrammingExercise>
      */

@@ -1,11 +1,6 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
+@import 'src/main/webapp/app/shared/metis/metis.component';
 
 .post-title {
     font-weight: 600;
-    color: #0f6ab4;
-
-    .reference-hash {
-        font-weight: 200;
-        color: $metis-light-gray;
-    }
+    color: $metis-blue;
 }

@@ -38,8 +38,8 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -111,6 +111,9 @@ public class CourseTestService {
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
 
+    @Autowired
+    private GroupNotificationService groupNotificationService;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -121,11 +124,8 @@ public class CourseTestService {
 
     private MockDelegate mockDelegate;
 
-    private GroupNotificationService groupNotificationService;
-
-    public void setup(MockDelegate mockDelegate, GroupNotificationService groupNotificationService) {
+    public void setup(MockDelegate mockDelegate) {
         this.mockDelegate = mockDelegate;
-        this.groupNotificationService = groupNotificationService;
 
         database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
 
@@ -136,14 +136,6 @@ public class CourseTestService {
 
     public void tearDown() {
         database.resetDatabase();
-    }
-
-    public CourseRepository getCourseRepo() {
-        return courseRepo;
-    }
-
-    public UserRepository getUserRepo() {
-        return userRepo;
     }
 
     // Test

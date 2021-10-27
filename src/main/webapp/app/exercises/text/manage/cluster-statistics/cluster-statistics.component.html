@@ -1,0 +1,48 @@
+<div class="container-fluid table-responsive">
+    <h4 jhiTranslate="artemisApp.textExercise.clusterStatistics.title"></h4>
+    <span jhiTranslate="artemisApp.textExercise.clusterStatistics.description"></span>
+    <table *ngIf="clusters && clusters.length > 0" class="table exercise-table guided-tour-exercise-table">
+        <thead>
+            <tr>
+                <th>
+                    <span jhiTranslate="artemisApp.textExercise.clusterStatistics.clusterId">Cluster ID</span>
+                </th>
+                <th>
+                    <span jhiTranslate="artemisApp.textExercise.clusterStatistics.reusedFeedbackRatio">Cluster Reused Feedback Ratio</span>
+                </th>
+                <th>
+                    <span jhiTranslate="artemisApp.textExercise.clusterStatistics.action">Action</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let cluster of clusters">
+                <td>{{ cluster.clusterId }}</td>
+                <td>
+                    <div class="pt-2">
+                        <jhi-progress-bar
+                            [tooltip]="'artemisApp.textExercise.clusterStatistics.reusedFeedbackRatioTooltip' | artemisTranslate"
+                            [percentage]="(cluster.numberOfAutomaticFeedbacks / cluster.clusterSize) * 100 || 0"
+                            [numerator]="cluster.numberOfAutomaticFeedbacks || 0"
+                            [denominator]="cluster.clusterSize || 0"
+                        >
+                        </jhi-progress-bar>
+                    </div>
+                </td>
+                <td>
+                    <button *ngIf="!cluster.disabled" class="btn btn-danger" (click)="setClusterDisabledPredicate(cluster.clusterId, true)">
+                        <span jhiTranslate="artemisApp.textExercise.clusterStatistics.disable">Disable</span>
+                    </button>
+                    <button *ngIf="cluster.disabled" class="btn btn-success" (click)="setClusterDisabledPredicate(cluster.clusterId, false)">
+                        <span jhiTranslate="artemisApp.textExercise.clusterStatistics.enable">Enable</span>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div>
+        <span class="badge bg-danger mt-4" *ngIf="clusters && clusters.length === 0" jhiTranslate="artemisApp.textExercise.clusterStatistics.noClustersFound"
+            ><b>No text clusters found for this exercise</b></span
+        >
+    </div>
+</div>

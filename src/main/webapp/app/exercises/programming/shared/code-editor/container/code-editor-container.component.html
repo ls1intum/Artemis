@@ -1,8 +1,8 @@
 <jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment" (onResize)="onGridResize($event)">
-    <div editorNavbar class="d-flex align-items-center">
+    <div editorNavbar class="d-flex flex-wrap align-items-center gap-2">
         <h4><ng-content select="[editorTitle]"></ng-content></h4>
         <ng-content select="[editorTitleActions]"></ng-content>
-        <div class="d-flex align-items-center ms-auto">
+        <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
             <ng-content select="[editorToolbar]"></ng-content>
             <jhi-code-editor-actions
                 *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
@@ -39,10 +39,11 @@
         [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
-        [feedbacks]="participation?.results && participation.results!.length > 0 && participation.results![0].feedbacks ? participation.results![0].feedbacks! : []"
+        [feedbacks]="(participation?.results && participation.results!.length > 0 && participation.results!.first()!.feedbacks) || []"
         [readOnlyManualFeedback]="readOnlyManualFeedback"
         [isTutorAssessment]="isTutorAssessment"
         [highlightDifferences]="highlightDifferences"
+        [course]="course"
         (onFileContentChange)="onFileContentChange($event)"
         (onUpdateFeedback)="updateFeedback($event!)"
         (onError)="onError($event)"

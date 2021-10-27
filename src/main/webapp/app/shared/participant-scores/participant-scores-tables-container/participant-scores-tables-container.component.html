@@ -6,11 +6,11 @@
 
 <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
 <span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
-    >{{ 'artemisApp.participantScores.averageScore' | artemisTranslate: { avg: round(avgScore, 1) } }}
+    >{{ 'artemisApp.participantScores.averageScore' | artemisTranslate: { avg: roundScoreSpecifiedByCourseSettings(avgScore, course) } }}
 </span>
 
 <span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
-    >{{ 'artemisApp.participantScores.averageRatedScore' | artemisTranslate: { avg: round(avgRatedScore, 1) } }}
+    >{{ 'artemisApp.participantScores.averageRatedScore' | artemisTranslate: { avg: roundScoreSpecifiedByCourseSettings(avgRatedScore, course) } }}
 </span>
 
 <span *ngIf="avgGrade" class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">
@@ -23,11 +23,12 @@
 </span>
 
 <div [ngSwitch]="mode">
-    <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores"></jhi-participant-scores-table>
+    <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores" [course]="course"></jhi-participant-scores-table>
     <jhi-participant-scores-average-table
         *ngSwitchCase="'average'"
         [isLoading]="isLoading"
         [participantAverageScores]="participantScoresAverage"
         [isBonus]="isBonus"
+        [course]="course"
     ></jhi-participant-scores-average-table>
 </div>
