@@ -114,12 +114,15 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.formGroup
             .get('title')
             ?.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged())
-            .subscribe(() => {
+            .subscribe((title: string) => {
+                console.log(title);
                 const tempPost = new Post();
                 this.setPostProperties(tempPost);
-                this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
-                    this.similarPosts = similarPosts;
-                });
+                if (title) {
+                    this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
+                        this.similarPosts = similarPosts;
+                    });
+                }
             });
     }
 
