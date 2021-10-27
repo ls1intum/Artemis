@@ -82,13 +82,10 @@
         canvas {
             cursor: pointer;
             z-index: 1;
-            width: 150px;
-            height: 150px;
         }
 
         .no-statistics {
             display: flex;
-            height: 150px;
             justify-content: center;
             flex-direction: column;
             margin-bottom: 0;

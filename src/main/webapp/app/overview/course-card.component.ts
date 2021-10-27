@@ -13,7 +13,7 @@ import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 @Component({
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
-    styleUrls: ['course-card.scss'],
+    styleUrls: ['course-card.component.scss'],
 })
 export class CourseCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
