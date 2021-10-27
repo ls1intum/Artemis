@@ -1,7 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { CookieService } from 'ngx-cookie-service';
+import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
@@ -9,10 +7,8 @@ import { of, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
@@ -21,9 +17,7 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -46,21 +40,16 @@ describe('CodeEditorFileBrowserComponent', () => {
             imports: [ArtemisTestModule, TreeviewModule.forRoot()],
             declarations: [
                 CodeEditorFileBrowserComponent,
-                MockComponent(CodeEditorStatusComponent),
                 CodeEditorFileBrowserFileComponent,
                 CodeEditorFileBrowserFolderComponent,
                 CodeEditorFileBrowserCreateNodeComponent,
-                MockPipe(ArtemisTranslatePipe),
+                MockComponent(CodeEditorStatusComponent),
+                TranslatePipeMock,
             ],
             providers: [
-                CodeEditorFileService,
-                DeviceDetectorService,
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
             ],
         })
             .compileComponents()
