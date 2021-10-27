@@ -6,3 +6,11 @@
     width: 10px;
     height: 10px;
 }
+
+:host::ng-deep.legend-labels {
+    background-color: transparent !important;
+}
+
+:host::ng-deep.horizontal-legend li {
+    display: block !important;
+}

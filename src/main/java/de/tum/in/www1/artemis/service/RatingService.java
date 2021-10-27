@@ -58,6 +58,15 @@ public class RatingService {
     }
 
     /**
+     * Count all ratings for the "exerciseId" Exerise
+     * @param exerciseId - Id of the exercise that the ratings are fetched for
+     * @return number of ratings for the exercise
+     */
+    public long countRatingsByExerciseId(long exerciseId) {
+        return ratingRepository.countByResult_Participation_Exercise_Id(exerciseId);
+    }
+
+    /**
      * Persist a new Rating
      *
      * @param resultId    - Id of the rating that should be persisted
