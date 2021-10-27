@@ -32,7 +32,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
     formComplaintType?: ComplaintType;
     // The number of complaints that the student is still allowed to submit in the course.
-    remaindingNumberOfComplaints = 0;
+    remainingNumberOfComplaints = 0;
     isCorrectUserToFileAction = false;
     isExamMode: boolean;
     showSection = false;
@@ -66,7 +66,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
                 this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
-                    this.remaindingNumberOfComplaints = allowedComplaints;
+                    this.remainingNumberOfComplaints = allowedComplaints;
                 });
             }
             this.loadPotentialComplaint();

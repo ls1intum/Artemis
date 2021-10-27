@@ -16,7 +16,7 @@ export class ComplaintsFormComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
     @Input() examId?: number;
-    @Input() remaindingNumberOfComplaints: number;
+    @Input() remainingNumberOfComplaints: number;
     @Input() complaintType: ComplaintType;
     @Input() isCurrentUserSubmissionAuthor = false;
     @Output() submit: EventEmitter<void> = new EventEmitter();
