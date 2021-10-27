@@ -95,8 +95,8 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        final var exerciseDueDate = modelingExercise.getDueDate();
-        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 

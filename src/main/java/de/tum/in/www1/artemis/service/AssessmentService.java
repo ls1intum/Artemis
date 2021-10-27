@@ -224,7 +224,7 @@ public class AssessmentService {
     public Result submitManualAssessment(long resultId, Exercise exercise, ZonedDateTime submissionDate) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
+        result.setRatedIfNotExceeded(exerciseDateService.getDueDate(result.getParticipation()).orElse(null), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system

@@ -22,6 +22,10 @@ public interface ParticipationInterface {
 
     void setInitializationDate(ZonedDateTime initializationDate);
 
+    ZonedDateTime getIndividualDueDate();
+
+    void setIndividualDueDate(ZonedDateTime individualDueDate);
+
     Set<Submission> getSubmissions();
 
     void addSubmission(Submission submission);

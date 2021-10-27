@@ -59,12 +59,17 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     default boolean isLocked() {
         if (this instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = getProgrammingExercise();
+
+            final ZonedDateTime now = ZonedDateTime.now();
+            boolean isAfterDueDate = (getIndividualDueDate() != null && getIndividualDueDate().isBefore(now))
+                    || (programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(now));
+
             // Editing is allowed if build and test after due date is not set and no manual correction is involved
             // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
             boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
                     && programmingExercise.getAssessmentType() != AssessmentType.MANUAL && programmingExercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC
                     && !programmingExercise.areManualResultsAllowed();
-            return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
+            return isAfterDueDate && !isEditingAfterDueAllowed;
         }
         return false;
     }

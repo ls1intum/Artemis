@@ -101,8 +101,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
-        final var exerciseDueDate = exercise.getDueDate();
-        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         if (file.isEmpty()) {
