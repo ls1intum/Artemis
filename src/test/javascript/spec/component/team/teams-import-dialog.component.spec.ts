@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NgForm, NgModel } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,7 +17,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { flatMap } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -55,15 +55,16 @@ describe('TeamsImportDialogComponent', () => {
         comp.conflictingRegistrationNumbersSet = new Set();
     }
 
-    beforeEach(
-        waitForAsync(() => {
+    beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockModule(FormsModule)],
+                imports: [ArtemisTestModule],
                 declarations: [
                     TeamsImportDialogComponent,
                     MockComponent(TeamsImportFromFileFormComponent),
                     MockDirective(DeleteButtonDirective),
                     MockDirective(TranslateDirective),
+                    MockDirective(NgModel),
+                    MockDirective(NgForm),
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(AlertComponent),
                     MockComponent(AlertErrorComponent),
@@ -72,16 +73,15 @@ describe('TeamsImportDialogComponent', () => {
                     MockComponent(HelpIconComponent),
                 ],
                 providers: [MockProvider(TeamService)],
-            }).compileComponents();
-        }),
+            }).compileComponents().then(() => {
+                fixture = TestBed.createComponent(TeamsImportDialogComponent);
+                comp = fixture.componentInstance;
+                ngbActiveModal = TestBed.inject(NgbActiveModal);
+                alertService = TestBed.inject(AlertService);
+                teamService = TestBed.inject(TeamService);
+            });
+        }
     );
-    beforeEach(() => {
-        fixture = TestBed.createComponent(TeamsImportDialogComponent);
-        comp = fixture.componentInstance;
-        ngbActiveModal = TestBed.inject(NgbActiveModal);
-        alertService = TestBed.inject(AlertService);
-        teamService = TestBed.inject(TeamService);
-    });
 
     describe('OnInit', () => {
         beforeEach(() => {
