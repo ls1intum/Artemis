@@ -25,24 +25,14 @@
 >
     <div editorTitle>
         <span>{{ exercise?.title }}</span>
-        <!-- prettier-ignore -->
-        <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
-            *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
+        <span
+            >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
+            }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
+            >]
             <jhi-included-in-score-badge
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span
-
-
-
-
-
-
-
-
-
-
-
-
+                [includedInOverallScore]="exercise.includedInOverallScore"
+            ></jhi-included-in-score-badge></span
         ><br />
         <span *ngIf="exercise.submissionPolicy"
             >{{ exercise.submissionPolicy.submissionLimit }} {{ 'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed' | artemisTranslate }}</span

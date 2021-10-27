@@ -331,7 +331,7 @@
                         "required": "Der Punktabzug muss gesetzt sein!"
                     },
                     "penaltyInfoLabel": "Strafe für Überzug",
-                    "triggerAllInformation": "Anders als für Abgaberichtlinien mit Repository Sperre, tritt die Auswirkung von Abgaberichtlinien mit Überzugsstrafen bei Aktualisierungen nicht sofort ein. Alle Abgaben müssen erneut bewertet werden, damit das Ergebnis aktualisiert wird."
+                    "triggerAllInformation": "Wird der Punktabzug für Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
                 },
                 "submissionPolicyType": {
                     "title": "Typ der Abgaberichtlinie",

@@ -331,7 +331,7 @@
                         "required": "The penalty must be set!"
                     },
                     "penaltyInfoLabel": "Exceeding Penalty",
-                    "triggerAllInformation": "Unlike for lock repository policies, all changes regarding submission penalty policies do not take effect immediately after updating or (de)activating the policy. Use the Re-evaluate all functionality to update scores and result strings."
+                    "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
                 },
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
