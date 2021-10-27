@@ -142,6 +142,17 @@ public class ComplaintService {
         return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
+    /**
+     * Counts the number of responses to feedback requests for the given course id
+     *
+     * @param courseId the id of the course
+     * @return the number of responses
+     */
+    public long countMoreFeedbackRequestResponsesByCourseId(long courseId) {
+        return complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
+                ComplaintType.MORE_FEEDBACK);
+    }
+
     public long countComplaintsByExerciseId(long exerciseId) {
         return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
     }
