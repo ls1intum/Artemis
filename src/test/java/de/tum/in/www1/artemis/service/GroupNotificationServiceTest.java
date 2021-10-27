@@ -45,6 +45,8 @@ public class GroupNotificationServiceTest {
     @Mock
     private static User user;
 
+    private static List<User> users = new ArrayList<>();
+
     @Mock
     private static GroupNotificationRepository groupNotificationRepository;
 
@@ -85,6 +87,14 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Exam exam;
 
+    // Problem statement of an exam exercise where the lenght is larger than the allowed max notification target size in the db
+    // allowed <= 255, this one has ~ 500
+    private static final String EXAM_PROBLEM_STATEMENT = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore "
+            + "et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. "
+            + "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, "
+            + "consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, "
+            + "sed diam voluptua. At vero eos et accusam et justo duo dolores et e";
+
     @Mock
     private static Attachment attachment;
 
@@ -115,7 +125,20 @@ public class GroupNotificationServiceTest {
      */
     @BeforeAll
     public static void setUp() {
+        mailService = mock(MailService.class);
+        doNothing().when(mailService).sendNotificationEmailForMultipleUsers(any(), any(), any());
+
+        course = mock(Course.class);
+        when(course.getId()).thenReturn(COURSE_ID);
+
+        user = mock(User.class);
+
+        users.add(user);
+
         userRepository = mock(UserRepository.class);
+        when(userRepository.getStudents(course)).thenReturn(users);
+        when(userRepository.getInstructors(course)).thenReturn(users);
+        when(userRepository.getEditors(course)).thenReturn(users);
 
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
@@ -127,12 +150,7 @@ public class GroupNotificationServiceTest {
 
         groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository, mailService, notificationSettingsService));
 
-        user = mock(User.class);
-
         archiveErrors = new ArrayList<>();
-
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
 
         exam = mock(Exam.class);
         when(exam.getId()).thenReturn(EXAM_ID);
@@ -170,11 +188,15 @@ public class GroupNotificationServiceTest {
 
         reset(groupNotificationService);
 
+        reset(notificationSettingsService);
+
         reset(attachment);
         when(attachment.getLecture()).thenReturn(lecture);
 
         reset(groupNotificationRepository);
         when(groupNotificationRepository.save(any())).thenReturn(null);
+
+        reset(messagingTemplate);
 
         capturedNotification = null;
     }
@@ -505,4 +527,72 @@ public class GroupNotificationServiceTest {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.EXAM_ARCHIVE_FINISHED_TITLE);
     }
+
+    /// Save & Send related Tests
+
+    // Exam Exercise Update
+
+    /**
+     * Basic Test for saveAndSend method for an exam exercise update (notification)
+     * Checks if a correct notification was created and no settings or email functionality was invoked
+     */
+    @Test
+    public void testSaveAndSend_ExamExerciseUpdate_basics() {
+        setExerciseStatus(ExerciseStatus.EXAM_EXERCISE_STATUS);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+
+        verify(groupNotificationRepository, times(3)).save(any());
+        verify(messagingTemplate, times(3)).convertAndSend(any(), notificationCaptor.capture());
+        capturedNotification = notificationCaptor.getValue();
+        assertThat(capturedNotification.getTitle()).isEqualTo(NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
+
+        // there should be no interaction with settings or email services
+        verify(notificationSettingsService, times(0)).checkNotificationTypeForEmailSupport(any());
+    }
+
+    /**
+     * Test for saveAndSend method for an exam exercise update (notification)
+     * Checks if the notification target contains the problem statement for transmitting it to the user via WebSocket
+     */
+    @Test
+    public void testSaveAndSend_ExamExerciseUpdate_correctTargetForSendingViaWebSocket() {
+        setExerciseStatus(ExerciseStatus.EXAM_EXERCISE_STATUS);
+        when(exercise.getProblemStatement()).thenReturn(EXAM_PROBLEM_STATEMENT);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+
+        verify(messagingTemplate, times(3)).convertAndSend(any(), notificationCaptor.capture());
+        capturedNotification = notificationCaptor.getValue();
+
+        // The notification target of notification that will be sent to the user via webapp at runtime should contain the problem statement again
+        assertThat(capturedNotification.getTarget().length()).isGreaterThanOrEqualTo(EXAM_PROBLEM_STATEMENT.length());
+    }
+
+    // Course related Notifications -> should use Settings & Email Services
+
+    /**
+     * Test for saveAndSend method for an exam exercise update (notification)
+     * Checks if the notification target contains the problem statement for transmitting it to the user via WebSocket
+     */
+    @Test
+    public void testSaveAndSend_CourseRelatedNotifications() {
+        when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any())).thenReturn(true);
+
+        setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+
+        // inside public saveAndSend method
+        verify(groupNotificationRepository, times(3)).save(any());
+        verify(messagingTemplate, times(3)).convertAndSend(any(), (Notification) any());
+        verify(notificationSettingsService, times(3)).checkNotificationTypeForEmailSupport(any());
+
+        // inside private prepareSendingGroupEmail method
+        verify(userRepository, times(1)).getStudents(course);
+        verify(userRepository, times(1)).getInstructors(course);
+        verify(userRepository, times(1)).getEditors(course);
+
+        // inside private prepareGroupNotificationEmail
+        verify(mailService, times(3)).sendNotificationEmailForMultipleUsers(any(), any(), any());
+    }
+
 }
