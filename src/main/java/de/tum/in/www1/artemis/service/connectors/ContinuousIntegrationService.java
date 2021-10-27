@@ -291,6 +291,7 @@ public interface ContinuousIntegrationService {
      * Name of the docker image used for the given programming language.
      *
      * @param language The programming language for which the docker image name is requested
+     * @param projectType The project type of the docker image to return
      * @return The name of the image (published on hub.docker.com)
      */
     static String getDockerImageName(ProgrammingLanguage language, Optional<ProjectType> projectType) {
