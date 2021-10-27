@@ -6,6 +6,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
@@ -60,6 +61,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnDestroy(): void {
@@ -124,14 +126,9 @@ export class UsersImportDialogComponent implements OnDestroy {
     performExtraValidations(csvFile: File, csvUsers: CsvUser[]) {
         const invalidUserEntries = this.computeInvalidUserEntries(csvUsers);
         if (invalidUserEntries) {
-            const msg = (body: string) => `
-                Could not read file <b>${csvFile.name}</b> due to the following error:
-                <ul class="mt-1"><li><b>Rows must have a value in one of the required columns ${body}</b></li></ul>
-                Please repair the file and try again.
-            `;
             const maxLength = 30;
             const entriesFormatted = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
-            this.validationError = msg(`${csvColumns.registrationNumber} or ${csvColumns.login}: ${entriesFormatted}`);
+            this.validationError = this.translateService.instant('importUsers.usersForImport.importFailed') + entriesFormatted;
         }
     }
 

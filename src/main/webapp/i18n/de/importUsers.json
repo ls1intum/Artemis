@@ -1,7 +1,7 @@
 {
     "importUsers": {
-        "buttonLabel": "Nutzer importieren",
-        "dialogTitle": "Nutzer importieren nach:",
+        "buttonLabel": "Nutzer Importieren",
+        "dialogTitle": "Nutzer Importieren nach:",
         "introText": "Mit diesem Dialog können Nutzer importiert werden.",
         "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikelnummer oder den Login beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
         "csvFile": {
@@ -10,7 +10,8 @@
         },
         "usersForImport": {
             "label": "Nutzer zum Importieren",
-            "tooltip": "Diese Nutzer werden importiert beim Klicken auf \"Importieren\"."
+            "tooltip": "Diese Nutzer werden importiert beim Klicken auf \"Importieren\".",
+            "importFailed": "Bitte versuchen sie es nach dem reparieren der Datei erneut, die Datei konnte wegen folgendem Fehler nicht gelesen werden: <ul class=\"mt-1\"><li><b>Die folgenden Reihen in ihrer CSV sind ungültig und müssen entweder den Login oder eine Matrikelnummer enthalten:</b></li></ul>"
         },
         "numberOfUsers": "Anzahl an Nutzern:",
         "numberOfUsersImported": "Importiert:",
