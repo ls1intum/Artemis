@@ -274,7 +274,7 @@ The following is an example HTML template for a vertical bar chart
 
 There are a few tips when using this framework:
 
-1. In order to configure the content of the tooltips in the chart, declare a ng-templae with the reference ``#tooltipTemplate``
+1. In order to configure the content of the tooltips in the chart, declare a ng-template with the reference ``#tooltipTemplate``
 containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
 the tooltips are configured in order to present the percentage value corresponding to the absolute value represented by the bar.
 Depending on the chart type, there is more than one type of tooltip configurable.
