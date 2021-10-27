@@ -13,6 +13,14 @@ import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainComman
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 
+export enum GradingInstructionTableColumn {
+    CREDITS = 'CREDITS',
+    SCALE = 'SCALE',
+    DESCRIPTION = 'DESCRIPTION',
+    FEEDBACK = 'FEEDBACK',
+    LIMIT = 'LIMIT',
+}
+
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -40,6 +48,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
+    showEditMode: boolean;
+    readonly gradingInstructionTableColumn = GradingInstructionTableColumn;
+
     domainCommands: DomainCommand[] = [
         this.creditsCommand,
         this.gradingScaleCommand,
@@ -64,6 +75,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.criteria = this.exercise.gradingCriteria || [];
         this.backupExercise = cloneDeep(this.exercise);
         this.markdownEditorText = this.generateMarkdown();
+        this.showEditMode = true;
     }
 
     ngAfterContentInit() {
@@ -86,25 +98,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     generateMarkdown(): string {
         let markdownText = '';
-        if (this.criteria == undefined || this.criteria.length === 0) {
-            this.criteria = [];
-            const dummyCriterion = new GradingCriterion();
-            const exampleCriterion = new GradingCriterion();
-            exampleCriterion.title = 'This is an example criterion';
-            const exampleInstr = new GradingInstruction();
-            exampleCriterion.structuredGradingInstructions = [];
-            exampleCriterion.structuredGradingInstructions.push(exampleInstr);
-            exampleCriterion.structuredGradingInstructions.push(exampleInstr); // to showcase that a criterion consists of multiple instructions
-            this.criteria.push(dummyCriterion);
-            this.criteria.push(exampleCriterion);
-        }
         markdownText += this.initializeExerciseGradingInstructionText();
-        for (const criterion of this.criteria) {
-            if (criterion.title == undefined) {
-                // if it is a dummy criterion, leave out the command identifier
-                markdownText += this.generateInstructionsMarkdown(criterion);
-            } else {
-                markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+        if (this.exercise.gradingCriteria) {
+            for (const criterion of this.exercise.gradingCriteria) {
+                if (criterion.title == undefined) {
+                    // if it is a dummy criterion, leave out the command identifier
+                    markdownText += this.generateInstructionsMarkdown(criterion);
+                } else {
+                    markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                }
             }
         }
         return markdownText;
@@ -448,7 +450,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
         criterion.structuredGradingInstructions.push(new GradingInstruction());
-        this.exercise.gradingCriteria!.push(criterion);
+        if (this.exercise.gradingCriteria == undefined) {
+            this.exercise.gradingCriteria = [criterion];
+        } else {
+            this.exercise.gradingCriteria!.push(criterion);
+        }
     }
 
     /**
@@ -496,5 +502,54 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (command === null && text.length > 0) {
             this.exercise.gradingInstructions = text;
         }
+    }
+
+    /**
+     * Switches edit mode
+     * Updates markdown text between mode switches
+     */
+    switchMode() {
+        this.showEditMode = !this.showEditMode;
+        this.markdownEditorText = this.generateMarkdown();
+    }
+
+    /**
+     * Updates given grading instruction in exercise
+     *
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
+     */
+    updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = instruction;
+    }
+
+    /**
+     * Updates changed properties of the GradingInstruction.
+     *
+     * @param gradingInstruction that needs to be updated
+     * @param criterion that includes the instruction needs to be updated
+     * @param column that is updated
+     */
+    updateGradingInstructionProperty($event: any, instruction: GradingInstruction, criterion: GradingCriterion, column: GradingInstructionTableColumn) {
+        switch (column) {
+            case GradingInstructionTableColumn.CREDITS:
+                instruction.credits = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.SCALE:
+                instruction.gradingScale = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.DESCRIPTION:
+                instruction.instructionDescription = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.FEEDBACK:
+                instruction.feedback = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.LIMIT:
+                instruction.usageCount = $event.target.value;
+                break;
+        }
+        this.updateGradingInstruction(instruction, criterion);
     }
 }

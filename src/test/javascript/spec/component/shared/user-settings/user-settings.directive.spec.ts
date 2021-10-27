@@ -55,7 +55,7 @@ describe('User Settings Directive', () => {
         email: false,
     };
     const notificationSettingB: NotificationSetting = {
-        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST,
         webapp: false,
         email: false,
     };

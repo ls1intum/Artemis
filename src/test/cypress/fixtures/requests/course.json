@@ -22,5 +22,8 @@
     "registrationConfirmationMessage": null,
     "presentationScore": 0,
     "color": null,
-    "courseIcon": null
+    "courseIcon": null,
+    "accuracyOfScores": 1,
+    "postsEnabled": true,
+    "maxPoints": null
 }
