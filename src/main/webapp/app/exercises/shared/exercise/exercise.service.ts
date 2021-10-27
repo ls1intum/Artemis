@@ -375,14 +375,6 @@ export class ExerciseService {
     }
 
     /**
-     * Retrieve a collection of useful statistics for the instructor exercise dashboard of the exercise with the given exerciseId
-     * @param { number } exerciseId - Id of exercise to retreive the stats for
-     */
-    getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
-    }
-
-    /**
      * Retrieves useful statistics for course exercises
      *
      * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>. Either the results of the last submission or the results of the last rated
