@@ -58,7 +58,7 @@ describe('NotificationSettingsComponent', () => {
         expect(comp.settingsChanged).toBe(false);
         expect(notificationSettingA.changed).toBe(false);
 
-        comp.toggleSetting(event);
+        comp.toggleSetting(event, true);
 
         expect(notificationSettingA.webapp).not.toEqual(webappStatus);
         expect(notificationSettingA.changed).toBe(true);
