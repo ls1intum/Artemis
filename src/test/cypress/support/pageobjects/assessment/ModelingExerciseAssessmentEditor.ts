@@ -1,5 +1,5 @@
-import { AbstractExerciseAssessmentPage } from './assessment/AbstractExerciseAssessmentPage';
-import { MODELING_SPACE } from './ModelingEditor';
+import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { MODELING_SPACE } from '../exercises/modeling/ModelingEditor';
 
 // TODO: find or create better selectors for this
 const FEEDBACK_CONTAINER = '.sc-lcuiOb';
