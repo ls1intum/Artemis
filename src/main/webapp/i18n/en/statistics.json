@@ -24,7 +24,21 @@
         "created_feedbacks": "Created feedbacks",
         "posts": "Created Posts",
         "resolved_posts": "Resolved Posts",
-        "score_distribution": "Score distribution"
+        "score_distribution": "Score distribution",
+        "submissionsTitle": "# of submissions",
+        "active_usersTitle": "# of users",
+        "logged_in_usersTitle": "# of users",
+        "released_exercisesTitle": "# of exercises",
+        "exercises_dueTitle": "# of exercises",
+        "conducted_examsTitle": "# of exams",
+        "exam_participationsTitle": "# of exam participants",
+        "exam_registrationsTitle": "# of exam registrations",
+        "active_tutorsTitle": "# of tutors",
+        "created_resultsTitle": "# of results",
+        "created_feedbacksTitle": "# of feedbacks",
+        "postsTitle": "# of created posts",
+        "answered_postsTitle": "# of replied posts",
+        "score_distributionTitle": "% of students"
     },
     "calendar_week": "CW",
     "overview": {
