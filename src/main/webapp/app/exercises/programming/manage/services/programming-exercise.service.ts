@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import dayjs from 'dayjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -13,6 +13,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -30,7 +31,7 @@ export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private accountService: AccountService) {}
 
     /**
      * Sets a new programming exercise up
@@ -195,6 +196,11 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            tap((res: EntityResponseType) => {
+                if (res.body) {
+                    this.accountService.setAccessRightsForExercise(res.body);
+                }
+            }),
         );
     }
 
@@ -206,6 +212,11 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            tap((res: EntityResponseType) => {
+                if (res.body) {
+                    this.accountService.setAccessRightsForExercise(res.body);
+                }
+            }),
         );
     }
 
@@ -231,6 +242,7 @@ export class ProgrammingExerciseService {
                         this.reconnectSubmissionAndResult(templateSubmissions);
                         const solutionSubmissions = res.body.solutionParticipation?.submissions;
                         this.reconnectSubmissionAndResult(solutionSubmissions);
+                        this.accountService.setAccessRightsForExercise(res.body);
                     }
                     return res;
                 }),

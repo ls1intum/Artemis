@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseExerciseService, CourseManagementService } from '../../../../course/manage/course-management.service';
+import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
@@ -48,9 +48,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 // reconnect exercise with course
                 this.textExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
-                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                    this.accountService.setAccessRightsForExercise(exercise);
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },
