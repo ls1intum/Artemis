@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -44,9 +42,6 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Overview Component', () => {
     const user = { id: 1 } as User;
@@ -150,7 +145,7 @@ describe('Overview Component', () => {
             guidedTourService['startTour']();
 
             guidedTourComponentFixture.detectChanges();
-            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
+            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBeDefined();
         }
 
         describe('Course Overview Tour', () => {
@@ -169,18 +164,18 @@ describe('Overview Component', () => {
                 courseCardComponentFixture.autoDetectChanges(true);
                 navBarComponentFixture.autoDetectChanges(true);
 
-                expect(guidedTourService.isOnFirstStep).to.be.true;
-                expect(guidedTourSteps).to.equal(9);
+                expect(guidedTourService.isOnFirstStep).toBe(true);
+                expect(guidedTourSteps).toBe(9);
 
                 // Click through tour steps in NavComponent
                 for (let i = 1; i < 6; i++) {
                     guidedTourService.nextStep();
-                    expect(guidedTourService.isOnFirstStep).to.be.false;
+                    expect(guidedTourService.isOnFirstStep).toBe(false);
                     guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = navBarComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
-                        expect(selectedElement).to.exist;
+                        expect(selectedElement).toBeDefined();
                     }
                 }
 
@@ -191,7 +186,7 @@ describe('Overview Component', () => {
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = courseCardComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
-                        expect(selectedElement).to.exist;
+                        expect(selectedElement).toBeDefined();
                     }
                 }
 
@@ -202,11 +197,11 @@ describe('Overview Component', () => {
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = footerComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
-                        expect(selectedElement).to.exist;
+                        expect(selectedElement).toBeDefined();
                     }
                 }
 
-                expect(guidedTourService.isOnLastStep).to.be.true;
+                expect(guidedTourService.isOnLastStep).toBe(true);
             });
         });
     });
