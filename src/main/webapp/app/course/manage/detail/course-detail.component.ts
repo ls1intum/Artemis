@@ -13,9 +13,6 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -55,8 +52,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private alertService: AlertService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
     ) {}
 
     /**
