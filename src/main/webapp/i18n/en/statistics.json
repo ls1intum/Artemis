@@ -23,22 +23,8 @@
         "created_results": "Created results",
         "created_feedbacks": "Created feedbacks",
         "posts": "Created Posts",
-        "answered_posts": "Replied Posts",
-        "score_distribution": "Score distribution",
-        "submissionsTitle": "# of submissions",
-        "active_usersTitle": "# of users",
-        "logged_in_usersTitle": "# of users",
-        "released_exercisesTitle": "# of exercises",
-        "exercises_dueTitle": "# of exercises",
-        "conducted_examsTitle": "# of exams",
-        "exam_participationsTitle": "# of exam participants",
-        "exam_registrationsTitle": "# of exam registrations",
-        "active_tutorsTitle": "# of tutors",
-        "created_resultsTitle": "# of results",
-        "created_feedbacksTitle": "# of feedbacks",
-        "postsTitle": "# of created posts",
-        "answered_postsTitle": "# of replied posts",
-        "score_distributionTitle": "% of students"
+        "resolved_posts": "Resolved Posts",
+        "score_distribution": "Score distribution"
     },
     "calendar_week": "CW",
     "overview": {
@@ -71,9 +57,9 @@
         "december": "December"
     },
     "exercise-statistics": {
-        "title": "Exercise statistics",
+        "title": "Exercise Statistics",
         "averageScore": "Average Score",
         "participationRate": "Participation Rate",
-        "answered_posts": "Replied Posts"
+        "resolved_posts": "Resolved Posts"
     }
 }

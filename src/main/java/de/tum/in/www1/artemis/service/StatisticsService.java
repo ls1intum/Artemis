@@ -187,11 +187,11 @@ public class StatisticsService {
         exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipationsOfStudentsOrTeams);
         exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(Objects.requireNonNullElse(numberOfStudentsOrTeams, 0L));
 
-        // questions stats
-        long questionsAsked = statisticsRepository.getNumberOfQuestionsAskedForExercise(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfQuestions(questionsAsked);
-        long answeredQuestions = statisticsRepository.getNumberOfQuestionsAnsweredForExercise(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfAnsweredQuestions(answeredQuestions);
+        // post stats
+        long numberOfExercisePosts = statisticsRepository.getNumberOfExercisePosts(exercise.getId());
+        exerciseManagementStatisticsDTO.setNumberOfPosts(numberOfExercisePosts);
+        long resolvedExercisePosts = statisticsRepository.getNumberOfResolvedExercisePosts(exercise.getId());
+        exerciseManagementStatisticsDTO.setNumberOfResolvedPosts(resolvedExercisePosts);
 
         // average score & max points
         Double maxPoints = exercise.getMaxPoints();
