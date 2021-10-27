@@ -130,14 +130,11 @@ describe('Overview Component', () => {
                     });
 
                     jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').mockReturnValue(of());
-
                     jest.spyOn(exerciseService, 'getNextExercisesForDays').mockReturnValue([]);
                     jest.spyOn(guidedTourService, 'init').mockImplementation();
                     jest.spyOn<any, any>(guidedTourService, 'updateGuidedTourSettings').mockReturnValue(of());
-
                     jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
                     jest.spyOn<any, any>(guidedTourService, 'checkSelectorValidity').mockReturnValue(true);
-
                     jest.spyOn<any, any>(guidedTourService, 'enableTour').mockImplementation(() => {
                         guidedTourService['availableTourForComponent'] = courseOverviewTour;
                         guidedTourService.currentTour = courseOverviewTour;
@@ -145,7 +142,7 @@ describe('Overview Component', () => {
                 });
         });
 
-        async function startGuidedTour() {
+        function startGuidedTour() {
             guidedTourComponentFixture.componentInstance.ngAfterViewInit();
 
             // Start course overview tour
@@ -157,8 +154,8 @@ describe('Overview Component', () => {
         }
 
         describe('Course Overview Tour', () => {
-            beforeEach(async () => {
-                await startGuidedTour();
+            beforeEach(() => {
+                startGuidedTour();
 
                 courseCardComponent.course = course;
                 courseCardComponent.hasGuidedTour = true;
