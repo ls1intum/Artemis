@@ -264,7 +264,7 @@ task executeCheckstyle (type: Exec) {
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "test", "-x", "jacocoTestCoverageVerification"
+    commandLine "./gradlew", ":user-management:build", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 
 compileJava.dependsOn processResources

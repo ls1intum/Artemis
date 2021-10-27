@@ -170,23 +170,3 @@ jhipster:
                 base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        group.id: user-management
-        auto.offset.reset: earliest
-    producer:
-        key.serializer: org.apache.kafka.common.serialization.StringSerializer
-        value.serializer: org.apache.kafka.common.serialization.StringSerializer
-# ===================================================================
-# Application specific properties
-# Add your own application properties here, see the ApplicationProperties class
-# to have type-safe configuration, like in the JHipsterProperties above
-#
-# More documentation is available at:
-# https://www.jhipster.tech/common-application-properties/
-# ===================================================================
-
-# application:
