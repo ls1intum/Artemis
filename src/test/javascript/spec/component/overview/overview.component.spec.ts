@@ -7,7 +7,6 @@ import { CookieService } from 'ngx-cookie-service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -18,23 +17,33 @@ import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.servi
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CoursesComponent } from 'app/overview/courses.component';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ChartsModule } from 'ng2-charts';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,27 +67,38 @@ describe('Overview Component', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [
-                    ArtemisCoursesModule,
-                    ArtemisSharedCommonModule,
-                    ArtemisSharedPipesModule,
                     ArtemisTestModule,
-                    ArtemisSharedModule,
-                    TranslateTestingModule,
+                    MockModule(ChartsModule),
                     RouterTestingModule.withRoutes([
                         {
                             path: 'courses',
-                            component: CoursesComponent,
+                            component: MockComponent(CoursesComponent),
                         },
                     ]),
                 ],
                 declarations: [
+                    CourseCardComponent,
                     GuidedTourComponent,
                     NavbarComponent,
-                    NotificationSidebarComponent,
                     FooterComponent,
-                    LoadingNotificationComponent,
-                    ActiveMenuDirective,
+                    NotificationSidebarComponent,
                     MockHasAnyAuthorityDirective,
+                    MockComponent(FaIconComponent),
+                    MockComponent(CourseRegistrationSelectorComponent),
+                    MockComponent(CourseExerciseRowComponent),
+                    MockComponent(LoadingNotificationComponent),
+                    MockComponent(CoursesComponent),
+                    MockComponent(SecuredImageComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockPipe(ArtemisDatePipe),
+                    MockPipe(ArtemisTimeAgoPipe),
+                    MockPipe(SafeResourceUrlPipe),
+                    MockPipe(FindLanguageFromKeyPipe),
+                    MockDirective(ActiveMenuDirective),
+                    MockDirective(TranslateDirective),
+                    MockDirective(NgbTooltip),
+                    MockDirective(NgbCollapse),
+                    MockDirective(NgbDropdown),
                 ],
                 providers: [
                     { provide: AccountService, useClass: MockAccountService },
