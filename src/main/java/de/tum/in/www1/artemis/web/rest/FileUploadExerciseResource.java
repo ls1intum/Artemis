@@ -97,7 +97,6 @@ public class FileUploadExerciseResource {
         // Validate the new file upload exercise
         exerciseService.validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
 
-        // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
 
         // Check that the user is authorized to create the exercise
@@ -144,13 +143,14 @@ public class FileUploadExerciseResource {
 
         // Check that the user is authorized to update the exercise
         FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, fileUploadExerciseBeforeUpdate, user);
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, fileUploadExerciseBeforeUpdate, null);
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExerciseElseThrow(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
         FileUploadExercise updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
