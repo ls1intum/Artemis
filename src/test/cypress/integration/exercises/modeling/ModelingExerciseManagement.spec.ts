@@ -22,7 +22,7 @@ let modelingExercise: any;
 
 const modelingExerciseTitle = 'Cypress modeling exercise';
 
-describe('Modeling Exercise Spec', () => {
+describe('Modeling Exercise Management Spec', () => {
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((courseResp: any) => {

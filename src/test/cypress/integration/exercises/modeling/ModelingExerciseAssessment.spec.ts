@@ -20,7 +20,7 @@ const instructor = userManagement.getInstructor();
 let course: any;
 let modelingExercise: any;
 
-describe('Modeling Exercise Spec', () => {
+describe('Modeling Exercise Assessment Spec', () => {
     before('Log in as admin and create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((courseResp) => {
