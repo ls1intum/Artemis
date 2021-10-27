@@ -1,7 +1,7 @@
 import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
-import { MODELING_SPACE } from '../support/pageobjects/ModelingEditor';
+import { MODELING_SPACE } from '../support/pageobjects/exercises/modeling/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
