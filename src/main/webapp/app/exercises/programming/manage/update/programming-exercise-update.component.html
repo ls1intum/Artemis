@@ -107,7 +107,7 @@
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>
-            <ngb-alert [dismissible]="false" [type]="'warning'" *ngIf="auxiliaryRepositoryDuplicateNames || auxiliaryRepositoryDuplicateDirectories">
+            <ngb-alert [dismissible]="false" [type]="'danger'" *ngIf="auxiliaryRepositoryDuplicateNames || auxiliaryRepositoryDuplicateDirectories">
                 <span *ngIf="auxiliaryRepositoryDuplicateNames">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate }}</span>
                 <span *ngIf="auxiliaryRepositoryDuplicateDirectories">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate }}</span>
             </ngb-alert>
