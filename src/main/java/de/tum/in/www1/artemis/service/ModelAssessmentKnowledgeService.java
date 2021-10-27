@@ -22,14 +22,15 @@ public class ModelAssessmentKnowledgeService {
     }
 
     /**
-     * delete only when no exercises use the knowledge
+     * delete only when no other exercise uses the knowledge
      *
-     * @param knowledgeId
+     * @param knowledgeId the id of the knowledge which should be deleted
+     * @param modelingExerciseId used to check that the knowledge is only connected to this exercise
      */
-    public void deleteKnowledge(Long knowledgeId) {
+    public void deleteKnowledge(Long knowledgeId, Long modelingExerciseId) {
         Set<ModelingExercise> exerciseSet = modelingExerciseRepository.findAllByKnowledgeId(knowledgeId);
         // If no other exercises use the same knowledge then remove knowledge
-        if (exerciseSet.isEmpty()) {
+        if (exerciseSet.size() == 1 && modelingExerciseId.equals(exerciseSet.iterator().next().getId())) {
             modelAssesmentKnowledgeRepository.deleteById(knowledgeId);
         }
     }
