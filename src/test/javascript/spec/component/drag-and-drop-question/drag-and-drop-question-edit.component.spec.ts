@@ -18,7 +18,7 @@ import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/ex
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -39,7 +39,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DndModule.forRoot()],
+            imports: [ArtemisTestModule, MockModule(FormsModule), DndModule.forRoot()],
             declarations: [
                 DragAndDropQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -332,8 +332,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
             const newPath = 'alwaysGoYourPath';
             let mockReturnValue = Promise.resolve({ path: newPath });
-            const spy = jest.spyOn(uploadService, 'uploadFile');
-            spy.mockReturnValue(mockReturnValue);
+            const uploadFileSpy = jest.spyOn(uploadService, 'uploadFile');
+            uploadFileSpy.mockReturnValue(mockReturnValue);
 
             component.uploadDragItem();
             tick();
@@ -346,7 +346,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             jest.restoreAllMocks();
 
             mockReturnValue = Promise.reject({ path: newPath });
-            spy.mockReturnValue(mockReturnValue);
+            uploadFileSpy.mockReturnValue(mockReturnValue);
             component.dragItemFile = new File([], 'file');
 
             component.uploadDragItem();
