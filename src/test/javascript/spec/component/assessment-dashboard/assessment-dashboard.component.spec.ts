@@ -31,7 +31,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgModel } from '@angular/forms';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
@@ -131,7 +130,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(FaIconComponent),
                 MockComponent(AlertComponent),
                 MockDirective(SortDirective),
                 MockDirective(NgModel),
@@ -148,7 +146,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .overrideComponent(AssessmentDashboardComponent, {
                 set: {
                     providers: [{ provide: CourseManagementService, useClass: CourseManagementService }],
@@ -172,7 +169,6 @@ describe('AssessmentDashboardInformationComponent', () => {
 
                 exerciseService = TestBed.inject(ExerciseService);
 
-                // courseService = TestBed.inject(CourseManagementService);
                 getCourseWithInterestingExercisesForTutorsStub = jest
                     .spyOn(courseService, 'getCourseWithInterestingExercisesForTutors')
                     .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
@@ -190,10 +186,6 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should init component correctly for exam', fakeAsync(() => {
-        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
-        activatedRoute.snapshot = route.snapshot;
-        TestBed.inject(ActivatedRoute);
-
         comp.ngOnInit();
         tick();
 
