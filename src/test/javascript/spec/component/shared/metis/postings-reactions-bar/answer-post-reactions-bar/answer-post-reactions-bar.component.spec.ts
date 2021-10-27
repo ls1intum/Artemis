@@ -17,7 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
-import { metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -55,6 +55,7 @@ describe('AnswerPostReactionsBarComponent', () => {
                 reactionToDelete.answerPost = answerPost;
                 answerPost.reactions = [reactionToDelete];
                 component.posting = answerPost;
+                metisService.setCourse(metisCourse);
             });
     });
 

@@ -262,7 +262,7 @@ export class MetisService {
      * @return {boolean} tutor flag
      */
     metisUserIsAtLeastTutorInCourse(): boolean {
-        return this.accountService.isAtLeastTutorInCourse(this.course);
+        return !!this.course.isAtLeastTutor;
     }
 
     /**
@@ -270,7 +270,7 @@ export class MetisService {
      * @return boolean instructor flag
      */
     metisUserIsAtLeastInstructorInCourse(): boolean {
-        return this.accountService.isAtLeastInstructorInCourse(this.course);
+        return !!this.course.isAtLeastInstructor;
     }
 
     /**

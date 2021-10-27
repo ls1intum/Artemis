@@ -37,8 +37,6 @@ describe('Metis Service', () => {
     let reactionService: MockReactionService;
     let postService: MockPostService;
     let answerPostService: MockAnswerPostService;
-    let accountService: MockAccountService;
-    let accountServiceIsAtLeastTutorMock: jest.SpyInstance;
     let post: Post;
     let answerPost: AnswerPost;
     let reaction: Reaction;
@@ -60,10 +58,8 @@ describe('Metis Service', () => {
         reactionService = injector.get(ReactionService);
         postService = injector.get(PostService);
         answerPostService = injector.get(AnswerPostService);
-        accountService = injector.get(AccountService);
         metisServiceGetFilteredPostsMock = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceUserMock = jest.spyOn(metisService, 'getUser');
-        accountServiceIsAtLeastTutorMock = jest.spyOn(accountService, 'isAtLeastTutorInCourse');
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
@@ -252,24 +248,6 @@ describe('Metis Service', () => {
             tick();
             expect(reactionServiceSpy).toHaveBeenCalled();
         }));
-    });
-
-    it('should determine that metis user is at least tutor in course', () => {
-        accountServiceIsAtLeastTutorMock.mockReturnValue(true);
-        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
-        expect(metisUserIsAtLeastTutorInCourseReturn).toBe(true);
-    });
-
-    it('should determine that metis user is not at least tutor in course', () => {
-        accountServiceIsAtLeastTutorMock.mockReturnValue(false);
-        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
-        expect(metisUserIsAtLeastTutorInCourseReturn).toBe(false);
-    });
-
-    it('should determine that metis user is at least tutor in course', () => {
-        accountServiceIsAtLeastTutorMock.mockReturnValue(true);
-        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
-        expect(metisUserIsAtLeastTutorInCourseReturn).toBe(true);
     });
 
     it('should determine that metis user is author of post', () => {
