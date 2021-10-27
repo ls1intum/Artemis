@@ -3,13 +3,44 @@ import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-setti
 import { Setting, UserSettingsStructure } from '../user-settings.model';
 
 export interface NotificationSetting extends Setting {
+    // Status indicating if the settings was activated for a specific communication channel by the user or the default settings
     webapp?: boolean;
     email?: boolean;
+
+    // 'x-Support' indicates if the corresponding checkbox is visible in the UI
+    // e.g. announcements should always generate a webapp notification -> webappSupport=false
+    // If left undefined webappSupport will count as true/activated (to make the structure file more lightweight)
+    webappSupport?: boolean;
+    // If left undefined emailSupport will count as false/deactivated
+    emailSupport?: boolean;
 }
 
 export const notificationSettingsStructure: UserSettingsStructure<NotificationSetting> = {
     category: UserSettingsCategory.NOTIFICATION_SETTINGS,
     groups: [
+        {
+            key: 'courseWideDiscussionNotifications',
+            restrictionLevel: Authority.USER,
+            settings: [
+                {
+                    key: 'newCoursePost',
+                    descriptionKey: 'newCoursePostDescription',
+                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST,
+                },
+                {
+                    key: 'newReplyForCoursePost',
+                    descriptionKey: 'newReplyForCoursePostDescription',
+                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST,
+                },
+                {
+                    key: 'newAnnouncementPost',
+                    descriptionKey: 'newAnnouncementPostDescription',
+                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST,
+                    emailSupport: true,
+                    webappSupport: false,
+                },
+            ],
+        },
         {
             key: 'exerciseNotifications',
             restrictionLevel: Authority.USER,
@@ -18,11 +49,13 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     key: 'exerciseReleased',
                     descriptionKey: 'exerciseReleasedDescription',
                     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,
+                    emailSupport: true,
                 },
                 {
                     key: 'exerciseOpenForPractice',
                     descriptionKey: 'exerciseOpenForPracticeDescription',
                     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+                    emailSupport: true,
                 },
                 {
                     key: 'newExercisePost',
@@ -44,6 +77,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     key: 'attachmentChanges',
                     descriptionKey: 'attachmentChangesDescription',
                     settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
+                    emailSupport: true,
                 },
                 {
                     key: 'newLecturePost',
@@ -54,22 +88,6 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     key: 'newReplyForLecturePost',
                     descriptionKey: 'newReplyForLecturePostDescription',
                     settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST,
-                },
-            ],
-        },
-        {
-            key: 'courseWideDiscussionNotifications',
-            restrictionLevel: Authority.USER,
-            settings: [
-                {
-                    key: 'newCoursePost',
-                    descriptionKey: 'newCoursePostDescription',
-                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST,
-                },
-                {
-                    key: 'newReplyForCoursePost',
-                    descriptionKey: 'newReplyForCoursePostDescription',
-                    settingId: SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST,
                 },
             ],
         },
