@@ -236,7 +236,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // update post of student1 (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -246,13 +246,13 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // update own post (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
 
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.get(1));
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -262,7 +262,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.get(1));
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -272,7 +272,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToUpdate = existingPosts.get(0);
         postToUpdate.setId(null);
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedPost).isNull();
     }
 

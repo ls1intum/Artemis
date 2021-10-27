@@ -96,18 +96,19 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param courseId id of the course the post belongs to
+     * @param postId   id of the post to update
      * @param post     post to update
      * @return updated post that was persisted
      */
-    public Post updatePost(Long courseId, Post post) {
+    public Post updatePost(Long courseId, Long postId, Post post) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // check
-        if (post.getId() == null) {
+        if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post existingPost = postRepository.findByIdElseThrow(post.getId());
+        Post existingPost = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
@@ -149,7 +150,7 @@ public class PostService extends PostingService {
         Post post = postRepository.findByIdElseThrow(postId);
         post.setDisplayPriority(displayPriority);
 
-        return updatePost(courseId, post);
+        return updatePost(courseId, postId, post);
     }
 
     /**
