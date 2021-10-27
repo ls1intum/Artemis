@@ -16,7 +16,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { flatMap } from 'lodash-es';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -75,10 +75,7 @@ describe('TeamsImportDialogComponent', () => {
                     MockDirective(NgModel),
                     MockDirective(NgForm),
                 ],
-                providers: [
-                    { provide: LocalStorageService, use: MockSyncStorage },
-                    { provide: SessionStorageService, use: MockSyncStorage },
-                ],
+                providers: [MockProvider(TeamService), MockProvider(NgbActiveModal), MockProvider(AlertService)],
             }).compileComponents();
         }),
     );

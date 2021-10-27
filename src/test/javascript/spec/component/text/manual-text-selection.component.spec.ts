@@ -2,11 +2,13 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { SelectionRectangle, TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
+import { MockProvider } from 'ng-mocks';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ManualTextSelectionComponent', () => {
     let component: ManualTextSelectionComponent;
@@ -16,10 +18,7 @@ describe('ManualTextSelectionComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ManualTextSelectionComponent],
-            providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [MockProvider(TextAssessmentAnalytics), MockProvider(ActivatedRoute), MockTranslateService],
         })
             .compileComponents()
             .then(() => {
