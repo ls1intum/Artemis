@@ -298,7 +298,7 @@ public interface ContinuousIntegrationService {
             case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java17-1";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> (projectType.isPresent() && projectType.get().equals(ProjectType.FACT))
-                    ? "sharing-codeability.uibk.ac.at/codeability/test-frameworks/fact/fact_artemis:latest"
+                    ? "codeability/test-frameworks/fact/fact_artemis:latest"
                     : "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";

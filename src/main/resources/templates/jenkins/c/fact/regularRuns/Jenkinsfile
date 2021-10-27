@@ -8,7 +8,7 @@ pipeline {
             docker {
                 image '#dockerImage'
                 label 'docker'
-                registryUrl 'https://sharing-codeability.uibk.ac.at/registry'
+                registryUrl 'https://sharing-codeability.uibk.ac.at:5051'
             }
         }
         stages {
@@ -70,8 +70,12 @@ pipeline {
                     if [ -e test-reports/tests-results.xml ]
                     then
                         sed -i 's/\x1b//g' test-reports/tests-results.xml
+                        sed -i 's/\\x0//g' test-reports/tests-results.xml
                         sed -i 's/<skipped/<error/g' test-reports/tests-results.xml
                         sed -i 's/<\/skipped>/<\/error>/g' test-reports/tests-results.xml
+                    fi
+                    if [ "$(ls -A results)" ]; then
+                        rm -rf results
                     fi
                     mv test-reports results
                     '''
