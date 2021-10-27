@@ -37,7 +37,7 @@
         "created_resultsTitle": "# of results",
         "created_feedbacksTitle": "# of feedbacks",
         "postsTitle": "# of created posts",
-        "answered_postsTitle": "# of replied posts",
+        "resolved_postsTitle": "# of resolved posts",
         "score_distributionTitle": "% of students"
     },
     "calendar_week": "CW",

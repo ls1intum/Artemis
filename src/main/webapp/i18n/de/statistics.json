@@ -36,7 +36,7 @@
         "created_resultsTitle": "# Bewertungen",
         "created_feedbacksTitle": "# Feedbacks",
         "postsTitle": "# Beiträge",
-        "answered_postsTitle": "# Beantwortete Beiträge",
+        "resolved_postsTitle": "# Beiträge, die als geklärt markiert sind",
         "score_distributionTitle": "% Studierende",
         "score_distribution": "Verteilung der Bewertung"
     },

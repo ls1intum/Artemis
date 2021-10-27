@@ -129,6 +129,7 @@ public class StatisticsService {
      * @return a custom CourseManagementStatisticsDTO, which contains the relevant data
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
+
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
         Set<Exercise> exercises = statisticsRepository.findExercisesByCourseId(courseId);
         Course course = exercises.stream().findAny().get().getCourseViaExerciseGroupOrCourseMember();
@@ -232,15 +233,7 @@ public class StatisticsService {
         exercises.sort((exerciseA, exerciseB) -> {
             var releaseDateA = exerciseA.getReleaseDate();
             var releaseDateB = exerciseB.getReleaseDate();
-            if (releaseDateA == null) {
-                // If A has no release date, sort B first
-                return 1;
-            }
-            else if (releaseDateB == null) {
-                // If B has no release date, sort A first
-                return -1;
-            }
-            else if (releaseDateA.isEqual(releaseDateB)) {
+            if (releaseDateA == null || releaseDateB == null || releaseDateA.isEqual(releaseDateB)) {
                 return 0;
             }
             else {
