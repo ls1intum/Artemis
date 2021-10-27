@@ -89,9 +89,8 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
                 if (!SecurityUtils.isAuthenticated()) {
                     SecurityUtils.setAuthorizationObject();
                 }
-                // only send a notification if ReleaseDate is null or not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-                if (exercise.getReleaseDate() == null
-                        || !exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                // only send a notification if ReleaseDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+                if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
                     groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
                 }
             });
