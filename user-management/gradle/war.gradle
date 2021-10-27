@@ -9,5 +9,4 @@ war {
     enabled = true
     archiveExtension = "war.original"
     includes = ["WEB-INF/**", "META-INF/**"]
-
 }

@@ -1,0 +1,74 @@
+dependencies {
+    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
+    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
+    implementation "org.jasypt:jasypt:${jasypt_version}"
+    implementation "io.sentry:sentry-spring-boot-starter:${sentry_version}"
+    implementation "io.sentry:sentry-logback:${sentry_version}"
+    implementation "org.jsoup:jsoup:${jsoup_version}"
+    implementation "commons-codec:commons-codec:${commons_codec_version}"   // needed for spring security saml2
+
+    // import JHipster dependencies BOM
+    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
+
+    implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
+    implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
+    implementation "io.micrometer:micrometer-registry-prometheus:${micrometer_registry_prometheus_version}"
+    implementation "net.logstash.logback:logstash-logback-encoder:${logstash_logback_encoder_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
+    implementation "javax.cache:cache-api:${cache_api_version}"
+    implementation "javax.transaction:javax.transaction-api:${javax_transaction_api_version}"
+    implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
+
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_netflix_eureka_client_version}"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_config_version}"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:${spring_cloud_connectors_version}"
+
+    implementation "org.springframework:spring-messaging:${spring_messaging_version}"
+
+    implementation "org.springframework.security:spring-security-config:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-web:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
+    implementation "io.jsonwebtoken:jjwt-api:${jsonwebtoken_jjwt_version}"
+    implementation "org.bouncycastle:bcprov-jdk15on:${bouncycastle_bcprov_version}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jsonwebtoken_jjwt_version}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jsonwebtoken_jjwt_version}"
+    implementation("io.springfox:springfox-swagger2:${springfox_version}") {
+        exclude module: "mapstruct"
+    }
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
+        exclude group: "com.vaadin.external.google", module: "android-json"
+    }
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
+        exclude module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+        exclude group: "com.vaadin.external.google", module: "android-json"
+    }
+    testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
+    testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
+    testImplementation "org.assertj:assertj-core:${assertj_core_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:${tngtech_archunit_junit5_version}"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${tngtech_archunit_junit5_version}"
+    testImplementation "org.mockito:mockito-core:${mockito_version}"
+    testImplementation "org.mockito:mockito-inline:${mockito_version}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
+    testImplementation "org.hamcrest:hamcrest-library:${hamcrest_library_version}"
+    testImplementation "org.awaitility:awaitility:${awaitility_version}"
+    testImplementation "org.apache.maven.shared:maven-invoker:${apache_maven_invoker_version}"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:${surefire_report_parser_version}"
+
+    // Lightweight JSON library needed for the internals of the MockRestServiceServer
+    testImplementation "org.json:json:${json_version}"
+}

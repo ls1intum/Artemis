@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
-// @formatter:off
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
@@ -148,8 +147,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .and()
             .headers()
             .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-            // TODO: investigate exactly whether the following works in our setup or not
-//            .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
             .and()
             .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
             .and()
@@ -187,22 +184,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/time").permitAll()
             .and()
             .apply(securityConfigurerAdapter());
+        // @formatter:on
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
     }
-
-
-//            .antMatchers("/api/authenticate").permitAll()
-//            .antMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
-//            .antMatchers("/api/**").authenticated()
-//            .antMatchers("/management/health").permitAll()
-//            .antMatchers("/management/health/**").permitAll()
-//            .antMatchers("/management/info").permitAll()
-//            .antMatchers("/management/prometheus").permitAll()
-//            .antMatchers("/management/**").permitAll()
-////            .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
-
-
 }

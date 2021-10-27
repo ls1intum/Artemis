@@ -19,7 +19,6 @@ bootRun {
     args = []
 }
 
-
 processResources {
     inputs.property('version', version)
     inputs.property('springProfiles', profiles)

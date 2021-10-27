@@ -6,8 +6,8 @@ apply plugin: "org.openapi.generator"
 
 openApiGenerate {
     generatorName = "spring"
-    inputSpec = "$rootDir/src/main/resources/swagger/api.yml".toString()
-    outputDir = "$buildDir/openapi".toString()
+    inputSpec = "$rootDir/user-management/src/main/resources/swagger/api.yml".toString()
+    outputDir = "$buildDir/user-management/openapi".toString()
     apiPackage = "de.tum.in.www1.artemis.web.api"
     modelPackage = "de.tum.in.www1.artemis.service.api.dto"
     apiFilesConstrainedTo = [""]

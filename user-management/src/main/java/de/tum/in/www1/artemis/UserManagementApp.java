@@ -20,7 +20,7 @@ import org.springframework.core.env.Environment;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "de.tum.in.www1.artemis" })
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class UserManagementApp {
 
