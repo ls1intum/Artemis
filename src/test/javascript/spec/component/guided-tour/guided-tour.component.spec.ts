@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -17,10 +15,14 @@ import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tou
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-
-chai.use(sinonChai);
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('GuidedTourComponent', () => {
     const tourStep = new TextTourStep({
@@ -63,24 +65,11 @@ describe('GuidedTourComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                RouterTestingModule.withRoutes([
-                    {
-                        path: 'courses',
-                        component: GuidedTourComponent,
-                    },
-                ]),
-            ],
-            declarations: [GuidedTourComponent],
-            schemas: [NO_ERRORS_SCHEMA],
+            imports: [ArtemisTestModule],
+            declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(FaIconComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DeviceDetectorService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -90,6 +79,10 @@ describe('GuidedTourComponent', () => {
                 guidedTourComponent = guidedTourComponentFixture.componentInstance;
                 guidedTourService = TestBed.inject(GuidedTourService);
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should subscribe to events on after init', () => {
@@ -111,11 +104,16 @@ describe('GuidedTourComponent', () => {
     it('should handle user permissions', () => {
         guidedTourComponent.currentTourStep = tourStep;
         const permission = guidedTourComponent['hasUserPermissionForCurrentTourStep']();
-        expect(permission).toEqual(true);
+        expect(permission).toBe(true);
     });
 
     describe('Keydown Element', () => {
-        beforeEach(async () => {
+        const expectedTourStepEntries = {
+            alreadyExecutedTranslateKey: 'tour.stepAlreadyExecutedHint.text',
+            contentTranslateKey: '',
+            headlineTranslateKey: '',
+        };
+        beforeEach(() => {
             // Prepare guided tour service
             jest.spyOn(guidedTourService, 'init').mockImplementation();
             jest.spyOn(guidedTourService, 'getLastSeenTourStepIndex').mockReturnValue(0);
@@ -130,26 +128,25 @@ describe('GuidedTourComponent', () => {
             guidedTourComponent.ngAfterViewInit();
 
             // Start course overview tour
-            expect(guidedTourComponent.currentTourStep).toBeUndefined();
+            expect(guidedTourComponent.currentTourStep).toBe(undefined);
             guidedTourService['enableTour'](courseOverviewTour, true);
             guidedTourService['startTour']();
-            expect(guidedTourComponent.currentTourStep).toBeDefined();
+            expect(guidedTourComponent.currentTourStep).toEqual(expectedTourStepEntries);
 
             // Check highlight (current) dot and small dot
             guidedTourComponentFixture.detectChanges();
             const highlightDot = guidedTourComponentFixture.debugElement.query(By.css('.current'));
-            expect(highlightDot).toBeDefined();
+            expect(highlightDot).not.toBe(null);
             const nSmallDot = guidedTourComponentFixture.debugElement.queryAll(By.css('.n-small'));
-            expect(nSmallDot).toBeDefined();
+            expect(nSmallDot).not.toBe(null);
         });
 
         it('should not trigger the guided tour with the right arrow key', () => {
-            guidedTourComponent.currentTourStep = null;
+            guidedTourComponent.currentTourStep = undefined; // TODO
             const nextStep = jest.spyOn(guidedTourService, 'nextStep');
             const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             guidedTourComponent.handleKeyboardEvent(eventMock);
-            expect(nextStep).toHaveBeenCalledTimes(0);
-            nextStep.mockReset();
+            expect(nextStep).not.toHaveBeenCalled();
         });
 
         it('should navigate next with the right arrow key', () => {
@@ -159,25 +156,21 @@ describe('GuidedTourComponent', () => {
             const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(nextStep).toHaveBeenCalledTimes(1);
-            nextStep.mockReset();
         });
 
         it('should navigate back with the left arrow key', () => {
             const backStep = jest.spyOn(guidedTourService, 'backStep').mockImplementation();
-            const nextStep = jest.spyOn(guidedTourService, 'nextStep');
+            jest.spyOn(guidedTourService, 'nextStep');
             const eventMockRight = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             const eventMockLeft = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
 
             guidedTourComponent.handleKeyboardEvent(eventMockLeft);
-            expect(backStep).toHaveBeenCalledTimes(0);
+            expect(backStep).not.toHaveBeenCalled();
 
             guidedTourComponent.handleKeyboardEvent(eventMockRight);
 
             guidedTourComponent.handleKeyboardEvent(eventMockLeft);
             expect(backStep).toHaveBeenCalledTimes(1);
-
-            nextStep.mockReset();
-            backStep.mockReset();
         });
 
         it('should skip the tour with the escape key', () => {
@@ -190,11 +183,11 @@ describe('GuidedTourComponent', () => {
 
             // Reset component
             skipTour.mockReset();
-            guidedTourComponent.currentTourStep = null;
+            guidedTourComponent.currentTourStep = undefined;
 
             // Skip tour with ESC key should not be possible when the component is not active
             guidedTourComponent.handleKeyboardEvent(eventMock);
-            expect(skipTour).toHaveBeenCalledTimes(0);
+            expect(skipTour).not.toHaveBeenCalled();
         });
 
         it('should not skip but finish the cancel tour with the escape key', () => {
@@ -208,13 +201,8 @@ describe('GuidedTourComponent', () => {
             }
 
             guidedTourComponent.handleKeyboardEvent(eventMock);
-            expect(skipTour).toHaveBeenCalledTimes(0);
+            expect(skipTour).not.toHaveBeenCalled();
             expect(finishTour).toHaveBeenCalledTimes(1);
-
-            // Reset component
-            skipTour.mockReset();
-            finishTour.mockReset();
-            guidedTourComponent.currentTourStep = null;
         });
     });
 
@@ -248,71 +236,71 @@ describe('GuidedTourComponent', () => {
         });
 
         it('should determine if the tour step has bottom orientation', () => {
-            expect(guidedTourComponent['isBottom']()).toEqual(false);
+            expect(guidedTourComponent['isBottom']()).toBe(false);
 
             guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
-            expect(guidedTourComponent['isBottom']()).toEqual(true);
+            expect(guidedTourComponent['isBottom']()).toBe(true);
         });
 
         it('should determine the highlight padding of the tour step', () => {
-            expect(guidedTourComponent['getHighlightPadding']()).toEqual(0);
+            expect(guidedTourComponent['getHighlightPadding']()).toBe(0);
 
             guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
-            expect(guidedTourComponent['getHighlightPadding']()).toEqual(10);
+            expect(guidedTourComponent['getHighlightPadding']()).toBe(10);
         });
 
         it('should calculate the top position of the tour step', () => {
-            expect(guidedTourComponent.topPosition).toEqual(0);
+            expect(guidedTourComponent.topPosition).toBe(0);
 
             setOrientation(Orientation.BOTTOM);
-            expect(guidedTourComponent.topPosition).toEqual(50);
+            expect(guidedTourComponent.topPosition).toBe(50);
         });
 
         it('should calculate the left position of the tour step', () => {
-            expect(guidedTourComponent.leftPosition).toEqual(-350);
+            expect(guidedTourComponent.leftPosition).toBe(-350);
         });
 
         it('should calculate the width of the tour step', () => {
-            expect(guidedTourComponent.calculatedTourStepWidth).toEqual(500);
+            expect(guidedTourComponent.calculatedTourStepWidth).toBe(500);
         });
 
         it('should apply the right transformation', () => {
             setOrientation(Orientation.TOP);
-            expect(guidedTourComponent.transform).toEqual('translateY(-100%)');
+            expect(guidedTourComponent.transform).toBe('translateY(-100%)');
 
             guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
-            expect(guidedTourComponent.transform).toEqual('');
+            expect(guidedTourComponent.transform).toBe('');
         });
 
         it('should calculate the right max width adjustment', () => {
             guidedTourComponent.tourStepWidth = 500;
             guidedTourComponent.minimalTourStepWidth = 400;
-            expect(guidedTourComponent['maxWidthAdjustmentForTourStep']).toEqual(100);
+            expect(guidedTourComponent['maxWidthAdjustmentForTourStep']).toBe(100);
         });
 
         it('should calculate the left position of the highlighted element', () => {
             guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
-            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toEqual(-350);
+            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toBe(-350);
 
             setOrientation(Orientation.TOPRIGHT);
-            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toEqual(-500);
+            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toBe(-500);
 
             setOrientation(Orientation.TOPLEFT);
-            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toEqual(0);
+            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toBe(0);
 
             setOrientation(Orientation.LEFT);
-            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toEqual(-510);
+            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toBe(-510);
 
             setOrientation(Orientation.RIGHT);
-            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toEqual(210);
+            expect(guidedTourComponent['calculatedHighlightLeftPosition']).toBe(210);
         });
 
         it('should adjust the width for screen bound', () => {
             guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
-            expect(guidedTourComponent['widthAdjustmentForScreenBound']).toEqual(0);
+            expect(guidedTourComponent['widthAdjustmentForScreenBound']).toBe(0);
 
             guidedTourComponent.tourStepWidth = 1000;
-            expect(guidedTourComponent['widthAdjustmentForScreenBound']).toEqual(500);
+            expect(guidedTourComponent['widthAdjustmentForScreenBound']).toBe(500);
         });
 
         it('should calculate the right style for the overlays', () => {
@@ -323,13 +311,13 @@ describe('GuidedTourComponent', () => {
             const rightStyle = { 'top.px': 0, 'left.px': 200, 'height.px': 50 };
 
             let style = guidedTourComponent.getOverlayStyle(OverlayPosition.TOP);
-            expect(JSON.stringify(style)).toEqual(JSON.stringify(topStyle));
+            expect(JSON.stringify(style)).toBe(JSON.stringify(topStyle));
             style = guidedTourComponent.getOverlayStyle(OverlayPosition.BOTTOM);
-            expect(JSON.stringify(style)).toEqual(JSON.stringify(bottomStyle));
+            expect(JSON.stringify(style)).toBe(JSON.stringify(bottomStyle));
             style = guidedTourComponent.getOverlayStyle(OverlayPosition.LEFT);
-            expect(JSON.stringify(style)).toEqual(JSON.stringify(leftStyle));
+            expect(JSON.stringify(style)).toBe(JSON.stringify(leftStyle));
             style = guidedTourComponent.getOverlayStyle(OverlayPosition.RIGHT);
-            expect(JSON.stringify(style)).toEqual(JSON.stringify(rightStyle));
+            expect(JSON.stringify(style)).toBe(JSON.stringify(rightStyle));
         });
 
         it('should initiate flip orientation', () => {
@@ -338,7 +326,7 @@ describe('GuidedTourComponent', () => {
             jest.spyOn<any, any>(guidedTourComponent, 'isTourOnScreen').mockReturnValue(false);
             const flipOrientationSpy = jest.spyOn<any, any>(guidedTourComponent, 'flipOrientation').mockImplementation();
             guidedTourComponent['scrollToAndSetElement']();
-            expect(flipOrientationSpy).toHaveBeenCalledTimes(0);
+            expect(flipOrientationSpy).not.toHaveBeenCalled();
 
             jest.advanceTimersByTime(300);
             guidedTourComponent['scrollToAndSetElement']();
@@ -348,11 +336,11 @@ describe('GuidedTourComponent', () => {
         it('should flip orientation', () => {
             setOrientation(Orientation.BOTTOMLEFT);
             guidedTourComponent['flipOrientation']();
-            expect(guidedTourComponent.orientation).toEqual(Orientation.BOTTOMRIGHT);
+            expect(guidedTourComponent.orientation).toBe(Orientation.BOTTOMRIGHT);
 
             setOrientation(Orientation.TOPRIGHT);
             guidedTourComponent['flipOrientation']();
-            expect(guidedTourComponent.orientation).toEqual(Orientation.TOPLEFT);
+            expect(guidedTourComponent.orientation).toBe(Orientation.TOPLEFT);
         });
     });
 });
