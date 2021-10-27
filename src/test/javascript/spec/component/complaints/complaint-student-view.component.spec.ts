@@ -258,7 +258,7 @@ describe('ComplaintInteractionsComponent', () => {
         expect(component.course).toStrictEqual(course);
         expect(component.showSection).toBe(true);
         expect(component.formComplaintType).toBe(undefined);
-        expect(component.numberOfAllowedComplaints).toStrictEqual(numberOfComplaints);
+        expect(component.remaindingNumberOfComplaints).toStrictEqual(numberOfComplaints);
         expect(component.isCorrectUserToFileAction).toBe(true);
         expect(result.participation).toStrictEqual(participation);
     }

@@ -31,13 +31,13 @@ export class ComplaintsStudentViewComponent implements OnInit {
     course?: Course;
     // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
     formComplaintType?: ComplaintType;
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
-    numberOfAllowedComplaints = 0;
-    isCorrectUserToFileAction: boolean;
+    // The number of complaints that the student is still allowed to submit in the course.
+    remaindingNumberOfComplaints = 0;
+    isCorrectUserToFileAction = false;
     isExamMode: boolean;
-    showSection: boolean;
-    timeOfFeedbackRequestValid: boolean;
-    timeOfComplaintValid: boolean;
+    showSection = false;
+    timeOfFeedbackRequestValid = false;
+    timeOfComplaintValid = false;
 
     ComplaintType = ComplaintType;
 
@@ -66,7 +66,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
                 this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
-                    this.numberOfAllowedComplaints = allowedComplaints;
+                    this.remaindingNumberOfComplaints = allowedComplaints;
                 });
             }
             this.loadPotentialComplaint();
@@ -110,12 +110,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * This function is used to check whether the student is allowed to submit a complaint or not.
-     * For exams, submitting a complaint is allowed within the Student Review Period, see {@link isWithinExamReviewPeriod}.
-     *
-     * For course exercises, submitting a complaint is allowed within one week after the student received the
-     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
-     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
      */
     private isComplaintAllowed(): boolean {
         if (this.isExamMode) {
@@ -125,7 +120,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Analogous to isComplaintAllowed but exams cannot have more feedback requests.
+     * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
      */
     private isFeedbackRequestAllowed(): boolean {
         if (!this.isExamMode) {

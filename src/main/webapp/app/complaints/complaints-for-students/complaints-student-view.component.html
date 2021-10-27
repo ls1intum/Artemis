@@ -3,10 +3,10 @@
         <button
             *ngIf="isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)"
             class="btn btn-primary"
-            [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid"
+            [class.not-allowed]="(!isExamMode && remaindingNumberOfComplaints == 0) || !timeOfComplaintValid"
             (click)="formComplaintType = ComplaintType.COMPLAINT"
-            [disabled]="(!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid"
-            title="{{ (!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : '' }}"
+            [disabled]="(!isExamMode && remaindingNumberOfComplaints == 0) || !timeOfComplaintValid"
+            title="{{ (!isExamMode && remaindingNumberOfComplaints == 0) || !timeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : '' }}"
         >
             {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}
         </button>
@@ -28,7 +28,7 @@
             [exercise]="exercise"
             [resultId]="result.id!"
             [examId]="exam?.id!"
-            [allowedComplaints]="numberOfAllowedComplaints"
+            [remaindingNumberOfComplaints]="remaindingNumberOfComplaints"
             [complaintType]="formComplaintType"
             [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction"
             (submit)="loadPotentialComplaint()"

@@ -5,14 +5,14 @@
             <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
             <p *ngIf="complaintType === ComplaintType.COMPLAINT">
                 <span
-                    *ngIf="!examId && allowedComplaints == undefined"
+                    *ngIf="!examId && remaindingNumberOfComplaints == undefined"
                     [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
                     [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
                 ></span>
                 <span
-                    *ngIf="!examId && allowedComplaints >= 0"
+                    *ngIf="!examId && remaindingNumberOfComplaints >= 0"
                     [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
-                    [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
+                    [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: remaindingNumberOfComplaints }"
                 ></span>
                 <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
                 <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
