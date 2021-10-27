@@ -1,6 +1,6 @@
-import { COURSE_BASE } from './../requests/CourseManagementRequests';
-import { GET, BASE_API, POST } from './../constants';
-import { CypressCredentials } from '../users';
+import { COURSE_BASE } from '../../../requests/CourseManagementRequests';
+import { GET, BASE_API, POST } from '../../../constants';
+import { CypressCredentials } from '../../../users';
 
 const buildingAndTesting = 'Building and testing...';
 const exerciseRow = '.course-exercise-row';
