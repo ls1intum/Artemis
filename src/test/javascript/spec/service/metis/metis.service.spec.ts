@@ -15,10 +15,8 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import {
-    metisAnswerPostUser1,
+    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePostsWithCourseWideContext,
     metisExercise,
@@ -55,7 +53,6 @@ describe('Metis Service', () => {
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
         injector = getTestBed();
@@ -70,7 +67,7 @@ describe('Metis Service', () => {
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
-        answerPost = metisAnswerPostUser1;
+        answerPost = metisResolvingAnswerPostUser1;
         reaction = metisReactionUser2;
         course = metisCourse;
     });
@@ -195,6 +192,12 @@ describe('Metis Service', () => {
             metisService.getFilteredPosts({ courseId: course.id });
             expect(postServiceSpy).toHaveBeenCalled();
         });
+
+        it('should get similar posts within course', () => {
+            const postServiceSpy = jest.spyOn(postService, 'computeSimilarityScoresWithCoursePosts');
+            metisService.getSimilarPosts(post);
+            expect(postServiceSpy).toHaveBeenCalled();
+        });
     });
 
     describe('Invoke answer post service methods', () => {
@@ -217,7 +220,7 @@ describe('Metis Service', () => {
             expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
         }));
 
-        it('should create a post', fakeAsync(() => {
+        it('should update an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'update');
             const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
                 expect(updatedAnswerPost).toEqual(answerPost);
@@ -298,6 +301,27 @@ describe('Metis Service', () => {
         expect(getCourseReturn).toEqual(newCourse);
     });
 
+    it('should create empty post for a course-wide context', () => {
+        const emptyPost = metisService.createEmptyPostForContext(CourseWideContext.ORGANIZATION, undefined, undefined);
+        expect(emptyPost.courseWideContext).toEqual(CourseWideContext.ORGANIZATION);
+        expect(emptyPost.exercise).toEqual(undefined);
+        expect(emptyPost.lecture).toEqual(undefined);
+    });
+
+    it('should create empty post for a exercise context', () => {
+        const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
+        expect(emptyPost.courseWideContext).toEqual(undefined);
+        expect(emptyPost.exercise).toEqual({ id: metisExercise.id, title: metisExercise.title, type: metisExercise.type });
+        expect(emptyPost.lecture).toEqual(undefined);
+    });
+
+    it('should create empty post for a lecture context', () => {
+        const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture);
+        expect(emptyPost.courseWideContext).toEqual(undefined);
+        expect(emptyPost.exercise).toEqual(undefined);
+        expect(emptyPost.lecture).toEqual(metisLecture);
+    });
+
     it('should determine the link components for a reference to a post with course-wide context', () => {
         metisService.setCourse(course);
         const referenceLinkComponents = metisService.getLinkForPost(metisCoursePostsWithCourseWideContext[0]);
@@ -338,5 +362,26 @@ describe('Metis Service', () => {
         expect(referenceLinkComponents).toEqual({
             postId: metisLecturePosts[0].id,
         });
+    });
+
+    it('should determine context information for a post with course-wide context', () => {
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(metisCoursePostsWithCourseWideContext[0]);
+        expect(contextInformation.routerLinkComponents).toEqual(undefined);
+        expect(contextInformation.displayName).toBeDefined();
+    });
+
+    it('should determine context information for a post with exercise context', () => {
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(metisExercisePosts[0]);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'exercises', metisExercisePosts[0].exercise!.id]);
+        expect(contextInformation.displayName).toEqual(metisExercisePosts[0].exercise!.title);
+    });
+
+    it('should determine context information for a post with lecture context', () => {
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(metisLecturePosts[0]);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecturePosts[0].lecture!.id]);
+        expect(contextInformation.displayName).toEqual(metisLecturePosts[0].lecture!.title);
     });
 });

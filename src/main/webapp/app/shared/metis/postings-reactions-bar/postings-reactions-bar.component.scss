@@ -1,9 +1,9 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
+@import 'src/main/webapp/app/shared/metis/metis.component';
 
 $reaction-button-default-color: rgba(242, 242, 242);
 $reaction-button-hover-color: rgba(255, 255, 255);
-$reaction-button-reacted-color: rgba(237, 245, 250);
-$reaction-button-reacted-accent-color: #0f6ab4;
+$reaction-button-reacted-color: $metis-light-blue;
+$reaction-button-reacted-accent-color: $metis-blue;
 
 .emoji-mart {
     font-size: smaller;

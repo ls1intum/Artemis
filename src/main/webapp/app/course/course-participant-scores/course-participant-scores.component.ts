@@ -8,6 +8,8 @@ import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-participant-scores',
@@ -17,6 +19,7 @@ export class CourseParticipantScoresComponent implements OnInit {
     readonly GradeType = GradeType;
 
     courseId: number;
+    course?: Course;
     isLoading: boolean;
     participantScores: ParticipantScoreDTO[] = [];
     participantScoresAverage: ParticipantScoreAverageDTO[] = [];
@@ -32,11 +35,13 @@ export class CourseParticipantScoresComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private gradingSystemService: GradingSystemService,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = +params['courseId'];
+            this.courseManagementService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
             if (this.courseId) {
                 this.loadData();
             }

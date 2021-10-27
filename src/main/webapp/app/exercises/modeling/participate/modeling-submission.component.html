@@ -38,7 +38,9 @@
                         [diagramType]="modelingExercise.diagramType!"
                         [withExplanation]="true"
                         [(explanation)]="explanation"
+                        [resizeOptions]="resizeOptions"
                     ></jhi-modeling-editor>
+                    <fa-icon [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type!"
@@ -58,6 +60,7 @@
                             [readOnly]="true"
                             [enablePopups]="false"
                             [displayPoints]="false"
+                            [course]="course"
                             (selectionChanged)="onSelectionChanged($event)"
                             [explanation]="explanation"
                         ></jhi-modeling-assessment>
@@ -108,6 +111,7 @@
                 class="col-xl-8 mt-3 alert unreferencedFeedback"
                 [feedback]="unreferencedFeedback || []"
                 [additional]="true"
+                [course]="course"
             >
             </jhi-additional-feedback>
         </div>

@@ -71,7 +71,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 this.exercise = exercise;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
-                this.setPermissions();
                 this.busy = false;
             });
     }
@@ -125,14 +124,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             this.fileUploadAssessmentService.cancelAssessment(submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
-        }
-    }
-
-    private setPermissions() {
-        if (this.exercise.course) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-        } else {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
         }
     }
 

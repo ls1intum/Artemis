@@ -3,7 +3,8 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -18,7 +19,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     set feedback(feedback: Feedback) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
-        this.viewOnly = feedback ? true : false;
+        this.viewOnly = !!feedback;
         if (this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0) {
             this.disableEditScore = true;
         } else {
@@ -34,6 +35,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readOnly: boolean;
     @Input()
     highlightDifferences: boolean;
+    @Input()
+    course?: Course;
 
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
@@ -45,7 +48,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onEditFeedback = new EventEmitter<number>();
 
     // Expose the function to the template
-    readonly round = round;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
     viewOnly: boolean;
     oldFeedback: Feedback;

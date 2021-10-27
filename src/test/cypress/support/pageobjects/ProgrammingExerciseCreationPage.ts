@@ -1,3 +1,5 @@
+import { PROGRAMMING_EXERCISE_BASE } from './../requests/CourseManagementRequests';
+import { POST } from '../constants';
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise creation page.
  */
@@ -42,8 +44,9 @@ export class ProgrammingExerciseCreationPage {
      * @returns the chainable of the request to make further verifications
      */
     generate() {
-        cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExercise');
+        cy.intercept(POST, PROGRAMMING_EXERCISE_BASE + 'setup').as('createProgrammingExercise');
         cy.get('#save-entity').click();
-        return cy.wait('@createProgrammingExercise');
+        // Creating a programming exercise can take quite a while so we increase the default timeout here
+        return cy.wait('@createProgrammingExercise', { timeout: 60000 });
     }
 }

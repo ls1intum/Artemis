@@ -24,7 +24,7 @@ author = 'Technical University of Munich, Chair for Applied Software Engineering
 
 # -- General configuration ---------------------------------------------------
 
-# The document name of the “master” document, that is, the document
+# The document name of the “main” document, that is, the document
 # that contains the root toctree directive.
 master_doc = "index"
 
@@ -54,3 +54,9 @@ html_context = {
     "github_version": "develop",
     "conf_py_path": "/docs/",
 }
+html_style = 'css/style.css'
+
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = ['_static']

@@ -12,10 +12,12 @@
             <fa-icon [icon]="'bars'"></fa-icon>
         </a>
         <a class="navbar-brand logo float-start" routerLink="/" (click)="collapseNavbar()">
-            <img class="logo-img" [src]="SERVER_API_URL + 'public/images/logo.png'" />
-            <span>&nbsp;&nbsp;&nbsp;</span>
-            <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;&nbsp;&nbsp;<span class="navbar-version">{{ version }}</span>
-            <jhi-loading-notification></jhi-loading-notification>
+            <div class="row">
+                <img class="logo-img col" [src]="SERVER_API_URL + 'public/images/logo.png'" />
+                <div jhiTranslate="global.title" class="navbar-title col">Artemis</div>
+                <div class="navbar-version col px-0 align-self-center">{{ version }}</div>
+                <jhi-loading-notification class="col align-self-center"></jhi-loading-notification>
+            </div>
         </a>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
@@ -172,6 +174,13 @@
                     </span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
+                    <li>
+                        <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'cog'" [fixedWidth]="true"></fa-icon>
+                            <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
+                        </a>
+                    </li>
+                    <div class="dropdown-divider"></div>
                     <li>
                         <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
                     </li>
