@@ -1,12 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { SimpleChange } from '@angular/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -14,11 +11,10 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-
 import * as sinon from 'sinon';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,12 +30,9 @@ describe('TutorParticipationGraphComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TutorParticipationGraphComponent, ProgressBarComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
+            declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock, MockDirective(NgbTooltip)],
             providers: [
-                JhiLanguageHelper,
-                { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: Router, useValue: router },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()

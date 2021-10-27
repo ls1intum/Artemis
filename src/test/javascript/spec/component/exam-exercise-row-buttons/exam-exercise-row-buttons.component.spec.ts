@@ -1,15 +1,8 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { CookieService } from 'ngx-cookie-service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -29,10 +22,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import * as sinon from 'sinon';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -69,21 +63,16 @@ describe('ExamExerciseRowButtonsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
-                RouterTestingModule.withRoutes([
-                    {
-                        path: 'courses',
-                        component: ExamExerciseRowButtonsComponent,
-                    },
-                ]),
+                ArtemisTestModule
             ],
-            declarations: [ExamExerciseRowButtonsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockDirective(DeleteButtonDirective)],
+            declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DeviceDetectorService },
+                MockProvider(TextExerciseService),
+                MockProvider(FileUploadExerciseService),
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(ModelingExerciseService),
+                MockProvider(QuizExerciseService),
+                MockProvider(EventManager)
             ],
         })
             .compileComponents()

@@ -1,21 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../test.module';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint } from 'app/entities/complaint.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { RouterTestingModule } from '@angular/router/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { MockQueryParamsDirective } from '../shared/metis/post/post.component.spec';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -23,20 +24,25 @@ describe('AssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
+                MockDirective(TranslateDirective),
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AlertComponent),
                 MockComponent(NgbAlert),
                 MockComponent(AssessmentWarningComponent),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
                 MockComponent(NgbTooltip),
+                TranslatePipeMock,
+                MockRouterLinkDirective,
+                MockQueryParamsDirective
             ],
-            providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
+            providers: [
+                MockProvider(TextAssessmentAnalytics),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute()}
+            ],
         })
             .compileComponents()
             .then(() => {
