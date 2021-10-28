@@ -1,12 +1,20 @@
-<div class="table-editable-field">
+<div class="table-editable-field row">
     <input
-        #editingInput
         [id]="id"
         class="table-editable-field__input form-control me-2"
         (blur)="sendValueUpdate($event)"
         (keyup.enter)="sendValueUpdate($event)"
         [value]="inputValue"
         (input)="storeInputValue($event)"
+        [required]="isRequired"
+        [pattern]="pattern ?? '.*'"
+        [(ngModel)]="inputValue"
         type="text"
+        #editingInput="ngModel"
     />
+    <ng-container *ngFor="let error of editingInput.errors! | keyvalue | removekeys: ['required']">
+        <div *ngIf="editingInput.invalid && (editingInput.dirty || editingInput.touched)" class="alert alert-danger">
+            <div [jhiTranslate]="translationBase + '.' + error.key"></div>
+        </div>
+    </ng-container>
 </div>
