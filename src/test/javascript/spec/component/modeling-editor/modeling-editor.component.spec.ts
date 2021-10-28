@@ -1,27 +1,21 @@
 import { Course } from 'app/entities/course.model';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { cloneDeep } from 'lodash-es';
-import { SimpleChange } from '@angular/core';
+import { Renderer2, SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { stub } from 'sinon';
@@ -47,14 +41,10 @@ describe('ModelingEditorComponent', () => {
             imports: [HttpClientTestingModule, ArtemisTestModule],
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
             providers: [
-                MockProvider(AlertService),
                 MockProvider(GuidedTourService),
+                MockProvider(Renderer2),
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()

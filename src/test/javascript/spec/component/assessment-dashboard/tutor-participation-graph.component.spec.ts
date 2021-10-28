@@ -31,9 +31,7 @@ describe('TutorParticipationGraphComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock, MockDirective(NgbTooltip)],
-            providers: [
-                { provide: Router, useValue: router },
-            ],
+            providers: [{ provide: Router, useValue: router }],
         })
             .compileComponents()
             .then(() => {

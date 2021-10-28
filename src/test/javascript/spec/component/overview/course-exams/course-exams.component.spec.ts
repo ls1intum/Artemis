@@ -1,17 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
@@ -33,9 +31,9 @@ describe('CourseExamsComponent', () => {
             declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(CourseScoreCalculationService),
+                MockProvider(CourseManagementService),
+                MockProvider(ArtemisServerDateService),
             ],
         })
             .compileComponents()
@@ -43,6 +41,7 @@ describe('CourseExamsComponent', () => {
                 componentFixture = TestBed.createComponent(CourseExamsComponent);
                 component = componentFixture.componentInstance;
 
+                jest.spyOn(TestBed.inject(CourseManagementService), 'getCourseUpdates').mockReturnValue(of());
                 jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse').mockReturnValue({ exams: [visibleExam, notVisibleExam] });
             });
     });

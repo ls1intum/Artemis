@@ -4,37 +4,31 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { DebugElement } from '@angular/core';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { SinonStub, stub } from 'sinon';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, of } from 'rxjs';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { ExerciseMode, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { Team } from 'app/entities/team.model';
-import { ClipboardModule } from 'ngx-clipboard';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { HttpClient } from '@angular/common/http';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,7 +55,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbModule, FeatureToggleModule, ClipboardModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
@@ -69,14 +63,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 ExtensionPointDirective,
                 MockRouterLinkDirective,
+                MockDirective(FeatureToggleDirective),
             ],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: ProfileService, useClass: MockProfileService },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(HttpClient),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()

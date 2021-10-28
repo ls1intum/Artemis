@@ -7,7 +7,6 @@ import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { MockProvider } from 'ng-mocks';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute } from '@angular/router';
 
 describe('ManualTextSelectionComponent', () => {
@@ -18,7 +17,7 @@ describe('ManualTextSelectionComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ManualTextSelectionComponent],
-            providers: [MockProvider(TextAssessmentAnalytics), MockProvider(ActivatedRoute), MockTranslateService],
+            providers: [MockProvider(TextAssessmentAnalytics), MockProvider(ActivatedRoute)],
         })
             .compileComponents()
             .then(() => {

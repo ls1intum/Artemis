@@ -35,7 +35,7 @@ describe('TextExamSubmissionComponent', () => {
         textSubmission = new TextSubmission();
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
                 TextExamSubmissionComponent,
@@ -46,7 +46,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockComponent(ResizeableContainerComponent),
             ],
-            providers: [MockProvider(TextEditorService), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
             .then(() => {

@@ -28,21 +28,18 @@ describe('AssessmentLayoutComponent', () => {
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
-                MockDirective(TranslateDirective),
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AlertComponent),
                 MockComponent(NgbAlert),
                 MockComponent(AssessmentWarningComponent),
-                MockComponent(NgbTooltip),
+                MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
                 TranslatePipeMock,
                 MockRouterLinkDirective,
-                MockQueryParamsDirective
+                MockQueryParamsDirective,
             ],
-            providers: [
-                MockProvider(TextAssessmentAnalytics),
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute()}
-            ],
+            providers: [MockProvider(TextAssessmentAnalytics), { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         })
             .compileComponents()
             .then(() => {

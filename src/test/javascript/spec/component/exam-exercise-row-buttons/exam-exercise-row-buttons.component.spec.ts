@@ -60,11 +60,10 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
     let fixture: ComponentFixture<ExamExerciseRowButtonsComponent>;
     let component: ExamExerciseRowButtonsComponent;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule
-            ],
+            imports: [ArtemisTestModule],
             declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
             providers: [
                 MockProvider(TextExerciseService),
@@ -72,7 +71,6 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(QuizExerciseService),
-                MockProvider(EventManager)
             ],
         })
             .compileComponents()
@@ -97,6 +95,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 quizExerciseExportSpy = sinon.spy(quizExerciseService, 'exportQuiz');
             });
     });
+
     describe('isExamOver', () => {
         it('should return true if over', () => {
             component.latestIndividualEndDate = dayjs().subtract(1, 'hours');

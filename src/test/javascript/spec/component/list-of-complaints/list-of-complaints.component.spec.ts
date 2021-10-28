@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -11,6 +11,10 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgModel } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { SortService } from 'app/shared/service/sort.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('ListOfComplaintsComponent', () => {
     let comp: ListOfComplaintsComponent;
@@ -23,13 +27,20 @@ describe('ListOfComplaintsComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 ListOfComplaintsComponent,
-                MockPipe(ArtemisTranslatePipe),
                 MockComponent(AlertComponent),
                 MockDirective(NgModel),
                 MockDirective(SortDirective),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) }, MockProvider(ComplaintService), MockProvider(ArtemisDatePipe)],
+            providers: [
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(ComplaintService),
+                MockProvider(ArtemisDatePipe),
+                MockProvider(SortService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -46,7 +57,9 @@ describe('ListOfComplaintsComponent', () => {
             });
     });
 
-    afterEach(() => {});
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
 
     it('should hide addressed complaints by default', () => {
         expect(comp.complaintsToShow.length).toEqual(1);

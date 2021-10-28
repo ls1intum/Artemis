@@ -9,6 +9,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
 
 describe('CourseExamDetailComponent', () => {
     let component: CourseExamDetailComponent;
@@ -27,7 +29,7 @@ describe('CourseExamDetailComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseExamDetailComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
+            providers: [{ provide: Router, useClass: MockRouter }],
         })
             .compileComponents()
             .then(() => {

@@ -14,7 +14,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { SubmissionType } from 'app/entities/submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -24,7 +23,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/result/feedback-collapse.component';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { BuildLogEntryArray } from 'app/entities/build-log.model';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -163,7 +161,7 @@ describe('ResultDetailComponent', () => {
                 MockComponent(FeedbackCollapseComponent),
                 MockDirective(NgbTooltip),
             ],
-            providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(TranslateService), MockProvider(ProfileService)],
+            providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(ProfileService)],
         })
             .compileComponents()
             .then(() => {

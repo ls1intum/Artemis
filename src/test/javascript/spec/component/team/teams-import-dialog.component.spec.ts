@@ -22,8 +22,6 @@ import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStuden
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
@@ -75,7 +73,7 @@ describe('TeamsImportDialogComponent', () => {
                     MockDirective(NgModel),
                     MockDirective(NgForm),
                 ],
-                providers: [MockProvider(TeamService), MockProvider(NgbActiveModal), MockProvider(AlertService)],
+                providers: [MockProvider(TeamService), MockProvider(NgbActiveModal)],
             }).compileComponents();
         }),
     );
