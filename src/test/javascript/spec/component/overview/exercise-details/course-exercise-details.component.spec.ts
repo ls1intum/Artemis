@@ -90,7 +90,6 @@ describe('CourseExerciseDetailsComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
-    let getTeamPayloadStub: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
