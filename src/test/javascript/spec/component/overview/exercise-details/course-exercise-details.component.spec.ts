@@ -90,7 +90,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
-    let getTeamPayloadMock: jest.SpyInstance;
+    let getTeamPayloadStub: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
@@ -166,9 +166,8 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 // mock teamService, needed for team assignment
                 teamService = fixture.debugElement.injector.get(TeamService);
-                getTeamPayloadMock = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
                 const teamAssignmentPayload = { exerciseId: 2, teamId: 2, studentParticipations: [] } as TeamAssignmentPayload;
-                getTeamPayloadMock.mockReturnValue(() => Promise.resolve(of(teamAssignmentPayload)));
+                jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
