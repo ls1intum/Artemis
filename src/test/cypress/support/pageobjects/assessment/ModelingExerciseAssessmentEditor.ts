@@ -1,8 +1,7 @@
-import { AbstractExerciseAssessmentPage } from './assessment/AbstractExerciseAssessmentPage';
-import { MODELING_SPACE } from './ModelingEditor';
-import { CypressExerciseType } from '../requests/CourseManagementRequests';
-import { BASE_API, PUT } from '../constants';
-
+import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { MODELING_SPACE } from '../exercises/modeling/ModelingEditor';
+import { CypressExerciseType } from '../../requests/CourseManagementRequests';
+import { BASE_API, PUT } from '../../constants';
 // TODO: find or create better selectors for this
 const FEEDBACK_CONTAINER = '.sc-lcuiOb';
 

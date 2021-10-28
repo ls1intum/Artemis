@@ -1,4 +1,4 @@
-import { BASE_API, PUT } from '../constants';
+import { BASE_API, PUT } from '../../../constants';
 
 // TODO: find or create better selectors for modeling objects
 export const MODELING_SPACE = '.sc-jrAFXE';
