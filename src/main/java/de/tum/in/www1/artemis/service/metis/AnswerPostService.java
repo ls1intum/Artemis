@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -18,6 +19,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class AnswerPostService extends PostingService {
@@ -36,8 +39,8 @@ public class AnswerPostService extends PostingService {
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate) {
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
@@ -63,7 +66,7 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
 
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
         // use post from database rather than user input
@@ -73,7 +76,7 @@ public class AnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-
+        this.preparePostAndBroadcast(savedAnswerPost, course);
         sendNotification(post, course);
 
         return savedAnswerPost;
@@ -96,7 +99,7 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
-        Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerPost;
 
@@ -105,14 +108,14 @@ public class AnswerPostService extends PostingService {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
-            updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
             mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setContent(answerPost.getContent());
-            updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         }
+        updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }
 
@@ -121,10 +124,13 @@ public class AnswerPostService extends PostingService {
      *
      * @param answerPost answer post that is reacted on
      * @param reaction   reaction that was added by a user
+     * @param courseId   id of the course the answer post belongs to
      */
-    public void updateWithReaction(AnswerPost answerPost, Reaction reaction) {
+    public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
+        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
-        answerPostRepository.save(answerPost);
+        AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
     /**
@@ -144,6 +150,11 @@ public class AnswerPostService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerPostId);
+
+        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
+        Post updatedPost = answerPost.getPost();
+        updatedPost.removeAnswerPost(answerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
@@ -171,6 +182,22 @@ public class AnswerPostService extends PostingService {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
         }
+    }
+
+    /**
+     * Helper method to prepare the post included in the websocket message and initiate the broadcasting
+     *
+     * @param updatedAnswerPost answer post that was updated
+     * @param course            course the answer post belongs to
+     */
+    private void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
+        Post updatedPost = updatedAnswerPost.getPost();
+        // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
+        // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
+        updatedPost.removeAnswerPost(updatedAnswerPost);
+        updatedPost.addAnswerPost(updatedAnswerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
