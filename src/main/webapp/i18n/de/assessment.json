@@ -6,9 +6,9 @@
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "feedback": "Feedback",
-            "feedbackHint": "This feedback is associated with the assessment instruction. You can provide additional feedback for this submission element. Student will see combined feedback during the review.",
-            "feedbackCommentPlaceholder": "You can enter feedback here...",
-            "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
+            "feedbackHint": "Diese Feedback ist mit der Bewertungsanweisung verbunden. Sie können zusätzliches Feedback für dieses Abgabeelement geben. Der Studierende sieht das kombinierte Feedback während der Überprüfung.",
+            "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
+            "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
