@@ -136,7 +136,7 @@ describe('Grading System Component', () => {
         expect(comp.lowerBoundInclusivity).toBe(true);
         expect(comp.gradingScale.gradeSteps.length).toBe(13);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.id).toBeUndefined();
+            expect(gradeStep.id).toBe(undefined);
             expect(gradeStep.gradeName).toBeDefined();
             expect(gradeStep.lowerBoundInclusive).toBe(true);
             expect(gradeStep.lowerBoundPercentage).toBeWithin(0, 101);
@@ -166,7 +166,7 @@ describe('Grading System Component', () => {
         comp.createGradeStep();
 
         expect(comp.gradingScale.gradeSteps.length).toBe(4);
-        expect(comp.gradingScale.gradeSteps[3].id).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[3].id).toBe(undefined);
         expect(comp.gradingScale.gradeSteps[3].gradeName).toStrictEqual('');
         expect(comp.gradingScale.gradeSteps[3].lowerBoundPercentage).toBe(100);
         expect(comp.gradingScale.gradeSteps[3].upperBoundPercentage).toBe(100);
@@ -384,7 +384,7 @@ describe('Grading System Component', () => {
 
     it('should validate valid grading scale correctly', () => {
         expect(comp.validGradeSteps()).toBe(true);
-        expect(comp.invalidGradeStepsMessage).toBeUndefined();
+        expect(comp.invalidGradeStepsMessage).toBe(undefined);
     });
 
     it('should validate invalid grading scale with empty grade steps correctly', () => {
@@ -544,7 +544,7 @@ describe('Grading System Component', () => {
 
         comp.setPoints(gradeStep1, true);
 
-        expect(gradeStep1.lowerBoundPoints).toBeUndefined();
+        expect(gradeStep1.lowerBoundPoints).toBe(undefined);
 
         comp.maxPoints = 100;
 
@@ -589,11 +589,11 @@ describe('Grading System Component', () => {
 
         comp.onChangeMaxPoints(-10);
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).toBe(undefined);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).toBe(undefined);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).toBe(undefined);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).toBe(undefined);
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBe(undefined);
+        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBe(undefined);
     });
 });
