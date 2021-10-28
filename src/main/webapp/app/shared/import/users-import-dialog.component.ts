@@ -128,7 +128,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         if (invalidUserEntries) {
             const maxLength = 30;
             const entriesFormatted = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
-            this.validationError = this.translateService.instant('importUsers.usersForImport.importFailed') + entriesFormatted;
+            this.validationError = entriesFormatted;
         }
     }
 

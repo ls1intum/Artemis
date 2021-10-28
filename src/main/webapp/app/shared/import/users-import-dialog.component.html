@@ -22,7 +22,15 @@
             </div>
             <div class="mt-2">
                 <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
-                <div *ngIf="validationError" class="mt-4 mb-2 text-danger" [innerHTML]="validationError"></div>
+                <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
+                    <div [jhiTranslate]="'importUsers.usersForImport.importFailed'"></div>
+                    <ul class="mt-1">
+                        <li>
+                            <b [jhiTranslate]="'importUsers.usersForImport.failedRows'"></b>
+                            <b [innerHTML]="validationError"> </b>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
         <div *ngIf="usersToImport && usersToImport.length > 0" class="form-group mt-4">
