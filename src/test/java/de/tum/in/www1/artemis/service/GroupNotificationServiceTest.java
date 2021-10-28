@@ -197,8 +197,6 @@ public class GroupNotificationServiceTest {
         when(groupNotificationRepository.save(any())).thenReturn(null);
 
         reset(messagingTemplate);
-
-        capturedNotification = null;
     }
 
     /**
