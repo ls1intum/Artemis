@@ -112,6 +112,7 @@ describe('Grading System Component', () => {
 
         expect(comp).toBeDefined();
         expect(comp.isExam).toBe(true);
+        expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
         expect(findExamStub).toHaveBeenCalledTimes(1);
         expect(comp.exam).toStrictEqual(exam);
@@ -125,6 +126,7 @@ describe('Grading System Component', () => {
 
         fixture.detectChanges();
 
+        expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenCalledTimes(1);
     });
 
@@ -282,6 +284,7 @@ describe('Grading System Component', () => {
         comp.delete();
 
         expect(gradingSystemDeleteForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId);
+        expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(false);
     });
 
@@ -293,6 +296,7 @@ describe('Grading System Component', () => {
         comp.delete();
 
         expect(gradingSystemDeleteForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId);
+        expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(false);
     });
 
@@ -305,6 +309,7 @@ describe('Grading System Component', () => {
         comp.save();
 
         expect(gradingSystemServiceStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemServiceStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(false);
     });
 
@@ -320,6 +325,7 @@ describe('Grading System Component', () => {
         comp.save();
 
         expect(gradingSystemCreateForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemCreateForCourseStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(createdGradingScaleForCourse);
     });
@@ -337,6 +343,7 @@ describe('Grading System Component', () => {
         comp.save();
 
         expect(gradingSystemCreateForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+        expect(gradingSystemCreateForExamStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(createdGradingScaleForExam);
     });
@@ -353,6 +360,7 @@ describe('Grading System Component', () => {
         comp.save();
 
         expect(gradingSystemUpdateForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemUpdateForCourseStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(updateGradingScaleFoCourse);
     });
@@ -370,6 +378,7 @@ describe('Grading System Component', () => {
         comp.save();
 
         expect(gradingSystemUpdateForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+        expect(gradingSystemUpdateForExamStub).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(updatedGradingScaleForExam);
     });
@@ -394,6 +403,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('empty set');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.empty');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with negative max points', () => {
@@ -404,6 +414,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('negative max points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.negativeMaxPoints');
+        expect(translateStub).toHaveBeenCalledTimes(1);
         course.maxPoints = 100;
     });
 
@@ -414,6 +425,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('empty field');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with empty grade step point fields correctly', () => {
@@ -424,6 +436,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('empty field for points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with invalid percentages', () => {
@@ -433,6 +446,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid percentage');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPercentages');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with invalid points', () => {
@@ -448,6 +462,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPoints');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with set points when all should be undefined', () => {
@@ -464,6 +479,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('non-unique grade names');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonUniqueGradeNames');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with unset first passing grade', () => {
@@ -474,6 +490,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('unset first passing grade');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.unsetFirstPassingGrade');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with invalid bonus points', () => {
@@ -484,6 +501,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid bonus points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidBonusPoints');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale without strictly ascending bonus points', () => {
@@ -496,6 +514,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('descending bonus points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with invalid adjacency', () => {
@@ -513,6 +532,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid adjacency');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidAdjacency');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should validate invalid grading scale with invalid first grade step', () => {
@@ -531,6 +551,7 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).toBe(false);
         expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid first grade step');
         expect(translateStub).toHaveBeenCalledWith('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
+        expect(translateStub).toHaveBeenCalledTimes(1);
     });
 
     it('should detect that max points are valid', () => {
