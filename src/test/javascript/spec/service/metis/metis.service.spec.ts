@@ -50,8 +50,6 @@ describe('Metis Service', () => {
     let reactionService: MockReactionService;
     let postService: MockPostService;
     let answerPostService: AnswerPostService;
-    let accountService: MockAccountService;
-    let accountServiceIsAtLeastTutorStub: jest.SpyInstance;
     let post: Post;
     let answerPost: AnswerPost;
     let reaction: Reaction;
@@ -78,11 +76,9 @@ describe('Metis Service', () => {
         reactionService = injector.get(ReactionService);
         postService = injector.get(PostService);
         answerPostService = injector.get(AnswerPostService);
-        accountService = injector.get(AccountService);
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
-        accountServiceIsAtLeastTutorStub = jest.spyOn(accountService, 'isAtLeastTutorInCourse');
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;

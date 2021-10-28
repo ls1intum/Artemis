@@ -246,7 +246,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setExercise(null);
         postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -259,7 +259,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setLecture(null);
         postToUpdate.setExercise(this.existingExercisePosts.get(0).getExercise());
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -273,7 +273,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setCourse(null);
         postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -285,7 +285,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // change to course post with different course-wide context
         postToUpdate.setCourseWideContext(CourseWideContext.RANDOM);
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -314,7 +314,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToNotUpdate.setExercise(null);
         postToNotUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.OK);
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.OK);
         // no effect on post context
         assertThat(notUpdatedPost.getCourseWideContext()).isEqualTo(null);
         assertThat(notUpdatedPost.getCourse()).isEqualTo(null);
