@@ -16,26 +16,16 @@ import { ExportToCsv } from 'export-to-csv';
 import { parse } from 'papaparse';
 
 const csvColumnsGrade = Object.freeze({
-    id: 'id',
     gradeName: 'gradeName',
     lowerBoundPercentage: 'lowerBoundPercentage',
-    lowerBoundPoints: 'lowerBoundPoints',
     upperBoundPercentage: 'upperBoundPercentage',
-    upperBoundPoints: 'upperBoundPoints',
-    lowerBoundInclusive: 'lowerBoundInclusive',
-    upperBoundInclusive: 'upperBoundInclusive',
     isPassingGrade: 'isPassingGrade',
 });
 
 const csvColumnsBonus = Object.freeze({
-    id: 'id',
     bonusPoints: 'bonusPoints',
     lowerBoundPercentage: 'lowerBoundPercentage',
-    lowerBoundPoints: 'lowerBoundPoints',
     upperBoundPercentage: 'upperBoundPercentage',
-    upperBoundPoints: 'upperBoundPoints',
-    lowerBoundInclusive: 'lowerBoundInclusive',
-    upperBoundInclusive: 'upperBoundInclusive',
 });
 
 // needed to map from csv object to grade step
@@ -60,7 +50,6 @@ export class GradingSystemComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
     isLoading = false;
     invalidGradeStepsMessage?: string;
-    invalidImportMessage?: string;
 
     course?: Course;
     exam?: Exam;
@@ -650,16 +639,17 @@ export class GradingSystemComponent implements OnInit {
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
+            this.lowerBoundInclusivity = true;
+            this.setInclusivity(this.gradingScale.gradeSteps);
+            this.maxPoints = 100;
+            this.onChangeMaxPoints(this.maxPoints);
             this.determineFirstPassingGrade();
-            this.setBoundInclusivity();
+            this.gradingScale.gradeSteps.sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage);
         }
-
-        // reset input files in order to select a new file after importing one before
-        // event.target.value = '';
     }
 
     /**
-     * Validate and import grade steps from csv file
+     * Import grade steps from csv file
      * @param event the read event
      * @param csvFile the csv file
      * @private
@@ -667,10 +657,8 @@ export class GradingSystemComponent implements OnInit {
     async readGradingStepsFromCSVFile(event: any, csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
-            this.invalidImportMessage = undefined;
             csvGradeSteps = await this.parseCSVFile(csvFile);
         } catch (error) {
-            this.invalidImportMessage = error.message;
             return [];
         }
 
@@ -687,25 +675,18 @@ export class GradingSystemComponent implements OnInit {
             this.gradingScale.gradeType = GradeType.GRADE;
         }
 
-        const result = this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType);
-
-        if (this.invalidImportMessage) {
-            event.target.value = '';
-        }
-
-        this.gradingScale.gradeSteps = result;
+        this.gradingScale.gradeSteps = this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType);
     }
 
     /**
-     * Map the imported csv objects to GradeStep object with validation.
+     * Map the imported csv objects to GradeStep object
      * In case that the grade type of the imported file is bonus, attribute gradeName will be set with the bonusPoints attribute
      * @param csvGradeSteps
      */
     mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[], gradeType: GradeType): GradeStep[] {
-        const result = csvGradeSteps.map(
+        return csvGradeSteps.map(
             (csvGradeStep) =>
                 ({
-                    ...(csvGradeStep[csvColumnsGrade.id] !== '' && { id: Number(csvGradeStep[csvColumnsGrade.id]) }),
                     gradeName:
                         gradeType === GradeType.GRADE
                             ? csvGradeStep[csvColumnsGrade.gradeName]
@@ -715,111 +696,10 @@ export class GradingSystemComponent implements OnInit {
                             ? String(csvGradeStep[csvColumnsBonus.bonusPoints])
                             : '',
                     lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage]) : undefined,
-                    ...(csvGradeStep[csvColumnsGrade.lowerBoundPoints] !== '' && { lowerBoundPoints: Number(csvGradeStep[csvColumnsGrade.lowerBoundPoints]) }),
                     upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage]) : undefined,
-                    ...(csvGradeStep[csvColumnsGrade.upperBoundPoints] !== '' && { upperBoundPoints: Number(csvGradeStep[csvColumnsGrade.upperBoundPoints]) }),
-                    lowerBoundInclusive: csvGradeStep[csvColumnsGrade.lowerBoundInclusive] ? csvGradeStep[csvColumnsGrade.lowerBoundInclusive] === 'TRUE' : undefined,
-                    upperBoundInclusive: csvGradeStep[csvColumnsGrade.upperBoundInclusive] ? csvGradeStep[csvColumnsGrade.upperBoundInclusive] === 'TRUE' : undefined,
                     ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade] === 'TRUE' }),
                 } as GradeStep),
         );
-
-        if (!this.validateImportedCsvGradeStepsForInclusivity(result)) {
-            return [];
-        }
-        return result;
-    }
-
-    /**
-     * Validate the grade steps imported from csv file for upper/lower bound inclusivity
-     * @param gradeSteps
-     */
-    validateImportedCsvGradeStepsForInclusivity(gradeSteps: GradeStep[]): boolean {
-        // check that lowest grade step includes lower bound
-        if (gradeSteps.length > 0 && !gradeSteps[0].lowerBoundInclusive) {
-            this.invalidImportMessage =
-                this.translateService.instant('artemisApp.gradingSystem.csv.errorLine') +
-                ' 2: ' +
-                this.translateService.instant('artemisApp.gradingSystem.csv.lowestPointNotIncluded');
-            return false;
-        }
-
-        // check that highest grade step includes upper bound
-        if (gradeSteps.length > 1 && !gradeSteps[gradeSteps.length - 1].upperBoundInclusive) {
-            this.invalidImportMessage =
-                this.translateService.instant('artemisApp.gradingSystem.csv.errorLine') +
-                ' ' +
-                (gradeSteps.length + 1) +
-                ': ' +
-                this.translateService.instant('artemisApp.gradingSystem.csv.highestPointNotIncluded');
-            return false;
-        }
-
-        // check that lowerBoundInclusive and upperBoundInclusive is set for all grade steps
-        let inclusivityMissing = false;
-
-        gradeSteps.forEach((gradeStep, index) => {
-            if (gradeStep.lowerBoundInclusive === undefined) {
-                this.invalidImportMessage =
-                    this.translateService.instant('artemisApp.gradingSystem.csv.errorLine') +
-                    ' ' +
-                    (index + 2) +
-                    ': ' +
-                    this.translateService.instant('artemisApp.gradingSystem.csv.lowerBoundInclusiveMissing');
-                inclusivityMissing = true;
-            }
-
-            if (gradeStep.upperBoundInclusive === undefined) {
-                this.invalidImportMessage =
-                    this.translateService.instant('artemisApp.gradingSystem.csv.errorLine') +
-                    ' ' +
-                    (index + 2) +
-                    ': ' +
-                    this.translateService.instant('artemisApp.gradingSystem.csv.upperBoundInclusiveMissing');
-                inclusivityMissing = true;
-            }
-        });
-
-        if (inclusivityMissing) {
-            return false;
-        }
-
-        // Check consistency of bound inclusivity
-        let lowerBoundInclusiveChosen = false;
-        let upperBoundInclusiveChosen = false;
-
-        for (let index = 1; index < gradeSteps.length - 1; index++) {
-            const gradeStep: GradeStep = gradeSteps[index];
-
-            if (gradeStep.lowerBoundInclusive === gradeStep.upperBoundInclusive) {
-                this.invalidImportMessage =
-                    this.translateService.instant('artemisApp.gradingSystem.csv.errorLine') +
-                    ' ' +
-                    (index + 2) +
-                    ': ' +
-                    this.translateService.instant('artemisApp.gradingSystem.csv.lowerAndUpperBoundInclusiveEqual');
-                return false;
-            }
-
-            if (gradeStep.lowerBoundInclusive) {
-                lowerBoundInclusiveChosen = true;
-            }
-
-            if (gradeStep.upperBoundInclusive) {
-                upperBoundInclusiveChosen = true;
-            }
-
-            if (lowerBoundInclusiveChosen && upperBoundInclusiveChosen) {
-                this.invalidImportMessage =
-                    this.translateService.instant('artemisApp.gradingSystem.csv.errorLine') +
-                    ' ' +
-                    (index + 2) +
-                    ': ' +
-                    this.translateService.instant('artemisApp.gradingSystem.csv.inclusivityNotConsistent');
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -832,6 +712,7 @@ export class GradingSystemComponent implements OnInit {
             parse(csvFile, {
                 header: true,
                 skipEmptyLines: true,
+                dynamicTyping: false,
                 complete: (results) => resolve(results.data as CsvGradeStep[]),
                 error: (error) => reject(error),
             });
@@ -855,16 +736,11 @@ export class GradingSystemComponent implements OnInit {
      */
     convertToCsvRow(gradeStep: GradeStep): any {
         return {
-            id: gradeStep.id ?? '',
             ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
             ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
             lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '',
-            lowerBoundPoints: gradeStep.lowerBoundPoints ?? '',
             upperBoundPercentage: gradeStep.upperBoundPercentage ?? '',
-            upperBoundPoints: gradeStep.upperBoundPoints ?? '',
-            lowerBoundInclusive: gradeStep.lowerBoundInclusive ?? '',
-            upperBoundInclusive: gradeStep.upperBoundInclusive ?? '',
-            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade ?? '' }),
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade }),
         };
     }
 
@@ -876,7 +752,7 @@ export class GradingSystemComponent implements OnInit {
     exportAsCSV(rows: any[], headers: string[]): void {
         const options = {
             fieldSeparator: ',',
-            quoteStrings: '"',
+            quoteStrings: '',
             decimalSeparator: 'locale',
             showLabels: true,
             filename: 'grading_key_' + this.gradingScale.course?.shortName,
