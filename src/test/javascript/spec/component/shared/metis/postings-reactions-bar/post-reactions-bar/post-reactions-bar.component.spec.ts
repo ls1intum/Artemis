@@ -24,7 +24,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -32,8 +32,6 @@ describe('PostReactionsBarComponent', () => {
     let fixture: ComponentFixture<PostReactionsBarComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
-    let accountService: MockAccountService;
-    let accountServiceAuthorityMock: jest.SpyInstance;
     let metisServiceUpdateDisplayPriorityMock: jest.SpyInstance;
     let post: Post;
     let reactionToCreate: Reaction;
@@ -58,10 +56,8 @@ describe('PostReactionsBarComponent', () => {
                 fixture = TestBed.createComponent(PostReactionsBarComponent);
                 injector = getTestBed();
                 metisService = injector.get(MetisService);
-                accountService = injector.get(AccountService);
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
-                accountServiceAuthorityMock = jest.spyOn(accountService, 'isAtLeastTutorInCourse');
                 metisServiceUpdateDisplayPriorityMock = jest.spyOn(metisService, 'updatePostDisplayPriority');
                 post = new Post();
                 post.id = 1;
@@ -74,6 +70,7 @@ describe('PostReactionsBarComponent', () => {
                 reactionToDelete.post = post;
                 post.reactions = [reactionToDelete];
                 component.posting = post;
+                metisService.setCourse(metisCourse);
             });
     });
 
@@ -82,7 +79,8 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should initialize user authority and reactions correctly', () => {
-        accountServiceAuthorityMock.mockReturnValue(false);
+        metisCourse.isAtLeastTutor = false;
+        metisService.setCourse(metisCourse);
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).toEqual(false);
         fixture.detectChanges();
@@ -98,7 +96,8 @@ describe('PostReactionsBarComponent', () => {
 
     it('should initialize user authority and reactions correctly with same user', () => {
         component.posting!.author!.id = 99;
-        accountServiceAuthorityMock.mockReturnValue(true);
+        metisCourse.isAtLeastTutor = true;
+        metisService.setCourse(metisCourse);
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).toEqual(true);
         fixture.detectChanges();
@@ -139,7 +138,8 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should invoke metis service method when pin icon is toggled', () => {
-        accountServiceAuthorityMock.mockReturnValue(true);
+        metisCourse.isAtLeastTutor = true;
+        metisService.setCourse(metisCourse);
         component.ngOnInit();
         fixture.detectChanges();
         const pinEmoji = getElement(debugElement, '.pin');
@@ -153,7 +153,8 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should invoke metis service method when archive icon is toggled', () => {
-        accountServiceAuthorityMock.mockReturnValue(true);
+        metisCourse.isAtLeastTutor = true;
+        metisService.setCourse(metisCourse);
         component.ngOnInit();
         fixture.detectChanges();
         const archiveEmoji = getElement(debugElement, '.archive');
@@ -167,7 +168,8 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
-        accountServiceAuthorityMock.mockReturnValue(false);
+        metisCourse.isAtLeastTutor = false;
+        metisService.setCourse(metisCourse);
         component.posting.displayPriority = DisplayPriority.PINNED;
         component.ngOnInit();
         fixture.detectChanges();
@@ -180,7 +182,8 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
-        accountServiceAuthorityMock.mockReturnValue(false);
+        metisCourse.isAtLeastTutor = false;
+        metisService.setCourse(metisCourse);
         component.posting.displayPriority = DisplayPriority.ARCHIVED;
         component.ngOnInit();
         fixture.detectChanges();
