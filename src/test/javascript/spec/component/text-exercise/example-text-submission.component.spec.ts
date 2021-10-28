@@ -137,10 +137,8 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
-        of();
 
         // WHEN
-        fixture.detectChanges();
         await comp.startAssessment();
 
         // THEN
@@ -264,7 +262,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
     });
 
-    it('when wrong tutor assessment, upon backend response should mark feedback as incorrect', fakeAsync(() => {
+    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
         // GIVEN
         const textBlockRefA = TextBlockRef.new();
         textBlockRefA.block!.id = 'ID';
