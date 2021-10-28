@@ -3,7 +3,6 @@ import { Directive, HostListener, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -59,6 +58,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -112,7 +112,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
-                MockComponent(ComplaintInteractionsComponent),
+                MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(RatingComponent),
                 RouterLinkSpy,
                 MockComponent(AlertComponent),
