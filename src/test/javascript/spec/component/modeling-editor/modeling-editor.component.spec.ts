@@ -42,8 +42,6 @@ describe('ModelingEditorComponent', () => {
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
             providers: [
                 MockProvider(GuidedTourService),
-                MockProvider(Renderer2),
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: route },
             ],
         })
