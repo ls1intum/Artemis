@@ -8,7 +8,7 @@ artemis:
     repo-download-clone-path: ./repos-download/server-integration-test
     encryption-password: fake-password
     user-management:
-        use-external: false
+        use-external: true
         external:
             url: https://user-management.fake.fake
             user: fake-username
