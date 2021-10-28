@@ -14,11 +14,11 @@ import { MockPipe, MockComponent, MockDirective } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgModel } from '@angular/forms';
+import { of } from 'rxjs';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -84,7 +84,6 @@ describe('LectureAttachmentsComponent', () => {
                 LectureAttachmentsComponent,
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(AlertErrorComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
@@ -92,67 +91,36 @@ describe('LectureAttachmentsComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            data: {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        lecture,
-                                    }),
-                            },
-                        },
-                    },
-                },
+                { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
                 {
                     provide: AttachmentService,
                     useValue: {
                         create() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: newAttachment,
-                                    }),
-                            };
+                            return of({ body: newAttachment });
                         },
                         findAllByLectureId() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: [...attachments],
-                                    }),
-                            };
+                            return of({ body: [...attachments] });
                         },
                         update() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: {
-                                            id: 52,
-                                            name: 'TestFile',
-                                            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-                                            version: 2,
-                                            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
-                                            attachmentType: 'FILE',
-                                        } as Attachment,
-                                    }),
-                            };
+                            return of({
+                                body: {
+                                    id: 52,
+                                    name: 'TestFile',
+                                    link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                                    version: 2,
+                                    uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
+                                    attachmentType: 'FILE',
+                                } as Attachment,
+                            });
                         },
                         delete() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: newAttachment,
-                                    }),
-                            };
+                            return of({ body: newAttachment });
                         },
                     },
                 },
                 { provide: FileService, useClass: MockFileService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
