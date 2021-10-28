@@ -41,9 +41,9 @@ describe('ModelingExercise Management Detail Component', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -88,7 +88,7 @@ describe('ModelingExercise Management Detail Component', () => {
         expect(statisticsServiceStub).to.have.been.called;
         expect(comp.modelingExercise).to.deep.equal(modelingExercise);
         expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-        expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+        expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
         expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
         expect(eventManager.subscribe).to.have.been.calledWith('modelingExerciseListModification');
         tick();
