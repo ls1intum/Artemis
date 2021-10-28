@@ -48,6 +48,7 @@ public class GroupNotificationService {
 
     /**
      * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
+     *
      * @param exercise which is updated
      * @param notificationText holds the custom change message for the notification process
      * @param instanceMessageSendService can initiate a scheduled notification
@@ -59,6 +60,7 @@ public class GroupNotificationService {
 
     /**
      * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
+     *
      * @param exercise that is updated
      * @param notificationText that is used for the notification process
      */
@@ -95,6 +97,7 @@ public class GroupNotificationService {
 
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
+     *
      * @param groups is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
@@ -201,7 +204,6 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups about a newly released exercise at the moment of its release date.
-     *
      * This notification can be deactivated in the notification settings
      *
      * @param exercise that has been created
@@ -406,6 +408,7 @@ public class GroupNotificationService {
      * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
      * If the checks are successful creates and sends a corresponding email
      * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
+     *
      * @param notification that should be checked
      * @param users which will be filtered based on their notification (email) settings
      * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)
