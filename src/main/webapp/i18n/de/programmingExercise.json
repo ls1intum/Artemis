@@ -323,15 +323,15 @@
                     "optionLabel": "Repository Sperre"
                 },
                 "submissionPenalty": {
-                    "optionLabel": "Strafe für Überzug",
-                    "penaltyInputFieldTitle": "Punktabzug für Überschreitung des Abgabelimits",
-                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
+                    "optionLabel": "Punktabzug je Überschreitung",
+                    "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
+                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer oder gleich 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "Der Punktabzug muss größer als 0 sein!",
+                        "min": "Der Punktabzug muss größer oder gleich 0 sein!",
                         "required": "Der Punktabzug muss gesetzt sein!"
                     },
-                    "penaltyInfoLabel": "Strafe für Überzug",
-                    "triggerAllInformation": "Wird der Punktabzug für Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
+                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
                 },
                 "submissionPolicyType": {
                     "title": "Typ der Abgaberichtlinie",
@@ -343,8 +343,8 @@
                         "tooltip": "Dein Abgaberepository wird gesperrt, sobald das Abgabelimit erreicht wird. Es wird nicht möglich sein, weiter an der Aufgabe teilzunehmen, sobald das Repository gesperrt wurde."
                     },
                     "submission_penalty": {
-                        "title": "Strafe für Überzug",
-                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
+                        "title": "Punktabzug je Überschreitung",
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche, innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
                     }
                 },
                 "submissionLimitTitle": "Abgabelimit",
