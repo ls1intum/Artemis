@@ -192,7 +192,6 @@
         "test:leaks": "ng test --log-heap-usage --detect-leaks",
         "test:server-api-tests": "`pwd`/src/test/k6/api_tests.sh",
         "test:watch": "npm run test -- --watch",
-        "watch": "concurrently npm:start npm:backend:start",
         "webapp:build": "npm run clean-www && npm run webapp:build:dev",
         "webapp:build:dev": "ng build --configuration development",
         "webapp:build:prod": "ng build --configuration production",

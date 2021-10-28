@@ -29,7 +29,7 @@ describe('ApollonDiagramService', () => {
     }));
 
     it('should create a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
             const responseObject = apollonDiagram;
@@ -40,7 +40,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -52,7 +52,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should update a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
             const responseObject = apollonDiagram;
@@ -63,7 +63,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -75,7 +75,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should find a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const diagramId = 1;
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -87,7 +87,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -99,7 +99,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should delete a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const diagramId = 1;
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -111,7 +111,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -123,7 +123,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should get diagrams by course', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
             const responseObject = [apollonDiagram];
@@ -134,7 +134,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
