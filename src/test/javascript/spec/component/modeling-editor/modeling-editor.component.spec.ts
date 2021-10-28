@@ -2,8 +2,6 @@ import { Course } from 'app/entities/course.model';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -15,7 +13,7 @@ import * as testClassDiagram from '../../util/modeling/test-models/class-diagram
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisTestModule } from '../../test.module';
 import { cloneDeep } from 'lodash-es';
-import { Renderer2, SimpleChange } from '@angular/core';
+import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { stub } from 'sinon';
@@ -40,10 +38,7 @@ describe('ModelingEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, ArtemisTestModule],
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
-            providers: [
-                MockProvider(GuidedTourService),
-                { provide: ActivatedRoute, useValue: route },
-            ],
+            providers: [MockProvider(GuidedTourService), { provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
             .then(() => {
