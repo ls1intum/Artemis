@@ -58,6 +58,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     protected applyFilter(): void {
         this.filteredFileUploadExercises = this.fileUploadExercises.filter((exercise) => this.filter.includeExercise(exercise));
+        this.emitFilteredExerciseCount(this.filteredFileUploadExercises.length);
     }
 
     /**

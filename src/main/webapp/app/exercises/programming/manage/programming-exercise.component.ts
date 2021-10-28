@@ -105,6 +105,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     protected applyFilter(): void {
         this.filteredProgrammingExercises = this.programmingExercises.filter((exercise) => this.filter.includeExercise(exercise));
+        this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
     }
 
     trackId(index: number, item: ProgrammingExercise) {

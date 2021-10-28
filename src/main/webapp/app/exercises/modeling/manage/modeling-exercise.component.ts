@@ -59,6 +59,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     protected applyFilter(): void {
         this.filteredModelingExercises = this.modelingExercises.filter((exercise) => this.filter.includeExercise(exercise));
+        this.emitFilteredExerciseCount(this.filteredModelingExercises.length);
     }
 
     /**

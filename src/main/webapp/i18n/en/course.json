@@ -98,6 +98,7 @@
                 "labelExerciseCategory": "Category",
                 "fieldExerciseCategory": "Category",
                 "labelExerciseType": "Exercise Type",
+                "noResults": "No exercises matching this search query were found",
                 "type": {
                     "all": "All Exercises",
                     "programming": "Programming Exercises",

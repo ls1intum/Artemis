@@ -17,6 +17,17 @@
     </div>
 
     <jhi-course-management-exercises-search *ngIf="showSearch" (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
+    <div
+        *ngIf="
+            showSearch &&
+            filteredProgrammingExercisesCount + filteredQuizExercisesCount + filteredModelingExercisesCount + filteredTextExercisesCount + filteredFileUploadExercisesCount == 0 &&
+            !exerciseFilter.isEmpty()
+        "
+        class="alert alert-secondary"
+        role="alert"
+    >
+        {{ 'artemisApp.course.search.noResults' | artemisTranslate }}
+    </div>
     <jhi-alert></jhi-alert>
 
     <jhi-course-exercise-card [hidden]="!['all', 'programming'].includes(exerciseFilter.exerciseTypeSearch)" headingJhiTranslate="artemisApp.course.programmingExercises">
@@ -26,6 +37,7 @@
             [course]="course"
             [exerciseFilter]="exerciseFilter"
             (exerciseCount)="programmingExercisesCount = $event"
+            (filteredExerciseCount)="filteredProgrammingExercisesCount = $event"
         ></jhi-programming-exercise>
     </jhi-course-exercise-card>
 
@@ -34,7 +46,13 @@
         headingJhiTranslate="artemisApp.course.quizExercises"
         [hidden]="!['all', 'quiz'].includes(exerciseFilter.exerciseTypeSearch)"
     >
-        <jhi-quiz-exercise [embedded]="true" [course]="course" [exerciseFilter]="exerciseFilter" (exerciseCount)="quizExercisesCount = $event"></jhi-quiz-exercise>
+        <jhi-quiz-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="quizExercisesCount = $event"
+            (filteredExerciseCount)="filteredQuizExercisesCount = $event"
+        ></jhi-quiz-exercise>
     </jhi-course-exercise-card>
 
     <jhi-course-exercise-card
@@ -42,7 +60,13 @@
         headingJhiTranslate="artemisApp.course.modelingExercises"
         [hidden]="!['all', 'modeling'].includes(exerciseFilter.exerciseTypeSearch)"
     >
-        <jhi-modeling-exercise [embedded]="true" [course]="course" [exerciseFilter]="exerciseFilter" (exerciseCount)="modelingExercisesCount = $event"></jhi-modeling-exercise>
+        <jhi-modeling-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="modelingExercisesCount = $event"
+            (filteredExerciseCount)="filteredModelingExercisesCount = $event"
+        ></jhi-modeling-exercise>
     </jhi-course-exercise-card>
 
     <jhi-course-exercise-card
@@ -50,7 +74,13 @@
         headingJhiTranslate="artemisApp.course.textExercises"
         [hidden]="!['all', 'text'].includes(exerciseFilter.exerciseTypeSearch)"
     >
-        <jhi-text-exercise [embedded]="true" [course]="course" [exerciseFilter]="exerciseFilter" (exerciseCount)="textExercisesCount = $event"></jhi-text-exercise>
+        <jhi-text-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="textExercisesCount = $event"
+            (filteredExerciseCount)="filteredTextExercisesCount = $event"
+        ></jhi-text-exercise>
     </jhi-course-exercise-card>
 
     <jhi-course-exercise-card
@@ -63,6 +93,7 @@
             [course]="course"
             [exerciseFilter]="exerciseFilter"
             (exerciseCount)="fileUploadExercisesCount = $event"
+            (filteredExerciseCount)="filteredFileUploadExercisesCount = $event"
         ></jhi-file-upload-exercise>
     </jhi-course-exercise-card>
 </ng-container>

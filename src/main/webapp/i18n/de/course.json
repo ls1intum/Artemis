@@ -98,6 +98,7 @@
                 "labelExerciseCategory": "Kategorie",
                 "fieldExerciseCategory": "Kategorie",
                 "labelExerciseType": "Aufgabentyp",
+                "noResults": "Keine Aufgaben wurden für die Suchparameter gefunden",
                 "type": {
                     "all": "Alle Aufgaben",
                     "programming": "Programmieraufgaben",

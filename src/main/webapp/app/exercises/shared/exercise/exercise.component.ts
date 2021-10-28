@@ -15,6 +15,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     @Input() course: Course;
     filter: ExerciseFilter;
     @Output() exerciseCount = new EventEmitter<number>();
+    @Output() filteredExerciseCount = new EventEmitter<number>();
     showAlertHeading: boolean;
     showHeading: boolean;
     courseId: number;
@@ -95,6 +96,10 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     protected emitExerciseCount(count: number): void {
         this.exerciseCount.emit(count);
+    }
+
+    protected emitFilteredExerciseCount(count: number): void {
+        this.filteredExerciseCount.emit(count);
     }
 
     protected abstract getChangeEventName(): string;

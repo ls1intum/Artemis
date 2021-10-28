@@ -17,6 +17,11 @@ export class CourseManagementExercisesComponent implements OnInit {
     programmingExercisesCount = 0;
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
+    filteredQuizExercisesCount = 0;
+    filteredTextExercisesCount = 0;
+    filteredProgrammingExercisesCount = 0;
+    filteredModelingExercisesCount = 0;
+    filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
 
     // extension points, see shared/extension-point

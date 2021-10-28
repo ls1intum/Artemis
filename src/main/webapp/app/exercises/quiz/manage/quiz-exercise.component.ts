@@ -60,6 +60,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     protected applyFilter(): void {
         this.filteredQuizExercises = this.quizExercises.filter((exercise) => this.filter.includeExercise(exercise));
+        this.emitFilteredExerciseCount(this.filteredQuizExercises.length);
     }
 
     /**
