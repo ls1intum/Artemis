@@ -15,7 +15,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import dayjs from 'dayjs';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockModule } from 'ng-mocks';
 import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,7 +24,7 @@ import { ParseLinks } from 'app/core/util/parse-links.service';
 import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
 
 @NgModule({
-    imports: [HttpClientTestingModule],
+    imports: [HttpClientTestingModule, MockModule(FontAwesomeModule)],
     providers: [
         DatePipe,
         CookieService,
