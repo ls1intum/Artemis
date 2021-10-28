@@ -38,7 +38,7 @@ public class SingleUserNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param course that the post belongs to
      */
-    public void notifyGroupsWithNotificationType(Post post, NotificationType notificationType, Course course) {
+    private void notifyGroupsWithNotificationType(Post post, NotificationType notificationType, Course course) {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types

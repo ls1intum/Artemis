@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.notifications;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
@@ -25,9 +25,8 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 
 public class GroupNotificationServiceTest {
 
@@ -200,7 +199,7 @@ public class GroupNotificationServiceTest {
     }
 
     /**
-     * Auxiliary method that checks if the groupNotificationRepository was called once successfully with the correct notification (type)
+     * Auxiliary method that checks if the groupNotificationRepository was called successfully with the correct notification (type)
      * @param numberOfGroupsAndCalls indicates the expected number of notifications created/saved.
      * This number depends on the number of different groups. For each different group one separate call is needed.
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
@@ -579,7 +578,7 @@ public class GroupNotificationServiceTest {
         setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
 
-        // inside public saveAndSend method
+        // inside private saveAndSend method
         verify(groupNotificationRepository, times(3)).save(any());
         verify(messagingTemplate, times(3)).convertAndSend(any(), (Notification) any());
         verify(notificationSettingsService, times(3)).checkNotificationTypeForEmailSupport(any());
