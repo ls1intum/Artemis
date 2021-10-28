@@ -203,7 +203,7 @@
                 </div>
             </div>
             <!-- RESULTS END -->
-            <jhi-complaint-interactions
+            <jhi-complaint-student-view
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
@@ -218,7 +218,7 @@
                 [participation]="studentParticipation!"
                 [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
-            </jhi-complaint-interactions>
+            </jhi-complaint-student-view>
             <div
                 class="row"
                 *ngIf="
