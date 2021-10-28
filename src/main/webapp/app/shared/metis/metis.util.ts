@@ -36,6 +36,12 @@ export enum PostSortCriterion {
     ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
+export enum MetisPostAction {
+    CREATE_POST = 'CREATE_POST',
+    UPDATE_POST = 'UPDATE_POST',
+    DELETE_POST = 'DELETE_POST',
+}
+
 export interface PostContextFilter {
     courseId?: number;
     courseWideContext?: CourseWideContext;
@@ -90,3 +96,5 @@ export interface ContextInformation {
  * each component is either a string or a number
  */
 export type RouteComponents = (string | number)[];
+
+export const MetisWebsocketChannelPrefix = '/topic/metis/';
