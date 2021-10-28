@@ -292,11 +292,16 @@
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
-                "repositoryNameRequired": "The repository name is required.",
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
-                "invalidDirectoryName": "An existing repository is already checked out into that directory!",
-                "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
-                "warning": "Auxiliary repositories that are added or changed after the creation of the exercise need to be manually added to the VCS and the build plan!"
+                "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
+                "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
+                "warning": "Auxiliary repositories can be edited and removed. Changes do not cascade to the VCS and CIS and must be carried out manually.",
+                "repositoryNameRequired": {
+                    "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
+                }
             },
             "submissionPolicy": {
                 "title": "Submission Policy",

@@ -292,11 +292,15 @@
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
-                "repositoryNameRequired": "Der Name des Repositories wird benötigt",
-                "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
-                "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
-                "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
-                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt oder verändert werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+                "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
+                "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
+                "warning": "Hilfs-Repositories können editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen manuell durchgeführt werden.",
+                "repositoryNameRequired": {
+                    "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
+                }
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",

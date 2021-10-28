@@ -42,9 +42,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
-    invalidRepositoryNamePattern: RegExp;
-    invalidDirectoryNamePattern: RegExp;
-    invalidWarnings: boolean;
+    auxiliaryRepositoryDuplicateNames: boolean;
+    auxiliaryRepositoryDuplicateDirectories: boolean;
+    auxiliaryRepositoryNamedCorrectly: boolean;
     submitButtonTitle: string;
     isImport: boolean;
     isEdit: boolean;
@@ -75,6 +75,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
     packageNamePattern = '';
 
+    // Auxiliary Repository names must only include words or '-' characters.
+    invalidRepositoryNamePattern = RegExp('^(?!(solution|exercise|tests|auxiliary)\\b)\\b(\\w|-)+$');
+
+    // Auxiliary Repository checkout directories must be valid directory paths. Those must only include words,
+    // '-' or '/' characters.
+    invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
+
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
@@ -98,6 +105,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
+    public auxiliaryRepositoriesValid = true;
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -131,7 +139,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.name = newValue;
-            this.invalidWarnings = true;
+            this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.name;
         };
     }
@@ -144,20 +152,40 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.checkoutDirectory = newValue;
+            this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.checkoutDirectory;
         };
     }
 
     /**
-     * Updates the description of the editedAuxiliaryRepository.
-     *
-     * @param editedAuxiliaryRepository
+     * Refreshes auxiliary variables for auxiliary repository checks. Those variables are
+     * used in the template to display warnings.
      */
-    updateDescription(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
-            editedAuxiliaryRepository.description = newValue;
-            return editedAuxiliaryRepository.description;
-        };
+    refreshAuxiliaryRepositoryChecks() {
+        let legalNameAndDirs = false;
+        // Check that there are no duplicate names.
+        const names = new Set<string | undefined>();
+        const auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        auxReposWithName.forEach((auxiliaryRepository) => {
+            names.add(auxiliaryRepository.name);
+            legalNameAndDirs ||= !this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
+        });
+        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
+
+        // Check that there are no duplicate checkout directories
+        const directories = new Set<string | undefined>();
+        const auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
+        auxReposWithDirectory.forEach((auxiliaryRepository) => {
+            directories.add(auxiliaryRepository.checkoutDirectory);
+            legalNameAndDirs ||= !this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
+        });
+        this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
+
+        // Check that there are no empty/incorrect repository names and directories
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
+
+        // Combining auxiliary variables to one to keep the template readable
+        this.auxiliaryRepositoriesValid = this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
     }
 
     /**
@@ -315,9 +343,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
         this.supportsOCaml = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML);
         this.supportsEmpty = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY);
-
-        this.setInvalidRepoNamePattern();
-        this.setInvalidDirectoryNamePattern();
     }
 
     /**
@@ -355,26 +380,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
         }
-    }
-
-    /**
-     * Sets the attribute invalidRepositoryNamePattern to an updated RegExp that does not allow auxiliary repository names that are already used for this exercise and only allows
-     * "-" besides [0-9A-z]
-     */
-    private setInvalidRepoNamePattern() {
-        let invalidRepoNames = '';
-        this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidRepoNames += '|' + auxiliaryRepository.name));
-        this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b(\\w|-)+$');
-    }
-
-    /**
-     * Sets the attribute invalidDirectoryNamePattern to an updated RegExp that does not allow directory names that are already used for other auxiliary repositories of this
-     * exercise "-" besides [0-9A-z]
-     */
-    private setInvalidDirectoryNamePattern() {
-        let invalidDirectoryNames = '';
-        this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
-        this.invalidDirectoryNamePattern = new RegExp('^(?!( ' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
     }
 
     /**

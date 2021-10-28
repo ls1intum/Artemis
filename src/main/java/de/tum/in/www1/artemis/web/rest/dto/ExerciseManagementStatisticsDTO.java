@@ -14,9 +14,9 @@ public class ExerciseManagementStatisticsDTO {
 
     private long numberOfStudentsOrTeamsInCourse;
 
-    private long numberOfQuestions;
+    private long numberOfPosts;
 
-    private long numberOfAnsweredQuestions;
+    private long numberOfResolvedPosts;
 
     public double getAverageScoreOfExercise() {
         return averageScoreOfExercise;
@@ -50,20 +50,20 @@ public class ExerciseManagementStatisticsDTO {
         this.numberOfParticipations = numberOfParticipations;
     }
 
-    public long getNumberOfQuestions() {
-        return numberOfQuestions;
+    public long getNumberOfPosts() {
+        return numberOfPosts;
     }
 
-    public void setNumberOfQuestions(long numberOfQuestions) {
-        this.numberOfQuestions = numberOfQuestions;
+    public void setNumberOfPosts(long numberOfPosts) {
+        this.numberOfPosts = numberOfPosts;
     }
 
-    public long getNumberOfAnsweredQuestions() {
-        return numberOfAnsweredQuestions;
+    public long getNumberOfResolvedPosts() {
+        return numberOfResolvedPosts;
     }
 
-    public void setNumberOfAnsweredQuestions(long numberOfAnsweredQuestions) {
-        this.numberOfAnsweredQuestions = numberOfAnsweredQuestions;
+    public void setNumberOfResolvedPosts(long numberOfResolvedPosts) {
+        this.numberOfResolvedPosts = numberOfResolvedPosts;
     }
 
     public double getMaxPointsOfExercise() {
