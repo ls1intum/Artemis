@@ -1,7 +1,7 @@
 import allSuccessful from '../../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
-import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/OnlineEditorPage';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
