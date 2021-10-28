@@ -22,7 +22,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs';
 
-describe('ComplaintInteractionsComponent', () => {
+describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
     const course: Course = {
         id: 1,
