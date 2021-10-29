@@ -12,9 +12,9 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -26,7 +26,7 @@ describe('CodeEditorAceComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
-            declarations: [CodeEditorAceComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent)],
+            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -50,9 +50,9 @@ describe('CodeEditorAceComponent', () => {
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBeDefined();
+        expect(placeholder).not.toBe(null);
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTruthy();
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(true);
     });
 
     it('if the component is loading a file from server, it should show the editor in a readonly state', () => {
@@ -60,15 +60,15 @@ describe('CodeEditorAceComponent', () => {
         comp.isLoading = true;
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBeNull();
+        expect(placeholder).toBe(null);
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTruthy();
-        expect(comp.editor.getEditor().getReadOnly()).toBeTruthy();
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(true);
+        expect(comp.editor.getEditor().getReadOnly()).toBe(true);
 
         comp.isLoading = false;
         fixture.detectChanges();
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalsy();
-        expect(comp.editor.getEditor().getReadOnly()).toBeFalsy();
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(false);
+        expect(comp.editor.getEditor().getReadOnly()).toBe(false);
     });
 
     it('if a file is selected and the component is not loading a file from server, the editor should be usable', () => {
@@ -76,10 +76,10 @@ describe('CodeEditorAceComponent', () => {
         comp.isLoading = false;
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBeNull();
+        expect(placeholder).toBe(null);
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalsy();
-        expect(comp.editor.getEditor().getReadOnly()).toBeFalsy();
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(false);
+        expect(comp.editor.getEditor().getReadOnly()).toBe(false);
     });
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
@@ -94,13 +94,13 @@ describe('CodeEditorAceComponent', () => {
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
-        expect(comp.isLoading).toBeTruthy();
+        expect(comp.isLoading).toBe(true);
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
         expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
         fixture.detectChanges();
 
-        expect(comp.isLoading).toBeFalsy();
+        expect(comp.isLoading).toBe(false);
         expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
     });
 
@@ -188,7 +188,7 @@ describe('CodeEditorAceComponent', () => {
         const displayFeedbacksSpy = jest.spyOn(comp, 'displayFeedbacks');
         comp.onFileTextChanged('newFileContent');
 
-        expect(comp.editor.getEditor().getReadOnly()).toBeTruthy();
+        expect(comp.editor.getEditor().getReadOnly()).toBe(true);
         expect(displayFeedbacksSpy).toHaveBeenCalledTimes(1);
     });
 
