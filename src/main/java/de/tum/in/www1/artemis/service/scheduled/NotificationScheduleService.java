@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
@@ -89,10 +90,21 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
                 if (!SecurityUtils.isAuthenticated()) {
                     SecurityUtils.setAuthorizationObject();
                 }
-                // only send a notification if ReleaseDate is null or not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-                if (exercise.getReleaseDate() == null
-                        || !exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-                    groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
+                Exercise foundCurrentVersionOfScheduledExercise;
+                // if the exercise has been updated at the meantime the scheduled immutable exercise is outdated and has to be replaced by the current on in the db
+                try {
+                    // exercise = exerciseRepository.findByIdElseThrow(exercise.getId());
+                    foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
+                }
+                catch (EntityNotFoundException entityNotFoundException) {
+                    log.debug("Scheduled notification is no longer in the database " + exercise.getId());
+                    return;
+                }
+                // only send a notification if ReleaseDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+                if (foundCurrentVersionOfScheduledExercise.getReleaseDate() != null
+                        && !foundCurrentVersionOfScheduledExercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2))
+                        && !foundCurrentVersionOfScheduledExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                    groupNotificationService.notifyAllGroupsAboutReleasedExercise(foundCurrentVersionOfScheduledExercise);
                 }
             });
             log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());

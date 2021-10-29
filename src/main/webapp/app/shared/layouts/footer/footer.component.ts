@@ -10,6 +10,7 @@ import { filter, tap } from 'rxjs/operators';
 })
 export class FooterComponent implements OnInit {
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
+    readonly requestChangeUrl = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
     email: string;
 
