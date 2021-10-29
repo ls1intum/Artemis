@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@angular/router';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -40,6 +40,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -57,6 +58,7 @@ describe('AssessmentDashboardInformationComponent', () => {
     let toggleSecondCorrectionStub: jest.SpyInstance;
 
     let accountService: AccountService;
+    let sortService: SortService;
     let isAtLeastInstructorInCourseStub: jest.SpyInstance;
 
     const programmingExercise = {
@@ -156,9 +158,22 @@ describe('AssessmentDashboardInformationComponent', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
                 accountService = TestBed.inject(AccountService);
+                sortService = TestBed.inject(SortService);
 
-                getExamWithInterestingExercisesForAssessmentDashboardStub = jest.spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard');
-                getStatsForExamAssessmentDashboardStub = jest.spyOn(examManagementService, 'getStatsForExamAssessmentDashboard');
+                getExamWithInterestingExercisesForAssessmentDashboardStub = jest
+                    .spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard')
+                    .mockReturnValue(of({ body: exam }) as Observable<HttpResponse<Exam>>);
+                getStatsForExamAssessmentDashboardStub = jest
+                    .spyOn(examManagementService, 'getStatsForExamAssessmentDashboard')
+                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
+
+                getCourseWithInterestingExercisesForTutorsStub = jest
+                    .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
+                    .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
+                getStatsForTutorsStub = jest
+                    .spyOn(courseManagementService, 'getStatsForTutors')
+                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
+
                 toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
 
                 getCourseWithInterestingExercisesForTutorsStub = jest.spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
@@ -172,51 +187,83 @@ describe('AssessmentDashboardInformationComponent', () => {
         jest.restoreAllMocks();
     });
 
-    describe('ngOnInit', () => {
-        it('should loadAll for course', () => {
-            const newRoute = {
-                snapshot: {
-                    paramMap: convertToParamMap({ courseId: course.id }),
-                    url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
-                },
-            } as any as ActivatedRoute;
-            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
-            activatedRoute.snapshot = newRoute.snapshot;
-            TestBed.inject(ActivatedRoute);
+    it('should init component correctly for exam', fakeAsync(() => {
+        comp.ngOnInit();
+        tick();
 
-            getCourseWithInterestingExercisesForTutorsStub.mockReturnValue(of({ body: course }));
-            getStatsForTutorsStub.mockReturnValue(of(courseTutorStats));
+        expect(comp.isExamMode).toBe(true);
+        expect(comp.courseId).toEqual(10);
+        expect(comp.examId).toEqual(20);
+        expect(comp.isTestRun).toBe(false);
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledOnce();
+        expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledOnce();
+        expect(comp.exam).toEqual(exam);
+        expect(comp.showFinishedExercises).toBe(true);
+        expect(comp.unfinishedExercises).toHaveLength(3);
+        expect(comp.finishedExercises).toHaveLength(1);
+    }));
 
-            comp.ngOnInit();
-            expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
-            expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
-        });
+    it('should init component correctly for course', fakeAsync(() => {
+        const newRoute = {
+            snapshot: {
+                paramMap: convertToParamMap({ courseId: course.id }),
+                url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+            },
+        } as any as ActivatedRoute;
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = newRoute.snapshot;
+        TestBed.inject(ActivatedRoute);
 
-        it('should loadAll for exam', () => {
-            getExamWithInterestingExercisesForAssessmentDashboardStub.mockReturnValue(of({ body: exam }));
-            getStatsForExamAssessmentDashboardStub.mockReturnValue(of(courseTutorStats));
-            isAtLeastInstructorInCourseStub.mockReturnValue(of(true));
+        comp.ngOnInit();
+        tick();
 
-            comp.ngOnInit();
-            expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
-            expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
-            expect(comp.exam).toBe(exam);
-            expect(comp.unfinishedExercises).toHaveLength(3);
-            expect(comp.finishedExercises).toHaveLength(1);
-        });
+        expect(comp.isExamMode).toBe(false);
+        expect(comp.courseId).toEqual(10);
+        expect(comp.examId).toBe(0);
+        expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledOnce();
+        expect(getStatsForTutorsStub).toHaveBeenCalledOnce();
+        expect(comp.course).toEqual(Course.from(course));
+        expect(comp.unfinishedExercises).toHaveLength(4);
+        expect(comp.finishedExercises).toHaveLength(0);
+    }));
+
+    it('should toggle correctionRound for exercises', () => {
+        comp.exercises = exercises;
+        const toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
+        toggleSecondCorrectionStub.mockReturnValue(of(true));
+        comp.toggleSecondCorrection(fileUploadExercise.id!);
+        expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
+        toggleSecondCorrectionStub.mockReturnValue(of(false));
+        comp.toggleSecondCorrection(fileUploadExercise.id!);
+        expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
+        expect(comp.toggelingSecondCorrectionButton).toBe(false);
     });
 
-    describe('toggle second correctionRound', () => {
-        it('should toggle correctionRound for exercises', () => {
-            comp.exercises = exercises;
-            toggleSecondCorrectionStub.mockReturnValue(of(true));
-            comp.toggleSecondCorrection(fileUploadExercise.id!);
-            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
-            toggleSecondCorrectionStub.mockReturnValue(of(false));
-            comp.toggleSecondCorrection(fileUploadExercise.id!);
-            expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
-            expect(comp.toggelingSecondCorrectionButton).toBe(false);
-        });
+    it('should update exercises with finished exercises', () => {
+        comp.showFinishedExercises = true;
+        comp.unfinishedExercises = [textExercise];
+        comp.finishedExercises = [programmingExercise];
+        comp.updateExercises();
+        expect(comp.exercises).toEqual([textExercise, programmingExercise]);
+    });
+
+    it('should update exercises without finished exercises', () => {
+        comp.showFinishedExercises = false;
+        comp.unfinishedExercises = [textExercise];
+        comp.updateExercises();
+        expect(comp.exercises).toEqual([textExercise]);
+    });
+
+    it('should sort rows', () => {
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        comp.exercises = [textExercise];
+        comp.exercisesSortingPredicate = 'assessmentDueDate';
+        comp.exercisesReverseOrder = false;
+
+        comp.sortRows();
+
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+        expect(sortServiceSpy).toHaveBeenCalledWith([textExercise], 'assessmentDueDate', false);
     });
 
     describe('getAssessmentDashboardLinkForExercise', () => {
@@ -304,25 +351,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 expect(comp.stats.tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
                 expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints
                 expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(false);
-            });
-
-            it('do not compute issues if in exam mode', () => {
-                // given
-                const newRoute = {
-                    snapshot: {
-                        paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
-                        url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
-                    },
-                } as any as ActivatedRoute;
-                const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
-                activatedRoute.snapshot = newRoute.snapshot;
-                const computeIssuesWithTutorPerformanceSpy = jest.spyOn(comp, 'computeIssuesWithTutorPerformance');
-
-                // when
-                comp.ngOnInit();
-
-                // then
-                expect(computeIssuesWithTutorPerformanceSpy).not.toHaveBeenCalled();
             });
         });
 
