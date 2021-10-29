@@ -19,7 +19,7 @@
                 [styles]="{ color: '#0f6ab4' }"
             ></fa-icon>
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
-            <div *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto pe-2">
+            <span *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto">
                 <a
                     class="linked-context-information"
                     *ngIf="contextInformation.routerLinkComponents"
@@ -27,10 +27,10 @@
                     (click)="onNavigateToContext($event)"
                     routerLinkActive="active"
                 >
-                    {{ contextInformation.displayName }}
+                    {{ contextInformation.displayName + ':' }}
                 </a>
-                <div class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}</div>
-            </div>
+                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName + ':' }}</span>
+            </span>
             <span class="col-auto">
                 <a
                     class="post-title"

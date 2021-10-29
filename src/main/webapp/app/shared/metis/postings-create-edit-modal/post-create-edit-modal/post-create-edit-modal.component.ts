@@ -11,6 +11,7 @@ import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/m
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 
+// max length does not apply to announcements
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
 
@@ -81,9 +82,9 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         });
-        // start new subscription to value changes of title;
+        // start new subscription to value changes of title for posts that are not announcements;
         // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
-        if (this.editType === this.EditType.CREATE) {
+        if (this.editType === this.EditType.CREATE && !(this.posting.courseWideContext === CourseWideContext.ANNOUNCEMENT)) {
             this.triggerPostSimilarityCheck();
         }
         this.similarPosts = [];
