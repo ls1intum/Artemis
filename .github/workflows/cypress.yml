@@ -46,6 +46,8 @@ jobs:
       - name: Start Artemis
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: rootPassword
           SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling
         run: java -jar build/libs/*.war
 
