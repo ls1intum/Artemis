@@ -28,7 +28,7 @@ describe('Modeling Exercise Assessment Spec', () => {
             courseManagementRequests.addInstructorToCourse(course.id, instructor);
             courseManagementRequests.addTutorToCourse(course, tutor);
             courseManagementRequests.addStudentToCourse(course.id, student.username).then(() => {
-                courseManagementRequests.createModelingExercise({ course }, undefined, undefined, day().add(5, 'seconds'), day().add(1, 'hour')).then((resp) => {
+                courseManagementRequests.createModelingExercise({ course }, undefined, day(), day().add(5, 'seconds'), day().add(1, 'hour')).then((resp) => {
                     modelingExercise = resp.body;
                     cy.login(student).then(() => {
                         courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
