@@ -252,7 +252,7 @@ Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemi
 
 We are using the framework ngx-charts in order to instantiate charts and diagrams in Artemis.
 
-The following is an example HTML template for a vertical bar chart
+The following is an example HTML template for a vertical bar chart:
 
 .. code-block:: html
 
