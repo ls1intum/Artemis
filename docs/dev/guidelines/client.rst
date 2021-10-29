@@ -266,8 +266,7 @@ The following is an example HTML template for a vertical bar chart
             [yAxis]="true"
             [yScaleMax]="20"
             [roundEdges]="true"
-            [showDataLabel]="true"
-        >
+            [showDataLabel]="true">
             <ng-template #tooltipTemplate let-model="model">{{ labelTitle }}: {{ roundValue((model.value / totalValue) * 100) }}% </ng-template>
         </ngx-charts-bar-vertical>
     </div>
