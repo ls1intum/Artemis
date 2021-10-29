@@ -22,6 +22,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import {
     ProgrammingExerciseGradingService,
@@ -50,7 +51,8 @@ import { TestCaseDistributionChartComponent } from 'app/exercises/programming/ma
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -207,10 +209,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 CategoryIssuesChartComponent,
                 MockComponent(ScaCategoryDistributionChartComponent),
+                MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockDirective(NgbPopover),
                 MockDirective(NgModel),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 AlertService,

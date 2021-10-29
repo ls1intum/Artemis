@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.Objects;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -87,18 +89,19 @@ public class AnswerPostService extends PostingService {
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId   id of the course the answer post belongs to
-     * @param answerPost answer post to update
+     * @param courseId      id of the course the answer post belongs to
+     * @param answerPostId  id of the answer post to update
+     * @param answerPost    answer post to update
      * @return updated answer post that was persisted
      */
-    public AnswerPost updateAnswerPost(Long courseId, AnswerPost answerPost) {
+    public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, AnswerPost answerPost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        if (answerPost.getId() == null) {
+        if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
-        AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
+        AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerPost;
