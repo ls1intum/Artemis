@@ -1,28 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { NgModel } from '@angular/forms';
 import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTestModule } from '../../../../test.module';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,23 +33,18 @@ describe('TextExamSubmissionComponent', () => {
         textSubmission = new TextSubmission();
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
-        return TestBed.configureTestingModule({
-            imports: [
-                RouterTestingModule.withRoutes([]),
-                MockModule(ArtemisQuizQuestionTypesModule),
-                MockModule(NgbModule),
-                MockModule(FormsModule),
-                MockModule(FontAwesomeModule),
-                MockModule(ArtemisSharedModule),
-            ],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [
                 TextExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
+                MockDirective(NgModel),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
+                MockComponent(ResizeableContainerComponent),
             ],
-            providers: [MockProvider(TextEditorService), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
             .then(() => {
@@ -62,6 +52,7 @@ describe('TextExamSubmissionComponent', () => {
                 component = fixture.componentInstance;
             });
     });
+
     afterEach(() => {
         sinon.restore();
     });

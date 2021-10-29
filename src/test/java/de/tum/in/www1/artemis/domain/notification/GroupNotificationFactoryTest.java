@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
@@ -21,14 +22,14 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 
 public class GroupNotificationFactoryTest {
 
+    @Autowired
+    private static GroupNotificationFactory groupNotificationFactory;
+
     @Mock
     private User user;
 
     @Mock
     private GroupNotificationType groupNotificationType;
-
-    @Mock
-    private static GroupNotificationFactory groupNotificationFactory;
 
     @Mock
     private static Lecture lecture;
@@ -80,8 +81,6 @@ public class GroupNotificationFactoryTest {
      */
     @BeforeAll
     public static void setUp() {
-        groupNotificationFactory = mock(GroupNotificationFactory.class, CALLS_REAL_METHODS);
-
         course = mock(Course.class);
         when(course.getId()).thenReturn(courseId);
 

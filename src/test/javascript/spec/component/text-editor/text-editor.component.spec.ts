@@ -14,7 +14,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
-import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { textEditorRoute } from 'app/exercises/text/participate/text-editor.route';
@@ -22,7 +21,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
-import { ComplaintsComponent } from 'app/complaints/complaints.component';
+import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
@@ -42,6 +41,7 @@ import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 
 describe('TextEditorComponent', () => {
     // needed to make sure ace is defined
@@ -75,8 +75,8 @@ describe('TextEditorComponent', () => {
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
-                MockComponent(ComplaintsComponent),
-                MockComponent(ComplaintInteractionsComponent),
+                MockComponent(ComplaintsFormComponent),
+                MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(HeaderParticipationPageComponent),

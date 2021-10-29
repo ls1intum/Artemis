@@ -38,7 +38,7 @@ export class SaveExerciseCommand<T extends Exercise> {
             }
         };
 
-        const callBackend = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
+        const callServer = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
             const ex = Exercise.sanitize(exercise);
             switch (this.editType) {
                 case EditType.IMPORT:
@@ -75,7 +75,7 @@ export class SaveExerciseCommand<T extends Exercise> {
         }
 
         return saveObservable.pipe(
-            mergeMap(callBackend),
+            mergeMap(callServer),
             map((res) => res.body! as T),
         );
     }
