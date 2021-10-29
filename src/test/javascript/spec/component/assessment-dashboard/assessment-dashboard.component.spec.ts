@@ -254,6 +254,14 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(comp.exercises).toEqual([textExercise]);
     });
 
+    it('should toggle showing finished exercises', () => {
+        const updateExercisesSpy = jest.spyOn(comp, 'updateExercises');
+        comp.showFinishedExercises = false;
+        comp.triggerFinishedExercises();
+        expect(comp.showFinishedExercises).toBe(true);
+        expect(updateExercisesSpy).toHaveBeenCalledOnce();
+    });
+
     it('should sort rows', () => {
         const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
         comp.exercises = [textExercise];
