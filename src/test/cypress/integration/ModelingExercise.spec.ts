@@ -1,7 +1,7 @@
 import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
-import { MODELING_SPACE } from '../support/pageobjects/ModelingEditor';
+import { MODELING_SPACE } from '../support/pageobjects/exercises/modeling/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
@@ -69,7 +69,7 @@ describe('Modeling Exercise Spec', () => {
 
         it('Create Example Solution', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
-            cy.contains(modelingExerciseTitle).click();
+            cy.get(`[href="/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}"]`).first().click();
             cy.get('.card-body').contains('Edit').click();
             modelingEditor.addComponentToModel(1);
             createModelingExercise.save();

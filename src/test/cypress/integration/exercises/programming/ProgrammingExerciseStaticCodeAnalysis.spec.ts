@@ -1,6 +1,6 @@
 import scaSubmission from '../../../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
-import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/OnlineEditorPage';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
@@ -56,8 +56,8 @@ describe('Static code analysis tests', () => {
             editorPage.getResultPanel().contains('50%').should('be.visible');
             editorPage.getResultPanel().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
-            scaFeedback.shouldShowFeedback(13, '10.0');
-            scaFeedback.shouldShowCodeIssue("Variable 'literal1' must be private and have accessor methods.", '5.0');
+            scaFeedback.shouldShowFeedback(13, '10');
+            scaFeedback.shouldShowCodeIssue("Variable 'literal1' must be private and have accessor methods.", '5');
             scaFeedback.shouldShowCodeIssue("Avoid unused private fields such as 'LITERAL_TWO'.", '0.5');
             scaFeedback.shouldShowCodeIssue("de.test.BubbleSort.literal1 isn't final but should be", '2.5');
             scaFeedback.shouldShowCodeIssue('Unread public/protected field: de.test.BubbleSort.literal1', '0.2');
