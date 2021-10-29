@@ -59,7 +59,6 @@ describe('Modeling Exercise Management Spec', () => {
                 .then((body: any) => {
                     modelingExercise = body;
                     cy.contains(modelingExercise.title).should('exist');
-
                     cy.log('Create Example Solution');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
                     cy.get('.apollon-editor').scrollIntoView();
