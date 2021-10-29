@@ -44,6 +44,9 @@ jobs:
           NODE_OPTIONS: --max_old_space_size=6144
       
       - name: Start Artemis
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+          SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling
         run: java -jar build/libs/*.war
 
       - name: Run Cypress Tests
@@ -52,5 +55,5 @@ jobs:
           working-directory: src/test/cypress
           browser: chrome
           install-command: yarn install --frozen-lockfile
-          config: baseUrl=https://artemistest5.ase.in.tum.de
+          config: baseUrl=http://localhost:8080
           env: username=${{ secrets.BAMBOO_TEST_USER }},password=${{ secrets.BAMBOO_TEST_PASSWORD }},adminUsername=${{ secrets.BAMBOO_ADMIN_USER }},adminPassword=${{ secrets.BAMBOO_ADMIN_PASSWORD }}
