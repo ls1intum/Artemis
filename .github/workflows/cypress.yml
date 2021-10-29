@@ -44,7 +44,7 @@ jobs:
           NODE_OPTIONS: --max_old_space_size=6144
       
       - name: Start Artemis
-        run: java -jar build/libs/*.war &
+        run: java -jar build/libs/*.war
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v2
