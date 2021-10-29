@@ -1,0 +1,28 @@
+# ===================================================================
+# Jenkins specific properties: this file will only be loaded during startup if the profile jenkins is active
+#
+# This configuration overrides the application.yml file.
+# ===================================================================
+
+jenkins:
+    # The following (optional) parameter allows to customize if Jenkins CSRF protection should be used (activated) within Artemis:
+    # see https://wiki.jenkins.io/display/JENKINS/Remote+access+API --> CSRF Protection
+    # The default value for this parameter is true, so if it is not specified, crumb protection will be active.
+    # If you experience problems using crumb, you can deactivate it here.
+    use-crumb: false
+
+    # The following (optional) parameter allows to enable the use of pseudonyms.
+    # If activated, the user's first and last name are not transferred to jenkins.
+    # Instead the user will be called "user <loginname>".
+    use-pseudonyms: false
+
+    # You can override the CI and VCS URLs that are used internally by Artemis.
+    # This is useful when the internal communication between Jenkins and Gitlab is
+    # different to how clients should access those services.
+    # The client-facing URLs (e.g. for the repository clone URL, link to the build plans)
+    # will still be constructed from the ones defined in application-artemis.yml.
+    internal-urls:
+        # Override the ci url used e.g in Gitlab as the webhook url.
+        ci-url: # http://jenkins:8080
+        # Overrides the vcs url used e.g as the Gitlab checkout url in Jenkins build plans
+        vcs-url: # http://gitlab:80
