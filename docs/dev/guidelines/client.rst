@@ -76,12 +76,14 @@ Use JSDoc style comments for functions, interfaces, enums, and classes.
 If you use icons next to text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
 
 Do this:
-.. code-block:: html
+.. code-block:: html+ng2
+
     <fa-icon [icon]="'times'"></fa-icon>
     <span>Text</span>
 
 Don't do one of these or any other combination of whitespaces:
-.. code-block:: html
+.. code-block:: html+ng2
+
     <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
 
     <fa-icon [icon]="'times'"></fa-icon><span> Text</span>
@@ -93,7 +95,7 @@ Don't do one of these or any other combination of whitespaces:
 Ignoring this will lead to inconsistent spacing between icons and text.
 
 10. Style
-========
+=========
 
 1. Use arrow functions over anonymous function expressions.
 2. Always surround arrow function parameters.
@@ -120,7 +122,7 @@ We use ``prettier`` to style code automatically and ``eslint`` to find additiona
 You can find the corresponding commands to invoke those tools in ``package.json``.
 
 11. Preventing Memory Leaks
-==========================
+===========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
 
@@ -207,28 +209,28 @@ When creating a completely new route you will have to register the new paths in 
 
 .. code-block:: ts
 
-	const mapping = {
-		courses: 'artemisApp.course.home.title',
-		lectures: 'artemisApp.lecture.home.title',
-		// put your new directly translated url segments here
-		// the index is the path segment in which '-' have to be replaced by '_'
-		// the value is the translation string
-		your_case: 'artemisApp.cases.title',
-	};
+    const mapping = {
+        courses: 'artemisApp.course.home.title',
+        lectures: 'artemisApp.lecture.home.title',
+        // put your new directly translated url segments here
+        // the index is the path segment in which '-' have to be replaced by '_'
+        // the value is the translation string
+        your_case: 'artemisApp.cases.title',
+    };
 
-	addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
-		switch (this.lastRouteUrlSegment) {
-			case 'course-management':
-				// handles :courseId
-				break;
-			case 'lectures':
-				// handles :lectureId
-				break;
-			case 'your-case':
-				// add a case here for your :variable which is preceded in the path by 'your-case'
-				break;
-		}
-	}
+    addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
+        switch (this.lastRouteUrlSegment) {
+            case 'course-management':
+                // handles :courseId
+                break;
+            case 'lectures':
+                // handles :lectureId
+                break;
+            case 'your-case':
+                // add a case here for your :variable which is preceded in the path by 'your-case'
+                break;
+        }
+    }
 
 13. Strict Template Check
 =========================
@@ -254,7 +256,7 @@ We are using the framework ngx-charts in order to instantiate charts and diagram
 
 The following is an example HTML template for a vertical bar chart:
 
-.. code-block:: html
+.. code-block:: html+ng2
 
     <div #containerRef class="col-md-9">
         <ngx-charts-bar-vertical
