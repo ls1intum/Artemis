@@ -1,20 +1,13 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import { stub } from 'sinon';
 import dayjs from 'dayjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -24,8 +17,40 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { MockProvider, MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { NgbAlert, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { FileService } from 'app/shared/http/file.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CheckboxControlValueAccessor, DefaultValueAccessor, FormsModule, NgForm, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -41,12 +66,52 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, ArtemisProgrammingExerciseUpdateModule, FormDateTimePickerModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            declarations: [
+                ProgrammingExerciseUpdateComponent,
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(HelpIconComponent),
+                NgModel,
+                CheckboxControlValueAccessor,
+                DefaultValueAccessor,
+                SelectControlValueAccessor,
+                NumberValueAccessor,
+                MockPipe(RemoveKeysPipe),
+                MockDirective(TranslateDirective),
+                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(TableEditableFieldComponent),
+                MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
+                MockDirective(NgbTooltip),
+                MockComponent(CategorySelectorComponent),
+                MockComponent(AddAuxiliaryRepositoryButtonComponent),
+                MockComponent(DifficultyPickerComponent),
+                MockComponent(TeamConfigFormGroupComponent),
+                MockComponent(ProgrammingExerciseLifecycleComponent),
+                MockComponent(IncludedInOverallScorePickerComponent),
+                MockPipe(ArtemisTranslatePipe),
+                NgForm,
+                MockComponent(PresentationScoreComponent),
+                MockComponent(NgbAlert),
+                MockComponent(ProgrammingExerciseInstructionComponent),
+                MockComponent(ProgrammingExerciseEditableInstructionComponent),
+                MockComponent(GradingInstructionsDetailsComponent),
+                MockComponent(ButtonComponent),
+                MockDirective(CustomMinDirective),
+                MockDirective(CustomMaxDirective),
+            ],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: FileService, useClass: MockFileService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(NgbModal),
+                MockProvider(ExerciseUpdateWarningService),
+                MockProvider(ProgrammingExerciseSimulationService),
+                MockProvider(ExerciseGroupService),
+                MockProvider(ProgrammingLanguageFeatureService),
+                MockProvider(ArtemisNavigationUtilService),
             ],
         }).compileComponents();
 
@@ -180,11 +245,15 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
             jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             jest.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
-            const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
-            getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
-            getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
-            getFeaturesStub.withArgs(ProgrammingLanguage.C).returns(getProgrammingLanguageFeature(ProgrammingLanguage.C));
+
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+            //const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            //getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            //getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
+            //getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
+            //getFeaturesStub.withArgs(ProgrammingLanguage.C).returns(getProgrammingLanguageFeature(ProgrammingLanguage.C));
         });
 
         it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
