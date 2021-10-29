@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, getTestBed } from '@angular/core/testing';
 import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
@@ -10,7 +10,7 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockPipe, MockComponent, MockDirective } from 'ng-mocks';
+import { MockPipe, MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
@@ -19,11 +19,15 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgModel } from '@angular/forms';
 import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
+    let injector: TestBed;
     let fileUploaderService: FileUploaderService;
+    let attachmentService: AttachmentService;
+    let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
 
     const lecture = {
         id: 4,
@@ -92,40 +96,18 @@ describe('LectureAttachmentsComponent', () => {
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
-                {
-                    provide: AttachmentService,
-                    useValue: {
-                        create() {
-                            return of({ body: newAttachment });
-                        },
-                        findAllByLectureId() {
-                            return of({ body: [...attachments] });
-                        },
-                        update() {
-                            return of({
-                                body: {
-                                    id: 52,
-                                    name: 'TestFile',
-                                    link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-                                    version: 2,
-                                    uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
-                                    attachmentType: 'FILE',
-                                } as Attachment,
-                            });
-                        },
-                        delete() {
-                            return of({ body: newAttachment });
-                        },
-                    },
-                },
                 { provide: FileService, useClass: MockFileService },
+                MockProvider(AttachmentService),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
                 comp = fixture.componentInstance;
-                fileUploaderService = TestBed.inject(FileUploaderService);
+                injector = getTestBed();
+                fileUploaderService = injector.get(FileUploaderService);
+                attachmentService = injector.get(AttachmentService);
+                attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
             });
     });
 
@@ -136,6 +118,7 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should accept file and add attachment to list', fakeAsync(() => {
         fixture.detectChanges();
+        jest.spyOn(attachmentService, 'create').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
         expect(comp.attachmentToBeCreated).toBe(undefined);
         expect(addAttachmentButton).not.toBe(null);
@@ -150,10 +133,10 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachmentToBeCreated!.name = 'Test File Name';
         jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
         uploadAttachmentButton.nativeElement.click();
-
         fixture.detectChanges();
         tick();
         expect(comp.attachments.length).toBe(3);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should not accept too large file', fakeAsync(() => {
@@ -177,12 +160,14 @@ describe('LectureAttachmentsComponent', () => {
         const fileAlert = fixture.debugElement.query(By.css('#too-large-file-alert'));
         expect(comp.attachments.length).toBe(2);
         expect(fileAlert).not.toBe(null);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should exit saveAttachment', fakeAsync(() => {
         fixture.detectChanges();
         comp.attachmentToBeCreated = undefined;
         comp.saveAttachment();
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
         expect(comp.attachmentToBeCreated).toEqual({
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
@@ -201,8 +186,24 @@ describe('LectureAttachmentsComponent', () => {
             uploadDate: dayjs(),
         } as Attachment;
         comp.notificationText = 'wow how did i get here';
+        const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 52,
+                        name: 'TestFile',
+                        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                        version: 2,
+                        uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
+                        attachmentType: 'FILE',
+                    } as Attachment,
+                }),
+            ),
+        );
         comp.saveAttachment();
+        expect(attachmentServiceUpdateStub).toHaveBeenCalledTimes(1);
         expect(comp.attachments[1].version).toBe(2);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should edit attachment', fakeAsync(() => {
@@ -212,6 +213,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.editAttachment(newAttachment);
         expect(comp.attachmentToBeCreated).toBe(newAttachment);
         expect(comp.attachmentBackup).toEqual(newAttachment);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should delete attachment', fakeAsync(() => {
@@ -224,8 +226,11 @@ describe('LectureAttachmentsComponent', () => {
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
+        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments.length).toBe(1);
+        expect(attachmentServiceDeleteStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should call cancel', fakeAsync(() => {
@@ -241,6 +246,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachmentBackup = toCancel;
         comp.cancel();
         expect(comp.attachments[1]).toBe(toCancel);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should download attachment', fakeAsync(() => {
@@ -262,8 +268,8 @@ describe('LectureAttachmentsComponent', () => {
         };
         comp.attachmentToBeCreated = newAttachment;
         comp.setLectureAttachment(object);
-
         expect(comp.attachmentFile).toBe(myBlob1);
         expect(comp.attachmentToBeCreated.link).toBe(myBlob1.name);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     }));
 });
