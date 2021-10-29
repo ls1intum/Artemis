@@ -11,7 +11,6 @@ import { CourseWideContext } from '../metis.util';
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges {
-    @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
