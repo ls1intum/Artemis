@@ -13,6 +13,7 @@ import { PatternMatch, PostingContentPart } from '../metis.util';
 export class PostingContentComponent implements OnInit, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
+    @Input() announcement = false;
     showContent = false;
     currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];

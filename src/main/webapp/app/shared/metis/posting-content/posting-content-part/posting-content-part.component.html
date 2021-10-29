@@ -1,5 +1,6 @@
 <span
-    class="markdown-preview manipulate-p"
+    class="markdown-preview"
+    [ngClass]="postingContentPart.linkToReference ? 'manipulate-p' : ''"
     *ngIf="postingContentPart.contentBeforeReference"
     [innerHTML]="postingContentPart.contentBeforeReference | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
 ></span>
@@ -7,7 +8,8 @@
     {{ postingContentPart.referenceStr }}
 </a>
 <span
-    class="markdown-preview manipulate-p"
+    class="markdown-preview"
+    [ngClass]="postingContentPart.linkToReference ? 'manipulate-p' : ''"
     *ngIf="postingContentPart.contentAfterReference"
     [innerHTML]="postingContentPart.contentAfterReference | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
 ></span>
