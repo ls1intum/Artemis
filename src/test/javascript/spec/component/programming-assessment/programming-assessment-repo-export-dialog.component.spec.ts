@@ -1,11 +1,8 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
@@ -13,12 +10,19 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { NgModel, NgForm } from '@angular/forms';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const createBlobHttpResponse = () => {
     const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
@@ -43,12 +47,24 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     programmingExercise.releaseDate = dayjs();
     programmingExercise.dueDate = dayjs().add(7, 'days');
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingAssessmentModule],
+            imports: [ArtemisTestModule],
+            declarations: [
+                ProgrammingAssessmentRepoExportDialogComponent,
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(AlertErrorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+                MockDirective(FeatureToggleDirective),
+                MockDirective(NgModel),
+                MockDirective(NgForm),
+                MockDirective(MockHasAnyAuthorityDirective),
+            ],
             providers: [
-                ExerciseService,
-                ProgrammingAssessmentRepoExportService,
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
@@ -64,7 +80,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 repoExportService = fixture.debugElement.injector.get(ProgrammingAssessmentRepoExportService);
 
                 // stubs
-                stub(exerciseService, 'find').returns(of({ body: programmingExercise } as HttpResponse<Exercise>));
+                jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
 
                 comp.exerciseId = exerciseId;
                 comp.participationIdList = participationIdList;
@@ -72,41 +88,45 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('test initialization', () => {
         fixture.detectChanges();
-        expect(comp.exerciseId).to.be.equal(42);
+        expect(comp.exerciseId).toEqual(42);
     });
 
     it('Exercise service should find the correct programming exercise', () => {
         fixture.detectChanges();
-        expect(comp.exercise).to.be.equal(programmingExercise);
+        expect(comp.exercise).toEqual(programmingExercise);
     });
 
     it('Export a repo by participations should download a zipped file', fakeAsync(() => {
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos(exerciseId);
         tick();
-        expect(comp.repositoryExportOptions.addParticipantName).to.be.false;
-        expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).to.be.true;
-        expect(comp.exportInProgress).to.be.false;
-        expect(exportReposStub).to.be.calledOnce;
+        expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
+        expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
+        expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
     it('Export a repo by participant identifiers should download a zipped file', fakeAsync(() => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ALL';
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = stub(repoExportService, 'exportReposByParticipantIdentifiers').returns(of(httpResponse));
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos(exerciseId);
         tick();
-        expect(comp.repositoryExportOptions.addParticipantName).to.be.true;
-        expect(comp.exportInProgress).to.be.false;
-        expect(exportReposStub).to.be.calledOnce;
+        expect(comp.repositoryExportOptions.addParticipantName).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
+        expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
     it('Export of multiple repos download multiple files', fakeAsync(() => {
@@ -116,13 +136,13 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         fixture.componentInstance.exercise.isAtLeastInstructor = true;
         comp.selectedProgrammingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.bulkExportRepos();
         tick();
-        expect(comp.repositoryExportOptions.exportAllParticipants).to.be.true;
-        expect(comp.exportInProgress).to.be.false;
-        expect(exportReposStub).to.be.calledTwice;
+        expect(comp.repositoryExportOptions.exportAllParticipants).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
+        expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));
 });

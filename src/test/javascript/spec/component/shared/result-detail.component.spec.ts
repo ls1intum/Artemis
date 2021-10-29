@@ -1,17 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SinonStub, spy, stub } from 'sinon';
+import { stub } from 'sinon';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { FeedbackItem, FeedbackItemType, ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -19,16 +13,16 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { FeedbackCollapseComponent } from 'app/exercises/shared/result/feedback-collapse.component';
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -39,8 +33,8 @@ describe('ResultDetailComponent', () => {
     let buildLogService: BuildLogService;
     let resultService: ResultService;
     let profileService: ProfileService;
-    let buildlogsStub: SinonStub;
-    let getFeedbackDetailsForResultStub: SinonStub;
+    let buildlogsStub: jest.SpyInstance;
+    let getFeedbackDetailsForResultStub: jest.SpyInstance;
 
     // Template for Bitbucket commit hash url
     const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
@@ -156,14 +150,18 @@ describe('ResultDetailComponent', () => {
         return programmingSubmission;
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisResultModule],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+            imports: [ArtemisTestModule],
+            declarations: [
+                ResultDetailComponent,
+                TranslatePipeMock,
+                MockPipe(ArtemisDatePipe),
+                MockComponent(ChartComponent),
+                MockComponent(FeedbackCollapseComponent),
+                MockDirective(NgbTooltip),
             ],
+            providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(ProfileService)],
         })
             .compileComponents()
             .then(() => {
@@ -195,14 +193,20 @@ describe('ResultDetailComponent', () => {
                 resultService = debugElement.injector.get(ResultService);
                 profileService = debugElement.injector.get(ProfileService);
 
-                buildlogsStub = stub(buildLogService, 'getBuildLogs').returns(of([]));
-                getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult').returns(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+                buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
+                getFeedbackDetailsForResultStub = jest
+                    .spyOn(resultService, 'getFeedbackDetailsForResult')
+                    .mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
 
                 // Set profile info
                 const profileInfo = new ProfileInfo();
                 profileInfo.commitHashURLTemplate = commitHashURLTemplate;
                 stub(profileService, 'getProfileInfo').returns(new BehaviorSubject(profileInfo));
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should generate commit link for programming exercise result with submission, participation and exercise', () => {
@@ -216,8 +220,8 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.getCommitHash()).to.equal('123456789ab');
-        expect(comp.getCommitUrl()).to.equal('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
+        expect(comp.getCommitHash()).toBe('123456789ab');
+        expect(comp.getCommitUrl()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
@@ -227,21 +231,22 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(comp.isLoading).to.be.false;
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
         const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        getFeedbackDetailsForResultStub.returns(of({ body: feedbacks } as HttpResponse<Feedback[]>));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id!, comp.result.id);
-        expect(comp.filteredFeedbackList).to.have.same.deep.members(expectedItems);
-        expect(comp.isLoading).to.be.false;
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
+        expect(comp.filteredFeedbackList).toIncludeSameMembers(expectedItems);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and no submission was provided.', () => {
@@ -249,9 +254,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
-        expect(comp.buildLogs).to.deep.equal([]);
-        expect(comp.isLoading).to.be.false;
+        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(comp.buildLogs).toBeArrayOfSize(0);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
@@ -260,9 +266,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
-        expect(comp.buildLogs).to.deep.equal([]);
-        expect(comp.isLoading).to.be.false;
+        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(comp.buildLogs).toBeArrayOfSize(0);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
@@ -271,9 +278,9 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.be.undefined;
-        expect(comp.isLoading).to.be.false;
+        expect(buildlogsStub).not.toHaveBeenCalled();
+        expect(comp.feedbackList).toBe(undefined);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
@@ -282,33 +289,35 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.not.have.been.called;
-        expect(comp.buildLogs).to.be.undefined;
-        expect(comp.isLoading).to.be.false;
+        expect(buildlogsStub).not.toHaveBeenCalled();
+        expect(comp.buildLogs).toBe(undefined);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         const response = new HttpErrorResponse({ status: 403 });
-        buildlogsStub.returns(throwError(response));
+        buildlogsStub.mockReturnValue(throwError(response));
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
-        expect(comp.loadingFailed).to.be.false;
-        expect(comp.isLoading).to.be.false;
+        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(comp.loadingFailed).toBe(false);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         const response = new HttpErrorResponse({ status: 500 });
-        buildlogsStub.returns(throwError(response));
+        buildlogsStub.mockReturnValue(throwError(response));
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
-        expect(comp.loadingFailed).to.be.true;
-        expect(comp.isLoading).to.be.false;
+        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(comp.loadingFailed).toBe(true);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should show test names if showTestDetails is set to true', () => {
@@ -319,9 +328,9 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(comp.isLoading).to.be.false;
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should filter the correct feedbacks when a filter is set', () => {
@@ -332,9 +341,9 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems.filter((item) => item.type === FeedbackItemType.Test));
-        expect(comp.isLoading).to.be.false;
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled;
+        expect(comp.filteredFeedbackList).toEqual(expectedItems.filter((item) => item.type === FeedbackItemType.Test));
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should generate correct class names for feedback items', () => {
@@ -352,7 +361,7 @@ describe('ResultDetailComponent', () => {
             'alert-success', // test case 3
         ];
 
-        expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).to.equal(expectedClasses[index]));
+        expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).toEqual(expectedClasses[index]));
     });
 
     it('should calculate the correct chart values and update the score chart', () => {
@@ -363,16 +372,17 @@ describe('ResultDetailComponent', () => {
         comp.result.feedbacks = feedbacks;
 
         comp.scoreChartPreset.applyTo(new ChartComponent());
-        const chartSetValuesSpy = spy(comp.scoreChartPreset, 'setValues');
+        const chartSetValuesSpy = jest.spyOn(comp.scoreChartPreset, 'setValues');
 
         comp.ngOnInit();
 
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(comp.showScoreChartTooltip).to.equal(true);
+        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(comp.showScoreChartTooltip).toBe(true);
 
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(10, 5, 6, 100, 100);
+        expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
+        expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 5, 6, 100, 100);
         checkChartPreset(5, 5, '10', '5 of 6');
-        expect(comp.isLoading).to.be.false;
+        expect(comp.isLoading).toBe(false);
 
         // test score exceeding exercise maxpoints
 
@@ -380,11 +390,12 @@ describe('ResultDetailComponent', () => {
         feedbacks.push(feedbackPair1.fb);
         expectedItems.push(feedbackPair1.item);
 
-        chartSetValuesSpy.resetHistory();
+        chartSetValuesSpy.mockClear();
         comp.ngOnInit();
 
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(104, 5, 6, 100, 100);
+        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
+        expect(chartSetValuesSpy).toHaveBeenCalledWith(104, 5, 6, 100, 100);
         checkChartPreset(99, 1, '100 of 104', '1 of 6');
 
         // test negative > positive, limit at 0
@@ -395,24 +406,25 @@ describe('ResultDetailComponent', () => {
         feedbacks.push(feedbackPair2.fb);
         expectedItems.push(feedbackPair2.item);
 
-        chartSetValuesSpy.resetHistory();
+        chartSetValuesSpy.mockClear();
         comp.ngOnInit();
 
-        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(10, 22, 206, 100, 100);
+        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
+        expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 22, 206, 100, 100);
         checkChartPreset(0, 10, '10', '10 of 206');
     });
 
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets.length).to.equal(2);
+        expect(comp.scoreChartPreset.datasets).toHaveLength(2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[0].data[0]).to.equal(d1);
+        expect(comp.scoreChartPreset.datasets[0].data[0]).toBe(d1);
         // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[0]).to.equal(l1);
+        expect(comp.scoreChartPreset.valueLabels[0]).toBe(l1);
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[1].data[0]).to.equal(d2);
+        expect(comp.scoreChartPreset.datasets[1].data[0]).toBe(d2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[1]).to.equal(l2);
+        expect(comp.scoreChartPreset.valueLabels[1]).toBe(l2);
     };
 });

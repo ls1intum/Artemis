@@ -84,12 +84,12 @@
                 </div>
             </ng-template>
 
-            <jhi-complaint-interactions
+            <jhi-complaint-student-view
                 *ngIf="textExercise && result && participation"
                 [exercise]="textExercise"
                 [result]="resultWithComplaint ? resultWithComplaint : result"
                 [participation]="participation"
-            ></jhi-complaint-interactions>
+            ></jhi-complaint-student-view>
         </div>
     </div>
     <!--endregion-->
