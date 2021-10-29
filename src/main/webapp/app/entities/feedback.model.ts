@@ -165,6 +165,14 @@ export class Feedback implements BaseEntity {
         }
     }
 
+    /**
+     * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction
+     * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
+     * it return detail_text or text property of the feedback depending on the submission element.
+     *
+     * @param feedback that contains feedback text and grading instruction
+     * @returns {string} formatted string representing the feedback text ready to display
+     */
     public static buildFeedbackTextForReview(feedback: Feedback): string {
         let feedbackText = '';
         if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
