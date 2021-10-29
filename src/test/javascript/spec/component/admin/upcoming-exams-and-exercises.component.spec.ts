@@ -15,6 +15,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
+            declarations: [UpcomingExamsAndExercisesComponent, TranslatePipeMock, MockRouterLinkDirective],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 {
@@ -22,7 +23,6 @@ describe('UpcomingExamsAndExercisesComponent', () => {
                     useClass: MockExamManagementService,
                 },
             ],
-            declarations: [UpcomingExamsAndExercisesComponent, TranslatePipeMock, MockRouterLinkDirective],
         })
             .compileComponents()
             .then(() => {
