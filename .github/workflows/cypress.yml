@@ -50,7 +50,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
           SPRING_DATASOURCE_PASSWORD: rootPassword
           SPRING_PROFILES_ACTIVE: dev,gitlab,jenkins,artemis,scheduling
-        run: cd build/libs; java -jar build/libs/*.war
+        run: cd build/libs; java -jar *.war
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v2
