@@ -55,11 +55,9 @@ describe('AssessmentDashboardInformationComponent', () => {
     let getStatsForTutorsStub: jest.SpyInstance;
 
     let exerciseService: ExerciseService;
-    let toggleSecondCorrectionStub: jest.SpyInstance;
 
     let accountService: AccountService;
     let sortService: SortService;
-    let isAtLeastInstructorInCourseStub: jest.SpyInstance;
 
     const programmingExercise = {
         id: 16,
@@ -174,12 +172,8 @@ describe('AssessmentDashboardInformationComponent', () => {
                     .spyOn(courseManagementService, 'getStatsForTutors')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
 
-                toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
-
                 getCourseWithInterestingExercisesForTutorsStub = jest.spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
                 getStatsForTutorsStub = jest.spyOn(courseManagementService, 'getStatsForTutors');
-
-                isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
             });
     });
 
