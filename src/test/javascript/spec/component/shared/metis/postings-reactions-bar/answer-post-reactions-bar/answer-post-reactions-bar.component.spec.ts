@@ -21,7 +21,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -62,6 +62,7 @@ describe('AnswerPostReactionsBarComponent', () => {
                 reactionToDelete.answerPost = answerPost;
                 answerPost.reactions = [reactionToDelete];
                 component.posting = answerPost;
+                metisService.setCourse(metisCourse);
             });
     });
 

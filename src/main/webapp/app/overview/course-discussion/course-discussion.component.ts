@@ -28,7 +28,7 @@ interface ContentFilterOption {
 @Component({
     selector: 'jhi-course-discussion',
     templateUrl: './course-discussion.component.html',
-    styleUrls: ['./course-discussion.scss'],
+    styleUrls: ['./course-discussion.component.scss'],
     providers: [MetisService],
 })
 export class CourseDiscussionComponent implements OnInit, OnDestroy {
