@@ -83,7 +83,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
                 this.titleLink = [`/course-management/${this.course.id}/${this.exerciseType}-exercises/${this.exerciseId}/participations`];
                 break;
             case DoughnutChartType.QUESTIONS:
-                this.doughnutChartTitle = 'answered_posts';
+                this.doughnutChartTitle = 'resolved_posts';
                 this.titleLink = [`/courses/${this.course.id}/exercises/${this.exerciseId}`];
                 break;
             default:
