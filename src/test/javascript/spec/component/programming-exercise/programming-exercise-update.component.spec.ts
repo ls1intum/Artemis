@@ -248,12 +248,6 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-
-            //const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            //getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
-            //getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
-            //getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
-            //getFeaturesStub.withArgs(ProgrammingLanguage.C).returns(getProgrammingLanguageFeature(ProgrammingLanguage.C));
         });
 
         it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
