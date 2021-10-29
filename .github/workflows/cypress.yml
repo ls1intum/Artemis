@@ -1,9 +1,18 @@
 name: Run Cypress E2E Tests
 on: push
 
+env:
+  CI: true
+  node: 14.x
+  java: 16
+
 jobs:
-  build:
+  execute-tests:
     runs-on: ubuntu-latest
+#    environment:
+#        name: artemistest5-e2e-tests
+#        url: https://artemistest5.ase.in.tum.de
+#    concurrency: cypress-tests
     
     services:
       mysql:
@@ -15,15 +24,24 @@ jobs:
           - 33306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-  execute-tests:
-    runs-on: ubuntu-latest
-    environment:
-        name: artemistest5-e2e-tests
-        url: https://artemistest5.ase.in.tum.de
-    concurrency: cypress-tests
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2.4.1
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Setup Java
+        uses: actions/setup-java@v2.3.1
+        with:
+          distribution: 'zulu'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Production Build
+        run: ./gradlew -Pprod -Pwar clean bootWar
+        env:
+          NODE_OPTIONS: --max_old_space_size=6144
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v2
