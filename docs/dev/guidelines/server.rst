@@ -449,7 +449,7 @@ Now, instead of mocking the whole Service, we can just mock the static method, l
         public void testExportAll_IOException() throws Exception {
             MockedStatic<Files> mockedFiles = mockStatic(Files.class);
             mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
-            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST");
+            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);
 
             mockedFiles.close();
         }
