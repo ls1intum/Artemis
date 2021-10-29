@@ -2,7 +2,7 @@
     class="markdown-preview"
     [ngClass]="postingContentPart.linkToReference ? 'manipulate-p' : ''"
     *ngIf="postingContentPart.contentBeforeReference"
-    [innerHTML]="postingContentPart.contentBeforeReference | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
+    [innerHTML]="postingContentPart.contentBeforeReference | postContentMarkdown | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
 ></span>
 <a class="reference-hash" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
     {{ postingContentPart.referenceStr }}
@@ -11,5 +11,5 @@
     class="markdown-preview"
     [ngClass]="postingContentPart.linkToReference ? 'manipulate-p' : ''"
     *ngIf="postingContentPart.contentAfterReference"
-    [innerHTML]="postingContentPart.contentAfterReference | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
+    [innerHTML]="postingContentPart.contentAfterReference | postContentMarkdown | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes"
 ></span>
