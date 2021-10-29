@@ -286,8 +286,8 @@ Here are a few tips when using this framework:
     .. code-block:: css
 
         ::ng-deep .textDataLabel {
-        font-weight: bolder;
-        font-size: 15px !important;
+            font-weight: bolder;
+            font-size: 15px !important;
         }
 
     3. In order to make the chart responsive in width, bind it to the width of its parent container.
