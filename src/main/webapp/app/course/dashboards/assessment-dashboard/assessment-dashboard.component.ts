@@ -218,7 +218,8 @@ export class AssessmentDashboardComponent implements OnInit {
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
-                    // This is done here to make sure the whole page is already loaded when the guided tour step is started on the page
+
+                    // Ensure that the page is loaded when the guided tour is started
                     this.guidedTourService.componentPageLoaded();
                     this.computeIssuesWithTutorPerformance();
                 },
@@ -228,9 +229,9 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Computes the performance issues for every tutor based on its rating, score, complaints number comparing to the average tutor numbers
+     * Computes performance issues for every tutor based on its rating, score, and number of complaints when compared to the average tutor stats
      */
-    computeIssuesWithTutorPerformance() {
+    computeIssuesWithTutorPerformance(): void {
         // clear the tutor issues array
         this.tutorIssues = [];
 

@@ -178,7 +178,7 @@
     <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
         <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
         <ul *ngFor="let issue of tutorIssues">
-            <li *ngIf="issue.averageTutorValue < issue.threshold[0]">
+            <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">
                 {{
                     issue.translationKey + '.below'
                         | artemisTranslate
@@ -186,11 +186,11 @@
                                   tutorName: issue.tutorName,
                                   numberOfTutorItems: issue.numberOfTutorItems,
                                   averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                  threshold: issue.threshold[0].toFixed(1)
+                                  threshold: issue.allowedRange.lowerBound.toFixed(1)
                               }
                 }}
             </li>
-            <li *ngIf="issue.averageTutorValue > issue.threshold[1]">
+            <li *ngIf="issue.averageTutorValue > issue.allowedRange.upperBound">
                 {{
                     issue.translationKey + '.above'
                         | artemisTranslate
@@ -198,7 +198,7 @@
                                   tutorName: issue.tutorName,
                                   numberOfTutorItems: issue.numberOfTutorItems,
                                   averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                  threshold: issue.threshold[1].toFixed(1)
+                                  threshold: issue.allowedRange.upperBound.toFixed(1)
                               }
                 }}
             </li>

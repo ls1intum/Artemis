@@ -49,7 +49,7 @@
                     "below": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%."
                 },
                 "complaints": {
-                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerden mit der Beschwerdenratio von {{averageTutorValue}}% bekommen. Das ist größer als {{threshold}}."
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerden bekommen. Das entspricht einer Beschwerdequote von {{averageTutorValue}}%. Das ist größer als {{threshold}}%."
                 }
             }
         }
