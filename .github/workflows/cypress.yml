@@ -44,7 +44,7 @@ jobs:
           NODE_OPTIONS: --max_old_space_size=6144
       
       - name: Copy configuration files
-        run: cp src/test/cypress/deployment/*.yml build/libs/*
+        run: cp src/test/cypress/deployment/*.yml build/libs/
       - name: Start Artemis
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
