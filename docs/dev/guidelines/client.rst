@@ -271,7 +271,7 @@ The following is an example HTML template for a vertical bar chart:
         </ngx-charts-bar-vertical>
     </div>
 
-There are a few tips when using this framework:
+Here are a few tips when using this framework:
 
 1. In order to configure the content of the tooltips in the chart, declare a ng-template with the reference ``#tooltipTemplate``
 containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
