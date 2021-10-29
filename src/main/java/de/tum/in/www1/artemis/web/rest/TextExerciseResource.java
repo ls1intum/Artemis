@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -169,12 +168,8 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
-        if (textExercise.getReleaseDate() == null || !textExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyAllGroupsAboutReleasedExercise(textExercise);
-        }
-        else {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(textExercise.getId());
-        }
+
+        groupNotificationService.checkNotificationForExerciseRelease(textExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -238,9 +233,7 @@ public class TextExerciseResource {
             updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(textExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExercise, notificationText, instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
     }
