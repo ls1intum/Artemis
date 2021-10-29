@@ -4,23 +4,23 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0.25
+        env:
+          MYSQL_DATABASE: Artemis
+          MYSQL_ROOT_PASSWORD: rootPassword
+        ports:
+          - 33306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+  execute-tests:
+    runs-on: ubuntu-latest
     environment:
         name: artemistest5-e2e-tests
         url: https://artemistest5.ase.in.tum.de
     concurrency: cypress-tests
-    
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
