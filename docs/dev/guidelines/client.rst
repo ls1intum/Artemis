@@ -76,12 +76,14 @@ Use JSDoc style comments for functions, interfaces, enums, and classes.
 If you use icons next to text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
 
 Do this:
+
 .. code-block:: html+ng2
 
     <fa-icon [icon]="'times'"></fa-icon>
     <span>Text</span>
 
 Don't do one of these or any other combination of whitespaces:
+
 .. code-block:: html+ng2
 
     <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
@@ -249,8 +251,8 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
-14. Chart instantiation
-=========================
+14. Chart Instantiation
+=======================
 
 We are using the framework ngx-charts in order to instantiate charts and diagrams in Artemis.
 
