@@ -274,25 +274,25 @@ The following is an example HTML template for a vertical bar chart:
 Here are a few tips when using this framework:
 
     1. In order to configure the content of the tooltips in the chart, declare a `ng-template <https://angular.io/api/core/ng-template>`_ with the reference ``#tooltipTemplate``
-    containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
-    the tooltips are configured in order to present the percentage value corresponding to the absolute value represented by the bar.
-    Depending on the chart type, there is more than one type of tooltip configurable.
-    For more information visit https://swimlane.gitbook.io/ngx-charts/
+       containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
+       the tooltips are configured in order to present the percentage value corresponding to the absolute value represented by the bar.
+       Depending on the chart type, there is more than one type of tooltip configurable.
+       For more information visit https://swimlane.gitbook.io/ngx-charts/
 
     2. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
-    The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
-    a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
+       The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
+       a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
 
-    .. code-block:: css
+       .. code-block:: css
 
-        ::ng-deep .textDataLabel {
-            font-weight: bolder;
-            font-size: 15px !important;
-        }
+           ::ng-deep .textDataLabel {
+               font-weight: bolder;
+               font-size: 15px !important;
+           }
 
     3. In order to make the chart responsive in width, bind it to the width of its parent container.
-    First, annotate the parent container with a reference (in the example ``#containerRef``).
-    Then, when configuring the dimensions of the chart in ``[view]``, insert ``containerRef.offsetWidth`` instead
-    of an specific value for the width.
+       First, annotate the parent container with a reference (in the example ``#containerRef``).
+       Then, when configuring the dimensions of the chart in ``[view]``, insert ``containerRef.offsetWidth`` instead
+       of an specific value for the width.
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
