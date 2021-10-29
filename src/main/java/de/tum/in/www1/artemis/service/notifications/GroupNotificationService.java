@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
 public class GroupNotificationService {
@@ -29,10 +33,64 @@ public class GroupNotificationService {
 
     private final UserRepository userRepository;
 
-    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository) {
+    private MailService mailService;
+
+    private NotificationSettingsService notificationSettingsService;
+
+    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
+            MailService mailService, NotificationSettingsService notificationSettingsService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
+        this.mailService = mailService;
+        this.notificationSettingsService = notificationSettingsService;
+    }
+
+    /**
+     * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
+     * @param exercise which is updated
+     * @param notificationText holds the custom change message for the notification process
+     * @param instanceMessageSendService can initiate a scheduled notification
+     */
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exercise, String notificationText, InstanceMessageSendService instanceMessageSendService) {
+        notifyAboutExerciseUpdate(exercise, notificationText);
+        checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+    }
+
+    /**
+     * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
+     * @param exercise that is updated
+     * @param notificationText that is used for the notification process
+     */
+    public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
+        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            // Do not send an exercise-update notification before the release date of the exercise.
+            return;
+        }
+
+        if ((notificationText != null && exercise.isCourseExercise()) || exercise.isExamExercise()) {
+            // sends an exercise-update notification
+            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+        }
+    }
+
+    /**
+     * Checks if a new exercise-released notification has to be created or even scheduled
+     * The exercise update might have changed the release date, so the scheduled notification that informs the users about the release of this exercise has to be updated
+     *
+     * @param exercise that is updated
+     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
+     */
+    public void checkNotificationForExerciseRelease(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+        // Only notify students and tutors when the exercise is created for a course
+        if (exercise.isCourseExercise()) {
+            if (exercise.getReleaseDate() == null || !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                notifyAllGroupsAboutReleasedExercise(exercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(exercise.getId());
+            }
+        }
     }
 
     /**
@@ -85,7 +143,7 @@ public class GroupNotificationService {
                         (String) typeSpecificInformation);
                 case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
             };
-            saveAndSend(resultingGroupNotification);
+            saveAndSend(resultingGroupNotification, notificationSubject);
         }
     }
 
@@ -292,17 +350,27 @@ public class GroupNotificationService {
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
+     * Also starts the process of sending the information contained in the notification via email.
      *
      * @param notification that should be saved and sent
+     * @param notificationSubject which information will be extracted to create the email
      */
-    private void saveAndSend(GroupNotification notification) {
+    private void saveAndSend(GroupNotification notification, Object notificationSubject) {
         if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
+            messagingTemplate.convertAndSend(notification.getTopic(), notification);
+            return;
         }
-        else {
-            groupNotificationRepository.save(notification);
-        }
+
+        groupNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
+
+        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+
+        // checks if this notification type has email support
+        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
+            prepareSendingGroupEmail(notification, notificationSubject);
+        }
     }
 
     /**
@@ -315,5 +383,40 @@ public class GroupNotificationService {
         notification.setTarget(targetWithoutProblemStatement);
         groupNotificationRepository.save(notification);
         notification.setTarget(originalTarget);
+    }
+
+    /**
+     * Prepares sending an email based on a GroupNotification by finding the relevant users
+     * @param notification which information should also be propagated via email
+     */
+    private void prepareSendingGroupEmail(GroupNotification notification, Object notificationSubject) {
+        Course course = notification.getCourse();
+        GroupNotificationType groupType = notification.getType();
+        List<User> foundUsers = new ArrayList<>();
+        switch (groupType) {
+            case STUDENT -> foundUsers = userRepository.getStudents(course);
+            case INSTRUCTOR -> foundUsers = userRepository.getInstructors(course);
+            case EDITOR -> foundUsers = userRepository.getEditors(course);
+            case TA -> foundUsers = userRepository.getTutors(course);
+        }
+        prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+    }
+
+    /**
+     * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
+     * If the checks are successful creates and sends a corresponding email
+     * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
+     * @param notification that should be checked
+     * @param users which will be filtered based on their notification (email) settings
+     * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)
+     */
+    public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
+        // find the users that have this notification type & email communication channel activated
+        List<User> usersThatShouldReceiveAnEmail = users.stream()
+                .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
+
+        if (!usersThatShouldReceiveAnEmail.isEmpty()) {
+            mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);
+        }
     }
 }

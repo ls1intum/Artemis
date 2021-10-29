@@ -10,6 +10,4 @@ export class Reaction {
     public emojiId?: string;
     public post?: Post;
     public answerPost?: AnswerPost;
-
-    constructor() {}
 }

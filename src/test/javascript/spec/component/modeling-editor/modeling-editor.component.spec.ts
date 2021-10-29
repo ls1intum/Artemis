@@ -1,73 +1,54 @@
 import { Course } from 'app/entities/course.model';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
+import { stub } from 'sinon';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
     return { width: 0, height: 0 };
 };
 
-describe('ModelingEditorComponent Component', () => {
+describe('ModelingEditorComponent', () => {
     let fixture: ComponentFixture<ModelingEditorComponent>;
-    const sandbox = sinon.createSandbox();
     const course = { id: 123 } as Course;
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     // @ts-ignore
-    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weired errors with setters, because testClassDiagram is not an actual object
+    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
+    const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
-        const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, ArtemisTestModule, ArtemisSharedModule, ArtemisModelingEditorModule],
-            declarations: [],
-            providers: [
-                AlertService,
-                JhiLanguageHelper,
-                GuidedTourService,
-                { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
-            schemas: [],
+            imports: [HttpClientTestingModule, ArtemisTestModule],
+            declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
+            providers: [MockProvider(GuidedTourService), { provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingEditorComponent);
+                stub(TestBed.inject(GuidedTourService), 'checkModelingComponent').returns(of());
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        sinon.restore();
     });
 
     it('ngAfterViewInit', () => {
