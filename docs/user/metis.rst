@@ -10,7 +10,18 @@ Discussion
 Overview
 --------
 
-Why? Where
+
+Lecture Posts
+^^^^^^^^^^^^^
+|lecture-posts|
+
+Exercise Posts
+^^^^^^^^^^^^^^
+|exercise-posts|
+
+Course-wide Posts
+^^^^^^^^^^^^^^^^^
+|course-posts|
 
 Features for Users
 ------------------
@@ -24,8 +35,7 @@ User filters, sort, text search ...
 
 React on Posts
 ^^^^^^^^^^^^^^
-
-React, Vote...
+|react-on-posts|
 
 Reference Posts of Others
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -66,7 +76,6 @@ Icon, influence on order
 Mark Posts As Resolved
 ^^^^^^^^^^^^^^^^^^^^^^
 see above but for they do not have to be author
-|open-in-intellij-button|
 
 Features for Instructors
 ------------------------
@@ -74,3 +83,10 @@ Features for Instructors
 Post Announcements
 ^^^^^^^^^^^^^^^^^^
 Marked with bullhorn, pinned, cannot be resolved
+
+
+.. |lecture-posts| image:: metis/lecture-posts.png
+.. |exercise-posts| image:: metis/exercise-posts.png
+.. |course-posts| image:: metis/course-posts.png
+.. |react-on-posts| image:: metis/react-on-posts.png
+    :width: 200
