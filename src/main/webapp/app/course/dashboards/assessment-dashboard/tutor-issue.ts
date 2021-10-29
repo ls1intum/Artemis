@@ -92,7 +92,7 @@ export class TutorIssueScoreChecker extends TutorValueChecker {
  */
 export class TutorIssueComplaintsChecker extends TutorValueChecker {
     get allowedRange(): Range {
-        // Tutor complaints count should be less than average number of complaints in the course + 20%
+        // Tutor complaint ratio should be less than average course complaint ratio + 20%
         const twentyPercent = this.averageCourseValue / 5;
         return new Range(0, round(this.averageCourseValue + twentyPercent, 1));
     }

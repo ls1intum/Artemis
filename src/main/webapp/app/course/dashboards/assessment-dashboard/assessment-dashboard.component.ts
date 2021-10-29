@@ -236,7 +236,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.tutorIssues = [];
 
         const complaintRatio = (entry: TutorLeaderboardElement) => {
-            if (entry.numberOfAssessments == 0) {
+            if (entry.numberOfAssessments === 0) {
                 return 0;
             }
             return (100 * entry.numberOfTutorComplaints) / entry.numberOfAssessments;
