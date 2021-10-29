@@ -28,7 +28,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { PostingContentComponent } from './posting-content/posting-content.components';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { postContentMarkdown } from 'app/shared/metis/posting-content/html-for-post-content-markdown.pipe';
+import { PostContentMarkdown } from 'app/shared/metis/posting-content/html-for-post-content-markdown.pipe';
 
 @NgModule({
     imports: [
@@ -64,7 +64,7 @@ import { postContentMarkdown } from 'app/shared/metis/posting-content/html-for-p
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        postContentMarkdown,
+        PostContentMarkdown,
     ],
     exports: [
         PostingsThreadComponent,
@@ -83,7 +83,7 @@ import { postContentMarkdown } from 'app/shared/metis/posting-content/html-for-p
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        postContentMarkdown,
+        PostContentMarkdown,
     ],
 })
 export class MetisModule {}
