@@ -14,9 +14,8 @@
                 *ngIf="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
                 [icon]="'bullhorn'"
                 iconSize="xs"
-                class="col-auto pe-0"
+                class="col-auto pe-0 announcement-icon"
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
-                [styles]="{ color: '#0f6ab4' }"
             ></fa-icon>
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
             <span *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto">
