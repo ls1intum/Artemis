@@ -222,7 +222,7 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * devides exercises into finished and unfinished exercises.
+     * divides exercises into finished and unfinished exercises.
      *
      * @param exercises - the exercises that should get filtered
      * @private
