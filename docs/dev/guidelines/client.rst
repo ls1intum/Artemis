@@ -254,7 +254,7 @@ We are using the framework ngx-charts in order to instantiate charts and diagram
 
 The following is an example HTML template for a vertical bar chart
 
-.. code-block:: ts
+.. code-block:: html
 
     <div #containerRef class="col-md-9">
         <ngx-charts-bar-vertical
