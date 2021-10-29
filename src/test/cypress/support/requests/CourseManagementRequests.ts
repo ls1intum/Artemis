@@ -31,7 +31,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     deleteCourse(id: number) {
-        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login
+        // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(100);
         return cy.request({ method: DELETE, url: COURSE_BASE + id });
     }

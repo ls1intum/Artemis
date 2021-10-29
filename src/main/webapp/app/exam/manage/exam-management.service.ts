@@ -342,6 +342,15 @@ export class ExamManagementService {
         return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, exerciseGroups, { observe: 'response' });
     }
 
+    /**
+     * Resets an Exam with examId by deleting all its studentExams and participations.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
+    reset(courseId: number, examId: number): Observable<EntityResponseType> {
+        return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
+    }
+
     public static convertDateFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
             startDate: exam.startDate && dayjs(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
