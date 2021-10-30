@@ -36,7 +36,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     let comp: QuizReEvaluateComponent;
     let fixture: ComponentFixture<QuizReEvaluateComponent>;
     let quizService: QuizExerciseService;
-    let quizServiceFindSpy: jest.SpyInstance;
+    let quizServiceFindStub: jest.SpyInstance;
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -114,7 +114,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         const { question: quizQuestion1 } = createValidMCQuestion();
         const { question: quizQuestion2 } = createValidDnDQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
-        quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        quizServiceFindStub = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
@@ -125,7 +125,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         comp.ngOnInit();
         expect(comp.validQuiz()).toBe(true);
         expect(comp.quizExercise).toEqual(quizExercise);
-        expect(quizServiceFindSpy).toHaveBeenCalledTimes(1);
+        expect(quizServiceFindStub).toHaveBeenCalledTimes(1);
     });
 
     it('Should create correct duration strings', () => {
