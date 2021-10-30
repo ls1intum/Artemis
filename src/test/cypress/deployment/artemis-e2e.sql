@@ -1071,6 +1071,7 @@ CREATE TABLE `jhi_persistent_audit_event` (
 
 LOCK TABLES `jhi_persistent_audit_event` WRITE;
 /*!40000 ALTER TABLE `jhi_persistent_audit_event` DISABLE KEYS */;
+INSERT INTO `jhi_persistent_audit_event` VALUES (1,'artemis_admin','2021-10-27 15:37:28','AUTHENTICATION_SUCCESS'),(2,'artemis_admin','2021-10-30 07:50:15','AUTHENTICATION_SUCCESS'),(3,'user100','2021-10-30 08:01:42','AUTHENTICATION_FAILURE'),(4,'user_100','2021-10-30 08:01:51','AUTHENTICATION_SUCCESS'),(5,'artemis_admin','2021-10-30 08:02:04','AUTHENTICATION_SUCCESS'),(6,'user_100','2021-10-30 08:02:47','AUTHENTICATION_SUCCESS'),(7,'artemis_admin','2021-10-30 08:02:58','AUTHENTICATION_SUCCESS'),(8,'uuser_100','2021-10-30 08:06:49','AUTHENTICATION_FAILURE'),(9,'user_100','2021-10-30 08:06:52','AUTHENTICATION_SUCCESS'),(10,'user_102','2021-10-30 08:07:03','AUTHENTICATION_SUCCESS'),(11,'user_104','2021-10-30 08:07:17','AUTHENTICATION_SUCCESS'),(12,'user_101','2021-10-30 08:07:28','AUTHENTICATION_SUCCESS'),(13,'user_103','2021-10-30 08:07:46','AUTHENTICATION_SUCCESS');
 /*!40000 ALTER TABLE `jhi_persistent_audit_event` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1140,6 +1141,7 @@ CREATE TABLE `jhi_user` (
 
 LOCK TABLES `jhi_user` WRITE;
 /*!40000 ALTER TABLE `jhi_user` DISABLE KEYS */;
+INSERT INTO `jhi_user` VALUES (1,'artemis_admin','I+lqKn+WGhFu1gia5rAO36d9C2TXBNPo','Administrator','Administrator','admin@localhost',_binary '','en',NULL,'q3DJSIBoutc91pvyyHWe','system','2021-10-25 10:26:59','2021-10-25 10:26:59','system','2021-10-30 07:58:43',NULL,NULL,NULL),(2,'user_100','gpjZTZtKjX8WXNxcYp3/P6jH3GYoLM3S','user','100','user100@artemis-testing.com',_binary '','en',NULL,'39b2hgHqNOPtnT9aWsF6','artemis_admin','2021-10-30 07:53:44','2021-10-30 07:53:44','artemis_admin','2021-10-30 08:02:32',NULL,NULL,NULL),(3,'user_102','pXZxA5BV9JK7oCGRqLCHyjAHwFzRiitH','user','102','user102@artemis-testing.com',_binary '','en',NULL,'upkqkgI6V2uLop9gseP1','artemis_admin','2021-10-30 08:04:21','2021-10-30 08:04:21','artemis_admin','2021-10-30 08:04:21',NULL,NULL,NULL),(4,'user_104','QhfBX1Vdw4fnepXfxmuDHIQXGbcimsNa','user','104','user104@artemis-testing.com',_binary '','en',NULL,'8XmwuKCkkE54y3QIJebI','artemis_admin','2021-10-30 08:04:55','2021-10-30 08:04:55','artemis_admin','2021-10-30 08:04:55',NULL,NULL,NULL),(5,'user_103','U/4ivrg5TlSS431j3zHMm+/dSc90Amyv','user','103','user103@artemis-testing.com',_binary '','en',NULL,'rz2fzxMzzgXr3gqKNp2V','artemis_admin','2021-10-30 08:05:35','2021-10-30 08:05:35','artemis_admin','2021-10-30 08:05:35',NULL,NULL,NULL),(6,'user_101','dMtn+5bofzln4aApPBSftynBIJ0r2xyJ','user','101','user101@artemis-testing.com',_binary '','en',NULL,'sEk8D4vAxrqL0fXY045C','artemis_admin','2021-10-30 08:06:20','2021-10-30 08:06:20','artemis_admin','2021-10-30 08:06:20',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `jhi_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1166,6 +1168,7 @@ CREATE TABLE `jhi_user_authority` (
 
 LOCK TABLES `jhi_user_authority` WRITE;
 /*!40000 ALTER TABLE `jhi_user_authority` DISABLE KEYS */;
+INSERT INTO `jhi_user_authority` VALUES (1,'ROLE_ADMIN'),(5,'ROLE_INSTRUCTOR'),(6,'ROLE_TA'),(1,'ROLE_USER'),(2,'ROLE_USER'),(3,'ROLE_USER'),(4,'ROLE_USER');
 /*!40000 ALTER TABLE `jhi_user_authority` ENABLE KEYS */;
 UNLOCK TABLES;
 
