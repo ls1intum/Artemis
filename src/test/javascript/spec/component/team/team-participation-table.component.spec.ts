@@ -185,8 +185,7 @@ describe('TeamParticipationTableComponent', () => {
     });
 
     beforeEach(fakeAsync(() => {
-        const exercisesStub = jest.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockImplementation();
-        exercisesStub.mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
         comp.course = course;
         comp.exercise = exercise4;
         comp.team = mockTeam;
@@ -194,10 +193,6 @@ describe('TeamParticipationTableComponent', () => {
         comp.ngOnInit();
         tick();
     }));
-
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
 
     it('Exercises for one team are loaded correctly', fakeAsync(() => {
         // Make sure that all 3 exercises were received for exercise
@@ -210,17 +205,17 @@ describe('TeamParticipationTableComponent', () => {
 
     it('Assessment Action "continue" is triggered', fakeAsync(() => {
         const expectedAssessmentAction = comp.assessmentAction(submission2);
-        expect(expectedAssessmentAction).toEqual('continue');
+        expect(expectedAssessmentAction).toBe('continue');
     }));
 
     it('Assessment Action "start" is triggered', fakeAsync(() => {
         const expectedAssessmentAction = comp.assessmentAction(submission3);
-        expect(expectedAssessmentAction).toEqual('start');
+        expect(expectedAssessmentAction).toBe('start');
     }));
 
     it('Assessment Action "open" is triggered', fakeAsync(() => {
         const expectedAssessmentAction = comp.assessmentAction(submission4);
-        expect(expectedAssessmentAction).toEqual('open');
+        expect(expectedAssessmentAction).toBe('open');
     }));
 
     it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
