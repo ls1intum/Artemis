@@ -12,7 +12,7 @@ export class TutorIssue {
 }
 
 /**
- * Represents the an inclusive range with a lower and upper bound
+ * Represents the inclusive range with a lower and upper bound
  */
 export class Range {
     constructor(public lowerBound: number, public upperBound: number) {}
