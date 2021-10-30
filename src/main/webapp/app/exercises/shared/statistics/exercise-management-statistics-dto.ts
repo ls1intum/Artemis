@@ -9,12 +9,12 @@ export class ExerciseManagementStatisticsDto {
     numberOfParticipations: number;
     numberOfStudentsOrTeamsInCourse: number;
 
-    // questions
-    numberOfQuestions: number;
-    numberOfAnsweredQuestions: number;
+    // posts
+    numberOfPosts: number;
+    numberOfResolvedPosts: number;
 
     // helper
     absoluteAveragePoints?: number;
     participationsInPercent?: number;
-    questionsAnsweredInPercent?: number;
+    resolvedPostsInPercent?: number;
 }

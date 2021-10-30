@@ -39,8 +39,8 @@ import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/addi
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -65,7 +65,7 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(RatingComponent),
-                MockComponent(ComplaintInteractionsComponent),
+                MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(HeaderParticipationPageComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(HtmlForMarkdownPipe),

@@ -103,7 +103,7 @@
                     <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                         <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-file-upload-exam-summary>
                     </ng-container>
-                    <jhi-complaint-interactions
+                    <jhi-complaint-student-view
                         *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && isAfterStudentReviewStart()"
                         class="mb-2 mt-2 ms-3"
                         [exercise]="exercise"
@@ -111,7 +111,7 @@
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                         [testRun]="isTestRun"
                     >
-                    </jhi-complaint-interactions>
+                    </jhi-complaint-student-view>
                 </ng-container>
             </ng-container>
             <ng-container *ngIf="exercise.type === PROGRAMMING">
@@ -124,7 +124,7 @@
                         [submission]="getSubmissionForExercise(exercise)!"
                     ></jhi-programming-exam-summary>
                 </ng-container>
-                <jhi-complaint-interactions
+                <jhi-complaint-student-view
                     *ngIf="
                         (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) &&
                         getSubmissionForExercise(exercise) &&
@@ -136,7 +136,7 @@
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
                     [testRun]="isTestRun"
                 >
-                </jhi-complaint-interactions>
+                </jhi-complaint-student-view>
             </ng-container>
             <ng-template #noSubmission>
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
