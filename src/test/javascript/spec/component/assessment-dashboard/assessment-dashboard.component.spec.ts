@@ -41,6 +41,7 @@ import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreCh
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -421,5 +422,13 @@ describe('AssessmentDashboardInformationComponent', () => {
                 });
             });
         });
+    });
+
+    it('asQuizExercise should cast exercise to QuizExercise', () => {
+        const quizExercise = new QuizExercise(undefined, undefined);
+        expect(comp.asQuizExercise(quizExercise)).toBeInstanceOf(QuizExercise);
+
+        const textExercise = new TextExercise(undefined, undefined);
+        expect(comp.asQuizExercise(textExercise)).not.toBeInstanceOf(QuizExercise);
     });
 });
