@@ -18,7 +18,6 @@ jobs:
       mysql:
         image: mysql:8.0.25
         env:
-          MYSQL_DATABASE: Artemis
           MYSQL_ROOT_PASSWORD: rootPassword
         ports:
           - 3306:3306
@@ -44,12 +43,13 @@ jobs:
           NODE_OPTIONS: --max_old_space_size=6144
       
       - name: Copy configuration files
-        run: cp src/test/cypress/deployment/*.yml build/libs/
+        run: cp src/test/cypress/deployment/* build/libs/
+      - name: Import sql dump
+        run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword < build/libs/*.sql
       - name: Start Artemis
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ArtemisTest?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
           SPRING_DATASOURCE_PASSWORD: rootPassword
-          SPRING_PROFILES_ACTIVE: dev,gitlab,jenkins,artemis,scheduling
+          SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,local
         run: cd build/libs; java -jar *.war
 
       - name: Run Cypress Tests
