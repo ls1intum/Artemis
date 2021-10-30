@@ -1,7 +1,7 @@
 import allSuccessful from '../../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
-import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/OnlineEditorPage';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
@@ -78,7 +78,7 @@ describe('Programming exercise participations', () => {
      */
     function makePartiallySuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName, partiallySuccessful, () => {
-            editorPage.getResultPanel().contains('46%').should('be.visible');
+            editorPage.getResultPanel().contains('46.2%').should('be.visible');
             editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
             editorPage.getBuildOutput().contains('No build results available').should('be.visible');
             editorPage.getInstructionSymbols().each(($el, $index) => {

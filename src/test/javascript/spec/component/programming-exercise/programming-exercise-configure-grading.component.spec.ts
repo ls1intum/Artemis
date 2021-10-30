@@ -53,6 +53,8 @@ import { TestCaseDistributionChartComponent } from 'app/exercises/programming/ma
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -213,10 +215,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 CategoryIssuesChartComponent,
                 MockComponent(ScaCategoryDistributionChartComponent),
+                MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockDirective(NgbPopover),
                 MockDirective(NgModel),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 AlertService,
