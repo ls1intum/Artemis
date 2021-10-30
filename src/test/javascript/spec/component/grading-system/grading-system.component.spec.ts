@@ -204,7 +204,7 @@ describe('Grading System Component', () => {
             expect(gradeStep.isPassingGrade).toBe(true);
         });
 
-        comp.firstPassingGrade = 0;
+        comp.firstPassingGrade = '';
 
         comp.setPassingGrades(comp.gradingScale.gradeSteps);
 
