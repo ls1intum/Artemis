@@ -94,7 +94,9 @@ jobs:
               cache: 'npm'
         - name: Install Dependencies
           run: npm install
-        - name: TypeScript Test With Typechecking
+        - name: Compile Test Files With Typechecking
+          run: npm run test:build
+        - name: TypeScript Test Without Typechecking
           run: npm run test:ci
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
