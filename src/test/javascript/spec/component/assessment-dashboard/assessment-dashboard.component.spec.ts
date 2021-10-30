@@ -156,7 +156,6 @@ describe('AssessmentDashboardInformationComponent', () => {
 
                 examManagementService = TestBed.inject(ExamManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
-                accountService = TestBed.inject(AccountService);
                 sortService = TestBed.inject(SortService);
 
                 getExamWithInterestingExercisesForAssessmentDashboardStub = jest
@@ -175,6 +174,9 @@ describe('AssessmentDashboardInformationComponent', () => {
 
                 getCourseWithInterestingExercisesForTutorsStub = jest.spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
                 getStatsForTutorsStub = jest.spyOn(courseManagementService, 'getStatsForTutors');
+
+                accountService = TestBed.inject(AccountService);
+                jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
             });
     });
 
@@ -335,11 +337,11 @@ describe('AssessmentDashboardInformationComponent', () => {
                     } as TutorLeaderboardElement,
                     {
                         userId: 3,
-                        numberOfAssessments: 0,
+                        numberOfAssessments: 1,
                         numberOfTutorComplaints: 0,
                         numberOfTutorMoreFeedbackRequests: 0,
                         averageRating: 0,
-                        averageScore: 0,
+                        averageScore: 10,
                         numberOfTutorRatings: 0,
                         hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
@@ -350,10 +352,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                 comp.ngOnInit();
 
                 // then
-                expect(comp.tutorIssues).toHaveLength(2);
+                expect(comp.tutorIssues).toHaveLength(4);
                 expect(comp.stats.tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
-                expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints
-                expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(false);
+                expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints, score
+                expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(true); // score
             });
         });
 
