@@ -41,6 +41,7 @@
                 <jhi-date-time-picker
                     [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
                     [disabled]="!this.submissionExportOptions.filterLateSubmissions"
+                    [shouldDisplayTimeZoneWarning]="false"
                     name="filterLateSubmissionsDate"
                 ></jhi-date-time-picker>
             </div>
