@@ -159,7 +159,7 @@ describe('Course Management Detail Component', () => {
         });
 
         it('should add the selected user to course group', () => {
-            let fake = jest.fn();
+            const fake = jest.fn();
             comp.onAutocompleteSelect(user, fake);
             expect(addUserStub).toHaveBeenCalledWith(course.id, courseGroup, user.login);
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
@@ -167,7 +167,7 @@ describe('Course Management Detail Component', () => {
         });
 
         it('should call callback if user is already in the group', () => {
-            let fake = jest.fn();
+            const fake = jest.fn();
             comp.allCourseGroupUsers = [user];
             comp.onAutocompleteSelect(user, fake);
             expect(addUserStub).not.toHaveBeenCalled();
