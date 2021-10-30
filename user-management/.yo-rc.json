@@ -29,7 +29,7 @@
     "serverSideOptions": ["enableSwaggerCodegen:true"],
     "websocket": false,
     "searchEngine": false,
-    "messageBroker": falses,
+    "messageBroker": false,
     "enableSwaggerCodegen": true,
     "enableTranslation": true,
     "nativeLanguage": "en",
