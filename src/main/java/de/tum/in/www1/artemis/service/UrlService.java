@@ -37,14 +37,15 @@ public class UrlService {
      * @return The repository slug, i.e. the part of the url that identifies the repository (not the project) without .git in the end
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    public String getRepositorySlugFromUrl(URL url) throws VersionControlException {
-        // split the URL in parts using the separator "/"
-        final var urlParts = url.getFile().split("/");
-        if (urlParts.length < 1) {
+    private String getRepositorySlugFromUrl(URL url) throws VersionControlException {
+        // split the URL path in components using the separator "/"
+        final var pathComponents = url.getFile().split("/");
+        if (pathComponents.length < 2) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
+        // Note: pathComponents[] = "" because the path always starts with "/"
         // take the last element
-        String repositorySlug = urlParts[urlParts.length - 1];
+        String repositorySlug = pathComponents[pathComponents.length - 1];
         // if the element includes ".git" ...
         if (repositorySlug.endsWith(".git")) {
             // ... cut out the ending ".git", i.e. the last 4 characters
@@ -61,7 +62,7 @@ public class UrlService {
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      * @return <project key>/<repositorySlug>
      */
-    public String getPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getRepositoryPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         return getRepositoryPathFromUrl(repositoryUrl.getURL());
     }
 
@@ -74,13 +75,15 @@ public class UrlService {
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      * @return <project key>/<repositorySlug>
      */
-    public String getRepositoryPathFromUrl(URL url) throws VersionControlException {
-        final var urlParts = url.getFile().split("/");
-        if (urlParts.length < 2) {
+    private String getRepositoryPathFromUrl(URL url) throws VersionControlException {
+        // split the URL path in components using the separator "/"
+        final var pathComponents = url.getPath().split("/");
+        if (pathComponents.length < 2) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
-        final var last = urlParts.length - 1;
-        return urlParts[last - 1] + "/" + urlParts[last].replace(".git", "");
+        // Note: pathComponents[] = "" because the path always starts with "/"
+        final var last = pathComponents.length - 1;
+        return pathComponents[last - 1] + "/" + pathComponents[last].replace(".git", "");
     }
 
     /**
@@ -103,12 +106,18 @@ public class UrlService {
      * @return The project key
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
-    public String getProjectKeyFromUrl(URL url) throws VersionControlException {
-        String[] urlParts = url.getFile().split("/");
-        if (urlParts.length <= 2) {
-            throw new VersionControlException("No project key could be found for " + url.toString());
+    private String getProjectKeyFromUrl(URL url) throws VersionControlException {
+        // split the URL path in components using the separator "/"
+        final var pathComponents = url.getPath().split("/");
+        if (pathComponents.length <= 2) {
+            throw new VersionControlException("No project key could be found for " + url);
         }
-        var projectKey = urlParts[2];
+        // Note: pathComponents[] = "" because the path always starts with "/"
+        var projectKey = pathComponents[1];
+        if ("scm".equals(pathComponents[1])) {
+            // special case for Bitbucket
+            projectKey = pathComponents[2];
+        }
         log.debug("getProjectKeyFromUrl {} --> {}", url, projectKey);
         return projectKey;
     }
