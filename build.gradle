@@ -179,6 +179,7 @@ dependencies {
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
     }
+    testImplementation "com.h2database:h2:${h2_database_version}"
 }
 
 task executeTests (type: Exec) {
