@@ -58,6 +58,6 @@ jobs:
           working-directory: src/test/cypress
           browser: chrome
           wait-on: 'http://localhost:8080'
-          install-command: yarn install --frozen-lockfile
+          install-command: npm ci
           config: baseUrl=http://localhost:8080
           env: username=user_USERID,password=password_USERID,adminUsername=artemis_admin,adminPassword=artemis_admin
