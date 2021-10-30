@@ -1,4 +1,5 @@
 import { BASE_API, PUT } from '../../../constants';
+import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 
 // TODO: find or create better selectors for modeling objects
 export const MODELING_SPACE = '.sc-jrAFXE';
@@ -11,8 +12,8 @@ export class ModelingEditor {
     /**
      * Adds a Modeling Component to the Example Solution
      * */
-    addComponentToModel(componentNumber: number) {
-        cy.get(`${MODELING_COMPONENT}`).children().eq(componentNumber).drag(`${MODELING_SPACE}`, { scrollBehavior: false });
+    addComponentToModel(componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {
+        cy.get(`${MODELING_COMPONENT}`).children().eq(componentNumber).drag(`${MODELING_SPACE}`, { scrollBehavior });
     }
 
     save() {

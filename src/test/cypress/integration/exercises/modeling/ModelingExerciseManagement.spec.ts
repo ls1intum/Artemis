@@ -61,7 +61,6 @@ describe('Modeling Exercise Management Spec', () => {
                     cy.contains(modelingExercise.title).should('exist');
                     cy.log('Create Example Solution');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-                    cy.get('.apollon-editor').scrollIntoView();
                     modelingEditor.addComponentToModel(1);
                     createModelingExercise.save();
                     cy.get('jhi-exercise-submission-export').should('be.visible');
