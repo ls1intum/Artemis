@@ -13,7 +13,6 @@ import { metisPostExerciseUser1, metisPostLectureUser1, metisPostLectureUser2, m
 describe('PostFooterComponent', () => {
     let component: PostFooterComponent;
     let fixture: ComponentFixture<PostFooterComponent>;
-    let metisService: MetisService;
     const updatedTags = ['tag1', 'tag2', 'tag3'];
 
     beforeEach(() => {
@@ -26,7 +25,6 @@ describe('PostFooterComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostFooterComponent);
                 component = fixture.componentInstance;
-                metisService = TestBed.inject(MetisService);
             });
     });
 

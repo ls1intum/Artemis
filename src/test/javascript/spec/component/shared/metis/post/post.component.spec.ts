@@ -13,14 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import {
-    metisExercise,
-    metisLecture,
-    metisPostExerciseUser1,
-    metisPostLectureUser1,
-    metisPostOrganization,
-    metisPostTechSupport,
-} from '../../../../helpers/sample/metis-sample-data';
+import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })

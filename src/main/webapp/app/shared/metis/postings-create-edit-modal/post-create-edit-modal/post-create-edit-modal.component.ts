@@ -11,7 +11,6 @@ import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/m
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 
-// max length does not apply to announcements
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
 
