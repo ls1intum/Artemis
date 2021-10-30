@@ -427,8 +427,6 @@ describe('AssessmentDashboardInformationComponent', () => {
     it('asQuizExercise should cast exercise to QuizExercise', () => {
         const quizExercise = new QuizExercise(undefined, undefined);
         expect(comp.asQuizExercise(quizExercise)).toBeInstanceOf(QuizExercise);
-
-        const textExercise = new TextExercise(undefined, undefined);
         expect(comp.asQuizExercise(textExercise)).not.toBeInstanceOf(QuizExercise);
     });
 });
