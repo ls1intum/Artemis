@@ -24,7 +24,7 @@
                 <div *ngIf="inconsistencies != undefined && inconsistencies.length > 0">
                     <span class="h1 text-danger"><fa-icon [icon]="'times'"></fa-icon></span>
                     <br />
-                    <span jhiTranslate="artemisApp.consistencyCheck.errorsFound">No errors found</span>
+                    <span jhiTranslate="artemisApp.consistencyCheck.errorsFound">Following inconsistencies have been found</span>
                 </div>
             </div>
             <div class="table-responsive p-1 my-5" *ngIf="!isLoading">

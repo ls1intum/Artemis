@@ -64,27 +64,27 @@ describe('ConsistencyCheckComponent', () => {
 
     it('should call checks for single programming exercise', () => {
         // GIVEN
-        const checkConsistencyForProgrammingExercise = jest.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
+        const checkConsistencyForProgrammingExerciseStub = jest.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
 
         // WHEN
         component.exercisesToCheck = Array.of(programmingExercise);
         fixture.detectChanges();
 
         // THEN
-        expect(checkConsistencyForProgrammingExercise).toBeCalledTimes(1);
+        expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledTimes(1);
         expect(component.inconsistencies).toEqual(consistencyErrors);
     });
 
     it('should call checks for multiple programming exercises', () => {
         // GIVEN
-        const checkConsistencyForProgrammingExercise = jest.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
+        const checkConsistencyForProgrammingExerciseStub = jest.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
 
         // WHEN
         component.exercisesToCheck = programmingExercises;
         fixture.detectChanges();
 
         // THEN
-        expect(checkConsistencyForProgrammingExercise).toBeCalledTimes(2);
+        expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledTimes(2);
         expect(component.inconsistencies).toEqual(consistencyErrors.concat(consistencyErrors));
     });
 });
