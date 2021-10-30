@@ -120,7 +120,7 @@ jobs:
                 cache: 'npm'
           - name: Install Dependencies
             run: npm install
-          - name: TypeScript Test (Selection) With Typechecking
+          - name: TypeScript Test (Selection) Without Typechecking
             run: npm run test-diff:ci
 
   client-style:
