@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
@@ -21,6 +21,8 @@ export class AddAuxiliaryRepositoryButtonComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
 
+    @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
+
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.
      */
@@ -28,7 +30,11 @@ export class AddAuxiliaryRepositoryButtonComponent {
         if (this.programmingExercise.auxiliaryRepositories === undefined) {
             this.programmingExercise.auxiliaryRepositories = [];
         }
-        this.programmingExercise.auxiliaryRepositories?.push(new AuxiliaryRepository());
+        const newAuxiliaryRepository = new AuxiliaryRepository();
+        newAuxiliaryRepository.name = '';
+        newAuxiliaryRepository.checkoutDirectory = '';
+        this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
+        this.onRefresh.emit();
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
     }
 }

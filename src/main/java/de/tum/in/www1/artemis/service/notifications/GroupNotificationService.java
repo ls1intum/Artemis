@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
 public class GroupNotificationService {
@@ -43,6 +44,53 @@ public class GroupNotificationService {
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
+    }
+
+    /**
+     * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
+     * @param exercise which is updated
+     * @param notificationText holds the custom change message for the notification process
+     * @param instanceMessageSendService can initiate a scheduled notification
+     */
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exercise, String notificationText, InstanceMessageSendService instanceMessageSendService) {
+        notifyAboutExerciseUpdate(exercise, notificationText);
+        checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+    }
+
+    /**
+     * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
+     * @param exercise that is updated
+     * @param notificationText that is used for the notification process
+     */
+    public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
+        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            // Do not send an exercise-update notification before the release date of the exercise.
+            return;
+        }
+
+        if ((notificationText != null && exercise.isCourseExercise()) || exercise.isExamExercise()) {
+            // sends an exercise-update notification
+            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+        }
+    }
+
+    /**
+     * Checks if a new exercise-released notification has to be created or even scheduled
+     * The exercise update might have changed the release date, so the scheduled notification that informs the users about the release of this exercise has to be updated
+     *
+     * @param exercise that is updated
+     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
+     */
+    public void checkNotificationForExerciseRelease(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+        // Only notify students and tutors when the exercise is created for a course
+        if (exercise.isCourseExercise()) {
+            if (exercise.getReleaseDate() == null || !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                notifyAllGroupsAboutReleasedExercise(exercise);
+            }
+            else {
+                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(exercise.getId());
+            }
+        }
     }
 
     /**
