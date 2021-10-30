@@ -49,7 +49,7 @@ jobs:
       - name: Start Artemis
         env:
           SPRING_DATASOURCE_PASSWORD: rootPassword
-          SPRING_PROFILES_ACTIVE: dev,gitlab,jenkins,artemis,scheduling
+          SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,local
         run: cd build/libs; java -jar *.war
 
       - name: Run Cypress Tests
