@@ -23,7 +23,6 @@ import org.springframework.core.env.Environment;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@ComponentScan("de.tum.in.www1.artemis")
 @EntityScan( "de.tum.in.www1.artemis" )
 @SpringBootApplication(scanBasePackages = { "de.tum.in.www1.artemis" })
 @EnableConfigurationProperties(LiquibaseProperties.class)
