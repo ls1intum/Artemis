@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -17,11 +14,8 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import * as Sentry from '@sentry/browser';
 import { cloneDeep } from 'lodash-es';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import * as Sentry from '@sentry/browser';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
@@ -70,24 +64,22 @@ describe('CourseLearningGoals', () => {
                 const accountService = TestBed.get(AccountService);
                 const user = new User();
                 user.login = 'testUser';
-                sinon.stub(accountService, 'userIdentity').get(function getterFn() {
-                    return user;
-                });
+                jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue(user);
             });
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         courseLearningGoalsComponentFixture.detectChanges();
-        expect(courseLearningGoalsComponent).to.be.ok;
-        expect(courseLearningGoalsComponent.courseId).to.equal(1);
+        expect(courseLearningGoalsComponent).toBeDefined();
+        expect(courseLearningGoalsComponent.courseId).toEqual(1);
     });
 
     it('should load learning goal and associated progress and display a card for each of them', () => {
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.get(LearningGoalService);
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
         learningGoal.id = 1;
@@ -119,19 +111,24 @@ describe('CourseLearningGoals', () => {
             status: 200,
         });
 
-        const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(learningGoalsOfCourseResponse));
-        const getProgressStub = sinon.stub(learningGoalService, 'getProgress');
-        getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
-        getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
+        const getProgressSpy = jest.spyOn(learningGoalService, 'getProgress');
+        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
+        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
+        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressParticipantScoreResponse)); // when useParticipantScoreTable = true
+        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressParticipantScoreResponse)); // when useParticipantScoreTable = true
 
-        const captureExceptionSpy = sinon.spy(Sentry, 'captureException');
+        const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
 
         courseLearningGoalsComponentFixture.detectChanges();
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).to.have.lengthOf(2);
-        expect(getAllForCourseStub).to.have.been.calledOnce;
-        expect(getProgressStub).to.have.callCount(4);
-        expect(captureExceptionSpy).to.have.been.calledOnce;
+        expect(learningGoalCards).toHaveLength(2);
+        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(getProgressSpy).toHaveBeenCalledTimes(4);
+        expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toEqual(true);
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toEqual(true);
+        expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
     });
 });
