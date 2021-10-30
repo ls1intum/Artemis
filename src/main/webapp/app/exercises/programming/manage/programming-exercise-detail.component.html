@@ -298,10 +298,14 @@
                     </div>
                 </dd>
                 <dt>
-                    <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories">Auxiliary Repositories</span>
+                    <span
+                        *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories"
+                        jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories"
+                        >Auxiliary Repositories</span
+                    >
                 </dt>
                 <dd></dd>
-                <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
+                <div *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
                     <ul>
                         <li *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <dt>
@@ -319,7 +323,7 @@
                                     [auxiliaryRepositoryId]="auxiliaryRepository.id!"
                                 ></jhi-programming-exercise-instructor-repo-download>
                                 <div class="auxiliaryRepositoryDescription">
-                                    <span *ngIf="auxiliaryRepository.checkoutDirectory != undefined; else noCheckoutDirectorySet"
+                                    <span *ngIf="auxiliaryRepository.checkoutDirectory; else noCheckoutDirectorySet"
                                         >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
                                     </span>
                                     <ng-template #noCheckoutDirectorySet>

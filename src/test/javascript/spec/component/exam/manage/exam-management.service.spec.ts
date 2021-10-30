@@ -622,7 +622,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should archive the exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = { id: 1 };
+        const mockExam: Exam = { id: 1, studentExams: [{ id: 1 }] };
 
         // WHEN
         service.archiveExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq({}));
@@ -633,6 +633,25 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/archive`,
         });
         req.flush({});
+        tick();
+    }));
+
+    it('should reset an exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockResponse = { id: 1 };
+        const expected = { id: 1 };
+
+        // WHEN
+        service.reset(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq(expected));
+
+        // THEN
+        const req = httpMock.expectOne({
+            method: 'DELETE',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/reset`,
+        });
+
+        req.flush(mockResponse);
         tick();
     }));
 });
