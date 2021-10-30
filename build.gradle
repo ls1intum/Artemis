@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.2.6"
+    version = "5.2.7"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -179,7 +179,6 @@ dependencies {
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
     }
-    testImplementation "com.h2database:h2:${h2_database_version}"
 }
 
 task executeTests (type: Exec) {
@@ -267,7 +266,7 @@ gradle.taskGraph.whenReady { graph ->
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew executeTests -x webapp
-// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
+// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release

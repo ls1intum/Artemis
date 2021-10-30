@@ -1,7 +1,7 @@
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -17,7 +17,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
-import { metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { Router } from '@angular/router';
+import { MockRouter } from '../../../../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -32,10 +36,13 @@ describe('AnswerPostReactionsBarComponent', () => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
             providers: [
+                MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
             declarations: [AnswerPostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
         })
@@ -55,6 +62,7 @@ describe('AnswerPostReactionsBarComponent', () => {
                 reactionToDelete.answerPost = answerPost;
                 answerPost.reactions = [reactionToDelete];
                 component.posting = answerPost;
+                metisService.setCourse(metisCourse);
             });
     });
 
