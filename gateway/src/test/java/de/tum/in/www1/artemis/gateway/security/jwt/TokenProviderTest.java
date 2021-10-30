@@ -109,7 +109,7 @@ class TokenProviderTest {
         TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
 
         Key key = (Key) ReflectionTestUtils.getField(tokenProvider, "key");
-        assertThat(key).isNotNull().isEqualTo(Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
+        assertThat(key).isEqualTo(Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
     }
 
     private Authentication createAuthentication() {

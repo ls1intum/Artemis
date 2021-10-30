@@ -146,39 +146,6 @@ public final class TestUtil {
         }
     }
 
-    /**
-     * Creates a matcher that matches when the examined number represents the same value as the reference BigDecimal.
-     *
-     * @param number the reference BigDecimal against which the examined number is checked.
-     * @return matcher for the given number
-     */
-    public static NumberMatcher sameNumber(BigDecimal number) {
-        return new NumberMatcher(number);
-    }
-
-    /**
-     * Verifies the equals/hashcode contract on the domain object.
-     *
-     * @param clazz
-     * @param <T>
-     * @throws Exception
-     */
-    public static <T> void equalsVerifier(Class<T> clazz) throws Exception {
-        T domainObject1 = clazz.getConstructor().newInstance();
-        assertThat(domainObject1.toString()).isNotNull();
-        assertThat(domainObject1).isEqualTo(domainObject1);
-        assertThat(domainObject1).hasSameHashCodeAs(domainObject1);
-        // Test with an instance of another class
-        Object testOtherObject = new Object();
-        assertThat(domainObject1).isNotEqualTo(testOtherObject);
-        assertThat(domainObject1).isNotEqualTo(null);
-        // Test with an instance of the same class
-        T domainObject2 = clazz.getConstructor().newInstance();
-        assertThat(domainObject1).isNotEqualTo(domainObject2);
-        // HashCodes are equals because the objects are not persisted yet
-        assertThat(domainObject1).hasSameHashCodeAs(domainObject2);
-    }
-
     private TestUtil() {
     }
 }
