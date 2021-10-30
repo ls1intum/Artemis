@@ -60,7 +60,7 @@ export class StatisticsService {
 
     private static calculatePercentagesForExerciseStatistics(stats: ExerciseManagementStatisticsDto): ExerciseManagementStatisticsDto {
         stats.participationsInPercent = stats.numberOfStudentsOrTeamsInCourse > 0 ? round((stats.numberOfParticipations / stats.numberOfStudentsOrTeamsInCourse) * 100, 1) : 0;
-        stats.questionsAnsweredInPercent = stats.numberOfQuestions > 0 ? round((stats.numberOfAnsweredQuestions / stats.numberOfQuestions) * 100, 1) : 0;
+        stats.resolvedPostsInPercent = stats.numberOfPosts > 0 ? round((stats.numberOfResolvedPosts / stats.numberOfPosts) * 100, 1) : 0;
         stats.absoluteAveragePoints = round((stats.averageScoreOfExercise * stats.maxPointsOfExercise) / 100, 1);
         return stats;
     }

@@ -8,6 +8,10 @@ export class CourseAssessmentDashboardPage {
         cy.get(`[href="/course-management/${courseId}/complaints"]`).click();
     }
 
+    showTheComplaint() {
+        cy.get('.btn-primary').should('contain.text', 'Show the complaint').click();
+    }
+
     clickExerciseDashboardButton() {
         // Sometimes the page does not load properly, so we reload it if the button is not found
         cy.waitUntil(

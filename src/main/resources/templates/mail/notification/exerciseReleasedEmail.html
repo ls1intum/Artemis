@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="mail/notification/fragments :: head"/>
+<body>
+    <th:block th:replace="mail/notification/fragments :: header"/>
+    <!-- Message Body Start -->
+    <div id="message-body">
+        <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
+        <div class="notification-content">
+            <th:block th:replace="mail/notification/fragments :: exerciseTypeTranslation"/>
+            <span th:text="#{email.notification.title.exercise.created(
+                ${notificationSubject.getTitle()},
+                ${notificationSubject.getCourseViaExerciseGroupOrCourseMember().getTitle()}
+                )}">Notification Content for Exercise Created</span>
+            <p class="bold-text" th:text="#{email.notification.title.exercise.information}">Information about this exercise:</p>
+            <ul>
+                <th:block th:if="${notificationSubject.getDifficulty()}">
+                    <li th:include="mail/notification/fragments :: difficultyTranslation"/>
+                </th:block>
+                <th:block th:if="${notificationSubject.getReleaseDate()}">
+                    <li th:text="#{email.notification.aux.information.release.date(${timeService.convertToHumanReadableDate(notificationSubject.getReleaseDate())})}">Release Date</li>
+                </th:block>
+                <th:block th:if="${notificationSubject.getDueDate()}">
+                    <li th:text="#{email.notification.aux.information.due.date(${timeService.convertToHumanReadableDate(notificationSubject.getDueDate())})}">Due Date</li>
+                </th:block>
+                <li th:text="#{email.notification.title.exercise.information.max(${notificationSubject.getMaxPoints()})}">Max Points</li>
+                <th:block th:if="${notificationSubject.getBonusPoints()}">
+                    <li th:text="#{email.notification.title.exercise.information.bonus(${notificationSubject.getBonusPoints()})}">Bonus Points</li>
+                </th:block>
+            </ul>
+            <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+        </div>
+        <th:block th:replace="mail/notification/fragments :: farewell"/>
+    </div>
+    <!-- Message Body End -->
+    <th:block th:replace="mail/notification/fragments :: footer"/>
+</body>
+</html>

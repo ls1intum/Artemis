@@ -3,8 +3,8 @@ import { CypressAssessmentType, CypressExamBuilder } from '../../support/request
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import dayjs from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
-import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/OnlineEditorPage';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;

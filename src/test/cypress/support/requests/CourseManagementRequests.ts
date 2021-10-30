@@ -12,6 +12,7 @@ import assessment_submission from '../../fixtures/programming_exercise_submissio
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
+import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -31,7 +32,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     deleteCourse(id: number) {
-        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login
+        // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(100);
         return cy.request({ method: DELETE, url: COURSE_BASE + id });
     }
@@ -287,10 +288,35 @@ export class CourseManagementRequests {
         });
     }
 
+    updateModelingExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateModelingExercise(exercise);
+    }
+
+    updateModelingExercise(exercise: any) {
+        return cy.request({
+            url: MODELING_EXERCISE_BASE,
+            method: PUT,
+            body: exercise,
+        });
+    }
+
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
             url: `${MODELING_EXERCISE_BASE}/${exerciseID}`,
             method: DELETE,
+        });
+    }
+
+    makeModelingExerciseSubmission(exerciseID: number, participation: any) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
+            method: PUT,
+            body: {
+                ...modelingExerciseSubmissionTemplate,
+                id: participation.submissions[0].id,
+                participation,
+            },
         });
     }
 
