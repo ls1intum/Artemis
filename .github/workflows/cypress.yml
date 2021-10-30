@@ -47,6 +47,8 @@ jobs:
         run: cp src/test/cypress/deployment/* build/libs/
       - name: Import sql dump
         run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword Artemis < build/libs/*.sql
+      - name: Print liquibase changelogs in DB (DEBUGGING)
+        run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword Artemis -e "SELECT * FROM databasechangelog"
       - name: Start Artemis
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
