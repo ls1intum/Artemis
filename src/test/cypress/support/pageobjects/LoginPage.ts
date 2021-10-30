@@ -8,8 +8,8 @@ export class LoginPage {
         cy.get('#username').type(name, { log: false });
     }
 
-    enterPassword(name: string) {
-        cy.get('#password').type(name, { log: false });
+    enterPassword(password: string) {
+        cy.get('#password').type(password, { log: false });
     }
 
     clickLoginButton() {
