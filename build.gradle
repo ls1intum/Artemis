@@ -87,6 +87,27 @@ modernizer {
 
 apply from: "gradle/tasks.gradle"
 
+// configure excluded classes from the test coverage report
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "user-management/**" // exclude the user-management project from test coverage report for the moment until it is activated
+            ]
+        )
+    }))
+}
+
+jacocoTestReport.configure {
+    // we want to ignore some generated files in the domain folders as well as files from different projects
+    afterEvaluate { excludedClassFilesForReport(classDirectories) }
+}
+jacocoTestCoverageVerification.configure {
+    // we want to ignore some generated files in the domain folders as well as files from different projects
+    afterEvaluate { excludedClassFilesForReport(classDirectories) }
+}
+
 configurations {
     providedRuntime
 }
@@ -224,13 +245,13 @@ tasks.named("dependencyUpdates").configure {
 
 gradle.taskGraph.whenReady { graph ->
     def tasks = gradle.startParameter.taskNames.toString()
-    def hasRootGatewayTask = tasks.contains(":user-management:bootWar") || tasks.contains(":user-management:executeTests") || tasks.contains(":user-management:jacocoTestReport")
+    def hasRootUserManagementTask = tasks.contains(":user-management:bootWar") || tasks.contains(":user-management:executeTests") || tasks.contains(":user-management:jacocoTestReport")
         || tasks.contains(":user-management:spotlessCheck")  || tasks.contains(":user-management:spotlessApply")  || tasks.contains(":user-management:dependencyUpdates")
         || tasks.contains(":user-management:checkstyleMain")  || tasks.contains(":user-management:jacocoTestCoverageVerification")  || tasks.contains(":user-management:test")
         || tasks.contains(":user-management:bootRun") || tasks.contains(":user-management:buildJarForDocker") || tasks.contains(":user-management:cleanResources")
         || tasks.contains(":user-management:bootJar")
 
-    if (!hasRootGatewayTask) {
+    if (!hasRootUserManagementTask) {
         graph.getAllTasks().each { task ->
             def subGatewayTask = (task.path =~ /:user-management.+/)
             if (subGatewayTask) {

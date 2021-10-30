@@ -2,9 +2,6 @@
 # Spring Boot configuration.
 #
 # This configuration is used for unit/integration tests.
-#
-# More information on profiles: https://www.jhipster.tech/profiles/
-# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 # ===================================================================
@@ -12,13 +9,6 @@
 # Full reference is available at:
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
-
-eureka:
-    client:
-        enabled: false
-    instance:
-        appname: userManagement
-        instanceId: userManagement:${spring.application.instance-id:${random.value}}
 
 logging:
     level:
@@ -30,21 +20,22 @@ artemis:
     version: 1.3.3-beta7
     file-upload-path: uploads
     submission-export-path: exports
+    encryption-password: <encryption-password>
     external-system-request:
         batch-size: 1  # wait the time below after 1 requests (make it easier to test the corresponding code)
         batch-waiting-time: 5   # 5ms (make the tests faster)
 
 spring:
     application:
-        name: userManagement
+        name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
         url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
         name:
         username:
         password:
-    hikari:
-        auto-commit: false
+        hikari:
+            auto-commit: false
     data:
         jpa:
             repositories:
@@ -78,7 +69,7 @@ spring:
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
-            hibernate.cache.hazelcast.instance_name: userManagement
+            hibernate.cache.hazelcast.instance_name: Artemis
             hibernate.cache.hazelcast.use_lite_member: true
     liquibase:
         contexts: tests
@@ -92,13 +83,13 @@ spring:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     task:
         execution:
-            thread-name-prefix: user-management-task-
+            thread-name-prefix: artemis-task-
             pool:
                 core-size: 1
                 max-size: 50
                 queue-capacity: 10000
         scheduling:
-            thread-name-prefix: user-management-scheduling-
+            thread-name-prefix: artemis-scheduling-
             pool:
                 size: 1
     thymeleaf:
@@ -138,15 +129,38 @@ management:
         jhimetrics:
             enabled: true
 
-# ===================================================================
-# JHipster specific properties
-#
-# Full reference is available at: https://www.jhipster.tech/common-application-properties/
-# ===================================================================
+sentry:
+    dsn: https://not-activated@sentry.io/0000000
+    send-default-pii: true
+    logging:
+        enabled: false
+
+# Properties to be exposed on the /info management endpoint
+info:
+    # Comma separated list of profiles that will trigger the ribbon to show
+    display-ribbon-on-profiles: "dev"
+    sentry:
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        tours:
+            -   cancel_tour: ''
+            -   code_editor_tour: 'test'
+            -   course_overview_tour: ''
+            -   course_exercise_overview_tour: 'test'
+            -   modeling_tour: 'UML Class Diagram'
+            -   programming_exercise_fail_tour: 'test'
+            -   programming_exercise_success_tour: 'test'
+            -   tutor_assessment_tour: 'Patterns in Software Engineering'
+    # Allowed Orion version range. Should only be changed on major version releases
+    allowed-minimum-orion-version: 1.0.0
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to true for tests
+    text-assessment-analytics-enabled: true
 
 jhipster:
     clientApp:
-        name: 'userManagementApp'
+        name: 'artemisApp'
     # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
     cors:
         allowed-origin-patterns: "*"
@@ -158,11 +172,14 @@ jhipster:
     logging:
         # To test json console appender
         use-json-format: false
-        logstash:
+        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
             enabled: false
             host: localhost
             port: 5000
             queue-size: 512
+    mail: # specific JHipster mail property, for standard properties see MailProperties
+        from: Artemis@localhost
+        base-url: http://127.0.0.1:8080
     security:
         authentication:
             jwt:
@@ -170,3 +187,4 @@ jhipster:
                 base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
+                token-validity-in-seconds-for-remember-me: 2592000

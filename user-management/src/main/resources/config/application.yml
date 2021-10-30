@@ -16,10 +16,10 @@
 
 logging:
     level:
-        ROOT: INFO
-        de.tum.in.www1.artemis: INFO
-        io.github.jhipster: INFO
-        org.springframework.web.socket.config: INFO
+        ROOT: TRACE
+        de.tum.in.www1.artemis: TRACE
+        io.github.jhipster: TRACE
+        org.springframework.web.socket.config: TRACE
 
 artemis:
     version: #project.version#
@@ -123,7 +123,7 @@ spring:
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
-            hibernate.cache.hazelcast.instance_name: userManagement
+            hibernate.cache.hazelcast.instance_name: Artemis
             hibernate.cache.hazelcast.use_lite_member: true
     messages:
         basename: i18n/messages
@@ -155,6 +155,13 @@ spring:
         phone:
             home:
                 enabled: false
+
+springdoc:
+    api-docs:
+        path: /api-docs
+    swagger-ui:
+        path: /api.html
+        operationsSorter: method
 
 server:
     servlet:

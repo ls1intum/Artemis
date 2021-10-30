@@ -30,14 +30,6 @@ To start your application in the dev profile, run:
 ./gradlew :user-management:bootRun --args='--spring.profiles.active=dev,artemis'
 ```
 
-### Doing API-First development using openapi-generator
-
-[OpenAPI-Generator]() is configured for this application. You can generate API code from the `src/main/resources/swagger/api.yml` definition file by running:
-
-```bash
-./gradlew :user-management:openApiGenerate
-```
-
 ## Building for production
 
 ### Packaging as jar

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@EnableFeignClients(basePackages = "de.tum.in.www1.artemis")
+@EnableFeignClients(basePackages = "de.tum.in.www1.artemis.usermanagement")
 @Import(FeignClientsConfiguration.class)
 public class FeignConfiguration {
 
