@@ -18,7 +18,8 @@ export class CourseOverviewPage {
             case CypressExerciseType.TEXT:
                 this.getExerciseCardRootElement(exerciseName).find('.start-exercise').click();
                 break;
-            default: throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
+            default:
+                throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
         }
         cy.wait('@participateInExerciseQuery');
     }
