@@ -1,22 +1,17 @@
 import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, MockTeamService, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,16 +24,11 @@ describe('TeamUpdateDialogComponent', () => {
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisTeamModule],
-            declarations: [],
-            providers: [
-                EventManager,
-                { provide: TeamService, useClass: MockTeamService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [TeamUpdateDialogComponent],
+            providers: [{ provide: TeamService, useClass: MockTeamService }, { provide: ParticipationService, useClass: MockParticipationService }, MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
