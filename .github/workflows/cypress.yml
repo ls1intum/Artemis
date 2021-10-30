@@ -44,13 +44,10 @@ jobs:
       
       - name: Copy configuration files
         run: cp src/test/cypress/deployment/* build/libs/
-      - name: Create Database for Artemis
-        run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword -e "CREATE DATABASE Artemis CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
       - name: Import sql dump
-        run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword Artemis < build/libs/*.sql
+        run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword < build/libs/*.sql
       - name: Start Artemis
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
           SPRING_DATASOURCE_PASSWORD: rootPassword
           SPRING_PROFILES_ACTIVE: dev,gitlab,jenkins,artemis,scheduling
         run: cd build/libs; java -jar *.war
