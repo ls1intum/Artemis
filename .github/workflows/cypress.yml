@@ -50,13 +50,14 @@ jobs:
         env:
           SPRING_DATASOURCE_PASSWORD: rootPassword
           SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,local
-        run: cd build/libs; java -jar *.war
+        run: cd build/libs; java -jar *.war &
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v2
         with:
           working-directory: src/test/cypress
           browser: chrome
+          wait-on: 'http://localhost:8080'
           install-command: yarn install --frozen-lockfile
           config: baseUrl=http://localhost:8080
           env: username=${{ secrets.BAMBOO_TEST_USER }},password=${{ secrets.BAMBOO_TEST_PASSWORD }},adminUsername=${{ secrets.BAMBOO_ADMIN_USER }},adminPassword=${{ secrets.BAMBOO_ADMIN_PASSWORD }}
