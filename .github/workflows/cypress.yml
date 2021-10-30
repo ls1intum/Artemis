@@ -60,4 +60,4 @@ jobs:
           wait-on: 'http://localhost:8080'
           install-command: yarn install --frozen-lockfile
           config: baseUrl=http://localhost:8080
-          env: username=${{ secrets.BAMBOO_TEST_USER }},password=${{ secrets.BAMBOO_TEST_PASSWORD }},adminUsername=${{ secrets.BAMBOO_ADMIN_USER }},adminPassword=${{ secrets.BAMBOO_ADMIN_PASSWORD }}
+          env: username=user_USERID,password=password_USERID,adminUsername=artemis_admin,adminPassword=artemis_admin
