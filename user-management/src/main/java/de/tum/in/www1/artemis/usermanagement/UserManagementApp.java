@@ -16,19 +16,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@EntityScan( "de.tum.in.www1.artemis" )
+@EntityScan("de.tum.in.www1.artemis")
 @SpringBootApplication(scanBasePackages = { "de.tum.in.www1.artemis" })
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class UserManagementApp {
 
-    private static final Logger log = LoggerFactory.getLogger(UserManagementApp.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserManagementApp.class);
 
     private final Environment env;
 
@@ -57,9 +55,9 @@ public class UserManagementApp {
             hostAddress = InetAddress.getLocalHost().getHostAddress();
         }
         catch (UnknownHostException e) {
-            log.warn("The host name could not be determined, using `localhost` as fallback");
+            LOGGER.warn("The host name could not be determined, using `localhost` as fallback");
         }
-        log.info(
+        LOGGER.info(
                 "\n----------------------------------------------------------\n\t" + "Application '{}' is running! Access URLs:\n\t" + "Local: \t\t{}://localhost:{}{}\n\t"
                         + "External: \t{}://{}:{}{}\n\t" + "Profile(s): \t{}\n----------------------------------------------------------",
                 env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath, env.getActiveProfiles());
@@ -68,7 +66,7 @@ public class UserManagementApp {
         if (configServerStatus == null) {
             configServerStatus = "Not found or not setup for this application";
         }
-        log.info("\n----------------------------------------------------------\n\t" + "Config Server: \t{}\n----------------------------------------------------------",
+        LOGGER.info("\n----------------------------------------------------------\n\t" + "Config Server: \t{}\n----------------------------------------------------------",
                 configServerStatus);
     }
 
@@ -82,11 +80,13 @@ public class UserManagementApp {
     @PostConstruct
     public void initApplication() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-            log.error("You have misconfigured your application! It should not run " + "with both the 'dev' and 'prod' profiles at the same time.");
-        }
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
-            log.error("You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time.");
+        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+                LOGGER.error("You have misconfigured your application! It should not run " + "with both the 'dev' and 'prod' profiles at the same time.");
+            }
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
+                LOGGER.error("You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time.");
+            }
         }
     }
 }

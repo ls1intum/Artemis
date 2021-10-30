@@ -5,7 +5,6 @@ import java.security.Key;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.usermanagement.security.jwt.TokenProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.util.ObjectUtils;
