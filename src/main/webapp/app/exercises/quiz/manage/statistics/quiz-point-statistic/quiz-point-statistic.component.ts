@@ -307,6 +307,11 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
         });
     }
     formatDataLabel(value: any) {
-        return value + ' (' + round((value / this.totalParticipants) * 100) + '%)';
+        const relativeValue = (value / this.totalParticipants) * 100;
+        if (isNaN(relativeValue)) {
+            return value + ' (0%)';
+        } else {
+            return value + ' (' + round((value / this.totalParticipants) * 100, 1) + '%)';
+        }
     }
 }
