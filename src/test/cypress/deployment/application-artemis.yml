@@ -8,7 +8,7 @@ artemis:
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
     encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
     user-management:
-        use-external: true
+        use-external: false
         external:
             url: https://jira.ase.in.tum.de
             user: <username>        # e.g. ga12abc
