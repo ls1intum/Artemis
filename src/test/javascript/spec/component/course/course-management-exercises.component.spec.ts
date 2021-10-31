@@ -14,18 +14,12 @@ import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/t
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { of } from 'rxjs';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -35,7 +29,7 @@ describe('Course Management Exercises Component', () => {
     course.id = 123;
     const parentRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
-    let findStub: sinon.SinonStub;
+    let findStub: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -66,23 +60,23 @@ describe('Course Management Exercises Component', () => {
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);
         comp = fixture.componentInstance;
         courseService = TestBed.inject(CourseManagementService);
-        findStub = sinon.stub(courseService, 'find');
-        findStub.returns(of(new HttpResponse({ body: course })));
+        findStub = jest.spyOn(courseService, 'find');
+        findStub.mockReturnValue(of(new HttpResponse({ body: course })));
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CourseManagementExercisesComponent).to.be.ok;
+        expect(CourseManagementExercisesComponent).toBeTruthy();
     });
 
     it('should find course on on init', () => {
         comp.ngOnInit();
-        expect(comp.courseId).to.equal(course.id);
-        expect(findStub).to.have.been.calledWith(course.id);
+        expect(comp.courseId).toEqual(course.id);
+        expect(findStub).toHaveBeenCalledWith(course.id);
     });
 
     it('should open search bar on button click', () => {
@@ -93,7 +87,7 @@ describe('Course Management Exercises Component', () => {
 
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
-        expect(comp.showSearch).to.equal(true);
-        expect(searchBar).to.not.equal(null);
+        expect(comp.showSearch).toEqual(true);
+        expect(searchBar).not.toBe(null);
     });
 });

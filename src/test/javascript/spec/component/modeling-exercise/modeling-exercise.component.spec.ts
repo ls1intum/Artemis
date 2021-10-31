@@ -13,15 +13,9 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ModelingExercise Management Component', () => {
     let comp: ModelingExerciseComponent;
@@ -63,13 +57,13 @@ describe('ModelingExercise Management Component', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findStub = sinon.stub(courseExerciseService, 'findAllModelingExercisesForCourse').returns(
+        const findStub = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [modelingExercise],
@@ -83,8 +77,8 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).to.have.been.called;
-        expect(comp.modelingExercises[0]).to.deep.equal(modelingExercise);
+        expect(findStub).toHaveBeenCalled();
+        expect(comp.modelingExercises[0]).toEqual(modelingExercise);
     });
 
     describe('ModelingExercise Search Exercises', () => {
@@ -93,8 +87,8 @@ describe('ModelingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
 
             // THEN
-            expect(comp.modelingExercises).to.have.length(1);
-            expect(comp.filteredModelingExercises).to.have.length(1);
+            expect(comp.modelingExercises).toHaveLength(1);
+            expect(comp.filteredModelingExercises).toHaveLength(1);
         });
 
         it('Should show no exercises', () => {
@@ -102,34 +96,35 @@ describe('ModelingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.modelingExercises).to.have.length(1);
-            expect(comp.filteredModelingExercises.length).to.have.length(0);
+            expect(comp.modelingExercises).toHaveLength(1);
+            expect(comp.filteredModelingExercises).toHaveLength(0);
         });
     });
 
     it('should return items id when tracked', () => {
         const item = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         item.id = 123;
-        expect(comp.trackId(2, item)).to.equal(123);
+        expect(comp.trackId(2, item)).toEqual(123);
     });
 
     it('should delete the given exercise', fakeAsync(() => {
-        const deleteStub = sinon.stub(modelingExerciseService, 'delete').returns(of({} as HttpResponse<{}>));
+        const deleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
+        const broadcastStub = jest.spyOn(eventManager, 'broadcast');
         comp.deleteModelingExercise(2);
-        expect(deleteStub).to.have.been.calledWith(2);
+        expect(deleteStub).toHaveBeenCalledWith(2);
         tick();
-        expect(eventManager.broadcast).to.have.been.calledWith({
+        expect(broadcastStub).toHaveBeenCalledWith({
             name: 'modelingExerciseListModification',
             content: 'Deleted an modelingExercise',
         });
     }));
 
     it('should sort rows', () => {
-        const sortStub = sinon.stub(sortService, 'sortByProperty');
+        const sortStub = jest.spyOn(sortService, 'sortByProperty');
         comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
         comp.predicate = 'testPredicate';
         comp.reverse = true;
         comp.sortRows();
-        expect(sortStub).to.have.been.calledWith(comp.modelingExercises, comp.predicate, comp.reverse);
+        expect(sortStub).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
     });
 });
