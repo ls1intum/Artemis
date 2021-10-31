@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -321,18 +321,6 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).to.deep.equal({}));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}` });
         req.flush({});
-        tick();
-    }));
-
-    it('should get stats of instructor', fakeAsync(() => {
-        const stats = new StatsForDashboard();
-        returnedFromService = { ...stats };
-        courseManagementService
-            .getStatsForInstructors(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).to.deep.equal(stats));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/stats-for-instructor-dashboard` });
-        req.flush(returnedFromService);
         tick();
     }));
 
