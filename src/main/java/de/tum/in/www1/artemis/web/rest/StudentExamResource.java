@@ -567,7 +567,7 @@ public class StudentExamResource {
             // remove inner exercise from participation
             participation.setExercise(null);
             // only include the latest submission
-            Optional<Submission> optionalLatestSubmission = participation.findLatesLegalOrIllegalSubmission();
+            Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
