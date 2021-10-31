@@ -12,12 +12,9 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
-import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
