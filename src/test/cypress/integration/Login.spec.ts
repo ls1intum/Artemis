@@ -4,7 +4,7 @@ import { authTokenKey } from '../support/constants';
 const user = artemis.users.getStudentOne();
 const loginPage = artemis.pageobjects.login;
 
-describe('Authentication tests', () => {
+describe('Login page tests', () => {
     it('Logs in via the UI', () => {
         cy.visit('/');
         loginPage.login(user);
@@ -37,5 +37,15 @@ describe('Authentication tests', () => {
     it('Fails to access protected resource without login', () => {
         cy.visit('/course-management');
         cy.location('pathname').should('eq', '/');
+    });
+
+    it('Verify footer content', () => {
+        cy.visit('/');
+        loginPage.shouldShowFooter();
+        loginPage.shouldShowAboutUsInFooter();
+        loginPage.shouldShowRequestChangeInFooter();
+        loginPage.shouldShowReleaseNotesInFooter();
+        loginPage.shouldShowPrivacyStatementInFooter();
+        loginPage.shouldShowImprintInFooter();
     });
 });
