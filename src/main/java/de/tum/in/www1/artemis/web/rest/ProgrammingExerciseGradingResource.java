@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingServ
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 /**
- * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
+ * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are no endpoints available for POST,
  * PUT or DELETE.
  */
 @RestController
@@ -59,7 +59,7 @@ public class ProgrammingExerciseGradingResource {
     @PutMapping(RE_EVALUATE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
-        log.debug("REST request to reset the weights of exercise {}", exerciseId);
+        log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -74,9 +74,9 @@ public class ProgrammingExerciseGradingResource {
     }
 
     /**
-     * Get the exercise's test case statistics for the the given exercise id.
+     * Get the exercise's test case statistics for the given exercise id.
      *
-     * @param exerciseId of the the exercise.
+     * @param exerciseId of the exercise.
      * @return the test case statistics for the exercise.
      */
     @GetMapping(STATISTICS)
