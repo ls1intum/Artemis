@@ -14,12 +14,16 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 
 /**
  * A ProgrammingExercise.
@@ -96,6 +100,11 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "submission_policy_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private SubmissionPolicy submissionPolicy;
 
     @Transient
     private boolean isLocalSimulationTransient;
@@ -402,6 +411,14 @@ public class ProgrammingExercise extends Exercise {
         if (this.solutionParticipation != null) {
             this.solutionParticipation.setProgrammingExercise(this);
         }
+    }
+
+    public SubmissionPolicy getSubmissionPolicy() {
+        return this.submissionPolicy;
+    }
+
+    public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        this.submissionPolicy = submissionPolicy;
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove

@@ -283,7 +283,8 @@
             "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
-        }
+        },
+        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
     },
     "error": {
         "internalServerError": "Interner Serverfehler",

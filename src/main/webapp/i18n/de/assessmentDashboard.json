@@ -37,6 +37,20 @@
                 "title": "Tabelle aller Übungen",
                 "courseInformation": "Übung Tabelle listet alle Übungen des aktuellen Kurses auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen.",
                 "examInformation": "Übung Tabelle listet alle Übungen des aktuellen Klausur auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen."
+            },
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor:innen-Bestenliste",
+                "examTitle": "Tutor:innen-Klausur Bestenliste",
+                "id": "ID",
+                "name": "Name",
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Angenommene Beschwerden",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Offene Feedbackanfragen",
+                "numberOfComplaintResponses": "Beschwerdeantworten",
+                "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Feedbackanfragen",
+                "points": "Punkte",
+                "averageScore": "Durchschnittliche Punktzahl",
+                "averageRating": "Durchschnittliches Rating"
             }
         }
     }

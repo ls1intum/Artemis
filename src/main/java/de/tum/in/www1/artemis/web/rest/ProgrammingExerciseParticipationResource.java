@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
@@ -66,25 +67,23 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
-                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
-        if (participation.isEmpty()) {
-            return notFound();
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
+                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
+            throw new AccessForbiddenException("participation", participationId);
         }
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
-            return forbidden();
-        }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             // hide details that should not be shown to the students
-            participation.get().getExercise().filterSensitiveInformation();
+            participation.getExercise().filterSensitiveInformation();
 
-            final boolean isBeforeDueDate = participation.get().getExercise().isBeforeDueDate();
-            for (Result result : participation.get().getResults()) {
+            final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
+            for (Result result : participation.getResults()) {
                 result.filterSensitiveInformation();
                 result.filterSensitiveFeedbacks(isBeforeDueDate);
             }
         }
-        return ResponseEntity.ok(participation.get());
+        return ResponseEntity.ok(participation);
     }
 
     /**
