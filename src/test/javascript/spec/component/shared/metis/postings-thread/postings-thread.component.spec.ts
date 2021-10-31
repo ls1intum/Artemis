@@ -121,24 +121,22 @@ describe('PostingsThreadComponent', () => {
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('should display button to show answers', () => {
+    it('should display button to show multiple answers', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = false;
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton.innerHTML).toContain('showAnswers');
-        expect(answerNowButton.innerHTML).toContain('answerPlural');
+        expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
     });
 
-    it('should display button to show answer', () => {
+    it('should display button to show single answer', () => {
         component.post = post;
         component.post.answers = [metisPostExerciseUser1];
         component.showAnswers = false;
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton.innerHTML).toContain('showAnswers');
-        expect(answerNowButton.innerHTML).toContain('answerSingular');
+        expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
     });
 
     it('start discussion button should be visible if post does not yet have any answers', () => {
@@ -149,7 +147,7 @@ describe('PostingsThreadComponent', () => {
         expect(startDiscussion.innerHTML).toContain('startDiscussion');
     });
 
-    it('answer now button should not be visible answer posts are not shown', () => {
+    it('answer now button should not be visible if answer posts are not shown', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = false;
@@ -158,7 +156,7 @@ describe('PostingsThreadComponent', () => {
         expect(answerNowButton.innerHTML).not.toContain('answerNow');
     });
 
-    it('answer now button should be visible answer posts are not shown', () => {
+    it('answer now button should be visible if answer posts are shown', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = true;
@@ -172,7 +170,7 @@ describe('PostingsThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         component.ngOnInit();
         const postComponent = fixture.debugElement.nativeElement.querySelector('jhi-post');
-        expect(postComponent).not.toBe(undefined);
+        expect(postComponent).not.toBe(null);
     });
 
     it('should contain an answer post', () => {
@@ -181,7 +179,7 @@ describe('PostingsThreadComponent', () => {
         component.showAnswers = true;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).not.toBe(undefined);
+        expect(answerPostComponent).not.toBe(null);
     });
 
     it('should not contain an answer post', () => {
