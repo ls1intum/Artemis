@@ -14,6 +14,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -21,6 +22,8 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
     styleUrls: ['./quiz-point-statistic.component.scss'],
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy {
+    readonly round = round;
+
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
     private sub: Subscription;
@@ -301,9 +304,5 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             // a must be equal to b
             return 0;
         });
-    }
-
-    roundValue(participation: number) {
-        return Math.round(participation * 100) / 100;
     }
 }
