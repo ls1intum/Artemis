@@ -151,7 +151,6 @@ describe('TeamParticipationTableComponent', () => {
     course.exercises = [exercise1, exercise2, exercise3, exercise4, exercise5];
 
     let router: Router;
-    let routerStub: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -189,34 +188,34 @@ describe('TeamParticipationTableComponent', () => {
         comp.course = course;
         comp.exercise = exercise4;
         comp.team = mockTeam;
-        routerStub = jest.spyOn(router, 'navigate').mockImplementation();
+        jest.spyOn(router, 'navigate').mockImplementation();
         comp.ngOnInit();
         tick();
     }));
 
-    it('Exercises for one team are loaded correctly', fakeAsync(() => {
+    it('Exercises for one team are loaded correctly', () => {
         // Make sure that all 3 exercises were received for exercise
-        expect(comp.exercises).toHaveLength(course.exercises?.length!);
+        expect(comp.exercises).toHaveLength(course.exercises!.length);
 
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
         expect(datatable).not.toBe(null);
-    }));
+    });
 
-    it('Assessment Action "continue" is triggered', fakeAsync(() => {
+    it('Assessment Action "continue" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission2);
         expect(expectedAssessmentAction).toBe('continue');
-    }));
+    });
 
-    it('Assessment Action "start" is triggered', fakeAsync(() => {
+    it('Assessment Action "start" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission3);
         expect(expectedAssessmentAction).toBe('start');
-    }));
+    });
 
-    it('Assessment Action "open" is triggered', fakeAsync(() => {
+    it('Assessment Action "open" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission4);
         expect(expectedAssessmentAction).toBe('open');
-    }));
+    });
 
     it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
         const participation = exercise2.studentParticipations![0];
@@ -234,22 +233,22 @@ describe('TeamParticipationTableComponent', () => {
         ]);
     }));
 
-    it('Check enabled assessment button for exercises without due date', fakeAsync(() => {
+    it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
         expect(expectedAssessmentActionButtonDisabled).toBe(false);
-    }));
+    });
 
-    it('Check enabled assessment button for exercises with submission and passed due date', fakeAsync(() => {
+    it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
         expect(expectedAssessmentActionButtonDisabled).toBe(false);
-    }));
+    });
 
-    it('Check disabled assessment button for exercises without submission', fakeAsync(() => {
+    it('Check disabled assessment button for exercises without submission', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
         expect(expectedAssessmentActionButtonDisabled).toBe(true);
-    }));
+    });
 
-    it('Check disabled assessment button for exercises before due date as tutor', fakeAsync(() => {
+    it('Check disabled assessment button for exercises before due date as tutor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise4,
@@ -258,9 +257,9 @@ describe('TeamParticipationTableComponent', () => {
             submission4,
         );
         expect(expectedAssessmentActionButtonDisabled).toBe(true);
-    }));
+    });
 
-    it('Check disabled assessment button for programming exercises before due date as instructor', fakeAsync(() => {
+    it('Check disabled assessment button for programming exercises before due date as instructor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise4,
@@ -269,9 +268,9 @@ describe('TeamParticipationTableComponent', () => {
             submission4,
         );
         expect(expectedAssessmentActionButtonDisabled).toBe(true);
-    }));
+    });
 
-    it('Check enabled assessment button for exercises before due date as instructor', fakeAsync(() => {
+    it('Check enabled assessment button for exercises before due date as instructor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise5,
@@ -280,5 +279,5 @@ describe('TeamParticipationTableComponent', () => {
             submission5,
         );
         expect(expectedAssessmentActionButtonDisabled).toBe(false);
-    }));
+    });
 });
