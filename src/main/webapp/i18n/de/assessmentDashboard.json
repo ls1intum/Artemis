@@ -51,6 +51,20 @@
                 "complaints": {
                     "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerden bekommen. Das entspricht einer Beschwerdequote von {{averageTutorValue}}%. Das ist größer als {{threshold}}%."
                 }
+            },
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor:innen-Bestenliste",
+                "examTitle": "Tutor:innen-Klausur Bestenliste",
+                "id": "ID",
+                "name": "Name",
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Angenommene Beschwerden",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Offene Feedbackanfragen",
+                "numberOfComplaintResponses": "Beschwerdeantworten",
+                "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Feedbackanfragen",
+                "points": "Punkte",
+                "averageScore": "Durchschnittliche Punktzahl",
+                "averageRating": "Durchschnittliches Rating"
             }
         }
     }

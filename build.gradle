@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.2.7"
+version = "5.3.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -384,7 +384,7 @@ tasks.named("dependencyUpdates").configure {
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew executeTests -x webapp
-// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
+// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release
