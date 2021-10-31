@@ -189,11 +189,11 @@ describe('AssessmentDashboardInformationComponent', () => {
         tick();
 
         expect(comp.isExamMode).toBe(true);
-        expect(comp.courseId).toEqual(10);
-        expect(comp.examId).toEqual(20);
+        expect(comp.courseId).toBe(10);
+        expect(comp.examId).toBe(20);
         expect(comp.isTestRun).toBe(false);
-        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledOnce();
-        expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledOnce();
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
+        expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(comp.exam).toEqual(exam);
         expect(comp.showFinishedExercises).toBe(true);
         expect(comp.unfinishedExercises).toHaveLength(3);
@@ -215,10 +215,10 @@ describe('AssessmentDashboardInformationComponent', () => {
         tick();
 
         expect(comp.isExamMode).toBe(false);
-        expect(comp.courseId).toEqual(10);
+        expect(comp.courseId).toBe(10);
         expect(comp.examId).toBe(0);
-        expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledOnce();
-        expect(getStatsForTutorsStub).toHaveBeenCalledOnce();
+        expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
         expect(comp.course).toEqual(Course.from(course));
         expect(comp.unfinishedExercises).toHaveLength(4);
         expect(comp.finishedExercises).toHaveLength(0);
@@ -256,7 +256,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         comp.showFinishedExercises = false;
         comp.triggerFinishedExercises();
         expect(comp.showFinishedExercises).toBe(true);
-        expect(updateExercisesSpy).toHaveBeenCalledOnce();
+        expect(updateExercisesSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should sort rows', () => {
@@ -267,7 +267,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         comp.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledOnce();
+        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
         expect(sortServiceSpy).toHaveBeenCalledWith([textExercise], 'assessmentDueDate', false);
     });
 
