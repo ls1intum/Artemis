@@ -257,7 +257,7 @@ export class MetisService implements OnDestroy {
      * @return {boolean} tutor flag
      */
     metisUserIsAtLeastTutorInCourse(): boolean {
-        return this.accountService.isAtLeastTutorInCourse(this.course);
+        return !!this.course.isAtLeastTutor;
     }
 
     /**
@@ -265,7 +265,7 @@ export class MetisService implements OnDestroy {
      * @return boolean instructor flag
      */
     metisUserIsAtLeastInstructorInCourse(): boolean {
-        return this.accountService.isAtLeastInstructorInCourse(this.course);
+        return !!this.course.isAtLeastInstructor;
     }
 
     /**

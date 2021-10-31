@@ -16,7 +16,7 @@ import { HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-page-discussion-section',
     templateUrl: './page-discussion-section.component.html',
-    styleUrls: ['./page-discussion-section.scss'],
+    styleUrls: ['./page-discussion-section.component.scss'],
     providers: [MetisService],
 })
 export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, OnDestroy {

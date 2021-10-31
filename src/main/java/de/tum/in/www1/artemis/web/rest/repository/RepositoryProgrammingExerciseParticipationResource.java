@@ -18,10 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -51,39 +54,47 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final SubmissionPolicyService submissionPolicyService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
         this.participationRepository = participationRepository;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     @Override
     Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws InterruptedException, IllegalAccessException, GitAPIException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // Error case 1: The participation is not from a programming exercise.
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
-        ProgrammingExerciseParticipation programmingParticipation = (ProgrammingExerciseParticipation) participation;
+
+        ProgrammingExercise programmingExercise = programmingParticipation.getProgrammingExercise();
+        boolean lockRepositoryPolicyEnforced = false;
+
+        if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
+            lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
+        }
         // Error case 2: The user does not have permissions to push into the repository.
         boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
         // Error case 3: The user's participation repository is locked.
-        if (repositoryAction == RepositoryActionType.WRITE && programmingParticipation.isLocked()) {
+        if (repositoryAction == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
             throw new IllegalAccessException();
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingParticipation.getProgrammingExercise();
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
         // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryAction == RepositoryActionType.RESET) {
@@ -341,7 +352,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
-            return forbidden();
+            throw new AccessForbiddenException("Participation", participationId);
         }
 
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.getSubmissions().stream().findFirst().orElse(null);
@@ -363,7 +374,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // Do not return build logs if the build hasn't failed
         if (!programmingSubmission.isBuildFailed()) {
-            return forbidden();
+            throw new AccessForbiddenException("Build logs cannot be retrieved when the build hasn't failed!");
         }
 
         // Load the logs from the database

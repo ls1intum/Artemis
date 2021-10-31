@@ -4,6 +4,7 @@ import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/ent
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -18,6 +19,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     @Input() public exam?: Exam;
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
+    @Input() public submissionPolicy?: SubmissionPolicy;
 
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];

@@ -151,12 +151,8 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         scheduleOperations(programmingExercise.getId());
-        if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
-        }
-        else {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
-        }
+
+        groupNotificationService.checkNotificationForExerciseRelease(programmingExercise, instanceMessageSendService);
 
         return programmingExercise;
     }
@@ -379,7 +375,6 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
-
         setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
         connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
@@ -388,10 +383,7 @@ public class ProgrammingExerciseService {
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
-        // Only send notification for course exercises
-        if (notificationText != null && programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
 
         return savedProgrammingExercise;
     }
@@ -653,7 +645,6 @@ public class ProgrammingExerciseService {
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
@@ -661,9 +652,9 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        }
+
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+
         return savedProgrammingExercise;
     }
 
@@ -681,9 +672,9 @@ public class ProgrammingExerciseService {
 
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        }
+
+        groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+
         return updatedProgrammingExercise;
     }
 
