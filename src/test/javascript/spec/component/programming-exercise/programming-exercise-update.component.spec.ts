@@ -26,10 +26,14 @@ import {
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
+    const lockRepositoryPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 } as LockRepositoryPolicy;
+    const submissionPenaltyPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 50.4 } as SubmissionPenaltyPolicy;
+    const brokenPenaltyPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY } as SubmissionPenaltyPolicy;
 
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
@@ -169,6 +173,127 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isSaving).toEqual(false);
             expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
             expect(comp.isExamMode).toBeFalsy();
+        }));
+    });
+
+    describe('submission policy change', () => {
+        let expectedProgrammingExercise: ProgrammingExercise;
+
+        beforeEach(() => {
+            expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+            expectedProgrammingExercise.course = course;
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: expectedProgrammingExercise });
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+        });
+
+        it('Should set policy object on exercise', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+
+            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
+                submissionPolicyTypeField.value = type;
+                submissionPolicyTypeField.dispatchEvent(new Event('change'));
+                fixture.detectChanges();
+                tick();
+
+                expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(type);
+                expect(expectedProgrammingExercise.submissionPolicy?.id).toBeUndefined();
+            }
+
+            submissionPolicyTypeField.value = SubmissionPolicyType.NONE;
+            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+            tick();
+
+            expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(SubmissionPolicyType.NONE);
+        }));
+
+        it('Should set submission limit correctly for all policy types', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
+                submissionPolicyTypeField.value = type;
+                submissionPolicyTypeField.dispatchEvent(new Event('change'));
+                fixture.detectChanges();
+                tick();
+
+                const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+                submissionLimitInputField.value = 5;
+                submissionLimitInputField.dispatchEvent(new Event('input'));
+                tick();
+
+                expect(expectedProgrammingExercise.submissionPolicy?.submissionLimit).toBe(5);
+            }
+        }));
+
+        it('Should set exceeding penalty correctly for submission penalty type', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            submissionPolicyTypeField.value = SubmissionPolicyType.SUBMISSION_PENALTY;
+            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+            tick();
+
+            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
+            submissionLimitExceededPenaltyInputField.value = 73.73;
+            submissionLimitExceededPenaltyInputField.dispatchEvent(new Event('input'));
+            tick();
+
+            expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
+        }));
+
+        it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+            expectedProgrammingExercise.submissionPolicy = lockRepositoryPolicy;
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+
+            expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+            expect(submissionLimitInputField.value).toBe('5');
+        }));
+
+        it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+            expectedProgrammingExercise.submissionPolicy = submissionPenaltyPolicy;
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
+
+            expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+            expect(submissionLimitInputField.value).toBe('5');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('50.4');
+        }));
+
+        it('Should display correct input fields when set policy is broken', fakeAsync(() => {
+            expectedProgrammingExercise.submissionPolicy = brokenPenaltyPolicy;
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
+
+            expect(submissionLimitInputField.value).toBe('');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('');
         }));
     });
 

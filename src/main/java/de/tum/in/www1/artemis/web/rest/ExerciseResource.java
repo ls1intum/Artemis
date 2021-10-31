@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -299,8 +300,10 @@ public class ExerciseResource {
             exercise.addParticipation(participation);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).checksAndSetsIfProgrammingExerciseIsLocalSimulation();
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+            programmingExercise.setSubmissionPolicy(policy);
+            programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
         }
         // TODO: we should also check that the submissions do not contain sensitive data
 
