@@ -71,11 +71,11 @@ describe('Text exercise management', () => {
         const exerciseTitle = 'Text exercise' + generateUUID();
 
         beforeEach(() => {
+            cy.login(users.getAdmin(), '/');
             courseManagement.createTextExercise({ course }, exerciseTitle);
         });
 
         it('Deletes an existing text exercise', () => {
-            cy.login(users.getAdmin(), '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
             courseManagementExercises.clickDeleteExercise(exerciseTitle);
