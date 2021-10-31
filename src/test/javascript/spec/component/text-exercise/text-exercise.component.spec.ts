@@ -70,8 +70,8 @@ describe('TextExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('EXT', '', 'text');
 
             // THEN
-            expect(comp.textExercises.length).toEqual(1);
-            expect(comp.filteredTextExercises.length).toEqual(1);
+            expect(comp.textExercises).toHaveLength(1);
+            expect(comp.filteredTextExercises).toHaveLength(1);
         });
 
         it('Should show no exercises', () => {
@@ -79,8 +79,8 @@ describe('TextExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.textExercises.length).toEqual(1);
-            expect(comp.filteredTextExercises.length).toEqual(0);
+            expect(comp.textExercises).toHaveLength(1);
+            expect(comp.filteredTextExercises).toHaveLength(0);
         });
     });
 });

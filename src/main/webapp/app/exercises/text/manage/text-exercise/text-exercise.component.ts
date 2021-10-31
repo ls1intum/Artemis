@@ -60,7 +60,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredTextExercises = this.textExercises.filter((exercise) => this.filter.includeExercise(exercise));
+        this.filteredTextExercises = this.textExercises.filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredTextExercises.length);
     }
 

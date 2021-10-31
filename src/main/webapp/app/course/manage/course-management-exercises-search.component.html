@@ -35,12 +35,9 @@
                     {{ 'artemisApp.course.search.labelExerciseType' | artemisTranslate }}
                 </label>
                 <select id="exercise-search-type-input" class="form-select" [(ngModel)]="exerciseTypeSearch" (ngModelChange)="sendUpdate()">
-                    <option value="all">{{ 'artemisApp.course.search.type.all' | artemisTranslate }}</option>
-                    <option value="programming">{{ 'artemisApp.course.search.type.programming' | artemisTranslate }}</option>
-                    <option value="quiz">{{ 'artemisApp.course.search.type.quiz' | artemisTranslate }}</option>
-                    <option value="modeling">{{ 'artemisApp.course.search.type.modeling' | artemisTranslate }}</option>
-                    <option value="text">{{ 'artemisApp.course.search.type.text' | artemisTranslate }}</option>
-                    <option value="file-upload">{{ 'artemisApp.course.search.type.fileUpload' | artemisTranslate }}</option>
+                    <option *ngFor="let optionValue of typeOptions" [value]="optionValue">
+                        {{ 'artemisApp.course.search.type.' + optionValue | artemisTranslate }}
+                    </option>
                 </select>
             </div>
         </div>

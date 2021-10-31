@@ -104,7 +104,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     protected applyFilter(): void {
-        this.filteredProgrammingExercises = this.programmingExercises.filter((exercise) => this.filter.includeExercise(exercise));
+        this.filteredProgrammingExercises = this.programmingExercises.filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
     }
 

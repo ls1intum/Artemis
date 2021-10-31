@@ -105,7 +105,7 @@
                     "quiz": "Quizaufgaben",
                     "modeling": "Modellierungsaufgaben",
                     "text": "Textaufgabe",
-                    "fileUpload": "Dateiupload-Aufgabe"
+                    "file-upload": "Dateiupload-Aufgabe"
                 }
             },
             "students": "Studierende",

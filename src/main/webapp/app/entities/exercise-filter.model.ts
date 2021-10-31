@@ -23,7 +23,7 @@ export class ExerciseFilter {
      * Checks if an exercise should be included by this filter
      * @param exercise The exercise to check
      */
-    includeExercise(exercise: Exercise): boolean {
+    matchesExercise(exercise: Exercise): boolean {
         const nameMatches: boolean = this.exerciseNameSearch === '' || exercise.title!.toLowerCase().includes(this.exerciseNameSearch);
         const categoryMatches: boolean = this.exerciseCategorySearch === '' || (exercise.categories?.some((category) => this.matchesTag(category)) ?? false);
         const typeMatches: boolean = this.exerciseTypeSearch === 'all' || exercise.type === this.exerciseTypeSearch;

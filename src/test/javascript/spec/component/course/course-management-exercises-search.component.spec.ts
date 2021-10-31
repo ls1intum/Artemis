@@ -109,21 +109,21 @@ describe('Course Management Exercises Search Component', () => {
         it('should filter by name', () => {
             const filter = new ExerciseFilter();
             filter.exerciseNameSearch = '2';
-            const filteredExercises = exercises.filter((exercise) => filter.includeExercise(exercise));
+            const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
             expect(filteredExercises.length).toEqual(2);
         });
 
         it('should filter by category', () => {
             const filter = new ExerciseFilter();
             filter.exerciseCategorySearch = 'easy';
-            const filteredExercises = exercises.filter((exercise) => filter.includeExercise(exercise));
+            const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
             expect(filteredExercises.length).toEqual(1);
         });
 
         it('should filter by type', () => {
             const filter = new ExerciseFilter();
             filter.exerciseTypeSearch = 'text';
-            const filteredExercises = exercises.filter((exercise) => filter.includeExercise(exercise));
+            const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
             expect(filteredExercises.length).toEqual(2);
         });
 
@@ -132,7 +132,7 @@ describe('Course Management Exercises Search Component', () => {
             filter.exerciseNameSearch = 'a';
             filter.exerciseCategorySearch = 'hard';
             filter.exerciseTypeSearch = 'text';
-            const filteredExercises = exercises.filter((exercise) => filter.includeExercise(exercise));
+            const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
             expect(filteredExercises.length).toEqual(1);
         });
     });

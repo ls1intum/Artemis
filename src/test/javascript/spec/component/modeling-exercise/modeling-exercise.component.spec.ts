@@ -93,8 +93,8 @@ describe('ModelingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
 
             // THEN
-            expect(comp.modelingExercises.length).to.equal(1);
-            expect(comp.filteredModelingExercises.length).to.equal(1);
+            expect(comp.modelingExercises).to.have.length(1);
+            expect(comp.filteredModelingExercises).to.have.length(1);
         });
 
         it('Should show no exercises', () => {
@@ -102,8 +102,8 @@ describe('ModelingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.modelingExercises.length).to.equal(1);
-            expect(comp.filteredModelingExercises.length).to.equal(0);
+            expect(comp.modelingExercises).to.have.length(1);
+            expect(comp.filteredModelingExercises.length).to.have.length(0);
         });
     });
 

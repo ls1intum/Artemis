@@ -73,8 +73,8 @@ describe('FileUploadExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
 
             // THEN
-            expect(comp.fileUploadExercises.length).toEqual(1);
-            expect(comp.filteredFileUploadExercises.length).toEqual(1);
+            expect(comp.fileUploadExercises).toHaveLength(1);
+            expect(comp.filteredFileUploadExercises).toHaveLength(1);
         });
 
         it('Should show no exercises', () => {
@@ -82,8 +82,8 @@ describe('FileUploadExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.fileUploadExercises.length).toEqual(1);
-            expect(comp.filteredFileUploadExercises.length).toEqual(0);
+            expect(comp.fileUploadExercises).toHaveLength(1);
+            expect(comp.filteredFileUploadExercises).toHaveLength(0);
         });
     });
 });

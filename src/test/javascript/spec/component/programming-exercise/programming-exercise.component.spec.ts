@@ -83,8 +83,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'programming');
 
             // THEN
-            expect(comp.programmingExercises.length).toEqual(3);
-            expect(comp.filteredProgrammingExercises.length).toEqual(3);
+            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.filteredProgrammingExercises).toHaveLength(3);
         });
 
         it('Should show no exercises', () => {
@@ -92,8 +92,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'text');
 
             // THEN
-            expect(comp.programmingExercises.length).toEqual(3);
-            expect(comp.filteredProgrammingExercises.length).toEqual(0);
+            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.filteredProgrammingExercises).toHaveLength(0);
         });
 
         it('Should show first exercise', () => {
@@ -101,8 +101,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Exercise 1');
 
             // THEN
-            expect(comp.programmingExercises.length).toEqual(3);
-            expect(comp.filteredProgrammingExercises.length).toEqual(1);
+            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.filteredProgrammingExercises).toHaveLength(1);
         });
 
         it('Should show last 2 exercises', () => {
@@ -110,8 +110,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('2');
 
             // THEN
-            expect(comp.programmingExercises.length).toEqual(3);
-            expect(comp.filteredProgrammingExercises.length).toEqual(2);
+            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.filteredProgrammingExercises).toHaveLength(2);
         });
     });
 

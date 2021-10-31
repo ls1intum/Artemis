@@ -13,8 +13,6 @@ export class CourseManagementExercisesSearchComponent implements OnInit {
     exerciseTypeSearch: string;
     @Output() exerciseFilter = new EventEmitter<ExerciseFilter>();
 
-    constructor() {}
-
     /**
      * Initializes the attributes to match an empty filter
      */

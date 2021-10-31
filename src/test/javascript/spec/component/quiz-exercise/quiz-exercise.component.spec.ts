@@ -73,8 +73,8 @@ describe('QuizExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Quiz', '', 'quiz');
 
             // THEN
-            expect(comp.quizExercises.length).toEqual(1);
-            expect(comp.filteredQuizExercises.length).toEqual(1);
+            expect(comp.quizExercises).toHaveLength(1);
+            expect(comp.filteredQuizExercises).toHaveLength(1);
         });
 
         it('Should show no exercises', () => {
@@ -82,8 +82,8 @@ describe('QuizExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.quizExercises.length).toEqual(1);
-            expect(comp.filteredQuizExercises.length).toEqual(0);
+            expect(comp.quizExercises).toHaveLength(1);
+            expect(comp.filteredQuizExercises).toHaveLength(0);
         });
     });
 });

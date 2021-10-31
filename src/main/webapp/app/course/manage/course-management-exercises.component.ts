@@ -48,10 +48,32 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.programmingExercisesCount = count;
     }
 
+    /**
+     * Toggles the search bar
+     */
     toggleSearch() {
         this.showSearch = !this.showSearch;
+        // Reset the filter when the search bar is closed
         if (!this.showSearch) {
             this.exerciseFilter = new ExerciseFilter();
         }
+    }
+
+    getExerciseCount(): number {
+        return this.quizExercisesCount + this.programmingExercisesCount + this.modelingExercisesCount + this.fileUploadExercisesCount + this.textExercisesCount;
+    }
+
+    getFilteredExerciseCount(): number {
+        return (
+            this.filteredProgrammingExercisesCount +
+            this.filteredQuizExercisesCount +
+            this.filteredModelingExercisesCount +
+            this.filteredTextExercisesCount +
+            this.filteredFileUploadExercisesCount
+        );
+    }
+
+    shouldHideExerciseCard(type: string): boolean {
+        return !['all', type].includes(this.exerciseFilter.exerciseTypeSearch);
     }
 }
