@@ -115,6 +115,7 @@ describe('Course Management Detail Component', () => {
                 expect(users).toEqual([courseGroupUser]);
             });
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledTimes(1);
         });
 
         it('should set search no results if search returns no result', () => {
@@ -124,6 +125,7 @@ describe('Course Management Detail Component', () => {
             });
             expect(comp.searchNoResults).toBe(true);
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledTimes(1);
         });
 
         it('should return empty if search text is shorter than three characters', () => {
@@ -142,6 +144,7 @@ describe('Course Management Detail Component', () => {
             });
             expect(comp.searchFailed).toBe(true);
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -150,8 +153,7 @@ describe('Course Management Detail Component', () => {
         let user: User;
 
         beforeEach(() => {
-            addUserStub = jest.spyOn(courseService, 'addUserToCourseGroup').mockImplementation();
-            addUserStub.mockReturnValue(of(new HttpResponse()));
+            addUserStub = jest.spyOn(courseService, 'addUserToCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
             user = courseGroupUser;
             comp.allCourseGroupUsers = [];
             comp.course = course;
@@ -162,8 +164,10 @@ describe('Course Management Detail Component', () => {
             const fake = jest.fn();
             comp.onAutocompleteSelect(user, fake);
             expect(addUserStub).toHaveBeenCalledWith(course.id, courseGroup, user.login);
+            expect(addUserStub).toHaveBeenCalledTimes(1);
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
+            expect(fake).toHaveBeenCalledTimes(1);
         });
 
         it('should call callback if user is already in the group', () => {
@@ -173,6 +177,7 @@ describe('Course Management Detail Component', () => {
             expect(addUserStub).not.toHaveBeenCalled();
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
+            expect(fake).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -180,8 +185,7 @@ describe('Course Management Detail Component', () => {
         let removeUserStub: jest.SpyInstance;
 
         beforeEach(() => {
-            removeUserStub = jest.spyOn(courseService, 'removeUserFromCourseGroup').mockImplementation();
-            removeUserStub.mockReturnValue(of(new HttpResponse()));
+            removeUserStub = jest.spyOn(courseService, 'removeUserFromCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
             comp.allCourseGroupUsers = [courseGroupUser, courseGroupUser2];
             comp.course = course;
             comp.courseGroup = courseGroup;
@@ -190,6 +194,7 @@ describe('Course Management Detail Component', () => {
         it('should given user from group', () => {
             comp.removeFromGroup(courseGroupUser);
             expect(removeUserStub).toHaveBeenCalledWith(course.id, courseGroup, courseGroupUser.login);
+            expect(removeUserStub).toHaveBeenCalledTimes(1);
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser2]);
         });
 
