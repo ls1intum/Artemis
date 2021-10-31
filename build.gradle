@@ -93,6 +93,7 @@ private excludedClassFilesForReport(classDirectories) {
         fileTree(dir: it,
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "gateway/**", // exclude the gateway project from test coverage report for the moment until it is activated
                 "user-management/**" // exclude the user-management project from test coverage report for the moment until it is activated
             ]
         )

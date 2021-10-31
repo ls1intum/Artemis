@@ -21,7 +21,6 @@ An example is `base64-secret` used to verify JWT tokens. It can be changed in `d
 
 **It is recommended to change the base64 secret and the JHipster Registry password for production environment.**
 
-
 ## Development
 
 To start your application in the dev profile, run:
@@ -69,13 +68,13 @@ You can use Docker to improve your JHipster development experience. A number of 
 You can also fully dockerize your application and all the services that it depends on.
 To achieve this, first build a docker image of your app by running:
 
-```
+```bash
 ./gradlew bootJar -Pprod jibDockerBuild
 ```
 
 Then run:
 
-```
+```bash
 docker-compose -f src/main/docker/app.yml up -d
 ```
 
