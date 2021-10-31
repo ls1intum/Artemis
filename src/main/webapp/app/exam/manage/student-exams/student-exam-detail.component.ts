@@ -153,6 +153,7 @@ export class StudentExamDetailComponent implements OnInit {
                 Validators.required,
             ]),
         });
+        this.workingTimeForm.addValidators('');
     }
 
     examIsVisible(): boolean {

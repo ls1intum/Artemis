@@ -116,7 +116,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     private writeToLocalStorage(markdown: string) {
         if (window.localStorage) {
-            const cache = { markdown, date: dayjs().format('MMM DD YYYY, HH:mm:ss') };
+            const cache = { markdown, date: dayjs().format(markdownChangesSubscription) };
             localStorage.setItem(this.router.url, JSON.stringify(cache));
         }
     }

@@ -119,7 +119,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         // check if extension elements are set
         const extension = debugElement.query(By.css('.ms-1.badge.bg-info'));
-        expect(extension).toBeDefined();
+        expect(extension).toBeDefine();
         expect(extension.nativeElement.textContent.replace(/\s/g, '')).toEqual(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
     }));
 
@@ -134,7 +134,7 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         let submitFileButton = debugElement.query(By.css('jhi-button'));
-        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
+        jest.spyOn('uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
         submitFileButton.nativeElement.click();
         comp.submission!.submitted = true;
         comp.result = new Result();
@@ -171,7 +171,7 @@ describe('FileUploadSubmissionComponent', () => {
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).toBeDefined();
-        expect(fileUploadInput.nativeElement.disabled).toBe(false);
+        expect(fileUploadInput.disabled).toBe(false);
         expect(fileUploadInput.nativeElement.value).toEqual('');
     }));
 
