@@ -1,0 +1,181 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/plugins-release" }
+    }
+    dependencies {
+        classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
+    }
+}
+
+plugins {
+    id "checkstyle"
+    id "java"
+    id "maven-publish"
+    id "idea"
+    id "eclipse"
+    id "jacoco"
+    id "org.springframework.boot" // no version has to be specified since it's taken by the root project
+    id "com.google.cloud.tools.jib"
+    id "com.github.node-gradle.node"
+    id "com.diffplug.spotless"
+    id "org.openapi.generator" version "5.1.1" // version is included since the plugin is not used by Artemis
+    id "io.spring.nohttp" version "0.0.8" // version is included since the plugin is not used by Artemis
+    id "com.github.andygoossens.gradle-modernizer-plugin"
+    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
+    id "com.github.ben-manes.versions"
+    //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
+}
+
+group = "de.tum.in.www1.artemis"
+
+apply from: "gradle/docker.gradle"
+apply from: "gradle/swagger.gradle"
+//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
+
+if (project.hasProperty("prod")) {
+    apply from: "gradle/profile_prod.gradle"
+} else {
+    apply from: "gradle/profile_dev.gradle"
+}
+
+if (project.hasProperty("war")) {
+    apply from: "gradle/war.gradle"
+}
+
+if (project.hasProperty("zipkin")) {
+    apply from: "gradle/zipkin.gradle"
+}
+
+apply from: "../gradle/tasks.gradle"
+
+sourceSets {
+    external {
+        java {
+            srcDir file("../src/main/java")
+            include 'de/tum/in/www1/artemis/security/PBEPasswordEncoder.*'
+            include 'de/tum/in/www1/artemis/security/Role.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
+        }
+    }
+    main {
+        compileClasspath += external.java
+        java {
+            srcDir external.java
+        }
+    }
+    test {
+        compileClasspath += external.java
+        java {
+            srcDir external.java
+        }
+    }
+}
+
+idea {
+    module {
+        excludeDirs += files("node_modules")
+    }
+}
+
+spotless {
+    // allows to execute the code formatting commands ./gradlew :gateway:spotlessApply and ./gradlew :gateway:spotlessCheck
+    java {
+        target project.fileTree(project.rootDir) {
+            include "gateway/**/*.java"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/gateway/config/SecurityConfiguration.java", "**/node_modules/**",
+                "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**",
+                "**/exports/**", "src/main/java/de/tum/in/www1/artemis/**"
+        }
+        importOrderFile "../artemis-spotless.importorder"
+        eclipse().configFile "../artemis-spotless-style.xml"
+
+        removeUnusedImports()
+    }
+}
+
+defaultTasks "bootRun"
+
+springBoot {
+    mainClass = "de.tum.in.www1.artemis.gateway.GatewayApp"
+}
+
+modernizer {
+    failOnViolations = true
+    includeTestClasses = true
+}
+
+
+nohttp {
+    source.include "build.gradle", "README.md"
+}
+
+configurations {
+    providedRuntime
+    implementation.exclude module: "spring-boot-starter-tomcat"
+}
+
+
+apply from: "../gradle/dependencies.gradle"
+
+dependencies {
+    // Use ", version: jhipsterDependenciesVersion, changing: true" if you want
+    // to use a SNAPSHOT release instead of a stable release
+    implementation group: "tech.jhipster", name: "jhipster-framework", {
+        exclude group: "org.springframework", module: "spring-webmvc"
+    }
+    implementation "javax.annotation:javax.annotation-api"
+    implementation "io.dropwizard.metrics:metrics-core"
+    implementation "commons-beanutils:commons-beanutils:${commons_beanutils_version}"
+    implementation "org.apache.commons:commons-lang3"
+    implementation("org.springframework.boot:spring-boot-starter-webflux:${spring_boot_version}") {
+        exclude module: "spring-boot-starter-tomcat"
+    }
+    implementation "io.netty:netty-tcnative-boringssl-static"
+    implementation "org.zalando:problem-spring-webflux"
+    implementation "org.springframework.cloud:spring-cloud-starter-gateway"
+    implementation "com.github.vladimir-bukhtoyarov:bucket4j-core"
+    implementation "com.github.vladimir-bukhtoyarov:bucket4j-jcache"
+    implementation "org.springframework.cloud:spring-cloud-starter"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
+    implementation "org.springframework.retry:spring-retry"
+    implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+    implementation "org.springframework.data:spring-data-jpa"
+    implementation "io.springfox:springfox-bean-validators:3.0.0"
+
+    implementation("io.springfox:springfox-oas")
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}")
+
+    developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
+    //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+}
+
+node {
+    download = true
+    version = "${node_version}"
+    npmVersion = "${npm_version}"
+}
+
+task executeCheckstyle (type: Exec) {
+    commandLine "./gradlew", ":gateway:checkstyleMain", "-x", "webapp"
+}
+
+task executeTests (type: Exec) {
+    commandLine "./gradlew", ":gateway:test", "-x", "webapp"
+}
+
+task buildJarForDocker (type: Exec) {
+    commandLine "./gradlew", ":gateway:build", "-x", ":gateway:test", "-x", "jacocoTestCoverageVerification"
+}
+
+// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
+checkstyle {
+    toolVersion "${checkstyle_version}"
+    configFile file("../checkstyle.xml")
+    checkstyleTest.enabled = false
+    maxErrors = 0
+}

@@ -245,6 +245,7 @@ tasks.named("dependencyUpdates").configure {
 
 gradle.taskGraph.whenReady { graph ->
     def tasks = gradle.startParameter.taskNames.toString()
+
     def hasRootUserManagementTask = tasks.contains(":user-management:bootWar") || tasks.contains(":user-management:executeTests") || tasks.contains(":user-management:jacocoTestReport")
         || tasks.contains(":user-management:spotlessCheck")  || tasks.contains(":user-management:spotlessApply")  || tasks.contains(":user-management:dependencyUpdates")
         || tasks.contains(":user-management:checkstyleMain")  || tasks.contains(":user-management:jacocoTestCoverageVerification")  || tasks.contains(":user-management:test")
@@ -253,7 +254,22 @@ gradle.taskGraph.whenReady { graph ->
 
     if (!hasRootUserManagementTask) {
         graph.getAllTasks().each { task ->
-            def subGatewayTask = (task.path =~ /:user-management.+/)
+            def subUserManagementTask = (task.path =~ /:user-management.+/)
+            if (subUserManagementTask) {
+                println "TRACER skipping task ${task.path}"
+                task.enabled = false
+            }
+        }
+    }
+
+    def hasRootGatewayTask = tasks.contains(":gateway:bootWar") || tasks.contains(":gateway:executeTests") || tasks.contains(":gateway:jacocoTestReport")
+        || tasks.contains(":gateway:spotlessCheck")  || tasks.contains(":gateway:spotlessApply")  || tasks.contains(":gateway:dependencyUpdates")
+        || tasks.contains(":gateway:checkstyleMain")  || tasks.contains(":gateway:jacocoTestCoverageVerification")  || tasks.contains(":gateway:test")
+        || tasks.contains(":gateway:bootRun") || tasks.contains(":gateway:buildJarForDocker") || tasks.contains(":gateway:cleanResources")
+
+    if (!hasRootGatewayTask) {
+        graph.getAllTasks().each { task ->
+            def subGatewayTask = (task.path =~ /:gateway.+/)
             if (subGatewayTask) {
                 println "TRACER skipping task ${task.path}"
                 task.enabled = false
