@@ -7,7 +7,6 @@ import { Subject } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { Exercise } from 'app/entities/exercise.model';
 
 @Component({ template: '' })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
