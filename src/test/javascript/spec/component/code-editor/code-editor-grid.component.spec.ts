@@ -14,7 +14,7 @@ describe('CodeEditorGridComponent', () => {
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CodeEditorGridComponent],
         })

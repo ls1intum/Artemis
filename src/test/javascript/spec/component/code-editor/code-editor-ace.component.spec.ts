@@ -24,7 +24,7 @@ describe('CodeEditorAceComponent', () => {
     let loadRepositoryFileStub: jest.SpyInstance;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent)],
             providers: [

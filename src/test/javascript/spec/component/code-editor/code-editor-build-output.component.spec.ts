@@ -83,7 +83,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     } as StaticCodeAnalysisIssue;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [

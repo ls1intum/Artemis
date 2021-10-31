@@ -36,7 +36,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     const compressTree = '#compress_tree';
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TreeviewModule.forRoot()],
             declarations: [
                 CodeEditorFileBrowserComponent,

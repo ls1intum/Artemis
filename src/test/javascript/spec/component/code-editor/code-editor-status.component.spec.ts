@@ -13,7 +13,7 @@ describe('CodeEditorStatusComponent', () => {
     let comp: CodeEditorStatusComponent;
     let fixture: ComponentFixture<CodeEditorStatusComponent>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorStatusComponent, TranslatePipeMock, MockDirective(NgbTooltip)],
@@ -23,7 +23,7 @@ describe('CodeEditorStatusComponent', () => {
                 fixture = TestBed.createComponent(CodeEditorStatusComponent);
                 comp = fixture.componentInstance;
             });
-    }));
+    });
 
     it('should show an empty status segment for CommitState if no EditorState is given', () => {
         const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
@@ -31,7 +31,7 @@ describe('CodeEditorStatusComponent', () => {
     });
 
     Object.keys(CommitState).map((commitState) =>
-        it(`should show exactly one status segment for CommitState ${commitState} with an icon and a non empty description`, function () {
+        it(`should show exactly one status segment for CommitState ${commitState} with an icon and a non empty description`, () => {
             comp.commitState = commitState as CommitState;
             fixture.detectChanges();
             const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
