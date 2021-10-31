@@ -57,6 +57,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     roundEdges = true;
     showDataLabel = true;
     height = 500;
+    tooltipDisabled = true;
 
     // timer
     waitingForQuizStart = false;
@@ -304,5 +305,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             // a must be equal to b
             return 0;
         });
+    }
+    formatDataLabel(value: any) {
+        return value + ' (' + round((value / this.totalParticipants) * 100) + '%)';
     }
 }
