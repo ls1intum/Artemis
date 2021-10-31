@@ -1,6 +1,7 @@
 import { of, Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
+import { EntityArrayResponseType } from 'app/exercises/shared/exercise/exercise.service';
 
 export class MockExerciseService {
     find(exerciseId: number) {
@@ -18,5 +19,13 @@ export class MockExerciseService {
 
     convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
         return exercise;
+    }
+
+    convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+        return res;
+    }
+
+    convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+        return res;
     }
 }

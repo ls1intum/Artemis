@@ -10,6 +10,8 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 
 describe('FileUploadExercise Service', () => {
     let injector: TestBed;
@@ -29,6 +31,7 @@ describe('FileUploadExercise Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ExerciseService, useClass: MockExerciseService },
             ],
         });
         injector = getTestBed();
