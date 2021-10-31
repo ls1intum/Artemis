@@ -17,7 +17,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -36,12 +36,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let getExerciseSubmissionStateStub: jest.SpyInstance;
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let getBuildRunStateStub: jest.SpyInstance;
     let getBuildRunStateSubject: Subject<BuildRunState>;
 
     let triggerAllStub: jest.SpyInstance;
-    let triggerParticipationsStub: jest.SpyInstance;
 
     const exercise = { id: 20 } as Exercise;
 
@@ -67,10 +64,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             ],
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
@@ -86,10 +81,10 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 getExerciseSubmissionStateStub = jest.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(getExerciseSubmissionStateSubject);
 
                 getBuildRunStateSubject = new Subject<BuildRunState>();
-                getBuildRunStateStub = jest.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(getBuildRunStateSubject);
+                jest.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(getBuildRunStateSubject);
 
                 triggerAllStub = jest.spyOn(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').mockReturnValue(of());
-                triggerParticipationsStub = jest.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
+                jest.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
             });
     });
 
@@ -168,6 +163,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
+        expect(getExerciseSubmissionStateStub).toHaveBeenCalledTimes(1);
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
         expect(comp.hasFailedSubmissions).toBe(false);
