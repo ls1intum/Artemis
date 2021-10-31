@@ -37,7 +37,17 @@ describe('TeamUpdateDialogComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [TeamUpdateDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertErrorComponent), MockComponent(AlertComponent), MockComponent(HelpIconComponent), MockPipe(RemoveKeysPipe), MockComponent(TeamOwnerSearchComponent), MockComponent(TeamStudentSearchComponent), TranslateDirective],
+            declarations: [
+                TeamUpdateDialogComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(AlertErrorComponent),
+                MockComponent(AlertComponent),
+                MockComponent(HelpIconComponent),
+                MockPipe(RemoveKeysPipe),
+                MockComponent(TeamOwnerSearchComponent),
+                MockComponent(TeamStudentSearchComponent),
+                TranslateDirective,
+            ],
             providers: [
                 EventManager,
                 { provide: TeamService, useClass: MockTeamService },
