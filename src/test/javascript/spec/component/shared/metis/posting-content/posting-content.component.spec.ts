@@ -2,7 +2,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
@@ -10,6 +9,7 @@ import { PatternMatch, PostingContentPart } from 'app/shared/metis/metis.util';
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     metisCourse,
     metisCoursePosts,
@@ -27,9 +27,9 @@ describe('PostingContentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [HttpClientTestingModule],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {

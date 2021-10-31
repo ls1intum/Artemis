@@ -27,6 +27,7 @@
                     <jhi-date-time-picker
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
                         [(ngModel)]="notification.notificationDate"
+                        [shouldDisplayTimeZoneWarning]="false"
                         name="notificationDate"
                         required
                     ></jhi-date-time-picker>
@@ -35,6 +36,7 @@
                     <jhi-date-time-picker
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
                         [(ngModel)]="notification.expireDate"
+                        [shouldDisplayTimeZoneWarning]="false"
                         name="expireDate"
                         required
                     ></jhi-date-time-picker>
