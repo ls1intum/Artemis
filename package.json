@@ -184,7 +184,7 @@
         "start-tls": "npm run webapp:dev-ssl",
         "serve": "npm run start --",
         "build": "npm run webapp:prod --",
-        "compile:ts": "tsc --project tsconfig.json",
+        "compile:ts": "tsc --project tsconfig.app.json",
         "compile:ts:tests": "tsc --project tsconfig.spec.json",
         "jest": "jest --coverage --log-heap-usage --max-workers=4 --config jest.config.js",
         "test": "ng test --coverage --log-heap-usage -w=4",
