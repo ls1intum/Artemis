@@ -56,13 +56,28 @@
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
 
+                <button
+                    *ngIf="isAtLeastInstructor"
+                    jhiDeleteButton
+                    [actionType]="resetType"
+                    [buttonSize]="buttonSize"
+                    [entityTitle]="exam.title || ''"
+                    deleteQuestion="artemisApp.examManagement.reset.question"
+                    deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+                    (delete)="resetExam()"
+                    [dialogError]="dialogError$"
+                    class="btn mt-1"
+                >
+                    <fa-icon [icon]="'undo'"></fa-icon>
+                </button>
+
                 <div class="mt-1" *ngIf="exam && isExamOver && exam.course" class="my-2 me-1">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
                 </div>
             </div>
             <hr />
             <!-- Exam Checklist -->
-            <div *ngIf="isAtLeastInstructor">
+            <div *ngIf="isAtLeastInstructor && exam">
                 <jhi-exam-checklist [isAtLeastInstructor]="isAtLeastInstructor" [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam"></jhi-exam-checklist>
             </div>
 

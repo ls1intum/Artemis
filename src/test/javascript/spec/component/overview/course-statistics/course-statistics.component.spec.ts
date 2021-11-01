@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import dayjs from 'dayjs';
-import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -16,14 +14,15 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -204,30 +203,20 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, ChartsModule],
-            declarations: [CourseStatisticsComponent, MockComponent(CourseLearningGoalsComponent), MockComponent(ExerciseScoresChartComponent)],
+            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), ChartsModule],
+            declarations: [
+                CourseStatisticsComponent,
+                MockComponent(CourseLearningGoalsComponent),
+                MockComponent(ExerciseScoresChartComponent),
+                ArtemisTranslatePipe,
+                MockDirective(NgbTooltip),
+            ],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            params: {
-                                subscribe: (fn: (value: any) => void) => fn(1),
-                            },
-                        },
-                    },
-                },
-                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
@@ -236,7 +225,7 @@ describe('CourseStatisticsComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // has to be done so the component can cleanup properly
         jest.spyOn(comp, 'ngOnDestroy').mockImplementation();
         fixture.destroy();

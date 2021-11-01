@@ -24,6 +24,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -60,6 +61,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private eventManager: EventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
@@ -75,8 +77,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
 
+            const auxiliaryRepositories = this.programmingExercise.auxiliaryRepositories;
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
                 this.programmingExercise = updatedProgrammingExercise.body!;
+                this.programmingExercise.auxiliaryRepositories = auxiliaryRepositories;
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
                     const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
@@ -130,6 +134,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
+
+            this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(programmingExercise.id).subscribe((submissionPolicy) => {
+                if (submissionPolicy) {
+                    this.programmingExercise.submissionPolicy = submissionPolicy;
+                }
+            });
         });
     }
 

@@ -1,12 +1,8 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NavigationEnd, NavigationStart, Router, RouterState } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { Observable, of } from 'rxjs';
-import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../test.module';
@@ -16,11 +12,9 @@ import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent 
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { AssessmentTaskTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course.model';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
 import * as sinon from 'sinon';
@@ -32,19 +26,20 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
-
-chai.use(sinonChai);
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-has-any-authority.directive';
+import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
+import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { MockRouter } from '../helpers/mocks/mock-router';
 
 class MockRouterWithEvents {
     public url = 'courses';
@@ -111,13 +106,10 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
-                    { provide: MetisService, useClass: MockMetisService },
-                    MockProvider(DeviceDetectorService),
-                    MockProvider(TranslateService),
                 ],
             }).compileComponents();
 
@@ -134,7 +126,7 @@ describe('GuidedTourService', () => {
             service['updateGuidedTourSettings']('guided_tour_key', 1, GuidedTourState.STARTED).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
             const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
-            expect(req.request.url).toEqual(`${resourceUrl}`);
+            expect(req.request.url).toBe(`${resourceUrl}`);
             expect(service.guidedTourSettings).toEqual([expected]);
         });
 
@@ -143,7 +135,7 @@ describe('GuidedTourService', () => {
             service['deleteGuidedTourSetting']('guided_tour_key').subscribe();
             const req = httpMock.expectOne({ method: 'DELETE' });
             const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
-            expect(req.request.url).toEqual(`${resourceUrl}/guided_tour_key`);
+            expect(req.request.url).toBe(`${resourceUrl}/guided_tour_key`);
             expect(service.guidedTourSettings).toEqual([]);
         });
     });
@@ -159,37 +151,35 @@ describe('GuidedTourService', () => {
         let findParticipationStub: jest.SpyInstance;
         let deleteParticipationStub: jest.SpyInstance;
         let deleteGuidedTourSettingStub: jest.SpyInstance;
-        let navigationStub: jest.SpyInstance;
+        let navigateByUrlSpy: jest.SpyInstance;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    ArtemisTestModule,
-                    RouterTestingModule.withRoutes([
-                        {
-                            path: 'courses',
-                            component: NavbarComponent,
-                        },
-                    ]),
+                imports: [ArtemisTestModule],
+                declarations: [
+                    GuidedTourComponent,
+                    MockDirective(TranslateDirective),
+                    TranslatePipeMock,
+                    MockPipe(SafeResourceUrlPipe),
+                    MockComponent(LoadingNotificationComponent),
+                    MockComponent(NotificationSidebarComponent),
+                    MockDirective(NgbCollapse),
+                    MockHasAnyAuthorityDirective,
+                    MockDirective(ActiveMenuDirective),
+                    MockDirective(NgbDropdown),
+                    MockPipe(FindLanguageFromKeyPipe),
                 ],
-                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockPipe(SafeResourceUrlPipe)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
-                    { provide: CookieService, useClass: MockCookieService },
-                    { provide: AccountService, useClass: MockAccountService },
-                    MockProvider(DeviceDetectorService),
                     { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: MetisService, useClass: MockMetisService },
+                    { provide: Router, useClass: MockRouter },
                 ],
             })
-                .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
-
-                    TestBed.createComponent(NavbarComponent);
 
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
@@ -200,7 +190,7 @@ describe('GuidedTourService', () => {
                     deleteParticipationStub = jest.spyOn(participationService, 'deleteForGuidedTour');
                     // @ts-ignore
                     deleteGuidedTourSettingStub = jest.spyOn(guidedTourService, 'deleteGuidedTourSetting');
-                    navigationStub = jest.spyOn(router, 'navigateByUrl');
+                    navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
                 });
         });
 
@@ -226,14 +216,14 @@ describe('GuidedTourService', () => {
             });
 
             // Start course overview tour
-            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBeNull();
+            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBe(null);
             guidedTourService['enableTour'](guidedTour, true);
             guidedTourService['startTour']();
             guidedTourComponentFixture.detectChanges();
-            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBeDefined();
-            expect(guidedTourService.isOnFirstStep).toEqual(true);
-            expect(guidedTourService.currentTourStepDisplay).toEqual(1);
-            expect(guidedTourService.currentTourStepCount).toEqual(2);
+            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).not.toBe(null);
+            expect(guidedTourService.isOnFirstStep).toBe(true);
+            expect(guidedTourService.currentTourStepDisplay).toBe(1);
+            expect(guidedTourService.currentTourStepCount).toBe(2);
         }
 
         describe('Tours without user interaction', () => {
@@ -245,35 +235,34 @@ describe('GuidedTourService', () => {
             it('should start and finish the course overview guided tour', async () => {
                 // Navigate to next step
                 const nextButton = guidedTourComponentFixture.debugElement.query(By.css('.next-button'));
-                expect(nextButton).toBeDefined();
+                expect(nextButton).not.toBe(null);
                 nextButton.nativeElement.click();
-                expect(guidedTourService.isOnLastStep).toEqual(true);
+                expect(guidedTourService.isOnLastStep).toBe(true);
 
                 // Finish guided tour
                 nextButton.nativeElement.click();
                 guidedTourComponentFixture.detectChanges();
                 const tourStep = guidedTourComponentFixture.debugElement.query(By.css('.tour-step'));
-                expect(tourStep).toBeNull();
+                expect(tourStep).toBe(null);
             });
 
             it('should start and skip the tour', () => {
                 const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.btn-close'));
-                expect(skipButton).toBeDefined();
+                expect(skipButton).not.toBe(null);
                 skipButton.nativeElement.click();
                 guidedTourComponentFixture.detectChanges();
                 const tourStep = guidedTourComponentFixture.debugElement.query(By.css('.tour-step'));
-                expect(tourStep).toBeNull();
+                expect(tourStep).toBe(null);
             });
 
-            it('should prevent backdrop from advancing', () => {
+            it('backdrop should prevent from advancing', () => {
                 const backdrop = guidedTourComponentFixture.debugElement.queryAll(By.css('.guided-tour-overlay'));
-                expect(backdrop).toBeDefined();
-                expect(backdrop.length).toEqual(4);
+                expect(backdrop).toHaveLength(1);
                 backdrop.forEach((overlay) => {
                     overlay.nativeElement.click();
                 });
                 guidedTourComponentFixture.detectChanges();
-                expect(guidedTourService.isOnFirstStep).toEqual(true);
+                expect(guidedTourService.isOnFirstStep).toBe(true);
             });
         });
 
@@ -286,7 +275,7 @@ describe('GuidedTourService', () => {
             it('should disable the next button', () => {
                 guidedTourComponentFixture.detectChanges();
                 const nextButton = guidedTourComponentFixture.debugElement.nativeElement.querySelector('.next-button').disabled;
-                expect(nextButton).toBeDefined();
+                expect(nextButton).not.toBe(null);
             });
         });
 
@@ -306,12 +295,12 @@ describe('GuidedTourService', () => {
             }
 
             function currentCourseAndExerciseUndefined(): void {
-                expect(guidedTourService.currentTour).toBeUndefined();
-                expect(guidedTourService['currentCourse']).toBeUndefined();
-                expect(guidedTourService['currentExercise']).toBeUndefined();
+                expect(guidedTourService.currentTour).toBe(undefined);
+                expect(guidedTourService['currentCourse']).toBe(undefined);
+                expect(guidedTourService['currentExercise']).toBe(undefined);
             }
 
-            beforeEach(async () => {
+            beforeEach(() => {
                 guidedTourService.guidedTourMapping = guidedTourMapping;
                 prepareGuidedTour(tourWithCourseAndExercise);
                 resetCurrentTour();
@@ -334,7 +323,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).toEqual(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).toEqual(course1);
-                expect(guidedTourService['currentExercise']).toBeUndefined();
+                expect(guidedTourService['currentExercise']).toBe(undefined);
                 resetCurrentTour();
             });
 
@@ -382,22 +371,22 @@ describe('GuidedTourService', () => {
                 course1.exercises!.forEach((exercise) => {
                     exercise.course = course1;
                     if (exercise === exercise1) {
-                        expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toEqual(true);
+                        expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toBe(true);
                     } else {
-                        expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toEqual(false);
+                        expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toBe(false);
                     }
                 });
 
                 // disable tour for not matching course without exercise
                 guidedTourService.currentTour = undefined;
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
-                expect(guidedTourService.currentTour).toBeUndefined();
+                expect(guidedTourService.currentTour).toBe(undefined);
 
                 // disable tour for not matching course but matching exercise identifier
                 guidedTourService.currentTour = undefined;
                 course2.exercises = [exercise3];
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
-                expect(guidedTourService.currentTour).toBeUndefined();
+                expect(guidedTourService.currentTour).toBe(undefined);
             });
 
             describe('Tour with student participation', () => {
@@ -411,7 +400,7 @@ describe('GuidedTourService', () => {
                     exercise.course = course1;
                     exercise.studentParticipations = [studentParticipation];
 
-                    navigationStub.mockClear();
+                    navigateByUrlSpy.mockClear();
 
                     findParticipationStub.mockClear();
                     findParticipationStub.mockReturnValue(of(httpResponse));
@@ -435,8 +424,8 @@ describe('GuidedTourService', () => {
                     expect(deleteParticipationStub).toHaveBeenCalledWith(1, { deleteBuildPlan: true, deleteRepository: true });
                     expect(deleteGuidedTourSettingStub).toHaveBeenCalledTimes(1);
                     expect(deleteGuidedTourSettingStub).toHaveBeenCalledWith('tour_with_course_and_exercise');
-                    expect(navigationStub).toHaveBeenCalledTimes(1);
-                    expect(navigationStub).toHaveBeenCalledWith('/courses/1/exercises');
+                    expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
+                    expect(navigateByUrlSpy).toHaveBeenCalledWith('/courses/1/exercises');
 
                     prepareParticipation(exercise4, studentParticipation2, httpResponse2);
                     guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise, true);
@@ -447,8 +436,8 @@ describe('GuidedTourService', () => {
                     expect(deleteParticipationStub).toHaveBeenCalledWith(2, { deleteBuildPlan: false, deleteRepository: false });
                     expect(deleteGuidedTourSettingStub).toHaveBeenCalledTimes(1);
                     expect(deleteGuidedTourSettingStub).toHaveBeenCalledWith('tour_with_course_and_exercise');
-                    expect(navigationStub).toHaveBeenCalledTimes(1);
-                    expect(navigationStub).toHaveBeenCalledWith('/courses/1/exercises');
+                    expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
+                    expect(navigateByUrlSpy).toHaveBeenCalledWith('/courses/1/exercises');
 
                     const index = course1.exercises!.findIndex((exercise) => (exercise.id = exercise4.id));
                     course1.exercises!.splice(index, 1);
@@ -483,42 +472,42 @@ describe('GuidedTourService', () => {
             };
             it('should return true if it is the current Step', () => {
                 guidedTourService.currentTour = guidedTour;
-                expect(guidedTourService.isCurrentStep(step1)).toEqual(true);
+                expect(guidedTourService.isCurrentStep(step1)).toBe(true);
                 guidedTourService.currentTourStepIndex += 1;
-                expect(guidedTourService.isCurrentStep(step2)).toEqual(true);
+                expect(guidedTourService.isCurrentStep(step2)).toBe(true);
             });
             it('should return false if it is not the current Step', () => {
                 guidedTourService.currentTour = guidedTour;
-                expect(guidedTourService.isCurrentStep(step2)).toEqual(false);
+                expect(guidedTourService.isCurrentStep(step2)).toBe(false);
                 guidedTourService.currentTourStepIndex += 1;
-                expect(guidedTourService.isCurrentStep(step1)).toEqual(false);
+                expect(guidedTourService.isCurrentStep(step1)).toBe(false);
             });
             it('should return false if current Tour is undefined', () => {
-                expect(guidedTourService.isCurrentStep(step1)).toEqual(false);
+                expect(guidedTourService.isCurrentStep(step1)).toBe(false);
             });
         });
 
         describe('isCurrentTour', () => {
             it('should return true if it is the current Tour', () => {
                 guidedTourService.currentTour = tour;
-                expect(guidedTourService.isCurrentTour(tour)).toEqual(true);
+                expect(guidedTourService.isCurrentTour(tour)).toBe(true);
             });
             it('should return false if it is not the current Tour', () => {
-                expect(guidedTourService.isCurrentTour(tour)).toEqual(false);
+                expect(guidedTourService.isCurrentTour(tour)).toBe(false);
             });
             it('should return false if the current Tour is undefined', () => {
                 guidedTourService.currentTour = tourWithCourseAndExercise;
-                expect(guidedTourService.isCurrentTour(tour)).toEqual(false);
+                expect(guidedTourService.isCurrentTour(tour)).toBe(false);
             });
         });
 
         describe('getCurrentStepString', () => {
             it('should return nothing if currentTour is undefined', () => {
-                expect(guidedTourService.getCurrentStepString()).toBeUndefined();
+                expect(guidedTourService.getCurrentStepString()).toBe(undefined);
             });
             it('should return correct string if currentTour is defined', () => {
                 guidedTourService.currentTour = tour;
-                expect(guidedTourService.getCurrentStepString()).toEqual('1 / 2');
+                expect(guidedTourService.getCurrentStepString()).toBe('1 / 2');
             });
         });
 
@@ -562,7 +551,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.backStep();
                 tick();
                 expect(currentDotSubjectSpy).toHaveBeenCalledTimes(2);
-                expect(guidedTourService.currentTourStepIndex).toEqual(initialStep);
+                expect(guidedTourService.currentTourStepIndex).toBe(initialStep);
             }));
         });
         describe('finishGuidedTour', () => {
@@ -598,32 +587,32 @@ describe('GuidedTourService', () => {
                 sinon.restore();
             });
             it('should enableUserInteraction with UserInteractionEvent.WAIT_FOR_SELECTOR', fakeAsync(() => {
-                const userinteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
-                guidedTourService.enableUserInteraction({} as any, userinteractionEvent);
+                const userInteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
+                guidedTourService.enableUserInteraction({} as any, userInteractionEvent);
                 expect(handleWaitForSelectorEventSpy).toHaveBeenCalledTimes(1);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(0);
             }));
             it('should enableUserInteraction with UserInteractionEvent.CLICK', fakeAsync(() => {
-                const userinteractionEvent = UserInteractionEvent.CLICK;
-                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                const userInteractionEvent = UserInteractionEvent.CLICK;
+                guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(0);
             }));
             it('should enableUserInteraction with UserInteractionEvent.ACE_EDITOR', fakeAsync(() => {
-                const userinteractionEvent = UserInteractionEvent.ACE_EDITOR;
+                const userInteractionEvent = UserInteractionEvent.ACE_EDITOR;
                 observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
-                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(1);
             }));
             it('should enableUserInteraction with UserInteractionEvent.MODELING', fakeAsync(() => {
-                const userinteractionEvent = UserInteractionEvent.MODELING;
+                const userInteractionEvent = UserInteractionEvent.MODELING;
                 observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
-                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(1);
             }));
             it('should enableUserInteraction with UserInteractionEvent.ASSESS_SUBMISSION', fakeAsync(() => {
                 const isAssessmentCorrectSpy = jest.spyOn<any, any>(guidedTourService, 'isAssessmentCorrect');
-                const userinteractionEvent = UserInteractionEvent.ASSESS_SUBMISSION;
-                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                const userInteractionEvent = UserInteractionEvent.ASSESS_SUBMISSION;
+                guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(isAssessmentCorrectSpy).toHaveBeenCalledTimes(1);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(0);
             }));
@@ -653,17 +642,17 @@ describe('GuidedTourService', () => {
                 guidedTourService.guidedTourSettings = [];
             });
             afterEach(() => {
-                jest.clearAllMocks();
+                jest.restoreAllMocks();
             });
             describe('return undefined if parameters are undefined', () => {
-                it('should return undefined if exercise.course is undefibed', fakeAsync(() => {
+                it('should return undefined if exercise.course is undefined', fakeAsync(() => {
                     const inputExercise = {} as Exercise;
-                    expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).toBeUndefined();
+                    expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).toBe(undefined);
                     expect(enableTourSpy).toHaveBeenCalledTimes(0);
                 }));
                 it('should return undefined if guidedTour mapping is undefined', fakeAsync(() => {
                     guidedTourService.guidedTourMapping = undefined;
-                    expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toBeUndefined();
+                    expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toBe(undefined);
                 }));
             });
             it('should enableTourForExercise for text exercise', fakeAsync(() => {
@@ -758,32 +747,17 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    ArtemisTestModule,
-                    RouterTestingModule.withRoutes([
-                        {
-                            path: 'courses',
-                            component: NavbarComponent,
-                        },
-                    ]),
-                ],
-                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockPipe(SafeResourceUrlPipe)],
+                imports: [ArtemisTestModule],
+                declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockDirective(NavbarComponent)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
-                    { provide: CookieService, useClass: MockCookieService },
-                    { provide: AccountService, useClass: MockAccountService },
-                    MockProvider(DeviceDetectorService),
-                    { provide: TranslateService, useClass: MockTranslateService },
                     { provide: Router, useClass: MockRouterWithEvents },
-                    { provide: MetisService, useClass: MockMetisService },
                 ],
             })
-                .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
-                    TestBed.createComponent(NavbarComponent);
                     guidedTourService = TestBed.inject(GuidedTourService);
                     accountService = TestBed.inject(AccountService);
                     profileService = TestBed.inject(ProfileService);
