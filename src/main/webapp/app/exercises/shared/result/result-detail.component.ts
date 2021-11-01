@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { getExercise } from 'app/entities/participation/participation.model';
@@ -30,6 +30,7 @@ export enum FeedbackItemType {
     Issue,
     Test,
     Feedback,
+    Policy,
 }
 
 export class FeedbackItem {
@@ -190,7 +191,18 @@ export class ResultDetailComponent implements OnInit {
     private createFeedbackItems(feedbacks: Feedback[]): FeedbackItem[] {
         if (this.exerciseType === ExerciseType.PROGRAMMING) {
             return feedbacks.map((feedback) => {
-                if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                if (Feedback.isSubmissionPolicyFeedback(feedback)) {
+                    const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
+                    return {
+                        type: FeedbackItemType.Policy,
+                        category: 'Submission Policy',
+                        title: submissionPolicyTitle,
+                        text: feedback.detailText,
+                        positive: false,
+                        credits: feedback.credits,
+                        appliedCredits: feedback.credits,
+                    };
+                } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                     const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
                     const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
                     return {
