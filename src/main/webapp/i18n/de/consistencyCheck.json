@@ -15,8 +15,8 @@
                 "SOLUTION_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Lösung",
                 "IS_LOCAL_SIMULATION": "Ist eine lokale Simulation"
             },
-            "noErrors": "Keine Inkonsistenzen gefunden",
-            "errorsFound": "Es wurden folgende Inkonsistenzen gefunden"
+            "noInconsistencies": "Keine Inkonsistenzen gefunden",
+            "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden"
         }
     }
 }

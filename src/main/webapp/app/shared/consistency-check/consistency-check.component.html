@@ -19,12 +19,12 @@
                 <div *ngIf="inconsistencies != undefined && inconsistencies.length == 0">
                     <span class="h1 text-success"><fa-icon [icon]="'check'"></fa-icon></span>
                     <br />
-                    <span jhiTranslate="artemisApp.consistencyCheck.noErrors">No errors found</span>
+                    <span jhiTranslate="artemisApp.consistencyCheck.noInconsistencies">No inconsistencies found</span>
                 </div>
                 <div *ngIf="inconsistencies != undefined && inconsistencies.length > 0">
                     <span class="h1 text-danger"><fa-icon [icon]="'times'"></fa-icon></span>
                     <br />
-                    <span jhiTranslate="artemisApp.consistencyCheck.errorsFound">Following inconsistencies have been found</span>
+                    <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound">Following inconsistencies have been found</span>
                 </div>
             </div>
             <div class="table-responsive p-1 my-5" *ngIf="!isLoading">
