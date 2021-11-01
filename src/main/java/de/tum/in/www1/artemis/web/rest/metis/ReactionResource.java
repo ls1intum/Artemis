@@ -36,7 +36,7 @@ public class ReactionResource {
     @PostMapping("courses/{courseId}/postings/reactions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
-        Reaction createdReaction = reactionService.createReaction(reaction);
+        Reaction createdReaction = reactionService.createReaction(courseId, reaction);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/postings/reactions/" + createdReaction.getId())).body(createdReaction);
     }
 
@@ -51,7 +51,7 @@ public class ReactionResource {
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
-        reactionService.deleteReactionById(reactionId);
+        reactionService.deleteReactionById(reactionId, courseId);
         return ResponseEntity.ok().build();
     }
 }

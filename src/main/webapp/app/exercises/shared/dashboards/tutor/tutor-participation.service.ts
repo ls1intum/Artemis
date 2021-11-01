@@ -40,7 +40,7 @@ export class TutorParticipationService {
      * @param exampleSubmission The to be added example submission
      * @param exerciseId The ID of the exercise of the tutor participation
      */
-    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
+    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
         return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/assess-example-submission`, exampleSubmission, { observe: 'response' });
     }
 
@@ -49,7 +49,7 @@ export class TutorParticipationService {
      * @param course the course of the exercise
      * @param exercise  exercise with tutor participation
      */
-    deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise) {
+    deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise): Observable<void> {
         if (course && this.accountService.isAtLeastTutorInCourse(course)) {
             return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/example-submission`);
         }
