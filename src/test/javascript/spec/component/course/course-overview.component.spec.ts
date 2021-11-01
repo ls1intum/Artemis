@@ -26,7 +26,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import dayjs from 'dayjs';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';

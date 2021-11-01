@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -18,8 +15,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
 describe('LearningGoalCourseDetailModalComponent', () => {
     let learningGoalCourseDetailModalFixture: ComponentFixture<LearningGoalCourseDetailModalComponent>;
     let learningGoalCourseDetailModal: LearningGoalCourseDetailModalComponent;
@@ -58,12 +53,12 @@ describe('LearningGoalCourseDetailModalComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         learningGoalCourseDetailModalFixture.detectChanges();
-        expect(learningGoalCourseDetailModal).to.be.ok;
+        expect(learningGoalCourseDetailModal).toBeDefined();
     });
 
     it('should call sort service', fakeAsync(() => {
@@ -77,8 +72,8 @@ describe('LearningGoalCourseDetailModalComponent', () => {
         learningGoalCourseDetailModal.learningGoalCourseProgress = learningGoalCourseProgress;
         learningGoalCourseDetailModalFixture.detectChanges();
         const sortService = TestBed.inject(SortService);
-        const sortByPropertySpy = sinon.spy(sortService, 'sortByProperty');
+        const sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty');
         learningGoalCourseDetailModal.sortConnectedLectureUnits();
-        expect(sortByPropertySpy).to.have.been.calledOnce;
+        expect(sortByPropertySpy).toHaveBeenCalledTimes(1);
     }));
 });
