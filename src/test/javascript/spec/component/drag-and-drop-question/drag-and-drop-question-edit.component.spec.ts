@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { NgModel } from '@angular/forms';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
@@ -18,11 +18,15 @@ import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/ex
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { DndModule } from 'ng2-dnd';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { DraggableComponent } from 'ng2-dnd';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
+import { ChangeDetectorRef } from '@angular/core';
+import { clone } from 'lodash-es';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -39,7 +43,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), DndModule.forRoot()],
+            imports: [ArtemisTestModule],
             declarations: [
                 DragAndDropQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -48,8 +52,16 @@ describe('DragAndDropQuestionEditComponent', () => {
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockDirective(NgbCollapse),
+                MockDirective(NgModel),
+                MockComponent(DraggableComponent),
             ],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                MockProvider(ArtemisMarkdownService),
+                MockProvider(DragAndDropQuestionUtil),
+                MockProvider(FileUploaderService),
+                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(ChangeDetectorRef),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
@@ -66,7 +78,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         tick();
     }));
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
@@ -83,7 +95,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.detectChanges();
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
-        expect(component.backupQuestion).toStrictEqual(question1);
+        expect(component.backupQuestion).toEqual(question1);
     });
 
     it('should edit question in different ways', () => {
@@ -95,20 +107,23 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.moveDownQuestion();
         component.deleteQuestion();
 
-        expect(eventUpSpy).toBeCalledTimes(1);
-        expect(eventDownSpy).toBeCalledTimes(1);
-        expect(eventDeleteSpy).toBeCalledTimes(1);
+        expect(eventUpSpy).toHaveBeenCalledTimes(1);
+        expect(eventDownSpy).toHaveBeenCalledTimes(1);
+        expect(eventDeleteSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set background file', () => {
         const file1 = { name: 'newFile1' };
         const file2 = { name: 'newFile2' };
         const event = { target: { files: [file1, file2] } };
+        const newPath = 'alwaysGoYourPath';
+        const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
+        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
 
         component.setBackgroundFile(event);
 
-        expect(component.backgroundFile).toStrictEqual(file1);
-        expect(component.backgroundFileName).toStrictEqual(file1.name);
+        expect(component.backgroundFile).toEqual(file1);
+        expect(component.backgroundFileName).toBe(file1.name);
 
         component.uploadBackground();
     });
@@ -120,8 +135,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.setBackgroundFile(event);
 
-        expect(component.backgroundFile).toStrictEqual(file1);
-        expect(component.backgroundFileName).toStrictEqual(file1.name);
+        expect(component.backgroundFile).toEqual(file1);
+        expect(component.backgroundFileName).toBe(file1.name);
 
         const newPath = 'alwaysGoYourPath';
         const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
@@ -131,7 +146,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         tick();
 
         expect(component.backgroundFile).toBe(undefined);
-        expect(component.question.backgroundFilePath).toStrictEqual(newPath);
+        expect(component.question.backgroundFilePath).toBe(newPath);
         expect(component.isUploadingBackgroundFile).toBe(false);
     }));
 
@@ -139,10 +154,11 @@ describe('DragAndDropQuestionEditComponent', () => {
         const event1 = { pageX: 10, pageY: 10 };
         const event2 = { clientX: -10, clientY: -10 };
 
-        component.mouseMove(event1);
+        // @ts-ignore
+        component['mouseMoveAction'](event1, { left: 0, top: 0 }, 10, 10);
 
-        expect(component.mouse.x).toBe(0);
-        expect(component.mouse.y).toBe(0);
+        expect(component.mouse.x).toBe(10);
+        expect(component.mouse.y).toBe(10);
 
         // MOVE
         component.mouse.offsetX = 15;
@@ -151,7 +167,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         const lengthOfElement = 15;
         component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement };
 
-        component.mouseMove(event2);
+        // @ts-ignore
+        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
 
         expect(component.mouse.x).toBe(0);
         expect(component.mouse.y).toBe(0);
@@ -163,31 +180,34 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.startX = 10;
         component.mouse.startY = 10;
 
-        component.mouseMove(event2);
+        // @ts-ignore
+        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
 
         expect(component.mouse.x).toBe(0);
         expect(component.mouse.y).toBe(0);
-        expect(component.currentDropLocation.posX).toBeDefined();
-        expect(component.currentDropLocation.posY).toBeDefined();
+        expect(component.currentDropLocation.posX).toBe(0);
+        expect(component.currentDropLocation.posY).toBe(0);
 
         // RESIZE_X
         component.draggingState = DragState.RESIZE_X;
         component.mouse.startX = 10;
 
         fixture.detectChanges();
-        component.mouseMove(event2);
+        // @ts-ignore
+        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
 
-        expect(component.currentDropLocation.posX).toBeDefined();
-        expect(component.currentDropLocation.posY).toBeDefined();
+        expect(component.currentDropLocation.posX).toBe(0);
+        expect(component.currentDropLocation.posY).toBe(0);
 
         // RESIZE_Y
         component.draggingState = DragState.RESIZE_Y;
         component.mouse.startY = 10;
 
-        component.mouseMove(event2);
+        // @ts-ignore
+        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
 
-        expect(component.currentDropLocation.posX).toBeDefined();
-        expect(component.currentDropLocation.posY).toBeDefined();
+        expect(component.currentDropLocation.posX).toBe(0);
+        expect(component.currentDropLocation.posY).toBe(0);
     });
 
     it('should move mouse up', () => {
@@ -196,8 +216,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.mouseUp();
 
-        expect(questionUpdatedSpy).toBeCalledTimes(1);
-        expect(component.draggingState).toStrictEqual(DragState.NONE);
+        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(component.draggingState).toBe(DragState.NONE);
         expect(component.currentDropLocation).toBe(undefined);
 
         component.draggingState = DragState.CREATE;
@@ -210,10 +230,10 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.mouseUp();
 
-        expect(component.draggingState).toStrictEqual(DragState.NONE);
+        expect(component.draggingState).toBe(DragState.NONE);
         expect(component.currentDropLocation).toBe(undefined);
-        expect(component.question.correctMappings).toStrictEqual([]);
-        expect(component.question.dropLocations).toStrictEqual([alternativeDropLocation]);
+        expect(component.question.correctMappings).toBeArrayOfSize(0);
+        expect(component.question.dropLocations).toEqual([alternativeDropLocation]);
     });
 
     it('should move background mouse down', () => {
@@ -228,20 +248,20 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.currentDropLocation!.posY).toBe(mouse.y);
         expect(component.currentDropLocation!.width).toBe(0);
         expect(component.currentDropLocation!.height).toBe(0);
-        expect(component.draggingState).toStrictEqual(DragState.CREATE);
+        expect(component.draggingState).toBe(DragState.CREATE);
     });
 
     it('should drop location on mouse down', () => {
         component.draggingState = DragState.NONE;
         component.mouse = { x: 10, y: 10, startX: 5, startY: 5, offsetX: 0, offsetY: 0 };
         const dropLocation = new DropLocation();
-
+        dropLocation.posX = dropLocation.posY = 0;
         component.dropLocationMouseDown(dropLocation);
 
-        expect(component.mouse.offsetX).toBeDefined();
-        expect(component.mouse.offsetY).toBeDefined();
-        expect(component.currentDropLocation).toStrictEqual(dropLocation);
-        expect(component.draggingState).toStrictEqual(DragState.MOVE);
+        expect(component.mouse.offsetX).toBe(-10);
+        expect(component.mouse.offsetY).toBe(-10);
+        expect(component.currentDropLocation).toEqual(dropLocation);
+        expect(component.draggingState).toBe(DragState.MOVE);
     });
 
     it('should open, drag, drop', () => {
@@ -278,7 +298,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX);
 
-        expect(component.draggingState).toStrictEqual(DragState.RESIZE_X);
+        expect(component.draggingState).toBe(DragState.RESIZE_X);
         expect(component.mouse.startX).toBe(0);
 
         // top, left
@@ -299,7 +319,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX);
 
         expect(component.mouse.startY).toBe(0);
-        expect(component.draggingState).toStrictEqual(DragState.RESIZE_Y);
+        expect(component.draggingState).toBe(DragState.RESIZE_Y);
     });
 
     it('should add text item', () => {
@@ -311,7 +331,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
         const firstDragItemOfQuestion = component.question.dragItems![0];
-        expect(firstDragItemOfQuestion.text).toStrictEqual('Text');
+        expect(firstDragItemOfQuestion.text).toBe('Text');
     });
 
     it('should set drag item text', () => {
@@ -321,8 +341,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.setDragItemFile(event);
 
-        expect(component.dragItemFile).toStrictEqual(file1);
-        expect(component.dragItemFileName).toStrictEqual('newDragFile1');
+        expect(component.dragItemFile).toEqual(file1);
+        expect(component.dragItemFileName).toBe('newDragFile1');
     });
 
     it('should upload drag item', fakeAsync(() => {
@@ -339,9 +359,9 @@ describe('DragAndDropQuestionEditComponent', () => {
             tick();
 
             const expectedItem = component.question.dragItems![0];
-            expect(expectedItem!.pictureFilePath).toStrictEqual('alwaysGoYourPath');
+            expect(expectedItem!.pictureFilePath).toBe('alwaysGoYourPath');
             expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
-            expect(component.dragItemFileName).toStrictEqual('');
+            expect(component.dragItemFileName).toBe('');
             expect(component.dragItemFile).toBe(undefined);
             jest.restoreAllMocks();
 
@@ -369,7 +389,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         tick();
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
-        expect(component.dragItemPicture).toStrictEqual(newPath);
+        expect(component.dragItemPicture).toBe(newPath);
         expect(component.isUploadingDragItemFile).toBe(false);
     }));
 
@@ -382,8 +402,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.deleteDragItem(item);
 
-        expect(component.question.dragItems).toStrictEqual([]);
-        expect(component.question.correctMappings).toStrictEqual([mapping]);
+        expect(component.question.dragItems).toBeArrayOfSize(0);
+        expect(component.question.correctMappings).toEqual([mapping]);
     });
 
     it('should delete mapping', () => {
@@ -394,7 +414,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.deleteMapping(mapping);
 
-        expect(component.question.correctMappings).toStrictEqual([]);
+        expect(component.question.correctMappings).toBeArrayOfSize(0);
     });
 
     it('should drop a drag item on a drop location', () => {
@@ -417,7 +437,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.onDragDrop(alternativeLocation, event);
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
-        expect(component.question.correctMappings).toStrictEqual([mapping, expectedMapping]);
+        expect(component.question.correctMappings).toEqual([mapping, expectedMapping]);
     });
 
     it('should get mapping for drag item', () => {
@@ -426,15 +446,16 @@ describe('DragAndDropQuestionEditComponent', () => {
         const mapping = new DragAndDropMapping(item, location);
         component.question.correctMappings = [mapping];
 
-        expect(component.getMappingsForDragItem(item)).toStrictEqual([mapping]);
+        expect(component.getMappingsForDragItem(item)).toEqual([mapping]);
     });
 
     it('should change picture drag item to text drag item', () => {
         const item = new DragItem();
+        const componentClone = clone(component);
 
         component.changeToTextDragItem(item);
 
-        expect(component).toBeDefined();
+        expect(component).toStrictEqual(componentClone);
     });
 
     it('should change text drag item to picture drag item', fakeAsync(() => {
@@ -449,7 +470,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.changeToPictureDragItem(item);
         tick();
 
-        expect(component.dragItemPicture).toStrictEqual(newPath);
+        expect(component.dragItemPicture).toBe(newPath);
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
         expect(component.isUploadingDragItemFile).toBe(false);
     }));
@@ -463,7 +484,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resetQuestionTitle();
 
-        expect(component.question.title).toStrictEqual(title);
+        expect(component.question.title).toBe(title);
     });
 
     it('should reset question', () => {
@@ -565,7 +586,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.domainCommandsFound([domainCommand]);
 
-        expect(component.question.explanation).toStrictEqual(text);
+        expect(component.question.explanation).toBe(text);
 
         // hint
         command = new HintCommand();
@@ -574,7 +595,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.domainCommandsFound([domainCommand]);
 
-        expect(component.question.hint).toStrictEqual(text);
+        expect(component.question.hint).toBe(text);
 
         // text
         text = 'take this null as a command';
@@ -582,6 +603,6 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.domainCommandsFound([domainCommand]);
 
-        expect(component.question.text).toStrictEqual(text);
+        expect(component.question.text).toBe(text);
     });
 });
