@@ -600,6 +600,7 @@ public class SubmissionService {
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
      * @param exerciseId the exerciseId of the exercise of which the complaints are fetched
+     * @param isAtLeastInstructor if the user is an instructor
      * @return a list of DTOs containing a complaint and its submission
      */
     public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
