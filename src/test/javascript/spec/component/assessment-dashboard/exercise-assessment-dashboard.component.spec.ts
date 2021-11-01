@@ -27,7 +27,7 @@ import { TutorParticipationStatus } from 'app/entities/participation/tutor-parti
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';

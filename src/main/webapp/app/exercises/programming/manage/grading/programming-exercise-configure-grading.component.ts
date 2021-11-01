@@ -20,6 +20,8 @@ import {
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 /**
  * Describes the editableField
@@ -84,6 +86,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     testCaseColors = {};
     categoryColors = {};
 
+    submissionPolicy?: SubmissionPolicy;
+    hadPolicyBefore: boolean;
+
     /**
      * Returns the value of testcases
      */
@@ -120,6 +125,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private accountService: AccountService,
         private gradingService: ProgrammingExerciseGradingService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
         private alertService: AlertService,
@@ -157,6 +163,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         } else if (this.activeTab !== 'test-cases') {
                             this.selectTab('test-cases');
                         }
+                        this.hadPolicyBefore = this.programmingExercise.submissionPolicy !== undefined;
                     }),
                     catchError(() => of(null)),
                 );
@@ -185,8 +192,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis') {
-                this.activeTab = params['tab'];
+            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy') {
+                this.selectTab(params['tab']);
             } else {
                 this.selectTab('test-cases');
             }
@@ -446,6 +453,101 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isSaving = false;
                 this.changedCategoryIds = [];
             });
+    }
+
+    /**
+     * Removes the submission policy of the programming exercise.
+     */
+    removeSubmissionPolicy() {
+        this.isSaving = true;
+        this.programmingExerciseSubmissionPolicyService
+            .removeSubmissionPolicyFromProgrammingExercise(this.programmingExercise.id!)
+            .pipe(
+                tap(() => {
+                    this.programmingExercise.submissionPolicy = undefined;
+                    this.hadPolicyBefore = false;
+                }),
+                catchError(() => {
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+            });
+    }
+
+    /**
+     * Adds the submission policy of the programming exercise.
+     */
+    addSubmissionPolicy() {
+        this.isSaving = true;
+        this.programmingExerciseSubmissionPolicyService
+            .addSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
+            .pipe(
+                tap((submissionPolicy: SubmissionPolicy) => {
+                    this.programmingExercise.submissionPolicy = submissionPolicy;
+                    this.hadPolicyBefore = true;
+                }),
+                catchError(() => {
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+            });
+    }
+
+    /**
+     * Updates the submission policy of the programming exercise.
+     */
+    updateSubmissionPolicy() {
+        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.NONE && this.hadPolicyBefore) {
+            this.removeSubmissionPolicy();
+            return;
+        } else if (!this.hadPolicyBefore && this.programmingExercise.submissionPolicy?.type !== SubmissionPolicyType.NONE) {
+            this.addSubmissionPolicy();
+            return;
+        }
+        this.isSaving = true;
+        this.programmingExerciseSubmissionPolicyService
+            .updateSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
+            .pipe(
+                catchError(() => {
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+            });
+    }
+
+    /**
+     * Enable/Disable the submission policy of the programming exercise.
+     */
+    toggleSubmissionPolicy() {
+        this.isSaving = true;
+        const deactivateSaving = () => {
+            this.isSaving = false;
+        };
+        if (this.programmingExercise.submissionPolicy!.active) {
+            this.programmingExerciseSubmissionPolicyService
+                .disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
+                .pipe(
+                    tap(() => {
+                        this.programmingExercise!.submissionPolicy!.active = false;
+                    }),
+                )
+                .subscribe(deactivateSaving);
+        } else {
+            this.programmingExerciseSubmissionPolicyService
+                .enableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
+                .pipe(
+                    tap(() => {
+                        this.programmingExercise!.submissionPolicy!.active = true;
+                    }),
+                )
+                .subscribe(deactivateSaving);
+        }
     }
 
     /**
