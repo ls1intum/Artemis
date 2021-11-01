@@ -11,6 +11,7 @@ module.exports = {
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
+            isolatedModules: true,
             diagnostics: {
                 ignoreCodes: [151001],
             },
