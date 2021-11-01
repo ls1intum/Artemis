@@ -11,7 +11,7 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 const expect = chai.expect;
