@@ -23,7 +23,7 @@
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
     [exerciseDashboardLink]="exerciseDashboardLink"
-    [isAtLeastInstructor]="isAtLeastInstructor"
+    [isAtLeastInstructor]="exercise?.isAtLeastInstructor || false"
     [isIllegalSubmission]="!!submission && submission.type! === SUBMISSION_TYPE_ILLEGAL"
     [canOverride]="canOverride"
     [result]="manualResult"

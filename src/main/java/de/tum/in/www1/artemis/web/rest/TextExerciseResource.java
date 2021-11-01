@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -167,7 +168,8 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
-        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(textExercise.getId());
+
+        groupNotificationService.checkNotificationForExerciseRelease(textExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -231,9 +233,7 @@ public class TextExerciseResource {
             updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(textExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExercise, notificationText, instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
     }

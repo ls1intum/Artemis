@@ -3,7 +3,7 @@ import { CypressAssessmentType, CypressExamBuilder } from '../../support/request
 import dayjs from 'dayjs';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
-import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/OnlineEditorPage';
+import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
@@ -133,7 +133,7 @@ describe('Exam assessment', () => {
 
         beforeEach('Create exam, exercise and submission', () => {
             courseManagementRequests
-                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
                 .then((progRespone) => {
                     const programmingExercise = progRespone.body;
                     courseManagementRequests.generateMissingIndividualExams(exam);

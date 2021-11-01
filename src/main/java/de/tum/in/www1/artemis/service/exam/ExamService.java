@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -184,6 +185,33 @@ public class ExamService {
         // delete exam grading scale if it exists
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
         gradingScale.ifPresent(gradingScaleRepository::delete);
+    }
+
+    /**
+     * Deletes all elements associated with the exam but not the exam itself in order to reset it.
+     *
+     * The deleted elements are:
+     * <ul>
+     *     <li>All StudentExams</li>
+     *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
+           but not the exercises themself. See {@link ExerciseService#reset}</li>
+     * </ul>
+     * @param examId the ID of the exam to be reset
+     */
+    public void reset(@NotNull Long examId) {
+        User user = userRepository.getUser();
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.reset(exercise);
+                }
+            }
+        }
+        studentExamRepository.deleteAll(exam.getStudentExams());
     }
 
     /**

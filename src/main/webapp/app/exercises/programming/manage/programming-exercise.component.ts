@@ -15,7 +15,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
@@ -78,9 +77,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
-                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(getCourseFromExercise(exercise));
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
+                    this.accountService.setAccessRightsForExercise(exercise);
                     if (exercise.projectKey) {
                         if (exercise.solutionParticipation!.buildPlanId) {
                             exercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(

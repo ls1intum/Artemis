@@ -503,49 +503,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetStatsForInstructorExerciseDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
-        for (Course course : courses) {
-            var tutors = findTutors(course);
-            for (Exercise exercise : course.getExercises()) {
-                StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-                assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-                assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isEqualTo(0);
-                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
-                assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints is zero").isZero();
-                assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();
-                assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks are not available for exercises").isNull();
-
-                if (exercise instanceof FileUploadExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for file upload exercise is correct").isEqualTo(0);
-                }
-                if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for modeling exercise is correct").isEqualTo(2);
-                }
-                if (exercise instanceof ProgrammingExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isEqualTo(0);
-                }
-                if (exercise instanceof QuizExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for quiz exercise is correct").isEqualTo(0);
-                }
-                if (exercise instanceof TextExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for text exercise is correct").isEqualTo(1);
-                }
-
-                assertThat(stats.getNumberOfSubmissions().late()).as("Number of late submissions for exercise is correct").isEqualTo(0);
-            }
-        }
-    }
-
-    @Test
-    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
-    public void testGetStatsForInstructorExerciseDashboard_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testResetExercise() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {

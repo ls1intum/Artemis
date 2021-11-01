@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -28,6 +28,8 @@ import { MockActivatedRoute } from '../../../helpers/mocks/service/mock-route.se
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import {
     metisCourse,
     metisExercise,
@@ -55,12 +57,14 @@ describe('PageDiscussionSectionComponent', () => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [
+                MockProvider(SessionStorageService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),

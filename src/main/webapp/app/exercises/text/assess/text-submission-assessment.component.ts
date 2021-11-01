@@ -58,7 +58,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     cancelBusy: boolean;
     nextSubmissionBusy: boolean;
     isAssessor: boolean;
-    isAtLeastInstructor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
@@ -131,7 +130,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.cancelBusy = false;
         this.nextSubmissionBusy = false;
         this.isAssessor = false;
-        this.isAtLeastInstructor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
         this.highlightDifferences = false;
@@ -225,8 +223,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private checkPermissions(result?: Result): void {
         this.isAssessor = result?.assessor?.id === this.userId;
-        // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }
 
     /**
@@ -432,7 +428,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -452,7 +448,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return (!this.exercise?.isAtLeastInstructor || false) && !!this.complaint && this.isAssessor;
     }
 
     protected handleError(error: HttpErrorResponse): void {

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -136,7 +137,8 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(modelingExercise.getId());
+        groupNotificationService.checkNotificationForExerciseRelease(modelingExercise, instanceMessageSendService);
+
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -201,9 +203,8 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
-        if ((notificationText != null && modelingExercise.isCourseExercise()) || modelingExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(modelingExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExercise, notificationText, instanceMessageSendService);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);
     }

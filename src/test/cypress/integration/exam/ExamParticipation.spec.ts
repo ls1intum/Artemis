@@ -23,6 +23,7 @@ const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
 
 // Common primitives
 const textExerciseTitle = 'Cypress text exercise';
+const packageName = 'de.test';
 
 describe('Exam participation', () => {
     let course: any;
@@ -46,7 +47,7 @@ describe('Exam participation', () => {
                     courseRequests.createTextExercise({ exerciseGroup: groupResponse.body }, textExerciseTitle);
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
-                    courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body });
+                    courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, undefined, undefined, undefined, undefined, packageName);
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body });
@@ -107,7 +108,7 @@ describe('Exam participation', () => {
     }
 
     function makeProgrammingExerciseSubmission() {
-        onlineEditor.createFileInRootPackage('placeholderFile');
+        onlineEditor.createFileInRootPackage('placeholderFile', packageName);
         onlineEditor.deleteFile('Client.java');
         onlineEditor.deleteFile('BubbleSort.java');
         onlineEditor.deleteFile('MergeSort.java');
@@ -122,9 +123,9 @@ describe('Exam participation', () => {
     }
 
     function makeModelingExerciseSubmission() {
-        modelingEditor.addComponentToModel(1);
-        modelingEditor.addComponentToModel(2);
-        modelingEditor.addComponentToModel(3);
+        modelingEditor.addComponentToModel(1, false);
+        modelingEditor.addComponentToModel(2, false);
+        modelingEditor.addComponentToModel(3, false);
         modelingEditor.submit();
     }
 

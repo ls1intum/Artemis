@@ -46,19 +46,17 @@
                 [numberOfTutorAssessments]="numberOfTutorAssessments"
                 [courseId]="courseId"
                 [tutorId]="tutor.id!"
-                [numberOfTutorComplaints]="numberOfTutorComplaints"
-                [numberOfTutorMoreFeedbackRequests]="numberOfTutorMoreFeedbackRequests"
-                [numberOfAssessmentLocks]="numberOfAssessmentLocks"
                 [examId]="examId"
                 [totalNumberOfAssessments]="totalNumberOfAssessments"
                 [numberOfSubmissions]="numberOfSubmissions"
                 [numberOfCorrectionRounds]="numberOfCorrectionRounds"
                 [totalAssessmentPercentage]="totalAssessmentPercentage"
                 [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                [isAtLeastInstructor]="isAtLeastInstructor"
-                [numberOfComplaints]="numberOfComplaints"
-                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
-                [totalNumberOfAssessmentLocks]="totalNumberOfAssessmentLocks"
+                [isAtLeastInstructor]="course?.isAtLeastInstructor || false"
+                [complaints]="complaints"
+                [moreFeedbackRequests]="moreFeedbackRequests"
+                [assessmentLocks]="assessmentLocks"
+                [ratings]="ratings"
             >
             </jhi-assessment-dashboard-information>
         </div>
@@ -158,7 +156,7 @@
                         <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <ng-container
                                 class="col-lg-3 col-md-6 col-sm-6"
-                                *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
+                                *ngIf="course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
                             >
                                 <jhi-second-correction-enable-button
                                     class="me-1"
@@ -167,7 +165,7 @@
                                     [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                            <a class="btn btn-primary btn-sm" *ngIf="isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                            <a class="btn btn-primary btn-sm" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                 <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                             </a>
                         </ng-container>
@@ -178,8 +176,8 @@
     </div>
 
     <div class="container-fluid" style="padding-top: 25px">
-        <h4 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
-        <h4 *ngIf="isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
+        <h4 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
+        <h4 *ngIf="isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
 
         <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
     </div>
