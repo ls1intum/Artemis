@@ -1,21 +1,16 @@
 import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of, throwError, empty } from 'rxjs';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
@@ -25,7 +20,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -59,14 +53,14 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { RouterTestingModule } from '@angular/router/testing';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
@@ -190,13 +184,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(TutorLeaderboardComponent),
         MockComponent(TutorParticipationGraphComponent),
         MockComponent(HeaderExercisePageWithDetailsComponent),
-        MockComponent(HeaderParticipationPageComponent),
         MockComponent(SidePanelComponent),
         MockComponent(InfoPanelComponent),
         MockComponent(ModelingEditorComponent),
         MockComponent(SecondCorrectionEnableButtonComponent),
         MockComponent(CollapsableAssessmentInstructionsComponent),
-        MockComponent(AssessmentInstructionsComponent),
         MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
         MockComponent(LanguageTableCellComponent),
         MockComponent(ProgrammingExerciseInstructionComponent),
@@ -211,15 +203,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
     ];
+
     const providers = [
-        MockProvider(JhiLanguageHelper, { language: empty() }),
-        MockProvider(DeviceDetectorService),
-        MockProvider(HttpClient),
         MockProvider(ArtemisDatePipe),
         { provide: ActivatedRoute, useValue: route },
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
-        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
