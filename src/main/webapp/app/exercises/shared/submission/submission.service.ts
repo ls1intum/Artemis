@@ -62,6 +62,16 @@ export class SubmissionService {
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
+    /**
+     * Find more feedback requests for tutor in this exercise.
+     * @param exerciseId
+     */
+    getSubmissionsWithMoreFeedbackRequestsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
+        return this.http
+            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
     protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
         if (res.body) {
             res.body.forEach((dto) => {
