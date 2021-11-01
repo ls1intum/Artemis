@@ -226,6 +226,28 @@
                         <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
                     </dd>
                 </ng-container>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
+                <dd>
+                    <span
+                        jhiTranslate="{{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
+                                (!programmingExercise.submissionPolicy ? 'none' : programmingExercise.submissionPolicy.type!) +
+                                '.title'
+                        }}"
+                    ></span>
+                </dd>
+                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission Limit</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined && programmingExercise.submissionPolicy.exceedingPenalty">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
                 <dd>
                     <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
