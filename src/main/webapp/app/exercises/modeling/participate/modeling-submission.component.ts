@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -572,6 +572,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     public buildFeedbackTextForReview(feedback: Feedback): string {
-        return Feedback.buildFeedbackTextForReview(feedback);
+        return buildFeedbackTextForReview(feedback);
     }
 }

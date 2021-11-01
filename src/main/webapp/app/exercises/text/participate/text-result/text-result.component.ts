@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';
@@ -109,6 +109,6 @@ export class TextResultComponent {
     }
 
     public buildFeedbackTextForReview(feedback: Feedback): string {
-        return Feedback.buildFeedbackTextForReview(feedback);
+        return buildFeedbackTextForReview(feedback);
     }
 }

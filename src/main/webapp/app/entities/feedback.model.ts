@@ -172,33 +172,33 @@ export class Feedback implements BaseEntity {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
     }
+}
 
-    /**
-     * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction
-     * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
-     * it return detail_text or text property of the feedback depending on the submission element.
-     *
-     * @param feedback that contains feedback text and grading instruction
-     * @returns {string} formatted string representing the feedback text ready to display
-     */
-    public static buildFeedbackTextForReview(feedback: Feedback): string {
-        let feedbackText = '';
-        if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
-            feedbackText = feedback.gradingInstruction.feedback;
-            if (feedback.detailText) {
-                feedbackText = feedbackText + '\n' + feedback.detailText;
-            }
-            if (feedback.text) {
-                feedbackText = feedbackText + '\n' + feedback.text;
-            }
-            return convertToHtmlLinebreaks(feedbackText);
-        }
+/**
+ * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction
+ * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
+ * it return detail_text or text property of the feedback depending on the submission element.
+ *
+ * @param feedback that contains feedback text and grading instruction
+ * @returns {string} formatted string representing the feedback text ready to display
+ */
+export const buildFeedbackTextForReview = (feedback: Feedback): string => {
+    let feedbackText = '';
+    if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+        feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
-            return feedback.detailText;
+            feedbackText = feedbackText + '\n' + feedback.detailText;
         }
         if (feedback.text) {
-            return feedback.text;
+            feedbackText = feedbackText + '\n' + feedback.text;
         }
-        return feedbackText;
+        return convertToHtmlLinebreaks(feedbackText);
     }
-}
+    if (feedback.detailText) {
+        return feedback.detailText;
+    }
+    if (feedback.text) {
+        return feedback.text;
+    }
+    return feedbackText;
+};

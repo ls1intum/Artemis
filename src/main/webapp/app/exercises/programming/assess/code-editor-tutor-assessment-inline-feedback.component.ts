@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -108,6 +108,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     public buildFeedbackTextForReview(feedback: Feedback): string {
-        return Feedback.buildFeedbackTextForReview(feedback);
+        return buildFeedbackTextForReview(feedback);
     }
 }
