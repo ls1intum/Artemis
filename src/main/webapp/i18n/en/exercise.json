@@ -206,7 +206,8 @@
                     "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistency of feedback associated to this grading instruction."
                 }
             },
-            "isUsedForTutorial": "Tutor needs to review"
+            "isUsedForTutorial": "Tutor needs to review",
+            "action": "Action"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

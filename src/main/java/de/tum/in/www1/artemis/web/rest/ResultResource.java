@@ -133,7 +133,7 @@ public class ResultResource {
      * @param requestBody build result of CI system
      * @return a ResponseEntity to the CI system
      */
-    @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
+    @PostMapping(Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
@@ -214,7 +214,7 @@ public class ResultResource {
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @GetMapping(value = "exercises/{exerciseId}/results")
+    @GetMapping("exercises/{exerciseId}/results")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
         long start = System.currentTimeMillis();
