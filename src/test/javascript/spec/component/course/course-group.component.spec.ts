@@ -17,23 +17,16 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import dayjs from 'dayjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
-import * as sinon from 'sinon';
-import { SinonStub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Course Management Detail Component', () => {
     let comp: CourseGroupComponent;
@@ -51,7 +44,7 @@ describe('Course Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 CourseGroupComponent,
                 MockComponent(DataTableComponent),
@@ -75,130 +68,141 @@ describe('Course Management Detail Component', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(UserService),
             ],
-        }).compileComponents();
-        fixture = TestBed.createComponent(CourseGroupComponent);
-        comp = fixture.componentInstance;
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
-        userService = fixture.debugElement.injector.get(UserService);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CourseGroupComponent);
+                comp = fixture.componentInstance;
+                courseService = TestBed.inject(CourseManagementService);
+                userService = TestBed.inject(UserService);
+            });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CourseGroupComponent).to.be.ok;
+        expect(CourseGroupComponent).not.toBe(null);
     });
 
     describe('OnInit', () => {
         it('should load all course group users', () => {
-            const getUsersStub = sinon.stub(courseService, 'getAllUsersInCourseGroup');
-            getUsersStub.returns(of(new HttpResponse({ body: [courseGroupUser] })));
+            const getUsersStub = jest.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
             fixture.detectChanges();
             comp.ngOnInit();
-            expect(comp.course).to.deep.equal(course);
-            expect(comp.courseGroup).to.deep.equal(courseGroup);
-            expect(getUsersStub).to.have.been.called;
+            expect(comp.course).toEqual(course);
+            expect(comp.courseGroup).toEqual(courseGroup);
+            expect(getUsersStub).toHaveBeenCalledTimes(2);
         });
     });
 
     describe('searchAllUsers', () => {
         let loginOrName: string;
         let loginStream: Observable<{ text: string; entities: User[] }>;
-        let searchStub: SinonStub;
+        let searchStub: jest.SpyInstance;
 
         beforeEach(() => {
             loginOrName = 'testLoginOrName';
             loginStream = of({ text: loginOrName, entities: [] });
-            searchStub = sinon.stub(userService, 'search');
+            searchStub = jest.spyOn(userService, 'search');
         });
 
         it('should search users for given login or name', () => {
-            searchStub.returns(of(new HttpResponse({ body: [courseGroupUser] })));
+            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).to.deep.equal([courseGroupUser]);
+                expect(users).toEqual([courseGroupUser]);
             });
-            expect(searchStub).to.have.been.calledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledTimes(1);
         });
 
         it('should set search no results if search returns no result', () => {
-            searchStub.returns(of(new HttpResponse({ body: [] })));
+            searchStub.mockReturnValue(of(new HttpResponse({ body: [] })));
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).to.deep.equal([]);
+                expect(users).toEqual([]);
             });
-            expect(comp.searchNoResults).to.equal(true);
-            expect(searchStub).to.have.been.calledWith(loginOrName);
+            expect(comp.searchNoResults).toBe(true);
+            expect(searchStub).toHaveBeenCalledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledTimes(1);
         });
 
         it('should return empty if search text is shorter than three characters', () => {
             loginStream = of({ text: 'ab', entities: [] });
-            searchStub.returns(of(new HttpResponse({ body: [courseGroupUser] })));
+            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).to.deep.equal([]);
+                expect(users).toEqual([]);
             });
-            expect(searchStub).not.to.have.been.called;
+            expect(searchStub).not.toHaveBeenCalled();
         });
 
         it('should return empty if search fails', () => {
-            searchStub.returns(throwError(new Error('')));
+            searchStub.mockReturnValue(throwError(new Error('')));
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).to.deep.equal([]);
+                expect(users).toEqual([]);
             });
-            expect(comp.searchFailed).to.be;
-            expect(searchStub).to.have.been.calledWith(loginOrName);
+            expect(comp.searchFailed).toBe(true);
+            expect(searchStub).toHaveBeenCalledWith(loginOrName);
+            expect(searchStub).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('onAutocompleteSelect', () => {
-        let addUserStub: sinon.SinonStub;
-        let fake: sinon.SinonSpy;
+        let addUserStub: jest.SpyInstance;
         let user: User;
 
         beforeEach(() => {
-            addUserStub = sinon.stub(courseService, 'addUserToCourseGroup');
-            addUserStub.returns(of(new HttpResponse()));
-            fake = sinon.fake();
+            addUserStub = jest.spyOn(courseService, 'addUserToCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
             user = courseGroupUser;
             comp.allCourseGroupUsers = [];
             comp.course = course;
             comp.courseGroup = courseGroup;
         });
+
         it('should add the selected user to course group', () => {
+            const fake = jest.fn();
             comp.onAutocompleteSelect(user, fake);
-            expect(addUserStub).to.have.been.calledWith(course.id, courseGroup, user.login);
-            expect(comp.allCourseGroupUsers).to.deep.equal([courseGroupUser]);
-            expect(fake).to.have.been.calledWithExactly(user);
+            expect(addUserStub).toHaveBeenCalledWith(course.id, courseGroup, user.login);
+            expect(addUserStub).toHaveBeenCalledTimes(1);
+            expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
+            expect(fake).toHaveBeenCalledWith(user);
+            expect(fake).toHaveBeenCalledTimes(1);
         });
+
         it('should call callback if user is already in the group', () => {
+            const fake = jest.fn();
             comp.allCourseGroupUsers = [user];
             comp.onAutocompleteSelect(user, fake);
-            expect(addUserStub).not.to.have.been.called;
-            expect(comp.allCourseGroupUsers).to.deep.equal([courseGroupUser]);
-            expect(fake).to.have.been.calledWithExactly(user);
+            expect(addUserStub).not.toHaveBeenCalled();
+            expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
+            expect(fake).toHaveBeenCalledWith(user);
+            expect(fake).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('removeFromGroup', () => {
-        let removeUserStub: sinon.SinonStub;
+        let removeUserStub: jest.SpyInstance;
 
         beforeEach(() => {
-            removeUserStub = sinon.stub(courseService, 'removeUserFromCourseGroup');
-            removeUserStub.returns(of(new HttpResponse()));
+            removeUserStub = jest.spyOn(courseService, 'removeUserFromCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
             comp.allCourseGroupUsers = [courseGroupUser, courseGroupUser2];
             comp.course = course;
             comp.courseGroup = courseGroup;
         });
+
         it('should given user from group', () => {
             comp.removeFromGroup(courseGroupUser);
-            expect(removeUserStub).to.have.been.calledWith(course.id, courseGroup, courseGroupUser.login);
-            expect(comp.allCourseGroupUsers).to.deep.equal([courseGroupUser2]);
+            expect(removeUserStub).toHaveBeenCalledWith(course.id, courseGroup, courseGroupUser.login);
+            expect(removeUserStub).toHaveBeenCalledTimes(1);
+            expect(comp.allCourseGroupUsers).toEqual([courseGroupUser2]);
         });
+
         it('should not do anything if users has no login', () => {
             const user = { ...courseGroupUser };
             delete user.login;
             comp.removeFromGroup(user);
-            expect(removeUserStub).not.to.have.been.called;
+            expect(removeUserStub).not.toHaveBeenCalled();
         });
     });
 
@@ -207,19 +211,21 @@ describe('Course Management Detail Component', () => {
             comp.courseGroup = CourseGroup.STUDENTS;
             comp.course = { ...course };
             comp.course.studentGroupName = 'testStudentGroupName';
-            expect(comp.courseGroupName).to.equal(comp.course.studentGroupName);
+            expect(comp.courseGroupName).toBe(comp.course.studentGroupName);
         });
+
         it('should return courses teachingAssistantGroupName if group is tutors', () => {
             comp.courseGroup = CourseGroup.TUTORS;
             comp.course = { ...course };
             comp.course.teachingAssistantGroupName = 'testTeachingAssistantGroupName';
-            expect(comp.courseGroupName).to.equal(comp.course.teachingAssistantGroupName);
+            expect(comp.courseGroupName).toBe(comp.course.teachingAssistantGroupName);
         });
+
         it('should return courses instructorGroupName if group is instructors', () => {
             comp.courseGroup = CourseGroup.INSTRUCTORS;
             comp.course = { ...course };
             comp.course.instructorGroupName = 'testInstructorGroupName';
-            expect(comp.courseGroupName).to.equal(comp.course.instructorGroupName);
+            expect(comp.courseGroupName).toBe(comp.course.instructorGroupName);
         });
     });
 
@@ -227,7 +233,7 @@ describe('Course Management Detail Component', () => {
         it('should change user size to given number', () => {
             const size = 5;
             comp.handleUsersSizeChange(size);
-            expect(comp.filteredUsersSize).to.equal(size);
+            expect(comp.filteredUsersSize).toBe(size);
         });
     });
 
@@ -235,19 +241,20 @@ describe('Course Management Detail Component', () => {
         it('should format user info into appropriate format', () => {
             const name = 'testName';
             const user = { ...courseGroupUser, name };
-            expect(comp.searchResultFormatter(user)).to.equal(`${name} (${user.login})`);
+            expect(comp.searchResultFormatter(user)).toBe(`${name} (${user.login})`);
         });
     });
 
     describe('searchTextFromUser', () => {
         it('converts a user to a string that can be searched for', () => {
             const user = courseGroupUser;
-            expect(comp.searchTextFromUser(user)).to.equal(user.login);
+            expect(comp.searchTextFromUser(user)).toBe(user.login);
         });
+
         it('should return empty string if user does not have login', () => {
             const user = { ...courseGroupUser };
             delete user.login;
-            expect(comp.searchTextFromUser(user)).to.equal('');
+            expect(comp.searchTextFromUser(user)).toBe('');
         });
     });
 });

@@ -26,6 +26,7 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -376,6 +377,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.releaseDate = undefined;
         this.programmingExercise.shortName = undefined;
         this.programmingExercise.title = undefined;
+        if (this.programmingExercise.submissionPolicy) {
+            this.programmingExercise.submissionPolicy.id = undefined;
+        }
     }
 
     /**
@@ -425,6 +429,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;
             }
+        }
+
+        // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
+        if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
+            this.programmingExercise.submissionPolicy = undefined;
         }
 
         Exercise.sanitize(this.programmingExercise);
