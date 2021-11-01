@@ -1,10 +1,8 @@
-import * as chai from 'chai';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -12,11 +10,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { stub } from 'sinon';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('DoughnutChartComponent', () => {
     let fixture: ComponentFixture<DoughnutChartComponent>;
@@ -29,7 +23,7 @@ describe('DoughnutChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ChartsModule],
+            imports: [ArtemisTestModule, MockModule(ChartsModule)],
             declarations: [DoughnutChartComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [
                 { provide: Router, useClass: MockRouter },
@@ -58,42 +52,42 @@ describe('DoughnutChartComponent', () => {
         component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
         component.ngOnChanges();
         const expected = [absolute, max - absolute];
-        expect(component.stats).to.deep.equal(expected);
-        expect(component.doughnutChartData[0].data).to.deep.equal(expected);
+        expect(component.stats).toEqual(expected);
+        expect(component.doughnutChartData[0].data).toEqual(expected);
 
         component.currentMax = 0;
         component.ngOnChanges();
-        expect(component.doughnutChartData[0].data).to.deep.equal([-1, 0]);
+        expect(component.doughnutChartData[0].data).toEqual([-1, 0]);
     });
     describe('setting titles for different chart types', () => {
         it('should set title for average exercise score', () => {
             component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).to.deep.equal('averageScore');
-            expect(component.titleLink).to.deep.equal([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/scores`]);
+            expect(component.doughnutChartTitle).toEqual('averageScore');
+            expect(component.titleLink).toEqual([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/scores`]);
         });
 
         it('should set title for participations', () => {
             component.contentType = DoughnutChartType.PARTICIPATIONS;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).to.deep.equal('participationRate');
-            expect(component.titleLink).to.deep.equal([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/participations`]);
+            expect(component.doughnutChartTitle).toEqual('participationRate');
+            expect(component.titleLink).toEqual([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/participations`]);
         });
 
         it('should set title for question chart', () => {
             component.contentType = DoughnutChartType.QUESTIONS;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).to.deep.equal('answered_posts');
-            expect(component.titleLink).to.deep.equal([`/courses/${component.course.id}/exercises/${component.exerciseId}`]);
+            expect(component.doughnutChartTitle).toEqual('resolved_posts');
+            expect(component.titleLink).toEqual([`/courses/${component.course.id}/exercises/${component.exerciseId}`]);
         });
     });
 
     it('should open corresponding page', () => {
-        const navigateSpy = stub(router, 'navigate');
+        const navigateSpy = jest.spyOn(router, 'navigate');
         component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
         component.ngOnInit();
         component.openCorrespondingPage();
 
-        expect(navigateSpy).to.have.been.calledOnce;
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 });

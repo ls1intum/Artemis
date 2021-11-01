@@ -205,7 +205,9 @@
                     "deleteFeedback": "Lösche zusätzlich sämtliches Feedback, das mit den gelöschten Benotungshinweisen zusammenhängt.",
                     "information": "Wenn du keine Neubewertung auslösen möchtest, können wir die Konsistenz des Feedbacks, das mit dem Benotungshinweis zusammenhängt, nicht mehr garantieren."
                 }
-            }
+            },
+            "isUsedForTutorial": "Tutor:in muss überprüfen",
+            "action": "Aktion"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

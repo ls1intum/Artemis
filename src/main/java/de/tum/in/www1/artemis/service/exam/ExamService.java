@@ -188,6 +188,33 @@ public class ExamService {
     }
 
     /**
+     * Deletes all elements associated with the exam but not the exam itself in order to reset it.
+     *
+     * The deleted elements are:
+     * <ul>
+     *     <li>All StudentExams</li>
+     *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
+           but not the exercises themself. See {@link ExerciseService#reset}</li>
+     * </ul>
+     * @param examId the ID of the exam to be reset
+     */
+    public void reset(@NotNull Long examId) {
+        User user = userRepository.getUser();
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.reset(exercise);
+                }
+            }
+        }
+        studentExamRepository.deleteAll(exam.getStudentExams());
+    }
+
+    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam

@@ -36,16 +36,29 @@
                     {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
                 </span>
                 <!--Setting Specific Properties-->
-                <div class="form-check border-bottom">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        [checked]="setting.webapp"
-                        id="{{ setting.settingId }}"
-                        value="{{ setting.webapp }}"
-                        (click)="toggleSetting($event)"
-                    />
-                    <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
+                <div class="d-flex border-bottom">
+                    <div *ngIf="setting.webapp != undefined && (setting.webappSupport == undefined || setting.webappSupport)" class="form-check pe-3">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="setting.webapp"
+                            id="{{ setting.settingId }}"
+                            value="{{ setting.webapp }}"
+                            (click)="toggleSetting($event, true)"
+                        />
+                        <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
+                    </div>
+                    <div *ngIf="setting.email != undefined && setting.emailSupport" class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="setting.email"
+                            id="{{ setting.settingId }} email"
+                            value="{{ setting.email }}"
+                            (click)="toggleSetting($event, false)"
+                        />
+                        <label class="form-check-label" for="{{ setting.settingId }} email">Email</label>
+                    </div>
                 </div>
             </div>
         </div>
