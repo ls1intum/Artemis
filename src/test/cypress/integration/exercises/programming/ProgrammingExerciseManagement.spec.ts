@@ -15,9 +15,6 @@ const navigationBar = artemis.pageobjects.navigationBar;
 const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 const courseExercises = artemis.pageobjects.courseManagementExercises;
 
-// Selectors
-const datepickerButtons = '.owl-dt-container-control-button';
-
 describe('Programming Exercise Management', () => {
     let course: any;
 
