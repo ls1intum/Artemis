@@ -12,7 +12,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -276,14 +276,6 @@ export class CourseManagementService {
      */
     delete(courseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
-    }
-
-    /**
-     * returns the stats of the course with the provided unique identifier for the instructor dashboard
-     * @param courseId - the id of the course
-     */
-    getStatsForInstructors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 
     /**
