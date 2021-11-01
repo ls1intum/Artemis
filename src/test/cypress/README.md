@@ -1,14 +1,14 @@
 # Artemis Cypress test suite
-This folder contains the End-to-End testing test suite for Artemis.
-The test suite only contains system tests. Therefore it cannot be run out of the box and has some requirements. Those will be listed in the following.
+This folder contains the End-to-End test suite for Artemis.
+The test suite only contains End-to-End tests. Therefore it cannot be run out of the box and has some requirements. Those will be listed in the following.
 
 # Requirements
-1. Running (and reachable) test environment. The Artemis Server and Client have to be deployed somewhere, where the tests can access them. This can be a local setup or a remote one (the Artemis test servers for example)
-2. Pre-created users on the test environment. See the [corresponding section](#pre-created-users) below
+1. Running (and reachable) test environment: The Artemis Server and Client have to be deployed somewhere, where the tests can access them. This can be a local setup or a remote one (the Artemis test servers for example)
+2. Prepared user accounts on the test environment: See the [corresponding section](#prepared-users) below
 3. Node and Chrome installed on the machine, which executes the test suite
 
-## Pre-created users
-Currently the test suite does not automatically create the required users with their roles, but expects existing ones. There are several users the tests require:
+## Prepared users
+Currently the test suite does not automatically create the required users with their roles, but expects existing ones. There are several user accounts the test suite requires:
 |        ROLE        |     ID(s)     | AMOUNT |
 |:------------------:|:-------------:|:------:|
 |        `ADMIN`       |       -       |    1   |
@@ -16,7 +16,7 @@ Currently the test suite does not automatically create the required users with t
 | `TEACHING ASSISTANT` |      101      |    1   |
 |     `INSTRUCTOR`     |      103      |    1   |
 
-The test suite expects two templates (one for usernames and one for passwords) in its configuration, which contain the text `USERID`. When authenticating as one of the non-admin users the test will substitute the `USERID` text in the username and password templates with the required ID of the user.
+The test suite expects two templates (one for usernames and one for passwords) in its configuration (see the [general configuration section](#general-configuration)), which contain the text `USERID`. When authenticating as one of the non-admin users a test will substitute the `USERID` text in the username and password templates with the required ID (seen in the table) of the user.
 
 For example a basic template for usernames and passwords could be `user_USERID` and `password_USERID`. A test, which needed to authenticate as `INSTRUCTOR` would then use the credentials `user_103`:`password_103` for authentication.
 
@@ -30,12 +30,15 @@ Once the test environment is running and the required users are added in the tes
 1. `cypress.json`: Contains general settings for Cypress
 2. `cypress.env.json`: Contains settings specific for Artemis
 
+Both configuration files can be found in the cypress subfolder (`src/test/cypress`).
+
 In the following we will explain what setting in the configuration files has to be adjusted to be able to execute the test suite:
+
 For `cypress.json`:
 * `baseUrl`: The url pointing to the test environment here (make sure that there is no trailing slash)
 
 For `cypress.env.json`:
-* `username`: The username template with the `USERID` here (as described in the [pre-created users section](#pre-created-users))
+* `username`: The username template (as described in the [pre-created users section](#pre-created-users))
 * `password`: The password template
 * `adminUsername`: The admin username (no template)
 * `adminPassword`: The admin password (no template)
@@ -43,7 +46,7 @@ For `cypress.env.json`:
 ### Additional configuration for test environments using the Bamboo + Bitbucket setup
 On Bamboo + Bitbucket setups Artemis has issues with the group synchronization if a new course is created and immediately afterwards a programming exercise is created. This requires the tests to wait for over one minute in each test spec, which is related to programming exercises. This increases the total execution time of the test suite by a lot. The issue can be avoided by using already existing user groups in the course creation.
 
-Currently the tests require one pre-created user group for the roles `USER`, `TEACHING ASSISTANT`, `EDITOR` and `INSTRUCTOR` in the user management system of the test environment. Each group has its own setting in the configuration file. The `allowGroupCustomization` setting has to be set to `true` otherwise the tests will not use the pre-created user groups (resulting in a failure of all programming exercise related tests on a Bamboo + Bitbucket setup).
+Currently the tests require one pre-created user group for the roles `USER`, `TEACHING ASSISTANT`, `EDITOR` and `INSTRUCTOR` in the user management system of the test environment. Each group has its own setting in the configuration file. The `allowGroupCustomization` setting (found in the `cypress.env.json` file) has to be set to `true`. Otherwise the tests will not use the pre-created user groups (resulting in a failure of all programming exercise related tests on a Bamboo + Bitbucket setup).
 * `allowGroupCustomization`: `true`
 * `studentGroupName`: The group name for students (e.g. `artemis-e2etest-students`)
 * `tutorGroupName`: The group name for tutors (e.g. `artemis-e2etest-tutors`)
@@ -51,7 +54,7 @@ Currently the tests require one pre-created user group for the roles `USER`, `TE
 * `instructorGroupName`: The group name for tutors (e.g. `artemis-e2etest-instructors`)
 
 ### Example configurations
-In the following we will show example configurations of the test suite for imaginary Artemis setups. For readability we will leave out default settings, which are not mandatory to be adjusted.
+In the following we show example configurations of the test suite for imaginary Artemis setups. For readability we will leave out settings in the configuration files, which do not require the user to adjust them in order to run the tests.
 #### Test environment using Gitlab + Jenkins
 `cypress.json`:
 ```json
