@@ -529,7 +529,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
-        // Call programming-exercises/new-result which include build log entries
+        // Call programming-exercises/new-result which includes build log entries
         var buildLog = new BambooBuildLogDTO();
         buildLog.setLog("[ERROR] COMPILATION ERROR missing something");
         buildLog.setDate(ZonedDateTime.now().minusMinutes(1));
