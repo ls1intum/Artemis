@@ -1,9 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
-import { spy, stub } from 'sinon';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -14,16 +10,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionState } from 'app/shared/orion/orion';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('OrionExerciseAssessmentDashboardComponent', () => {
     let comp: OrionExerciseAssessmentDashboardComponent;
@@ -50,8 +42,6 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionAssessmentService),
                 MockProvider(ExerciseService),
-                MockProvider(AlertService),
-                MockProvider(TranslateService),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ exerciseId: 10 }) } } },
             ],
         })
@@ -63,67 +53,75 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 comp.exercise = programmingExercise;
             });
     });
+
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('openAssessmentInOrion should call connector', () => {
-        const assessExerciseSpy = spy(orionConnectorService, 'assessExercise');
+        const assessExerciseSpy = jest.spyOn(orionConnectorService, 'assessExercise');
 
         comp.openAssessmentInOrion();
 
-        expect(assessExerciseSpy).to.have.been.calledOnceWithExactly(programmingExercise);
+        expect(assessExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(assessExerciseSpy).toHaveBeenCalledWith(programmingExercise);
     });
     it('downloadSubmissionInOrion should call service', () => {
-        const downloadSubmissionSpy = spy(TestBed.inject(OrionAssessmentService), 'downloadSubmissionInOrion');
+        const downloadSubmissionSpy = jest.spyOn(TestBed.inject(OrionAssessmentService), 'downloadSubmissionInOrion');
 
         comp.downloadSubmissionInOrion(programmingSubmission, 2);
 
-        expect(downloadSubmissionSpy).to.have.been.calledOnceWith(comp.exerciseId, programmingSubmission, 2);
+        expect(downloadSubmissionSpy).toHaveBeenCalledTimes(1);
+        expect(downloadSubmissionSpy).toHaveBeenCalledWith(comp.exerciseId, programmingSubmission, 2);
     });
     it('ngOnInit should subscribe correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
         const stateObservable = new BehaviorSubject(orionState);
-        const orionStateStub = stub(orionConnectorService, 'state');
-        orionStateStub.returns(stateObservable);
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
+        orionStateStub.mockReturnValue(stateObservable);
 
         const response = of(new HttpResponse({ body: programmingExercise, status: 200 }));
-        const getForTutorsStub = stub(TestBed.inject(ExerciseService), 'getForTutors');
-        getForTutorsStub.returns(response);
+        const getForTutorsStub = jest.spyOn(TestBed.inject(ExerciseService), 'getForTutors');
+        getForTutorsStub.mockReturnValue(response);
 
         comp.ngOnInit();
         tick();
 
-        expect(comp.exerciseId).to.be.equals(10);
-        expect(comp.exercise).to.be.deep.equals(programmingExercise);
-        expect(comp.orionState).to.be.deep.equals(orionState);
+        expect(comp.exerciseId).toBe(10);
+        expect(comp.exercise).toEqual(programmingExercise);
+        expect(comp.orionState).toEqual(orionState);
 
-        expect(getForTutorsStub).to.have.been.calledOnceWithExactly(10);
-        expect(orionStateStub).to.have.been.calledOnceWithExactly();
+        expect(getForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getForTutorsStub).toHaveBeenCalledWith(10);
+        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledWith();
     }));
     it('ngOnInit should deal with error correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
         const stateObservable = new BehaviorSubject(orionState);
-        const orionStateStub = stub(orionConnectorService, 'state');
-        orionStateStub.returns(stateObservable);
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
+        orionStateStub.mockReturnValue(stateObservable);
 
         const error = new HttpErrorResponse({ status: 400 });
-        const getForTutorsStub = stub(TestBed.inject(ExerciseService), 'getForTutors');
-        getForTutorsStub.returns(throwError(error));
+        const getForTutorsStub = jest.spyOn(TestBed.inject(ExerciseService), 'getForTutors');
+        getForTutorsStub.mockReturnValue(throwError(error));
 
-        const errorSpy = spy(TestBed.inject(AlertService), 'error');
+        const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
         // counter the initialization in beforeEach
         comp.exercise = undefined as any;
 
         comp.ngOnInit();
         tick();
 
-        expect(comp.exerciseId).to.be.equals(10);
-        expect(comp.exercise).to.be.deep.equals(undefined);
-        expect(comp.orionState).to.be.deep.equals(orionState);
+        expect(comp.exerciseId).toBe(10);
+        expect(comp.exercise).toBe(undefined);
+        expect(comp.orionState).toEqual(orionState);
 
-        expect(getForTutorsStub).to.have.been.calledOnceWithExactly(10);
-        expect(orionStateStub).to.have.been.calledOnceWithExactly();
-        expect(errorSpy).to.have.been.calledOnceWithExactly('error.http.400');
+        expect(getForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getForTutorsStub).toHaveBeenCalledWith(10);
+        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledWith();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
     }));
 });

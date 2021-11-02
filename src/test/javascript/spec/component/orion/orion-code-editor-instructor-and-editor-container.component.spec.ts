@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
 import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -8,7 +5,6 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { TestBed } from '@angular/core/testing';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { spy, stub } from 'sinon';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
@@ -16,13 +12,16 @@ import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject } from 'rxjs';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;
@@ -46,9 +45,14 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
             providers: [
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionBuildAndTestService),
-                MockProvider(TranslateService),
-                MockProvider(LocalStorageService),
-                MockProvider(SessionStorageService),
+                { provide: Router, useClass: MockRouter },
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(CourseExerciseService),
+                MockProvider(DomainService),
+                MockProvider(ProgrammingExerciseParticipationService),
+                MockProvider(ExerciseHintService),
+                MockProvider(Location),
+                MockProvider(ParticipationService),
             ],
         })
             .compileComponents()
@@ -57,41 +61,46 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
                 orionConnectorService = TestBed.inject(OrionConnectorService);
             });
     });
+
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('applyDomainChange should inform connector', () => {
-        const selectRepositorySpy = spy(orionConnectorService, 'selectRepository');
+        const selectRepositorySpy = jest.spyOn(orionConnectorService, 'selectRepository');
 
         // @ts-ignore
         comp.applyDomainChange({}, {});
 
-        expect(selectRepositorySpy).to.have.been.calledOnceWithExactly(REPOSITORY.TEST);
+        expect(selectRepositorySpy).toHaveBeenCalledTimes(1);
+        expect(selectRepositorySpy).toHaveBeenCalledWith(REPOSITORY.TEST);
     });
     it('ngOnInit should subscribe to orionState', () => {
-        const orionStateStub = stub(orionConnectorService, 'state');
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
         const orionState = { opened: 40, building: false, cloning: false } as any;
-        orionStateStub.returns(new BehaviorSubject(orionState));
+        orionStateStub.mockReturnValue(new BehaviorSubject(orionState));
 
         comp.ngOnInit();
 
-        expect(orionStateStub).to.have.been.calledOnceWithExactly();
-        expect(comp.orionState).to.be.deep.equals(orionState);
+        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledWith();
+        expect(comp.orionState).toEqual(orionState);
     });
     it('buildLocally should call connector', () => {
-        const buildLocallySpy = spy(orionConnectorService, 'buildAndTestLocally');
-        const isBuildingSpy = spy(orionConnectorService, 'isBuilding');
+        const buildLocallySpy = jest.spyOn(orionConnectorService, 'buildAndTestLocally');
+        const isBuildingSpy = jest.spyOn(orionConnectorService, 'isBuilding');
 
         comp.buildLocally();
 
-        expect(isBuildingSpy).to.have.been.calledOnceWithExactly(true);
-        expect(buildLocallySpy).to.have.been.calledOnceWithExactly();
+        expect(isBuildingSpy).toHaveBeenCalledTimes(1);
+        expect(isBuildingSpy).toHaveBeenCalledWith(true);
+        expect(buildLocallySpy).toHaveBeenCalledTimes(1);
+        expect(buildLocallySpy).toHaveBeenCalledWith();
     });
     it('submit should call connector', () => {
-        const submitSpy = spy(orionConnectorService, 'submit');
-        const isBuildingSpy = spy(orionConnectorService, 'isBuilding');
-        const listenOnBuildOutputSpy = spy(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
+        const submitSpy = jest.spyOn(orionConnectorService, 'submit');
+        const isBuildingSpy = jest.spyOn(orionConnectorService, 'isBuilding');
+        const listenOnBuildOutputSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
 
         const exercise = { id: 5 } as any;
         const participation = { id: 10 } as any;
@@ -101,8 +110,11 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
         comp.submit();
 
-        expect(submitSpy).to.have.been.calledOnceWithExactly();
-        expect(isBuildingSpy).to.have.been.calledOnceWithExactly(true);
-        expect(listenOnBuildOutputSpy).to.have.been.calledOnceWithExactly(exercise, participation);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledWith();
+        expect(isBuildingSpy).toHaveBeenCalledTimes(1);
+        expect(isBuildingSpy).toHaveBeenCalledWith(true);
+        expect(listenOnBuildOutputSpy).toHaveBeenCalledTimes(1);
+        expect(listenOnBuildOutputSpy).toHaveBeenCalledWith(exercise, participation);
     });
 });
