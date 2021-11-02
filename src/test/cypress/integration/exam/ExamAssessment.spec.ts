@@ -156,7 +156,7 @@ describe('Exam assessment', () => {
 
             it('Assesses quiz automatically', () => {
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('.question-options').contains('points').should('be.visible');
+                cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
             });
         });
     });
