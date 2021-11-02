@@ -1,9 +1,0 @@
-/*
-* Bootstrap overrides https://getbootstrap.com/docs/4.0/getting-started/theming/
-* All values defined in bootstrap source
-* https://github.com/twbs/bootstrap/blob/v4-dev/scss/_variables.scss can be overwritten here
-* Make sure not to add !default to values here
-*/
-
-@import 'node_modules/bootstrap/scss/bootstrap';
-@import 'src/main/webapp/content/scss/artemis-variables';
