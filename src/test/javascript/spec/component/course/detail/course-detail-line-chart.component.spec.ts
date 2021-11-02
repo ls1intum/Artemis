@@ -2,7 +2,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import sinonChai from 'sinon-chai';
@@ -26,7 +26,7 @@ describe('CourseDetailLineChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgxChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)],
             declarations: [CourseDetailLineChartComponent,
                 MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -67,19 +67,19 @@ describe('CourseDetailLineChartComponent', () => {
         for (let i = 0; i < 16; i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).to.equal(initialStats[i]);
         }
-        expect(component.absoluteSeries.length).to.equal(16);
+        expect(component.absoluteSeries.length).to.equal(initialStats.length);
 
         component.switchTimeSpan(true);
 
         for (let i = 0; i < 16; i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).to.equal(graphData[i]);
         }
-        expect(component.data[0].series.length).to.equal(16);
+        expect(component.data[0].series.length).to.equal(initialStats.length);
 
         component.numberOfStudentsInCourse = 0;
         component.switchTimeSpan(true);
 
-        expect(component.data[0].series.length).to.equal(16);
+        expect(component.data[0].series.length).to.equal(initialStats.length);
         for (let i = 0; i < 16; i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).to.equal(0);
         }
