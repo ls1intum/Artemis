@@ -224,10 +224,7 @@ tasks.named("dependencyUpdates").configure {
 
 gradle.taskGraph.whenReady { graph ->
     def tasks = gradle.startParameter.taskNames.toString()
-    def hasRootGatewayTask = tasks.contains(":gateway:bootWar") || tasks.contains(":gateway:executeTests") || tasks.contains(":gateway:jacocoTestReport")
-        || tasks.contains(":gateway:spotlessCheck")  || tasks.contains(":gateway:spotlessApply")  || tasks.contains(":gateway:dependencyUpdates")
-        || tasks.contains(":gateway:checkstyleMain")  || tasks.contains(":gateway:jacocoTestCoverageVerification")  || tasks.contains(":gateway:test")
-        || tasks.contains(":gateway:bootRun") || tasks.contains(":gateway:buildJarForDocker") || tasks.contains(":gateway:cleanResources")
+    def hasRootGatewayTask = tasks.contains(":gateway:")
 
     if (!hasRootGatewayTask) {
         graph.getAllTasks().each { task ->
