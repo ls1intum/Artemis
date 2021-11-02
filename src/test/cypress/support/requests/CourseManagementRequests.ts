@@ -379,6 +379,13 @@ export class CourseManagementRequests {
         });
     }
 
+    evaluateExamQuizzes(exam: any) {
+        return cy.request({
+            url: `${COURSE_BASE}${exam.course.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            method: POST,
+        });
+    }
+
     makeTextExerciseSubmission(exerciseId: number, text: string) {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
