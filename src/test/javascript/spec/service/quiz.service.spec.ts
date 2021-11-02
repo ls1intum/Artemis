@@ -146,6 +146,13 @@ describe('Quiz Service', () => {
     };
     const shuffledAnswers = [
         {
+            explanation: 'Explanation for why this is correct',
+            hint: 'A hint',
+            invalid: false,
+            isCorrect: true,
+            text: 'Correct answer 2',
+        },
+        {
             explanation: 'Explanation for why this is wrong',
             hint: 'A hint',
             invalid: false,
@@ -166,13 +173,6 @@ describe('Quiz Service', () => {
             isCorrect: true,
             text: 'Correct answer 1',
         },
-        {
-            explanation: 'Explanation for why this is correct',
-            hint: 'A hint',
-            invalid: false,
-            isCorrect: true,
-            text: 'Correct answer 2',
-        },
     ];
     beforeEach(() => {
         injector = getTestBed();
@@ -184,18 +184,16 @@ describe('Quiz Service', () => {
         jest.spyOn(global.Math, 'random').mockRestore();
     });
 
+    it('shuffles order of Answer options', () => {
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [multipleChoice] });
+        service.randomizeOrder(quizExercise);
+        expect(quizExercise.quizQuestions[0].answerOptions).toStrictEqual(shuffledAnswers);
+    });
+
     it('switches order of Quiz Questions', () => {
         const quizExercise = Object.assign({}, quiz, { quizQuestions: [shortAnswer, multipleChoice] });
         const expected = Object.assign({}, quiz, { quizQuestions: [multipleChoice, shortAnswer] });
         service.randomizeOrder(quizExercise);
         expect(quizExercise).toStrictEqual(expected);
-    });
-
-    it('shuffles order of Answer options', () => {
-        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [multipleChoice] });
-        const expected = JSON.parse(JSON.stringify(quizExercise));
-        expected.quizQuestions[0].answerOptions = shuffledAnswers;
-        service.randomizeOrder(quizExercise);
-        expect(quizExercise.quizQuestions[0].answerOptions).toStrictEqual(shuffledAnswers);
     });
 });
