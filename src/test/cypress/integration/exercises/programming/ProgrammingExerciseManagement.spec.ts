@@ -15,9 +15,6 @@ const navigationBar = artemis.pageobjects.navigationBar;
 const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 const courseExercises = artemis.pageobjects.courseManagementExercises;
 
-// Selectors
-const datepickerButtons = '.owl-dt-container-control-button';
-
 describe('Programming Exercise Management', () => {
     let course: any;
 
@@ -75,15 +72,6 @@ describe('Programming Exercise Management', () => {
             programmingCreation.setTitle(exerciseTitle);
             programmingCreation.setShortName('cypress' + generateUUID());
             programmingCreation.setPackageName('de.test');
-
-            // Set release and due dates via owl date picker
-            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
-            cy.get(datepickerButtons).wait(500).eq(1).click().wait(500);
-            cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click({ force: true });
-            cy.get('.owl-dt-control-arrow-button').eq(1).click();
-            cy.get('.owl-dt-day-3').eq(2).click();
-            cy.get(datepickerButtons).eq(1).click();
-
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();
             programmingCreation.generate().its('response.statusCode').should('eq', 201);

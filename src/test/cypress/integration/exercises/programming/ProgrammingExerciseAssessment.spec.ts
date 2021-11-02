@@ -57,7 +57,7 @@ describe('Programming exercise assessment', () => {
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingAssessment.submit();
+        programmingAssessment.submit().its('response.statusCode').should('eq', 200);
     });
 
     describe('Feedback', () => {
