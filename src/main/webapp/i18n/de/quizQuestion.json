@@ -34,7 +34,7 @@
             "hideSampleSolution": "Blende die Musterlösung aus",
             "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus.",
             "longQuestion": "Trage wenn notwendig deine ausführliche Frage ein",
-            "hintText": "Füge hier einen hint hinzu (sichtbar während des Quizzes über den ?-Knopf)"
+            "hintText": "Füge hier einen Hinweis hinzu (sichtbar während des Quizzes über den ?-Knopf)"
         }
     }
 }
