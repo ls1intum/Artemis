@@ -26,7 +26,7 @@ export enum Graphs {
     // Course Statistics
     AVERAGE_SCORE = 'AVERAGE_SCORE',
     POSTS = 'POSTS',
-    ANSWERED_POSTS = 'ANSWERED_POSTS',
+    RESOLVED_POSTS = 'RESOLVED_POSTS',
 }
 
 export enum StatisticsView {

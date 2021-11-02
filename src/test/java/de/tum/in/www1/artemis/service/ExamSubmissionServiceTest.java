@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -88,7 +88,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get()).isEqualTo(forbidden());
+        assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
         // Should fail when submission is made after (start date + working time)
@@ -96,7 +96,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get()).isEqualTo(forbidden());
+        assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
         // Should pass if submission is made in time
@@ -114,7 +114,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get()).isEqualTo(forbidden());
+        assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
     }
@@ -135,7 +135,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         studentExamRepository.save(studentExam);
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get()).isEqualTo(forbidden());
+        assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
     }

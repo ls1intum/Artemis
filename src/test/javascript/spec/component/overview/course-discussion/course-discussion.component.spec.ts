@@ -5,13 +5,13 @@ import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postin
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,10 +26,13 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     metisCourse,
     metisCoursePosts,
@@ -69,19 +72,23 @@ describe('CourseDiscussionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
                 FormBuilder,
+                MockProvider(SessionStorageService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
             declarations: [
                 CourseDiscussionComponent,
                 MockComponent(PostingsThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
+                MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(ButtonComponent),

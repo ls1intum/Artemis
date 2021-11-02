@@ -411,8 +411,8 @@ public class TextAssessmentResource extends AssessmentResource {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();
-        if(!textExercise.getId().equals(exerciseId)){
-            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId "+ exerciseId +" !");
+        if (!textExercise.getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId " + exerciseId + " !");
         }
 
         // If the user is not at least a tutor for this exercise, return error
