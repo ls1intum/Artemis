@@ -143,11 +143,11 @@ public final class SecurityUtils {
     }
 
     /**
-     * Get the JWT of the current user.
+     * Get the JWT for the current security context.
      *
-     * @return the JWT of the current user.
+     * @return the JWT for the current security context.
      */
-    public static Optional<String> getCurrentUserJWT() {
+    public static Optional<String> getCurrentSecurityContextJWT() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication()).filter(authentication -> authentication.getCredentials() instanceof String)
                 .map(authentication -> (String) authentication.getCredentials());

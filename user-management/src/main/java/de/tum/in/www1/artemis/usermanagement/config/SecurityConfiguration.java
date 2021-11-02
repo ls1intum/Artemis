@@ -65,13 +65,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     /**
-     * initialize the security configuration by specifying that the (internal) user details service and (if available) an external authentication provider (e.g. JIRA)
+     * Initialize the security configuration by specifying that the (internal) user details service and (if available) an external authentication provider (e.g. JIRA)
      * should be used
      */
     @PostConstruct
     public void init() {
         try {
-            // here we configure 2 authentication provider: 1) the user details service for internal authentication using the Artemis database...
+            // Here we configure 2 authentication providers: 1) the user details service for internal authentication using the Artemis database...
             authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
             // ... and 2), if specified a remote (or external) user authentication provider (e.g. JIRA)
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
