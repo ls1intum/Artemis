@@ -1,5 +1,5 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
-@import '~bootstrap/scss/_variables.scss'; // includes $grid-breakpoints
+@import '~bootstrap/scss/variables'; // includes $grid-breakpoints
 
 .text-editor-grid {
     display: grid;
