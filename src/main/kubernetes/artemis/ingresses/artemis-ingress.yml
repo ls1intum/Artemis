@@ -11,7 +11,7 @@ spec:
   - host: artemis-app.artemis.rancher.localhost
     http:
       paths:
-      - backend:
+      - server:
           serviceName: artemis
           servicePort: 8080
         pathType: ImplementationSpecific

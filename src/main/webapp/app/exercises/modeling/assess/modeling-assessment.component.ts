@@ -4,8 +4,10 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
+import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import $ from 'jquery';
 import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 export interface DropInfo {
@@ -34,6 +36,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() elementCounts?: OtherModelElementCount[];
+    @Input() course?: Course;
 
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {
@@ -47,7 +50,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
     @Input() title: string;
-    @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
+    @Input() resizeOptions: { horizontalResize?: boolean; verticalResize?: boolean };
     @Input() readOnly = false;
     @Input() enablePopups = true;
     @Input() displayPoints = true;
@@ -74,16 +77,13 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
-            if (this.resizeOptions.initialWidth) {
-                this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
-            }
             interact('.resizable')
                 .resizable({
-                    edges: { left: false, right: '.draggable-right', bottom: false, top: false },
+                    edges: { left: false, right: this.resizeOptions.horizontalResize && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
                     modifiers: [
                         interact.modifiers!.restrictSize({
-                            min: { width: 15, height: 0 },
-                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 2000 },
+                            min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
+                            max: { width: MODELING_EDITOR_MAX_WIDTH, height: MODELING_EDITOR_MAX_HEIGHT },
                         }),
                     ],
                     inertia: true,
@@ -96,7 +96,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 })
                 .on('resizemove', (event: any) => {
                     const target = event.target;
-                    target.style.width = event.rect.width + 'px';
+                    if (this.resizeOptions.horizontalResize) {
+                        target.style.width = event.rect.width + 'px';
+                    }
+                    if (this.resizeOptions.verticalResize) {
+                        target.style.height = event.rect.height + 'px';
+                    }
                 });
         }
     }

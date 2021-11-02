@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -613,7 +614,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             // Latest submission might be illegal
-            submissions = participations.stream().map(StudentParticipation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+            submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
         }
@@ -651,7 +652,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatesLegalOrIllegalSubmission)
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));

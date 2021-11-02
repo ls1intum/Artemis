@@ -31,11 +31,12 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/browser';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz',
@@ -50,7 +51,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
-    readonly round = round;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
@@ -717,14 +719,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // disable automatic websocket reconnect
             // this.jhiWebsocketService.disableReconnect();
 
+            const course = this.quizExercise.course || this.quizExercise?.exerciseGroup?.exam?.course;
+
             // assign user score (limit decimal places to 2)
-            this.userScore = this.submission.scoreInPoints ? round(this.submission.scoreInPoints, 2) : 0;
+            this.userScore = this.submission.scoreInPoints ? roundScoreSpecifiedByCourseSettings(this.submission.scoreInPoints, course) : 0;
 
             // create dictionary with scores for each question
             this.questionScores = {};
             this.submission.submittedAnswers!.forEach((submittedAnswer) => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.quizQuestion!.id!] = round(submittedAnswer.scoreInPoints!, 2);
+                this.questionScores[submittedAnswer.quizQuestion!.id!] = roundScoreSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
         }
     }

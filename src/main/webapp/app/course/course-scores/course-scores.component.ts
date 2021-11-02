@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -43,8 +43,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
 
-    // Expose the function to the template
-    readonly round = round;
+    // Expose the functions to the template
+    readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
@@ -198,8 +198,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
         }
         for (const student of this.students) {
-            const overAllPoints = round(student.overallPoints, 1);
-            const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+            const overAllPoints = roundScoreSpecifiedByCourseSettings(student.overallPoints, this.course);
+            const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
             const regularCalculation = {
                 scoreAchieved: overallScore,
                 pointsAchieved: overAllPoints,
@@ -213,8 +213,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
-                courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
+                courseScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(courseScoreDTO.scoreAchieved, this.course);
+                courseScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(courseScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -319,7 +319,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     // In the client, these are now displayed rounded as 1.1 points.
                     // If the student adds up the displayed points, he gets a total of 5.5 points.
                     // In order to get the same total result as the student, we have to round before summing.
-                    const pointsAchievedByStudentInExercise = round((result.score! * relevantMaxPoints) / 100, 1);
+                    const pointsAchievedByStudentInExercise = roundScoreSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
                     student.overallPoints += pointsAchievedByStudentInExercise;
                     student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
                     student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
@@ -399,6 +399,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Localizes a number, e.g. switching the decimal separator
+     */
+    localize(numberToLocalize: number): string {
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course.accuracyOfScores!);
+    }
+
+    /**
+     * Localizes a percent number, e.g. switching the decimal separator
+     */
+    localizePercent(numberToLocalize: number): string {
+        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course.accuracyOfScores!);
+    }
+
+    /**
      * Method for exporting the csv with the needed data
      */
     exportResults() {
@@ -437,23 +451,26 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
                         let exerciseScoresPerType = 0;
                         if (this.maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
-                            exerciseScoresPerType = round((student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
+                            exerciseScoresPerType = roundScorePercentSpecifiedByCourseSettings(
+                                student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                                this.course,
+                            );
                         }
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.localeConversionService.toLocaleString(round(exercisePointValues[index], 1));
+                            rowData[title] = this.localize(roundScoreSpecifiedByCourseSettings(exercisePointValues[index], this.course));
                         });
-                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
-                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
+                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localize(exercisePointsPerType);
+                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localizePercent(exerciseScoresPerType);
                     }
                 }
 
-                const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
-                rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
-                rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
+                const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
+                rowData[OVERALL_COURSE_POINTS_KEY] = this.localize(student.overallPoints);
+                rowData[OVERALL_COURSE_SCORE_KEY] = this.localizePercent(overallScore);
                 if (this.course.presentationScore) {
-                    rowData[PRESENTATION_SCORE_KEY] = this.localeConversionService.toLocaleString(student.presentationScore);
+                    rowData[PRESENTATION_SCORE_KEY] = this.localize(student.presentationScore);
                 }
                 if (this.gradingScaleExists) {
                     if (this.isBonus) {
@@ -476,14 +493,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseMaxPoints = this.exerciseMaxPointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataMax[title] = this.localeConversionService.toLocaleString(exerciseMaxPoints[index]);
+                        rowDataMax[title] = this.localize(exerciseMaxPoints[index]);
                     });
-                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
-                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
+                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.localize(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
+                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localizePercent(100);
                 }
             }
-            rowDataMax[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfOverallPoints);
-            rowDataMax[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
+            rowDataMax[OVERALL_COURSE_POINTS_KEY] = this.localize(this.maxNumberOfOverallPoints);
+            rowDataMax[OVERALL_COURSE_SCORE_KEY] = this.localizePercent(100);
             if (this.course.presentationScore) {
                 rowDataMax[PRESENTATION_SCORE_KEY] = '';
             }
@@ -505,21 +522,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.localeConversionService.toLocaleString(round(exerciseAveragePoints[index], 1));
+                        rowDataAverage[title] = this.localize(roundScoreSpecifiedByCourseSettings(exerciseAveragePoints[index], this.course));
                     });
 
-                    const averageScore = round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
-
-                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
-                        this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
+                    const averageScore = roundScorePercentSpecifiedByCourseSettings(
+                        this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                        this.course,
                     );
-                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageScore);
+
+                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localize(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!);
+                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.localizePercent(averageScore);
                 }
             }
 
-            const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100, 1);
-            rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
-            rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
+            const averageOverallScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
+            rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localize(this.averageNumberOfOverallPoints);
+            rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localizePercent(averageOverallScore);
             if (this.gradingScaleExists) {
                 if (this.isBonus) {
                     rowDataAverage[BONUS_KEY] = this.averageGrade || '';
@@ -541,7 +559,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipations = this.exerciseParticipationsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipation[title] = this.localeConversionService.toLocaleString(exerciseParticipations[index]);
+                        rowDataParticipation[title] = this.localize(exerciseParticipations[index]);
                     });
                     rowDataParticipation[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipation[exerciseTypeName + ' ' + SCORE_KEY] = '';
@@ -559,7 +577,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipationsSuccessful = this.exerciseSuccessfulPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipationSuccuessful[title] = this.localeConversionService.toLocaleString(exerciseParticipationsSuccessful[index]);
+                        rowDataParticipationSuccuessful[title] = this.localize(exerciseParticipationsSuccessful[index]);
                     });
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + SCORE_KEY] = '';

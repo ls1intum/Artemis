@@ -5,12 +5,20 @@
     </div>
     <ng-container *ngIf="!isLoading">
         <div class="top-bar">
-            <div class="d-flex align-items-center" *ngIf="programmingExercise.staticCodeAnalysisEnabled; else tabPlaceholder">
+            <div class="d-flex align-items-center">
                 <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
                     <b>Test Cases</b>
                 </div>
-                <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
+                <div
+                    class="tab-item code-analysis"
+                    *ngIf="programmingExercise.staticCodeAnalysisEnabled"
+                    (click)="selectTab('code-analysis')"
+                    [ngClass]="activeTab == 'code-analysis' ? 'active' : ''"
+                >
                     <b>Code Analysis</b>
+                </div>
+                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab == 'submission-policy' ? 'active' : ''">
+                    <b>Submission Policy</b>
                 </div>
             </div>
             <ng-template #tabPlaceholder><div></div></ng-template>
@@ -27,6 +35,24 @@
                     [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     [isSaving]="isSaving"
                 ></jhi-programming-exercise-configure-grading-actions>
+            </div>
+        </div>
+
+        <div class="grading-body-container mt-3">
+            <div *ngIf="activeTab == 'submission-policy'">
+                <jhi-programming-exercise-grading-submission-policy-configuration-actions
+                    [exercise]="programmingExercise"
+                    [isSaving]="isSaving"
+                    [hadPolicyBefore]="hadPolicyBefore"
+                    (onUpdate)="updateSubmissionPolicy()"
+                    (onToggle)="toggleSubmissionPolicy()"
+                ></jhi-programming-exercise-grading-submission-policy-configuration-actions>
+                <jhi-submission-policy-update [programmingExercise]="programmingExercise" [editable]="true"></jhi-submission-policy-update>
+                <ng-container *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy != undefined">
+                    <ngb-alert [dismissible]="false" [type]="'info'">
+                        <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>
+                    </ngb-alert>
+                </ng-container>
             </div>
         </div>
 

@@ -263,6 +263,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const jQueryBackgroundOffset = jQueryBackgroundElement.offset()!;
         const backgroundWidth = jQueryBackgroundElement.width()!;
         const backgroundHeight = jQueryBackgroundElement.height()!;
+        this.mouseMoveAction(event, jQueryBackgroundOffset, backgroundWidth, backgroundHeight);
+    }
+
+    private mouseMoveAction(event: MouseEvent, jQueryBackgroundOffset: { left: number; top: number }, backgroundWidth: number, backgroundHeight: number) {
         if (event.pageX) {
             // Moz
             this.mouse.x = event.pageX - jQueryBackgroundOffset.left;

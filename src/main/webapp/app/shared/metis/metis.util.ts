@@ -36,6 +36,12 @@ export enum PostSortCriterion {
     ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
+export enum MetisPostAction {
+    CREATE_POST = 'CREATE_POST',
+    UPDATE_POST = 'UPDATE_POST',
+    DELETE_POST = 'DELETE_POST',
+}
+
 export interface PostContextFilter {
     courseId?: number;
     courseWideContext?: CourseWideContext;
@@ -60,7 +66,7 @@ export interface PostContextFilter {
  */
 export interface PostingContentPart {
     contentBeforeReference?: string; // string before occurrence of reference pattern -> only for the first PostContentPart in the content of a posting
-    linkToReference?: (string | number)[]; // link the reference navigates to
+    linkToReference?: RouteComponents; // link the reference navigates to
     queryParams?: Params; // params that are required for navigating
     referenceStr?: string; // string that is within the anchor tag
     contentAfterReference?: string; // string after occurrence of reference pattern
@@ -81,6 +87,14 @@ export interface PatternMatch {
  * and the display name, i.e. the string that is linked, e.g the lecture title
  */
 export interface ContextInformation {
-    routerLinkComponents?: (string | number)[];
+    routerLinkComponents?: RouteComponents;
     displayName: string;
 }
+
+/**
+ * Helper type reflecting components used by the angular router,
+ * each component is either a string or a number
+ */
+export type RouteComponents = (string | number)[];
+
+export const MetisWebsocketChannelPrefix = '/topic/metis/';

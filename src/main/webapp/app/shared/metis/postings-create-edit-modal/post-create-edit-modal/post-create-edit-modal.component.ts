@@ -75,17 +75,18 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.tags = this.posting?.tags ?? [];
-        this.similarPosts = [];
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the title and content must include at least one non-whitespace character
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         });
+        // start new subscription to value changes of title;
         // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
         if (this.editType === this.EditType.CREATE) {
             this.triggerPostSimilarityCheck();
         }
+        this.similarPosts = [];
     }
 
     /**
@@ -110,13 +111,23 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      * invokes the metis service to get similar posts on changes of the formGroup, i.e. title or content
      */
     triggerPostSimilarityCheck(): void {
-        this.formGroup.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged()).subscribe(() => {
-            const tempPost = new Post();
-            this.setPostProperties(tempPost);
-            this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
-                this.similarPosts = similarPosts;
+        this.formGroup
+            .get('title')
+            ?.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged())
+            .subscribe((title: string) => {
+                const tempPost = new Post();
+                this.setPostProperties(tempPost);
+                // determine if title is provided
+                if (title.length > 0) {
+                    // if title input field is not empty, invoke metis service to get similar posts
+                    this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
+                        this.similarPosts = similarPosts;
+                    });
+                } else {
+                    // if title input field is empty, set similar posts to empty array to not show the list
+                    this.similarPosts = [];
+                }
             });
-        });
     }
 
     /**
@@ -177,7 +188,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             ...currentContextSelectorOption,
         };
         if (currentContextSelectorOption.courseWideContext) {
-            this.posting.course = { id: this.course.id };
+            this.posting.course = { id: this.course.id, title: this.course.title };
         }
     }
 

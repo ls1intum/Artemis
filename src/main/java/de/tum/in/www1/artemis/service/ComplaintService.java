@@ -86,7 +86,7 @@ public class ComplaintService {
                 long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
                 if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
                     throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
-                            ENTITY_NAME, "toomanycomplaints");
+                            ENTITY_NAME, "tooManyComplaints");
                 }
             }
             else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK && !course.getRequestMoreFeedbackEnabled()) {
@@ -140,6 +140,17 @@ public class ComplaintService {
 
     public long countMoreFeedbackRequestsByCourseId(long courseId) {
         return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+    }
+
+    /**
+     * Counts the number of responses to feedback requests for the given course id
+     *
+     * @param courseId the id of the course
+     * @return the number of responses
+     */
+    public long countMoreFeedbackRequestResponsesByCourseId(long courseId) {
+        return complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
+                ComplaintType.MORE_FEEDBACK);
     }
 
     public long countComplaintsByExerciseId(long exerciseId) {
