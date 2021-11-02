@@ -124,7 +124,11 @@ export class CourseDetailLineChartComponent implements OnChanges {
     }
 
     switchTimeSpan(index: boolean): void {
-        index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
+        if (index) {
+            this.currentPeriod += 1;
+        } else {
+            this.currentPeriod -= 1;
+        }
         this.showsCurrentWeek = this.currentPeriod === 0;
         this.reloadChart();
     }
