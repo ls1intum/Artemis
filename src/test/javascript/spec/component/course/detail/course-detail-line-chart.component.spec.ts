@@ -27,8 +27,7 @@ describe('CourseDetailLineChartComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)],
-            declarations: [CourseDetailLineChartComponent,
-                MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseDetailLineChartComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
