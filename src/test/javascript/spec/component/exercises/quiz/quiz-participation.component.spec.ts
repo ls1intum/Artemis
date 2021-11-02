@@ -39,6 +39,9 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -88,6 +91,7 @@ const quizExerciseUnreleased = (<any>{
 
 const testBedDeclarations = [
     QuizParticipationComponent,
+    ButtonComponent,
     MockComponent(AlertComponent),
     MockPipe(ArtemisTranslatePipe),
     MockPipe(ArtemisDatePipe),
@@ -95,9 +99,9 @@ const testBedDeclarations = [
     MockComponent(MultipleChoiceQuestionComponent),
     MockComponent(DragAndDropQuestionComponent),
     MockComponent(ShortAnswerQuestionComponent),
-    MockComponent(ButtonComponent),
     MockComponent(JhiConnectionStatusComponent),
     MockDirective(NgbTooltip),
+    MockDirective(FeatureToggleDirective),
 ];
 
 describe('QuizParticipationComponent', () => {
@@ -196,7 +200,7 @@ describe('QuizParticipationComponent', () => {
             const findStudentStub = sinon.stub(exerciseService, 'findForStudent').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
-            const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz');
+            const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
             expect(refreshButton).to.exist;
 
             refreshButton.click();
@@ -209,7 +213,7 @@ describe('QuizParticipationComponent', () => {
         it('should submit quiz', () => {
             fixture.detectChanges();
 
-            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz');
+            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
             expect(submitButton).to.exist;
 
             submitButton.click();
@@ -252,7 +256,7 @@ describe('QuizParticipationComponent', () => {
             // Set a value > 15 to simulate an early hand in without answered questions
             component.remainingTimeSeconds = 200;
 
-            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz');
+            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
             expect(submitButton).to.exist;
 
             submitButton.click();
@@ -408,7 +412,7 @@ describe('QuizParticipationComponent', () => {
             const serviceStub = sinon.stub(exerciseService, 'find').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
-            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz');
+            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
             expect(submitButton).to.exist;
 
             submitButton.click();
@@ -490,7 +494,7 @@ describe('QuizParticipationComponent', () => {
             const serviceStub = sinon.stub(exerciseService, 'findForStudent').returns(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
-            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz');
+            const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
             expect(submitButton).to.exist;
 
             submitButton.click();
