@@ -701,19 +701,6 @@ public class CourseTestService {
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
-
-            StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
-                    StatsForDashboardDTO.class);
-
-            if (!isInstructor) {
-                assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
-            }
-            else {
-                assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfSubmissions());
-                assertThat(stats2.getTotalNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison()
-                        .isEqualTo(stats.getTotalNumberOfAssessments());
-            }
         }
     }
 
@@ -731,7 +718,6 @@ public class CourseTestService {
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test
