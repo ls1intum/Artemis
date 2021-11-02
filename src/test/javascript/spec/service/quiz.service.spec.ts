@@ -33,6 +33,7 @@ describe('Quiz Service', () => {
         isPracticeModeAvailable: true,
         title: 'Quiz title',
         duration: 600,
+        quizQuestions: undefined,
     };
     const multipleChoice: MultipleChoiceQuestion = {
         type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -143,20 +144,58 @@ describe('Quiz Service', () => {
             },
         ],
     };
+    const shuffledAnswers = [
+        {
+            explanation: 'Explanation for why this is wrong',
+            hint: 'A hint',
+            invalid: false,
+            isCorrect: false,
+            text: 'Wrong Answer 1',
+        },
+        {
+            explanation: 'Explanation for why this is wrong',
+            hint: 'A hint',
+            invalid: false,
+            isCorrect: false,
+            text: 'Wrong Answer 2',
+        },
+        {
+            explanation: 'Explanation for why this is correct',
+            hint: 'A hint',
+            invalid: false,
+            isCorrect: true,
+            text: 'Correct answer 1',
+        },
+        {
+            explanation: 'Explanation for why this is correct',
+            hint: 'A hint',
+            invalid: false,
+            isCorrect: true,
+            text: 'Correct answer 2',
+        },
+    ];
     beforeEach(() => {
         injector = getTestBed();
         service = injector.get(ArtemisQuizService);
+        jest.spyOn(global.Math, 'random').mockReturnValue(0.2);
     });
 
     afterEach(() => {
         jest.spyOn(global.Math, 'random').mockRestore();
     });
 
-    it('randomizes order of Questions', () => {
-        const quizExercise = Object.assign(quiz, { quizQuestions: [shortAnswer, multipleChoice] });
-        const expected = Object.assign(quiz, { quizQuestions: [shortAnswer] });
-        jest.spyOn(global.Math, 'random').mockReturnValue(0.2);
+    it('switches order of Quiz Questions', () => {
+        const quizExercise = Object.assign({}, quiz, { quizQuestions: [shortAnswer, multipleChoice] });
+        const expected = Object.assign({}, quiz, { quizQuestions: [multipleChoice, shortAnswer] });
         service.randomizeOrder(quizExercise);
         expect(quizExercise).toStrictEqual(expected);
+    });
+
+    it('shuffles order of Answer options', () => {
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [multipleChoice] });
+        const expected = JSON.parse(JSON.stringify(quizExercise));
+        expected.quizQuestions[0].answerOptions = shuffledAnswers;
+        service.randomizeOrder(quizExercise);
+        expect(quizExercise.quizQuestions[0].answerOptions).toStrictEqual(shuffledAnswers);
     });
 });
