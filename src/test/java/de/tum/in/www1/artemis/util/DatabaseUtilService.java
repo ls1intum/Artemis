@@ -2683,18 +2683,17 @@ public class DatabaseUtilService {
 
     public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        return addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        return addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
     }
 
     public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
-        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
         return submission;
     }
 
-    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
-            String assessorLogin) {
+    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Submission submission, String assessorLogin) {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
@@ -2975,7 +2974,12 @@ public class DatabaseUtilService {
     }
 
     public void addComplaintToSubmission(Submission submission, String userLogin) {
-        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(submission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        Result result = submission.getLatestResult();
+        if (result != null) {
+            result.hasComplaint(true);
+            resultRepo.save(result);
+        }
+        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(result).complaintType(ComplaintType.COMPLAINT);
         complaintRepo.save(complaint);
     }
 

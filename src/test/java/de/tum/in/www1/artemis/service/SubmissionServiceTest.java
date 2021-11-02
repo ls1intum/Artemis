@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,9 +22,11 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,6 +41,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
 
     private User student1;
 
@@ -77,10 +84,10 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(2, 2, 0, 1);
+        List<User> users = database.addUsers(3, 2, 0, 1);
         student1 = users.get(0);
-        tutor1 = users.get(2);
-        tutor2 = users.get(3);
+        tutor1 = users.get(3);
+        tutor2 = users.get(4);
 
         Course course = database.createCourse();
         Exam exam = database.addExam(course);
@@ -558,4 +565,69 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetSubmissionsWithComplaintsForExerciseAsInstructor() {
+        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, "student3");
+        // noinspection unused
+        var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
+        var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "instructor1");
+        var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
+        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2");
+        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3");
+
+        List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
+
+        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
+        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+
+        assertThat(dtoList.size()).isEqualTo(2);
+        assertThat(complaintsFromDTO.size()).isEqualTo(2);
+        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintSameTutor, submissionWithComplaintOtherTutor));
+
+        dtoList.forEach(dto -> {
+            if (dto.submission().equals(submissionWithComplaintSameTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student2");
+            }
+            else if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student3");
+            }
+            else {
+                fail("Unreachable statement");
+            }
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testGetSubmissionsWithComplaintsForExerciseAsTutor() {
+        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, "student3");
+        // noinspection unused
+        var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
+        var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "tutor1");
+        var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
+        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2");
+        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3");
+
+        List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
+
+        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
+        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+
+        assertThat(dtoList.size()).isEqualTo(1);
+        assertThat(complaintsFromDTO.size()).isEqualTo(1);
+        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintOtherTutor));
+        dtoList.forEach(dto -> {
+            if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student3");
+            }
+            else {
+                fail("Unreachable statement");
+            }
+        });
+    }
 }

@@ -151,7 +151,7 @@ public class SubmissionResource {
     }
 
     /**
-     * Get /exercises/:exerciseId//more-feedback-reqeusts-with-complaints
+     * Get /exercises/:exerciseId//more-feedback-requests-with-complaints
      *
      * Get all more feedback requests associated to an exercise which have more feedback requests in,
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
