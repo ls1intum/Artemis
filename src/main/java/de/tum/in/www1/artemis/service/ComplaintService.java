@@ -86,7 +86,7 @@ public class ComplaintService {
                 long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
                 if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
                     throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
-                            ENTITY_NAME, "toomanycomplaints");
+                            ENTITY_NAME, "tooManyComplaints");
                 }
             }
             else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK && !course.getRequestMoreFeedbackEnabled()) {

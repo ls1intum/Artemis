@@ -54,9 +54,9 @@ describe('ExerciseStatisticsComponent', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -96,7 +96,7 @@ describe('ExerciseStatisticsComponent', () => {
         expect(statisticsSpy).to.have.been.calledOnce;
         expect(exerciseSpy).to.have.been.calledOnce;
         expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
-        expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
+        expect(component.exerciseStatistics.resolvedPostsInPercent).to.equal(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
     });
 
@@ -113,7 +113,7 @@ describe('ExerciseStatisticsComponent', () => {
         expect(statisticsSpy).to.have.been.calledOnce;
         expect(exerciseSpy).to.have.been.calledOnce;
         expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
-        expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
+        expect(component.exerciseStatistics.resolvedPostsInPercent).to.equal(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
     }));
 });

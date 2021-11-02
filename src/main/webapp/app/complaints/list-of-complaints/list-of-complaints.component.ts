@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -43,7 +42,6 @@ export class ListOfComplaintsComponent implements OnInit {
         private alertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
-        private location: Location,
         private modalService: NgbModal,
         private sortService: SortService,
         private translateService: TranslateService,

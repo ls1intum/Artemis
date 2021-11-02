@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -17,7 +15,11 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -56,18 +58,13 @@ public class TextUnitResource {
         log.debug("REST request to get TextUnit : {}", textUnitId);
         Optional<TextUnit> optionalTextUnit = textUnitRepository.findById(textUnitId);
         if (optionalTextUnit.isEmpty()) {
-            return notFound();
+            throw new EntityNotFoundException("TextUnit");
         }
         TextUnit textUnit = optionalTextUnit.get();
-        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null) {
-            return conflict();
+        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException();
         }
-        if (!textUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
-        }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(textUnit.getLecture().getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
         return ResponseEntity.ok().body(textUnit);
     }
 
@@ -77,25 +74,18 @@ public class TextUnitResource {
      * @param lectureId      the id of the lecture to which the text unit belongs to update
      * @param textUnit the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
         log.debug("REST request to update an text unit : {}", textUnit);
         if (textUnit.getId() == null) {
-            return badRequest();
+            throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idnull");
         }
-
-        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null) {
-            return conflict();
+        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException();
         }
-        if (!textUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
-        }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(textUnit.getLecture().getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
         TextUnit result = textUnitRepository.save(textUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textUnit.getId().toString())).body(result);
@@ -114,19 +104,17 @@ public class TextUnitResource {
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
         if (textUnit.getId() != null) {
-            return badRequest();
+            throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idexists");
         }
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
-            return badRequest();
+            throw new BadRequestAlertException("A new text unit must be connected to a lecture", ENTITY_NAME, "lectureempty");
         }
         Lecture lecture = lectureOptional.get();
-        if (lecture.getCourse() == null) {
-            return conflict();
+        if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
+            throw new ConflictException();
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         textUnit.setLecture(null);
@@ -138,7 +126,5 @@ public class TextUnitResource {
 
         return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
                 .body(persistedTextUnit);
-
     }
-
 }
