@@ -21,11 +21,13 @@ import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dash
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
 @NgModule({
     imports: [
+        NgxChartsModule,
         ArtemisSharedModule,
         ArtemisResultModule,
         ClipboardModule,
