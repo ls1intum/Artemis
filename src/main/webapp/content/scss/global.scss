@@ -1,12 +1,12 @@
 @import 'bootstrap-variables';
-@import 'node_modules/ng-pick-datetime/assets/style/picker.min.css';
+@import '~ng-pick-datetime/assets/style/picker.min.css';
 // Needed for mathematical formulas in markdown editor
-@import 'node_modules/katex/dist/katex.css';
+@import '~katex/dist/katex.css';
 // Needed for highlighting code in the markdown editor
-@import 'node_modules/highlight.js/styles/vs.css';
-@import 'node_modules/@swimlane/ngx-datatable/themes/bootstrap.css';
+@import '~highlight.js/styles/vs.css';
+@import '~@swimlane/ngx-datatable/themes/bootstrap.css';
 // Needed for emojis in metis reactions
-@import 'node_modules/@ctrl/ngx-emoji-mart/picker';
+@import '~@ctrl/ngx-emoji-mart/picker';
 
 /* ==============================================================
 Bootstrap tweaks
