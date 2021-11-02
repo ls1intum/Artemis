@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,8 +20,6 @@ class DummyStatisticsComponent {}
 })
 class DummyManagementComponent {}
 
-chai.use(sinonChai);
-const expect = chai.expect;
 describe('LearningGoalPopoverComponent', () => {
     let learningGoalPopoverComponentFixture: ComponentFixture<LearningGoalsPopoverComponent>;
     let learningGoalPopoverComponent: LearningGoalsPopoverComponent;
@@ -50,12 +45,12 @@ describe('LearningGoalPopoverComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         learningGoalPopoverComponentFixture.detectChanges();
-        expect(learningGoalPopoverComponent).to.be.ok;
+        expect(learningGoalPopoverComponent).toBeDefined();
     });
 
     it('should navigate to course statistics', fakeAsync(() => {
@@ -70,7 +65,7 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).to.equal('/courses/1/statistics');
+        expect(location.path()).toEqual('/courses/1/statistics');
     }));
 
     it('should navigate to learning goal management', fakeAsync(() => {
@@ -85,6 +80,6 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).to.equal('/course-management/1/goal-management');
+        expect(location.path()).toEqual('/course-management/1/goal-management');
     }));
 });

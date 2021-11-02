@@ -58,11 +58,12 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
     public void createProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         assertThat(programmingExerciseRepository.count()).isEqualTo(0);
+        database.addSubmissionPolicyToExercise(ModelFactory.generateLockRepositoryPolicy(1, true), exercise);
         final var generatedExercise = request.postWithResponseBody(
                 ProgrammingExerciseSimulationResource.Endpoints.ROOT + ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION, exercise, ProgrammingExercise.class,
                 HttpStatus.CREATED);
 
-        assertThat(programmingExerciseRepository.findById(generatedExercise.getId()).isPresent());
+        assertThat(programmingExerciseRepository.findById(generatedExercise.getId())).isPresent();
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
