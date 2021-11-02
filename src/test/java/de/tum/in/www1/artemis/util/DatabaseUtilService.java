@@ -2973,13 +2973,13 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addComplaintToSubmission(Submission submission, String userLogin) {
+    public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType type) {
         Result result = submission.getLatestResult();
         if (result != null) {
             result.hasComplaint(true);
             resultRepo.save(result);
         }
-        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(result).complaintType(ComplaintType.COMPLAINT);
+        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(result).complaintType(type);
         complaintRepo.save(complaint);
     }
 

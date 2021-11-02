@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -575,8 +576,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
         var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "instructor1");
         var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
-        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2");
-        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3");
+        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2", ComplaintType.COMPLAINT);
+        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3", ComplaintType.COMPLAINT);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
 
@@ -610,8 +611,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
         var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "tutor1");
         var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
-        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2");
-        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3");
+        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2", ComplaintType.COMPLAINT);
+        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3", ComplaintType.COMPLAINT);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
 
@@ -624,6 +625,37 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         dtoList.forEach(dto -> {
             if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
                 assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student3");
+            }
+            else {
+                fail("Unreachable statement");
+            }
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testGetSubmissionsWithMoreFeedbackRequestsForExerciseAsTutor() {
+        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, "student3");
+        // noinspection unused
+        var submissionWithoutRequest = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
+        var submissionWithRequestSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "tutor1");
+        var submissionWithRequestOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
+        database.addComplaintToSubmission(submissionWithRequestSameTutor, "student2", ComplaintType.MORE_FEEDBACK);
+        database.addComplaintToSubmission(submissionWithRequestOtherTutor, "student3", ComplaintType.MORE_FEEDBACK);
+
+        List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(examTextExercise.getId());
+
+        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
+        List<Complaint> requestsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+
+        assertThat(dtoList.size()).isEqualTo(1);
+        assertThat(requestsFromDTO.size()).isEqualTo(1);
+        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithRequestSameTutor));
+        dtoList.forEach(dto -> {
+            if (dto.submission().equals(submissionWithRequestSameTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student2");
             }
             else {
                 fail("Unreachable statement");
