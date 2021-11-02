@@ -1,4 +1,5 @@
-@import '../_overview-vars.scss';
+@import 'src/main/webapp/app/overview/overview-vars';
+@import '~bootstrap/scss/_variables.scss'; // includes $gray-300
 
 :host {
     cursor: pointer;
