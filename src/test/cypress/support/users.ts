@@ -73,7 +73,7 @@ export class CypressUserManagement {
      * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
      * */
     public getAccountInfo(func: Function) {
-        cy.request({ method: GET, url: BASE_API + 'account' }).then((response) => {
+        cy.request({ method: GET, url: BASE_API + 'account', log: false }).then((response) => {
             func(response.body);
         });
     }
