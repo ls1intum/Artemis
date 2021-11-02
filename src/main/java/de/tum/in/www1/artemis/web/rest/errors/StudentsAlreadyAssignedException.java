@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.data.util.Pair;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 
@@ -23,7 +24,8 @@ public class StudentsAlreadyAssignedException extends BadRequestAlertException {
     private static final String ERROR_KEY = "studentsAlreadyAssignedToTeams";
 
     public StudentsAlreadyAssignedException(List<Pair<User, Team>> conflicts) {
-        super(ErrorConstants.STUDENT_ALREADY_ASSIGNED_TYPE, "Student(s) have already been assigned to other teams.", "team", ERROR_KEY, getParameters(conflicts));
+        super(ErrorConstants.STUDENT_ALREADY_ASSIGNED_TYPE, "Student(s) have already been assigned to other teams.", Constants.TEAM_ENTITY_NAME, ERROR_KEY,
+                getParameters(conflicts));
     }
 
     private static Map<String, Object> getParameters(List<Pair<User, Team>> conflicts) {
