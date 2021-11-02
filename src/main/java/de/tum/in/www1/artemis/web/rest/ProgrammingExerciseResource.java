@@ -111,6 +111,8 @@ public class ProgrammingExerciseResource {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
+    private final SubmissionPolicyService submissionPolicyService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -134,7 +136,7 @@ public class ProgrammingExerciseResource {
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, AuxiliaryRepositoryService auxiliaryRepositoryService) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService) {
 
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -157,6 +159,7 @@ public class ProgrammingExerciseResource {
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -349,6 +352,7 @@ public class ProgrammingExerciseResource {
         exerciseService.validateGeneralSettings(programmingExercise);
         validateProgrammingSettings(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -501,6 +505,11 @@ public class ProgrammingExerciseResource {
         if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
+        }
+
+        // If the new exercise has a submission policy, it must be validated.
+        if (newExercise.getSubmissionPolicy() != null) {
+            submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
         }
 
         // Check if the user has the rights to access the original programming exercise

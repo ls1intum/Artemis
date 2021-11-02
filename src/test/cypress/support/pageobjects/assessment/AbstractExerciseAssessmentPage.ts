@@ -1,5 +1,6 @@
-import { CypressExerciseType } from './../../requests/CourseManagementRequests';
-import { PUT, BASE_API } from './../../constants';
+import { BASE_API, PUT } from '../../constants';
+import { CypressExerciseType } from '../../requests/CourseManagementRequests';
+
 /**
  * Parent class for all exercise assessment pages.
  */
@@ -18,8 +19,14 @@ export abstract class AbstractExerciseAssessmentPage {
         }
     }
 
-    submit() {
+    submitWithoutInterception() {
         cy.get('[jhitranslate="entity.action.submit"]').click();
+    }
+
+    submit() {
+        cy.intercept(PUT, BASE_API + 'participations/*/manual-results?submit=true').as('submitAssessment');
+        this.submitWithoutInterception();
+        return cy.wait('@submitAssessment');
         // TODO: The alert is currently broken
         // cy.contains('Your assessment was submitted successfully!').should('be.visible');
     }
@@ -33,7 +40,9 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     private handleComplaint(response: string, accept: boolean, exerciseType: CypressExerciseType) {
-        cy.get('tr > .text-center >').click();
+        if (exerciseType !== CypressExerciseType.MODELING) {
+            cy.get('tr > .text-center >').click();
+        }
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
         switch (exerciseType) {
             case CypressExerciseType.PROGRAMMING:
@@ -41,6 +50,9 @@ export abstract class AbstractExerciseAssessmentPage {
                 break;
             case CypressExerciseType.TEXT:
                 cy.intercept(PUT, BASE_API + 'participations/*/submissions/*/text-assessment-after-complaint').as('complaintAnswer');
+                break;
+            case CypressExerciseType.MODELING:
+                cy.intercept(PUT, BASE_API + 'complaint-responses/complaint/*/resolve').as('complaintAnswer');
                 break;
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);

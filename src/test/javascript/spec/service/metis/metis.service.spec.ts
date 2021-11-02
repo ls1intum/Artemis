@@ -6,7 +6,6 @@ import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ArtemisTestModule } from '../../test.module';
 import { PostService } from 'app/shared/metis/post.service';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,7 +13,17 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockProvider } from 'ng-mocks';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { of } from 'rxjs';
 import {
     metisResolvingAnswerPostUser1,
     metisCourse,
@@ -32,13 +41,15 @@ import {
 describe('Metis Service', () => {
     let injector: TestBed;
     let metisService: MetisService;
-    let metisServiceUserMock: jest.SpyInstance;
-    let metisServiceGetFilteredPostsMock: jest.SpyInstance;
+    let metisServiceUserStub: jest.SpyInstance;
+    let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
+    let metisServiceCreateWebsocketSubscriptionSpy: jest.SpyInstance;
+    let websocketServiceSubscribeSpy: jest.SpyInstance;
+    let websocketServiceReceiveStub: jest.SpyInstance;
+    let websocketService: JhiWebsocketService;
     let reactionService: MockReactionService;
     let postService: MockPostService;
-    let answerPostService: MockAnswerPostService;
-    let accountService: MockAccountService;
-    let accountServiceIsAtLeastTutorMock: jest.SpyInstance;
+    let answerPostService: AnswerPostService;
     let post: Post;
     let answerPost: AnswerPost;
     let reaction: Reaction;
@@ -46,24 +57,28 @@ describe('Metis Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, ArtemisTestModule],
+            imports: [HttpClientTestingModule],
             providers: [
+                MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         });
         injector = getTestBed();
         metisService = injector.get(MetisService);
+        websocketService = injector.get(JhiWebsocketService);
         reactionService = injector.get(ReactionService);
         postService = injector.get(PostService);
         answerPostService = injector.get(AnswerPostService);
-        accountService = injector.get(AccountService);
-        metisServiceGetFilteredPostsMock = jest.spyOn(metisService, 'getFilteredPosts');
-        metisServiceUserMock = jest.spyOn(metisService, 'getUser');
-        accountServiceIsAtLeastTutorMock = jest.spyOn(accountService, 'isAtLeastTutorInCourse');
+        metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
+        metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
+        metisServiceUserStub = jest.spyOn(metisService, 'getUser');
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
@@ -84,7 +99,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdPostSub.unsubscribe();
         }));
 
@@ -93,7 +108,7 @@ describe('Metis Service', () => {
             metisService.deletePost(post);
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
 
         it('should update a post', fakeAsync(() => {
@@ -103,7 +118,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
         }));
 
@@ -114,7 +129,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
         }));
 
@@ -125,7 +140,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
         }));
 
@@ -159,7 +174,14 @@ describe('Metis Service', () => {
             expect(postServiceSpy).toBeCalledTimes(2);
 
             // change filter
-            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: undefined, courseId: metisCourse.id }, false);
+            metisService.getFilteredPosts(
+                {
+                    lectureId: undefined,
+                    exerciseId: undefined,
+                    courseId: metisCourse.id,
+                },
+                false,
+            );
             expect(postServiceSpy).toBeCalledTimes(3);
         });
 
@@ -177,7 +199,14 @@ describe('Metis Service', () => {
             expect(postServiceSpy).toBeCalledTimes(2);
 
             // change filter
-            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: undefined, courseWideContext: CourseWideContext.RANDOM }, false);
+            metisService.getFilteredPosts(
+                {
+                    lectureId: undefined,
+                    exerciseId: undefined,
+                    courseWideContext: CourseWideContext.RANDOM,
+                },
+                false,
+            );
             expect(postServiceSpy).toBeCalledTimes(3);
         });
 
@@ -208,7 +237,7 @@ describe('Metis Service', () => {
             });
             expect(answerPostServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdAnswerPostSub.unsubscribe();
         }));
 
@@ -217,7 +246,7 @@ describe('Metis Service', () => {
             metisService.deleteAnswerPost(answerPost);
             expect(answerPostServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
 
         it('should update an answer post', fakeAsync(() => {
@@ -227,7 +256,7 @@ describe('Metis Service', () => {
             });
             expect(answerPostServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedAnswerPostSub.unsubscribe();
         }));
     });
@@ -240,46 +269,28 @@ describe('Metis Service', () => {
             });
             expect(reactionServiceSpy).toHaveBeenCalled();
             tick();
-            expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdReactionSub.unsubscribe();
         }));
 
         it('should delete a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'delete');
             metisService.deleteReaction(reaction).subscribe(() => {
-                expect(metisServiceGetFilteredPostsMock).toHaveBeenCalled();
+                expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             });
             tick();
             expect(reactionServiceSpy).toHaveBeenCalled();
         }));
     });
 
-    it('should determine that metis user is at least tutor in course', () => {
-        accountServiceIsAtLeastTutorMock.mockReturnValue(true);
-        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
-        expect(metisUserIsAtLeastTutorInCourseReturn).toBe(true);
-    });
-
-    it('should determine that metis user is not at least tutor in course', () => {
-        accountServiceIsAtLeastTutorMock.mockReturnValue(false);
-        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
-        expect(metisUserIsAtLeastTutorInCourseReturn).toBe(false);
-    });
-
-    it('should determine that metis user is at least tutor in course', () => {
-        accountServiceIsAtLeastTutorMock.mockReturnValue(true);
-        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
-        expect(metisUserIsAtLeastTutorInCourseReturn).toBe(true);
-    });
-
     it('should determine that metis user is author of post', () => {
-        metisServiceUserMock.mockReturnValue(metisUser1);
+        metisServiceUserStub.mockReturnValue(metisUser1);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
         expect(metisUserIsAuthorOfPostingReturn).toBe(true);
     });
 
     it('should determine that metis user is not author of post', () => {
-        metisServiceUserMock.mockReturnValue(metisUser2);
+        metisServiceUserStub.mockReturnValue(metisUser2);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
         expect(metisUserIsAuthorOfPostingReturn).toBe(false);
     });
@@ -311,7 +322,11 @@ describe('Metis Service', () => {
     it('should create empty post for a exercise context', () => {
         const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
         expect(emptyPost.courseWideContext).toEqual(undefined);
-        expect(emptyPost.exercise).toEqual({ id: metisExercise.id, title: metisExercise.title, type: metisExercise.type });
+        expect(emptyPost.exercise).toEqual({
+            id: metisExercise.id,
+            title: metisExercise.title,
+            type: metisExercise.type,
+        });
         expect(emptyPost.lecture).toEqual(undefined);
     });
 
@@ -383,5 +398,62 @@ describe('Metis Service', () => {
         const contextInformation = metisService.getContextInformation(metisLecturePosts[0]);
         expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecturePosts[0].lecture!.id]);
         expect(contextInformation.displayName).toEqual(metisLecturePosts[0].lecture!.title);
+    });
+
+    describe('Handle websocket related functionality', () => {
+        beforeEach(() => {
+            metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
+            websocketServiceReceiveStub = jest.spyOn(websocketService, 'receive');
+            websocketServiceSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
+            metisService.setCourse(metisCourse);
+        });
+
+        it('should create websocket subscription when posts with lecture context are initially retrieved from DB', fakeAsync(() => {
+            const lecturePostWithTags = metisLecturePosts[0];
+            lecturePostWithTags.tags = ['tag1', 'tag2'];
+            websocketServiceReceiveStub.mockReturnValue(of({ post: lecturePostWithTags, action: MetisPostAction.CREATE_POST } as MetisPostDTO));
+            // setup subscription
+            metisService.getFilteredPosts({ lectureId: metisLecture.id! });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `lectures/${metisLecture.id}`);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            // receive message on channel
+            tick();
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureId: metisLecture.id! }, false);
+        }));
+
+        it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
+            websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE_POST } as MetisPostDTO));
+            // setup subscription
+            metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            // receive message on channel
+            tick();
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id! }, false);
+        }));
+
+        it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
+            const courseWidePostWithTags = metisCoursePostsWithCourseWideContext[0];
+            courseWidePostWithTags.tags = ['tag1', 'tag2'];
+            websocketServiceReceiveStub.mockReturnValue(of({ post: courseWidePostWithTags, action: MetisPostAction.UPDATE_POST } as MetisPostDTO));
+            // setup subscription
+            metisService.getFilteredPosts({ courseWideContext: courseWidePostWithTags.courseWideContext });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            // receive message on channel
+            tick();
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideContext: courseWidePostWithTags.courseWideContext }, false);
+        }));
+
+        it('should not create new subscription if already exists', fakeAsync(() => {
+            websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE_POST } as MetisPostDTO));
+            // setup subscription for the first time
+            metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);
+            // trigger createWebsocketSubscription for the second time with the same context filter. i.e. same channel
+            metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id! }, false);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+        }));
     });
 });

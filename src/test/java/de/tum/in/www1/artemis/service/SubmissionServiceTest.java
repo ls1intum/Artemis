@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -128,7 +128,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         userRepository.save(student1);
         Optional<ResponseEntity<Submission>> result = submissionService.checkSubmissionAllowance(examTextExercise, null, student1);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get()).isEqualTo(forbidden());
+        assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     private void queryTestingBasics(Exercise exercise) {
