@@ -17,7 +17,7 @@ import tech.jhipster.config.JHipsterProperties;
 
 /**
  * This class implements token creation in order to test the token verification,
- * since it is not included in {@link TokenProvider} because the Gateway is not responsible for authenticating users.
+ * since it is not included in {@link TokenProvider} because the User Management is not responsible for authenticating users.
  */
 public class MockTokenProvider {
 

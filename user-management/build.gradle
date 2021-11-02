@@ -200,7 +200,7 @@ apply from: "../gradle/dependencies.gradle"
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
     implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
-    implementation files("libs/jplag-${jplag_version}.jar")
+    implementation files("../libs/jplag-${jplag_version}.jar")
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
