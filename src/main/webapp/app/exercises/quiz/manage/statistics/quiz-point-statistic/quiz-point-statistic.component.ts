@@ -58,6 +58,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     showDataLabel = true;
     height = 500;
     tooltipDisabled = true;
+    animations = false;
 
     // timer
     waitingForQuizStart = false;
