@@ -34,7 +34,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
@@ -50,6 +50,15 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-chips';
+import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
+import { OwlDateTimeModule } from 'ng-pick-datetime';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -68,7 +77,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(NgbModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 SubmissionPolicyUpdateComponent,
                 ProgrammingExerciseUpdateComponent,
@@ -80,28 +89,36 @@ describe('ProgrammingExercise Management Update Component', () => {
                 DefaultValueAccessor,
                 SelectControlValueAccessor,
                 NumberValueAccessor,
-                MockPipe(RemoveKeysPipe),
+                RemoveKeysPipe,
                 MockDirective(TranslateDirective),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(TableEditableFieldComponent),
                 MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
-                MockDirective(NgbTooltip),
-                MockComponent(CategorySelectorComponent),
-                MockComponent(AddAuxiliaryRepositoryButtonComponent),
-                MockComponent(DifficultyPickerComponent),
-                MockComponent(TeamConfigFormGroupComponent),
-                MockComponent(ProgrammingExerciseLifecycleComponent),
-                MockComponent(IncludedInOverallScorePickerComponent),
+                CategorySelectorComponent,
+                ColorSelectorComponent,
+                MockComponent(TagInputComponent),
+                MockComponent(TagInputDropdown),
+                MockComponent(DeleteIconComponent),
+                AddAuxiliaryRepositoryButtonComponent,
+                DifficultyPickerComponent,
+                TeamConfigFormGroupComponent,
+                ModePickerComponent,
+                ProgrammingExerciseLifecycleComponent,
+                ProgrammingExerciseTestScheduleDatePickerComponent,
+                ArtemisDatePipe,
+                IncludedInOverallScorePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 NgForm,
                 MockComponent(PresentationScoreComponent),
-                MockComponent(NgbAlert),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ProgrammingExerciseEditableInstructionComponent),
-                MockComponent(GradingInstructionsDetailsComponent),
+                ProgrammingExerciseInstructionComponent,
+                ProgrammingExerciseEditableInstructionComponent,
+                MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
+                GradingInstructionsDetailsComponent,
+                MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
+                MockComponent(MarkdownEditorComponent),
                 MockComponent(ButtonComponent),
-                MockDirective(CustomMinDirective),
-                MockDirective(CustomMaxDirective),
+                CustomMinDirective,
+                CustomMaxDirective,
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
