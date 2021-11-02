@@ -92,7 +92,10 @@
             "fileUploadExercises": "Dateiupload-Aufgabe",
             "search": {
                 "searchButton": "Suchen",
-                "toggleButton": "Suchleiste umschalten",
+                "toggleButton": {
+                    "true": "Zeige erweiterte Suche",
+                    "false": "Verstecke erweiterte Suche"
+                },
                 "cardTitle": "Aufgaben durchsuchen",
                 "fieldExerciseName": "Aufgaben nach Namen durchsuchen",
                 "labelExerciseCategory": "Kategorie",

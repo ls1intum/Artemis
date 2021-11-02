@@ -92,7 +92,10 @@
             "fileUploadExercises": "File Upload Exercises",
             "search": {
                 "searchButton": "Search",
-                "toggleButton": "Toggle Search Bar",
+                "toggleButton": {
+                    "true": "Hide Advanced Search",
+                    "false": "Show Advanced Search"
+                },
                 "cardTitle": "Search Exercises",
                 "fieldExerciseName": "Search by exercise name",
                 "labelExerciseCategory": "Category",
