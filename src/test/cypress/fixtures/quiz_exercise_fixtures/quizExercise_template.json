@@ -1,12 +1,7 @@
 {
     "mode": "INDIVIDUAL",
     "includedInOverallScore": "INCLUDED_COMPLETELY",
-    "numberOfAssessmentsOfCorrectionRounds": [
-        {
-            "inTime": 0,
-            "late": 0
-        }
-    ],
+    "numberOfAssessmentsOfCorrectionRounds": [{ "inTime": 0, "late": 0, "total": 0 }],
     "studentAssignedTeamIdComputed": false,
     "secondCorrectionEnabled": false,
     "type": "quiz",
@@ -18,7 +13,6 @@
     "assessmentDueDateError": false,
     "dueDateError": false,
     "presentationScoreEnabled": false,
-    "course": null,
     "randomizeQuestionOrder": true,
     "releaseDate": null,
     "isVisibleBeforeStart": false,
