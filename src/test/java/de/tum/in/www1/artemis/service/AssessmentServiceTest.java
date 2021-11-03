@@ -212,6 +212,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
     }
 
+    // ToDo: flaky test when running all tests, works fine when running only this test suite probably due to tight timing constraints in combination with system load
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
