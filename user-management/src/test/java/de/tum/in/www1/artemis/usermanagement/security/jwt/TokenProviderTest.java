@@ -28,7 +28,7 @@ class TokenProviderTest {
 
     private TokenProvider tokenProvider;
 
-    private MockTokenProvider mockTokenProvider;
+    private TestTokenGenerator mockTokenProvider;
 
     @BeforeEach
     public void setup() {
@@ -37,7 +37,7 @@ class TokenProviderTest {
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         tokenProvider = new TokenProvider(jHipsterProperties);
-        mockTokenProvider = new MockTokenProvider(jHipsterProperties);
+        mockTokenProvider = new TestTokenGenerator(jHipsterProperties);
 
         key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
     }

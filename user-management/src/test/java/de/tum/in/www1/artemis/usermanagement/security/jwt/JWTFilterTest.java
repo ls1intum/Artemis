@@ -6,7 +6,6 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -24,7 +23,7 @@ class JWTFilterTest {
 
     private static final long ONE_MINUTE_MS = 60000;
 
-    private MockTokenProvider mockTokenProvider;
+    private TestTokenGenerator mockTokenProvider;
 
     private JWTFilter jwtFilter;
 
@@ -36,7 +35,7 @@ class JWTFilterTest {
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
         ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
-        mockTokenProvider = new MockTokenProvider(jHipsterProperties);
+        mockTokenProvider = new TestTokenGenerator(jHipsterProperties);
         jwtFilter = new JWTFilter(tokenProvider);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
