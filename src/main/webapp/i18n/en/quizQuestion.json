@@ -34,7 +34,8 @@
             "hideSampleSolution": "Hide Sample Solution",
             "allOptions": "Please choose all correct answer options",
             "longQuestion": "Enter your long question if needed",
-            "hintText": "Add a hint here (visible during the quiz via ?-Button)"
+            "hintText": "Add a hint here (visible during the quiz via ?-Button)",
+            "explanationText": "Add an explanation here (only visible in feedback after quiz has ended)"
         }
     }
 }

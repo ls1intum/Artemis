@@ -339,7 +339,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         correctSampleAnswerOption.isCorrect = true;
         correctSampleAnswerOption.text = this.translateService.instant('artemisApp.multipleChoiceQuestion.correctAnswer');
         correctSampleAnswerOption.hint = this.translateService.instant('artemisApp.quizQuestion.hintText');
-        correctSampleAnswerOption.explanation = this.translateService.instant('artemisApp.multipleChoiceQuestion.explanation');
+        correctSampleAnswerOption.explanation = this.translateService.instant('artemisApp.quizQuestion.explanationText');
 
         const incorrectSampleAnswerOption = new AnswerOption();
         incorrectSampleAnswerOption.isCorrect = false;

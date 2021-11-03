@@ -1,5 +1,6 @@
 import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
+import { TranslateService } from '@ngx-translate/core';
 
 export class ExplanationCommand extends DomainTagCommand {
     public static readonly identifier = '[exp]';
@@ -7,12 +8,20 @@ export class ExplanationCommand extends DomainTagCommand {
 
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addExplanation';
 
+    constructor(private translateService?: TranslateService) {
+        super();
+    }
     /**
      * @function execute
      * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n\t' + this.getOpeningIdentifier() + ExplanationCommand.text;
+        let text = '\n\t' + this.getOpeningIdentifier();
+        if (this.translateService) {
+            text += ' ' + this.translateService.instant('artemisApp.quizQuestion.explanationText');
+        } else {
+            text += ExplanationCommand.text;
+        }
         addTextAtCursor(text, this.aceEditor);
     }
 

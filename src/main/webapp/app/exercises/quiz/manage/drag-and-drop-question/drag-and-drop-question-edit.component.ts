@@ -33,6 +33,7 @@ import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -105,8 +106,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
-    hintCommand = new HintCommand();
-    explanationCommand = new ExplanationCommand();
+    hintCommand = new HintCommand(this.translateService);
+    explanationCommand = new ExplanationCommand(this.translateService);
 
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
@@ -117,6 +118,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         private modalService: NgbModal,
         private fileUploaderService: FileUploaderService,
         private changeDetector: ChangeDetectorRef,
+        private translateService: TranslateService,
     ) {}
 
     /**

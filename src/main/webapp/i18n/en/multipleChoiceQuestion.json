@@ -24,7 +24,6 @@
             "correct": "Correct",
             "wrong": "Wrong",
             "invalid": "Invalid answers will be assessed as correct.",
-            "explanation": "Add an explanation here (only visible in feedback after quiz has ended)",
             "correctAnswer": "Enter a correct answer option here",
             "wrongAnswer": "Enter a wrong answer option here",
             "editor": {

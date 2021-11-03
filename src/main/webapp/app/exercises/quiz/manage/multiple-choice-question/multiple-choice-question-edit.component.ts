@@ -10,6 +10,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -42,15 +43,20 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
     showMultipleChoiceQuestionPreview = true;
 
-    hintCommand = new HintCommand();
-    correctCommand = new CorrectOptionCommand();
-    incorrectCommand = new IncorrectOptionCommand();
-    explanationCommand = new ExplanationCommand();
+    hintCommand = new HintCommand(this.translateService);
+    correctCommand = new CorrectOptionCommand(this.translateService);
+    incorrectCommand = new IncorrectOptionCommand(this.translateService);
+    explanationCommand = new ExplanationCommand(this.translateService);
 
     /** DomainCommands for the multiple choice question **/
     commandMultipleChoiceQuestions: DomainCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private modalService: NgbModal,
+        private changeDetector: ChangeDetectorRef,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * Init the question editor text by parsing the markdown.
