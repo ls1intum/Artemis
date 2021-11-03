@@ -368,8 +368,17 @@ public class ProgrammingExercise extends Exercise {
                 return checkForRatedAndAssessedResult(result);
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
-                    || submission.getSubmissionDate().isBefore(this.getDueDate());
+                    || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
         }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+    }
+
+    private ZonedDateTime getRelevantDueDateForSubmission(Submission submission) {
+        if (submission.getParticipation().getIndividualDueDate() != null) {
+            return submission.getParticipation().getIndividualDueDate();
+        }
+        else {
+            return this.getDueDate();
+        }
     }
 
     @Override

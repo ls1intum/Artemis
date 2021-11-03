@@ -61,8 +61,8 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             ProgrammingExercise programmingExercise = getProgrammingExercise();
 
             final ZonedDateTime now = ZonedDateTime.now();
-            boolean isAfterDueDate = (getIndividualDueDate() != null && getIndividualDueDate().isBefore(now))
-                    || (programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(now));
+            boolean isAfterDueDate = (getIndividualDueDate() != null && now.isAfter(getIndividualDueDate()))
+                    || (programmingExercise.getDueDate() != null && now.isAfter(programmingExercise.getDueDate()));
 
             // Editing is allowed if build and test after due date is not set and no manual correction is involved
             // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
