@@ -47,12 +47,14 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/p
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -201,12 +203,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule, NgbModule],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseConfigureGradingActionsComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
+                MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
+                MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
                 MockComponent(ProgrammingExerciseTriggerAllButtonComponent),
                 MockComponent(AlertComponent),
@@ -217,8 +221,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(ScaCategoryDistributionChartComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbPopover),
                 MockDirective(NgModel),
                 MockDirective(TranslateDirective),
             ],
