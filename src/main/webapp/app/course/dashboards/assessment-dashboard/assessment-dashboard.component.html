@@ -70,6 +70,28 @@
                 {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
             </label>
         </div>
+        <div *ngIf="isExamMode" class="exam-action-buttons">
+            <button
+                id="evaluateQuizExercisesButton"
+                class="btn btn-primary mt-1"
+                (click)="evaluateQuizExercises()"
+                *ngIf="course?.isAtLeastInstructor"
+                [disabled]="isLoading || !isExamOver"
+            >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
+            </button>
+            <button
+                class="btn btn-primary mt-1"
+                id="assessUnsubmittedExamModelingAndTextParticipationsButton"
+                (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+                *ngIf="course?.isAtLeastInstructor"
+                [disabled]="isLoading || !isExamOver"
+            >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
+            </button>
+        </div>
         <table class="table exercise-table guided-tour-exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
