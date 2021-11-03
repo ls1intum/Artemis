@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -243,6 +244,9 @@ public class DatabaseUtilService {
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
     private RatingRepository ratingRepo;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -372,11 +376,25 @@ public class DatabaseUtilService {
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
+    public void addEditor(final String editorGroup, final String editorName) {
+        var instructor = ModelFactory.generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
+        instructor = userRepo.save(instructor);
+
+        assertThat(instructor.getId()).as("Editor has been created").isNotNull();
+    }
+
     public void addTeachingAssistant(final String taGroup, final String taName) {
         var ta = ModelFactory.generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
         ta = userRepo.save(ta);
 
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+    }
+
+    public void addStudent(final String studentGroup, final String studentName) {
+        var instructor = ModelFactory.generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
+        instructor = userRepo.save(instructor);
+
+        assertThat(instructor.getId()).as("Student has been created").isNotNull();
     }
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
@@ -714,10 +732,10 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(course1, textExercise));
+        posts.addAll(createBasicPosts(textExercise));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(course1, lecture));
+        posts.addAll(createBasicPosts(lecture));
 
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
@@ -745,11 +763,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Course courseContext, Lecture lectureContext) {
+    private List<Post> createBasicPosts(Lecture lectureContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
-            postToAdd.setCourse(courseContext);
             postToAdd.setLecture(lectureContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -757,11 +774,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Course courseContext, Exercise exerciseContext) {
+    private List<Post> createBasicPosts(Exercise exerciseContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
-            postToAdd.setCourse(courseContext);
             postToAdd.setExercise(exerciseContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -2154,6 +2170,13 @@ public class DatabaseUtilService {
         repository.setExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
         return repository;
+    }
+
+    public SubmissionPolicy addSubmissionPolicyToExercise(SubmissionPolicy policy, ProgrammingExercise programmingExercise) {
+        policy = submissionPolicyRepository.save(policy);
+        programmingExercise.setSubmissionPolicy(policy);
+        programmingExerciseRepository.save(programmingExercise);
+        return policy;
     }
 
     public Course addCourseWithModelingAndTextExercise() {

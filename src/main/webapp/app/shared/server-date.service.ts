@@ -2,16 +2,31 @@ import { Injectable } from '@angular/core';
 import dayjs from 'dayjs';
 import { HttpClient } from '@angular/common/http';
 
-@Injectable({ providedIn: 'root' })
-export class ArtemisServerDateService {
-    private resourceUrl = SERVER_API_URL + 'time';
-
+export interface ServerDateService {
+    readonly http: HttpClient;
+    readonly resourceUrl: string;
     // offsets of the last synchronizations in ms (max. 5)
-    private recentOffsets = new Array<number>();
+    readonly recentOffsets: Array<number>;
     // client (!) dates of the last synchronizations (max. 5)
-    private recentClientDates = new Array<dayjs.Dayjs>();
+    readonly recentClientDates: Array<dayjs.Dayjs>;
+    updateTime: () => void;
+    setServerDate: (date: string) => void;
+    now: () => dayjs.Dayjs;
+}
 
-    constructor(private http: HttpClient) {}
+@Injectable({ providedIn: 'root' })
+export class ArtemisServerDateService implements ServerDateService {
+    resourceUrl: string;
+    recentOffsets: number[];
+    recentClientDates: dayjs.Dayjs[];
+    http: HttpClient;
+
+    constructor(http: HttpClient) {
+        this.http = http;
+        this.resourceUrl = SERVER_API_URL + 'time';
+        this.recentOffsets = new Array<number>();
+        this.recentClientDates = new Array<dayjs.Dayjs>();
+    }
 
     /**
      * get a new server date if necessary

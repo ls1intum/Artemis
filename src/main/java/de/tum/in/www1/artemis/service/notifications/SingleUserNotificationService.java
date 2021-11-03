@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.service.MailService;
 
 @Service
 public class SingleUserNotificationService {
@@ -18,9 +20,16 @@ public class SingleUserNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate) {
+    private MailService mailService;
+
+    private NotificationSettingsService notificationSettingsService;
+
+    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate, MailService mailService,
+            NotificationSettingsService notificationSettingsService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.messagingTemplate = messagingTemplate;
+        this.mailService = mailService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -38,7 +47,7 @@ public class SingleUserNotificationService {
             case NEW_REPLY_FOR_COURSE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(resultingGroupNotification);
+        saveAndSend(resultingGroupNotification, post);
     }
 
     /**
@@ -63,6 +72,7 @@ public class SingleUserNotificationService {
 
     /**
      * Notify author of a course-wide that there is a new answer.
+     * Also creates and sends an email.
      *
      * @param post that is answered
      * @param course that the post belongs to
@@ -84,11 +94,32 @@ public class SingleUserNotificationService {
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
+     * Also creates and sends an email.
      *
      * @param notification that should be saved and sent
+     * @param notificationSubject which information will be extracted to create the email
      */
-    private void saveAndSend(SingleUserNotification notification) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        prepareSingleUserNotificationEmail(notification, notificationSubject);
+    }
+
+    /**
+     * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
+     * If the checks are successful creates and sends a corresponding email
+     * If the notification type indicates an urgent (critical) email it will be sent regardless of settings
+     * @param notification that should be checked
+     * @param notificationSubject which information will be extracted to create the email
+     */
+    private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
+        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        // checks if this notification type has email support
+        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
+            boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
+            if (isAllowedBySettings) {
+                mailService.sendNotificationEmail(notification, notification.getRecipient(), notificationSubject);
+            }
+        }
     }
 }

@@ -8,6 +8,15 @@ import dayjs from 'dayjs';
         <label class="form-control-label" *ngIf="labelName">
             {{ labelName }}
         </label>
+        <fa-stack
+            *ngIf="shouldDisplayTimeZoneWarning"
+            placement="top"
+            ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}"
+            style="height: 1em; width: 1em;"
+        >
+            <fa-icon [icon]="'globe'" stackItemSize="1x" class="text-lightgrey"></fa-icon>
+            <fa-icon [icon]="'clock'" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
+        </fa-stack>
         <div class="d-flex">
             <input
                 #dateInput="ngModel"
@@ -44,6 +53,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() startAt: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
+    @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -101,5 +111,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this.value = newValue;
         this._onChange(dayjs(this.value));
         this.valueChanged();
+    }
+
+    /**
+     * Get the current time zone of the user / browser
+     */
+    get currentTimeZone(): string {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 }

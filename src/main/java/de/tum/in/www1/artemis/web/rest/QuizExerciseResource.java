@@ -127,17 +127,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // Only notify students and tutors if the exercise is created for a course
-        if (quizExercise.isCourseExercise()) {
-            // notify websocket channel of changes to the quiz exercise
-            quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            if (quizExercise.getReleaseDate() == null || !quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-                groupNotificationService.notifyAllGroupsAboutReleasedExercise(quizExercise);
-            }
-            else {
-                instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
-            }
-        }
+        groupNotificationService.checkNotificationForExerciseRelease(quizExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -197,13 +187,8 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
-        // Only notify students about changes if a regular exercise in a course was updated
-        if (notificationText != null && quizExercise.isCourseExercise()) {
-            // notify websocket channel of changes to the quiz exercise
-            quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(quizExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(quizExercise, notificationText, instanceMessageSendService);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 

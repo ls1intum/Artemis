@@ -51,17 +51,18 @@ public class PostResource {
     }
 
     /**
-     * PUT /courses/{courseId}/posts : Update an existing post
+     * PUT /courses/{courseId}/posts/{postId} : Update an existing post with given id
      *
      * @param courseId id of the course the post belongs to
+     * @param postId   id of the post to update
      * @param post     post to update
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @PutMapping("courses/{courseId}/posts")
+    @PutMapping("courses/{courseId}/posts/{postId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
-        Post updatedPost = postService.updatePost(courseId, post);
+    public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
+        Post updatedPost = postService.updatePost(courseId, postId, post);
         return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
