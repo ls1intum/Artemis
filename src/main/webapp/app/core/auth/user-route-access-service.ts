@@ -34,14 +34,14 @@ export class UserRouteAccessService implements CanActivate {
         }
 
         const authorities = route.data['authorities'];
-        /*
-          For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
-          To ensure this behaviour the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
-          canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
-         */
+
+        // For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
+        // To ensure this behaviour the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
+        // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
         if (route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true') {
             authorities.push(Authority.EDITOR);
         }
+
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
