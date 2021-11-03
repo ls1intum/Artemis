@@ -29,6 +29,9 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
 
     private ProgrammingExerciseStudentParticipation participation;
 
+    private final Runnable noop = () -> {
+    };
+
     @BeforeEach
     public void reset() {
         SecurityUtils.setAuthorizationObject();
@@ -46,55 +49,64 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
 
     @Test
     public void scheduleTaskNoBuildAndTestDate() {
-        programmingExercise.setDueDate(ZonedDateTime.now());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-
-        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
-        participation.setExercise(programmingExercise);
+        setupExerciseAndParticipation(null, ZonedDateTime.now().plusHours(1));
 
         // should not be scheduled at all
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
-        });
-        assertThat((Future) scheduledTask).isNull();
+        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
+        assertThat((Future<?>) scheduledTask).isNull();
     }
 
     @Test
     public void scheduleTaskOnlyBuildAndTestAfterDueDate() {
-        programmingExercise.setDueDate(ZonedDateTime.now());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
-        participation.setExercise(programmingExercise);
+        setupExerciseAndParticipation(ZonedDateTime.now().plusHours(1), null);
 
         // should still be scheduled even if no individual due date affects the scheduling
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
-        });
+        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
         assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(60, Offset.offset(1L));
     }
 
     @Test
     public void scheduleTaskDueDateBeforeBuildAndTestDate() {
-        programmingExercise.setDueDate(ZonedDateTime.now());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
-
-        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
-        participation.setExercise(programmingExercise);
+        setupExerciseAndParticipation(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(1));
 
         // scheduling should choose proper build and test after due date as date
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
-        });
+        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
         assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(120, Offset.offset(1L));
     }
 
     @Test
     public void scheduleTaskDueDateAfterBuildAndTestDate() {
-        programmingExercise.setDueDate(ZonedDateTime.now());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
-
-        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
-        participation.setExercise(programmingExercise);
+        setupExerciseAndParticipation(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
 
         // scheduling should choose individual due date (after build and test date) as scheduling date
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
-        });
+        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
         assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(120, Offset.offset(1L));
+    }
+
+    @Test
+    public void scheduleOnIndividualDueDate() {
+        setupExerciseAndParticipation(null, ZonedDateTime.now().plusHours(2));
+
+        // scheduling should choose individual due date as scheduling date
+        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.DUE, noop);
+        assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(120, Offset.offset(1L));
+    }
+
+    @Test
+    public void scheduleNoDueDate() {
+        setupExerciseAndParticipation(null, null);
+        programmingExercise.setDueDate(null);
+
+        // should not be scheduled at all
+        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.DUE, noop);
+        assertThat((Future<?>) scheduledTask).isNull();
+    }
+
+    private void setupExerciseAndParticipation(ZonedDateTime exerciseBuildAndTestDate, ZonedDateTime individualDueDate) {
+        programmingExercise.setDueDate(ZonedDateTime.now());
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(exerciseBuildAndTestDate);
+
+        participation.setIndividualDueDate(individualDueDate);
+        participation.setExercise(programmingExercise);
     }
 }

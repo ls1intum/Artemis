@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 @Service
 public class ParticipationLifecycleService {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseLifecycleService.class);
+    private final Logger log = LoggerFactory.getLogger(ParticipationLifecycleService.class);
 
     private final TaskScheduler scheduler;
 
