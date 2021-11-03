@@ -1,10 +1,11 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { COURSE_BASE, CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import { POST } from '../../support/constants';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -33,6 +34,8 @@ Cypress.on('uncaught:exception', () => {
 });
 
 describe('Exam assessment', () => {
+    let examEnd: Dayjs;
+
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse(true).then((response) => {
@@ -53,8 +56,6 @@ describe('Exam assessment', () => {
     });
 
     describe('Exam exercise assessment', () => {
-        let examEnd: Dayjs;
-
         beforeEach('Generate new exam name', () => {
             examEnd = dayjs().add(30, 'seconds');
             prepareExam(examEnd);
@@ -127,45 +128,66 @@ describe('Exam assessment', () => {
                 cy.get('.question-options').contains('7 of 10 points').should('be.visible');
             });
         });
+    });
 
-        describe('Assess a quiz exercise submission', () => {
-            beforeEach('Create exercise and submission', () => {
-                courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then(() => {
-                    courseManagementRequests.generateMissingIndividualExams(exam);
-                    courseManagementRequests.prepareExerciseStartForExam(exam);
-                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    examStartEnd.startExam();
-                    cy.contains('Cypress Quiz').click();
-                    cy.get('#answer-option-0 > .selection > .ng-fa-icon > .svg-inline--fa').click();
-                    cy.get('#answer-option-2 > .selection > .ng-fa-icon > .svg-inline--fa').click();
-                    cy.get('#exam-navigation-bar').find('.btn-danger').click();
-                    examStartEnd.finishExam();
-                    cy.login(admin);
+    describe('Assess a quiz exercise submission', () => {
+        let resultDate: Dayjs;
+
+        beforeEach('Generate new exam name', () => {
+            examEnd = dayjs().add(15, 'seconds');
+            resultDate = examEnd.add(10, 'seconds');
+            prepareExam(examEnd, resultDate);
+        });
+
+        beforeEach('Create exercise and submission', () => {
+            courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then(() => {
+                courseManagementRequests.generateMissingIndividualExams(exam);
+                courseManagementRequests.prepareExerciseStartForExam(exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                cy.contains('Cypress Quiz').click();
+                cy.get('#answer-option-0 > .selection > .ng-fa-icon > .svg-inline--fa').click();
+                cy.get('#answer-option-2 > .selection > .ng-fa-icon > .svg-inline--fa').click();
+                cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                examStartEnd.finishExam();
+            });
+        });
+
+        it('Assesses quiz automatically', () => {
+            cy.waitUntil(() => {
+                const now = dayjs().isAfter(examEnd);
+                if (now) {
+                    return now;
+                } else {
+                    cy.wait(1000);
+                }
+            }).then(() => {
+                cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
+                cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
+                cy.contains('Evaluate quizzes').click();
+                cy.wait('@evaluateQuizzes').then(() => {
                     cy.waitUntil(() => {
-                        const now = dayjs().isAfter(examEnd);
+                        const now = dayjs().isAfter(resultDate);
                         if (now) {
                             return now;
                         } else {
                             cy.wait(1000);
                         }
                     }).then(() => {
-                        courseManagementRequests.evaluateExamQuizzes(exam);
+                        cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                        cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
                     });
                 });
-            });
-
-            it('Assesses quiz automatically', () => {
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
             });
         });
     });
 
     describe('Exam programming exercise assessment', () => {
-        const examEnd = 155000;
+        const examDuration = 155000;
 
         before('Prepare exam', () => {
-            prepareExam(dayjs().add(examEnd, 'milliseconds'));
+            examEnd = dayjs().add(examDuration, 'milliseconds');
+            prepareExam(examEnd);
         });
 
         beforeEach('Create exam, exercise and submission', () => {
@@ -187,7 +209,7 @@ describe('Exam assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: examEnd }).click();
+            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
             startAssessing();
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
