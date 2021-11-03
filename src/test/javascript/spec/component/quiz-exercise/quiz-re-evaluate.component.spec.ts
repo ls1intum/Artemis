@@ -123,7 +123,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('Should initialize quiz exercise', () => {
         comp.ngOnInit();
-        expect(comp.validQuiz()).toBe(true);
+        expect(comp.isValidQuiz()).toBe(true);
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(quizServiceFindStub).toHaveBeenCalledTimes(1);
     });

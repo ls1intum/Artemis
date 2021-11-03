@@ -945,7 +945,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         return super.computeInvalidReasons().concat(invalidReasons);
     }
-    validQuiz(): boolean {
+    isValidQuiz(): boolean {
         if (!this.quizExercise) {
             return false;
         }
@@ -954,6 +954,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         const releaseDateValidAndNotInPastCondition =
             !this.quizExercise.isPlannedToStart ||
             (this.quizExercise.releaseDate !== undefined && dayjs(this.quizExercise.releaseDate).isValid() && dayjs(this.quizExercise.releaseDate).isAfter(dayjs()));
-        return releaseDateValidAndNotInPastCondition && super.validQuiz();
+        return releaseDateValidAndNotInPastCondition && super.isValidQuiz();
     }
 }

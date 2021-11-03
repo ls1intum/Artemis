@@ -93,7 +93,7 @@
                 <div></div>
                 <div class="form-group">
                     <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"> </span>
-                    <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"> </span>
+                    <span *ngIf="pendingChanges() && isValidQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"> </span>
                     <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"> </span>
                     <ng-template #tooltipTranslate>
                         <div *ngFor="let reason of invalidReasons">
@@ -127,11 +127,11 @@
                     <button
                         class="btn btn-warning"
                         (click)="resetAll()"
-                        [disabled]="!pendingChanges() || !validQuiz() || isSaving"
+                        [disabled]="!pendingChanges() || !isValidQuiz() || isSaving"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                     ></button>
                     <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
-                    <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !validQuiz() || isSaving" jhiTranslate="entity.action.save"></button>
+                    <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !isValidQuiz() || isSaving" jhiTranslate="entity.action.save"></button>
                 </div>
             </div>
         </div>

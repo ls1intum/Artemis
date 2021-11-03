@@ -30,6 +30,10 @@ export abstract class QuizExerciseValidationDirective {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
+    readonly titleLengthThreshold = 250;
+    readonly explanationLengthThreshold = 500;
+    readonly hintLengthThreshold = 255;
+
     warningQuizCache = false;
     quizIsValid: boolean;
     quizExercise: QuizExercise;
@@ -45,8 +49,6 @@ export abstract class QuizExerciseValidationDirective {
     } = {};
     pendingChangesCache: boolean;
 
-    protected constructor() {}
-
     /**
      * 1. Check whether the inputs in the quiz are valid
      * 2. Check if warning are needed for the inputs
@@ -54,7 +56,7 @@ export abstract class QuizExerciseValidationDirective {
      */
     cacheValidation(changeDetector: ChangeDetectorRef): void {
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;
-        this.quizIsValid = this.validQuiz();
+        this.quizIsValid = this.isValidQuiz();
         this.pendingChangesCache = this.pendingChanges();
         this.checkForInvalidFlaggedQuestions();
         this.invalidReasons = this.computeInvalidReasons();
@@ -62,14 +64,14 @@ export abstract class QuizExerciseValidationDirective {
         changeDetector.detectChanges();
     }
 
-    validQuiz(): boolean {
+    isValidQuiz(): boolean {
         if (!this.quizExercise) {
             return false;
         }
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
-            this.quizExercise.title.length < 250 &&
+            this.quizExercise.title.length < this.titleLengthThreshold &&
             this.quizExercise.duration !== 0 &&
             this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
@@ -78,22 +80,73 @@ export abstract class QuizExerciseValidationDirective {
             if (question.points == undefined || question.points < 1) {
                 return false;
             }
-            if (question.explanation && question.explanation.length > 500) {
+            if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
                 return false;
             }
-            if (question.hint && question.hint.length > 255) {
+            if (question.hint && question.hint.length > this.hintLengthThreshold) {
                 return false;
+            }
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE: {
+                    const mcQuestion = question as MultipleChoiceQuestion;
+                    if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
+                        return (
+                            question.title &&
+                            question.title !== '' &&
+                            question.title.length < this.titleLengthThreshold &&
+                            mcQuestion.answerOptions!.every(
+                                (answerOption) =>
+                                    (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
+                                    (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
+                            )
+                        );
+                    }
+                    break;
+                }
+                case QuizQuestionType.DRAG_AND_DROP: {
+                    const dndQuestion = question as DragAndDropQuestion;
+                    return (
+                        question.title &&
+                        question.title !== '' &&
+                        question.title.length < this.titleLengthThreshold &&
+                        dndQuestion.correctMappings &&
+                        dndQuestion.correctMappings.length > 0 &&
+                        this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
+                        this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
+                    );
+                }
+                case QuizQuestionType.SHORT_ANSWER: {
+                    const shortAnswerQuestion = question as ShortAnswerQuestion;
+                    return (
+                        question.title &&
+                        question.title !== '' &&
+                        shortAnswerQuestion.correctMappings &&
+                        shortAnswerQuestion.correctMappings.length > 0 &&
+                        this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
+                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
+                        this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
+                        shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
+                        !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
+                        this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
+                    );
+                }
+                default: {
+                    captureException(new Error('Unknown question type: ' + question));
+                    return question.title && question.title !== '';
+                }
             }
 
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+            /*            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
                     return (
                         question.title &&
                         question.title !== '' &&
-                        question.title.length < 250 &&
+                        question.title.length < this.titleLengthThreshold &&
                         mcQuestion.answerOptions!.every(
-                            (answerOption) => (!answerOption.explanation || answerOption.explanation.length <= 500) && (!answerOption.hint || answerOption.hint.length <= 255),
+                            (answerOption) =>
+                                (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
+                                (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
                         )
                     );
                 }
@@ -102,7 +155,7 @@ export abstract class QuizExerciseValidationDirective {
                 return (
                     question.title &&
                     question.title !== '' &&
-                    question.title.length < 250 &&
+                    question.title.length < this.titleLengthThreshold &&
                     dndQuestion.correctMappings &&
                     dndQuestion.correctMappings.length > 0 &&
                     this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -125,7 +178,7 @@ export abstract class QuizExerciseValidationDirective {
             } else {
                 captureException(new Error('Unknown question type: ' + question));
                 return question.title && question.title !== '';
-            }
+            }*/
         }, this);
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
@@ -177,10 +230,10 @@ export abstract class QuizExerciseValidationDirective {
                 translateValues: {},
             });
         }
-        if (this.quizExercise.title!.length >= 250) {
+        if (this.quizExercise.title!.length >= this.titleLengthThreshold) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
-                translateValues: {},
+                translateValues: { threshold: this.titleLengthThreshold },
             });
         }
         if (!this.quizExercise.duration) {
@@ -238,35 +291,35 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.explanation && answerOption.explanation.length > 500)) {
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.explanation && answerOption.explanation.length > this.explanationLengthThreshold)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.answerExplanationLength',
-                        translateValues: { index: index + 1 },
+                        translateValues: { index: index + 1, threshold: this.explanationLengthThreshold },
                     });
                 }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length > 255)) {
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length > this.hintLengthThreshold)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.answerHintLength',
-                        translateValues: { index: index + 1 },
+                        translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
                     });
                 }
             }
-            if (question.title && question.title.length >= 250) {
+            if (question.title && question.title.length >= this.titleLengthThreshold) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
-                    translateValues: { index: index + 1 },
+                    translateValues: { index: index + 1, threshold: this.titleLengthThreshold },
                 });
             }
-            if (question.explanation && question.explanation.length > 500) {
+            if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionExplanationLength',
-                    translateValues: { index: index + 1 },
+                    translateValues: { index: index + 1, threshold: this.explanationLengthThreshold },
                 });
             }
-            if (question.hint && question.hint.length > 255) {
+            if (question.hint && question.hint.length > this.hintLengthThreshold) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionHintLength',
-                    translateValues: { index: index + 1 },
+                    translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
                 });
             }
 
