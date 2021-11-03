@@ -246,15 +246,6 @@
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
-            class="btn btn-info me-1 mb-1"
-            [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
-        >
-            <fa-icon [icon]="'chess-king'"></fa-icon>
-            <span class="d-none d-xl-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
-        </a>
-        <a
-            *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'scores']"
             class="btn btn-info me-1 mb-1"
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"
