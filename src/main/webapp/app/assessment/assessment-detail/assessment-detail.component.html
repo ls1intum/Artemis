@@ -9,7 +9,7 @@
     </div>
     <div class="card-body">
         <div class="form-group row">
-            <label class="col-3 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
+            <label class="col-4 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
             <input
                 class="col form-control"
                 type="number"
@@ -22,12 +22,12 @@
             />
         </div>
         <div class="form-group row">
-            <div class="col-3 assessment-label d-flex">
-                <label jhiTranslate="artemisApp.assessment.detail.feedback"></label>
+            <div class="col-4 assessment-label">
+                <label class="pe-0" style="float: left" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div *ngIf="assessment.gradingInstruction!">
                     <fa-icon
                         [icon]="'question-circle'"
-                        class="text-secondary p-1"
+                        class="text-secondary ps-1"
                         [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"
                         container="body"
                     ></fa-icon>
