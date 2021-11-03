@@ -359,10 +359,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+        List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
         assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
@@ -392,10 +389,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+        List<Path> entries = unzipExportedFile();
 
         // Checks
         assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
@@ -406,6 +400,17 @@ public class ProgrammingExerciseIntegrationServiceTest {
             assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
             assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
         }
+    }
+
+    /**
+     * Recursively unzips the exported file.
+     *
+     * @return the list of files that the {@code downloadedFile} contained.
+     */
+    private List<Path> unzipExportedFile() throws Exception {
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        return Files.walk(extractedZipDir).collect(Collectors.toList());
     }
 
     public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
