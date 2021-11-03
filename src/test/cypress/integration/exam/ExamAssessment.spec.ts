@@ -19,6 +19,7 @@ const examAssessment = artemis.pageobjects.assessment.exam;
 const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
+const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -146,39 +147,25 @@ describe('Exam assessment', () => {
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 cy.contains('Cypress Quiz').click();
-                cy.get('#answer-option-0 > .selection > .ng-fa-icon > .svg-inline--fa').click();
-                cy.get('#answer-option-2 > .selection > .ng-fa-icon > .svg-inline--fa').click();
-                cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                multipleChoice.tickAnswerOption(0);
+                multipleChoice.tickAnswerOption(2);
+                examNavigation.handInEarly();
                 examStartEnd.finishExam();
             });
         });
 
         it('Assesses quiz automatically', () => {
-            cy.waitUntil(() => {
-                const now = dayjs().isAfter(examEnd);
-                if (now) {
-                    return now;
-                } else {
-                    cy.wait(1000);
-                }
-            }).then(() => {
-                cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
-                cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
-                cy.contains('Evaluate quizzes').click();
-                cy.wait('@evaluateQuizzes').then(() => {
-                    cy.waitUntil(() => {
-                        const now = dayjs().isAfter(resultDate);
-                        if (now) {
-                            return now;
-                        } else {
-                            cy.wait(1000);
-                        }
-                    }).then(() => {
-                        cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                        cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
-                    });
-                });
-            });
+            if (dayjs().isBefore(examEnd)) {
+                cy.wait(examEnd.diff(dayjs(), 'ms'));
+            }
+            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
+            cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
+            cy.contains('Evaluate quizzes').click();
+            if (dayjs().isBefore(examEnd)) {
+                cy.wait(examEnd.diff(dayjs(), 'ms'));
+            }
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
         });
     });
 
