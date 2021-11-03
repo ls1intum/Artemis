@@ -73,7 +73,7 @@ describe('FileUploadExercise Service', () => {
     it('should update a FileUploadExercise', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
-                filePattern: 'BBBBBB',
+                filePattern: 'bbbbbb',
             },
             elemDefault,
         );
