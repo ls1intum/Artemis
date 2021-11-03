@@ -1,5 +1,9 @@
 @import 'src/main/webapp/app/overview/overview-vars';
 
+#course-page-heading {
+    font-weight: 500;
+}
+
 .course-table {
     padding: 5px 0;
     background-color: $light-background-color;
