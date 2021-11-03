@@ -63,7 +63,7 @@ public class TutorLeaderboardService {
 
         start = System.currentTimeMillis();
         // 0.6s
-        var tutorLeaderboardMoreFeedbackRequests = new List<>(); // complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
+        var tutorLeaderboardMoreFeedbackRequests = new ArrayList<TutorLeaderboardMoreFeedbackRequests>(); // complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
         end = System.currentTimeMillis();
         log.debug("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId<< call for course {} in {}ms", course.getId(), end - start);
 
