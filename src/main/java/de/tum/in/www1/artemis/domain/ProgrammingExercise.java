@@ -354,7 +354,8 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Get the latest (potentially) graded submission for a programming exercise.
-     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed, but that e.g. the CI system failed to deliver the build results.
+     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed,
+     * but that e.g. the CI system failed to deliver the build results.
      *
      * @param submissions Submissions for the given student.
      * @return the latest graded submission.
@@ -367,7 +368,7 @@ public class ProgrammingExercise extends Exercise {
             if (result != null) {
                 return checkForRatedAndAssessedResult(result);
             }
-            return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
+            return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
                     || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
         }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
     }
