@@ -37,6 +37,20 @@
                 "title": "Exercise Table",
                 "courseInformation": "Exercise table displays all exercises in this course. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions.",
                 "examInformation": "Exercise table displays all exercises in this exam. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions."
+            },
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor Course Leaderboard",
+                "examTitle": "Tutor Exam Leaderboard",
+                "id": "ID",
+                "name": "Name",
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Accepted complaints",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Open requests",
+                "numberOfComplaintResponses": "Complaint responses",
+                "numberOfAnsweredMoreFeedbackRequests": "Answered requests",
+                "points": "Points",
+                "averageScore": "Average score",
+                "averageRating": "Average rating"
             }
         }
     }
