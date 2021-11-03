@@ -6,13 +6,15 @@ import javax.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.participation.Participation;
+
 /**
  * Configures a Submission Penalty Policy.<br>
  * The Submission Penalty Policy imposes a permanent {@link SubmissionPenaltyPolicy#exceedingPenalty} on the achievable
  * participation score for every submission exceeding the {@link SubmissionPolicy#submissionLimit}. The {@link SubmissionPenaltyPolicy#exceedingPenalty}
  * increases with the submissions exceeding the limit in a linear way.<br>
  * The number of submissions in one participation is determined based on multiple factors.
- * More information on submission counts can be found at SubmissionPolicyService.getParticipationSubmissionCount(Participation).
+ * More information on submission counts can be found at {@link de.tum.in.www1.artemis.service.SubmissionPolicyService#getParticipationSubmissionCount(Participation)}.
  */
 @Entity
 @DiscriminatorValue("SPP")
