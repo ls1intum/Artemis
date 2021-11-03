@@ -51,11 +51,12 @@
                             </div>
 
                             <div class="btn-group-vertical me-1 mb-1">
-                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary mb-1 btn-sm">
+                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </a>
                                 <button
+                                    class="mt-1"
                                     jhiDeleteButton
                                     *ngIf="lecture.isAtLeastInstructor"
                                     [entityTitle]="lecture.title || ''"
