@@ -39,8 +39,6 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
 chai.use(sinonChai);
