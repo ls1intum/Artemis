@@ -24,7 +24,16 @@
 
     <jhi-course-exercise-card [hidden]="shouldHideExerciseCard('programming')" headingJhiTranslate="artemisApp.course.programmingExercises">
         <jhi-programming-exercise
-            *jhiExtensionPoint="overrideProgrammingExerciseCard; context: { embedded: true, course: course, exerciseCountCallback: setProgrammingExerciseCount.bind(this) }"
+            *jhiExtensionPoint="
+                overrideProgrammingExerciseCard;
+                context: {
+                    embedded: true,
+                    course: course,
+                    programmingExerciseCountCallback: setProgrammingExerciseCount.bind(this),
+                    exerciseFilter: exerciseFilter,
+                    filteredProgrammingExercisesCountCallback: setFilteredProgrammingExerciseCount.bind(this)
+                }
+            "
             [embedded]="true"
             [course]="course"
             [exerciseFilter]="exerciseFilter"
