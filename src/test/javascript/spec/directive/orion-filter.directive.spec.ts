@@ -25,8 +25,7 @@ import { isOrion } from 'app/shared/orion/orion';
     selector: 'jhi-test-component',
     template: '<div id="shown" jhiOrionFilter [showInOrionWindow]="true"></div><div id="hidden" jhiOrionFilter [showInOrionWindow]="false"></div>',
 })
-class TestComponent {
-}
+class TestComponent {}
 
 describe('OrionFilterDirective', () => {
     let comp: TestComponent;
@@ -56,11 +55,11 @@ describe('OrionFilterDirective', () => {
 
         const shownDiv = debugElement.query(By.css('#shown'));
         expect(shownDiv).not.toBe(null);
-        expect(shownDiv.nativeElement.style.display).toBe("");
+        expect(shownDiv.nativeElement.style.display).toBe('');
 
         const hiddenDiv = debugElement.query(By.css('#hidden'));
         expect(hiddenDiv).not.toBe(null);
-        expect(hiddenDiv.nativeElement.style.display).toBe("none");
+        expect(hiddenDiv.nativeElement.style.display).toBe('none');
     }));
 
     it('should show/hide elements if isOrion is false', fakeAsync(() => {
@@ -72,10 +71,10 @@ describe('OrionFilterDirective', () => {
 
         const shownDiv = debugElement.query(By.css('#shown'));
         expect(shownDiv).not.toBe(null);
-        expect(shownDiv.nativeElement.style.display).toBe("none");
+        expect(shownDiv.nativeElement.style.display).toBe('none');
 
         const hiddenDiv = debugElement.query(By.css('#hidden'));
         expect(hiddenDiv).not.toBe(null);
-        expect(hiddenDiv.nativeElement.style.display).toBe("");
+        expect(hiddenDiv.nativeElement.style.display).toBe('');
     }));
 });

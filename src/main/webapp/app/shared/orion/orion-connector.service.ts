@@ -1,6 +1,6 @@
 import { Injectable, Injector } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ArtemisOrionConnector, ExerciseView, OrionState } from 'app/shared/orion/orion';
+import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { stringifyCircular } from 'app/shared/util/utils';
@@ -33,7 +33,7 @@ function theWindow(): any {
 @Injectable({
     providedIn: 'root',
 })
-export class OrionConnectorService implements ArtemisOrionConnector {
+export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 

@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisOrionConnector, OrionState } from 'app/shared/orion/orion';
+import { OrionState } from 'app/shared/orion/orion';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { ActivatedRoute } from '@angular/router';
@@ -17,7 +17,7 @@ import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button
 describe('OrionExerciseDetailsStudentActionsComponent', () => {
     let comp: OrionExerciseDetailsStudentActionsComponent;
     let fixture: ComponentFixture<OrionExerciseDetailsStudentActionsComponent>;
-    let orionConnector: ArtemisOrionConnector;
+    let orionConnector: OrionConnectorService;
 
     let ideStateStub: jest.SpyInstance;
     let cloneSpy: jest.SpyInstance;

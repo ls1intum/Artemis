@@ -7,19 +7,16 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
-describe("OrionOutdatedComponent", () => {
+describe('OrionOutdatedComponent', () => {
     let comp: OrionOutdatedComponent;
     let fixture: ComponentFixture<OrionOutdatedComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                OrionOutdatedComponent,
-                TranslatePipeMock
-            ],
+            declarations: [OrionOutdatedComponent, TranslatePipeMock],
             providers: [
-                { provide: ActivatedRoute, useValue: { queryParams: of({ versionString: "version" })}},
+                { provide: ActivatedRoute, useValue: { queryParams: of({ versionString: 'version' }) } },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })
@@ -27,14 +24,14 @@ describe("OrionOutdatedComponent", () => {
             .then(() => {
                 fixture = TestBed.createComponent(OrionOutdatedComponent);
                 comp = fixture.componentInstance;
-                jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ allowedMinimumOrionVersion: "minVersion" } as any))
+                jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ allowedMinimumOrionVersion: 'minVersion' } as any));
             });
     });
 
-    it("should initialize correctly", () => {
+    it('should initialize correctly', () => {
         fixture.detectChanges();
 
-        expect(comp.versionString).toBe("version")
-        expect(comp.allowedMinimumVersion).toBe("minVersion")
-    })
+        expect(comp.versionString).toBe('version');
+        expect(comp.allowedMinimumVersion).toBe('minVersion');
+    });
 });

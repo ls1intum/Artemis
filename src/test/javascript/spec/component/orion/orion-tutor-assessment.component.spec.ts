@@ -23,11 +23,7 @@ describe('OrionTutorAssessmentComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(OrionAssessmentInstructionsComponent),
             ],
-            providers: [
-                MockProvider(OrionConnectorService),
-                MockProvider(OrionAssessmentService),
-                MockProvider(CodeEditorTutorAssessmentContainerComponent),
-            ],
+            providers: [MockProvider(OrionConnectorService), MockProvider(OrionAssessmentService), MockProvider(CodeEditorTutorAssessmentContainerComponent)],
         })
             .compileComponents()
             .then(() => {

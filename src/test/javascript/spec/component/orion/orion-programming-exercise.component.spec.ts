@@ -67,7 +67,7 @@ describe('OrionProgrammingExerciseComponent', () => {
 
         comp.openOrionEditor(programmingExercise);
 
-        expect(navigateStub).toHaveBeenCalledTimes(1)
+        expect(navigateStub).toHaveBeenCalledTimes(1);
         expect(navigateStub).toHaveBeenCalledWith(['code-editor', 'ide', 456, 'admin', undefined]);
     });
 });

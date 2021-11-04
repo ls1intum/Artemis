@@ -149,7 +149,7 @@ describe('OrionBuildAndTestService', () => {
     });
 
     it('should delegate correctly if called buildAndTestExercise', () => {
-        const listenOnBuildOutputAndForwardChangesSpy = jest.spyOn(serviceUnderTest, 'listenOnBuildOutputAndForwardChanges')
+        const listenOnBuildOutputAndForwardChangesSpy = jest.spyOn(serviceUnderTest, 'listenOnBuildOutputAndForwardChanges');
         const triggerBuildSpy = jest.spyOn(TestBed.inject(ProgrammingSubmissionService), 'triggerBuild').mockReturnValue(of());
 
         serviceUnderTest.buildAndTestExercise(exercise);
@@ -167,7 +167,9 @@ describe('OrionBuildAndTestService', () => {
         const buildLogSubscription = of().subscribe();
         const buildLogSubscriptionSpy = jest.spyOn(buildLogSubscription, 'unsubscribe');
 
+        //@ts-ignore
         serviceUnderTest.resultSubscription = resultSubscription;
+        //@ts-ignore
         serviceUnderTest.buildLogSubscription = buildLogSubscription;
 
         serviceUnderTest.buildAndTestExercise(exercise);

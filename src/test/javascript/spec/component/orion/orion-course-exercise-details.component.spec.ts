@@ -6,18 +6,14 @@ import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 
-describe("OrionCourseExerciseDetailsComponent", () => {
+describe('OrionCourseExerciseDetailsComponent', () => {
     let comp: OrionCourseExerciseDetailsComponent;
     let fixture: ComponentFixture<OrionCourseExerciseDetailsComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                OrionCourseExerciseDetailsComponent,
-                MockComponent(CourseExerciseDetailsComponent),
-                MockComponent(OrionExerciseDetailsStudentActionsComponent),
-            ],
+            declarations: [OrionCourseExerciseDetailsComponent, MockComponent(CourseExerciseDetailsComponent), MockComponent(OrionExerciseDetailsStudentActionsComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -26,9 +22,9 @@ describe("OrionCourseExerciseDetailsComponent", () => {
             });
     });
 
-    it("should contain CourseExerciseDetailsComponent", () => {
+    it('should contain CourseExerciseDetailsComponent', () => {
         const courseExerciseDetails = fixture.debugElement.query(By.directive(CourseExerciseDetailsComponent));
 
-        expect(courseExerciseDetails).not.toBe(null)
-    })
+        expect(courseExerciseDetails).not.toBe(null);
+    });
 });

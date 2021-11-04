@@ -20,13 +20,6 @@ export enum ExerciseView {
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
-export interface ArtemisOrionConnector extends ArtemisClientConnector, OrionConnectorFacade {
-    /**
-     * Returns an Observable of Orion State.
-     */
-    state(): Observable<OrionState>;
-}
-
 export interface OrionSharedUtilConnector {
     /**
      * Method to perform the login.
@@ -113,75 +106,6 @@ export interface OrionBuildConnector {
      * @param buildLogsJsonString The Json string of the build logs.
      */
     onBuildFailed(buildLogsJsonString: string): void;
-
-    /**
-     * Executed when the result of the test is out. See {@link OrionConnectorService} for details.
-     * @param success Whether the test was successful or not.
-     * @param testName The name of the test.
-     * @param message The message to display.
-     */
-    onTestResult(success: boolean, testName: string, message: string): void;
-}
-
-export interface OrionConnectorFacade {
-    /**
-     * Method to perform the login. See {@link OrionConnectorService} for details.
-     * @param username of the user.
-     * @param password of the user.
-     */
-    login(username: string, password: string): void;
-
-    /**
-     * Method to log a specific message. See {@link OrionConnectorService} for details.
-     * @param message The text to be logged.
-     */
-    log(message: string): void;
-
-    /**
-     * Edit a particular exercise. See {@link OrionConnectorService} for details.
-     * @param exercise The programming exercise to be edited.
-     */
-    editExercise(exercise: ProgrammingExercise): void;
-
-    /**
-     * Import a specific participation. See {@link OrionConnectorService} for details.
-     * @param repositoryUrl The URL of the repository of the participation.
-     * @param exercise The programming exercise of the participation.
-     */
-    importParticipation(repositoryUrl: string, exercise: ProgrammingExercise): void;
-
-    /**
-     * Code to provide the submit functionality. See {@link OrionConnectorService} for details.
-     */
-    submit(): void;
-
-    /**
-     * Select a specific repository. See {@link OrionConnectorService} for details.
-     * @param repository The repository to be selected.
-     */
-    selectRepository(repository: REPOSITORY): void;
-
-    /**
-     * Perform a build and test locally. See {@link OrionConnectorService} for details.
-     */
-    buildAndTestLocally(): void;
-
-    /**
-     * To be executed when build has started. See {@link OrionConnectorService} for details.
-     * @param problemStatement The problem statement string.
-     */
-    onBuildStarted(problemStatement: string): void;
-
-    /**
-     * To be executed when build is finished. See {@link OrionConnectorService} for details.
-     */
-    onBuildFinished(): void;
-
-    /**
-     * To be executed when the build failed. See {@link OrionConnectorService} for details.
-     * @param buildErrors All compile errors for the current build
-     */
-    onBuildFailed(buildErrors: Array<Annotation>): void;
 
     /**
      * Executed when the result of the test is out. See {@link OrionConnectorService} for details.
