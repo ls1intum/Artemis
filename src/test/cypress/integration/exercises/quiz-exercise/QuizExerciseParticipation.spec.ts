@@ -40,6 +40,7 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
+            cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
@@ -73,6 +74,7 @@ describe('Quiz Exercise Management', () => {
 
     describe('SA quiz participation', () => {
         before('Create SA quiz', () => {
+            cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
                 courseManagementRequest.setQuizVisible(quizExercise.id);
