@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import sinonChai from 'sinon-chai';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
-import { ArtemisTestModule } from '../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
@@ -102,7 +102,7 @@ describe('OrionAssessmentService', () => {
             // required, used to instantly trigger the callback
             // @ts-ignore
             readAsDataURL() {
-                alertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
+                this.onerror();
             },
         };
 

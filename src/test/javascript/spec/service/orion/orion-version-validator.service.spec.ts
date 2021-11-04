@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
