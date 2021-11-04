@@ -20,7 +20,7 @@ import { Component } from '@angular/core';
                     [embedded]="embedded"
                     (exerciseCount)="programmingExerciseCountCallback($event)"
                     [exerciseFilter]="exerciseFilter"
-                    (filteredExerciseCount)="(filteredProgrammingExercisesCountCallback)"
+                    (filteredExerciseCount)="filteredProgrammingExercisesCountCallback($event)"
                 >
                 </jhi-orion-programming-exercise>
             </ng-template>
