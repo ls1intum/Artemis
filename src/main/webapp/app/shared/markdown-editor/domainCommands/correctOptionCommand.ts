@@ -6,7 +6,7 @@ export class CorrectOptionCommand extends DomainTagCommand {
     public static readonly identifier = '[correct]';
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
 
-    constructor(private translateService?: TranslateService) {
+    constructor(private translateService: TranslateService) {
         super();
     }
 
@@ -15,12 +15,7 @@ export class CorrectOptionCommand extends DomainTagCommand {
      * @desc Add a new correct answer option to the text editor at the location of the cursor
      */
     execute(): void {
-        let text = '\n' + this.getOpeningIdentifier();
-        if (this.translateService) {
-            text += ' ' + this.translateService.instant('artemisApp.multipleChoiceQuestion.correctAnswer');
-        } else {
-            text += ' Enter a correct answer option here';
-        }
+        const text = '\n' + this.getOpeningIdentifier() + ' ' + this.translateService.instant('artemisApp.multipleChoiceQuestion.correctAnswer');
         addTextAtCursor(text, this.aceEditor);
     }
 

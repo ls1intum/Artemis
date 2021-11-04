@@ -4,11 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 
 export class HintCommand extends DomainTagCommand {
     public static readonly identifier = '[hint]';
-    public static readonly text = ' Add a hint here (visible during the quiz via ?-Button)';
 
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addHint';
 
-    constructor(private translateService?: TranslateService) {
+    constructor(private translateService: TranslateService) {
         super();
     }
 
@@ -17,12 +16,7 @@ export class HintCommand extends DomainTagCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        let text = '\n\t' + this.getOpeningIdentifier();
-        if (this.translateService) {
-            text += ' ' + this.translateService.instant('artemisApp.quizQuestion.hintText');
-        } else {
-            text += HintCommand.text;
-        }
+        const text = '\n\t' + this.getOpeningIdentifier() + ' ' + this.translateService.instant('artemisApp.quizQuestion.hintText');
         addTextAtCursor(text, this.aceEditor);
     }
 

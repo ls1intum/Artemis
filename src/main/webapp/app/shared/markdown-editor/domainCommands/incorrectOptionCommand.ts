@@ -6,7 +6,7 @@ export class IncorrectOptionCommand extends DomainTagCommand {
     public static readonly identifier = '[wrong]';
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addInCorrectAnswerOption';
 
-    constructor(private translateService?: TranslateService) {
+    constructor(private translateService: TranslateService) {
         super();
     }
 
@@ -15,12 +15,7 @@ export class IncorrectOptionCommand extends DomainTagCommand {
      * @desc Add a new incorrect answer option to the text editor at the location of the cursor
      */
     execute(): void {
-        let text = '\n' + this.getOpeningIdentifier();
-        if (this.translateService) {
-            text += ' ' + this.translateService.instant('artemisApp.multipleChoiceQuestion.wrongAnswer');
-        } else {
-            text += ' Enter a wrong answer option here';
-        }
+        const text = '\n' + this.getOpeningIdentifier() + ' ' + this.translateService.instant('artemisApp.multipleChoiceQuestion.wrongAnswer');
         addTextAtCursor(text, this.aceEditor);
     }
 

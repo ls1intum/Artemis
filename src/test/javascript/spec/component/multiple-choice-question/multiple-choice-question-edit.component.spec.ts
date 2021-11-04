@@ -22,6 +22,8 @@ import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,6 +31,7 @@ const expect = chai.expect;
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
+    let translateService: TranslateService;
 
     const question: MultipleChoiceQuestion = {
         id: 1,
@@ -51,11 +54,15 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                 MockDirective(NgbCollapse),
                 MockComponent(MultipleChoiceQuestionComponent),
             ],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
         component.question = question;
+        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(function () {
@@ -73,10 +80,10 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     it('should parse answer options but not question titles ', () => {
         component.domainCommandsFound([
             ['text1', new TestCaseCommand()],
-            ['text2', new CorrectOptionCommand()],
-            ['text3', new IncorrectOptionCommand()],
-            ['text4', new ExplanationCommand()],
-            ['text5', new HintCommand()],
+            ['text2', new CorrectOptionCommand(translateService)],
+            ['text3', new IncorrectOptionCommand(translateService)],
+            ['text4', new ExplanationCommand(translateService)],
+            ['text5', new HintCommand(translateService)],
         ]);
 
         const expected: MultipleChoiceQuestion = {
@@ -107,11 +114,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse answer options with question titles ', () => {
         component.domainCommandsFound([
-            ['text1', new ExplanationCommand()],
-            ['text2', new HintCommand()],
+            ['text1', new ExplanationCommand(translateService)],
+            ['text2', new HintCommand(translateService)],
             ['text3', new TestCaseCommand()],
-            ['text4', new CorrectOptionCommand()],
-            ['text5', new IncorrectOptionCommand()],
+            ['text4', new CorrectOptionCommand(translateService)],
+            ['text5', new IncorrectOptionCommand(translateService)],
         ]);
 
         const expected: MultipleChoiceQuestion = {

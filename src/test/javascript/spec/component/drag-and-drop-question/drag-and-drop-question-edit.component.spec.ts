@@ -27,12 +27,15 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
     let uploadService: FileUploaderService;
     let modalService: NgbModal;
+    let translateService: TranslateService;
 
     const question1 = new DragAndDropQuestion();
     question1.id = 1;
@@ -60,6 +63,7 @@ describe('DragAndDropQuestionEditComponent', () => {
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(FileUploaderService),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ChangeDetectorRef),
             ],
         }).compileComponents();
@@ -67,6 +71,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component = fixture.componentInstance;
         uploadService = TestBed.inject(FileUploaderService);
         modalService = TestBed.inject(NgbModal);
+        translateService = TestBed.inject(TranslateService);
     });
 
     beforeEach(fakeAsync(() => {
@@ -580,18 +585,18 @@ describe('DragAndDropQuestionEditComponent', () => {
         let domainCommand: [string, DomainCommand];
 
         // explanation
-        let command = new ExplanationCommand();
+        const explanation = new ExplanationCommand(translateService);
         let text = 'take this as an explanationCommand';
-        domainCommand = [text, command];
+        domainCommand = [text, explanation];
 
         component.domainCommandsFound([domainCommand]);
 
         expect(component.question.explanation).toBe(text);
 
         // hint
-        command = new HintCommand();
+        const hint = new HintCommand(translateService);
         text = 'take this as a hintCommand';
-        domainCommand = [text, command];
+        domainCommand = [text, hint];
 
         component.domainCommandsFound([domainCommand]);
 
