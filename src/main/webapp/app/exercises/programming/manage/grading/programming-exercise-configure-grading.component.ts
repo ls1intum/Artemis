@@ -178,6 +178,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     catchError(() => of(null)),
                 );
 
+                this.loadStatistics(exerciseId);
+
                 zip(loadExercise, loadExerciseTestCaseState)
                     .pipe(take(1))
                     .subscribe(() => {

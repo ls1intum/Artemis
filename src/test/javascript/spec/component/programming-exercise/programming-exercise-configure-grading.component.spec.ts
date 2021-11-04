@@ -791,7 +791,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         expect(loadExerciseStub).toHaveBeenCalledTimes(1);
-        expect(loadStatisticsStub).toHaveBeenCalledTimes(2);
+        expect(loadStatisticsStub).toHaveBeenCalledTimes(3);
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
 
         expect(comp.maxIssuesPerCategory).toBe(5);
