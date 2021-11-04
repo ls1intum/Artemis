@@ -118,6 +118,6 @@ describe('Programming exercise assessment', () => {
 
     function updateExerciseAssessmentDueDate() {
         cy.login(admin);
-        courseManagement.updateProgrammingExerciseAssessmentDueDate(exercise);
+        courseManagement.updateProgrammingExerciseAssessmentDueDate(exercise, dayjs().subtract(5, 'seconds'));
     }
 });
