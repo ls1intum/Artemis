@@ -175,7 +175,37 @@
         </table>
     </div>
 
-    <div class="container-fluid" style="padding-top: 25px">
+    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
+        <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
+        <ul *ngFor="let issue of tutorIssues">
+            <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">
+                {{
+                    issue.translationKey + '.below'
+                        | artemisTranslate
+                            : {
+                                  tutorName: issue.tutorName,
+                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                  threshold: issue.allowedRange.lowerBound.toFixed(1)
+                              }
+                }}
+            </li>
+            <li *ngIf="issue.averageTutorValue > issue.allowedRange.upperBound">
+                {{
+                    issue.translationKey + '.above'
+                        | artemisTranslate
+                            : {
+                                  tutorName: issue.tutorName,
+                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                  threshold: issue.allowedRange.upperBound.toFixed(1)
+                              }
+                }}
+            </li>
+        </ul>
+    </div>
+
+    <div class="container-fluid pt-4">
         <h4 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
         <h4 *ngIf="isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
 

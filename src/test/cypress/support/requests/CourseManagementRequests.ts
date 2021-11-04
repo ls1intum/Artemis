@@ -346,11 +346,18 @@ export class CourseManagementRequests {
         const quizExercise: any = {
             ...quizTemplate,
             title,
-            releaseDate: dayjsToString(releaseDate),
             quizQuestions,
             duration,
         };
-        const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+        let newQuizExercise;
+        const dates = {
+            releaseDate: dayjsToString(releaseDate),
+        };
+        if (body.hasOwnProperty('course')) {
+            newQuizExercise = Object.assign({}, quizExercise, dates, body);
+        } else {
+            newQuizExercise = Object.assign({}, quizExercise, body);
+        }
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
@@ -369,6 +376,13 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
             method: PUT,
+        });
+    }
+
+    evaluateExamQuizzes(exam: any) {
+        return cy.request({
+            url: `${COURSE_BASE}${exam.course.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            method: POST,
         });
     }
 
