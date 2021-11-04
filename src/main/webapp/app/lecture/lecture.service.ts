@@ -133,8 +133,8 @@ export class LectureService {
         if (lecture) {
             if (lecture.course) {
                 this.accountService.setAccessRightsForCourse(lecture.course);
-                lecture.isAtLeastInstructor = lecture.course.isAtLeastInstructor;
                 lecture.isAtLeastEditor = lecture.course.isAtLeastEditor;
+                lecture.isAtLeastInstructor = lecture.course.isAtLeastInstructor;
             }
         }
         return lecture;
