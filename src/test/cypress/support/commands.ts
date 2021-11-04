@@ -133,8 +133,8 @@ Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, tim
             return found;
         },
         {
-            interval: 2000,
-            timeout: 20000,
+            interval,
+            timeout,
             errorMsg: `Timed out finding an element matching the "${selector}" selector`,
         },
     );
