@@ -12,6 +12,7 @@ export class TutorLeaderboardElement {
     public averageScore = 0;
     public averageRating = 0;
     public numberOfTutorRatings = 0;
+    public hasIssuesWithPerformance = false;
 
     constructor() {}
 }
