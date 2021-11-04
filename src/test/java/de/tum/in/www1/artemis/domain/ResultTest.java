@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.assertj.core.data.Offset;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
@@ -42,7 +42,11 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         feedback4.setCredits(-1.5);
         Feedback feedback5 = new Feedback();
         feedback5.setCredits(3.0);
-        feedbackList = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
+        feedbackList = List.of(feedback1, feedback2, feedback3, feedback4, feedback5);
+
+        Course course = new Course();
+        course.setAccuracyOfScores(1);
+        result.setParticipation(new StudentParticipation().exercise(new TextExercise().course(course)));
     }
 
     @Test
@@ -80,7 +84,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         feedback2.setCredits(-0.5);
         Feedback feedback3 = new Feedback();
         feedback3.setCredits(1.567);
-        feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
+        feedbackList = List.of(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);

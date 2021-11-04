@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -108,6 +108,8 @@ public class ParticipantScoreService {
         Set<Exercise> individualExercises = exercises.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
+        Course course = exercises.stream().findAny().get().getCourseViaExerciseGroupOrCourseMember();
+
         // For every student we want to calculate the score
         Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, ScoreDTO::new));
 
@@ -139,7 +141,7 @@ public class ParticipantScoreService {
 
         // calculating achieved score
         for (ScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.scoreAchieved = round((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0);
+            scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
             // sending this for debugging purposes to find out why the scores calculation could be wrong
             scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
         }

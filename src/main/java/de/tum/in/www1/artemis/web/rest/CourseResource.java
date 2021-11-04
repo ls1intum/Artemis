@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static java.time.ZonedDateTime.now;
 
@@ -125,6 +125,8 @@ public class CourseResource {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final RatingService ratingService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -132,7 +134,7 @@ public class CourseResource {
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            ParticipantScoreRepository participantScoreRepository) {
+            ParticipantScoreRepository participantScoreRepository, RatingService ratingService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -156,6 +158,7 @@ public class CourseResource {
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.ratingService = ratingService;
     }
 
     /**
@@ -660,13 +663,13 @@ public class CourseResource {
         // 2.2s - slow
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
-        log.info("Finished >submissionRepository.countByCourseIdSubmittedBeforeDueDate< call for course {} in {}ms", course.getId(), end - start);
+        log.info("Finished > submissionRepository.countByCourseIdSubmittedBeforeDueDate< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 2.3s - slow
         numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
-        log.info("Finished >programmingExerciseRepository.countSubmissionsByCourseIdSubmitted< call for course {} in {}ms", course.getId(), end - start);
+        log.info("Finished > programmingExerciseRepository.countSubmissionsByCourseIdSubmitted< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 3.0s - slow
@@ -696,6 +699,14 @@ public class CourseResource {
         log.info("Finished >  complaintService.countMoreFeedbackRequestsByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
+        final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(courseId);
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+        end = System.currentTimeMillis();
+        log.info("Finished > complaintResponseRepository\n"
+                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull< call for course {} in {}ms",
+                course.getId(), end - start);
+
+        start = System.currentTimeMillis();
         // 0.12s - a bit slow
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         end = System.currentTimeMillis();
@@ -712,12 +723,25 @@ public class CourseResource {
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         start = System.currentTimeMillis();
+        // 10ms - fast
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(courseId);
+        end = System.currentTimeMillis();
+        log.info("Finished > submissionRepository.countLockedSubmissionsByCourseId < call for course {} in {}ms", course.getId(), end - start);
+        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
+
+        start = System.currentTimeMillis();
         // 8s - very slow
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
         end = System.currentTimeMillis();
         log.info("Finished > tutorLeaderboardService.getCourseLeaderboard < call for course {} in {}ms", course.getId(), end - start);
 
         stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        start = System.currentTimeMillis();
+        // 9ms - fast
+        stats.setNumberOfRatings(ratingService.countRatingsByCourse(courseId));
+        end = System.currentTimeMillis();
+        log.info("Finished > ratingService.countRatingsByCourse < call for course {} in {}ms", course.getId(), end - start);
 
         log.info("Finished > getStatsForAssessmentDashboard < call for course {} in {}", course.getId(), TimeLogUtil.formatDurationFrom(startRestCall));
         return ResponseEntity.ok(stats);
@@ -841,106 +865,6 @@ public class CourseResource {
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
         return ResponseEntity.ok(submissions);
-    }
-
-    /**
-     * GET /courses/:courseId/stats-for-instructor-dashboard
-     * <p>
-     * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
-     * assessments - number of complaints - number of open complaints - tutor leaderboard data
-     *
-     * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
-     */
-    @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) {
-        log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
-        final long start = System.currentTimeMillis();
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-
-        long start2 = System.currentTimeMillis();
-        final Set<Long> exerciseIdsOfCourse = exerciseRepository.findAllIdsByCourseId(courseId);
-        long end2 = System.currentTimeMillis();
-        log.info("Finished > exerciseRepository.findAllIdsByCourseId < call for course {} in {}ms", course.getId(), end2 - start2);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-        StatsForDashboardDTO stats = new StatsForDashboardDTO();
-        start2 = System.currentTimeMillis();
-        // this one is very slow TODO make faster
-        final DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > resultRepository.countNumberOfAssessments < call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        // no examMode here, so its the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
-        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
-        stats.setNumberOfComplaints(numberOfComplaints);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
-        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintResponseRepository\n"
-                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull < call for course {} in {}ms",
-                course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
-        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintResponseRepository\n"
-                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull< call for course {} in {}ms",
-                course.getId(), end2 - start2);
-
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-
-        stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
-
-        start2 = System.currentTimeMillis();
-        final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > submissionRepository.countByCourseIdSubmittedBeforeDueDate < call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > submissionRepository.countByCourseIdSubmittedAfterDueDate< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
-
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
-        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > submissionRepository.countLockedSubmissionsByUserIdAndCourseId< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long startT = System.currentTimeMillis();
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
-        stats.setTutorLeaderboardEntries(leaderboardEntries);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > tutorLeaderboardService.getCourseLeaderboard< call for course {} in {}ms", course.getId(), end2 - start2);
-
-        log.info("Finished TutorLeaderboard in {}ms", System.currentTimeMillis() - startT);
-        log.info("Finished /courses/{}/stats-for-instructor-dashboard call in {}ms", courseId, System.currentTimeMillis() - start);
-
-        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -1439,7 +1363,7 @@ public class CourseResource {
         setAssessments(dto, exerciseIdsOfCourse);
         setComplaints(dto, courseId);
         setMoreFeedbackRequests(dto, courseId);
-        setAverageScore(dto, reachablePoints, averageScoreForCourse);
+        setAverageScore(dto, reachablePoints, averageScoreForCourse, course);
 
         return ResponseEntity.ok(dto);
     }
@@ -1489,11 +1413,11 @@ public class CourseResource {
     /**
      *  Helper method for setting the average score in the CourseManagementDetailViewDTO
      */
-    private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse) {
+    private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse, Course course) {
         dto.setCurrentMaxAverageScore(reachablePoints);
-        dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * reachablePoints));
+        dto.setCurrentAbsoluteAverageScore(roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * reachablePoints, course));
         if (reachablePoints > 0.0) {
-            dto.setCurrentPercentageAverageScore(round(averageScoreForCourse));
+            dto.setCurrentPercentageAverageScore(roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course));
         }
         else {
             dto.setCurrentPercentageAverageScore(0.0);

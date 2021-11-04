@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -88,27 +88,27 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // checkCourseAccess
         Optional<ResponseEntity<Exam>> accessFailureCourse1 = examAccessService.checkCourseAccessForInstructor(course1.getId());
         assertThat(accessFailureCourse1.isPresent()).isTrue();
-        assertThat(accessFailureCourse1.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourse1.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         Optional<ResponseEntity<Exam>> accessFailureCourse2 = examAccessService.checkCourseAccessForTeachingAssistant(course1.getId());
         assertThat(accessFailureCourse2.isPresent()).isTrue();
-        assertThat(accessFailureCourse2.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourse2.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam1 = examAccessService.checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
         assertThat(accessFailureCourseAndExam1.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam1.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExam1.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam2 = examAccessService.checkCourseAndExamAccessForTeachingAssistant(course1.getId(), exam1.getId());
         assertThat(accessFailureCourseAndExam2.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam2.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExam2.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAndExerciseGroupAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndExerciseGroup = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(),
                 exam1.getId(), exerciseGroup1);
         assertThat(accessFailureCourseAndExamAndExerciseGroup.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndExerciseGroup.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExamAndExerciseGroup.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAndStudentExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam1.getId(),
                 studentExam1.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -117,21 +117,21 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // checkCourseAccess
         Optional<ResponseEntity<Exam>> accessFailureCourse = examAccessService.checkCourseAccessForInstructor(course1.getId());
         assertThat(accessFailureCourse.isPresent()).isTrue();
-        assertThat(accessFailureCourse.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourse.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam = examAccessService.checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
         assertThat(accessFailureCourseAndExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExam.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAndExerciseGroupAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndExerciseGroup = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(),
                 exam1.getId(), exerciseGroup1);
         assertThat(accessFailureCourseAndExamAndExerciseGroup.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndExerciseGroup.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExamAndExerciseGroup.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAndStudentExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam1.getId(),
                 studentExam1.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -140,27 +140,27 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // checkCourseAccess
         Optional<ResponseEntity<Exam>> accessFailureCourse1 = examAccessService.checkCourseAccessForInstructor(course1.getId());
         assertThat(accessFailureCourse1.isPresent()).isTrue();
-        assertThat(accessFailureCourse1.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourse1.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         Optional<ResponseEntity<Exam>> accessFailureCourse2 = examAccessService.checkCourseAccessForTeachingAssistant(course1.getId());
         assertThat(accessFailureCourse2.isPresent()).isTrue();
-        assertThat(accessFailureCourse2.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourse2.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam1 = examAccessService.checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
         assertThat(accessFailureCourseAndExam1.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam1.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExam1.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam2 = examAccessService.checkCourseAndExamAccessForTeachingAssistant(course1.getId(), exam1.getId());
         assertThat(accessFailureCourseAndExam2.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam2.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExam2.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAndExerciseGroupAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndExerciseGroup = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(),
                 exam1.getId(), exerciseGroup1);
         assertThat(accessFailureCourseAndExamAndExerciseGroup.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndExerciseGroup.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExamAndExerciseGroup.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         // checkCourseAndExamAndStudentExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam1.getId(),
                 studentExam1.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(forbidden());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -199,17 +199,17 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // checkCourseAndExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam = examAccessService.checkCourseAndExamAccessForInstructor(course1.getId(), 99999L);
         assertThat(accessFailureCourseAndExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam.get()).isEqualTo(notFound());
+        assertThat(accessFailureCourseAndExam.get().getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         // checkCourseAndExamAndExerciseGroupAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndExerciseGroup = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(),
                 99999L, exerciseGroup1);
         assertThat(accessFailureCourseAndExamAndExerciseGroup.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndExerciseGroup.get()).isEqualTo(notFound());
+        assertThat(accessFailureCourseAndExamAndExerciseGroup.get().getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         // checkCourseAndExamAndStudentExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), 99999L,
                 studentExam1.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(notFound());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -218,17 +218,17 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // checkCourseAndExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExam = examAccessService.checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
         assertThat(accessFailureCourseAndExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExam.get()).isEqualTo(conflict());
+        assertThat(accessFailureCourseAndExam.get().getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         // checkCourseAndExamAndExerciseGroupAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndExerciseGroup = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(),
                 exam2.getId(), exerciseGroup1);
         assertThat(accessFailureCourseAndExamAndExerciseGroup.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndExerciseGroup.get()).isEqualTo(conflict());
+        assertThat(accessFailureCourseAndExamAndExerciseGroup.get().getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         // checkCourseAndExamAndStudentExamAccess
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam2.getId(),
                 studentExam1.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(conflict());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
@@ -254,7 +254,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndExerciseGroup = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(),
                 exam1.getId(), exerciseGroup2);
         assertThat(accessFailureCourseAndExamAndExerciseGroup.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndExerciseGroup.get()).isEqualTo(badRequest());
+        assertThat(accessFailureCourseAndExamAndExerciseGroup.get().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -270,7 +270,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     public void testCheckCourseAndExamAndStudentExamAccess_notFound() {
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam1.getId(), 99999L);
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(notFound());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -279,7 +279,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam1.getId(),
                 studentExam2.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isPresent()).isTrue();
-        assertThat(accessFailureCourseAndExamAndStudentExam.get()).isEqualTo(conflict());
+        assertThat(accessFailureCourseAndExamAndStudentExam.get().getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
@@ -297,14 +297,14 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         course.setStudentGroupName("another");
         courseRepository.save(course);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course.getId(), exam1.getId());
-        assertThat(result).isEqualTo(forbidden());
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examExists() {
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 123155L);
-        assertThat(result).isEqualTo(notFound());
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -313,7 +313,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         studentExam2.setUser(database.getUserByLogin("student1"));
         studentExamRepository.save(studentExam2);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam2.getId());
-        assertThat(result).isEqualTo(conflict());
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
@@ -322,7 +322,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         studentExam1.setUser(database.getUserByLogin("student1"));
         studentExamRepository.save(studentExam1);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam1.getId());
-        assertThat(result).isEqualTo(forbidden());
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -332,6 +332,6 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
-        assertThat(result).isEqualTo(forbidden());
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 }

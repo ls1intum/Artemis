@@ -133,6 +133,7 @@ describe('StudentExamsComponent', () => {
             },
         }),
         MockProvider(AlertService),
+        MockProvider(ArtemisTranslatePipe),
         MockDirective(TranslateDirective),
         {
             provide: LocalStorageService,
@@ -322,9 +323,9 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError and get additional error when generating student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
+        const artemisTranslationPipe = TestBed.inject(ArtemisTranslatePipe);
         const alertService = TestBed.inject(AlertService);
-        const translationService = TestBed.inject(TranslateService);
-        const errorDetailString = 'artemisApp.exam.validation.tooFewExerciseGroups';
+        const errorDetailString = 'artemisApp.studentExams.missingStudentExamGenerationError';
         const httpError = new HttpErrorResponse({
             error: { errorKey: errorDetailString },
             status: 400,
@@ -339,13 +340,13 @@ describe('StudentExamsComponent', () => {
 
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toEqual(false);
         const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const translationServiceSpy = jest.spyOn(translationService, 'instant');
+        const translationSpy = jest.spyOn(artemisTranslationPipe, 'transform');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
         expect(generateStudentExamsButton).toBeTruthy();
         expect(generateStudentExamsButton.nativeElement.disabled).toEqual(false);
         generateStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
-        expect(translationServiceSpy).toBeCalledWith(errorDetailString);
+        expect(translationSpy).toHaveBeenCalledWith(errorDetailString);
     });
 
     it('should generate student exams after warning the user that the existing are deleted', () => {

@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
@@ -39,6 +39,7 @@ export class Course implements BaseEntity {
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
+    public accuracyOfScores?: number;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;
@@ -78,6 +79,7 @@ export class Course implements BaseEntity {
         this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
+        this.accuracyOfScores = 1; // default value
     }
 
     /**
