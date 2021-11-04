@@ -4,9 +4,11 @@ import { BASE_API, POST } from '../../constants';
  */
 export abstract class AbstractExerciseFeedback {
     readonly resultSelector = 'jhi-result';
+    readonly additionalFeedbackSelector = '.unreferencedFeedback';
 
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        cy.get('.unreferencedFeedback').contains(`${points} Points: ${feedbackText}`).should('be.visible');
+        cy.reloadUntilFound(this.additionalFeedbackSelector);
+        cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 
     shouldShowScore(achievedPoints: number, maxPoints: number, percentage: number) {
