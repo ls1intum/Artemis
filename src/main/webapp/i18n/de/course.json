@@ -107,8 +107,8 @@
                     "programming": "Programmieraufgaben",
                     "quiz": "Quizaufgaben",
                     "modeling": "Modellierungsaufgaben",
-                    "text": "Textaufgabe",
-                    "file-upload": "Dateiupload-Aufgabe"
+                    "text": "Textaufgaben",
+                    "file-upload": "Dateiupload-Aufgaben"
                 }
             },
             "students": "Studierende",
