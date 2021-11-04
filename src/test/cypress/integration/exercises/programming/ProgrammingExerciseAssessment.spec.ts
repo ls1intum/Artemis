@@ -1,5 +1,6 @@
 import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
+import dayjs from 'dayjs';
 
 // The user management object
 const users = artemis.users;
@@ -114,7 +115,7 @@ describe('Programming exercise assessment', () => {
 
     function updateExerciseDueDate() {
         cy.login(admin);
-        courseManagement.updateProgrammingExerciseDueDate(exercise);
+        courseManagement.updateProgrammingExerciseDueDate(exercise, dayjs().add(5, 'seconds'));
     }
 
     function updateExerciseAssessmentDueDate() {
