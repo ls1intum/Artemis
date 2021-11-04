@@ -136,7 +136,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            throw new AccessForbiddenException("You do not have sufficient permissions load lectures for course administration purposes!");
+            throw new AccessForbiddenException("You do not have sufficient permissions to load lectures for course administration purposes!");
         }
 
         Set<Lecture> lectures;
