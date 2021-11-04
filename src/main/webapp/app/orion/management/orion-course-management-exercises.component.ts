@@ -7,8 +7,22 @@ import { Component } from '@angular/core';
             <ng-template #overrideNonProgrammingExerciseCard>
                 <!-- Nothing, only programming exercises are shown -->
             </ng-template>
-            <ng-template #overrideProgrammingExerciseCard let-course="course" let-embedded="embedded" let-exerciseCountCallback="exerciseCountCallback">
-                <jhi-orion-programming-exercise [course]="course" [embedded]="embedded" (exerciseCount)="exerciseCountCallback($event)"> </jhi-orion-programming-exercise>
+            <ng-template
+                #overrideProgrammingExerciseCard
+                let-course="course"
+                let-embedded="embedded"
+                let-programmingExerciseCountCallback="programmingExerciseCountCallback"
+                let-exerciseFilter="exerciseFilter"
+                let-filteredProgrammingExercisesCountCallback="filteredProgrammingExercisesCountCallback"
+            >
+                <jhi-orion-programming-exercise
+                    [course]="course"
+                    [embedded]="embedded"
+                    (exerciseCount)="programmingExerciseCountCallback($event)"
+                    [exerciseFilter]="exerciseFilter"
+                    (filteredExerciseCount)="(filteredProgrammingExercisesCountCallback)"
+                >
+                </jhi-orion-programming-exercise>
             </ng-template>
         </jhi-course-management-exercises>
     `,
