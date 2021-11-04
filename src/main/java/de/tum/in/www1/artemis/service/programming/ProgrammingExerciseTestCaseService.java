@@ -92,10 +92,7 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
 
-        // Make sure that at least one test has a weight >0 for purely automatic feedback so that students can still achieve 100% score.
-        // If manual feedback is given, then a test case weight of zero is okay, as students can still receive points via manual feedbacks.
-        var testWeightsSum = existingTestCases.stream().mapToDouble(testCase -> Optional.ofNullable(testCase.getWeight()).orElse(0.0)).sum();
-        if (testWeightsSum < 0 || (testWeightsSum == 0 && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
+        if (!isTestCaseWeightSumValid(programmingExercise, existingTestCases)) {
             throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError");
         }
 
@@ -103,6 +100,28 @@ public class ProgrammingExerciseTestCaseService {
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
+    }
+
+    /**
+     * Checks if the sum of test case weights is valid.
+     *
+     * The test case weights are valid if at least one test has a weight >0 for purely automatic feedback so that students can still achieve 100% score.
+     * If manual feedback is given, then a test case weight of zero is okay, as students can still receive points via manual feedbacks.
+     * @param exercise the test cases belong to.
+     * @param testCases of the exercise.
+     * @return true, if the sum of weights is valid as specified above.
+     */
+    public static boolean isTestCaseWeightSumValid(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
+        if (testCases.isEmpty()) {
+            return true;
+        }
+        double testWeightsSum = testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).filter(Objects::nonNull).sum();
+        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            return testWeightsSum > 0;
+        }
+        else {
+            return testWeightsSum >= 0;
+        }
     }
 
     private static void validateTestCase(ProgrammingExerciseTestCase testCase) {

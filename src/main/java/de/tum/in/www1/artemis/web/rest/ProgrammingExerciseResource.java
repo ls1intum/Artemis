@@ -185,12 +185,11 @@ public class ProgrammingExerciseResource {
             throw new BadRequestAlertException("The Solution Repository URL seems to be invalid.", "Exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }
 
-        // if the updated exercise has only automatic feedback at least one test case weight has to be >0
-        // otherwise students can never reach a score >0%
+        // It has already been checked when setting the test case weights that their sum is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
         if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
             final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            double testCaseWeightSum = testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).filter(Objects::nonNull).sum();
-            if (!testCases.isEmpty() && testCaseWeightSum <= 0) {
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(exercise, testCases)) {
                 throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
                         ErrorKeys.INVALID_TEST_CASE_WEIGHTS);
             }
