@@ -5,11 +5,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-modal-confirm-autofocus',
     templateUrl: './modal-confirm-autofocus.component.html',
 })
-export class ModalConfirmAutofocusComponent implements OnInit {
+export class ModalConfirmAutofocusComponent {
     title: string;
     text: string;
 
     constructor(public modal: NgbActiveModal) {}
-
-    ngOnInit() {}
 }
