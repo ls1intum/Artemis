@@ -33,7 +33,7 @@ on:
 # Keep in sync with codeql-analysis.yml and build-deploy.yml
 env:
   CI: true
-  node: 14.x
+  node: 16.x
   java: 17
 
 jobs:
@@ -84,7 +84,7 @@ jobs:
 
   client-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
         - uses: actions/checkout@v2
         - name: Setup Node.js
@@ -108,7 +108,7 @@ jobs:
 
   client-tests-selected:
       runs-on: ubuntu-latest
-      timeout-minutes: 45
+      timeout-minutes: 30
       steps:
           - uses: actions/checkout@v2
             with:
