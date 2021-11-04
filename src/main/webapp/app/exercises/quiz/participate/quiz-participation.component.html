@@ -176,7 +176,7 @@
             <jhi-button
                 *ngIf="mode === 'live' && !quizExercise.started && !quizExercise.isPlannedToStart"
                 id="refresh-quiz"
-                (click)="refreshQuiz(true)"
+                (onClick)="refreshQuiz(true)"
                 [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
                 [btnType]="ButtonType.PRIMARY"
                 [title]="'artemisApp.exercise.refresh'"
@@ -187,7 +187,7 @@
                 <jhi-button
                     *ngIf="!showingResult"
                     id="submit-quiz"
-                    (click)="onSubmit()"
+                    (onClick)="onSubmit()"
                     [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
                     [btnType]="ButtonType.SUCCESS"
                     [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
