@@ -94,11 +94,9 @@ describe('Programming exercise assessment', () => {
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
             courseManagement.addInstructorToCourse(course.id, instructor);
-            courseManagement
-                .createProgrammingExercise({ course }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
-                .then((programmingResponse) => {
-                    exercise = programmingResponse.body;
-                });
+            courseManagement.createProgrammingExercise({ course }, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC).then((programmingResponse) => {
+                exercise = programmingResponse.body;
+            });
         });
     }
 

@@ -90,15 +90,11 @@ export class CourseManagementRequests {
     createProgrammingExercise(
         body: { course: any } | { exerciseGroup: any },
         scaMaxPenalty?: number,
-        releaseDate = day(),
-        dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
-        assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
-        const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const template = {
             ...programmingExerciseTemplate,
             title,
@@ -107,11 +103,6 @@ export class CourseManagementRequests {
             assessmentType: CypressAssessmentType[assessmentType],
         };
         const exercise: any = Object.assign({}, template, body);
-        if (!isExamExercise) {
-            exercise.releaseDate = dayjsToString(releaseDate);
-            exercise.dueDate = dayjsToString(dueDate);
-            exercise.assessmentDueDate = dayjsToString(assessmentDate);
-        }
 
         if (scaMaxPenalty) {
             exercise.staticCodeAnalysisEnabled = true;
