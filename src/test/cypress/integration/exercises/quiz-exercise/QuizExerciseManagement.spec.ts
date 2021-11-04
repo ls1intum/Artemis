@@ -79,6 +79,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
+            cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
