@@ -3,11 +3,11 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.concurrent.Future;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.assertj.core.data.Offset;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,8 +52,8 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
         setupExerciseAndParticipation(null, ZonedDateTime.now().plusHours(1));
 
         // should not be scheduled at all
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
-        assertThat((Future<?>) scheduledTask).isNull();
+        var scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
+        assertThat(scheduledTask).isEmpty();
     }
 
     @Test
@@ -61,8 +61,8 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
         setupExerciseAndParticipation(ZonedDateTime.now().plusHours(1), null);
 
         // should still be scheduled even if no individual due date affects the scheduling
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
-        assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(60, Offset.offset(1L));
+        var scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
+        assertThat(scheduledTask).is(scheduledInMinutes(60));
     }
 
     @Test
@@ -70,8 +70,8 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
         setupExerciseAndParticipation(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(1));
 
         // scheduling should choose proper build and test after due date as date
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
-        assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(120, Offset.offset(1L));
+        var scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
+        assertThat(scheduledTask).is(scheduledInMinutes(120));
     }
 
     @Test
@@ -79,8 +79,8 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
         setupExerciseAndParticipation(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
 
         // scheduling should choose individual due date (after build and test date) as scheduling date
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
-        assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(120, Offset.offset(1L));
+        var scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, noop);
+        assertThat(scheduledTask).is(scheduledInMinutes(120));
     }
 
     @Test
@@ -88,8 +88,8 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
         setupExerciseAndParticipation(null, ZonedDateTime.now().plusHours(2));
 
         // scheduling should choose individual due date as scheduling date
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.DUE, noop);
-        assertThat(scheduledTask.getDelay(TimeUnit.MINUTES)).isCloseTo(120, Offset.offset(1L));
+        var scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.DUE, noop);
+        assertThat(scheduledTask).is(scheduledInMinutes(120));
     }
 
     @Test
@@ -98,8 +98,8 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
         programmingExercise.setDueDate(null);
 
         // should not be scheduled at all
-        ScheduledFuture<?> scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.DUE, noop);
-        assertThat((Future<?>) scheduledTask).isNull();
+        var scheduledTask = participationLifecycleService.scheduleTask(participation, ParticipationLifecycle.DUE, noop);
+        assertThat(scheduledTask).isEmpty();
     }
 
     private void setupExerciseAndParticipation(ZonedDateTime exerciseBuildAndTestDate, ZonedDateTime individualDueDate) {
@@ -108,5 +108,9 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
 
         participation.setIndividualDueDate(individualDueDate);
         participation.setExercise(programmingExercise);
+    }
+
+    private Condition<Optional<ScheduledFuture<?>>> scheduledInMinutes(long minutes) {
+        return new Condition<>(s -> Math.abs(s.get().getDelay(TimeUnit.MINUTES) - minutes) <= 1, "scheduled in %d minutes", minutes);
     }
 }

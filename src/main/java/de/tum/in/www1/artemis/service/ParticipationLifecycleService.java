@@ -43,21 +43,21 @@ public class ParticipationLifecycleService {
      * @param lifecycle at which the task should be scheduled.
      * @param task the action that should be performed at the date of the given lifecycle.
      * @return a scheduled task that performs the given action at the appropriate time.
-     *         Returns {@code null} if the given participation does not have date at which the given lifecycle task could be run.
-     *         E.g. {@link ParticipationLifecycle#BUILD_AND_TEST_AFTER_DUE_DATE} for non-programming exercises will return {@code null}.
+     *         Returns nothing if the given participation does not have date at which the given lifecycle task could be run.
+     *         E.g. {@link ParticipationLifecycle#BUILD_AND_TEST_AFTER_DUE_DATE} for non-programming exercises will return nothing.
      */
-    public ScheduledFuture<?> scheduleTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
+    public Optional<ScheduledFuture<?>> scheduleTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
         final Optional<ZonedDateTime> lifecycleDate = getDateForLifecycle(participation, lifecycle);
         if (lifecycleDate.isPresent()) {
             final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.get().toInstant());
             log.debug("Scheduled task for participation {} in exercise '{}' ({}) to trigger on {}.", participation.getId(), participation.getExercise().getTitle(),
                     participation.getExercise().getId(), lifecycle);
-            return future;
+            return Optional.of(future);
         }
         else {
             log.warn("Cannot schedule a task for lifecycle {} for participation (id: {}, exercise: {}, exercise id: {}) as no appropriate date is known!", lifecycle,
                     participation.getId(), participation.getExercise().getTitle(), participation.getExercise().getId());
-            return null;
+            return Optional.empty();
         }
     }
 
