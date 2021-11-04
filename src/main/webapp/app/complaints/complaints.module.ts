@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 
-import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
+import { ComplaintsRequestFormComponent } from 'app/complaints/request-form/complaints-request-form.component';
+import { ComplaintsResponseFormComponent } from 'app/complaints/response-form/complaints-response-form.component';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -10,8 +11,8 @@ import { ComplaintResponseComponent } from 'app/complaints/response/complaint-re
 
 @NgModule({
     imports: [ArtemisSharedModule, ClipboardModule],
-    declarations: [ComplaintsFormComponent, ComplaintsStudentViewComponent, ComplaintRequestComponent, ComplaintResponseComponent],
-    exports: [ComplaintsStudentViewComponent],
+    declarations: [ComplaintsRequestFormComponent, ComplaintsResponseFormComponent, ComplaintsStudentViewComponent, ComplaintRequestComponent, ComplaintResponseComponent],
+    exports: [ComplaintsStudentViewComponent, ComplaintRequestComponent, ComplaintResponseComponent, ComplaintsResponseFormComponent],
     providers: [ComplaintService],
 })
 export class ArtemisComplaintsModule {}

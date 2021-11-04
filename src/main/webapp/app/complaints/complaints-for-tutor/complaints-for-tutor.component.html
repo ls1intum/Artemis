@@ -1,111 +1,28 @@
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
-    </div>
-</div>
+<div *ngIf="complaint">
+    <h3>
+        {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | artemisTranslate) : ('artemisApp.complaint.review' | artemisTranslate) }}
+    </h3>
 
-<h3 *ngIf="!isLoading && complaint">
-    {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | artemisTranslate) : ('artemisApp.complaint.review' | artemisTranslate) }}
-</h3>
-
-<div class="col-12 mt-2" [class.px-0]="zeroIndent" *ngIf="!isLoading && complaint">
-    <div class="alert alert-info" *ngIf="handled">
-        {{
-            complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                ? ('artemisApp.moreFeedback.alreadyHandled' | artemisTranslate)
-                : ('artemisApp.complaint.complaintAlreadyHandled' | artemisTranslate)
-        }}
-    </div>
-    <div class="mt-3 mb-3">
-        <div id="lockDuration" class="alert alert-info" *ngIf="showLockDuration">
-            {{
-                'artemisApp.locks.lockInformation' | artemisTranslate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate }
-            }}
-        </div>
-        <button id="lockButton" class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
-            {{ 'artemisApp.locks.removeButton' | artemisTranslate }}
-        </button>
-    </div>
-    <div class="row">
-        <div class="col-12 col-md-6">
-            <h4>
-                <span
-                    >{{
-                        complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                            ? ('artemisApp.moreFeedback.title' | artemisTranslate)
-                            : ('artemisApp.complaint.title' | artemisTranslate)
-                    }}
-                </span>
-                <small *ngIf="handled">
-                    <span *ngIf="complaint?.accepted" class="text-light bg-success small">
-                        &nbsp;{{
-                            complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                                ? ('artemisApp.moreFeedback.accepted' | artemisTranslate)
-                                : ('artemisApp.complaint.accepted' | artemisTranslate)
-                        }}&nbsp;
-                    </span>
-                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
-                </small>
-            </h4>
-            <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
-        </div>
-
-        <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6">
-            <h3>
+    <div class="col-12 mt-2" [class.px-0]="zeroIndent">
+        <div *ngIf="complaint.complaintType === ComplaintType.COMPLAINT" class="mt-3 mb-3">
+            <div id="lockDuration" class="alert alert-info" *ngIf="showLockDuration">
                 {{
-                    complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? ('artemisApp.moreFeedbackResponse.title' | artemisTranslate)
-                        : ('artemisApp.complaintResponse.title' | artemisTranslate)
+                    'artemisApp.locks.lockInformation'
+                        | artemisTranslate
+                            : {
+                                  user: this.complaintResponse?.reviewer?.login,
+                                  endDate: this.complaintResponse.lockEndDate | artemisDate
+                              }
                 }}
-            </h3>
-            <textarea
-                id="responseTextArea"
-                class="col-12 px-1"
-                rows="4"
-                maxlength="2000"
-                [(ngModel)]="complaintResponse.responseText"
-                [readonly]="handled || isLockedForLoggedInUser"
-                [disabled]="handled || isLockedForLoggedInUser"
-            ></textarea>
-            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="d-flex flex-wrap gap-1 justify-content-between mt-3">
-                <button
-                    id="acceptComplaintButton"
-                    type="button"
-                    class="btn btn-success btn-block"
-                    (click)="respondToComplaint(true)"
-                    [disabled]="isLockedForLoggedInUser"
-                    title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
-                >
-                    {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
-                </button>
-                <button
-                    id="rejectComplaintButton"
-                    type="button"
-                    class="btn btn-danger btn-block"
-                    (click)="respondToComplaint(false)"
-                    [disabled]="isLockedForLoggedInUser"
-                    title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
-                >
-                    {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}
-                </button>
-                <!-- empty div to create additional spacing after the last button, but only for sm or up -->
-                <div class="d-none d-sm-block"></div>
             </div>
-
-            <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end mt-3">
-                <div class="col-12">
-                    <button
-                        id="respondToMoreFeedbackButton"
-                        type="button"
-                        class="btn btn-success btn-block"
-                        [disabled]="isLockedForLoggedInUser"
-                        (click)="respondToComplaint(true)"
-                        title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | artemisTranslate }}"
-                    >
-                        {{ 'artemisApp.moreFeedbackResponse.provideFeedback' | artemisTranslate }}
-                    </button>
-                </div>
-            </div>
+            <button id="lockButton" class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
+                {{ 'artemisApp.locks.removeButton' | artemisTranslate }}
+            </button>
+        </div>
+        <div class="row" style="align-items: baseline">
+            <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [isStudent]="false"></jhi-complaint-request>
+            <jhi-complaint-response *ngIf="complaint.accepted !== undefined" class="col-12 col-md-6" [complaint]="complaint"></jhi-complaint-response>
+            <jhi-complaint-response-form class="col-12 col-md-6" [complaint]="complaint" (submit)="updateComplaint($event)"></jhi-complaint-response-form>
         </div>
     </div>
 </div>

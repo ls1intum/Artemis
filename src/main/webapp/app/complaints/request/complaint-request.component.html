@@ -1,20 +1,22 @@
 <div>
     <p class="mt-4">
-        {{
+        <span *ngIf="isStudent">{{
             complaint.complaintType === ComplaintType.COMPLAINT
                 ? ('artemisApp.complaint.alreadySubmittedSubmissionAuthor' | artemisTranslate)
                 : ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | artemisTranslate)
-        }}
-        <span [ngbTooltip]="complaint.submittedTime | artemisDate">{{ complaint.submittedTime | artemisTimeAgo }}</span>
+        }}</span>
+        <span *ngIf="isStudent" [ngbTooltip]="complaint.submittedTime | artemisDate">{{ complaint.submittedTime | artemisTimeAgo }}</span>
+        <span *ngIf="!isStudent">{{
+            complaint.complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate)
+        }}</span>
         <span *ngIf="complaint.accepted === true" class="text-light bg-success">
             {{
-                complaint.complaintType === ComplaintType.COMPLAINT
-                    ? ('artemisApp.complaint.acceptedLong' | artemisTranslate)
-                    : ('artemisApp.moreFeedback.acceptedLong' | artemisTranslate)
+                (complaint.complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.' : 'artemisApp.moreFeedback.') + (isStudent ? 'acceptedLong' : 'accepted')
+                    | artemisTranslate
             }}
         </span>
         <span *ngIf="complaint.accepted === false" class="text-light bg-danger">
-            {{ 'artemisApp.complaint.rejectedLong' | artemisTranslate }}
+            {{ 'artemisApp.complaint.' + (isStudent ? 'rejectedLong' : 'rejected') | artemisTranslate }}
         </span>
     </p>
 

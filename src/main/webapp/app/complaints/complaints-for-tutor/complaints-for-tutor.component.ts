@@ -46,6 +46,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.complaint) {
+            console.log(this.complaint);
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
 
@@ -65,6 +66,11 @@ export class ComplaintsForTutorComponent implements OnInit {
                 }
             }
         }
+    }
+
+    public updateComplaint(complaintResponse: ComplaintResponse) {
+        this.complaint.complaintResponse = complaintResponse;
+        this.complaint.accepted = complaintResponse.complaint?.accepted;
     }
 
     private createLock() {
@@ -135,60 +141,6 @@ export class ComplaintsForTutorComponent implements OnInit {
                 this.onError(err);
             },
         );
-    }
-
-    respondToComplaint(acceptComplaint: boolean): void {
-        if (!this.complaintResponse.responseText || this.complaintResponse.responseText.length <= 0) {
-            this.alertService.error('artemisApp.complaintResponse.noText');
-            return;
-        }
-        if (!this.isAllowedToRespond) {
-            return;
-        }
-
-        this.complaintResponse.complaint = this.complaint;
-        this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
-        this.complaintResponse.complaint!.accepted = acceptComplaint;
-
-        if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
-            // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
-            // The complaint is sent along with the assessment update by the parent to avoid additional requests.
-            this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
-            this.handled = true;
-            this.showLockDuration = false;
-            this.showRemoveLockButton = false;
-        } else {
-            // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
-            this.resolveComplaint();
-        }
-    }
-
-    private resolveComplaint() {
-        this.isLoading = true;
-        this.complaintResponseService
-            .resolveComplaint(this.complaintResponse)
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe(
-                (response) => {
-                    this.handled = true;
-                    // eslint-disable-next-line chai-friendly/no-unused-expressions
-                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? this.alertService.success('artemisApp.moreFeedbackResponse.created')
-                        : this.alertService.success('artemisApp.complaintResponse.created');
-                    this.complaintResponse = response.body!;
-                    this.complaint = this.complaintResponse.complaint!;
-                    this.isLockedForLoggedInUser = false;
-                    this.showLockDuration = false;
-                    this.showRemoveLockButton = false;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err);
-                },
-            );
     }
 
     onError(httpErrorResponse: HttpErrorResponse) {

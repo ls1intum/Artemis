@@ -1,11 +1,16 @@
 <div *ngIf="complaint.accepted != undefined && complaint.complaintResponse">
     <p class="col-12 mt-4">
-        {{
+        <span *ngIf="isStudent">{{
             complaint.complaintType === ComplaintType.COMPLAINT
                 ? ('artemisApp.complaint.responseExists' | artemisTranslate)
                 : ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
-        }}
-        <span [ngbTooltip]="complaint.complaintResponse.submittedTime | artemisDate">{{ complaint.complaintResponse.submittedTime | artemisTimeAgo }}</span
+        }}</span>
+        <span *ngIf="!isStudent">{{
+            complaint.complaintType === ComplaintType.COMPLAINT
+                ? ('artemisApp.complaintResponse.title' | artemisTranslate)
+                : ('artemisApp.moreFeedbackResponse.title' | artemisTranslate)
+        }}</span>
+        <span *ngIf="isStudent" [ngbTooltip]="complaint.complaintResponse.submittedTime | artemisDate">{{ complaint.complaintResponse.submittedTime | artemisTimeAgo }}</span
         >:
     </p>
 
