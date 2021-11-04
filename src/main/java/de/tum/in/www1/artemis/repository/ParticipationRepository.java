@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -68,4 +69,12 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 AND p.individualDueDate IS NOT null
             """)
     Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM Participation p
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.individualDueDate IS NOT null
+            """)
+    Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 }

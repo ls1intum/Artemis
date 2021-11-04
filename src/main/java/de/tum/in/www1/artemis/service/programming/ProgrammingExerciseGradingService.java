@@ -316,6 +316,10 @@ public class ProgrammingExerciseGradingService {
         return updatedResults;
     }
 
+    public Result updateResult(Participation participation) {
+        throw new UnsupportedOperationException("ToDo: implement");
+    }
+
     /**
      * Updates the score for the latest result of the given participation.
      * @param exercise the participation belongs to.

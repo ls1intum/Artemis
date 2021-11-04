@@ -83,6 +83,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     List<ProgrammingExerciseStudentParticipation> findByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.individualDueDate IS NOT null
+            """)
+    List<ProgrammingExerciseStudentParticipation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 
