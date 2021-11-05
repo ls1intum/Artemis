@@ -18,7 +18,7 @@
                 (ngModelChange)="emitChanges()"
                 [readOnly]="disabled || assessment.gradingInstruction || readOnly"
                 [disabled]="disabled"
-                [required]="assessment.gradingInstruction ? false : true"
+                [required]="!assessment.gradingInstruction"
             />
         </div>
         <div class="form-group row">

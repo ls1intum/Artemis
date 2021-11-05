@@ -227,6 +227,15 @@ export class ResultDetailComponent implements OnInit {
                         positive: feedback.positive,
                         credits: feedback.credits,
                     };
+                } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
+                    return {
+                        type: FeedbackItemType.Feedback,
+                        category: this.showTestDetails ? 'Tutor' : 'Feedback',
+                        title: feedback.text,
+                        text: feedback.gradingInstruction.feedback + '\n' + feedback.detailText,
+                        positive: feedback.positive,
+                        credits: feedback.credits,
+                    };
                 } else {
                     return {
                         type: FeedbackItemType.Feedback,

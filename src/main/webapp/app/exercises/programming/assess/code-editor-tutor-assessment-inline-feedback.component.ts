@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
+import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -107,7 +108,25 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
     }
 
+    /**
+     * Builds the feedback text. When the feedback has a link with grading instruction it merges the feedback of
+     * the grading instruction with the feedback text provided by the assessor. Otherwise, it returns detail_text.
+     *
+     * @param feedback that contains feedback detail_text and grading instruction
+     * @returns {string} formatted string representing the feedback text ready to display
+     */
     public buildFeedbackTextForReview(feedback: Feedback): string {
-        return buildFeedbackTextForReview(feedback);
+        let feedbackText = '';
+        if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+            feedbackText = feedback.gradingInstruction.feedback;
+            if (feedback.detailText) {
+                feedbackText = feedbackText + '\n' + feedback.detailText;
+            }
+            return convertToHtmlLinebreaks(feedbackText);
+        }
+        if (feedback.detailText) {
+            return feedback.detailText;
+        }
+        return feedbackText;
     }
 }
