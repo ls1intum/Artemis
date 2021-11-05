@@ -7,7 +7,6 @@ import { By } from '@angular/platform-browser';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 
 describe('OrionCourseExerciseDetailsComponent', () => {
-    let comp: OrionCourseExerciseDetailsComponent;
     let fixture: ComponentFixture<OrionCourseExerciseDetailsComponent>;
 
     beforeEach(() => {
@@ -18,7 +17,6 @@ describe('OrionCourseExerciseDetailsComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(OrionCourseExerciseDetailsComponent);
-                comp = fixture.componentInstance;
             });
     });
 

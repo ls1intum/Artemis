@@ -167,9 +167,9 @@ describe('OrionBuildAndTestService', () => {
         const buildLogSubscription = of().subscribe();
         const buildLogSubscriptionSpy = jest.spyOn(buildLogSubscription, 'unsubscribe');
 
-        //@ts-ignore
+        // @ts-ignore
         serviceUnderTest.resultSubscription = resultSubscription;
-        //@ts-ignore
+        // @ts-ignore
         serviceUnderTest.buildLogSubscription = buildLogSubscription;
 
         serviceUnderTest.buildAndTestExercise(exercise);

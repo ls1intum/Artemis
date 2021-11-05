@@ -1,7 +1,4 @@
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Observable } from 'rxjs';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 export interface OrionState {
     opened: number;

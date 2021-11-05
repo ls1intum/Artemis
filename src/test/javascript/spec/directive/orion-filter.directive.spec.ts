@@ -1,23 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import * as sinon from 'sinon';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { isOrion } from 'app/shared/orion/orion';
 
@@ -47,7 +30,7 @@ describe('OrionFilterDirective', () => {
     });
 
     it('should show/hide elements if isOrion is true', fakeAsync(() => {
-        //@ts-ignore
+        // @ts-ignore
         isOrion = true;
 
         fixture.detectChanges();
@@ -63,7 +46,7 @@ describe('OrionFilterDirective', () => {
     }));
 
     it('should show/hide elements if isOrion is false', fakeAsync(() => {
-        //@ts-ignore
+        // @ts-ignore
         isOrion = false;
 
         fixture.detectChanges();

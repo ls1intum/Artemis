@@ -141,7 +141,7 @@ describe('OrionConnectorService', () => {
         expect(localState).toContainEntry(['cloning', true]);
     });
     it('should navigate on startedBuildInOrion', () => {
-        let navigateSpy = jest.spyOn(router, 'navigateByUrl');
+        const navigateSpy = jest.spyOn(router, 'navigateByUrl');
 
         serviceUnderTest.startedBuildInOrion(5, 10);
 
@@ -149,7 +149,7 @@ describe('OrionConnectorService', () => {
         expect(navigateSpy).toHaveBeenCalledWith('/courses/5/exercises/10?withIdeSubmit=true');
     });
     it('should throw error in updateAssessment if no component present', () => {
-        let errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
+        const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
 
         serviceUnderTest.updateAssessment(5, '');
 
