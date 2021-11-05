@@ -53,7 +53,6 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -225,7 +224,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
-                MockComponent(DataTableComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
