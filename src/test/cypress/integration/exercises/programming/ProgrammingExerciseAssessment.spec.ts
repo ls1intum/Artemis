@@ -1,3 +1,4 @@
+import { GET, BASE_API } from './../../../support/constants';
 import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import dayjs from 'dayjs';
@@ -64,10 +65,18 @@ describe('Programming exercise assessment', () => {
     describe('Feedback', () => {
         before(() => {
             updateExerciseAssessmentDueDate();
+            cy.intercept(GET, BASE_API + 'participations/*/results/*/details').as('getFeedback');
             cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
         });
 
         it('Student sees feedback after assessment due date and complains', () => {
+            cy.wait('@getFeedback')
+                .its('response')
+                .then((feedbackResponse) => {
+                    expect(feedbackResponse?.statusCode).to.equal(200);
+                    expect(feedbackResponse?.body[0].detailText).to.eq(tutorCodeFeedback);
+                    expect(feedbackResponse?.body[1].detailText).to.eq(tutorFeedback);
+                });
             const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
             const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title);
