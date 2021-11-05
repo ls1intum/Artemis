@@ -31,10 +31,10 @@ public class TutorLeaderboardMoreFeedbackRequests {
     }
 
     public TutorLeaderboardMoreFeedbackRequests(Long userId, Long allRequests, Long notAnsweredRequests, Double points) {
-        this.userId = userId;
-        this.allRequests = allRequests;
-        this.notAnsweredRequests = notAnsweredRequests;
-        this.points = points;
+        this.userId = userId == null ? 0 : userId;
+        this.allRequests = allRequests == null ? 0 : allRequests;
+        this.notAnsweredRequests = notAnsweredRequests == null ? 0 : notAnsweredRequests;
+        this.points = points == null ? 0 : points;
     }
 
     public TutorLeaderboardMoreFeedbackRequests() {
