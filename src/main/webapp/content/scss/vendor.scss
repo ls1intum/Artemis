@@ -1,5 +1,5 @@
 /* after changing this file run 'npm run webapp:build' */
 $fa-font-path: '~font-awesome/fonts';
 
-@import 'node_modules/bootstrap/scss/bootstrap';
 @import 'src/main/webapp/content/scss/artemis-variables';
+@import 'node_modules/bootstrap/scss/bootstrap';
