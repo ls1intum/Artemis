@@ -662,7 +662,7 @@ export class GradingSystemComponent implements OnInit {
             return [];
         }
 
-        if (csvGradeSteps.length === 0) {
+        if (csvGradeSteps.length === 0 || csvGradeSteps.length > 100) {
             this.gradingScale.gradeSteps = [];
             return;
         }
@@ -681,20 +681,14 @@ export class GradingSystemComponent implements OnInit {
     /**
      * Map the imported csv objects to GradeStep object
      * In case that the grade type of the imported file is bonus, attribute gradeName will be set with the bonusPoints attribute
-     * @param csvGradeSteps
+     * @param csvGradeSteps Imported grade steps as csv objects
+     * @param gradeType Implicit Grade Type of imported csv file
      */
     mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[], gradeType: GradeType): GradeStep[] {
         return csvGradeSteps.map(
             (csvGradeStep) =>
                 ({
-                    gradeName:
-                        gradeType === GradeType.GRADE
-                            ? csvGradeStep[csvColumnsGrade.gradeName]
-                                ? String(csvGradeStep[csvColumnsGrade.gradeName])
-                                : ''
-                            : csvGradeStep[csvColumnsBonus.bonusPoints]
-                            ? String(csvGradeStep[csvColumnsBonus.bonusPoints])
-                            : '',
+                    gradeName: gradeType === GradeType.GRADE ? String(csvGradeStep[csvColumnsGrade.gradeName] ?? '') : String(csvGradeStep[csvColumnsBonus.bonusPoints] ?? ''),
                     lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage]) : undefined,
                     upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage]) : undefined,
                     ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade] === 'TRUE' }),
@@ -755,7 +749,7 @@ export class GradingSystemComponent implements OnInit {
             quoteStrings: '',
             decimalSeparator: 'locale',
             showLabels: true,
-            filename: 'grading_key_' + this.gradingScale.course?.shortName,
+            filename: 'grading_key' + (this.gradingScale.course?.shortName ? '_' + this.gradingScale.course?.shortName : ''),
             useTextFile: false,
             useBom: true,
             headers,

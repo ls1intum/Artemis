@@ -12,15 +12,11 @@
             </button>
             <jhi-grading-system-info-modal></jhi-grading-system-info-modal>
         </div>
-        <div class="form-group">
-            <div class="d-flex align-items-end">
-                <div>
-                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.gradingSystem.csv.importButton">Select .csv file</label>
-                </div>
-            </div>
-            <div class="mt-2">
-                <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
-            </div>
+        <div class="d-flex">
+            <label class="btn btn-primary me-1 mb-1">
+                <span jhiTranslate="artemisApp.gradingSystem.csv.importButton">Import (.csv)</span>
+                <input type="file" accept=".json,.csv" style="display: none" (change)="onCSVFileSelect($event)" />
+            </label>
         </div>
         <div class="d-flex">
             <button (click)="exportGradingStepsToCsv()" class="btn btn-primary me-1 mb-1" type="button">
