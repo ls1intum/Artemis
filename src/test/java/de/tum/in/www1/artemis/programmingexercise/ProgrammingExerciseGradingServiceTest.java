@@ -699,21 +699,57 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         verifyStudentScoreCalculations(testParticipations);
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldUpdateTheLatestResultOfASingleParticipation() {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        final var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
+        testCaseRepository.saveAll(testCases.values());
+
+        final var testParticipations = createTestParticipations();
+
+        // change test case weights
+        testCases.get("test1").setWeight(0.);
+        testCases.get("test2").setWeight(1.);
+        testCases.get("test3").setWeight(3.);
+        testCaseRepository.saveAll(testCases.values());
+
+        for (int student = 1; student <= 5; ++student) {
+            final var testParticipation = (ProgrammingExerciseStudentParticipation) testParticipations[student - 1];
+            final List<Result> updatedResults = programmingExerciseGradingService.updateParticipationResults(testParticipation);
+            resultRepository.saveAll(updatedResults);
+
+            verifyStudentScoreCalculation(testParticipations, student);
+        }
+    }
+
     private void verifyStudentScoreCalculations(final Participation[] testParticipations) {
-        // student1 25 %
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[0].getId()).get();
-            var results = participation.getResults();
+        for (int student = 1; student <= 5; ++student) {
+            verifyStudentScoreCalculation(testParticipations, student);
+        }
+    }
+
+    private void verifyStudentScoreCalculation(final Participation[] testParticipations, int student) {
+        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[student - 1].getId()).get();
+        var results = participation.getResults();
+
+        if (student == 1) {
+            // student1 25 %
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 25D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
-
-        // student2 61% % / 75 %
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[1].getId()).get();
-            var results = participation.getResults();
+        else if (student == 2) {
+            // student2 61% % / 75 %
             assertThat(results).hasSize(2);
 
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
@@ -725,29 +761,20 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             assertThat(automaticResultOptional).isPresent();
             testParticipationResult(automaticResultOptional.get(), 75D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
         }
-
-        // student3 no result
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[2].getId()).get();
-            var results = participation.getResults();
+        else if (student == 3) {
+            // student3 no result
             assertThat(results).isNullOrEmpty();
             assertThat(participation.findLatestLegalResult()).isNull();
         }
-
-        // student4 100%
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[3].getId()).get();
-            var results = participation.getResults();
+        else if (student == 4) {
+            // student4 100%
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, "3 of 3 passed", false, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
-
-        // student5 Build Failed
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[4].getId()).get();
-            var results = participation.getResults();
+        else if (student == 5) {
+            // student5 Build Failed
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, "Build Failed", false, 0, AssessmentType.AUTOMATIC);

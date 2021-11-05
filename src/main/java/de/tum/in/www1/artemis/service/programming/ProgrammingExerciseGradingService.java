@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIF
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -271,53 +272,104 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Updates <b>all</b> latest automatic results of the given exercise with the information of the exercises test cases. This update includes:
-     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
-     * - Checking the due date and the visibility.
-     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     * Updates <b>all</b> latest results of the given exercise with the information of the exercises test cases.
+     * <p>
+     * This update includes:
+     * <ul>
+     *     <li>Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs).</li>
+     *     <li>Checking the due date and the visibility.</li>
+     *     <li>Recalculating the score based on the successful test cases weight vs the total weight of all test cases.</li>
+     * </ul>
      *
-     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change.
      *
-     * @param exercise the exercise whose results should be updated
-     * @return the results of the exercise that have been updated
+     * @param exercise whose results should be updated.
+     * @return the results of the exercise that have been updated.
      */
-    public List<Result> updateAllResults(ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+    public List<Result> updateAllResults(final ProgrammingExercise exercise) {
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
 
-        ArrayList<Result> updatedResults = new ArrayList<>();
-
-        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise, false);
-                    updatedResults.add(result);
-                });
-        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise, false);
-                    updatedResults.add(result);
-                });
-
-        // filter test cases before/after due date only once
-        Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
-        Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
+        final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
         // We only update the latest automatic results here, later manual assessments are not affected
-        List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
-        for (StudentParticipation studentParticipation : participations) {
-            updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true).ifPresent(updatedResults::add);
-        }
+        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
+        // Also update manual results
+        final List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
 
-        // Update also manual results
-        List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
-        for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, false).ifPresent(updatedResults::add);
-        }
+        final List<StudentParticipation> studentParticipations = new ArrayList<>();
+        studentParticipations.addAll(participations);
+        studentParticipations.addAll(participationsWithManualResult);
 
-        return updatedResults;
+        final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
+
+        return Stream.concat(updatedTemplateAndSolutionResult, updatedStudentResults).toList();
     }
 
-    public Result updateResult(Participation participation) {
+    /**
+     * Updates the latest results of all participations that do not have an individual due date. This includes the template and solution participation.
+     * <p>
+     * For details what will be updated for individual results, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param exercise whose results should be updated.
+     * @return the results of the exercise that have been updated.
+     */
+    public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
         throw new UnsupportedOperationException("ToDo: implement");
+        // like updateAllResults, but with different database query only fetching participations without individual due date
+    }
+
+    /**
+     * Updates the latest result scores of the given participation.
+     * <p>
+     * For details what will be updated, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param participation for which the results should be updated.
+     * @return a list of updated results (maximum two: latest automatic, and latest manual result).
+     */
+    public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
+        final ProgrammingExercise exercise = participation.getProgrammingExercise();
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
+        final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
+
+        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacks(participation.getId())
+                .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
+        final Optional<Result> updatedManualResult = studentParticipationRepository.findByIdWithManualResultAndFeedbacks(participation.getId())
+                .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
+
+        return Stream.of(updatedAutomaticResult, updatedManualResult).flatMap(Optional::stream).toList();
+    }
+
+    /**
+     * Updates the latest results for the given participations.
+     * @param exercise the participations belong to.
+     * @param allTestCases of the programming exercise.
+     * @param participations for which the latest results should be updated.
+     * @return all results that have been updated.
+     */
+    private Stream<Result> updateResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> allTestCases, final List<StudentParticipation> participations) {
+        final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(allTestCases, true);
+        final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(allTestCases, false);
+
+        return participations.stream().map(participation -> updateLatestResult(exercise, participation, allTestCases, testCasesBeforeDueDate, testCasesAfterDueDate, true))
+                .flatMap(Optional::stream);
+    }
+
+    /**
+     * Updates the latest results for the template and solution participation.
+     * @param exercise the template and solution belong to.
+     * @param testCases of the exercise.
+     * @return a stream of results that have been updated.
+     *         (maximum length two; if template and/or solution do not have a results, then fewer)
+     */
+    private Stream<Result> updateTemplateAndSolutionResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> testCases) {
+        final Optional<Result> templateResult = templateProgrammingExerciseParticipationRepository
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(templateParticipation -> updateLatestResult(exercise, templateParticipation, testCases, testCases, testCases, false));
+
+        final Optional<Result> solutionResult = solutionProgrammingExerciseParticipationRepository
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(solutionParticipation -> updateLatestResult(exercise, solutionParticipation, testCases, testCases, testCases, false));
+
+        return Stream.of(templateResult, solutionResult).flatMap(Optional::stream);
     }
 
     /**
