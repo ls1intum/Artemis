@@ -13,6 +13,7 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { captureException } from '@sentry/browser';
+import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
 interface Warning {
     translateKey: string;
@@ -48,6 +49,8 @@ export abstract class QuizExerciseValidationDirective {
         [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
     } = {};
     pendingChangesCache: boolean;
+
+    protected constructor() {}
 
     /**
      * 1. Check whether the inputs in the quiz are valid
@@ -429,62 +432,83 @@ export abstract class QuizExerciseValidationDirective {
         questions.forEach(function (question) {
             const invalidQuestion = question.invalid;
             const invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions !== undefined) {
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                /*&& (<MultipleChoiceQuestion>question).answerOptions !== undefined) {
                 (<MultipleChoiceQuestion>question).answerOptions!.forEach(function (option) {
                     if (option.invalid) {
                         invalidElements.push(option);
                     }
-                });
+                });*/
+                this.pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                if ((<DragAndDropQuestion>question).dragItems !== undefined) {
+                /*if ((<DragAndDropQuestion>question).dragItems !== undefined) {
                     (<DragAndDropQuestion>question).dragItems!.forEach(function (option) {
                         if (option.invalid) {
                             invalidElements.push(option);
                         }
                     });
-                }
-                if ((<DragAndDropQuestion>question).correctMappings !== undefined) {
+                }*/
+                this.pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
+                /*if ((<DragAndDropQuestion>question).correctMappings !== undefined) {
                     (<DragAndDropQuestion>question).correctMappings!.forEach(function (option) {
                         if (option.invalid) {
                             invalidElements.push(option);
                         }
                     });
-                }
-                if ((<DragAndDropQuestion>question).dropLocations !== undefined) {
+                }*/
+                this.pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
+                /*if ((<DragAndDropQuestion>question).dropLocations !== undefined) {
                     (<DragAndDropQuestion>question).dropLocations!.forEach(function (option) {
                         if (option.invalid) {
                             invalidElements.push(option);
                         }
                     });
-                }
+                }*/
+                this.pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
             } else {
-                if ((<ShortAnswerQuestion>question).solutions !== undefined) {
+                /*if ((<ShortAnswerQuestion>question).solutions !== undefined) {
                     (<ShortAnswerQuestion>question).solutions!.forEach(function (option) {
                         if (option.invalid) {
                             invalidElements.push(option);
                         }
                     });
-                }
-                if ((<ShortAnswerQuestion>question).correctMappings !== undefined) {
+                }*/
+                this.pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
+                /*if ((<ShortAnswerQuestion>question).correctMappings !== undefined) {
                     (<ShortAnswerQuestion>question).correctMappings!.forEach(function (option) {
                         if (option.invalid) {
                             invalidElements.push(option);
                         }
                     });
-                }
-                if ((<ShortAnswerQuestion>question).spots !== undefined) {
+                }*/
+                this.pushToInvalidElements((<ShortAnswerQuestion>question).correctMappings, invalidElements);
+                /*if ((<ShortAnswerQuestion>question).spots !== undefined) {
                     (<ShortAnswerQuestion>question).spots!.forEach(function (option) {
                         if (option.invalid) {
                             invalidElements.push(option);
                         }
                     });
-                }
+                }*/
+                this.pushToInvalidElements((<ShortAnswerQuestion>question).spots, invalidElements);
             }
             if (invalidQuestion || invalidElements.length !== 0) {
                 invalidQuestions[question.title!] = invalidElements.length !== 0 ? { invalidElements } : {};
             }
         });
         this.invalidFlaggedQuestions = invalidQuestions;
+    }
+
+    pushToInvalidElements(
+        array: CanBecomeInvalid[],
+        invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[],
+    ): void {
+        if (array !== undefined) {
+            array!.forEach(function (option: CanBecomeInvalid) {
+                if (option.invalid) {
+                    invalidElements.push(option);
+                }
+            });
+        }
     }
     /**
      * check if Dictionary is empty
