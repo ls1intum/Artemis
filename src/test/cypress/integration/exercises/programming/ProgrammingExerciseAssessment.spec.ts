@@ -73,6 +73,7 @@ describe('Programming exercise assessment', () => {
             cy.wait('@getFeedback')
                 .its('response')
                 .then((feedbackResponse) => {
+                    cy.log(JSON.stringify(feedbackResponse));
                     expect(feedbackResponse?.statusCode).to.equal(200);
                     expect(feedbackResponse?.body[0].detailText).to.eq(tutorCodeFeedback);
                     expect(feedbackResponse?.body[1].detailText).to.eq(tutorFeedback);
