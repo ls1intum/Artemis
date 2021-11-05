@@ -429,7 +429,7 @@ export abstract class QuizExerciseValidationDirective {
         const invalidQuestions: {
             [questionId: number]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
         } = {};
-        questions.forEach(function (question) {
+        questions.forEach((question) => {
             const invalidQuestion = question.invalid;
             const invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -499,7 +499,7 @@ export abstract class QuizExerciseValidationDirective {
     }
 
     pushToInvalidElements(
-        array: CanBecomeInvalid[],
+        array: CanBecomeInvalid[] | undefined,
         invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[],
     ): void {
         if (array !== undefined) {
