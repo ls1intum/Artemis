@@ -4,6 +4,7 @@ import { getElement, getElements } from '../../../../helpers/utils/general.utils
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { PostingContentMarkdownLinebreakPipe } from 'app/shared/pipes/posting-content-markdown-linebreak.pipe';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -27,6 +28,7 @@ describe('PostingContentPartComponent', () => {
             declarations: [
                 PostingContentPartComponent,
                 HtmlForMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
+                PostingContentMarkdownLinebreakPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
@@ -62,7 +64,7 @@ describe('PostingContentPartComponent', () => {
     describe('For posting with reference', () => {
         it('should contain a reference and markdown content before and after', () => {
             const contentBeforeReference = 'I want to reference the following Post ';
-            const contentAfterReference = 'in my content.';
+            const contentAfterReference = 'in my content, with\nlinebreak.';
             const referenceStr = '#7';
             component.postingContentPart = {
                 contentBeforeReference,
@@ -75,8 +77,7 @@ describe('PostingContentPartComponent', () => {
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
             expect(markdownRenderedTexts).toHaveLength(2);
             expect(markdownRenderedTexts![0].innerHTML).toEqual('<p>' + contentBeforeReference + '</p>');
-            expect(markdownRenderedTexts![1].innerHTML).toEqual('<p>' + contentAfterReference + '</p>');
-
+            expect(markdownRenderedTexts![1].innerHTML).toEqual('<p>' + contentAfterReference.replace(/\n/gm, '<br>') + '</p>');
             const referenceLink = getElement(debugElement, '.reference-hash');
             expect(referenceLink).toBeDefined();
         });

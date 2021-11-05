@@ -10,7 +10,7 @@ export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
+    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
     allowedHtmlAttributes: string[] = ['href'];
 
     constructor() {}
