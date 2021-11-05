@@ -1,5 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
+import dayjs from 'dayjs';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -43,6 +44,8 @@ describe('Lecture management', () => {
         cy.fixture('loremIpsum.txt').then((text) => {
             lectureCreation.typeDescription(text);
         });
-        lectureCreation.save().its('response.statusCode').should('eq', 201);
+        lectureCreation.setStartDate(dayjs());
+        lectureCreation.setEndDate(dayjs().add(1, 'hour'));
+        lectureCreation.save();
     });
 });
