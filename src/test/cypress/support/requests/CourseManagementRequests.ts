@@ -148,6 +148,11 @@ export class CourseManagementRequests {
         return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
     }
 
+    updateModelingExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+    }
+
     private updateExercise(exercise: any, type: CypressExerciseType) {
         let url: string;
         switch (type) {
@@ -158,6 +163,8 @@ export class CourseManagementRequests {
                 url = TEXT_EXERCISE_BASE;
                 break;
             case CypressExerciseType.MODELING:
+                url = MODELING_EXERCISE_BASE;
+                break;
             case CypressExerciseType.QUIZ:
             default:
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
@@ -290,15 +297,7 @@ export class CourseManagementRequests {
 
     updateModelingExerciseAssessmentDueDate(exercise: any, due = day()) {
         exercise.assessmentDueDate = dayjsToString(due);
-        return this.updateModelingExercise(exercise);
-    }
-
-    updateModelingExercise(exercise: any) {
-        return cy.request({
-            url: MODELING_EXERCISE_BASE,
-            method: PUT,
-            body: exercise,
-        });
+        return this.updateExercise(exercise, CypressExerciseType.MODELING);
     }
 
     deleteModelingExercise(exerciseID: number) {
@@ -346,11 +345,18 @@ export class CourseManagementRequests {
         const quizExercise: any = {
             ...quizTemplate,
             title,
-            releaseDate: dayjsToString(releaseDate),
             quizQuestions,
             duration,
         };
-        const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+        let newQuizExercise;
+        const dates = {
+            releaseDate: dayjsToString(releaseDate),
+        };
+        if (body.hasOwnProperty('course')) {
+            newQuizExercise = Object.assign({}, quizExercise, dates, body);
+        } else {
+            newQuizExercise = Object.assign({}, quizExercise, body);
+        }
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
@@ -369,6 +375,13 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
             method: PUT,
+        });
+    }
+
+    evaluateExamQuizzes(exam: any) {
+        return cy.request({
+            url: `${COURSE_BASE}${exam.course.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            method: POST,
         });
     }
 
@@ -456,16 +469,6 @@ export class CourseManagementRequests {
     updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
         exercise.assessmentDueDate = dayjsToString(due);
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
-    }
-
-    /**
-     * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
-     * This function takes an exercise template and adds one of the fields to it
-     * @param exercise the exercise template
-     * @param body the exercise group or course the exercise will be added to
-     */
-    private getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
-        return Object.assign({}, exercise, body);
     }
 }
 
