@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
@@ -8,7 +7,6 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
 describe('TestCasePassedBuildsChartComponent', () => {
     let comp: TestCasePassedBuildsChartComponent;
     let fixture: ComponentFixture<TestCasePassedBuildsChartComponent>;
-    let debugElement: DebugElement;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,7 +17,6 @@ describe('TestCasePassedBuildsChartComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TestCasePassedBuildsChartComponent);
-                debugElement = fixture.debugElement;
                 comp = fixture.componentInstance as TestCasePassedBuildsChartComponent;
             });
     });
