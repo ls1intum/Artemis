@@ -133,10 +133,10 @@ describe('ModelingSubmission Management Component', () => {
         comp.isLoading = false;
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('div'))).not.toBe(undefined);
+        expect(debugElement.query(By.css('div'))).not.toBe(null);
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(undefined);
+        expect(submitButton).not.toBe(null);
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
         expect(comp.isActive).toBe(true);
     });
@@ -149,7 +149,7 @@ describe('ModelingSubmission Management Component', () => {
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(undefined);
+        expect(submitButton).not.toBe(null);
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
     });
 
@@ -163,7 +163,7 @@ describe('ModelingSubmission Management Component', () => {
 
         expect(comp.isLate).toBe(true);
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(undefined);
+        expect(submitButton).not.toBe(null);
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
         submission.submitted = true;
     });
@@ -175,7 +175,7 @@ describe('ModelingSubmission Management Component', () => {
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(undefined);
+        expect(submitButton).not.toBe(null);
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
     });
 
