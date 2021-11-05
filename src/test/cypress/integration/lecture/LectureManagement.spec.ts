@@ -25,10 +25,6 @@ describe('Lecture management', () => {
         });
     });
 
-    beforeEach(() => {
-        cy.login(instructor, '/course-management/' + course.id);
-    });
-
     after(() => {
         if (!!course) {
             cy.login(admin);
@@ -44,6 +40,7 @@ describe('Lecture management', () => {
 
     it('creates a lecture', () => {
         const lectureTitle = 'exam' + generateUUID();
+        cy.login(instructor, '/course-management/' + course.id);
         cy.contains('Lectures').click();
         lectureManagement.clickCreateLecture();
         lectureCreation.setTitle(lectureTitle);
@@ -60,16 +57,34 @@ describe('Lecture management', () => {
 
     describe('Handle existing lecture', () => {
         beforeEach('Create a lecture', () => {
+            cy.login(instructor, '/course-management/' + course.id + '/lectures');
             courseManagementRequests.createLecture(course).then((lectureResponse) => {
                 lecture = lectureResponse.body;
             });
         });
 
         it('Deletes an existing lecture', () => {
-            cy.login(instructor, '/course-management/' + course.id + '/lectures');
             lectureManagement.deleteLecture(lecture.title).then((resp) => {
                 expect(resp.response!.statusCode).to.eq(200);
+                lectureManagement.getLectureContainer().children().should('have.length', 0);
                 lecture = null;
+            });
+        });
+
+        it('Adds a text unit to the lecture', () => {
+            lectureManagement.openUnitsPage(lecture.title);
+            cy.fixture('loremIpsum.txt').then((text) => {
+                lectureManagement.addTextUnit('Text unit', text);
+            });
+            cy.contains('Text unit').should('be.visible');
+        });
+
+        it('Adds a exercise unit to the lecture', () => {
+            courseManagementRequests.createModelingExercise({ course }).then((model) => {
+                const exercise = model.body;
+                lectureManagement.openUnitsPage(lecture.title);
+                lectureManagement.addExerciseUnit(exercise.id);
+                cy.contains(exercise.title);
             });
         });
     });
