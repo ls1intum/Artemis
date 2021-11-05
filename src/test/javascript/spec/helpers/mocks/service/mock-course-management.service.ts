@@ -28,4 +28,8 @@ export class MockCourseManagementService {
     getCoursesForNotifications = () => {
         return this.coursesForNotificationsMock.asObservable();
     };
+
+    findAllCategoriesOfCourse = () => {
+        return of();
+    };
 }

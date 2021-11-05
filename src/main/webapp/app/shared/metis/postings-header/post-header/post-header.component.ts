@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -9,30 +9,12 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-e
     templateUrl: './post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
 })
-export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnInit, OnChanges, OnDestroy {
-    @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
+export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnDestroy {
     @Input() previewMode: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    numberOfAnswerPosts: number;
-    showAnswers = false;
 
     constructor(protected metisService: MetisService) {
         super(metisService);
-    }
-
-    /**
-     * on initialization: updates answer post information
-     */
-    ngOnInit(): void {
-        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
-        super.ngOnInit();
-    }
-
-    /**
-     * on changes: updates answer post information
-     */
-    ngOnChanges(): void {
-        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
     }
 
     /**
@@ -40,17 +22,6 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      */
     ngOnDestroy(): void {
         this.postCreateEditModal?.modalRef?.close();
-    }
-
-    /**
-     * toggles showAnswers flag to highlight header icon when answers are toggled
-     * emits an event of toggling (show, do not show) the answer posts for a post
-     */
-    toggleAnswers(): void {
-        if (this.numberOfAnswerPosts > 0) {
-            this.showAnswers = !this.showAnswers;
-        }
-        this.toggleAnswersChange.emit();
     }
 
     /**
