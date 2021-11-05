@@ -19,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -670,7 +671,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         var submissions = database.getAllSubmissionsOfExercise(exercise);
 
         Submission submission = submissions.get(0);
-        database.addComplaintToSubmission(submission, "student1");
+        database.addComplaintToSubmission(submission, "student1", ComplaintType.COMPLAINT);
         assertThat(submission.getResults().size()).isEqualTo(2);
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + lastResult.getId(),
