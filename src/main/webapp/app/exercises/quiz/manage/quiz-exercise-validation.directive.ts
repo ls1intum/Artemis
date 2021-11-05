@@ -23,6 +23,9 @@ export interface Reason {
     translateKey: string;
     translateValues: any;
 }
+type InvalidFlaggedQuestions = {
+    [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
+};
 
 @Directive()
 export abstract class QuizExerciseValidationDirective {
@@ -45,9 +48,7 @@ export abstract class QuizExerciseValidationDirective {
     invalidReasons: Reason[];
     invalidWarnings: Warning[];
 
-    protected invalidFlaggedQuestions: {
-        [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
-    } = {};
+    protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;
 
     protected constructor() {}
