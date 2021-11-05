@@ -15,7 +15,7 @@ const lectureCreation = artemis.pageobjects.lecture.creation;
 
 describe('Lecture management', () => {
     let course: any;
-    let lectureTitle: string;
+    let lecture: any;
 
     before(() => {
         cy.login(admin);
@@ -26,7 +26,6 @@ describe('Lecture management', () => {
     });
 
     beforeEach(() => {
-        lectureTitle = 'exam' + generateUUID();
         cy.login(instructor, '/course-management/' + course.id);
     });
 
@@ -37,7 +36,14 @@ describe('Lecture management', () => {
         }
     });
 
-    it('creates a Lecture', () => {
+    afterEach('Delete lecture', () => {
+        if (lecture) {
+            courseManagementRequests.deleteLecture(lecture.id);
+        }
+    });
+
+    it('creates a lecture', () => {
+        const lectureTitle = 'exam' + generateUUID();
         cy.contains('Lectures').click();
         lectureManagement.clickCreateLecture();
         lectureCreation.setTitle(lectureTitle);
@@ -46,6 +52,25 @@ describe('Lecture management', () => {
         });
         lectureCreation.setStartDate(dayjs());
         lectureCreation.setEndDate(dayjs().add(1, 'hour'));
-        lectureCreation.save();
+        lectureCreation.save().then((lectureResponse) => {
+            lecture = lectureResponse.response!.body;
+            expect(lectureResponse.response!.statusCode).to.eq(201);
+        });
+    });
+
+    describe('Handle existing lecture', () => {
+        beforeEach('Create a lecture', () => {
+            courseManagementRequests.createLecture(course).then((lectureResponse) => {
+                lecture = lectureResponse.body;
+            });
+        });
+
+        it('Deletes an existing lecture', () => {
+            cy.login(instructor, '/course-management/' + course.id + '/lectures');
+            lectureManagement.deleteLecture(lecture.title).then((resp) => {
+                expect(resp.response!.statusCode).to.eq(200);
+                lecture = null;
+            });
+        });
     });
 });

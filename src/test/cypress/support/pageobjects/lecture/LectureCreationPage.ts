@@ -9,7 +9,7 @@ export class LectureCreationPage {
     save() {
         cy.intercept(POST, BASE_API + 'lectures').as('createLecture');
         cy.get('#save-entity').click();
-        return cy.wait('@createLecture').its('response.statusCode').should('eq', 201);
+        return cy.wait('@createLecture');
     }
 
     typeDescription(description: string) {
