@@ -13,6 +13,7 @@ import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_tem
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
+import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -460,6 +461,28 @@ export class CourseManagementRequests {
     updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
         exercise.assessmentDueDate = dayjsToString(due);
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
+    }
+
+    deleteLecture(lectureId: number) {
+        return cy.request({
+            url: `${BASE_API}lectures/${lectureId}`,
+            method: DELETE,
+        });
+    }
+
+    createLecture(course: any, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+        const lecture = {
+            ...lectureTemplate,
+            course,
+            title,
+            startDate,
+            endDate,
+        };
+        return cy.request({
+            url: `${BASE_API}lectures`,
+            method: POST,
+            body: lecture,
+        });
     }
 }
 

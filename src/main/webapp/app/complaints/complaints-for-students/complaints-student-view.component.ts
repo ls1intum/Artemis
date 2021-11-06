@@ -21,7 +21,7 @@ import { HttpResponse } from '@angular/common/http';
 export class ComplaintsStudentViewComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
-    @Input() result: Result;
+    @Input() result?: Result;
     @Input() exam: Exam;
     // flag to indicate exam test run. Default set to false.
     @Input() testRun = false;
@@ -54,14 +54,12 @@ export class ComplaintsStudentViewComponent implements OnInit {
     ngOnInit(): void {
         this.course = this.exercise.course;
         this.isExamMode = this.exam != undefined;
-        if (this.participation?.id && this.participation.results && this.participation.results.length > 0) {
+        if (this.participation && this.result?.completionDate) {
             // Make sure results and participation are connected
-            this.result = this.participation.results[0];
             this.result.participation = this.participation;
-        }
-        if (this.participation && this.result.completionDate) {
+
             if (this.participation.submissions && this.participation.submissions.length > 0) {
-                this.submission = this.participation.submissions[0];
+                this.submission = this.participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
@@ -116,7 +114,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (this.isExamMode) {
             return this.isWithinExamReviewPeriod();
         }
-        return this.canFileComplaintWithCompletionDate(this.result.completionDate!);
+        return this.canFileComplaintWithCompletionDate(this.result!.completionDate!);
     }
 
     /**
@@ -124,7 +122,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isFeedbackRequestAllowed(): boolean {
         if (!this.isExamMode) {
-            return this.canFileComplaintWithCompletionDate(this.result.completionDate!);
+            return this.canFileComplaintWithCompletionDate(this.result!.completionDate!);
         }
         return false;
     }
