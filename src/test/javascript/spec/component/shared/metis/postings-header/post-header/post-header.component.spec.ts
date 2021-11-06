@@ -14,7 +14,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
-import { metisAnswerPosts, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -56,15 +56,6 @@ describe('PostHeaderComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should have information on answers on init', () => {
-        expect(component.numberOfAnswerPosts).toBeDefined();
-    });
-
-    it('should have information on answers on changes', () => {
-        component.ngOnChanges();
-        expect(component.numberOfAnswerPosts).toBeDefined();
-    });
-
     it('should set date information correctly for post of today', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.today-flag')).toBeDefined();
@@ -84,34 +75,5 @@ describe('PostHeaderComponent', () => {
         expect(getElement(debugElement, '.deleteIcon')).toBeDefined();
         component.deletePosting();
         expect(metisServiceDeletePostMock).toHaveBeenCalled();
-    });
-
-    it('should not show answer-count icon for post without answers', () => {
-        component.ngOnChanges();
-        fixture.detectChanges();
-        expect(component.numberOfAnswerPosts).toEqual(0);
-        expect(getElement(debugElement, '.answer-count')).toBeNull();
-        expect(getElement(debugElement, '.answer-count .icon')).toBeDefined();
-    });
-
-    it('should only display non clickable icon for post with answers', () => {
-        component.posting.answers = metisAnswerPosts;
-        component.ngOnChanges();
-        fixture.detectChanges();
-        expect(component.numberOfAnswerPosts).toEqual(metisAnswerPosts.length);
-        expect(getElement(debugElement, '.answer-count').innerHTML).toContain(String(metisAnswerPosts.length));
-        expect(getElement(debugElement, '.answer-count .icon')).toBeDefined();
-        expect(getElement(debugElement, '.toggle-answer-element.clickable')).toBeDefined();
-    });
-
-    it('should call toggleAnswers method and emit event when answer count icon is clicked', () => {
-        const toggleAnswersSpy = jest.spyOn(component, 'toggleAnswers');
-        const toggleAnswersChangeSpy = jest.spyOn(component.toggleAnswersChange, 'emit');
-        component.posting.answers = metisAnswerPosts;
-        component.ngOnChanges();
-        fixture.detectChanges();
-        getElement(debugElement, '.toggle-answer-element.clickable').click();
-        expect(toggleAnswersSpy).toHaveBeenCalled();
-        expect(toggleAnswersChangeSpy).toHaveBeenCalled();
     });
 });

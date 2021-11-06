@@ -108,6 +108,7 @@
                         class="mb-2 mt-2 ms-3"
                         [exercise]="exercise"
                         [participation]="getParticipationForExercise(exercise)!"
+                        [result]="getParticipationForExercise(exercise)!.results?.[0]"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                         [testRun]="isTestRun"
                     >
@@ -133,6 +134,7 @@
                     class="mb-2 mt-2 ms-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)!"
+                    [result]="getParticipationForExercise(exercise)!.results?.[0]"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
                     [testRun]="isTestRun"
                 >
