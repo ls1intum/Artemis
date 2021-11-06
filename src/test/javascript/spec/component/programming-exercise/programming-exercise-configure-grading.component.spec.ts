@@ -35,14 +35,14 @@ import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-e
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
@@ -52,6 +52,7 @@ import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
@@ -208,12 +209,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule, ArtemisTestModule, NgxDatatableModule, NgbModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
                 TableEditableFieldComponent,
+                NgbPopover,
+                NgbTooltip,
                 MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
@@ -224,13 +227,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
+                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
@@ -241,6 +244,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .compileComponents()
