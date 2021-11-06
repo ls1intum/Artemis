@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -10,24 +8,20 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import dayjs from 'dayjs';
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent } from 'ng-mocks';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 describe('PostingsThreadComponent', () => {
     let component: PostingsThreadComponent;
     let fixture: ComponentFixture<PostingsThreadComponent>;
     let metisService: MetisService;
-    let metisServiceUserAuthorityStub: SinonStub;
+    let metisServiceUserAuthorityStub: jest.SpyInstance;
 
     const unApprovedAnswerPost1 = {
         id: 1,
@@ -68,7 +62,7 @@ describe('PostingsThreadComponent', () => {
             ],
             declarations: [
                 PostingsThreadComponent,
-                MockPipe(ArtemisTranslatePipe),
+                TranslatePipeMock,
                 MockComponent(PostComponent),
                 MockComponent(AnswerPostComponent),
                 MockComponent(FaIconComponent),
@@ -80,36 +74,36 @@ describe('PostingsThreadComponent', () => {
                 fixture = TestBed.createComponent(PostingsThreadComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                metisServiceUserAuthorityStub = stub(metisService, 'metisUserIsAtLeastTutorInCourse');
+                metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
             });
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
     it('should be initialized correctly for users that are at least tutors in course', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
-        metisServiceUserAuthorityStub.returns(true);
+        metisServiceUserAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).to.deep.equal(true);
-        expect(component.createdAnswerPost.resolvesPost).to.be.equal(true);
+        expect(component.isAtLeastTutorInCourse).toEqual(true);
+        expect(component.createdAnswerPost.resolvesPost).toEqual(true);
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
-        metisServiceUserAuthorityStub.returns(false);
+        metisServiceUserAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).to.deep.equal(false);
-        expect(component.createdAnswerPost.resolvesPost).to.be.equal(false);
+        expect(component.isAtLeastTutorInCourse).toEqual(false);
+        expect(component.createdAnswerPost.resolvesPost).toEqual(false);
     });
 
     it('should sort answers', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).to.deep.equal(sortedAnswerArray);
+        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
     it('should not sort empty array of answers', () => {
@@ -117,38 +111,58 @@ describe('PostingsThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         component.post.answers = undefined;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).to.deep.equal([]);
+        expect(component.sortedAnswerPosts).toEqual([]);
     });
 
     it('should sort answers on changes', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.ngOnChanges();
-        expect(component.sortedAnswerPosts).to.deep.equal(sortedAnswerArray);
+        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('should toggle answers', () => {
+    it('should display button to show multiple answers', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = false;
-        component.toggleAnswers();
-        expect(component.showAnswers).to.be.equal(true);
-    });
-
-    it('answer now button should not be visible if post does not yet have any answers', () => {
-        component.post = post;
-        component.post.answers = unsortedAnswerArray;
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).to.not.exist;
+        expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
     });
 
-    it('answer now button should be visible if post does not yet have any answers', () => {
+    it('should display button to show single answer', () => {
+        component.post = post;
+        component.post.answers = [metisPostExerciseUser1];
+        component.showAnswers = false;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
+        expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
+    });
+
+    it('start discussion button should be visible if post does not yet have any answers', () => {
         component.post = post;
         component.post.answers = [];
         fixture.detectChanges();
+        const startDiscussion = fixture.debugElement.nativeElement.querySelector('button');
+        expect(startDiscussion.innerHTML).toContain('startDiscussion');
+    });
+
+    it('answer now button should not be visible if answer posts are not shown', () => {
+        component.post = post;
+        component.post.answers = unsortedAnswerArray;
+        component.showAnswers = false;
+        fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).to.exist;
+        expect(answerNowButton.innerHTML).not.toContain('answerNow');
+    });
+
+    it('answer now button should be visible if answer posts are shown', () => {
+        component.post = post;
+        component.post.answers = unsortedAnswerArray;
+        component.showAnswers = true;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
+        expect(answerNowButton.innerHTML).toContain('answerNow');
     });
 
     it('should contain a post', () => {
@@ -156,7 +170,7 @@ describe('PostingsThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         component.ngOnInit();
         const postComponent = fixture.debugElement.nativeElement.querySelector('jhi-post');
-        expect(postComponent).to.exist;
+        expect(postComponent).not.toBe(null);
     });
 
     it('should contain an answer post', () => {
@@ -165,7 +179,7 @@ describe('PostingsThreadComponent', () => {
         component.showAnswers = true;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).to.exist;
+        expect(answerPostComponent).not.toBe(null);
     });
 
     it('should not contain an answer post', () => {
@@ -174,6 +188,6 @@ describe('PostingsThreadComponent', () => {
         component.showAnswers = false;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).to.not.exist;
+        expect(answerPostComponent).toBe(null);
     });
 });

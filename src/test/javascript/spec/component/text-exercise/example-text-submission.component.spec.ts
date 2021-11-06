@@ -132,15 +132,13 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         await comp.ngOnInit();
-        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
+        comp.exercise!.isAtLeastInstructor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
-        of();
 
         // WHEN
-        fixture.detectChanges();
         await comp.startAssessment();
 
         // THEN
@@ -153,8 +151,8 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         await comp.ngOnInit();
-        comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
+        comp.exercise!.isAtLeastEditor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
@@ -187,8 +185,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
-        comp.isAtLeastEditor = true;
         comp.exercise = exercise;
+        comp.exercise!.isAtLeastEditor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
@@ -264,7 +262,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
     });
 
-    it('when wrong tutor assessment, upon backend response should mark feedback as incorrect', fakeAsync(() => {
+    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
         // GIVEN
         const textBlockRefA = TextBlockRef.new();
         textBlockRefA.block!.id = 'ID';

@@ -19,14 +19,9 @@
                         <td width="4%" [innerHTML]="setScore(instruction.credits)"></td>
                         <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
                         <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
-                        <td width="4%" [innerHTML]="instruction.usageCount"></td>
-                        <td width="2%" style="text-align: end">
-                            <fa-icon
-                                [icon]="'question-circle'"
-                                class="text-secondary"
-                                placement="left"
-                                ngbTooltip="{{ 'artemisApp.exercise.usageCountHint' | artemisTranslate }}"
-                            ></fa-icon>
+                        <td width="4%" style="position: relative; white-space: nowrap">
+                            <span>{{ instruction.usageCount }}</span>
+                            <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                         </td>
                     </tr>
                 </tbody>

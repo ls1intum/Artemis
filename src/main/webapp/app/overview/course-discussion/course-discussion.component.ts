@@ -12,6 +12,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 interface ContextFilterOption {
     courseId?: number;
@@ -27,7 +28,7 @@ interface ContentFilterOption {
 @Component({
     selector: 'jhi-course-discussion',
     templateUrl: './course-discussion.component.html',
-    styleUrls: ['./course-discussion.scss'],
+    styleUrls: ['./course-discussion.component.scss'],
     providers: [MetisService],
 })
 export class CourseDiscussionComponent implements OnInit, OnDestroy {
@@ -39,7 +40,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     currentSortDirection = SortDirection.DESC;
     currentPostContentFilter: ContentFilterOption;
     searchText?: string;
-    filterResolved = false;
+    filterToUnresolved = false;
+    filterToOwn = false;
+    filterToAnsweredOrReactedByUser = false;
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
@@ -104,8 +107,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.formGroup = this.formBuilder.group({
             context: [this.currentPostContextFilter],
             sortBy: [PostSortCriterion.CREATION_DATE],
-            sortDirection: [SortDirection.DESC],
-            filterResolved: [this.filterResolved],
+            filterToUnresolved: [this.filterToUnresolved],
+            filterToOwn: [this.filterToOwn],
+            filterToAnsweredOrReacted: [this.filterToAnsweredOrReactedByUser],
         });
     }
 
@@ -127,12 +131,25 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * on changing the sort options via dropdown, the metis service is invoked to deliver the posts for the currently set context,
      * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
      */
-    onChangeSort(): void {
+    onChangeSortBy(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
-    onFilterResolved(): void {
+    /**
+     * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
+     * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
+     */
+    onChangeSortDir(): void {
+        // flip sort direction
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESC ? SortDirection.ASC : SortDirection.DESC;
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+    }
+
+    /**
+     * on changing the filter (to unresolved | own | answered or reacted posts only), the currently loaded posts are filtered accordingly
+     */
+    onFilterChange(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
@@ -180,31 +197,44 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * filters posts on their context: checks if a current non-empty search text (provided via user input) in contained in either the post title or post content,
-     * the compared strings are lowercase in advance
-     * @return boolean predicate if the post is filtered out or not
+     * filters posts on several post characteristics criteria, their context and a search string in a match-all-manner
+     * - filterToUnresolved: post is only kept if none of the given answers is marked as resolving
+     * - filterToOwn: post is only kept if the author of the post matches the currently logged in user
+     * - filterToAnsweredOrReactedByUser: post is only kept if the author of any given answer the user that put any reaction on that post matches the currently logged in user
+     * - currentPostContentFilter: post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
+     * @return boolean predicate if the post is kept (true) or filtered out (false)
      */
     filterFn = (post: Post): boolean => {
-        if (this.filterResolved) {
+        let keepPost = true;
+        if (this.filterToUnresolved) {
             // announcement should never be regarded as unresolved posts as they do not address any problem to be solved
-            return !this.metisService.isPostResolved(post) && post.courseWideContext !== CourseWideContext.ANNOUNCEMENT;
+            keepPost = keepPost && (!this.metisService.isPostResolved(post) || post.courseWideContext === CourseWideContext.ANNOUNCEMENT);
+        }
+        if (this.filterToOwn) {
+            keepPost = keepPost && this.metisService.metisUserIsAuthorOfPosting(post);
+        }
+        if (this.filterToAnsweredOrReactedByUser) {
+            const hasAnsweredOrReacted =
+                (post.answers?.some((answer: AnswerPost) => this.metisService.metisUserIsAuthorOfPosting(answer)) ||
+                    post.reactions?.some((reaction: Reaction) => reaction.user?.id === this.metisService.getUser().id)) ??
+                false;
+            keepPost = keepPost && hasAnsweredOrReacted;
         }
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content
             const lowerCasedSearchString = this.currentPostContentFilter.searchText.toLowerCase();
             // if searchText starts with a # and is followed by a post id, filter for post with id
             if (lowerCasedSearchString.startsWith('#') && !isNaN(+lowerCasedSearchString.substring(1))) {
-                return post.id === Number(lowerCasedSearchString.substring(1));
+                return keepPost && post.id === Number(lowerCasedSearchString.substring(1));
             }
             // regular search on content, title, and tags
-            return (
-                (post.title?.toLowerCase().includes(lowerCasedSearchString) ||
-                    post.content?.toLowerCase().includes(lowerCasedSearchString) ||
-                    post.tags?.join().toLowerCase().includes(lowerCasedSearchString)) ??
-                false
-            );
+            const searchStringMatchesAnyPostProperty =
+                post.title?.toLowerCase().includes(lowerCasedSearchString) ||
+                post.content?.toLowerCase().includes(lowerCasedSearchString) ||
+                post.tags?.join().toLowerCase().includes(lowerCasedSearchString);
+            return keepPost && (searchStringMatchesAnyPostProperty ?? false);
         }
-        return true;
+        return keepPost;
     };
 
     /**
@@ -270,7 +300,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.createdPost = this.metisService.createEmptyPostForContext(
             this.currentPostContextFilter.courseWideContext,
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
-            this.currentPostContextFilter.lectureId,
+            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
     }
 
@@ -280,6 +310,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
+    /**
+     * sets the filter and sort options after receiving user input
+     */
     private setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
@@ -289,8 +322,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             ...this.formGroup.get('context')?.value,
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;
-        this.currentSortDirection = this.formGroup.get('sortDirection')?.value;
-        this.filterResolved = this.formGroup.get('filterResolved')?.value;
+        this.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
+        this.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        this.filterToAnsweredOrReactedByUser = this.formGroup.get('filterToAnsweredOrReacted')?.value;
     }
 
     /**

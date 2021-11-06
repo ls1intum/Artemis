@@ -24,6 +24,8 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
@@ -498,6 +500,7 @@ public class ModelFactory {
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
+        course.setAccuracyOfScores(1);
         return course;
     }
 
@@ -879,6 +882,21 @@ public class ModelFactory {
         apollonDiagram.setDiagramType(diagramType);
         apollonDiagram.setTitle(title);
         return apollonDiagram;
+    }
+
+    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
+        LockRepositoryPolicy policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(submissionLimit);
+        policy.setActive(active);
+        return policy;
+    }
+
+    public static SubmissionPenaltyPolicy generateSubmissionPenaltyPolicy(int submissionLimit, double penalty, boolean active) {
+        SubmissionPenaltyPolicy policy = new SubmissionPenaltyPolicy();
+        policy.setSubmissionLimit(submissionLimit);
+        policy.setExceedingPenalty(penalty);
+        policy.setActive(active);
+        return policy;
     }
 
     /**

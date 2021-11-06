@@ -163,14 +163,14 @@ export class GradingSystemComponent implements OnInit {
      * - there must be at least one grade step
      * - if max points are defined, they should be at least 0
      * - all fields must be filled out
-     * - the percentage values must lie between 0 and 100 (both inclusive)
-     * - if max points are defined, all points values must be between 0 and the max points (both inclusive)
+     * - the percentage values must be at least 0
+     * - if max points are defined, all points values must be at least 0
      * - all grade names must be unique
      * - the first passing must be set if the scale is of GRADE type
      * - the bonus points are at least 0 if the scale is of BONUS type
      * - the bonus points must be strictly ascending in values
      * - the max and min % of adjacent grade steps overlap
-     * - the first grade step begins at 0% and the last ends at 100%
+     * - the first grade step begins at 0%
      */
     validGradeSteps(): boolean {
         if (!this.gradingScale || this.gradingScale.gradeSteps.length === 0) {
@@ -195,7 +195,7 @@ export class GradingSystemComponent implements OnInit {
         }
         // check if any of the fields have invalid percentages
         for (const gradeStep of this.gradingScale.gradeSteps) {
-            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage >= gradeStep.upperBoundPercentage) {
+            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.lowerBoundPercentage > gradeStep.upperBoundPercentage) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
                 return false;
             }
@@ -203,7 +203,7 @@ export class GradingSystemComponent implements OnInit {
         // check if any of the fields have invalid points
         if (this.maxPointsValid()) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.upperBoundPoints! > this.maxPoints! || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
+                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.lowerBoundPoints! > gradeStep.upperBoundPoints!) {
                     this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPoints');
                     return false;
                 }
@@ -259,7 +259,7 @@ export class GradingSystemComponent implements OnInit {
             }
         }
         // check if first and last grade step are valid
-        if (sortedGradeSteps[0].lowerBoundPercentage !== 0 || sortedGradeSteps.last()!.upperBoundPercentage !== 100) {
+        if (sortedGradeSteps[0].lowerBoundPercentage !== 0 || sortedGradeSteps.last()!.upperBoundPercentage < 100) {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
             return false;
         }
@@ -401,15 +401,21 @@ export class GradingSystemComponent implements OnInit {
      * @param gradeSteps the grade steps which will be adjusted
      */
     setInclusivity(gradeSteps: GradeStep[]): GradeStep[] {
+        // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
+        let sortedGradeSteps: GradeStep[] = [];
+        this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
+        sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
+
         gradeSteps.forEach((gradeStep) => {
             if (this.lowerBoundInclusivity) {
                 gradeStep.lowerBoundInclusive = true;
-                gradeStep.upperBoundInclusive = gradeStep.upperBoundPercentage === 100;
+                gradeStep.upperBoundInclusive = sortedGradeSteps.last()!.gradeName === gradeStep.gradeName;
             } else {
+                gradeStep.lowerBoundInclusive = sortedGradeSteps.first()!.gradeName === gradeStep.gradeName;
                 gradeStep.upperBoundInclusive = true;
-                gradeStep.lowerBoundInclusive = gradeStep.lowerBoundPercentage === 0;
             }
         });
+
         return gradeSteps;
     }
 

@@ -1,24 +1,15 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FormsModule } from '@angular/forms';
-import { NgbPopoverModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { stub } from 'sinon';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -29,8 +20,15 @@ describe('ShortAnswerQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, NgbPopoverModule, ArtemisMarkdownEditorModule],
-            declarations: [ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent), MockDirective(NgbTooltip)],
+            imports: [],
+            declarations: [
+                ShortAnswerQuestionComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(QuizScoringInfoStudentModalComponent),
+                MockComponent(NgbPopover),
+                MockComponent(FaIconComponent),
+                MockDirective(NgbTooltip),
+            ],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionComponent);
@@ -47,7 +45,7 @@ describe('ShortAnswerQuestionComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -62,11 +60,11 @@ describe('ShortAnswerQuestionComponent', () => {
 
         component.question = alternativeQuestion;
 
-        expect(component.textParts).to.deep.equal([[`<p>${text}</p>`]]);
-        expect(component.shortAnswerQuestion).to.deep.equal(alternativeQuestion);
-        expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).to.equal(`<p>${text}</p>`);
-        expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).to.equal(`<p>${hint}</p>`);
-        expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).to.equal(`<p>${explanation}</p>`);
+        expect(component.textParts).toStrictEqual([[`<p>${text}</p>`]]);
+        expect(component.shortAnswerQuestion).toStrictEqual(alternativeQuestion);
+        expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).toStrictEqual(`<p>${text}</p>`);
+        expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).toStrictEqual(`<p>${hint}</p>`);
+        expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).toStrictEqual(`<p>${explanation}</p>`);
     });
 
     it('should set submitted texts', () => {
@@ -83,15 +81,15 @@ describe('ShortAnswerQuestionComponent', () => {
             return true;
         };
         const returnValue = { value: text } as unknown as HTMLElement;
-        const getNavigationStub = stub(document, 'getElementById').returns(returnValue);
+        const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
 
         component.question = alternativeQuestion;
         component.setSubmittedText();
 
-        expect(getNavigationStub).to.have.been.called;
-        expect(component.submittedTexts.length).to.equal(1);
-        expect(component.submittedTexts[0].text).to.equal(text);
-        expect(component.submittedTexts[0].spot).to.deep.equal(spot);
+        expect(getNavigationStub).toHaveBeenCalledTimes(1);
+        expect(component.submittedTexts.length).toBe(1);
+        expect(component.submittedTexts[0].text).toStrictEqual(text);
+        expect(component.submittedTexts[0].spot).toStrictEqual(spot);
     });
 
     it('should show sample solution', () => {
@@ -110,9 +108,9 @@ describe('ShortAnswerQuestionComponent', () => {
         component.shortAnswerQuestion = alternativeQuestion;
         component.showSampleSolution();
 
-        expect(component.sampleSolutions.length).to.equal(1);
-        expect(component.sampleSolutions[0]).to.deep.equal(solution);
-        expect(component.showingSampleSolution).to.be.true;
+        expect(component.sampleSolutions.length).toBe(1);
+        expect(component.sampleSolutions[0]).toStrictEqual(solution);
+        expect(component.showingSampleSolution).toBe(true);
     });
 
     it('should toggle show sample solution', () => {
@@ -122,11 +120,11 @@ describe('ShortAnswerQuestionComponent', () => {
         component.showResult = true;
         component.showingSampleSolution = true;
         component.forceSampleSolution = true;
-        expect(component.showingSampleSolution).to.be.true;
+        expect(component.showingSampleSolution).toBe(true);
         component.forceSampleSolution = false;
         component.hideSampleSolution();
 
-        expect(component.showingSampleSolution).to.be.false;
+        expect(component.showingSampleSolution).toBe(false);
     });
 
     it('should get submitted text size for spot', () => {
@@ -138,7 +136,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const tag = '[-spot 1]';
         component.submittedTexts = [submitted];
 
-        expect(component.getSubmittedTextSizeForSpot(tag)).to.deep.equal(submitted.text.length + 2);
+        expect(component.getSubmittedTextSizeForSpot(tag)).toBe(submitted.text.length + 2);
     });
 
     it('should get sample solution size for spot', () => {
@@ -154,7 +152,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.sampleSolutions = [new ShortAnswerSolution(), solution];
         const tag = '[-spot 1]';
 
-        expect(component.getSampleSolutionSizeForSpot(tag)).to.deep.equal(solution.text.length + 2);
+        expect(component.getSampleSolutionSizeForSpot(tag)).toBe(solution.text.length + 2);
     });
 
     it('should get background color for input field', () => {
@@ -178,10 +176,10 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.correctMappings = [mapping];
 
         component.shortAnswerQuestion = alternativeQuestion;
-        expect(component.getBackgroundColourForInputField(tag)).to.equal('lightgreen');
+        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('lightgreen');
         component.shortAnswerQuestion.correctMappings = [];
-        expect(component.getBackgroundColourForInputField(tag)).to.equal('yellow');
+        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('yellow');
         component.submittedTexts = [];
-        expect(component.getBackgroundColourForInputField(tag)).to.equal('red');
+        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('red');
     });
 });

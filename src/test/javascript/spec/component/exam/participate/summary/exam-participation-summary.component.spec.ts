@@ -4,15 +4,13 @@ import dayjs from 'dayjs';
 import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
@@ -38,7 +36,13 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -66,6 +70,10 @@ const exam = {
     reviewEndDate,
 } as Exam;
 
+const exerciseGroup = {
+    exam,
+} as ExerciseGroup;
+
 const textSubmission = { id: 1, submitted: true } as TextSubmission;
 const quizSubmission = { id: 1 } as QuizSubmission;
 const modelingSubmission = { id: 1 } as ModelingSubmission;
@@ -76,10 +84,10 @@ const quizParticipation = { id: 2, student: user, submissions: [quizSubmission] 
 const modelingParticipation = { id: 3, student: user, submissions: [modelingSubmission] } as StudentParticipation;
 const programmingParticipation = { id: 4, student: user, submissions: [programmingSubmission] } as StudentParticipation;
 
-const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation] } as TextExercise;
-const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation] } as QuizExercise;
-const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation] } as ModelingExercise;
-const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation] } as ProgrammingExercise;
+const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation], exerciseGroup } as TextExercise;
+const quizExercise = { id: 2, type: ExerciseType.QUIZ, studentParticipations: [quizParticipation], exerciseGroup } as QuizExercise;
+const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipations: [modelingParticipation], exerciseGroup } as ModelingExercise;
+const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
 const studentExam = { id: 1, exam, user, exercises } as StudentExam;
@@ -87,7 +95,7 @@ const studentExam = { id: 1, exam, user, exercises } as StudentExam;
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), FontAwesomeTestingModule, MockModule(NgbModule), HttpClientModule],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientModule],
             declarations: [
                 ExamParticipationSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
@@ -100,7 +108,8 @@ function sharedSetup(url: string[]) {
                 MockComponent(ModelingExamSummaryComponent),
                 MockComponent(TextExamSummaryComponent),
                 MockComponent(FileUploadExamSummaryComponent),
-                MockComponent(ComplaintInteractionsComponent),
+                MockComponent(ComplaintsStudentViewComponent),
+                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
@@ -118,6 +127,11 @@ function sharedSetup(url: string[]) {
                         },
                     },
                 },
+                MockProvider(CourseManagementService, {
+                    find: () => {
+                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
             ],
         })
             .compileComponents()

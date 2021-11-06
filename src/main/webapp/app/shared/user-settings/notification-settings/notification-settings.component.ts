@@ -31,14 +31,22 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
      * Catches the toggle event from an user click
      * Toggles the respective setting and mark it as changed (only changed settings will be send to the server for saving)
      */
-    toggleSetting(event: any) {
+    toggleSetting(event: any, webApp: boolean) {
         this.settingsChanged = true;
-        const settingId = event.currentTarget.id;
+        let settingId = event.currentTarget.id;
+        // optionId String could have an appended (e.g.( " email" or " webapp" to specify which option to toggle
+        if (settingId.indexOf(' ') !== -1) {
+            settingId = settingId.substr(0, settingId.indexOf(' '));
+        }
         const foundSetting = this.settings.find((setting) => setting.settingId === settingId);
         if (!foundSetting) {
             return;
         }
-        foundSetting!.webapp = !foundSetting!.webapp;
+        if (webApp) {
+            foundSetting!.webapp = !foundSetting!.webapp;
+        } else {
+            foundSetting!.email = !foundSetting!.email;
+        }
         foundSetting.changed = true;
     }
 }

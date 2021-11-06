@@ -14,6 +14,8 @@ import dayjs from 'dayjs';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,6 +34,7 @@ describe('ProgrammingExercise Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         });
         injector = getTestBed();
