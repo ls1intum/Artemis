@@ -44,7 +44,15 @@
         <tbody>
             <tr *ngFor="let tutor of tutorsData; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ tutor.name }}</td>
+                <td>
+                    {{ tutor.name }}
+                    <fa-icon
+                        *ngIf="isAtLeastInstructor && tutor.hasIssuesWithPerformance"
+                        [icon]="'exclamation-triangle'"
+                        class="text-warning"
+                        ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
+                    ></fa-icon>
+                </td>
                 <td>{{ tutor.points }}</td>
                 <td>{{ tutor.numberOfAssessments }}</td>
                 <ng-container *ngIf="!isAtLeastInstructor; else atLeastInstructor">
@@ -85,7 +93,7 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
-                <td>{{ averageScorePercentage(tutor.averageScore) }}%</td>
+                <td>{{ tutor.averageScore.toFixed(1) }}%</td>
                 <td>{{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }})</td>
             </tr>
         </tbody>
