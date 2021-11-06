@@ -122,6 +122,8 @@
         padding: 0;
         margin: auto;
         z-index: 1;
+        max-width: max-content;
+        min-width: 170px;
     }
 
     .exercise-score {
