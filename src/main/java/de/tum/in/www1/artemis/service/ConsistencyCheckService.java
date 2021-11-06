@@ -37,24 +37,6 @@ public class ConsistencyCheckService {
     }
 
     /**
-     * Check VCS and CI consistency of programming exercises contained in
-     * a given course
-     * @param courseId of the course containing the programming exercises to check
-     * @return List containing the resulting errors, if any.
-     */
-    public List<ConsistencyErrorDTO> checkConsistencyOfCourse(long courseId) {
-        log.debug("Checking consistency for course [{}]", courseId);
-        List<ConsistencyErrorDTO> result = new ArrayList<>();
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllByCourseWithTemplateAndSolutionParticipation(courseId);
-
-        for (ProgrammingExercise programmingExercise : exercises) {
-            result.addAll(checkConsistencyOfProgrammingExercise(programmingExercise));
-        }
-
-        return result;
-    }
-
-    /**
      * Overloaded method for consistency checks, which retrieves the programming exercise before calling
      * the consistency checks method
      *
@@ -81,6 +63,7 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(ProgrammingExercise programmingExercise) {
+        log.debug("Checking consistency for programming exercise: {}", programmingExercise.getId());
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
         programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();

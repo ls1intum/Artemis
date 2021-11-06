@@ -6,7 +6,7 @@ import { ConsistencyCheckError } from 'app/entities/consistency-check-result.mod
     providedIn: 'root',
 })
 export class ConsistencyCheckService {
-    private readonly consistencyCheckUrl = SERVER_API_URL + 'api/consistency-check/';
+    private readonly resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}
 
@@ -15,6 +15,6 @@ export class ConsistencyCheckService {
      * @param exerciseId id of the programming exercise to check
      */
     checkConsistencyForProgrammingExercise(exerciseId: number) {
-        return this.http.get<ConsistencyCheckError[]>(`${this.consistencyCheckUrl}exercise/${exerciseId}`, { responseType: 'json' });
+        return this.http.get<ConsistencyCheckError[]>(`${this.resourceUrl}/${exerciseId}/consistency-check`, { responseType: 'json' });
     }
 }

@@ -11,9 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -36,14 +34,10 @@ public class ConsistencyCheckResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final CourseRepository courseRepository;
-
-    public ConsistencyCheckResource(AuthorizationCheckService authCheckService, ConsistencyCheckService consistencyCheckService, ExerciseRepository exerciseRepository,
-            CourseRepository courseRepository) {
+    public ConsistencyCheckResource(AuthorizationCheckService authCheckService, ConsistencyCheckService consistencyCheckService, ExerciseRepository exerciseRepository) {
         this.authCheckService = authCheckService;
         this.consistencyCheckService = consistencyCheckService;
         this.exerciseRepository = exerciseRepository;
-        this.courseRepository = courseRepository;
     }
 
     /**
@@ -51,26 +45,12 @@ public class ConsistencyCheckResource {
      * @param programmingExerciseId id of the exercise to check
      * @return List containing the resulting errors, if any.
      */
-    @GetMapping("consistency-check/exercise/{programmingExerciseId}")
+    @GetMapping("programming-exercises/{programmingExerciseId}/consistency-check")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
         final Exercise exercise = exerciseRepository.findByIdElseThrow(programmingExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
-        return ResponseEntity.ok(result);
-    }
-
-    /**
-     * GET consistency-check/course/{courseId} : request consistency check of all programming exercises of a given course
-     * @param courseId id of the course to check
-     * @return List containing the resulting errors, if any.
-     */
-    @GetMapping("consistency-check/course/{courseId}")
-    public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfCourse(@PathVariable long courseId) {
-        log.debug("REST request to check consistencies of course [{}]", courseId);
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
         return ResponseEntity.ok(result);
     }
 }

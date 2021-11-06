@@ -67,16 +67,4 @@ public class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpri
     public void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_forbidden();
     }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfCourse_forbidden() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfCourse_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfCourse() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfCourse();
-    }
 }
