@@ -115,7 +115,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param feedback that contains feedback detail_text and grading instruction
      * @returns {string} formatted string representing the feedback text ready to display
      */
-    public buildFeedbackTextForReview(feedback: Feedback): string {
+    public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
         let feedbackText = '';
         if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
             feedbackText = feedback.gradingInstruction.feedback;

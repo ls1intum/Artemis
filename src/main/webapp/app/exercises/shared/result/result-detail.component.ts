@@ -232,7 +232,7 @@ export class ResultDetailComponent implements OnInit {
                         type: FeedbackItemType.Feedback,
                         category: this.showTestDetails ? 'Tutor' : 'Feedback',
                         title: feedback.text,
-                        text: feedback.gradingInstruction.feedback + '\n' + feedback.detailText,
+                        text: feedback.detailText ? feedback.gradingInstruction.feedback + '\n' + feedback.detailText : feedback.gradingInstruction.feedback,
                         positive: feedback.positive,
                         credits: feedback.credits,
                     };

@@ -397,7 +397,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             dropInfo.instruction = feedback.gradingInstruction;
             dropInfo.removeMessage = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.removeAssessmentInstructionLink');
             dropInfo.tooltipMessage = this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + feedback!.gradingInstruction!.instructionDescription;
-            dropInfo.feedbackHint = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.feedbackHint');
+            dropInfo.feedbackHint = this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint');
             return dropInfo;
         }
 
