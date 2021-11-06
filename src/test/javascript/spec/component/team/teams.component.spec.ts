@@ -1,36 +1,34 @@
 import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { NgModel } from '@angular/forms';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie-service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { teamRoute } from 'app/exercises/shared/team/team.route';
-import { RouterTestingModule } from '@angular/router/testing';
 import { Router, convertToParamMap } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
+import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
+import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
+import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
+import { RouterTestingModule } from '@angular/router/testing';
+import { teamRoute } from 'app/exercises/shared/team/team.route';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,29 +47,27 @@ describe('TeamsComponent', () => {
         snapshot: { queryParamMap: convertToParamMap({}) },
     } as any as ActivatedRoute;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                FormsModule,
-                NgbModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                ArtemisTeamModule,
-                RouterTestingModule.withRoutes([teamRoute[0]]),
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), RouterTestingModule.withRoutes([teamRoute[0]])],
+            declarations: [
+                TeamsComponent,
+                MockDirective(NgModel),
+                TranslatePipeMock,
+                MockComponent(TeamsExportButtonComponent),
+                MockComponent(TeamsImportButtonComponent),
+                MockComponent(TeamUpdateButtonComponent),
+                MockComponent(AlertComponent),
+                MockComponent(DataTableComponent),
+                MockComponent(TeamStudentsListComponent),
+                MockRouterLinkDirective,
+                MockComponent(TeamDeleteButtonComponent),
             ],
-            declarations: [],
             providers: [
-                EventManager,
-                { provide: TeamService, useClass: MockTeamService },
-                { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
                 { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: AccountService, useClass: MockAccountService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: TeamService, useClass: MockTeamService },
             ],
         })
             .compileComponents()

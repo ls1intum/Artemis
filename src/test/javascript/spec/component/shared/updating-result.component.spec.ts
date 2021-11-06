@@ -1,12 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs';
-import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -16,9 +13,7 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { MissingResultInfo, ResultComponent } from 'app/exercises/shared/result/result.component';
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;
@@ -46,14 +41,11 @@ describe('UpdatingResultComponent', () => {
     const submission = { id: 1 } as any;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UpdatingResultComponent, MockComponent(ResultComponent), TranslatePipeMock],
+            declarations: [UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
