@@ -1,4 +1,3 @@
-import { GET, BASE_API } from './../../../support/constants';
 import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import dayjs from 'dayjs';
