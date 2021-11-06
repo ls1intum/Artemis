@@ -139,50 +139,6 @@ export abstract class QuizExerciseValidationDirective {
                     return question.title && question.title !== '';
                 }
             }
-
-            /*            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const mcQuestion = question as MultipleChoiceQuestion;
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                    return (
-                        question.title &&
-                        question.title !== '' &&
-                        question.title.length < this.titleLengthThreshold &&
-                        mcQuestion.answerOptions!.every(
-                            (answerOption) =>
-                                (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
-                                (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
-                        )
-                    );
-                }
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const dndQuestion = question as DragAndDropQuestion;
-                return (
-                    question.title &&
-                    question.title !== '' &&
-                    question.title.length < this.titleLengthThreshold &&
-                    dndQuestion.correctMappings &&
-                    dndQuestion.correctMappings.length > 0 &&
-                    this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
-                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
-                );
-            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const shortAnswerQuestion = question as ShortAnswerQuestion;
-                return (
-                    question.title &&
-                    question.title !== '' &&
-                    shortAnswerQuestion.correctMappings &&
-                    shortAnswerQuestion.correctMappings.length > 0 &&
-                    this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
-                    this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
-                    this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
-                    shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
-                    !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
-                    this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
-                );
-            } else {
-                captureException(new Error('Unknown question type: ' + question));
-                return question.title && question.title !== '';
-            }*/
         }, this);
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
@@ -434,62 +390,14 @@ export abstract class QuizExerciseValidationDirective {
             const invalidQuestion = question.invalid;
             const invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                /*&& (<MultipleChoiceQuestion>question).answerOptions !== undefined) {
-                (<MultipleChoiceQuestion>question).answerOptions!.forEach(function (option) {
-                    if (option.invalid) {
-                        invalidElements.push(option);
-                    }
-                });*/
                 this.pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                /*if ((<DragAndDropQuestion>question).dragItems !== undefined) {
-                    (<DragAndDropQuestion>question).dragItems!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }*/
                 this.pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
-                /*if ((<DragAndDropQuestion>question).correctMappings !== undefined) {
-                    (<DragAndDropQuestion>question).correctMappings!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }*/
                 this.pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
-                /*if ((<DragAndDropQuestion>question).dropLocations !== undefined) {
-                    (<DragAndDropQuestion>question).dropLocations!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }*/
                 this.pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
             } else {
-                /*if ((<ShortAnswerQuestion>question).solutions !== undefined) {
-                    (<ShortAnswerQuestion>question).solutions!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }*/
                 this.pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
-                /*if ((<ShortAnswerQuestion>question).correctMappings !== undefined) {
-                    (<ShortAnswerQuestion>question).correctMappings!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }*/
                 this.pushToInvalidElements((<ShortAnswerQuestion>question).correctMappings, invalidElements);
-                /*if ((<ShortAnswerQuestion>question).spots !== undefined) {
-                    (<ShortAnswerQuestion>question).spots!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }*/
                 this.pushToInvalidElements((<ShortAnswerQuestion>question).spots, invalidElements);
             }
             if (invalidQuestion || invalidElements.length !== 0) {
