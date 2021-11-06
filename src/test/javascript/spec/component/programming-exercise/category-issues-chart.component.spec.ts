@@ -8,7 +8,8 @@ describe('CategoryIssuesChartComponent', () => {
     let fixture: ComponentFixture<CategoryIssuesChartComponent>;
     let comp: CategoryIssuesChartComponent;
     let category: StaticCodeAnalysisCategory;
-    beforeEach(async () => {
+
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [CategoryIssuesChartComponent, MockDirective(NgbTooltip)],
