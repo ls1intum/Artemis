@@ -51,7 +51,9 @@ export class ExerciseHintService implements IExerciseHintService {
      */
     create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
-        exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+        if (exerciseHint.exercise.categories) {
+            exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+        }
         return this.http.post<ExerciseHint>(this.resourceUrl, exerciseHint, { observe: 'response' });
     }
 
