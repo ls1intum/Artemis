@@ -7,17 +7,17 @@
 >
     <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
         <div class="row align-items-start">
-            <div class="form-group col-8 p-2 m-0">
+            <div class="form-group col-8 m-0">
                 <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div class="d-inline" *ngIf="feedback.gradingInstruction!">
                     <fa-icon [icon]="'question-circle'" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
                     <span>{{ feedback.gradingInstruction!.feedback }}</span>
                 </div>
             </div>
-            <div class="form-group col-3 p-2 m-0">
+            <div class="form-group col-3 m-0">
                 <label jhiTranslate="artemisApp.exercise.score"></label>
             </div>
-            <div class="form-group col-1 p-2 m-0" *ngIf="feedback.gradingInstruction!">
+            <div class="form-group col-1 m-0" *ngIf="feedback.gradingInstruction!">
                 <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
             </div>
         </div>
@@ -59,7 +59,7 @@
 <ng-template #readOnlyFeedback>
     <div class="container">
         <div class="row align-items-center">
-            <div class="col ps-0">
+            <div class="col ps-0 pt-1">
                 <h5 class="d-inline">
                     <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
                         roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P'
@@ -67,7 +67,7 @@
                 </h5>
                 <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>
             </div>
-            <div *ngIf="!readOnly" class="col d-flex justify-content-end">
+            <div *ngIf="!readOnly" class="col d-flex justify-content-end pt-1">
                 <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="'pencil-alt'"></fa-icon> <span jhiTranslate="entity.action.edit">Edit</span>
                 </button>
