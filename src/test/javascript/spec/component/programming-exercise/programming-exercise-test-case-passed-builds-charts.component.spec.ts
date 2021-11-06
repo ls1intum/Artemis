@@ -35,12 +35,6 @@ describe('TestCasePassedBuildsChartComponent', () => {
         expect(comp.tooltip).toBe('0% passed, 0% failed, 100% not executed of 5 students.');
     }));
 
-    it('should not update the tooltip when receiving an invalid amount of participants', fakeAsync(() => {
-        initComponent({ numPassed: -1, numFailed: 0 }, -1);
-
-        expect(comp.tooltip).toBe('');
-    }));
-
     it('should show a tooltip with "40% passed, 60% failed" when receiving corresponding stats', fakeAsync(() => {
         initComponent({ numPassed: 2, numFailed: 3 }, 5);
 
@@ -51,5 +45,11 @@ describe('TestCasePassedBuildsChartComponent', () => {
         initComponent({ numPassed: 5, numFailed: 0 }, 5);
 
         expect(comp.tooltip).toBe('100% passed, 0% failed of 5 students.');
+    }));
+
+    it('should show the default tooltip when given invalid inputs', fakeAsync(() => {
+        initComponent({ numPassed: -1, numFailed: 0 }, -1);
+
+        expect(comp.tooltip).toBe('0% passed, 0% failed, 100% not executed of 0 students.');
     }));
 });
