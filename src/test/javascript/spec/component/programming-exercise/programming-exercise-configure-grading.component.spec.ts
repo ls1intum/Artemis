@@ -68,7 +68,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let updateCategoriesStub: jest.SpyInstance;
     let resetTestCasesStub: jest.SpyInstance;
     let resetCategoriesStub: jest.SpyInstance;
-    let notifyTestCasesSpy: jest.SpyInstance;
     let testCasesChangedStub: jest.SpyInstance;
     let getExerciseTestCaseStateStub: jest.SpyInstance;
     let loadExerciseStub: jest.SpyInstance;
@@ -261,7 +260,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
                 updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
                 updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
-                notifyTestCasesSpy = jest.spyOn(gradingService, 'notifyTestCases');
                 resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
                 resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
                 loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
