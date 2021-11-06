@@ -20,7 +20,7 @@ export class SystemNotificationManagementResolve implements Resolve<SystemNotifi
         if (route.params['id']) {
             return this.service.find(parseInt(route.params['id'], 10)).pipe(
                 filter((response: HttpResponse<SystemNotification>) => response.ok),
-                map((exam: HttpResponse<SystemNotification>) => exam.body!),
+                map((response: HttpResponse<SystemNotification>) => response.body!),
             );
         }
         return new SystemNotification();
