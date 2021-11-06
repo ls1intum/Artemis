@@ -5,9 +5,11 @@ import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
+import { HttpResponse } from '@angular/common/http';
+import { filter, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
-export class SystemNotificationManagementResolve implements Resolve<any> {
+export class SystemNotificationManagementResolve implements Resolve<SystemNotification> {
     constructor(private service: SystemNotificationService) {}
 
     /**
@@ -16,7 +18,10 @@ export class SystemNotificationManagementResolve implements Resolve<any> {
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['id']) {
-            return this.service.find(parseInt(route.params['id'], 10));
+            return this.service.find(parseInt(route.params['id'], 10)).pipe(
+                filter((response: HttpResponse<SystemNotification>) => response.ok),
+                map((exam: HttpResponse<SystemNotification>) => exam.body!),
+            );
         }
         return new SystemNotification();
     }
