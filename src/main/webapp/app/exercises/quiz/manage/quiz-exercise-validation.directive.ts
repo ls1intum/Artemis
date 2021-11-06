@@ -405,7 +405,14 @@ export abstract class QuizExerciseValidationDirective {
         this.invalidFlaggedQuestions = invalidQuestions;
     }
 
-    pushToInvalidElements(
+    /**
+     * Helper function in order to prevent code duplication in computeInvalidReasons
+     * Iterates over the array and pushes invalid elements to invalidElements
+     * @param array the array containing elements that can be invalid
+     * @param invalidElements the array all invalid elements are pushed to
+     * @private
+     */
+    private pushToInvalidElements(
         array: CanBecomeInvalid[] | undefined,
         invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[],
     ): void {
