@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
@@ -10,8 +11,8 @@ describe('TestCasePassedBuildsChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbModule],
-            declarations: [TestCasePassedBuildsChartComponent],
+            imports: [],
+            declarations: [TestCasePassedBuildsChartComponent, MockDirective(NgbTooltip)],
             providers: [],
         })
             .compileComponents()

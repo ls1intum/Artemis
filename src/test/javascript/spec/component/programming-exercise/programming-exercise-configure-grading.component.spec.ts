@@ -214,8 +214,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
                 TableEditableFieldComponent,
-                NgbPopover,
-                NgbTooltip,
                 MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
@@ -230,6 +228,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
+                MockDirective(NgbPopover),
+                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
             ],
             providers: [
