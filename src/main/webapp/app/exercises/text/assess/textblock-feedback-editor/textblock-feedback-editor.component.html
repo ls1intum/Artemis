@@ -45,17 +45,17 @@
     </div>
 
     <div class="row">
-        <div class="form-group col-md-10">
+        <div class="form-group col-md-10 m-0">
             <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
             <div class="d-inline" *ngIf="feedback.gradingInstruction!">
                 <fa-icon [icon]="'question-circle'" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
                 <span>{{ feedback.gradingInstruction!.feedback }}</span>
             </div>
         </div>
-        <div class="form-group col-md-1 text-end">
+        <div class="form-group col-md-1 text-end m-0">
             <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
         </div>
-        <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
+        <div class="form-group col-md-1 m-0" *ngIf="feedback.gradingInstruction!">
             <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
         </div>
     </div>
