@@ -51,8 +51,6 @@ export abstract class QuizExerciseValidationDirective {
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;
 
-    protected constructor() {}
-
     /**
      * 1. Check whether the inputs in the quiz are valid
      * 2. Check if warning are needed for the inputs
