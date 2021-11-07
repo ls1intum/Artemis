@@ -159,8 +159,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     // extension points, see shared/extension-point
     @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
-    @ContentChild('overrideOpenButton') overrideOpenButton: TemplateRef<any>;
-    @ContentChild('overrideNewButton') overrideNewButton: TemplateRef<any>;
+    @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
     constructor(
         private exerciseService: ExerciseService,
