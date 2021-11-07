@@ -85,9 +85,6 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                     }
                 });
 
-                // sort courses by their title alphabetically ascending
-                // this.courses = this.courses.sort((a, b) => a.title!.localeCompare(b.title!));
-
                 this.nextRelevantExams = this.exams.filter(
                     (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
                 );
