@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { MockComponent, MockProvider, MockModule } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,9 +8,6 @@ import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportButtonComponent>;
@@ -34,7 +29,7 @@ describe('UsersImportButtonComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.resetAllMocks();
     });
 
     it('should initialize', () => {
@@ -45,8 +40,11 @@ describe('UsersImportButtonComponent', () => {
         comp.openUsersImportDialog(new MouseEvent('click'));
 
         const openStudentsExamImportDialogButton = fixture.debugElement.query(By.css('jhi-button'));
-        expect(openStudentsExamImportDialogButton).to.exist;
-        expect(modalServiceOpenStub).to.have.been.called;
+
+        expect(openStudentsExamImportDialogButton).not.toBe(null);
+
+        expect(modalServiceOpenStub).toHaveBeenCalled;
+
         modalServiceOpenStub.restore();
     });
 });

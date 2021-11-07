@@ -13,19 +13,13 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { AlertService } from 'app/core/util/alert.service';
 import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -50,7 +44,7 @@ describe('UsersImportButtonComponent', () => {
                 MockComponent(AlertErrorComponent),
             ],
             providers: [
-                { provide: NgbActiveModal, useValue: sinon.createStubInstance(NgbActiveModal) },
+                MockProvider(NgbActiveModal),
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
                 MockProvider(HttpClient),
@@ -72,12 +66,12 @@ describe('UsersImportButtonComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull;
     });
 
     it('should reset dialog when selecting csv file', async () => {
@@ -88,16 +82,16 @@ describe('UsersImportButtonComponent', () => {
         const event = { target: { files: [studentCsvColumns] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport).to.be.empty;
-        expect(component.notFoundUsers).to.be.empty;
+        expect(component.usersToImport).toHaveLength(0);
+        expect(component.notFoundUsers).toHaveLength(0);
     });
 
     it('should read no students from csv file', async () => {
         const event = { target: { files: [studentCsvColumns] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport).to.be.empty;
-        expect(component.notFoundUsers).to.be.empty;
+        expect(component.usersToImport).toHaveLength(0);
+        expect(component.notFoundUsers).toHaveLength(0);
     });
 
     it('should read students from csv file', async () => {
@@ -105,8 +99,8 @@ describe('UsersImportButtonComponent', () => {
         const event = { target: { files: [csv] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport.length).to.equal(2);
-        expect(component.notFoundUsers).to.be.empty;
+        expect(component.usersToImport.length).toEqual(2);
+        expect(component.notFoundUsers).toHaveLength(0);
     });
 
     it('should have validation error for invalid csv', async () => {
@@ -116,7 +110,7 @@ describe('UsersImportButtonComponent', () => {
         const event = { target: { files: [invalidCsv] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.validationError).to.not.be.empty;
+        expect(component.validationError).toHaveLength(1);
     });
 
     it('should import students', function () {
@@ -127,35 +121,35 @@ describe('UsersImportButtonComponent', () => {
         const studentsNotFound: StudentDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
-        sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
+        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
         component.importUsers();
 
-        expect(examManagementService.addStudentsToExam).to.have.been.calledOnce;
-        expect(component.isImporting).to.be.false;
-        expect(component.hasImported).to.be.true;
-        expect(component.notFoundUsers.length).to.equal(studentsNotFound.length);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalled();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(true);
+        expect(component.notFoundUsers.length).toEqual(studentsNotFound.length);
     });
 
     it('should compute invalid student entries', function () {
         let rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }]);
-        expect(rowNumbersOrNull).to.equal('2');
+        expect(rowNumbersOrNull).toBe('2');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { registrationnumber: '1' }, { login: 'username' }]);
-        expect(rowNumbersOrNull).to.equal('2');
+        expect(rowNumbersOrNull).toBe('2');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
-        expect(rowNumbersOrNull).to.be.null;
+        expect(rowNumbersOrNull).toBe(null);
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
-        expect(rowNumbersOrNull).to.be.null;
+        expect(rowNumbersOrNull).toBe(null);
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
-        expect(rowNumbersOrNull).to.equal('2, 3');
+        expect(rowNumbersOrNull).toBe('2, 3');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([]);
-        expect(rowNumbersOrNull).to.be.null;
+        expect(rowNumbersOrNull).toBe(null);
     });
 
     it('should import correctly', function () {
@@ -166,16 +160,15 @@ describe('UsersImportButtonComponent', () => {
         const notImportedStudents: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
 
         const fakeResponse = { body: notImportedStudents } as HttpResponse<StudentDTO[]>;
-        sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
+        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = importedStudents.concat(notImportedStudents);
         component.importUsers();
 
-        importedStudents.forEach((student) => expect(component.wasImported(student)).to.be.true);
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).to.be.false);
-
-        expect(component.numberOfUsersImported).to.equal(importedStudents.length);
-        expect(component.numberOfUsersNotImported).to.equal(notImportedStudents.length);
+        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse);
+        expect(component.numberOfUsersImported).toBe(importedStudents.length);
+        expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
 
     it('should invoke REST call on "Import" but not on "Finish"', function () {
@@ -186,36 +179,35 @@ describe('UsersImportButtonComponent', () => {
         const studentsNotFound: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
-        sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
+        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
 
         fixture.detectChanges();
 
-        expect(component.hasImported).to.be.false;
-        expect(component.isSubmitDisabled).to.be.false;
+        expect(component.hasImported).toBeFalse;
+        expect(component.isSubmitDisabled).toBeFalse;
         const importButton = fixture.debugElement.query(By.css('#import'));
-        expect(importButton).to.exist;
+
+        expect(importButton).not.toBeNull;
 
         importButton.nativeElement.click();
 
-        expect(examManagementService.addStudentsToExam).to.have.been.calledOnce;
-        expect(component.isImporting).to.be.false;
-        expect(component.hasImported).to.be.true;
-        expect(component.notFoundUsers.length).to.equal(studentsNotFound.length);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalled();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(true);
+        expect(component.notFoundUsers.length).toEqual(studentsNotFound.length);
 
-        // Reset call counter
-        sinon.restore();
-        sinon.replace(examManagementService, 'addStudentsToExam', sinon.fake.returns(of(fakeResponse)));
+        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.hasImported = true;
         fixture.detectChanges();
 
         const finishButton = fixture.debugElement.query(By.css('#finish-button'));
-        expect(finishButton).to.exist;
+        expect(finishButton).not.toBeNull;
 
         finishButton.nativeElement.click();
 
-        expect(examManagementService.addStudentsToExam).to.not.have.been.called;
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalled();
     });
 });
