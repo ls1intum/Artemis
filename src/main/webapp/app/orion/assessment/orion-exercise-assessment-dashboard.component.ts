@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { calculateSubmissionStatusIsDraft, Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
