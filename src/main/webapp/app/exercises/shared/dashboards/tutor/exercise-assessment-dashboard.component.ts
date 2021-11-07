@@ -15,7 +15,6 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import {
-    calculateSubmissionStatusIsDraft,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     setLatestSubmissionResult,
@@ -49,6 +48,7 @@ import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/u
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
+import { Result } from 'app/entities/result.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -64,7 +64,6 @@ export interface ExampleSubmissionQueryParams {
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
-    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -610,6 +609,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     private onError(error: string) {
         this.alertService.error(error);
+    }
+
+    /**
+     * Calculates the status of a submission by inspecting the result. Returns true if the submission is a draft, or false if it is done
+     * @param submission which to check
+     * @param correctionRound for which to get status
+     */
+     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
+        const tmpResult = submission.results?.[correctionRound];
+        return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
     }
 
     calculateComplaintStatus(complaint: Complaint) {

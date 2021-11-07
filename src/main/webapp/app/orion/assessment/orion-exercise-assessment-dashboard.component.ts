@@ -18,7 +18,6 @@ import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.se
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
-    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     orionState: OrionState;
 
     exerciseId: number;
@@ -46,6 +45,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
      * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
      */
     openAssessmentInOrion() {
+        if (!this.exercise.course) {
+            // set course for exam exercises
+            this.exercise.course = this.exercise.exerciseGroup?.exam?.course;
+        }
         this.orionConnectorService.assessExercise(this.exercise);
     }
 
