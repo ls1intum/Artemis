@@ -16,6 +16,7 @@ import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
+import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 
 @NgModule({
     imports: [
@@ -32,6 +33,7 @@ import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programm
         ArtemisProgrammingExerciseLifecycleModule,
         NgxDatatableModule,
         ArtemisTableModule,
+        SubmissionPolicyUpdateModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

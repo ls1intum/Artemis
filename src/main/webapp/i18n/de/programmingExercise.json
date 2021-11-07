@@ -108,7 +108,7 @@
             },
             "problemStatement": {
                 "title": "Aufgabenstellung",
-                "taskCommand": "[task] Aufgabe",
+                "taskCommand": "Aufgabe",
                 "testCaseCommand": "Testfall einfügen",
                 "exerciseHintCommand": "Aufgaben-spezifischen Hinweis hinzufügen"
             },
@@ -300,6 +300,63 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
+                }
+            },
+            "submissionPolicy": {
+                "title": "Abgaberichtlinie",
+                "updateButton": {
+                    "title": "Speichern",
+                    "tooltip": "Speichert die Änderungen an der Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories betroffen sind!"
+                },
+                "activateButton": {
+                    "title": "Aktivieren",
+                    "tooltip": "Aktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
+                },
+                "deactivateButton": {
+                    "title": "Deaktivieren",
+                    "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG: Für Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories entsperrt werden müssen!"
+                },
+                "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
+                "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
+                "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
+                "submissionsAllowed": "erlaubte Abgaben",
+                "none": {
+                    "optionLabel": "Keine"
+                },
+                "lockRepository": {
+                    "optionLabel": "Repository Sperre"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Punktabzug je Überschreitung",
+                    "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
+                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer oder gleich 0 kann eingetragen werden.",
+                    "penaltyInputFieldValidationWarning": {
+                        "min": "Der Punktabzug muss größer oder gleich 0 sein!",
+                        "required": "Der Punktabzug muss gesetzt sein!"
+                    },
+                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
+                },
+                "submissionPolicyType": {
+                    "title": "Typ der Abgaberichtlinie",
+                    "none": {
+                        "title": "Keine"
+                    },
+                    "lock_repository": {
+                        "title": "Repository Sperre",
+                        "tooltip": "Dein Abgaberepository wird gesperrt, sobald das Abgabelimit erreicht wird. Es wird nicht möglich sein, weiter an der Aufgabe teilzunehmen, sobald das Repository gesperrt wurde."
+                    },
+                    "submission_penalty": {
+                        "title": "Punktabzug je Überschreitung",
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche, innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
+                    }
+                },
+                "submissionLimitTitle": "Abgabelimit",
+                "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
+                "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
+                "submissionLimitWarning": {
+                    "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
+                    "required": "Das Abgabelimit muss gesetzt sein!"
                 }
             }
         },

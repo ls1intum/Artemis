@@ -85,7 +85,7 @@ export class ExamResolve implements Resolve<Exam> {
         if (courseId && examId) {
             return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
-                map((exam: HttpResponse<Exam>) => exam.body!),
+                map((response: HttpResponse<Exam>) => response.body!),
             );
         }
         return of(new Exam());
@@ -131,7 +131,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((studentExam: HttpResponse<StudentExam>) => studentExam.body!),
+                map((response: HttpResponse<StudentExam>) => response.body!),
             );
         }
         return of(new StudentExam());

@@ -283,7 +283,8 @@
             "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
-        }
+        },
+        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
     },
     "error": {
         "internalServerError": "Interner Serverfehler",
@@ -312,6 +313,7 @@
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",
     "releaseNotes": "Versionshinweise",
+    "requestChange": "Änderung beantragen",
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {

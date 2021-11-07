@@ -1,5 +1,6 @@
 import { artemis } from '../../../support/ArtemisTesting';
 import { generateUUID } from '../../../support/utils';
+import { CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 
 // The user management object
 const users = artemis.users;
@@ -26,7 +27,7 @@ describe('Text exercise participation', () => {
 
     it('Creates a text exercise in the UI', () => {
         cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
-        courseOverview.startExercise(exerciseTitle);
+        courseOverview.startExercise(exerciseTitle, CypressExerciseType.TEXT);
         courseOverview.openRunningExercise(exerciseTitle);
 
         // Verify the initial state of the text editor

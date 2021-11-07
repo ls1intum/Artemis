@@ -10,7 +10,7 @@
             "app/*": ["src/main/webapp/app/*"]
         }
     },
-    "files": ["src/test/javascript/spec/entry.ts"],
+    "files": ["src/test/javascript/spec/jest-test-setup.ts"],
     "include": ["src/test/javascript", "src/main/webapp/app"],
     "exclude": ["node_modules"]
 }

@@ -11,6 +11,7 @@ module.exports = {
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
+            isolatedModules: true,
             diagnostics: {
                 ignoreCodes: [151001],
             },
@@ -27,10 +28,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 77.0,
-            branches: 59.8,
-            functions: 67.9,
-            lines: 76.5,
+            statements: 76.8,
+            branches: 63.5,
+            functions: 67.5,
+            lines: 76.3,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],

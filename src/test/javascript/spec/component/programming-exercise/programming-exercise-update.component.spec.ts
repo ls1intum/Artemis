@@ -1,10 +1,8 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import { stub } from 'sinon';
 import dayjs from 'dayjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -24,12 +22,50 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgForm, NumberValueAccessor, NgModel, CheckboxControlValueAccessor, DefaultValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-chips';
+import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
+import { OwlDateTimeModule } from 'ng-pick-datetime';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
+    const lockRepositoryPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 } as LockRepositoryPolicy;
+    const submissionPenaltyPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 50.4 } as SubmissionPenaltyPolicy;
+    const brokenPenaltyPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY } as SubmissionPenaltyPolicy;
 
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
@@ -41,7 +77,49 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, ArtemisProgrammingExerciseUpdateModule, FormDateTimePickerModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(NgbModule), MockModule(OwlDateTimeModule)],
+            declarations: [
+                SubmissionPolicyUpdateComponent,
+                ProgrammingExerciseUpdateComponent,
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(HelpIconComponent),
+                NgModel,
+                CheckboxControlValueAccessor,
+                DefaultValueAccessor,
+                SelectControlValueAccessor,
+                NumberValueAccessor,
+                RemoveKeysPipe,
+                MockDirective(TranslateDirective),
+                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(TableEditableFieldComponent),
+                MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
+                CategorySelectorComponent,
+                ColorSelectorComponent,
+                MockComponent(TagInputComponent),
+                MockComponent(TagInputDropdown),
+                MockComponent(DeleteIconComponent),
+                AddAuxiliaryRepositoryButtonComponent,
+                DifficultyPickerComponent,
+                TeamConfigFormGroupComponent,
+                ModePickerComponent,
+                ProgrammingExerciseLifecycleComponent,
+                ProgrammingExerciseTestScheduleDatePickerComponent,
+                ArtemisDatePipe,
+                IncludedInOverallScorePickerComponent,
+                MockPipe(ArtemisTranslatePipe),
+                NgForm,
+                MockComponent(PresentationScoreComponent),
+                ProgrammingExerciseInstructionComponent,
+                ProgrammingExerciseEditableInstructionComponent,
+                MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
+                GradingInstructionsDetailsComponent,
+                MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
+                MockComponent(MarkdownEditorComponent),
+                MockComponent(ButtonComponent),
+                CustomMinDirective,
+                CustomMaxDirective,
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -172,6 +250,127 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
     });
 
+    describe('submission policy change', () => {
+        let expectedProgrammingExercise: ProgrammingExercise;
+
+        beforeEach(() => {
+            expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+            expectedProgrammingExercise.course = course;
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: expectedProgrammingExercise });
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+        });
+
+        it('Should set policy object on exercise', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+
+            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
+                submissionPolicyTypeField.value = type;
+                submissionPolicyTypeField.dispatchEvent(new Event('change'));
+                fixture.detectChanges();
+                tick();
+
+                expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(type);
+                expect(expectedProgrammingExercise.submissionPolicy?.id).toBeUndefined();
+            }
+
+            submissionPolicyTypeField.value = SubmissionPolicyType.NONE;
+            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+            tick();
+
+            expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(SubmissionPolicyType.NONE);
+        }));
+
+        it('Should set submission limit correctly for all policy types', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
+                submissionPolicyTypeField.value = type;
+                submissionPolicyTypeField.dispatchEvent(new Event('change'));
+                fixture.detectChanges();
+                tick();
+
+                const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+                submissionLimitInputField.value = 5;
+                submissionLimitInputField.dispatchEvent(new Event('input'));
+                tick();
+
+                expect(expectedProgrammingExercise.submissionPolicy?.submissionLimit).toBe(5);
+            }
+        }));
+
+        it('Should set exceeding penalty correctly for submission penalty type', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            submissionPolicyTypeField.value = SubmissionPolicyType.SUBMISSION_PENALTY;
+            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+            tick();
+
+            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
+            submissionLimitExceededPenaltyInputField.value = 73.73;
+            submissionLimitExceededPenaltyInputField.dispatchEvent(new Event('input'));
+            tick();
+
+            expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
+        }));
+
+        it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+            expectedProgrammingExercise.submissionPolicy = lockRepositoryPolicy;
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+
+            expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+            expect(submissionLimitInputField.value).toBe('5');
+        }));
+
+        it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+            expectedProgrammingExercise.submissionPolicy = submissionPenaltyPolicy;
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
+
+            expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+            expect(submissionLimitInputField.value).toBe('5');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('50.4');
+        }));
+
+        it('Should display correct input fields when set policy is broken', fakeAsync(() => {
+            expectedProgrammingExercise.submissionPolicy = brokenPenaltyPolicy;
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
+            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
+
+            expect(submissionLimitInputField.value).toBe('');
+            expect(submissionLimitExceededPenaltyInputField.value).toBe('');
+        }));
+    });
+
     describe('programming language change and features', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -180,11 +379,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
             jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             jest.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
-            const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
-            getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
-            getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
-            getFeaturesStub.withArgs(ProgrammingLanguage.C).returns(getProgrammingLanguageFeature(ProgrammingLanguage.C));
+
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
         });
 
         it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {

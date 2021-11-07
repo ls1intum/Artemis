@@ -59,6 +59,7 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -98,7 +99,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [HttpClientTestingModule],
             declarations: [
                 CourseExerciseDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),

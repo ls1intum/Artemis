@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -243,6 +244,9 @@ public class DatabaseUtilService {
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
     private RatingRepository ratingRepo;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -372,11 +376,25 @@ public class DatabaseUtilService {
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
+    public void addEditor(final String editorGroup, final String editorName) {
+        var instructor = ModelFactory.generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
+        instructor = userRepo.save(instructor);
+
+        assertThat(instructor.getId()).as("Editor has been created").isNotNull();
+    }
+
     public void addTeachingAssistant(final String taGroup, final String taName) {
         var ta = ModelFactory.generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
         ta = userRepo.save(ta);
 
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+    }
+
+    public void addStudent(final String studentGroup, final String studentName) {
+        var instructor = ModelFactory.generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
+        instructor = userRepo.save(instructor);
+
+        assertThat(instructor.getId()).as("Student has been created").isNotNull();
     }
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
@@ -2154,6 +2172,13 @@ public class DatabaseUtilService {
         return repository;
     }
 
+    public SubmissionPolicy addSubmissionPolicyToExercise(SubmissionPolicy policy, ProgrammingExercise programmingExercise) {
+        policy = submissionPolicyRepository.save(policy);
+        programmingExercise.setSubmissionPolicy(policy);
+        programmingExerciseRepository.save(programmingExercise);
+        return policy;
+    }
+
     public Course addCourseWithModelingAndTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -2658,18 +2683,17 @@ public class DatabaseUtilService {
 
     public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        return addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        return addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
     }
 
     public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
-        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
         return submission;
     }
 
-    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
-            String assessorLogin) {
+    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Submission submission, String assessorLogin) {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
@@ -2949,8 +2973,13 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addComplaintToSubmission(Submission submission, String userLogin) {
-        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(submission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+    public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType type) {
+        Result result = submission.getLatestResult();
+        if (result != null) {
+            result.hasComplaint(true);
+            resultRepo.save(result);
+        }
+        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(result).complaintType(type);
         complaintRepo.save(complaint);
     }
 

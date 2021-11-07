@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -155,7 +154,7 @@ public class SubmissionService {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+            submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     .map(submission -> (T) submission)
                     .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null).collect(toList());
         }
@@ -195,7 +194,7 @@ public class SubmissionService {
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
-        List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+        List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                 .collect(toList());
 
         if (correctionRound > 0) {
@@ -601,31 +600,58 @@ public class SubmissionService {
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
      * @param exerciseId the exerciseId of the exercise of which the complaints are fetched
-     * @param principal the current user
      * @param isAtLeastInstructor if the user is an instructor
      * @return a list of DTOs containing a complaint and its submission
      */
-    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, Principal principal, boolean isAtLeastInstructor) {
-        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = new ArrayList<>();
-
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
         // get all complaints which belong to the exercise
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
 
-        if (complaints.isEmpty()) {
-            return submissionWithComplaintDTOs;
+        if (!isAtLeastInstructor) {
+            complaints = complaints.stream().filter(complaint -> !complaint.getResult().getAssessor().equals(userRepository.getUser())).toList();
         }
-        // get the ids of all results which have a complaint, and with those fetch all their submissions
-        List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(toList());
-        List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
 
-        // add each submission with its complaint to the DTO
-        submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
-            // get the complaint which belongs to the submission
-            Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
-            prepareComplaintAndSubmission(complaintOfSubmission, submission);
-            submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
-        });
+        return getSubmissionsWithComplaintsFromComplaints(complaints);
+    }
+
+    /**
+     * This method gets all more feature requests of an exercise and returns them together with their corresponding submission in a DTO
+     *
+     * @param exerciseId the exerciseId of the exercise of which the complaints are fetched
+     * @return a list of DTOs containing a complaint and its submission
+     */
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithMoreFeedbackRequestsForExercise(Long exerciseId) {
+        // get all requests which belong to the exercise
+        List<Complaint> requests = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+
+        requests = requests.stream().filter(complaint -> complaint.getResult().getAssessor().equals(userRepository.getUser())).toList();
+
+        return getSubmissionsWithComplaintsFromComplaints(requests);
+    }
+
+    /**
+     * Splits a list of complaints into a DTO containing the corresponding complaint and its submission
+     *
+     * @param complaints the list of complaints that should be split
+     * @return the list of DTOs
+     */
+    private List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsFromComplaints(List<Complaint> complaints) {
+        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = new ArrayList<>();
+
+        if (!complaints.isEmpty()) {
+            var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
+            // get the ids of all results which have a complaint, and with those fetch all their submissions
+            List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(toList());
+            List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+
+            // add each submission with its complaint to the DTO
+            submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
+                // get the complaint which belongs to the submission
+                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                prepareComplaintAndSubmission(complaintOfSubmission, submission);
+                submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+            });
+        }
 
         return submissionWithComplaintDTOs;
     }
