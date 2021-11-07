@@ -71,11 +71,4 @@ export class PostingsThreadComponent implements OnInit, OnChanges, OnDestroy {
         answerPost.resolvesPost = this.isAtLeastTutorInCourse;
         return answerPost;
     }
-
-    /**
-     * toggles the answers of a post (show/do not show)
-     */
-    toggleAnswers(): void {
-        this.showAnswers = !this.showAnswers;
-    }
 }
