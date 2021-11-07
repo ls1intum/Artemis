@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -20,6 +20,9 @@ import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import { AlertService } from 'app/core/util/alert.service';
 import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Router } from '@angular/router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +49,16 @@ describe('UsersImportButtonComponent', () => {
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
             ],
-            providers: [{ provide: NgbActiveModal, useValue: sinon.createStubInstance(NgbActiveModal) }, MockProvider(AlertService), MockProvider(ExamManagementService)],
+            providers: [
+                { provide: NgbActiveModal, useValue: sinon.createStubInstance(NgbActiveModal) },
+                MockProvider(AlertService),
+                MockProvider(ExamManagementService),
+                MockProvider(HttpClient),
+                MockProvider(TranslateService),
+                MockProvider(SessionStorageService),
+                MockProvider(LocalStorageService),
+                MockProvider(Router),
+            ],
         })
             .compileComponents()
             .then(() => {
