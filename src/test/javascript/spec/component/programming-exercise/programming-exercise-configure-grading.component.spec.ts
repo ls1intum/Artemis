@@ -1,15 +1,13 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { sortBy as _sortBy } from 'lodash-es';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -38,14 +36,14 @@ import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-e
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
@@ -55,6 +53,8 @@ import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -162,6 +162,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         },
     } as ProgrammingExerciseGradingStatistics;
 
+    const sortedTestCases = (testCases: ProgrammingExerciseTestCase[]) => {
+        return testCases.sort((a, b) => {
+            if (a.testName! < b.testName!) {
+                return -1;
+            } else if (a.testName! > b.testName!) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+    };
+
     const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs) => ({
         body: {
             released,
@@ -197,29 +209,31 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule, NgbModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
-                ProgrammingExerciseConfigureGradingActionsComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
+                TableEditableFieldComponent,
+                MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
                 MockComponent(ProgrammingExerciseTriggerAllButtonComponent),
                 MockComponent(AlertComponent),
-                TableEditableFieldComponent,
-                TestCasePassedBuildsChartComponent,
+                MockComponent(TestCasePassedBuildsChartComponent),
                 MockComponent(TestCaseDistributionChartComponent),
-                CategoryIssuesChartComponent,
+                MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
+                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
+                MockDirective(NgbPopover),
+                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
@@ -230,6 +244,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .compileComponents()
@@ -296,7 +311,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
     };
 
-    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
+    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', () => {
         initGradingComponent();
 
         fixture.detectChanges();
@@ -310,13 +325,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).not.toBe(null);
         expect(saveButton.nativeElement.disabled).toBe(true);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', fakeAsync(() => {
+    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', () => {
         initGradingComponent({ showInactive: true });
 
         fixture.detectChanges();
@@ -330,18 +341,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).not.toBe(null);
         expect(saveButton.nativeElement.disabled).toBe(true);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should update test case when an input field is updated', fakeAsync(() => {
+    it('should update test case when an input field is updated', () => {
         initGradingComponent({ showInactive: true });
 
         fixture.detectChanges();
 
-        const orderedTests = _sortBy(testCases1, 'testName');
+        const orderedTests = sortedTestCases(testCases1);
 
         const table = debugElement.query(By.css(testCaseTableId));
 
@@ -385,7 +392,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        let testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
+        let testThatWasUpdated = sortedTestCases(comp.testCases)[0];
         expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility)]);
         expect(testThatWasUpdated.weight).toBe(20);
@@ -426,20 +433,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
+        testThatWasUpdated = sortedTestCases(comp.testCases)[0];
         expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility)]);
         expect(testThatWasUpdated.weight).toBe(20);
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-
-        fixture.detectChanges();
-
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+    });
 
     const setAllWeightsToZero = () => {
         const table = debugElement.query(By.css(testCaseTableId));
@@ -465,7 +466,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        const orderedTests = _sortBy(testCases1, 'testName');
+        const orderedTests = sortedTestCases(testCases1);
         setAllWeightsToZero();
 
         fixture.detectChanges();
@@ -488,6 +489,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         if (assessmentType === AssessmentType.AUTOMATIC) {
             expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
         } else {
             expect(alertServiceSpy).not.toHaveBeenCalled();
         }
@@ -505,12 +507,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         checkBehaviourForZeroWeight(AssessmentType.MANUAL);
     });
 
-    it('should be able to update the value of the visibility', fakeAsync(() => {
+    it('should be able to update the value of the visibility', () => {
         initGradingComponent({ showInactive: true });
 
         fixture.detectChanges();
 
-        const orderedTests = _sortBy(testCases1, 'testName');
+        const orderedTests = sortedTestCases(testCases1);
 
         const table = debugElement.query(By.css(testCaseTableId));
         const dropdowns = table.queryAll(By.all()).filter((elem) => elem.name === 'select');
@@ -535,16 +537,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
+        const testThatWasUpdated = sortedTestCases(comp.testCases)[0];
         expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should also be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', fakeAsync(() => {
+    it('should also be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', () => {
         initGradingComponent({ hasBuildAndTestAfterDueDate: false, showInactive: true });
 
         fixture.detectChanges();
@@ -553,65 +551,45 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
         // three options for each test case should still be available
         expect(options).toHaveLength(testCases1.length * 3);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should show the updatedTests badge when the exercise is released and has student results', fakeAsync(() => {
+    it('should show the updatedTests badge when the exercise is released and has student results', () => {
         initGradingComponent();
 
         fixture.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBe(null);
         expect(getNoUpdatedTestCaseBadge()).not.toBe(null);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should not show the updatedTests badge when the exercise is released and has no student results', fakeAsync(() => {
+    it('should not show the updatedTests badge when the exercise is released and has no student results', () => {
         initGradingComponent({ released: true, hasStudentResult: false });
 
         fixture.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBe(null);
         expect(getNoUpdatedTestCaseBadge()).toBe(null);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', fakeAsync(() => {
+    it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', () => {
         initGradingComponent({ released: false, hasStudentResult: true });
 
         fixture.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBe(null);
         expect(getNoUpdatedTestCaseBadge()).toBe(null);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should show that there are updated test cases if the testCasesChanged flat is set', fakeAsync(() => {
+    it('should show that there are updated test cases if the testCasesChanged flat is set', () => {
         initGradingComponent({ testCasesChanged: true });
 
         fixture.detectChanges();
 
         expect(getUpdatedTestCaseBadge()).not.toBe(null);
         expect(getNoUpdatedTestCaseBadge()).toBe(null);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should reset all test cases when the reset button is clicked', fakeAsync(() => {
+    it('should reset all test cases when the reset button is clicked', () => {
         initGradingComponent();
 
         fixture.detectChanges();
@@ -659,13 +637,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(resetTestCasesStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.testCases).toEqual(testCases1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should reset all categories when the reset button is clicked', fakeAsync(() => {
+    it('should reset all categories when the reset button is clicked', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
         fixture.detectChanges();
@@ -717,13 +691,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.staticCodeAnalysisCategories).toEqual(codeAnalysisCategories1);
         expect(comp.changedCategoryIds).toHaveLength(0);
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should update sca category when an input field is updated', fakeAsync(() => {
+    it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
         fixture.detectChanges();
@@ -777,20 +747,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
         expect(comp.hasUpdatedGradingConfig).toBe(true);
+    });
 
-        fixture.detectChanges();
-
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should load and calculate grading statistics correctly', fakeAsync(() => {
+    it('should load the grading statistics correctly', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
         fixture.detectChanges();
 
-        expect(loadExerciseStub).toHaveBeenCalledTimes(1);
         expect(loadStatisticsStub).toHaveBeenCalledTimes(3);
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
 
@@ -798,34 +761,37 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.gradingStatistics).toEqual(gradingStatistics);
 
         fixture.detectChanges();
-        tick();
 
-        const issueCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
+        const categoryIssuesCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
+        expect(categoryIssuesCharts).toHaveLength(2);
 
-        expect(issueCharts[0].columns).toHaveLength(11);
-        expect(issueCharts[0].columns[0].tooltip).toBe('2 students have 1 issue.');
-        expect(issueCharts[0].columns[1].tooltip).toBe('2 students have 2 issues.');
-        expect(issueCharts[0].columns[2].tooltip).toBe('1 student has 3 issues.');
+        expect(categoryIssuesCharts[0].issuesMap).toEqual(gradingStatistics.categoryIssuesMap!['Bad Practice']);
+        expect(categoryIssuesCharts[0].category).toEqual(codeAnalysisCategories1[0]);
+        expect(categoryIssuesCharts[0].totalStudents).toBe(5);
+        expect(categoryIssuesCharts[0].maxNumberOfIssues).toBe(5);
 
-        expect(issueCharts[1].columns).toHaveLength(11);
-        expect(issueCharts[1].columns[1].tooltip).toBe('1 student has 2 issues.');
-        expect(issueCharts[1].columns[4].tooltip).toBe('1 student has 5 issues.');
+        expect(categoryIssuesCharts[1].issuesMap).toEqual(gradingStatistics.categoryIssuesMap!['Styling']);
+        expect(categoryIssuesCharts[1].category).toEqual(codeAnalysisCategories1[1]);
+        expect(categoryIssuesCharts[1].totalStudents).toBe(5);
+        expect(categoryIssuesCharts[1].maxNumberOfIssues).toBe(5);
 
         comp.selectTab('test-cases');
 
         fixture.detectChanges();
-        tick();
 
-        const percentageCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
+        const passedBuildCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
+        expect(passedBuildCharts).toHaveLength(3);
 
-        expect(percentageCharts[0].tooltip).toBe('0% passed, 0% failed, 100% not executed of 5 students.');
-        expect(percentageCharts[1].tooltip).toBe('40% passed, 60% failed of 5 students.');
-        expect(percentageCharts[2].tooltip).toBe('20% passed, 80% failed of 5 students.');
+        // this test case is disabled and has no stats
+        expect(passedBuildCharts[0].testCaseStats).toBe(undefined);
+        expect(passedBuildCharts[0].totalParticipations).toBe(5);
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+        expect(passedBuildCharts[1].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testBubbleSort);
+        expect(passedBuildCharts[1].totalParticipations).toBe(5);
+
+        expect(passedBuildCharts[2].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testMergeSort);
+        expect(passedBuildCharts[2].totalParticipations).toBe(5);
+    });
 
     const sortAndTestTable = (table: string) => (headerElement: DebugElement, prop: string, dir: string) => {
         headerElement.nativeElement.click();
@@ -837,7 +803,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(sortIcon).toBe(dir === 'asc' ? 'sort-up' : 'sort-down');
     };
 
-    it('should sort test-case table', fakeAsync(() => {
+    it('should sort test-case table', () => {
         initGradingComponent();
 
         fixture.detectChanges();
@@ -854,13 +820,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const passedPercentHeader = headerColumns[6];
         sortAndTest(passedPercentHeader, 'passedPercent', 'asc');
         sortAndTest(passedPercentHeader, 'passedPercent', 'desc');
+    });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should sort code-analysis table', fakeAsync(() => {
+    it('should sort code-analysis table', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
         fixture.detectChanges();
@@ -879,9 +841,5 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const detectedIssuesHeader = headerColumns[4];
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
-
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+    });
 });

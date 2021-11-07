@@ -6,7 +6,7 @@
             <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
         </button>
 
-        <div class="text-center">
+        <div #containerRef class="text-center">
             <p class="text-start" style="font-size: large">
                 <span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
             </p>
@@ -23,8 +23,25 @@
                     </p>
                 </div>
             </div>
-            <canvas baseChart [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
-
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, height]"
+                [results]="ngxData"
+                [scheme]="color"
+                [xAxisLabel]="xAxisLabel"
+                [yAxisLabel]="yAxisLabel"
+                [legend]="legend"
+                [showXAxisLabel]="showXAxisLabel"
+                [showYAxisLabel]="showYAxisLabel"
+                [xAxis]="xAxis"
+                [yAxis]="yAxis"
+                [yScaleMax]="maxScale"
+                [roundEdges]="roundEdges"
+                [showDataLabel]="showDataLabel"
+                [dataLabelFormatting]="formatDataLabel.bind(this)"
+                [animations]="animations"
+                [tooltipDisabled]="tooltipDisabled"
+            >
+            </ngx-charts-bar-vertical>
             <div class="text-center">
                 <button (click)="switchRated()" type="button" class="btn btn-primary">
                     <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
