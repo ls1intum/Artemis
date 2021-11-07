@@ -21,6 +21,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExportToCsv } from 'export-to-csv';
+
+const generateCsv = jest.fn();
+
+jest.mock('export-to-csv', () => ({
+    ExportToCsv: jest.fn().mockImplementation(() => ({
+        generateCsv,
+    })),
+}));
 
 describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
@@ -627,7 +636,7 @@ describe('Grading System Component', () => {
         const event = { target: { files: [csvColumnsGrade] } };
         await comp.onCSVFileSelect(event);
 
-        expect(comp.gradingScale.gradeSteps).lengthOf(0);
+        expect(comp.gradingScale.gradeSteps.length).toBe(0);
     });
 
     it('should have validation error for csv without header', async () => {
@@ -637,7 +646,7 @@ describe('Grading System Component', () => {
         const event = { target: { files: [invalidCsv] } };
         await comp.onCSVFileSelect(event);
 
-        expect(comp.gradingScale.gradeSteps).lengthOf(0);
+        expect(comp.gradingScale.gradeSteps.length).toBe(0);
     });
 
     it('should import csv with "grade" as grade type correctly', async () => {
@@ -679,8 +688,9 @@ describe('Grading System Component', () => {
         ];
 
         await comp.onCSVFileSelect(event);
-        expect(comp.gradingScale.gradeSteps).to.deep.equal(gradeStepsGrade);
-        expect(comp.gradingScale.gradeType).to.equal(GradeType.GRADE);
+
+        expect(comp.gradingScale.gradeSteps).toEqual(gradeStepsGrade);
+        expect(comp.gradingScale.gradeType).toBe(GradeType.GRADE);
     });
 
     it('should import csv with "bonus" as grade type correctly', async () => {
@@ -719,19 +729,21 @@ describe('Grading System Component', () => {
         ];
 
         await comp.onCSVFileSelect(event);
-        expect(comp.gradingScale.gradeSteps).to.deep.equal(gradeStepsBonus);
-        expect(comp.gradingScale.gradeType).to.be.equal(GradeType.BONUS);
+
+        expect(comp.gradingScale.gradeSteps).toEqual(gradeStepsBonus);
+        expect(comp.gradingScale.gradeType).toBe(GradeType.BONUS);
     });
 
     it('should generate csv correctly', () => {
         comp.gradingScale.gradeSteps = gradeSteps;
         const numberOfGradeSteps = gradeSteps.length;
-        const exportAsCsvStub = sinon.stub(comp, 'exportAsCSV');
+        const exportAsCsvStub = jest.spyOn(comp, 'exportAsCSV');
 
         comp.exportGradingStepsToCsv();
 
-        const generatedRows = exportAsCsvStub.getCall(0).args[0];
-        expect(generatedRows.length).to.equal(numberOfGradeSteps);
+        expect(exportAsCsvStub).toHaveBeenCalledTimes(1);
+        const generatedRows = exportAsCsvStub.mock.calls[0][0];
+        expect(generatedRows.length).toBe(numberOfGradeSteps);
 
         for (let index = 0; index < numberOfGradeSteps; index++) {
             const gradeStepRow = generatedRows[index];
@@ -748,21 +760,21 @@ describe('Grading System Component', () => {
 
         // percentage equal to points due to max points of 100
         for (const gradeStep of comp.gradingScale.gradeSteps) {
-            expect(gradeStep.lowerBoundPercentage).to.equal(gradeStep.lowerBoundPoints);
-            expect(gradeStep.upperBoundPercentage).to.equal(gradeStep.upperBoundPoints);
+            expect(gradeStep.lowerBoundPercentage).toBe(gradeStep.lowerBoundPoints);
+            expect(gradeStep.upperBoundPercentage).toBe(gradeStep.upperBoundPoints);
         }
     });
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-
-        expect(comp).to.be.ok;
+        expect(ExportToCsv).toHaveBeenCalled();
+        expect(generateCsv).toHaveBeenCalled();
     });
 });
 
 // validating grade step rows
 function validateGradeStepRow(actualGradeStepRow: any, expectedGradeStepRow: GradeStep) {
-    expect(actualGradeStepRow.gradeName).to.equal(expectedGradeStepRow.gradeName);
-    expect(actualGradeStepRow.lowerBoundPercentage).to.equal(expectedGradeStepRow.lowerBoundPercentage);
-    expect(actualGradeStepRow.upperBoundPercentage).to.equal(expectedGradeStepRow.upperBoundPercentage);
+    expect(actualGradeStepRow.gradeName).toBe(expectedGradeStepRow.gradeName);
+    expect(actualGradeStepRow.lowerBoundPercentage).toBe(expectedGradeStepRow.lowerBoundPercentage);
+    expect(actualGradeStepRow.upperBoundPercentage).toBe(expectedGradeStepRow.upperBoundPercentage);
 }
