@@ -541,9 +541,17 @@
                                     {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
                                 </td>
                                 <td>
-                                    <ng-container *jhiExtensionPoint="
-                                                    overrideOpenAssessmentButton;
-                                                    context: { submission: submissionWithComplaint.submission, queryParams: getComplaintQueryParams(submissionWithComplaint.complaint), disabled: isComplaintLocked(submissionWithComplaint.complaint), buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint',  }">
+                                    <ng-container
+                                        *jhiExtensionPoint="
+                                            overrideOpenAssessmentButton;
+                                            context: {
+                                                submission: submissionWithComplaint.submission,
+                                                queryParams: getComplaintQueryParams(submissionWithComplaint.complaint),
+                                                disabled: isComplaintLocked(submissionWithComplaint.complaint),
+                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint'
+                                            }
+                                        "
+                                    >
                                         <a
                                             *ngIf="submissionWithComplaint.complaint.accepted === undefined; else continueButton"
                                             [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
@@ -621,9 +629,16 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <ng-container *jhiExtensionPoint="
-                                                    overrideOpenAssessmentButton;
-                                                    context: { submission: moreFeedbackRequest.submission, queryParams: getComplaintQueryParams(moreFeedbackRequest.complaint), buttonLabel: moreFeedbackRequest.complaint.accepted === undefined ? 'evaluateMoreFeedbackRequest' : 'showMoreFeedbackRequests',  }">
+                                    <ng-container
+                                        *jhiExtensionPoint="
+                                            overrideOpenAssessmentButton;
+                                            context: {
+                                                submission: moreFeedbackRequest.submission,
+                                                queryParams: getComplaintQueryParams(moreFeedbackRequest.complaint),
+                                                buttonLabel: moreFeedbackRequest.complaint.accepted === undefined ? 'evaluateMoreFeedbackRequest' : 'showMoreFeedbackRequests'
+                                            }
+                                        "
+                                    >
                                         <a
                                             *ngIf="moreFeedbackRequest.complaint.accepted === undefined; else continueButton"
                                             class="btn btn-success btn-sm"
