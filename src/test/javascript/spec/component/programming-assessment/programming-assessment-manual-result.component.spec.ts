@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe, MockProvider, MockDirective } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
@@ -238,7 +238,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
-        expect(assessmentLayout).not.toBe(null);
+        expect(assessmentLayout).not.toBe(undefined);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
@@ -478,7 +478,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         codeEditorFileBrowserComp.isLoadingFiles = false;
         fixture.detectChanges();
         const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        expect(browserComponent).not.toBe(null);
+        expect(browserComponent).not.toBe(undefined);
         expect(browserComponent.filesTreeViewItem).toHaveLength(1);
 
         const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
