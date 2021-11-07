@@ -17,10 +17,11 @@
     <!-- If the exercise is opened, show download submission buttons -->
     <ng-template #withTable>
         <jhi-exercise-assessment-dashboard>
-            <ng-template #overrideOpenAssessmentButton let-submission="submission" let-queryParams="queryParams" let-buttonLabel="buttonLabel">
+            <ng-template #overrideOpenAssessmentButton let-submission="submission" let-queryParams="queryParams" let-buttonLabel="buttonLabel" let-disabled="disabled">
                 <jhi-ide-button
                     class="btn btn-sm"
                     [buttonLoading]="orionState.cloning"
+                    [disabled]="!!disabled"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.' + buttonLabel | artemisTranslate }}"
                     (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'])"
                 >
