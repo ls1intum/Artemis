@@ -108,7 +108,7 @@
             },
             "problemStatement": {
                 "title": "Aufgabenstellung",
-                "taskCommand": "[task] Aufgabe",
+                "taskCommand": "Aufgabe",
                 "testCaseCommand": "Testfall einfügen",
                 "exerciseHintCommand": "Aufgaben-spezifischen Hinweis hinzufügen"
             },

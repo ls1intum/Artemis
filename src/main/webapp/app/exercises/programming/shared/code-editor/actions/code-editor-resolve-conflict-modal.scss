@@ -1,8 +1,5 @@
-@import 'src/main/webapp/content/scss/bootstrap-variables';
-
-@import 'node_modules/bootstrap/scss/variables';
-@import 'node_modules/bootstrap/scss/buttons';
-@import 'node_modules/bootstrap/scss/modal';
+@import 'node_modules/bootstrap/scss/bootstrap';
+@import 'src/main/webapp/content/scss/artemis-variables';
 
 .conflict-modal__header {
     @extend .modal-header;
