@@ -70,7 +70,7 @@
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a
-                                *ngIf="modelingExercise.isAtLeastTutor"
+                                *ngIf="modelingExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
                                 class="btn btn-info btn-sm me-1"
                             >

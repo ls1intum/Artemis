@@ -213,13 +213,13 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping("exercises/{exerciseId}/results")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         final List<StudentParticipation> participations;
         if (exercise.isExamExercise()) {
@@ -244,11 +244,11 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
      */
     @GetMapping("exercises/{exerciseId}/results-with-points-per-criterion")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "true") boolean withSubmissions) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         final List<StudentParticipation> participations;
         if (exercise.isExamExercise()) {

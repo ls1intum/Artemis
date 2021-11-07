@@ -183,6 +183,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         }
     }
 
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
@@ -523,6 +524,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetResultsForExamExercise_asTutor() throws Exception {
+        setupExamModelingExerciseWithResults();
+        request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsWithPointsForExamExercise() throws Exception {
         setupExamModelingExerciseWithResults();
@@ -540,6 +548,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         for (final var resultWithPoints : resultsWithPoints) {
             assertThat(resultWithPoints.getPointsPerCriterion()).isEmpty();
         }
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetResultsWithPointsForExamExercise_asTutor() throws Exception {
+        setupExamModelingExerciseWithResults();
+        request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
     }
 
     private void setupExamModelingExerciseWithResults() {
