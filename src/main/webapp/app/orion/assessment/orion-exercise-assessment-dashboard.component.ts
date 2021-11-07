@@ -45,11 +45,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
      * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
      */
     openAssessmentInOrion() {
-        if (!this.exercise.course) {
-            // set course for exam exercises
-            this.exercise.course = this.exercise.exerciseGroup?.exam?.course;
-        }
-        this.orionConnectorService.assessExercise(this.exercise);
+        // create copy of the exercise without exam information, otherwise the course is present twice
+        // and the de-cyclic serialisation will not send the actual exercise.course
+        const exerciseCopy = { ...this.exercise, exerciseGroup: undefined };
+        this.orionConnectorService.assessExercise(exerciseCopy);
     }
 
     /**
