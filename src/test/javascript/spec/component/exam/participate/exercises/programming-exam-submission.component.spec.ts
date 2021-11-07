@@ -1,4 +1,8 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -11,8 +15,6 @@ import { CommitState, DomainType } from 'app/exercises/programming/shared/code-e
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -41,7 +43,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
                 MockComponent(UpdatingResultComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(DomainService)],
+            providers: [MockProvider(ChangeDetectorRef), MockProvider(DomainService)],
         })
             .compileComponents()
             .then(() => {
