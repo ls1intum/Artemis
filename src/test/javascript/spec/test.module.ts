@@ -24,7 +24,7 @@ import { ParseLinks } from 'app/core/util/parse-links.service';
 import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
 
 @NgModule({
-    imports: [HttpClientTestingModule, MockModule(FontAwesomeModule)],
+    imports: [HttpClientTestingModule],
     providers: [
         DatePipe,
         CookieService,
