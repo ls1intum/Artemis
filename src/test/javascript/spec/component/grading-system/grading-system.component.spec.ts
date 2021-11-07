@@ -72,8 +72,6 @@ describe('Grading System Component', () => {
     const course = new Course();
     course.maxPoints = 100;
 
-    global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule, MockModule(FormsModule), RouterTestingModule.withRoutes([])],
@@ -121,7 +119,7 @@ describe('Grading System Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp).toBeDefined();
+        expect(comp).not.toBe(undefined);
         expect(comp.isExam).toBe(true);
         expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
@@ -147,10 +145,10 @@ describe('Grading System Component', () => {
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
         expect(comp.firstPassingGrade).toStrictEqual('4.0');
         expect(comp.lowerBoundInclusivity).toBe(true);
-        expect(comp.gradingScale.gradeSteps.length).toBe(13);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(13);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.id).toBe(undefined);
-            expect(gradeStep.gradeName).toBeDefined();
+            expect(gradeStep.gradeName).not.toBe(undefined);
             expect(gradeStep.lowerBoundInclusive).toBe(true);
             expect(gradeStep.lowerBoundPercentage).toBeWithin(0, 101);
             expect(gradeStep.upperBoundPercentage).toBeWithin(0, 101);
@@ -169,7 +167,7 @@ describe('Grading System Component', () => {
     it('should delete grade step', () => {
         comp.deleteGradeStep(1);
 
-        expect(comp.gradingScale.gradeSteps.length).toBe(2);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(2);
         expect(comp.gradingScale.gradeSteps).not.toContain(gradeStep2);
     });
 
@@ -178,7 +176,7 @@ describe('Grading System Component', () => {
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps.length).toBe(4);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(4);
         expect(comp.gradingScale.gradeSteps[3].id).toBe(undefined);
         expect(comp.gradingScale.gradeSteps[3].gradeName).toStrictEqual('');
         expect(comp.gradingScale.gradeSteps[3].lowerBoundPercentage).toBe(100);
@@ -202,7 +200,7 @@ describe('Grading System Component', () => {
 
         const filteredGradeSteps = comp.gradeStepsWithNonemptyNames();
 
-        expect(filteredGradeSteps.length).toBe(1);
+        expect(filteredGradeSteps).toHaveLength(1);
         expect(filteredGradeSteps[0]).toStrictEqual(gradeStep2);
     });
 
@@ -277,13 +275,13 @@ describe('Grading System Component', () => {
 
     it('should not delete non-existing grading scale', () => {
         comp.existingGradingScale = false;
-        const gradingSystemDeleteForCourseStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse');
-        const gradingSystemDeleteForExamStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam');
+        const gradingSystemDeleteForCourseSpy = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse');
+        const gradingSystemDeleteForExamSpy = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam');
 
         comp.delete();
 
-        expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(0);
-        expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForCourseSpy).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForExamSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should delete grading scale for course', () => {
@@ -329,14 +327,14 @@ describe('Grading System Component', () => {
         comp.course = course;
         const createdGradingScaleForCourse = comp.gradingScale;
         createdGradingScaleForCourse.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForCourseStub = jest
+        const gradingSystemCreateForCourseMock = jest
             .spyOn(gradingSystemService, 'createGradingScaleForCourse')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForCourse })));
 
         comp.save();
 
-        expect(gradingSystemCreateForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemCreateForCourseStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(createdGradingScaleForCourse);
     });
@@ -347,14 +345,14 @@ describe('Grading System Component', () => {
         comp.exam = exam;
         const createdGradingScaleForExam = comp.gradingScale;
         createdGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForExamStub = jest
+        const gradingSystemCreateForExamMock = jest
             .spyOn(gradingSystemService, 'createGradingScaleForExam')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForExam })));
 
         comp.save();
 
-        expect(gradingSystemCreateForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
-        expect(gradingSystemCreateForExamStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+        expect(gradingSystemCreateForExamMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(createdGradingScaleForExam);
     });
@@ -364,14 +362,14 @@ describe('Grading System Component', () => {
         comp.course = course;
         const updateGradingScaleFoCourse = comp.gradingScale;
         updateGradingScaleFoCourse.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForCourseStub = jest
+        const gradingSystemUpdateForCourseMock = jest
             .spyOn(gradingSystemService, 'updateGradingScaleForCourse')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: updateGradingScaleFoCourse })));
 
         comp.save();
 
-        expect(gradingSystemUpdateForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemUpdateForCourseStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(updateGradingScaleFoCourse);
     });
@@ -382,14 +380,14 @@ describe('Grading System Component', () => {
         comp.exam = exam;
         const updatedGradingScaleForExam = comp.gradingScale;
         updatedGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForExamStub = jest
+        const gradingSystemUpdateForCourseMock = jest
             .spyOn(gradingSystemService, 'updateGradingScaleForExam')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: updatedGradingScaleForExam })));
 
         comp.save();
 
-        expect(gradingSystemUpdateForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
-        expect(gradingSystemUpdateForExamStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(updatedGradingScaleForExam);
     });
@@ -636,7 +634,7 @@ describe('Grading System Component', () => {
         const event = { target: { files: [csvColumnsGrade] } };
         await comp.onCSVFileSelect(event);
 
-        expect(comp.gradingScale.gradeSteps.length).toBe(0);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
     });
 
     it('should have validation error for csv without header', async () => {
@@ -646,7 +644,7 @@ describe('Grading System Component', () => {
         const event = { target: { files: [invalidCsv] } };
         await comp.onCSVFileSelect(event);
 
-        expect(comp.gradingScale.gradeSteps.length).toBe(0);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
     });
 
     it('should import csv with "grade" as grade type correctly', async () => {
@@ -737,13 +735,13 @@ describe('Grading System Component', () => {
     it('should generate csv correctly', () => {
         comp.gradingScale.gradeSteps = gradeSteps;
         const numberOfGradeSteps = gradeSteps.length;
-        const exportAsCsvStub = jest.spyOn(comp, 'exportAsCSV');
+        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCSV');
 
         comp.exportGradingStepsToCsv();
 
-        expect(exportAsCsvStub).toHaveBeenCalledTimes(1);
-        const generatedRows = exportAsCsvStub.mock.calls[0][0];
-        expect(generatedRows.length).toBe(numberOfGradeSteps);
+        expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
+        const generatedRows = exportAsCsvMock.mock.calls[0][0];
+        expect(generatedRows).toHaveLength(numberOfGradeSteps);
 
         for (let index = 0; index < numberOfGradeSteps; index++) {
             const gradeStepRow = generatedRows[index];
