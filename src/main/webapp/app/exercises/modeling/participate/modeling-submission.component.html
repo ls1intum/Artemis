@@ -93,7 +93,7 @@
                                         <span
                                             *ngIf="feedback.text || feedback.detailText || feedback.gradingInstruction"
                                             [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
-                                            ><strong>Feedback:</strong><span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
+                                            ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
                                         ></span>
                                     </td>
                                     <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
