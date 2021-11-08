@@ -25,19 +25,28 @@ export class TestCasePassedBuildsChartComponent implements OnChanges {
     tooltip = '';
 
     ngOnChanges(): void {
-        if (this.totalParticipations) {
-            const passedPercent = this.totalParticipations > 0 ? ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100 : 0;
-            const failedPercent = this.totalParticipations > 0 ? ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100 : 0;
-            const notExecutedPercent = round(100 - passedPercent - failedPercent);
+        if (this.totalParticipations && this.totalParticipations > 0) {
+            const passedPercent = ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
+            const failedPercent = ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100;
 
             setTimeout(() => {
                 this.passedPercent = passedPercent;
                 this.failedPercent = failedPercent;
-
-                this.tooltip = `${passedPercent.toFixed(0)}% passed, ${failedPercent.toFixed(0)}% failed${
-                    notExecutedPercent > 0 ? `, ${notExecutedPercent}% not executed` : ''
-                } of ${this.totalParticipations} students.`;
+                this.tooltip = TestCasePassedBuildsChartComponent.generateTooltip(passedPercent, failedPercent, this.totalParticipations!);
+            });
+        } else {
+            setTimeout(() => {
+                this.passedPercent = 0;
+                this.failedPercent = 0;
+                this.tooltip = TestCasePassedBuildsChartComponent.generateTooltip(0, 0, 0);
             });
         }
+    }
+
+    private static generateTooltip(passedPercent: number, failedPercent: number, totalStudents: number): string {
+        const notExecutedPercent = round(100 - passedPercent - failedPercent);
+        return `${passedPercent.toFixed(0)}% passed, ${failedPercent.toFixed(0)}% failed${
+            notExecutedPercent > 0 ? `, ${notExecutedPercent}% not executed` : ''
+        } of ${totalStudents} students.`;
     }
 }
