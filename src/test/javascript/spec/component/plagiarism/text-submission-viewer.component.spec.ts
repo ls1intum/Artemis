@@ -5,7 +5,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -17,6 +16,8 @@ import { FileType } from 'app/exercises/programming/shared/code-editor/model/cod
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;
@@ -33,7 +34,8 @@ describe('Text Submission Viewer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            imports: [ArtemisTestModule, TranslateTestingModule],
+            declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
