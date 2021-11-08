@@ -23,7 +23,7 @@
                     [buttonLoading]="orionState.cloning"
                     [disabled]="!!disabled"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.' + buttonLabel | artemisTranslate }}"
-                    (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'])"
+                    (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'], queryParams['testRun'])"
                 >
                 </jhi-ide-button>
             </ng-template>
