@@ -27,7 +27,7 @@
                     <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound">Following inconsistencies have been found</span>
                 </div>
             </div>
-            <div class="table-responsive p-1 my-5" *ngIf="!isLoading">
+            <div class="table-responsive p-1 my-5" *ngIf="!isLoading && inconsistencies != undefined && inconsistencies.length > 0">
                 <table class="table table-striped">
                     <thead>
                         <tr>
