@@ -68,7 +68,7 @@ export class OrionAssessmentService {
             exportAllParticipants: false,
             filterLateSubmissions: false,
             addParticipantName: false,
-            combineStudentCommits: false,
+            combineStudentCommits: true,
             anonymizeStudentCommits: true,
             normalizeCodeStyle: false,
             hideStudentNameInZippedFolder: true,

@@ -14,7 +14,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @param seconds {number}
      */
     transform(seconds: number, short = false): string {
-        if (seconds === null || seconds <= 0) {
+        if (!seconds || seconds <= 0) {
             return '0min 0s';
         }
 
@@ -23,11 +23,26 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
         const minutes = Math.floor((seconds % this.secondsInHour) / this.secondsInMinute);
         seconds = seconds % this.secondsInMinute;
 
-        if (short === true) {
+        if (short) {
             return this.handleShortFormat(days, hours, minutes, seconds);
         } else {
             return this.handleLongFormat(days, hours, minutes, seconds);
         }
+    }
+
+    /**
+     * Converts seconds into the human readable format HH:mm.
+     * This notation is used in working time management for student exams.
+     * Example: 4200 seconds are converted into 01:10.
+     * @param seconds {number} to be converted into the HH:mm format
+     */
+    toHHmmNotation(seconds: number): string {
+        if (!seconds || seconds <= 0) {
+            return '00:00';
+        }
+        const hours = Math.floor(seconds / this.secondsInHour);
+        const minutes = Math.floor((seconds - hours * this.secondsInHour) / this.secondsInMinute);
+        return (hours < 10 ? '0' : '') + hours + ':' + (minutes < 10 ? '0' : '') + minutes;
     }
 
     private handleShortFormat(days: number, hours: number, minutes: number, seconds: number): string {

@@ -45,7 +45,6 @@ export class CourseUpdateComponent implements OnInit {
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
-    accuracyOfScores = 1; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
 
