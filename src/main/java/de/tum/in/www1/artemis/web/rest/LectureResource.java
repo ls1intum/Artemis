@@ -25,10 +25,10 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -82,10 +82,8 @@ public class LectureResource {
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
-            throw new AccessForbiddenException("You do not have sufficient permissions to create lectures!");
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -96,20 +94,16 @@ public class LectureResource {
      *
      * @param lecture the lecture to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
-     *         Server Error) if the lecture couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * Server Error) if the lecture couldn't be updated
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
+    public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
-            throw new AccessForbiddenException("You do not have sufficient permissions to delete lectures!");
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // Make sure that the original references are preserved.
         Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
@@ -125,7 +119,7 @@ public class LectureResource {
      * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
      *
      * @param withLectureUnits if set associated lecture units will also be loaded
-     * @param courseId the courseId of the course for which all lectures should be returned
+     * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
@@ -133,11 +127,8 @@ public class LectureResource {
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            throw new AccessForbiddenException("You do not have sufficient permissions to load lectures for course administration purposes!");
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Set<Lecture> lectures;
         if (withLectureUnits) {
@@ -170,9 +161,7 @@ public class LectureResource {
             return ResponseEntity.badRequest().build();
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("You do not have sufficient permissions to load this lecture!");
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
@@ -238,15 +227,12 @@ public class LectureResource {
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Lecture lecture = optionalLecture.get();
-        if (!authCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), user)) {
-            throw new AccessForbiddenException("You do not have sufficient permissions to delete this lecture!");
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lecture.getCourse(), null);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();

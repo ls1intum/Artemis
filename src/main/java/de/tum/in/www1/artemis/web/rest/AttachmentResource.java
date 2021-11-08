@@ -18,10 +18,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
@@ -85,16 +85,14 @@ public class AttachmentResource {
     /**
      * PUT /attachments : Updates an existing attachment.
      *
-     * @param attachment the attachment to update
+     * @param attachment       the attachment to update
      * @param notificationText text that will be send to student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
-     *         (Internal Server Error) if the attachment couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * (Internal Server Error) if the attachment couldn't be updated
      */
     @PutMapping("/attachments")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText)
-            throws URISyntaxException {
+    public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
         if (attachment.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
@@ -173,14 +171,10 @@ public class AttachmentResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        if (hasCourseInstructorAccess) {
-            log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
-            attachmentRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
-        }
-        else {
-            throw new AccessForbiddenException("You do not have sufficient permissions to delete lecture attachments!");
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+
+        log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
+        attachmentRepository.deleteById(id);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }
