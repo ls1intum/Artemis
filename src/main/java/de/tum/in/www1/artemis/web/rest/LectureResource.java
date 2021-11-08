@@ -94,7 +94,7 @@ public class LectureResource {
      *
      * @param lecture the lecture to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
-     * Server Error) if the lecture couldn't be updated
+     *         Server Error) if the lecture couldn't be updated
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
