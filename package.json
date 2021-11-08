@@ -132,7 +132,7 @@
         "jest-canvas-mock": "2.3.1",
         "jest-date-mock": "1.0.8",
         "jest-junit": "13.0.0",
-        "jest-preset-angular": "10.1.0",
+        "jest-preset-angular": "11.0.0-rc.2",
         "jest-sinon": "1.0.4",
         "jest-extended": "1.1.0",
         "lint-staged": "11.2.6",
@@ -160,7 +160,8 @@
         "webpack-bundle-analyzer": "4.5.0",
         "webpack-dev-server": "4.4.0",
         "webpack-merge": "5.8.0",
-        "webpack-notifier": "1.14.1"
+        "webpack-notifier": "1.14.1",
+        "webpack-sources": "3.2.1"
     },
     "engines": {
         "node": ">=14.16.0 <=17"
