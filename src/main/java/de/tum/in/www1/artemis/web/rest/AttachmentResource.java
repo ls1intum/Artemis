@@ -88,7 +88,7 @@ public class AttachmentResource {
      * @param attachment       the attachment to update
      * @param notificationText text that will be send to student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
-     * (Internal Server Error) if the attachment couldn't be updated
+     *         (Internal Server Error) if the attachment couldn't be updated
      */
     @PutMapping("/attachments")
     @PreAuthorize("hasRole('EDITOR')")
