@@ -1,23 +1,23 @@
 <div *ngIf="!loading">
     <p>
-        <span>{{ 'artemisApp.plagiarism.cases.plagiarism-explanation' | artemisTranslate }}</span>
-        <span>{{ 'artemisApp.plagiarism.cases.affected-exercise' | artemisTranslate }}</span>
+        <span>{{ 'artemisApp.plagiarism.cases.plagiarismExplanation' | artemisTranslate }}</span>
+        <span>{{ 'artemisApp.plagiarism.cases.affectedExercise' | artemisTranslate }}</span>
         <a class="text-decoration-none" [routerLink]="['/courses', exercise.course!.id, 'exercises', exercise.id]">{{ exercise.title }}</a>
     </p>
     <p>
-        <span class="fw-bold">{{ 'artemisApp.plagiarism.cases.instructor-message' | artemisTranslate }}</span>
+        <span class="fw-bold">{{ 'artemisApp.plagiarism.cases.instructorMessage' | artemisTranslate }}</span>
         <span *ngIf="!loading">{{ instructorMessage }}</span>
     </p>
     <p *ngIf="hasStatus()">
-        <span>{{ 'artemisApp.plagiarism.cases.status-changed' | artemisTranslate }}</span>
-        <span *ngIf="isConfirmed()" class="text-danger">{{ 'artemisApp.plagiarism.cases.finally-confirmed' | artemisTranslate }}</span>
-        <span *ngIf="!isConfirmed()" class="text-success">{{ 'artemisApp.plagiarism.cases.finally-denied' | artemisTranslate }}</span>
+        <span>{{ 'artemisApp.plagiarism.cases.statusChanged' | artemisTranslate }}</span>
+        <span *ngIf="isConfirmed()" class="text-danger">{{ 'artemisApp.plagiarism.cases.finallyConfirmed' | artemisTranslate }}</span>
+        <span *ngIf="!isConfirmed()" class="text-success">{{ 'artemisApp.plagiarism.cases.finallyDenied' | artemisTranslate }}</span>
     </p>
     <div *ngIf="!loading">
         <jhi-plagiarism-split-view [exercise]="exercise" [comparison]="comparison" [splitControlSubject]="splitControlSubject"></jhi-plagiarism-split-view>
     </div>
 
-    <p>{{ 'artemisApp.plagiarism.cases.your-statement' | artemisTranslate }}</p>
+    <p>{{ 'artemisApp.plagiarism.cases.yourStatement' | artemisTranslate }}</p>
     <div>
         <textarea cols="3" class="form-control" [(ngModel)]="response" required [disabled]="!loading && !canSendStatement()"></textarea>
         <button class="btn btn-primary m-1" (click)="sendStatement()" [disabled]="!response || !canSendStatement()">{{ 'entity.action.submit' | artemisTranslate }}</button>

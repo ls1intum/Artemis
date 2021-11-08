@@ -30,7 +30,7 @@ export class PlagiarismCasesComponent implements OnInit {
             });
     }
 
-    export() {
+    export(): void {
         const blobParts: string[] = ['Student login,Exercise,Similarity,Status\n'];
         this.confirmedPlagiarismCases?.forEach((c) => {
             c.comparisons.forEach((comp) => {
@@ -50,7 +50,7 @@ export class PlagiarismCasesComponent implements OnInit {
         downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
     }
 
-    notificationsSent() {
+    notificationsSent(): number {
         let size = 0;
         this.confirmedPlagiarismCases?.forEach((c) => {
             c.comparisons.forEach((comp) => {
@@ -65,7 +65,7 @@ export class PlagiarismCasesComponent implements OnInit {
         return size;
     }
 
-    numberOfCases() {
+    numberOfCases(): number {
         let size = 0;
         this.confirmedPlagiarismCases!.forEach((c) => {
             c.comparisons.forEach(() => (size += 2));
@@ -73,7 +73,7 @@ export class PlagiarismCasesComponent implements OnInit {
         return size;
     }
 
-    numberOfResponses() {
+    numberOfResponses(): number {
         let size = 0;
         this.confirmedPlagiarismCases!.forEach((c) => {
             c.comparisons.forEach((cmp) => {
@@ -88,7 +88,7 @@ export class PlagiarismCasesComponent implements OnInit {
         return size;
     }
 
-    responsesAssessed() {
+    responsesAssessed(): number {
         let size = 0;
         this.confirmedPlagiarismCases?.forEach((c) => {
             c.comparisons.forEach((cmp) => {

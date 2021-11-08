@@ -89,7 +89,7 @@ const routes: Routes = [
         component: PlagiarismCasesReviewComponent,
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'artemisApp.plagiarism.cases.plagiarism-review',
+            pageTitle: 'artemisApp.plagiarism.cases.plagiarismReview',
         },
         canActivate: [UserRouteAccessService],
     },

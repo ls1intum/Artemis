@@ -88,7 +88,7 @@ export const courseManagementState: Routes = [
         component: PlagiarismCasesComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.plagiarism.cases.plagiarism-cases',
+            pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },
