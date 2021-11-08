@@ -78,9 +78,9 @@ under ``localhost:7990``.
 
 1. Get licenses for Bamboo, Bitbucket and Jira Service Management.
 
-   - Bamboo: Select Bamboo (Server) and ``not installed yet``
-   - Bitbucket: Select Bitbucket (Data Center) and ``not installed yet``
-   - Jira: Select Jira Service Management (Data Center) and ``not installed yet``
+   - Bamboo: Select ``Bamboo (Data Center)`` and ``not installed yet``
+   - Bitbucket: Select ``Bitbucket (Data Center)`` and ``not installed yet``
+   - Jira: Select ``Jira Service Management (formerly Service Desk) (Data Center)`` and ``not installed yet``
 
 2. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
