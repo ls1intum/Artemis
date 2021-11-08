@@ -2,7 +2,7 @@ version: "2"
 services:
     jira:
         container_name: artemis_jira
-        image: atlassian/jira-core:8.15.3
+        image: atlassian/jira-core:8.13.5
         volumes:
           - artemis-jira:/var/atlassian/application-data/jira
         ports:
