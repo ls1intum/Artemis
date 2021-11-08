@@ -89,6 +89,7 @@ export class UserRouteAccessService implements CanActivate {
                             return true;
                         }
                         if (isDevMode()) {
+                            console.error('url', url);
                             console.error('User has not any of required authorities: ', authorities);
                         }
                         return false;
