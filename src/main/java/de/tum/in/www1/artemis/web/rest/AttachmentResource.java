@@ -144,7 +144,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/attachments/{id}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);

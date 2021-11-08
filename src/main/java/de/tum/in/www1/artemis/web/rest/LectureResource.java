@@ -225,7 +225,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{id}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {
