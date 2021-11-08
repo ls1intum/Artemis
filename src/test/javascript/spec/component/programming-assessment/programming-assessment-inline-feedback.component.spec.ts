@@ -6,7 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -105,5 +105,14 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.feedback.credits).toEqual(instruction.credits);
         expect(comp.feedback.detailText).toEqual(instruction.feedback);
         expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
+    });
+
+    it('should count feedback with one credit as positive', () => {
+        comp.feedback = new Feedback();
+        comp.feedback.credits = 1;
+
+        comp.updateFeedback();
+
+        expect(comp.feedback.positive).toBe(true);
     });
 });
