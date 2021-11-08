@@ -619,7 +619,7 @@
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [result]="moreFeedbackRequest.complaint.result"></jhi-result>
+                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise"></jhi-result>
                                 </td>
                                 <td>
                                     <span *ngIf="moreFeedbackRequest.complaint.accepted !== undefined">{{
