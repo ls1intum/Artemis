@@ -49,7 +49,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                         .body!.filter((course) => {
                             return !this.courses.find((el) => el.id === course.id);
                         })
-                        .sort((a, b) => a.title!.localeCompare(b.title!));
+                        .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                     resolve();
                 },
                 (response: string) => reject(response),
