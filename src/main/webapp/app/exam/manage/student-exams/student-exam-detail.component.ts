@@ -140,7 +140,7 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     private initWorkingTimeForm() {
-        const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime!);
+        const workingTime = this.artemisDurationFromSecondsPipe.toHHmmNotation(this.studentExam.workingTime!);
         const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
             minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
