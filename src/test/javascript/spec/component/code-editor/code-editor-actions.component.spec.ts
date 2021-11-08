@@ -1,19 +1,13 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
-
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -23,8 +17,11 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockModule } from 'ng-mocks';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;
@@ -35,10 +32,10 @@ describe('CodeEditorActionsComponent', () => {
     let updateFilesStub: jest.SpyInstance;
     let commitStub: jest.SpyInstance;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, FeatureToggleModule],
-            declarations: [CodeEditorActionsComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(AceEditorModule)],
+            declarations: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -69,8 +66,8 @@ describe('CodeEditorActionsComponent', () => {
         fixture.detectChanges();
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
         const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
-        expect(submitButton).not.toBeNull();
-        expect(refreshButton).not.toBeNull();
+        expect(submitButton).not.toBe(null);
+        expect(refreshButton).not.toBe(null);
     });
 
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
@@ -183,24 +180,24 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBeFalsy();
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         // start commit, wait for result
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
-        expect(comp.isBuilding).toBeFalsy();
+        expect(comp.isBuilding).toBe(false);
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBeTruthy();
+        expect(commitButton.nativeElement.disabled).toBe(true);
 
         // commit result mockReturnValue
         commitObservable.next(null);
-        expect(comp.isBuilding).toBeTruthy();
+        expect(comp.isBuilding).toBe(true);
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBeFalsy();
+        expect(commitButton.nativeElement.disabled).toBe(false);
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
@@ -215,25 +212,25 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBeFalsy();
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         // start commit, wait for result
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
-        expect(comp.isBuilding).toBeFalsy();
+        expect(comp.isBuilding).toBe(false);
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBeTruthy();
+        expect(commitButton.nativeElement.disabled).toBe(true);
 
         // commit result mockReturnValue an error
         commitObservable.error('error!');
-        expect(comp.isBuilding).toBeFalsy();
+        expect(comp.isBuilding).toBe(false);
         expect(comp.commitState).toEqual(CommitState.UNCOMMITTED_CHANGES);
         expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'commitFailed');
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBeFalsy();
+        expect(commitButton.nativeElement.disabled).toBe(false);
     });
 
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
@@ -250,7 +247,7 @@ describe('CodeEditorActionsComponent', () => {
         saveChangedFilesStub.mockReturnValue(saveObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBeFalsy();
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         // unsaved changes exist, needs to save files first
         commitButton.nativeElement.click();
@@ -270,11 +267,11 @@ describe('CodeEditorActionsComponent', () => {
 
         tick();
 
-        expect(comp.isBuilding).toBeTruthy();
+        expect(comp.isBuilding).toBe(true);
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBeFalsy();
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         fixture.destroy();
         flush();

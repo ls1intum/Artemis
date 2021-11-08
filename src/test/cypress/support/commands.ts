@@ -81,6 +81,7 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     }).then((response) => {
         expect(response.status).to.equal(200);
         localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
+        cy.wait(50);
     });
     if (url) {
         cy.visit(url);

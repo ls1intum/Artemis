@@ -98,7 +98,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
-    moreFeedbackRequests: Complaint[] = [];
+    submissionsWithMoreFeedbackRequests: SubmissionWithComplaintDTO[] = [];
     submissionsWithComplaints: SubmissionWithComplaintDTO[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
@@ -330,8 +330,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
-            this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                    this.submissionsWithMoreFeedbackRequests = res.body || [];
+                },
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
