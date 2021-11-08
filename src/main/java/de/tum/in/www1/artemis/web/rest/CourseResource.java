@@ -394,6 +394,10 @@ public class CourseResource {
         if (course.getAccuracyOfScores() == null) {
             throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
         }
+        if (course.getAccuracyOfScores() < 0 || course.getAccuracyOfScores() > 5) {
+            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
+                    "accuracyOfScoresInvalid", true);
+        }
     }
 
     private void validateShortName(Course course) {
