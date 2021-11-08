@@ -93,4 +93,14 @@ public class RatingService {
         updatedRating.setRating(ratingValue);
         return ratingRepository.save(updatedRating);
     }
+
+    /**
+     * Computes average rating for the given exercise.
+     *
+     * @param exerciseId - id of the exercise
+     * @return returns the average rating of the exercise
+     */
+    public Double averageRatingByExerciseId(Long exerciseId) {
+        return ratingRepository.averageRatingByExerciseId(exerciseId);
+    }
 }

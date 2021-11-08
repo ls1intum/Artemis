@@ -108,6 +108,7 @@ export abstract class Exercise implements BaseEntity {
     public studentAssignedTeamIdComputed = false;
     public numberOfParticipations?: number;
     public testRunParticipationsExist?: boolean;
+    public averageRating?: number;
 
     // helper attributes
     public secondCorrectionEnabled = false;

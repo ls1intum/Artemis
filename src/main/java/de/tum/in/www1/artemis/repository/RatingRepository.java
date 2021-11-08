@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Rating;
@@ -29,6 +31,15 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     void deleteByResult_Id(long resultId);
 
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
+
+    @Query("""
+                SELECT avg(ra.rating)
+                FROM
+                    Result r join r.participation p join p.exercise e join r.assessor a
+                    LEFT JOIN FETCH Rating ra on ra.result = r.id
+                WHERE e.id = :#{#exerciseId}
+            """)
+    Double averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Count all ratings given to submissions for the given course.

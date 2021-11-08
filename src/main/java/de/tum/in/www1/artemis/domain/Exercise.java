@@ -204,6 +204,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private boolean isGradingInstructionFeedbackUsedTransient = false;
 
+    @Transient
+    private Double averageRatingTransient;
+
     public String getTitle() {
         return title;
     }
@@ -877,6 +880,14 @@ public abstract class Exercise extends DomainObject {
 
     public void setGradingInstructionFeedbackUsed(boolean isGradingInstructionFeedbackUsedTransient) {
         this.isGradingInstructionFeedbackUsedTransient = isGradingInstructionFeedbackUsedTransient;
+    }
+
+    public Double getAverageRating() {
+        return averageRatingTransient;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRatingTransient = averageRating;
     }
 
     public Boolean getPresentationScoreEnabled() {

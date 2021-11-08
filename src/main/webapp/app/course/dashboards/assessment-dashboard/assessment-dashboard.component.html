@@ -82,6 +82,10 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
+                    <th jhiSortBy="averageRating">
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="dueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -117,6 +121,10 @@
                             [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
                         >
                         </jhi-tutor-participation-graph>
+                    </td>
+                    <td>
+                        <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ </span>
+                        <span *ngIf="exercise.averageRating === undefined"> --- </span>
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
