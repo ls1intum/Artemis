@@ -127,7 +127,7 @@ export class LectureService {
      * respective course are set aswell.
      *
      * @param lecture for which the access rights shall be set
-     * @private
+     * @return lecture that with set access rights if the course was set
      */
     private setAccessRightsLecture(lecture: Lecture | null) {
         if (lecture) {
