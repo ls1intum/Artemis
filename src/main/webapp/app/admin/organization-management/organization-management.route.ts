@@ -7,7 +7,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/entities/organization.model';
 
 @Injectable({ providedIn: 'root' })
-export class OrganizationMgmtResolve implements Resolve<any> {
+export class OrganizationMgmtResolve implements Resolve<Organization> {
     constructor(private organizationManagementService: OrganizationManagementService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
