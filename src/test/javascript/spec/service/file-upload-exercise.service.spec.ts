@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 
@@ -10,6 +10,8 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 
 describe('FileUploadExercise Service', () => {
     let injector: TestBed;
@@ -29,6 +31,7 @@ describe('FileUploadExercise Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ExerciseService, useClass: MockExerciseService },
             ],
         });
         injector = getTestBed();
@@ -38,7 +41,7 @@ describe('FileUploadExercise Service', () => {
         elemDefault = new FileUploadExercise(undefined, undefined);
     });
 
-    it('should find an element', async () => {
+    it('should find an element', fakeAsync(() => {
         const returnedFromService = Object.assign({}, elemDefault);
         service
             .find(123)
@@ -46,10 +49,11 @@ describe('FileUploadExercise Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should create a FileUploadExercise', async () => {
+    it('should create a FileUploadExercise', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 id: 0,
@@ -62,13 +66,14 @@ describe('FileUploadExercise Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should update a FileUploadExercise', async () => {
+    it('should update a FileUploadExercise', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
-                filePattern: 'BBBBBB',
+                filePattern: 'bbbbbb',
             },
             elemDefault,
         );
@@ -79,10 +84,11 @@ describe('FileUploadExercise Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should return a list of FileUploadExercise', async () => {
+    it('should return a list of FileUploadExercise', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 filePattern: 'BBBBBB',
@@ -98,16 +104,36 @@ describe('FileUploadExercise Service', () => {
             )
             .subscribe((body) => expect(body).toContainEqual(expected));
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify([returnedFromService]));
+        req.flush([returnedFromService]);
         httpMock.verify();
-    });
+        tick();
+    }));
 
-    it('should delete a FileUploadExercise', async () => {
+    it('should delete a FileUploadExercise', fakeAsync(() => {
         service.delete(123).subscribe((resp) => expect(resp.ok));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-    });
+        tick();
+    }));
+
+    it('should update and re-evaluate a FileUploadExercise', fakeAsync(() => {
+        const returnedFromService = Object.assign(
+            {
+                filePattern: 'BBBBBB',
+            },
+            elemDefault,
+        );
+
+        const expected = Object.assign({}, returnedFromService);
+        service
+            .reevaluateAndUpdate(expected, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

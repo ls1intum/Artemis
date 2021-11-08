@@ -34,6 +34,8 @@ import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExercis
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
 import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
 import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerciseFeedbackPage';
+import { LectureManagementPage } from './lecture/LectureManagementPage';
+import { LectureCreationPage } from './lecture/LectureCreationPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -84,5 +86,9 @@ export class ArtemisPageobjects {
         multipleChoice: new MultipleChoiceQuiz(),
         shortAnswer: new ShortAnswerQuiz(),
         dragAndDrop: new DragAndDropQuiz(),
+    };
+    lecture = {
+        management: new LectureManagementPage(),
+        creation: new LectureCreationPage(),
     };
 }
