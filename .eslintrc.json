@@ -1,18 +1,12 @@
 {
     "plugins": [
-//        "@angular-eslint/eslint-plugin",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
         "chai-friendly"
     ],
     "extends": [
-//        "eslint:recommended",
-//        "plugin:@typescript-eslint/recommended",
-//        "plugin:@typescript-eslint/recommended-requiring-type-checking",
-//        "plugin:@angular-eslint/recommended",
         "plugin:prettier/recommended",
         "prettier"
-//        "eslint-config-prettier"
     ],
     "env": {
         "browser": true,

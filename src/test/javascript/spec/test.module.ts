@@ -12,7 +12,6 @@ import { MockEventManager } from './helpers/mocks/service/mock-event-manager.ser
 import { CookieService } from 'ngx-cookie-service';
 import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
-import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import dayjs from 'dayjs';
 import { MockComponent } from 'ng-mocks';
@@ -75,7 +74,7 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
 })
 export class ArtemisTestModule {
     constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, translateService: TranslateService) {
-        registerLocaleData(locale);
+        // registerLocaleData(locale);
         iconLibrary.addIconPacks(fas);
         iconLibrary.addIcons(...fontAwesomeIcons);
         dpConfig.minDate = { year: dayjs().year() - 100, month: 1, day: 1 };
