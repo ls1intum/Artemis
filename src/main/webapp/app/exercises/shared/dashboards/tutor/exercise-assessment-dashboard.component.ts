@@ -14,13 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import {
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-    Submission,
-    SubmissionExerciseType,
-} from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -616,7 +610,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param submission which to check
      * @param correctionRound for which to get status
      */
-     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
+    calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
         const tmpResult = submission.results?.[correctionRound];
         return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
     }
