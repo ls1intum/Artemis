@@ -383,7 +383,8 @@ public class ProgrammingExerciseService {
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+        // TODO test if this is irrelevant to the scheduled release notification -> if irrelevant simply delete
+        // groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
 
         return savedProgrammingExercise;
     }
@@ -646,6 +647,7 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExercise;
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
@@ -653,7 +655,8 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
+                instanceMessageSendService);
 
         return savedProgrammingExercise;
     }

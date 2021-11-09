@@ -48,13 +48,17 @@ public class GroupNotificationService {
 
     /**
      * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
-     * @param exercise which is updated
+     * @param exerciseBeforeUpdate is the initial exercise before it gets updated
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      * @param notificationText holds the custom change message for the notification process
      * @param instanceMessageSendService can initiate a scheduled notification
      */
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exercise, String notificationText, InstanceMessageSendService instanceMessageSendService) {
-        notifyAboutExerciseUpdate(exercise, notificationText);
-        checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
+            InstanceMessageSendService instanceMessageSendService) {
+        notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
+        if (!exerciseAfterUpdate.getReleaseDate().isEqual(exerciseBeforeUpdate.getReleaseDate())) {
+            checkNotificationForExerciseRelease(exerciseAfterUpdate, instanceMessageSendService);
+        }
     }
 
     /**

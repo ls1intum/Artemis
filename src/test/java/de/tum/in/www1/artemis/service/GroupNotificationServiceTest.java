@@ -46,6 +46,8 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Exercise exercise;
 
+    private static Exercise exerciseAlternative;
+
     private final static Long EXERCISE_ID = 13L;
 
     @Mock
@@ -95,6 +97,8 @@ public class GroupNotificationServiceTest {
         when(course.getId()).thenReturn(COURSE_ID);
 
         exercise = mock(Exercise.class);
+        exerciseAlternative = mock(Exercise.class);
+        when(exerciseAlternative.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
 
         instanceMessageSendService = mock(InstanceMessageSendService.class);
         doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(EXERCISE_ID);
@@ -208,15 +212,32 @@ public class GroupNotificationServiceTest {
     /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
 
     /**
-    * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
-    */
-    @Test
-    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
+     * Auxiliary method to set the needed mocks for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
+     */
+    private void prepareMocksForCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
         doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         doNothing().when(groupNotificationService).checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, NOTIFICATION_TEXT, instanceMessageSendService);
+    }
+
+    /**
+    * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method with unchanged release date
+    */
+    @Test
+    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise_unchangedReleaseDate() {
+        prepareMocksForCheckNotificationForExerciseReleaseTesting();
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, exercise, NOTIFICATION_TEXT, instanceMessageSendService);
+        verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService, times(0)).checkNotificationForExerciseRelease(any(), any());
+    }
+
+    /**
+     * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method with changed release date
+     */
+    @Test
+    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise_changedReleaseDate() {
+        prepareMocksForCheckNotificationForExerciseReleaseTesting();
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exerciseAlternative, exercise, NOTIFICATION_TEXT, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
         verify(groupNotificationService, times(1)).checkNotificationForExerciseRelease(any(), any());
     }
-
 }
