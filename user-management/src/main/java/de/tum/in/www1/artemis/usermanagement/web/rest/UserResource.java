@@ -1,13 +1,21 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.usermanagement.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-
-import javax.validation.Valid;
-
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.usermanagement.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.usermanagement.service.user.UserCreationService;
+import de.tum.in.www1.artemis.usermanagement.service.user.UserService;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.LoginAlreadyUsedException;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,22 +29,16 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.errors.*;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import io.swagger.annotations.ApiParam;
+import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
+
+import javax.validation.Valid;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 /**
  * REST controller for managing users.
@@ -58,7 +60,6 @@ import tech.jhipster.web.util.ResponseUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
-@Deprecated // Moved to user management microservice. To be removed.
 @RestController
 @RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
@@ -80,7 +81,7 @@ public class UserResource {
     private final AuthorityRepository authorityRepository;
 
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
+                        ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;

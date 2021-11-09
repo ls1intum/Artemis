@@ -1,7 +1,8 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.usermanagement.web.rest;
 
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.usermanagement.service.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -9,14 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.user.UserService;
+import java.util.Set;
 
 /**
  * Rest controller for managing GuidedTourSetting
  */
-@Deprecated // Moved to user management microservice. To be removed.
 @RestController
 @RequestMapping("/api")
 public class GuidedTourSettingsResource {

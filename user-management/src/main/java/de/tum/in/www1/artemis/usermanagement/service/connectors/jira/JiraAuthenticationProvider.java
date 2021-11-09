@@ -1,14 +1,25 @@
-package de.tum.in.www1.artemis.service.connectors.jira;
+package de.tum.in.www1.artemis.usermanagement.service.connectors.jira;
 
-import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import com.fasterxml.jackson.databind.JsonNode;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
+import de.tum.in.www1.artemis.repository.UserRepository;
+//import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
+import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+//import de.tum.in.www1.artemis.service.user.AuthorityService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+//import de.tum.in.www1.artemis.service.user.UserCreationService;
+import de.tum.in.www1.artemis.usermanagement.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.usermanagement.security.ArtemisAuthenticationProviderImpl;
+import de.tum.in.www1.artemis.usermanagement.service.user.AuthorityService;
+import de.tum.in.www1.artemis.usermanagement.service.user.UserCreationService;
+import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,8 +28,14 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-import org.springframework.security.authentication.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.ProviderNotFoundException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
@@ -27,23 +44,14 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
-import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
-import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
-import de.tum.in.www1.artemis.service.ldap.LdapUserService;
-import de.tum.in.www1.artemis.service.user.AuthorityService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 
 @Component
 @Profile("jira")
@@ -65,8 +73,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     private final AuthorityService authorityService;
 
     public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
-            AuthorityService authorityService, UserCreationService userCreationService) {
+                                      @Qualifier("shortTimeoutJiraRestTemplate") RestTemplate shortTimeoutRestTemplate, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
+                                      AuthorityService authorityService, UserCreationService userCreationService) {
         super(userRepository, passwordService, userCreationService);
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
@@ -92,19 +100,11 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     }
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        User user = getOrCreateUser(authentication, false);
-        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
-    }
-
-    @Deprecated // Moved to user management microservice. To be removed.
-    @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
         return getOrCreateUser(authentication, skipPasswordCheck);
     }
 
-    @Deprecated // Moved to user management microservice. To be removed.
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
@@ -172,11 +172,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
-    @Override
-    public boolean supports(Class<?> authentication) {
-        return true;
-    }
-
     /**
      * Adds a JIRA user to a JIRA group. Ignores "user is already a member of" errors.
      *
@@ -184,7 +179,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
      * @param group    The JIRA group name
      * @throws ArtemisAuthenticationException if JIRA returns an error
      */
-    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
         // then we also make sure to add it into JIRA so that the synchronization during the next login does not remove the group again
@@ -208,7 +202,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
-    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void createUserInExternalUserManagement(User user) {
         log.info("Try to create user {} in JIRA", user.getLogin());
@@ -234,7 +227,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     // and the internal directory as second choice. However, users can only be created in the first user directory and there is no option
     // to create them in the second user directory
 
-    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void createGroup(String groupName) {
         log.info("Create group {} in JIRA", groupName);
@@ -250,7 +242,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
-    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void deleteGroup(String groupName) {
         // Important: only delete groups that have been created from artemis
@@ -272,7 +263,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
-    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void removeUserFromGroup(User user, String group) {
         // then we also make sure to remove it in JIRA so that the synchronization during the next login does not add the group again
@@ -288,7 +278,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
-    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public boolean isGroupAvailable(String group) {
         try {

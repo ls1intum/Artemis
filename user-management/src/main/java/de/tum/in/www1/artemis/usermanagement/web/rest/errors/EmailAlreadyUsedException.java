@@ -1,8 +1,10 @@
-package de.tum.in.www1.artemis.web.rest.errors;
+package de.tum.in.www1.artemis.usermanagement.web.rest.errors;
+
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 
 import java.io.Serial;
 
-@Deprecated // Moved to user management microservice. To be removed
 public class EmailAlreadyUsedException extends BadRequestAlertException {
 
     @Serial

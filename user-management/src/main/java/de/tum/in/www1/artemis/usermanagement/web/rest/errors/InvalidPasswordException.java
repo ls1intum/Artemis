@@ -1,11 +1,11 @@
-package de.tum.in.www1.artemis.web.rest.errors;
+package de.tum.in.www1.artemis.usermanagement.web.rest.errors;
 
-import java.io.Serial;
-
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import org.zalando.problem.AbstractThrowableProblem;
 import org.zalando.problem.Status;
 
-@Deprecated // Moved to user management microservice. To be removed
+import java.io.Serial;
+
 public class InvalidPasswordException extends AbstractThrowableProblem {
 
     @Serial

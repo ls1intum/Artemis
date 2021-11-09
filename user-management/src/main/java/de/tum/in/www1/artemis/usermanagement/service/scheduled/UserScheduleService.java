@@ -1,9 +1,9 @@
-package de.tum.in.www1.artemis.service.scheduled;
+package de.tum.in.www1.artemis.usermanagement.service.scheduled;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.*;
-
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,12 +11,10 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.*;
 
-@Deprecated // moved to user management microservice
 @Service
 @Profile("scheduling")
 public class UserScheduleService {

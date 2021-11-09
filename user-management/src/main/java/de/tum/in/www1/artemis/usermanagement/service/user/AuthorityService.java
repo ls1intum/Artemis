@@ -1,20 +1,18 @@
-package de.tum.in.www1.artemis.service.user;
+package de.tum.in.www1.artemis.usermanagement.service.user;
 
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.Role.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.in.www1.artemis.security.Role.*;
 
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-
-@Deprecated // Moved to user management microservice. To be removed
 @Service
 public class AuthorityService {
 

@@ -1,14 +1,25 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.usermanagement.web.rest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.usermanagement.service.messaging.services.MailServiceProducer;
+import de.tum.in.www1.artemis.usermanagement.service.user.UserCreationService;
+import de.tum.in.www1.artemis.usermanagement.service.user.UserService;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.InvalidPasswordException;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.LoginAlreadyUsedException;
+import de.tum.in.www1.artemis.usermanagement.web.rest.vm.KeyAndPasswordVM;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,24 +29,17 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.MailService;
-import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
-import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.errors.*;
-import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * REST controller for managing the current user's account.
  */
-@Deprecated // Moved to user management microservice. To be removed.
 @RestController
 @RequestMapping("/api")
 public class AccountResource {
@@ -59,15 +63,15 @@ public class AccountResource {
 
     private final PasswordService passwordService;
 
-    private final MailService mailService;
+    private final MailServiceProducer mailServiceProducer;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
-            PasswordService passwordService) {
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
+            PasswordService passwordService, MailServiceProducer mailServiceProducer) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
-        this.mailService = mailService;
         this.passwordService = passwordService;
+        this.mailServiceProducer = mailServiceProducer;
     }
 
     /**
@@ -117,7 +121,7 @@ public class AccountResource {
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
-        mailService.sendActivationEmail(user);
+        mailServiceProducer.sendActivationMail(user);
     }
 
     /**
@@ -231,7 +235,7 @@ public class AccountResource {
         }
         Optional<User> user = userService.requestPasswordReset(mail);
         if (user.isPresent()) {
-            mailService.sendPasswordResetMail(user.get());
+            mailServiceProducer.sendPasswordResetMail(user.get());
         }
         else {
             // Pretend the request has been successful to prevent checking which emails really exist

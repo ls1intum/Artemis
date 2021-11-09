@@ -1,12 +1,29 @@
-package de.tum.in.www1.artemis.service.user;
+package de.tum.in.www1.artemis.usermanagement.service.user;
 
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.Role.*;
-
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.usermanagement.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.usermanagement.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.usermanagement.web.rest.errors.InvalidPasswordException;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,31 +33,22 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
-import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
-import de.tum.in.www1.artemis.service.ldap.LdapUserService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
-import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
+
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.in.www1.artemis.security.Role.ADMIN;
+import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
 /**
  * Service class for managing users.
  */
-@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserService {
 
@@ -367,7 +375,7 @@ public class UserService {
 
     /**
      * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
-     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
+     * Also updates the user groups in the used authentication provider (like {@link de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider}.
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
