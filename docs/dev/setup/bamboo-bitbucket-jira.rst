@@ -199,8 +199,16 @@ under ``localhost:7990``.
       minutes). Press synchronise after adding the directory, the users and
       groups should now be available.
 
-       .. figure:: bamboo-bitbucket-jira/user_directories.png
-          :align: center
+    .. list-table::
+
+        * - .. figure:: bamboo-bitbucket-jira/user_directories_bitbucket.png
+
+                Adding Crowd Server in **Bitbucket**
+
+          - .. figure:: bamboo-bitbucket-jira/user_directories_bamboo.png
+
+                Adding Crowd Server in **Bamboo**
+
 
 7. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
