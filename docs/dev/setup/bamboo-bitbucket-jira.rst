@@ -101,7 +101,13 @@ under ``localhost:7990``.
        <details>
        <summary>xdg-utils for Windows users</summary>
        An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem, which should be activated anyways when running Docker on Windows.
-       For the installation on the subsystem the above linked explanation can be used. Make sure to execute the script from the subsystem.
+       For the installation on the subsystem the above linked explanation can be used.
+
+    .. raw:: html
+
+       <br>
+
+       Make sure to execute the script from the subsystem.
     .. raw:: html
 
        </details>
@@ -109,7 +115,7 @@ under ``localhost:7990``.
    Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
    Execute the shell script ``atlassian-setup.sh`` in the
-   ``src/main/docker`` directory (e.g. with
+   ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
    groups, users and disabled application links between the 3 applications.
 
@@ -186,12 +192,10 @@ under ``localhost:7990``.
 
           - .. figure:: bamboo-bitbucket-jira/jira_add_application_bamboo.png
 
-
-
    -  Go to Bitbucket and Bamboo → User Directories → Add Directories →
       Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
       use the application name and password which you used in the previous
-      step. Also, you should decrease the synchronisation period (e.g. to 2
+      step. Also, you should decrease the synchronisation period (e.g. to 2
       minutes). Press synchronise after adding the directory, the users and
       groups should now be available.
 
