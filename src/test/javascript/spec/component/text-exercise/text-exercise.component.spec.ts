@@ -4,7 +4,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -13,11 +13,14 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('TextExercise Management Component', () => {
     let comp: TextExerciseComponent;
     let fixture: ComponentFixture<TextExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
+    let modalService: NgbModal;
 
     const course = { id: 123 } as Course;
     const textExercise: TextExercise = { id: 456, title: 'Text Exercise', type: 'text' } as TextExercise;
@@ -32,6 +35,7 @@ describe('TextExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(TextExerciseComponent, '')
@@ -40,6 +44,7 @@ describe('TextExercise Management Component', () => {
         fixture = TestBed.createComponent(TextExerciseComponent);
         comp = fixture.componentInstance;
         courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         comp.textExercises = [textExercise];
     });
@@ -62,6 +67,18 @@ describe('TextExercise Management Component', () => {
 
         // THEN
         expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalled();
+    });
+
+    it('Should open modal', () => {
+        const mockReturnValue = { result: Promise.resolve({ id: 456 } as TextExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openImportModal();
+        expect(modalService.open).toHaveBeenCalledWith(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+    });
+
+    it('Should return exercise id', () => {
+        expect(comp.trackId(0, textExercise)).toEqual(456);
     });
 
     describe('TextExercise Search Exercises', () => {

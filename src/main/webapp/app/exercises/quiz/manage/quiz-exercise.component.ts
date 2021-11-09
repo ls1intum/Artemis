@@ -51,8 +51,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.setQuizExercisesStatus();
-                this.applyFilter();
                 this.emitExerciseCount(this.quizExercises.length);
+                this.applyFilter();
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

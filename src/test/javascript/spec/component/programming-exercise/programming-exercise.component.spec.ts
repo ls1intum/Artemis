@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -13,6 +13,13 @@ import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
+import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -29,6 +36,9 @@ describe('ProgrammingExercise Management Component', () => {
     let comp: ProgrammingExerciseComponent;
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
     let service: CourseExerciseService;
+    let programmingExerciseService: ProgrammingExerciseService;
+    let exerciseService: ExerciseService;
+    let modalService: NgbModal;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
@@ -42,6 +52,7 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(ProgrammingExerciseComponent, '')
@@ -50,6 +61,9 @@ describe('ProgrammingExercise Management Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(CourseExerciseService);
+        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });
@@ -75,6 +89,100 @@ describe('ProgrammingExercise Management Component', () => {
         expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalled();
         expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+    });
+
+    it('Should reset exercise', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(exerciseService, 'reset').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: undefined,
+                    headers,
+                }),
+            ),
+        );
+        const mockSubscriber = jest.fn();
+        comp.dialogError$.subscribe(mockSubscriber);
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.resetProgrammingExercise(456);
+        expect(exerciseService.reset).toHaveBeenCalledWith(456);
+        expect(mockSubscriber).toHaveBeenCalledWith('');
+    });
+
+    it('Should not reset exercise', () => {
+        const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(httpErrorResponse));
+        const mockSubscriber = jest.fn();
+        comp.dialogError$.subscribe(mockSubscriber);
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.resetProgrammingExercise(456);
+        expect(exerciseService.reset).toHaveBeenCalledWith(456);
+        expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
+    });
+
+    it('Should delete exercise', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    headers,
+                }),
+            ),
+        );
+        const mockSubscriber = jest.fn();
+        comp.dialogError$.subscribe(mockSubscriber);
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
+        expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
+        expect(mockSubscriber).toHaveBeenCalledWith('');
+    });
+
+    it('Should not delete exercise', () => {
+        const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(httpErrorResponse));
+        const mockSubscriber = jest.fn();
+        comp.dialogError$.subscribe(mockSubscriber);
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
+        expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
+        expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
+    });
+
+    it('Should open import modal', () => {
+        const mockReturnValue = { result: Promise.resolve({ id: 456 } as ProgrammingExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openImportModal();
+        expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+    });
+
+    it('Should open edit selected modal', () => {
+        const mockReturnValue = { componentInstance: {}, closed: of() } as unknown as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openEditSelectedModal();
+        expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
+    });
+
+    it('Should open repo export modal', () => {
+        const mockReturnValue = { componentInstance: {} } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openRepoExportModal();
+        expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
+    });
+
+    it('Should return exercise id', () => {
+        expect(comp.trackId(0, programmingExercise)).toEqual(456);
     });
 
     describe('ProgrammingExercise Search Exercises', () => {

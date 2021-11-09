@@ -4,7 +4,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -16,6 +16,8 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 
 describe('ModelingExercise Management Component', () => {
     let comp: ModelingExerciseComponent;
@@ -24,6 +26,7 @@ describe('ModelingExercise Management Component', () => {
     let modelingExerciseService: ModelingExerciseService;
     let eventManager: EventManager;
     let sortService: SortService;
+    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -40,6 +43,7 @@ describe('ModelingExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(ModelingExerciseComponent, '')
@@ -50,6 +54,7 @@ describe('ModelingExercise Management Component', () => {
         courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
         sortService = fixture.debugElement.injector.get(SortService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         eventManager = fixture.debugElement.injector.get(EventManager);
 
@@ -79,6 +84,35 @@ describe('ModelingExercise Management Component', () => {
         // THEN
         expect(findStub).toHaveBeenCalled();
         expect(comp.modelingExercises[0]).toEqual(modelingExercise);
+    });
+
+    it('Should delete exercise', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    headers,
+                }),
+            ),
+        );
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.deleteModelingExercise(456);
+        expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
+    });
+
+    it('Should open modal', () => {
+        const mockReturnValue = { result: Promise.resolve({ id: 456 } as ModelingExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openImportModal();
+        expect(modalService.open).toHaveBeenCalledWith(ModelingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+    });
+
+    it('Should return exercise id', () => {
+        expect(comp.trackId(0, modelingExercise)).toEqual(456);
     });
 
     describe('ModelingExercise Search Exercises', () => {

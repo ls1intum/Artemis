@@ -49,8 +49,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                         exercise.course = this.course;
                         this.accountService.setAccessRightsForExercise(exercise);
                     });
-                    this.applyFilter();
                     this.emitExerciseCount(this.fileUploadExercises.length);
+                    this.applyFilter();
                 },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );
