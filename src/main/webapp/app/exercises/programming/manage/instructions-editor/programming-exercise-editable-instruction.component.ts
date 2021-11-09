@@ -31,7 +31,7 @@ import { Result } from 'app/entities/result.model';
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
     participationValue: Participation;
-    exerciseValue: ProgrammingExercise;
+    programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
     exerciseHints: ExerciseHint[];
@@ -62,7 +62,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() forceRender: Observable<void>;
     @Input()
     get exercise() {
-        return this.exerciseValue;
+        return this.programmingExercise;
     }
     @Input()
     get participation() {
@@ -80,11 +80,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     set exercise(exercise: ProgrammingExercise) {
-        if (this.exerciseValue && exercise.problemStatement !== this.exerciseValue.problemStatement) {
+        if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
             this.unsavedChanges = true;
         }
-        this.exerciseValue = exercise;
-        this.exerciseChange.emit(this.exerciseValue);
+        this.programmingExercise = exercise;
+        const isExamExercise = !!this.programmingExercise.exerciseGroup;
+        if (isExamExercise) {
+            // Note: Exam exercises do not include hints at the moment, therefore, the markdown editor should not offer this command
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+        } else {
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
+        }
+        this.exerciseChange.emit(this.programmingExercise);
     }
 
     set unsavedChanges(hasChanges: boolean) {
