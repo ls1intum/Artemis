@@ -34,11 +34,11 @@ Docker-Compose
 
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
-equal to the bamboo version number in the Dockerfile of bamboo stored in
-``src/main/docker/bamboo/Dockerfile`` or ``src/main/docker/bamboo/swift/Dockerfile``.
+equal to the bamboo version number in the Dockerfiles of bamboo stored in
+``src/main/docker/bamboo`` (``src/main/docker/bamboo/Dockerfile``, ``src/main/docker/bamboo/swift/Dockerfile``, ``src/main/docker/bamboo/c/Dockerfile``).
 If the version number is not equal adjust the version number in the Dockerfile.
 
-In case you want to enable Swift programming exercises, you need to change
+In case you want to enable Swift or C programming exercises, you need to change
 the specified Dockerfile in the docker-compose file ``atlassian.yml`` stored in ``src/main/docker``.
 To use the Swift Dockerfile, change the following:
 
@@ -56,7 +56,7 @@ to:
                container_name: artemis_bamboo
                build: bamboo/swift
 
-Execute the docker-compose file e.g. with
+Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``.
 If you notice that the used image didn't change, append the flag ``--build``.
 
@@ -65,7 +65,7 @@ docker networks
 ``ERROR: Pool overlaps with other one on this address space``. Use the
 command ``docker network prune`` to resolve this issue.
 
-Also make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferences -> Resources``
+Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``
 
 Configure Bamboo, Bitbucket and Jira
 ------------------------------------
