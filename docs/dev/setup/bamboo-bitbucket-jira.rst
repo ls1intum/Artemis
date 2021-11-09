@@ -164,7 +164,7 @@ under ``localhost:7990``.
 
        Jira → Bitbucket
 
-5. The script has already created users and groups but you need to
+5. The script *(step 3)* has already created users and groups but you need to
    manually assign the users into their respective group in Jira. In our
    test setup, users 1-5 are students, 6-10 are tutors, 11-15 are
    editors and 16-20 are instructors. The usernames are artemis_test_user_{1-20}
@@ -180,8 +180,12 @@ under ``localhost:7990``.
       Create one application for bitbucket and one for bamboo → add the
       IP-address ``0.0.0.0/0`` to IP Addresses
 
-       .. figure:: bamboo-bitbucket-jira/jira_add_application.png
-          :align: center
+    .. list-table::
+
+        * - .. figure:: bamboo-bitbucket-jira/jira_add_application_bitbucket.png
+
+          - .. figure:: bamboo-bitbucket-jira/jira_add_application_bamboo.png
+
 
 
    -  Go to Bitbucket and Bamboo → User Directories → Add Directories →
