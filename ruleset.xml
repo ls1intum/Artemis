@@ -8,7 +8,7 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
 
     <description>
         Allows underscores in JUnit 4 and 5 test methods
-        Template from https://pmd.github.io/pmd-6.33.0/pmd_userdocs_making_rulesets.html#creating-a-ruleset
+        Template from https://pmd.github.io/pmd-6.40.0/pmd_userdocs_making_rulesets.html#creating-a-ruleset
     </description>
 
     // Java
