@@ -94,11 +94,25 @@ under ``localhost:7990``.
 
    - Bitbucket: Do not connect Bitbucket with Jira yet
 
-3. Execute the shell script ``atlassian-setup.sh`` in the
+3. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
+
+    .. raw:: html
+
+       <details>
+       <summary>xdg-utils for Windows users</summary>
+       An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem, which should be activated anyways when running Docker on Windows.
+       For the installation on the subsystem the above linked explanation can be used. Make sure to execute the script from the subsystem.
+    .. raw:: html
+
+       </details>
+
+   Make sure that Jira, Bitbucket and Bamboo have finished starting up.
+
+   Execute the shell script ``atlassian-setup.sh`` in the
    ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
    groups, users and disabled application links between the 3 applications.
-   Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the script.
+
 
 4. Enable the created `application
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
