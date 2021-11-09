@@ -12,7 +12,7 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
     selector: 'jhi-plagiarism-cases-review',
     templateUrl: './plagiarism-cases-review.component.html',
     // since this is the only style we need, there's no need for another file.
-    styles: [':host ::ng-deep .gutter{background: none!important;}'],
+    styles: [':host ::ng-deep .gutter{background: none !important;}'],
 })
 export class PlagiarismCasesReviewComponent implements OnInit {
     loading = true;
@@ -52,11 +52,11 @@ export class PlagiarismCasesReviewComponent implements OnInit {
             });
     }
 
-    canSendStatement() {
+    canSendStatement(): boolean {
         return (this.isStudentA && this.comparison.statementA === undefined) || (!this.isStudentA && this.comparison.statementB === undefined);
     }
 
-    sendStatement() {
+    sendStatement(): void {
         if (this.isStudentA) {
             this.comparison.statementA = this.response;
         } else {
@@ -71,17 +71,17 @@ export class PlagiarismCasesReviewComponent implements OnInit {
             });
     }
 
-    isConfirmed() {
+    isConfirmed(): boolean {
         if (this.isStudentA) {
-            return this.comparison.statusA ? this.comparison.statusA === PlagiarismStatus.CONFIRMED : false;
+            return this.comparison.statusA && this.comparison.statusA === PlagiarismStatus.CONFIRMED;
         }
-        return this.comparison.statusB ? this.comparison.statusB === PlagiarismStatus.CONFIRMED : false;
+        return this.comparison.statusB && this.comparison.statusB === PlagiarismStatus.CONFIRMED;
     }
 
-    hasStatus() {
+    hasStatus(): boolean {
         if (this.isStudentA) {
-            return this.comparison.statusA ? this.comparison.statusA !== PlagiarismStatus.NONE : false;
+            return this.comparison.statusA && this.comparison.statusA !== PlagiarismStatus.NONE;
         }
-        return this.comparison.statusB ? this.comparison.statusB !== PlagiarismStatus.NONE : false;
+        return this.comparison.statusB && this.comparison.statusB !== PlagiarismStatus.NONE;
     }
 }

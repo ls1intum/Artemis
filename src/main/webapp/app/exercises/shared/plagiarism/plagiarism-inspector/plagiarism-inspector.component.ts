@@ -154,7 +154,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgressMessage = state === 'RUNNING' ? messages : this.translateService.instant('artemisApp.plagiarism.loading');
 
         if (state === 'COMPLETED') {
-            this.detectionInProgressMessage = this.translateService.instant('artemisApp.plagiarism.fetching-results');
+            this.detectionInProgressMessage = this.translateService.instant('artemisApp.plagiarism.fetchingResults');
             this.getLatestPlagiarismResult();
         }
     }
@@ -330,14 +330,14 @@ export class PlagiarismInspectorComponent implements OnInit {
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip() {
-        const tooltip = 'artemisApp.plagiarism.minimum-size-tooltip';
+        const tooltip = 'artemisApp.plagiarism.minimumSizeTooltip';
 
         switch (this.exercise.type) {
             case ExerciseType.TEXT: {
-                return tooltip + '-text';
+                return tooltip + 'Text';
             }
             case ExerciseType.MODELING: {
-                return tooltip + '-modeling';
+                return tooltip + 'Modeling';
             }
             default: {
                 return tooltip;
