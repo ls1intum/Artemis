@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "consistencyCheck": {
+            "button": "Konsistenzprüfung",
+            "title": "Konsistenzprüfung",
+            "text": "Die Überprüfung der Programmieraufgaben wird durchgeführt. Gefundene Inkonsistenzen werden nachfolgend angezeigt.",
+            "warning": "Bei Kursen mit vielen Programmieraufgaben wird dies einige Zeit in Anspruch nehmen.",
+            "error": {
+                "type": "Fehlertyp",
+                "VCS_PROJECT_MISSING": "Fehlendes VCS Projekt",
+                "TEMPLATE_REPO_MISSING": "Fehlendes Vorlagen-Repository",
+                "SOLUTION_REPO_MISSING": "Fehlendes Lösung-Repository",
+                "TEST_REPO_MISSING": "Fehlendes Test-Repository",
+                "TEMPLATE_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Vorlage",
+                "SOLUTION_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Lösung",
+                "IS_LOCAL_SIMULATION": "Ist eine lokale Simulation"
+            },
+            "noInconsistencies": "Keine Inkonsistenzen gefunden",
+            "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden"
+        }
+    }
+}
