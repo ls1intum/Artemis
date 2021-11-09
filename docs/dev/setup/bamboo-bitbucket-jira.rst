@@ -312,7 +312,7 @@ Configure Artemis
 
            repo-clone-path: ./repos/
            repo-download-clone-path: ./repos-download/
-           encryption-password: artemis-encrypt     # arbitrary password for encrypting database values
+           encryption-password: artemis-encrypt   # arbitrary password for encrypting database values
            user-management:
                use-external: true
                external:
@@ -327,17 +327,17 @@ Configure Artemis
                url: http://localhost:7990
                user:  <bitbucket-admin-user>
                password: <bitbucket-admin-password>
-               token: <bitbucket-admin-token>
+               token: <bitbucket-admin-token>   # step 10.2
                ssh-private-key-folder-path: <ssh-private-key-folder-path>
                ssh-private-key-password: <ssh-private-key-password>
            continuous-integration:
                url: http://localhost:8085
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
-               token: <bamboo-admin-token>
+               token: <bamboo-admin-token>   # step 10.1
                vcs-application-link-name: LS1 Bitbucket Server
                empty-commit-necessary: true
-               artemis-authentication-token-value: <artemis-authentication-token-value>
+               artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
 2. Modify the application-dev.yml
 
