@@ -129,7 +129,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         const participation = newParticipation();
         component.studentParticipation = participation;
 
-        expect(component.getSubmission()).toBe(participation.submissions![0]);
+        expect(component.getSubmission()).toEqual(participation.submissions![0]);
     });
 
     it('should return false if no unsaved changes', () => {
