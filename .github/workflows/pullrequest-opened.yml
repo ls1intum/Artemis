@@ -27,7 +27,7 @@ jobs:
     if: github.event.pull_request.draft == false && !contains(github.event.issue.labels.*.name, 'ready for review') && github.event.pull_request.user.login != 'dependabot[bot]'
     steps:
       - name: Comment PR
-        uses: thollander/actions-comment-pull-request@master
+        uses: thollander/actions-comment-pull-request@main
         with:
           message: 'Still in progress? Consider converting to draft.'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
