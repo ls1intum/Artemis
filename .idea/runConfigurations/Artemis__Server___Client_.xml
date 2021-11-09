@@ -6,7 +6,7 @@
     <option name="VM_PARAMETERS" value="--illegal-access=warn" />
     <option name="PROGRAM_PARAMETERS" value=" " />
     <option name="ALTERNATIVE_JRE_PATH" />
-    <option name="SHORTEN_COMMAND_LINE" value="NONE" />
+    <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
     <method v="2">
       <option name="Gradle.BeforeRunTask" enabled="true" tasks="webpack" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="" />
       <option name="Make" enabled="true" />
