@@ -1,8 +1,12 @@
-@import '../../../overview/_overview-vars.scss';
+@import 'src/main/webapp/app/overview/overview-vars';
 
 .card {
     height: 450px;
     max-width: 2000px;
+
+    .card-title {
+        font-size: 1.575rem;
+    }
 
     .card-heading {
         position: relative;
