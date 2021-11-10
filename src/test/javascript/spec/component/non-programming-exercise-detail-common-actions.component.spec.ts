@@ -110,7 +110,7 @@ describe('Exercise detail common actions Component', () => {
         expect(comp.baseResource).to.equal('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
     });
 
-    it('should call event manager on delete exercises', function () {
+    it('should call event manager on delete exercises', () => {
         const textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
         const fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
         const modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
