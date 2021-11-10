@@ -49,6 +49,10 @@ describe('TextExercise Management Component', () => {
         comp.textExercises = [textExercise];
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
@@ -66,7 +70,7 @@ describe('TextExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalled();
+        expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalledTimes(1);
     });
 
     it('Should open modal', () => {
@@ -75,10 +79,11 @@ describe('TextExercise Management Component', () => {
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledTimes(1);
     });
 
     it('Should return exercise id', () => {
-        expect(comp.trackId(0, textExercise)).toEqual(456);
+        expect(comp.trackId(0, textExercise)).toBe(456);
     });
 
     describe('TextExercise Search Exercises', () => {

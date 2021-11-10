@@ -68,6 +68,10 @@ describe('ProgrammingExercise Management Component', () => {
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('Should call load all on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
@@ -108,10 +112,12 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.resetProgrammingExercise(456);
         expect(exerciseService.reset).toHaveBeenCalledWith(456);
+        expect(exerciseService.reset).toHaveBeenCalledTimes(1);
         expect(mockSubscriber).toHaveBeenCalledWith('');
+        expect(mockSubscriber).toHaveBeenCalledTimes(1);
     });
 
-    it('Should not reset exercise', () => {
+    it('Should not reset exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(httpErrorResponse));
         const mockSubscriber = jest.fn();
@@ -121,7 +127,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.resetProgrammingExercise(456);
         expect(exerciseService.reset).toHaveBeenCalledWith(456);
+        expect(exerciseService.reset).toHaveBeenCalledTimes(1);
         expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
+        expect(mockSubscriber).toHaveBeenCalledTimes(1);
     });
 
     it('Should delete exercise', () => {
@@ -141,10 +149,12 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
         expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
+        expect(programmingExerciseService.delete).toHaveBeenCalledTimes(1);
         expect(mockSubscriber).toHaveBeenCalledWith('');
+        expect(mockSubscriber).toHaveBeenCalledTimes(1);
     });
 
-    it('Should not delete exercise', () => {
+    it('Should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(httpErrorResponse));
         const mockSubscriber = jest.fn();
@@ -154,7 +164,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
         expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
+        expect(programmingExerciseService.delete).toHaveBeenCalledTimes(1);
         expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
+        expect(mockSubscriber).toHaveBeenCalledTimes(1);
     });
 
     it('Should open import modal', () => {
@@ -163,6 +175,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledTimes(1);
     });
 
     it('Should open edit selected modal', () => {
@@ -171,6 +184,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openEditSelectedModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledTimes(1);
     });
 
     it('Should open repo export modal', () => {
@@ -179,10 +193,11 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openRepoExportModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledTimes(1);
     });
 
     it('Should return exercise id', () => {
-        expect(comp.trackId(0, programmingExercise)).toEqual(456);
+        expect(comp.trackId(0, programmingExercise)).toBe(456);
     });
 
     describe('ProgrammingExercise Search Exercises', () => {
@@ -238,7 +253,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleProgrammingExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises.length).toEqual(0);
+            expect(comp.selectedProgrammingExercises.length).toBe(0);
         });
 
         it('Should select all', () => {
@@ -246,7 +261,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleAllProgrammingExercises();
 
             // THEN
-            expect(comp.selectedProgrammingExercises.length).toEqual(comp.programmingExercises.length);
+            expect(comp.selectedProgrammingExercises.length).toBe(comp.programmingExercises.length);
         });
 
         it('Should deselect all', () => {
@@ -255,7 +270,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleAllProgrammingExercises(); // Deselect all
 
             // THEN
-            expect(comp.selectedProgrammingExercises.length).toEqual(0);
+            expect(comp.selectedProgrammingExercises.length).toBe(0);
         });
 
         it('Should check correctly if selected', () => {

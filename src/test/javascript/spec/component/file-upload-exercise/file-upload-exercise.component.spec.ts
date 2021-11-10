@@ -49,6 +49,10 @@ describe('FileUploadExercise Management Component', () => {
         comp.fileUploadExercises = [fileUploadExercise];
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
@@ -85,10 +89,11 @@ describe('FileUploadExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteFileUploadExercise(456);
         expect(fileUploadExerciseService.delete).toHaveBeenCalledWith(456);
+        expect(fileUploadExerciseService.delete).toHaveBeenCalledTimes(1);
     });
 
     it('Should return exercise id', () => {
-        expect(comp.trackId(0, fileUploadExercise)).toEqual(456);
+        expect(comp.trackId(0, fileUploadExercise)).toBe(456);
     });
 
     describe('FileUploadExercise Search Exercises', () => {

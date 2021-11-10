@@ -60,23 +60,18 @@ describe('Course Management Exercises Component', () => {
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);
         comp = fixture.componentInstance;
         courseService = TestBed.inject(CourseManagementService);
-        findStub = jest.spyOn(courseService, 'find');
-        findStub.mockReturnValue(of(new HttpResponse({ body: course })));
+        findStub = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(CourseManagementExercisesComponent).toBeTruthy();
     });
 
     it('should find course on on init', () => {
         comp.ngOnInit();
-        expect(comp.courseId).toEqual(course.id);
+        expect(comp.courseId).toBe(course.id);
         expect(findStub).toHaveBeenCalledWith(course.id);
+        expect(findStub).toHaveBeenCalledTimes(1);
     });
 
     it('should open search bar on button click', () => {
@@ -87,7 +82,7 @@ describe('Course Management Exercises Component', () => {
 
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
-        expect(comp.showSearch).toEqual(true);
+        expect(comp.showSearch).toBe(true);
         expect(searchBar).not.toBe(null);
     });
 });

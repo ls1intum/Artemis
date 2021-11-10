@@ -61,14 +61,14 @@ describe('ModelingExercise Management Component', () => {
         comp.modelingExercises = [modelingExercise];
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findStub = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
+        const findSpy = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [modelingExercise],
@@ -82,7 +82,7 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).toHaveBeenCalled();
+        expect(findSpy).toHaveBeenCalled();
         expect(comp.modelingExercises[0]).toEqual(modelingExercise);
     });
 
@@ -101,6 +101,7 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteModelingExercise(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
+        expect(modelingExerciseService.delete).toHaveBeenCalledTimes(1);
     });
 
     it('Should open modal', () => {
@@ -109,10 +110,11 @@ describe('ModelingExercise Management Component', () => {
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(ModelingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledTimes(1);
     });
 
     it('Should return exercise id', () => {
-        expect(comp.trackId(0, modelingExercise)).toEqual(456);
+        expect(comp.trackId(0, modelingExercise)).toBe(456);
     });
 
     describe('ModelingExercise Search Exercises', () => {
@@ -138,27 +140,30 @@ describe('ModelingExercise Management Component', () => {
     it('should return items id when tracked', () => {
         const item = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         item.id = 123;
-        expect(comp.trackId(2, item)).toEqual(123);
+        expect(comp.trackId(2, item)).toBe(123);
     });
 
     it('should delete the given exercise', fakeAsync(() => {
-        const deleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
-        const broadcastStub = jest.spyOn(eventManager, 'broadcast');
+        const deleteSpy = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
+        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         comp.deleteModelingExercise(2);
-        expect(deleteStub).toHaveBeenCalledWith(2);
+        expect(deleteSpy).toHaveBeenCalledWith(2);
+        expect(deleteSpy).toHaveBeenCalledTimes(1);
         tick();
-        expect(broadcastStub).toHaveBeenCalledWith({
+        expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'modelingExerciseListModification',
             content: 'Deleted an modelingExercise',
         });
+        expect(broadcastSpy).toBeCalledTimes(1);
     }));
 
     it('should sort rows', () => {
-        const sortStub = jest.spyOn(sortService, 'sortByProperty');
+        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
         comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
         comp.predicate = 'testPredicate';
         comp.reverse = true;
         comp.sortRows();
-        expect(sortStub).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
+        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
+        expect(sortSpy).toHaveBeenCalledTimes(1);
     });
 });
