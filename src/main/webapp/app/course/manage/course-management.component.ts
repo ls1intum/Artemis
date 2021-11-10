@@ -51,7 +51,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     loadAll() {
         this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
+                this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
 
                 this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);

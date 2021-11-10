@@ -188,6 +188,7 @@ public class CourseResource {
         validateRegistrationConfirmationMessage(course);
         validateComplaintsAndRequestMoreFeedbackConfig(course);
         validateOnlineCourseAndRegistrationEnabled(course);
+        validateAccuracyOfScores(course);
 
         createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -318,6 +319,7 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(updatedCourse);
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
+        validateAccuracyOfScores(updatedCourse);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -385,6 +387,16 @@ public class CourseResource {
         if (course.isOnlineCourse() && course.isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    private void validateAccuracyOfScores(Course course) {
+        if (course.getAccuracyOfScores() == null) {
+            throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
+        }
+        if (course.getAccuracyOfScores() < 0 || course.getAccuracyOfScores() > 5) {
+            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
+                    "accuracyOfScoresInvalid", true);
         }
     }
 
