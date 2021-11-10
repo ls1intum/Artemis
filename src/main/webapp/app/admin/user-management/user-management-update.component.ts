@@ -8,12 +8,18 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
 })
 export class UserManagementUpdateComponent implements OnInit {
+    USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
+    USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
+    PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+
     user: User;
     languages: string[];
     authorities: string[];

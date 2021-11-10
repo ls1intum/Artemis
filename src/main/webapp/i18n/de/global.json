@@ -148,14 +148,14 @@
                 },
                 "newpassword": {
                     "required": "Ein neues Passwort wird benötigt.",
-                    "minlength": "Das neue Passwort muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Das neue Passwort darf nicht länger als 100 Zeichen sein",
+                    "minlength": "Das neue Passwort muss mindestens {{min}} Zeichen lang sein",
+                    "maxlength": "Das neue Passwort darf nicht länger als {{max}} Zeichen sein",
                     "strength": "Passwortstärke:"
                 },
                 "confirmpassword": {
                     "required": "Du musst das Passwort bestätigen.",
-                    "minlength": "Das bestätigte Passwort muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Das bestätigte Passwort darf nicht länger als 100 Zeichen sein"
+                    "minlength": "Das bestätigte Passwort muss mindestens {{min}} Zeichen lang sein",
+                    "maxlength": "Das bestätigte Passwort darf nicht länger als {{max}} Zeichen sein"
                 },
                 "email": {
                     "required": "Deine E-Mail-Adresse wird benötigt.",

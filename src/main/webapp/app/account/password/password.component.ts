@@ -5,20 +5,24 @@ import { AccountService } from 'app/core/auth/account.service';
 import { PasswordService } from './password.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormBuilder, Validators } from '@angular/forms';
+import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
 })
 export class PasswordComponent implements OnInit {
+    PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+
     doNotMatch = false;
     error = false;
     success = false;
     user?: User;
     passwordForm = this.fb.group({
         currentPassword: ['', [Validators.required]],
-        newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
+        newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+        confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
     });
     passwordResetEnabled = false;
 
