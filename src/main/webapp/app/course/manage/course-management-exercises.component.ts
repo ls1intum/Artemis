@@ -112,10 +112,10 @@ export class CourseManagementExercisesComponent implements OnInit {
      * @param count to set the programmingExerciseCount to
      */
     setProgrammingExerciseCount(count: number) {
-        this._programmingExercisesCount = count;
+        this.programmingExercisesCount = count;
     }
     setFilteredProgrammingExerciseCount(count: number) {
-        this._filteredProgrammingExercisesCount = count;
+        this.filteredProgrammingExercisesCount = count;
     }
 
     updateNoResultMessage() {
