@@ -1538,4 +1538,49 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(textBlock.getFeedback().getId()).isNotNull();
         });
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testFeedbackIdIsSetToNullIfResultIsDeleted() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setTextBlocks(Set.of(ModelFactory.generateTextBlock(0, 15, "This is Part 1,"), ModelFactory.generateTextBlock(16, 35, " and this is Part 2."),
+                ModelFactory.generateTextBlock(36, 57, " There is also Part 3.")));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        textAssessmentDTO.getTextBlocks()
+                .forEach(textBlock -> feedbacks.add(new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1").reference(textBlock.getId())));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+
+        Result result = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
+                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+
+        textSubmission.setBlocks(textBlockRepository.findAllBySubmissionId(textSubmission.getId()));
+        resultRepo.save(result);
+        result.setSubmission(textSubmission);
+        textSubmission.addResult(result);
+        submissionRepository.save(textSubmission);
+
+        final var feedbacksToUpdate = result.getFeedbacks();
+        feedbacksToUpdate.forEach(feedback -> feedback.setResult(result));
+        feedbackRepository.saveAll(feedbacksToUpdate);
+
+        request.delete("/api/participations/" + result.getParticipation().getId() + "/text-submissions/" + result.getSubmission().getId() + "/results/" + result.getId(),
+                HttpStatus.OK);
+        assertThat(resultRepo.existsById(result.getId())).isFalse();
+        final var updatedBlocks = textBlockRepository.findAll();
+        final var feedbacks2 = feedbackRepository.findAll();
+        textBlockRepository.findAll().forEach(textBlock -> {
+            assertThat(textBlock.getFeedback().getId()).isNull();
+        });
+    }
 }

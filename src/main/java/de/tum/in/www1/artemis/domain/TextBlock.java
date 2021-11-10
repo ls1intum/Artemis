@@ -63,6 +63,7 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private Double addedDistance;
 
+    // There is a foreign key on delete set null
     @OneToOne
     @JsonIgnore
     private Feedback feedback;

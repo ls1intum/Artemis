@@ -9,5 +9,6 @@
             SET
                 tb.feedback_id = f.id;
         </sql>
+        <addForeignKeyConstraint baseColumnNames="feedback_id" baseTableName="text_block" constraintName="fk_text_block_feedback_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="feedback" onDelete="SET NULL"/>
     </changeSet>
 </databaseChangeLog>
