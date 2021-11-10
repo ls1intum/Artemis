@@ -125,4 +125,26 @@ public class NotificationSettingsServiceTest {
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
         assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isFalse();
     }
+
+    /**
+     * Tests the method checkLoadedNotificationSettingsForCorrectness with an empty input
+     */
+    @Test
+    public void testCheckLoadedNotificationSettingsForCorrectness_empty() {
+        Set<NotificationSetting> testSet = new HashSet<>();
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+    }
+
+    /**
+     * Tests the method checkLoadedNotificationSettingsForCorrectness with an incomplete input
+     */
+    @Test
+    public void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
+        Set<NotificationSetting> testSet = new HashSet<>();
+        testSet.add(completeNotificationSettingA);
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet).contains(completeNotificationSettingA);
+    }
 }

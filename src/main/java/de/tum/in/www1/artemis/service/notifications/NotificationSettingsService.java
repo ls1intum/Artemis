@@ -180,17 +180,26 @@ public class NotificationSettingsService {
      * If the loaded set has a different size from the default settings both sets have to be merged
      * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
      */
-    public void checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
+    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
         if (loadedNotificationSettingSet.isEmpty()) {
-            loadedNotificationSettingSet = DEFAULT_NOTIFICATION_SETTINGS;
+            return DEFAULT_NOTIFICATION_SETTINGS;
         }
         // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
         if (loadedNotificationSettingSet.size() != DEFAULT_NOTIFICATION_SETTINGS.size()) {
             Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>();
             updatedNotificationSettingSet.addAll(DEFAULT_NOTIFICATION_SETTINGS);
-            updatedNotificationSettingSet.addAll(loadedNotificationSettingSet);
-            loadedNotificationSettingSet = updatedNotificationSettingSet;
+
+            loadedNotificationSettingSet.forEach(loadedSetting -> {
+                DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
+                    if (defaultSetting.getSettingId().equals(loadedSetting.getSettingId())) {
+                        updatedNotificationSettingSet.remove(defaultSetting);
+                        updatedNotificationSettingSet.add(loadedSetting);
+                    }
+                });
+            });
+            return updatedNotificationSettingSet;
         }
+        return loadedNotificationSettingSet;
     }
 
     /**
