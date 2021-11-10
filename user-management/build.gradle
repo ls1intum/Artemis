@@ -94,6 +94,8 @@ sourceSets {
             include 'de/tum/in/www1/artemis/config/RestTemplateConfiguration.*'
             include 'de/tum/in/www1/artemis/config/auth/AtheneAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
             include 'de/tum/in/www1/artemis/config/auth/JiraAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/config/connector/GitLabApiConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/connector/JenkinsServerConfiguration.*'
 
             // de.tum.in.www1.artemis.service
             include 'de/tum/in/www1/artemis/service/FilePathService.*'
@@ -167,6 +169,11 @@ sourceSets {
         java {
             srcDir file("../src/test")
             include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
+            include "java/de/tum/in/www1/artemis/util/DatabaseCleanupService.*"
+            include "java/de/tum/in/www1/artemis/util/ConfigUtil.*"
+
+            srcDir file("../src/main")
+            include "java/de/tum/in/www1/artemis/util/FileUtils.*"
         }
     }
     main {
