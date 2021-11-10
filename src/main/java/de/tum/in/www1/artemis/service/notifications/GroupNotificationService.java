@@ -56,7 +56,22 @@ public class GroupNotificationService {
     public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
             InstanceMessageSendService instanceMessageSendService) {
         notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
-        if (!exerciseAfterUpdate.getReleaseDate().isEqual(exerciseBeforeUpdate.getReleaseDate())) {
+
+        final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
+        final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
+        boolean releaseDateHasChanged = false;
+
+        if ((updatedReleaseDate == null && initialReleaseDate != null) || (updatedReleaseDate != null && initialReleaseDate == null)) {
+            releaseDateHasChanged = true;
+        }
+
+        if (!releaseDateHasChanged && updatedReleaseDate != null && initialReleaseDate != null) {
+            if (!exerciseAfterUpdate.getReleaseDate().isEqual(exerciseBeforeUpdate.getReleaseDate())) {
+                releaseDateHasChanged = true;
+            }
+        }
+
+        if (releaseDateHasChanged) {
             checkNotificationForExerciseRelease(exerciseAfterUpdate, instanceMessageSendService);
         }
     }
