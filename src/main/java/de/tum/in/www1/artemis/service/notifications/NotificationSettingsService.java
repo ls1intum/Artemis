@@ -175,6 +175,25 @@ public class NotificationSettingsService {
     }
 
     /**
+     * Checks the personal notificationSettings retrieved from the DB.
+     * If the loaded set is empty substitute it with the default settings
+     * If the loaded set has a different size from the default settings both sets have to be merged
+     * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
+     */
+    public void checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
+        if (loadedNotificationSettingSet.isEmpty()) {
+            loadedNotificationSettingSet = DEFAULT_NOTIFICATION_SETTINGS;
+        }
+        // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
+        if (loadedNotificationSettingSet.size() != DEFAULT_NOTIFICATION_SETTINGS.size()) {
+            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>();
+            updatedNotificationSettingSet.addAll(DEFAULT_NOTIFICATION_SETTINGS);
+            updatedNotificationSettingSet.addAll(loadedNotificationSettingSet);
+            loadedNotificationSettingSet = updatedNotificationSettingSet;
+        }
+    }
+
+    /**
      * Updates the notificationSettings by setting the current user
      * @param notificationSettings which might be saved the very first time and have no user set yet
      * @param currentUser who should be set
