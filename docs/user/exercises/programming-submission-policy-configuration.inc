@@ -1,7 +1,7 @@
 .. _configure_submission_policies:
 
-This section covers the lifecycle of submission policies of a programming exercise. One programming exercise might have
-no submission policy at all, or one submission policy, but never more than one. Submission policies are initially specified
+The submission policy defines the effect that a submission has on the participation of one participant in a programming exercise.
+A programming exercise might have no submission policy at all, or one submission policy, but never more than one. Submission policies are initially specified
 in the creation process of a programming exercise and can later be adjusted in the grading configuration of the particular programming exercise.
 
 .. note::
