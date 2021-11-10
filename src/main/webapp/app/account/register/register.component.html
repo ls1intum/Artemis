@@ -77,11 +77,21 @@
                             Your username is required.
                         </small>
 
-                        <small class="form-text text-danger" *ngIf="registerForm.get('login')?.errors?.minlength" jhiTranslate="register.messages.validate.login.minlength">
+                        <small
+                            class="form-text text-danger"
+                            *ngIf="registerForm.get('login')?.errors?.minlength"
+                            jhiTranslate="register.messages.validate.login.minlength"
+                            [translateValues]="{ min: USERNAME_MIN_LENGTH }"
+                        >
                             Your username is required to be at least 4 characters.
                         </small>
 
-                        <small class="form-text text-danger" *ngIf="registerForm.get('login')?.errors?.maxlength" jhiTranslate="register.messages.validate.login.maxlength">
+                        <small
+                            class="form-text text-danger"
+                            *ngIf="registerForm.get('login')?.errors?.maxlength"
+                            jhiTranslate="register.messages.validate.login.maxlength"
+                            [translateValues]="{ max: USERNAME_MAX_LENGTH }"
+                        >
                             Your username cannot be longer than 50 characters.
                         </small>
 

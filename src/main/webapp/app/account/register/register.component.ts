@@ -17,6 +17,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     @ViewChild('login', { static: false })
     login?: ElementRef;
 
+    readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
+    readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 

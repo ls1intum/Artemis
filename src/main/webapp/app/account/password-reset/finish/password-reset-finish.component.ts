@@ -14,8 +14,8 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     @ViewChild('newPassword', { static: false })
     newPassword?: ElementRef;
 
-    PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
-    PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 
     initialized = false;
     doNotMatch = false;
