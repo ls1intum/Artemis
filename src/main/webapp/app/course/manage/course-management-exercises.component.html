@@ -11,14 +11,14 @@
         </div>
         <div class="col text-end align-self-center">
             <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="showSearch = !showSearch">
-                {{ 'artemisApp.course.search.toggleButton.' + showSearch | artemisTranslate }}
+                {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
             </button>
         </div>
     </div>
 
     <jhi-course-management-exercises-search *ngIf="showSearch" (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
     <div *ngIf="showNoResultMessage" class="alert alert-secondary" role="alert">
-        {{ 'artemisApp.course.search.noResults' | artemisTranslate }}
+        {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
     </div>
     <jhi-alert></jhi-alert>
 
