@@ -23,7 +23,7 @@
             </div>
             <ng-template #tabPlaceholder><div></div></ng-template>
             <div class="d-flex align-items-center">
-                <jhi-programming-exercise-configure-grading-status
+                <jhi-programming-exercise-configure-grading-status *ngIf="activeTab != 'submission-policy'"
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                     [hasUnsavedTestCaseChanges]="!!changedTestCaseIds.length"
                     [hasUnsavedCategoryChanges]="!!changedCategoryIds.length"
@@ -47,7 +47,7 @@
                     (onUpdate)="updateSubmissionPolicy()"
                     (onToggle)="toggleSubmissionPolicy()"
                 ></jhi-programming-exercise-grading-submission-policy-configuration-actions>
-                <jhi-submission-policy-update [programmingExercise]="programmingExercise" [editable]="true"></jhi-submission-policy-update>
+                <jhi-submission-policy-update [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor"></jhi-submission-policy-update>
                 <ng-container *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy != undefined">
                     <ngb-alert [dismissible]="false" [type]="'info'">
                         <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>

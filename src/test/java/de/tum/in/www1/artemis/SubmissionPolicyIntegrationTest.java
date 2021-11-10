@@ -99,8 +99,14 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "other-editor1", roles = "EDITOR")
-    public void test_addSubmissionPolicyToProgrammingExercise_forbidden_foreignEditor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void test_addSubmissionPolicyToProgrammingExercise_forbidden_editor() throws Exception {
+        test_addSubmissionPolicyToProgrammingExercise_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void test_addSubmissionPolicyToProgrammingExercise_forbidden_foreignInstructor() throws Exception {
         test_addSubmissionPolicyToProgrammingExercise_forbidden();
     }
 
@@ -189,8 +195,14 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "other-editor1", roles = "EDITOR")
-    public void test_updateSubmissionPolicy_forbidden_foreignEditor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "TA")
+    public void test_updateSubmissionPolicy_forbidden_editor() throws Exception {
+        test_updateSubmissionPolicy_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void test_updateSubmissionPolicy_forbidden_foreignInstructor() throws Exception {
         test_updateSubmissionPolicy_forbidden();
     }
 
