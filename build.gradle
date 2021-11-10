@@ -285,6 +285,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.1.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
+    testImplementation "com.opencsv:opencsv:5.5.2"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20210307"
