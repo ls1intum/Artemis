@@ -70,10 +70,6 @@ export class MockMetisService {
         return false;
     }
 
-    getNumberOfAnswerPosts(post: Post) {
-        return post.answers?.length! ? post.answers?.length! : 0;
-    }
-
     getLinkForPost(post?: Post): RouteComponents {
         if (post?.lecture) {
             return ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];

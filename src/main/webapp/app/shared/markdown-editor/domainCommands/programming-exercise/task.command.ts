@@ -5,7 +5,6 @@ export class TaskCommand extends DomainTagCommand {
     public static readonly identifier = '[task]';
     public static readonly taskPlaceholder = 'Task Short Description';
     public static readonly testCasePlaceholder = 'testCaseName';
-    public static readonly hintsPlaceholder = 'hintId1, hintId2';
 
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.taskCommand';
 
@@ -21,7 +20,7 @@ export class TaskCommand extends DomainTagCommand {
     }
 
     private getTask() {
-        return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder}){${TaskCommand.hintsPlaceholder}}`;
+        return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
     }
 
     public getTagRegex(flags = ''): RegExp {
