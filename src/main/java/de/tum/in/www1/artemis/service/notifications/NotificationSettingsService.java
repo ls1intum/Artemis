@@ -179,6 +179,7 @@ public class NotificationSettingsService {
      * If the loaded set is empty substitute it with the default settings
      * If the loaded set has a different size from the default settings both sets have to be merged
      * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
+     * @return the updated and correct notification settings
      */
     public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
         if (loadedNotificationSettingSet.isEmpty()) {
