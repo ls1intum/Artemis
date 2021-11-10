@@ -156,13 +156,13 @@ describe('Exam assessment', () => {
 
         it('Assesses quiz automatically', () => {
             if (dayjs().isBefore(examEnd)) {
-                cy.wait(examEnd.diff(dayjs().add(1, 'second'), 'ms'));
+                cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
             cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
             cy.contains('Evaluate quizzes').click();
             if (dayjs().isBefore(resultDate)) {
-                cy.wait(examEnd.diff(dayjs().add(1, 'second'), 'ms'));
+                cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
