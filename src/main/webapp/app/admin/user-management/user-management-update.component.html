@@ -19,7 +19,7 @@
                         [(ngModel)]="user.login"
                         required
                         [minLength]="USERNAME_MIN_LENGTH"
-                        [maxlength]="USERNAME_MAX_LENGTH"
+                        [maxLength]="USERNAME_MAX_LENGTH"
                         pattern="^[_.@A-Za-z0-9-]*$"
                     />
 
@@ -79,7 +79,7 @@
                         id="password"
                         placeholder="{{ 'global.menu.account.password' | artemisTranslate }}"
                         [minLength]="PASSWORD_MIN_LENGTH"
-                        [maxlength]="PASSWORD_MAX_LENGTH"
+                        [maxLength]="PASSWORD_MAX_LENGTH"
                         #password="ngModel"
                         [(ngModel)]="user.password"
                     />
