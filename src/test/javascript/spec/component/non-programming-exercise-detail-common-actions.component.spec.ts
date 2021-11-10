@@ -45,9 +45,13 @@ describe('Exercise detail common actions Component', () => {
                 MockComponent(ExternalSubmissionButtonComponent),
                 MockRouterLinkDirective,
             ],
-            providers: [MockProvider(TextExerciseService), { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService }, MockProvider(ModelingExerciseService), { provide: Router, useClass: MockRouter}],
-        })
-            .compileComponents();
+            providers: [
+                MockProvider(TextExerciseService),
+                { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                MockProvider(ModelingExerciseService),
+                { provide: Router, useClass: MockRouter },
+            ],
+        }).compileComponents();
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });
