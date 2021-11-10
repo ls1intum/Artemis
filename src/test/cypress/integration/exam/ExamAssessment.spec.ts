@@ -135,7 +135,7 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(15, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             resultDate = examEnd.add(10, 'seconds');
             prepareExam(examEnd, resultDate);
         });
@@ -161,7 +161,7 @@ describe('Exam assessment', () => {
             cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
             cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
             cy.contains('Evaluate quizzes').click();
-            if (dayjs().isBefore(examEnd)) {
+            if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs().add(1, 'second'), 'ms'));
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
