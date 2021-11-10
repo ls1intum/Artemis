@@ -291,14 +291,11 @@ public class ProgrammingExerciseGradingService {
 
         final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
-        // We only update the latest automatic results here, later manual assessments are not affected
-        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
-        // Also update manual results
-        final List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
-
         final List<StudentParticipation> studentParticipations = new ArrayList<>();
-        studentParticipations.addAll(participations);
-        studentParticipations.addAll(participationsWithManualResult);
+        // We only update the latest automatic results here, later manual assessments are not affected
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId()));
+        // Also update manual results
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId()));
 
         final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
 
@@ -313,8 +310,19 @@ public class ProgrammingExerciseGradingService {
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
-        throw new UnsupportedOperationException("ToDo: implement");
-        // like updateAllResults, but with different database query only fetching participations without individual due date
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+
+        final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
+
+        final List<StudentParticipation> studentParticipations = new ArrayList<>();
+        // We only update the latest automatic results here, later manual assessments are not affected
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+        // Also update manual results
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+
+        final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
+
+        return Stream.concat(updatedTemplateAndSolutionResult, updatedStudentResults).toList();
     }
 
     /**
