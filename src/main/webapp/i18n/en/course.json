@@ -98,7 +98,8 @@
                     "false": "Show Advanced Search"
                 },
                 "cardTitle": "Search Exercises",
-                "fieldExerciseName": "Search by exercise name",
+                "labelExerciseName": "Search by exercise name",
+                "fieldExerciseName": "Exercise name",
                 "labelExerciseCategory": "Category",
                 "fieldExerciseCategory": "Category",
                 "labelExerciseType": "Exercise Type",

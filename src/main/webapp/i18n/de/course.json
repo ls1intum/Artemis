@@ -98,7 +98,8 @@
                     "false": "Verstecke erweiterte Suche"
                 },
                 "cardTitle": "Aufgaben durchsuchen",
-                "fieldExerciseName": "Aufgaben nach Namen durchsuchen",
+                "labelExerciseName": "Aufgaben nach Namen durchsuchen",
+                "fieldExerciseName": "Aufgaben Name",
                 "labelExerciseCategory": "Kategorie",
                 "fieldExerciseCategory": "Kategorie",
                 "labelExerciseType": "Aufgabentyp",
