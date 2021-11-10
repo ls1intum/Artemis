@@ -70,7 +70,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     loadAndFilterCourses() {
         this.courseService.findAllForDashboard().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
+                this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
@@ -84,6 +84,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         });
                     }
                 });
+
                 this.nextRelevantExams = this.exams.filter(
                     (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
                 );
