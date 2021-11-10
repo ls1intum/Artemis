@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
@@ -134,6 +133,7 @@ public class NotificationSettingsServiceTest {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        verify(notificationSettingRepository, times(0)).saveAll(any());
     }
 
     /**
@@ -146,5 +146,6 @@ public class NotificationSettingsServiceTest {
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         assertThat(testSet).contains(completeNotificationSettingA);
+        verify(notificationSettingRepository, times(1)).saveAll(any());
     }
 }

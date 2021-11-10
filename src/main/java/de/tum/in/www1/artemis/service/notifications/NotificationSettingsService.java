@@ -198,6 +198,8 @@ public class NotificationSettingsService {
                     }
                 });
             });
+            // update DB to fix inconsistencies and avoid redundant future merges
+            notificationSettingRepository.saveAll(updatedNotificationSettingSet);
             return updatedNotificationSettingSet;
         }
         return loadedNotificationSettingSet;
