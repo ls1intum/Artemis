@@ -575,7 +575,10 @@
                     [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                 ></fa-icon>
                 <div class="table-responsive">
-                    <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests && moreFeedbackRequests!.length > 0; else noMoreFeedbackRequests">
+                    <table
+                        class="table table-striped exercise-table"
+                        *ngIf="submissionsWithMoreFeedbackRequests && submissionsWithMoreFeedbackRequests!.length > 0; else noMoreFeedbackRequests"
+                    >
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -586,26 +589,26 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let moreFeedbackRequest of moreFeedbackRequests; let i = index">
+                            <tr *ngFor="let moreFeedbackRequest of submissionsWithMoreFeedbackRequests; let i = index">
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ moreFeedbackRequest.submittedTime | artemisDate }}</td>
+                                <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [result]="moreFeedbackRequest.result"></jhi-result>
+                                    <jhi-result [result]="moreFeedbackRequest.complaint.result"></jhi-result>
                                 </td>
                                 <td>
-                                    <span *ngIf="moreFeedbackRequest.accepted !== undefined">{{
+                                    <span *ngIf="moreFeedbackRequest.complaint.accepted !== undefined">{{
                                         'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestEvaluated' | artemisTranslate
                                     }}</span>
-                                    <span *ngIf="moreFeedbackRequest.accepted === undefined"
+                                    <span *ngIf="moreFeedbackRequest.complaint.accepted === undefined"
                                         >{{ 'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestNotEvaluated' | artemisTranslate }}
                                     </span>
                                 </td>
                                 <td>
                                     <a
-                                        *ngIf="moreFeedbackRequest.accepted === undefined; else continueButton"
+                                        *ngIf="moreFeedbackRequest.complaint.accepted === undefined; else continueButton"
                                         class="btn btn-success btn-sm"
-                                        [routerLink]="getAssessmentLink(moreFeedbackRequest)"
-                                        [queryParams]="getComplaintQueryParams(moreFeedbackRequest)"
+                                        [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                        [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
@@ -613,8 +616,8 @@
                                     <ng-template #continueButton>
                                         <button
                                             class="btn btn-primary btn-sm"
-                                            [routerLink]="getAssessmentLink(moreFeedbackRequest)"
-                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest)"
+                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                         >
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
