@@ -12,8 +12,8 @@ import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from 'app/app.constants';
     templateUrl: './password.component.html',
 })
 export class PasswordComponent implements OnInit {
-    PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
-    PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 
     doNotMatch = false;
     error = false;
