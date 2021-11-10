@@ -378,13 +378,14 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
         connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
+        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
-        // TODO test if this is irrelevant to the scheduled release notification -> if irrelevant simply delete
-        // groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
+                instanceMessageSendService);
 
         return savedProgrammingExercise;
     }
