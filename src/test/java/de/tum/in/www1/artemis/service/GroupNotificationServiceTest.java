@@ -98,7 +98,7 @@ public class GroupNotificationServiceTest {
 
         exercise = mock(Exercise.class);
         exerciseAlternative = mock(Exercise.class);
-        when(exerciseAlternative.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
+        when(exerciseAlternative.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(3));
 
         instanceMessageSendService = mock(InstanceMessageSendService.class);
         doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(EXERCISE_ID);
@@ -215,7 +215,7 @@ public class GroupNotificationServiceTest {
      * Auxiliary method to set the needed mocks for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
      */
     private void prepareMocksForCheckAndCreateAppropriateNotificationsWhenUpdatingExerciseTesting() {
-        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
+        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
         doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         doNothing().when(groupNotificationService).checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
     }
@@ -272,7 +272,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise_changedReleaseDate_undefinedReleaseDate_afterUpdate() {
         prepareMocksForCheckAndCreateAppropriateNotificationsWhenUpdatingExerciseTesting();
-        when(exerciseAlternative.getReleaseDate()).thenReturn(ZonedDateTime.now());
+        when(exerciseAlternative.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(3));
         when(exercise.getReleaseDate()).thenReturn(null);
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exerciseAlternative, exercise, NOTIFICATION_TEXT, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());

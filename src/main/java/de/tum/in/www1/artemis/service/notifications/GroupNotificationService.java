@@ -61,17 +61,43 @@ public class GroupNotificationService {
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
         boolean releaseDateHasChanged = false;
 
-        if ((updatedReleaseDate == null && initialReleaseDate != null) || (updatedReleaseDate != null && initialReleaseDate == null)) {
+        if ((updatedReleaseDate == null) != (initialReleaseDate == null)) {
             releaseDateHasChanged = true;
         }
 
         if (!releaseDateHasChanged && updatedReleaseDate != null && initialReleaseDate != null) {
-            if (!exerciseAfterUpdate.getReleaseDate().isEqual(exerciseBeforeUpdate.getReleaseDate())) {
+            if (!updatedReleaseDate.isEqual(initialReleaseDate)) {
                 releaseDateHasChanged = true;
             }
         }
 
-        if (releaseDateHasChanged) {
+        initializeCheckNotificationForExerciseRelease(releaseDateHasChanged, exerciseAfterUpdate, instanceMessageSendService);
+    }
+
+    /**
+     * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
+     * @param releaseDateHasChanged indicates if the release date has changed
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
+     * @param notificationText holds the custom change message for the notification process
+     * @param instanceMessageSendService can initiate a scheduled notification
+     */
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(boolean releaseDateHasChanged, Exercise exerciseAfterUpdate, String notificationText,
+            InstanceMessageSendService instanceMessageSendService) {
+        notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
+        initializeCheckNotificationForExerciseRelease(releaseDateHasChanged, exerciseAfterUpdate, instanceMessageSendService);
+    }
+
+    /**
+     * Auxiliary method that checks if the release date has been changed and is not in the past to initialize the process of creating a release notification
+     * @param releaseDateHasChanged indicates if the release date has been changed
+     * @param exerciseAfterUpdate is the updated exercise
+     * @param instanceMessageSendService is the provided instanceMessageSendService (needed as parameter to break cyclic dependencies)
+     */
+    private void initializeCheckNotificationForExerciseRelease(boolean releaseDateHasChanged, Exercise exerciseAfterUpdate, InstanceMessageSendService instanceMessageSendService) {
+        final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
+        // only initialize the process of checking and sending a release notification if
+        // the release date has changed and the release date is not in the past
+        if (releaseDateHasChanged && (updatedReleaseDate == null || !updatedReleaseDate.isBefore(ZonedDateTime.now()))) {
             checkNotificationForExerciseRelease(exerciseAfterUpdate, instanceMessageSendService);
         }
     }

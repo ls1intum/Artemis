@@ -647,8 +647,18 @@ public class ProgrammingExerciseService {
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
-        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExercise;
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+
+        final ZonedDateTime releaseDateBeforeUpdate = programmingExercise.getReleaseDate();
+        final ZonedDateTime releaseDateAfterUpdate = updatedProgrammingExercise.getReleaseDate();
+        boolean releaseDateHasChanged = false;
+        if ((releaseDateBeforeUpdate == null) != (releaseDateAfterUpdate == null)) {
+            releaseDateHasChanged = true;
+        }
+        if (releaseDateBeforeUpdate != null && releaseDateAfterUpdate != null && !releaseDateAfterUpdate.isEqual(releaseDateBeforeUpdate)) {
+            releaseDateHasChanged = true;
+        }
+
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
@@ -656,7 +666,7 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(releaseDateHasChanged, savedProgrammingExercise, notificationText,
                 instanceMessageSendService);
 
         return savedProgrammingExercise;
