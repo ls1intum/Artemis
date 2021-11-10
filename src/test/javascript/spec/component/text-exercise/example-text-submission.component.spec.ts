@@ -166,6 +166,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         textBlock2.computeId();
         submission.blocks = [textBlock1, textBlock2];
+        submission.text = "123456789";
         comp.result = result;
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
@@ -200,6 +201,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         textBlock2.computeId();
         submission.blocks = [textBlock1, textBlock2];
+        submission.text = "123456789";
         comp.result = result;
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
@@ -242,6 +244,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         textBlock2.computeId();
         submission.blocks = [textBlock1, textBlock2];
+        submission.text = "123456789";
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
         await comp.ngOnInit();
 
