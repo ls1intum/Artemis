@@ -135,7 +135,7 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(15, 'seconds');
             resultDate = examEnd.add(10, 'seconds');
             prepareExam(examEnd, resultDate);
         });
