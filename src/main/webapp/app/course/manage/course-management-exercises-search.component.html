@@ -3,7 +3,7 @@
         <h5 class="mb-0">{{ 'artemisApp.course.search.cardTitle' | artemisTranslate }}</h5>
     </div>
     <div class="card-body">
-        <div class="input-group form-group">
+        <div class="form-group">
             <input
                 id="exercise-search-input"
                 type="search"
@@ -12,9 +12,6 @@
                 [(ngModel)]="exerciseNameSearch"
                 (keydown.enter)="sendUpdate()"
             />
-            <div class="input-group-append">
-                <button id="saveFilterButton" class="btn btn-primary" type="button" (click)="sendUpdate()">{{ 'artemisApp.course.search.searchButton' | artemisTranslate }}</button>
-            </div>
         </div>
         <div class="row">
             <div class="form-group col">
@@ -40,6 +37,14 @@
                     </option>
                 </select>
             </div>
+        </div>
+        <div class="gap-2 d-flex">
+            <button id="resetFilterButton" class="btn btn-secondary offset-6 col-3" type="button" (click)="reset()">
+                {{ 'artemisApp.course.search.resetButton' | artemisTranslate }}
+            </button>
+            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="sendUpdate()">
+                {{ 'artemisApp.course.search.searchButton' | artemisTranslate }}
+            </button>
         </div>
     </div>
 </div>

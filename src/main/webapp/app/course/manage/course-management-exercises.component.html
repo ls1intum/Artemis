@@ -4,25 +4,25 @@
             <h3>
                 <span>
                     {{ course.title }}
-                    - {{ getExerciseCount() }}
+                    - {{ exerciseCount }}
                     {{ 'artemisApp.course.exercises' | artemisTranslate }}
                 </span>
             </h3>
         </div>
         <div class="col text-end align-self-center">
-            <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
+            <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="showSearch = !showSearch">
                 {{ 'artemisApp.course.search.toggleButton.' + showSearch | artemisTranslate }}
             </button>
         </div>
     </div>
 
     <jhi-course-management-exercises-search *ngIf="showSearch" (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
-    <div *ngIf="showSearch && getFilteredExerciseCount() == 0 && !exerciseFilter.isEmpty()" class="alert alert-secondary" role="alert">
+    <div *ngIf="showNoResultMessage" class="alert alert-secondary" role="alert">
         {{ 'artemisApp.course.search.noResults' | artemisTranslate }}
     </div>
     <jhi-alert></jhi-alert>
 
-    <jhi-course-exercise-card [hidden]="shouldHideExerciseCard('programming')" headingJhiTranslate="artemisApp.course.programmingExercises">
+    <jhi-course-exercise-card [hidden]="hideProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.programmingExercises">
         <jhi-programming-exercise
             *jhiExtensionPoint="
                 overrideProgrammingExerciseCard;
@@ -42,11 +42,7 @@
         ></jhi-programming-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card
-        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
-        headingJhiTranslate="artemisApp.course.quizExercises"
-        [hidden]="shouldHideExerciseCard('quiz')"
-    >
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.quizExercises" [hidden]="hideQuizExerciseCard">
         <jhi-quiz-exercise
             [embedded]="true"
             [course]="course"
@@ -56,11 +52,7 @@
         ></jhi-quiz-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card
-        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
-        headingJhiTranslate="artemisApp.course.modelingExercises"
-        [hidden]="shouldHideExerciseCard('modeling')"
-    >
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.modelingExercises" [hidden]="hideModelingExerciseCard">
         <jhi-modeling-exercise
             [embedded]="true"
             [course]="course"
@@ -70,11 +62,7 @@
         ></jhi-modeling-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card
-        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
-        headingJhiTranslate="artemisApp.course.textExercises"
-        [hidden]="shouldHideExerciseCard('text')"
-    >
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.textExercises" [hidden]="hideTextExerciseCard">
         <jhi-text-exercise
             [embedded]="true"
             [course]="course"
@@ -87,7 +75,7 @@
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         headingJhiTranslate="artemisApp.course.fileUploadExercises"
-        [hidden]="shouldHideExerciseCard('file-upload')"
+        [hidden]="hideFileUploadExerciseCard"
     >
         <jhi-file-upload-exercise
             [embedded]="true"

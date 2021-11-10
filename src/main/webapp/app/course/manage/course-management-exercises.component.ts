@@ -12,17 +12,25 @@ export class CourseManagementExercisesComponent implements OnInit {
     course: Course;
     courseId = 0;
     showSearch = false;
-    quizExercisesCount = 0;
-    textExercisesCount = 0;
-    programmingExercisesCount = 0;
-    modelingExercisesCount = 0;
-    fileUploadExercisesCount = 0;
-    filteredQuizExercisesCount = 0;
-    filteredTextExercisesCount = 0;
-    filteredProgrammingExercisesCount = 0;
-    filteredModelingExercisesCount = 0;
-    filteredFileUploadExercisesCount = 0;
-    exerciseFilter: ExerciseFilter;
+    private _quizExercisesCount = 0;
+    private _textExercisesCount = 0;
+    private _programmingExercisesCount = 0;
+    private _modelingExercisesCount = 0;
+    private _fileUploadExercisesCount = 0;
+    private _filteredQuizExercisesCount = 0;
+    private _filteredTextExercisesCount = 0;
+    private _filteredProgrammingExercisesCount = 0;
+    private _filteredModelingExercisesCount = 0;
+    private _filteredFileUploadExercisesCount = 0;
+    private _exerciseFilter: ExerciseFilter;
+    exerciseCount = 0;
+    filteredExerciseCount = 0;
+    showNoResultMessage = false;
+    hideQuizExerciseCard = false;
+    hideTextExerciseCard = false;
+    hideProgrammingExerciseCard = false;
+    hideModelingExerciseCard = false;
+    hideFileUploadExerciseCard = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
@@ -30,13 +38,72 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     constructor(private courseService: CourseManagementService, private route: ActivatedRoute) {}
 
+    get exerciseFilter(): ExerciseFilter {
+        return this._exerciseFilter;
+    }
+
+    set exerciseFilter(value: ExerciseFilter) {
+        this._exerciseFilter = value;
+        this.updateFilter();
+    }
+
+    set filteredModelingExercisesCount(value: number) {
+        this._filteredModelingExercisesCount = value;
+        this.updateFilteredExerciseCount();
+    }
+
+    set filteredProgrammingExercisesCount(value: number) {
+        this._filteredProgrammingExercisesCount = value;
+        this.updateFilteredExerciseCount();
+    }
+
+    set filteredTextExercisesCount(value: number) {
+        this._filteredTextExercisesCount = value;
+        this.updateFilteredExerciseCount();
+    }
+
+    set filteredQuizExercisesCount(value: number) {
+        this._filteredQuizExercisesCount = value;
+        this.updateFilteredExerciseCount();
+    }
+
+    set filteredFileUploadExercisesCount(value: number) {
+        this._filteredFileUploadExercisesCount = value;
+        this.updateFilteredExerciseCount();
+    }
+
+    set fileUploadExercisesCount(value: number) {
+        this._fileUploadExercisesCount = value;
+        this.updateExerciseCount();
+    }
+
+    set modelingExercisesCount(value: number) {
+        this._modelingExercisesCount = value;
+        this.updateExerciseCount();
+    }
+
+    set programmingExercisesCount(value: number) {
+        this._programmingExercisesCount = value;
+        this.updateExerciseCount();
+    }
+
+    set textExercisesCount(value: number) {
+        this._textExercisesCount = value;
+        this.updateExerciseCount();
+    }
+
+    set quizExercisesCount(value: number) {
+        this._quizExercisesCount = value;
+        this.updateExerciseCount();
+    }
+
     /**
      * initializes courseId and course
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
         this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
-        this.exerciseFilter = new ExerciseFilter('');
+        this._exerciseFilter = new ExerciseFilter('');
     }
 
     /**
@@ -45,38 +112,40 @@ export class CourseManagementExercisesComponent implements OnInit {
      * @param count to set the programmingExerciseCount to
      */
     setProgrammingExerciseCount(count: number) {
-        this.programmingExercisesCount = count;
+        this._programmingExercisesCount = count;
     }
     setFilteredProgrammingExerciseCount(count: number) {
-        this.filteredProgrammingExercisesCount = count;
+        this._filteredProgrammingExercisesCount = count;
     }
 
-    /**
-     * Toggles the search bar
-     */
-    toggleSearch() {
-        this.showSearch = !this.showSearch;
-        // Reset the filter when the search bar is closed
-        if (!this.showSearch) {
-            this.exerciseFilter = new ExerciseFilter();
-        }
+    updateNoResultMessage() {
+        this.showNoResultMessage = this.showSearch && this.filteredExerciseCount === 0 && !this._exerciseFilter.isEmpty();
     }
 
-    getExerciseCount(): number {
-        return this.quizExercisesCount + this.programmingExercisesCount + this.modelingExercisesCount + this.fileUploadExercisesCount + this.textExercisesCount;
+    updateExerciseCount() {
+        this.exerciseCount = this._quizExercisesCount + this._programmingExercisesCount + this._modelingExercisesCount + this._fileUploadExercisesCount + this._textExercisesCount;
     }
 
-    getFilteredExerciseCount(): number {
-        return (
-            this.filteredProgrammingExercisesCount +
-            this.filteredQuizExercisesCount +
-            this.filteredModelingExercisesCount +
-            this.filteredTextExercisesCount +
-            this.filteredFileUploadExercisesCount
-        );
+    updateFilteredExerciseCount() {
+        this.filteredExerciseCount =
+            this._filteredProgrammingExercisesCount +
+            this._filteredQuizExercisesCount +
+            this._filteredModelingExercisesCount +
+            this._filteredTextExercisesCount +
+            this._filteredFileUploadExercisesCount;
+        this.updateNoResultMessage();
     }
 
-    shouldHideExerciseCard(type: string): boolean {
-        return !['all', type].includes(this.exerciseFilter.exerciseTypeSearch);
+    updateFilter() {
+        this.hideQuizExerciseCard = this.shouldHideExerciseCard('quiz');
+        this.hideTextExerciseCard = this.shouldHideExerciseCard('text');
+        this.hideProgrammingExerciseCard = this.shouldHideExerciseCard('programming');
+        this.hideModelingExerciseCard = this.shouldHideExerciseCard('modeling');
+        this.hideFileUploadExerciseCard = this.shouldHideExerciseCard('file-upload');
+        this.updateNoResultMessage();
+    }
+
+    private shouldHideExerciseCard(type: string): boolean {
+        return !['all', type].includes(this._exerciseFilter.exerciseTypeSearch);
     }
 }

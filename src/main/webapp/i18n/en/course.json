@@ -92,6 +92,7 @@
             "fileUploadExercises": "File Upload Exercises",
             "search": {
                 "searchButton": "Search",
+                "resetButton": "Reset",
                 "toggleButton": {
                     "true": "Hide Advanced Search",
                     "false": "Show Advanced Search"

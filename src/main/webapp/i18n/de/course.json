@@ -92,6 +92,7 @@
             "fileUploadExercises": "Dateiupload-Aufgabe",
             "search": {
                 "searchButton": "Suchen",
+                "resetButton": "Zurücksetzen",
                 "toggleButton": {
                     "true": "Zeige erweiterte Suche",
                     "false": "Verstecke erweiterte Suche"

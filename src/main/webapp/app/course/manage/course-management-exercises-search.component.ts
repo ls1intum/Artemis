@@ -33,4 +33,15 @@ export class CourseManagementExercisesSearchComponent implements OnInit {
     sendUpdate() {
         this.exerciseFilter.emit(new ExerciseFilter(this.exerciseNameSearch, this.exerciseCategorySearch, this.exerciseTypeSearch));
     }
+
+    /**
+     * Resets all inputs to default values
+     */
+    reset() {
+        const filter = new ExerciseFilter();
+        this.exerciseNameSearch = filter.exerciseNameSearch;
+        this.exerciseCategorySearch = filter.exerciseCategorySearch;
+        this.exerciseTypeSearch = filter.exerciseTypeSearch;
+        this.sendUpdate();
+    }
 }
