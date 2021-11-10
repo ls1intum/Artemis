@@ -10,6 +10,7 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
@@ -326,8 +327,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
-        const isSumOfWeightsOK = this.isSumOfWeightsGreaterThanZero(testCaseUpdates);
-        if (!isSumOfWeightsOK) {
+        if (!this.isSumOfWeightsOk(testCaseUpdates)) {
             this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
             this.isSaving = false;
             return;
@@ -713,7 +713,25 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .subscribe();
     }
 
-    private isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
+    /**
+     * The sum of all test weights has to be at least zero. For exercises with purely automatic assessment the weight has to be greater than zero.
+     * @param testCaseUpdates the changed test cases with not-yet-verified settings.
+     * @private
+     */
+    private isSumOfWeightsOk(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
+        const totalTestCaseWeights = this.sumOfTestCaseWeights(testCaseUpdates);
+        if (this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC) {
+            // Students can only get points when at least one test case is weighted > 0
+            return totalTestCaseWeights > 0;
+        } else {
+            // When manual assessment is enabled, students can also reach full
+            // marks just with manual feedbacks.
+            // Therefore, it is okay if all weights are set to 0.
+            return totalTestCaseWeights >= 0;
+        }
+    }
+
+    private sumOfTestCaseWeights(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): number {
         let weight = 0;
         this.testCases.forEach((testCase) => {
             const index = testCaseUpdates.findIndex((update) => testCase.id === update.id);
@@ -723,7 +741,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 weight += testCase.weight ?? 0;
             }
         });
-        return weight > 0;
+        return weight;
     }
 
     getEventValue(event: Event) {
