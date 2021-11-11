@@ -306,6 +306,7 @@
         "invalid.auxiliary.repository.name": "At least one Auxiliary Repository name is invalid or duplicated. Please make sure all names are appropriate and do not contain duplications.",
         "invalid.auxiliary.repository.checkout.directory": "At least one Auxiliary Repository checkout directory is invalid or duplicated. Please make sure all checkout directories are appropriate and do not contain duplications.",
         "invalid.auxiliary.repository.description": "The description of at least one Auxiliary Repository is too long!",
+        "invalid.testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
         "unexpectedError": "An unexpected error occurred: {{error}}"
     },
     "aboutUs": "About us",
