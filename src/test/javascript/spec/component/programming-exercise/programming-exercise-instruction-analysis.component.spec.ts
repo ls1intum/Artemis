@@ -11,6 +11,7 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exercise-instruction-analysis.service';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -41,7 +42,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             TestBed.configureTestingModule({
                 imports: [TranslateModule.forRoot(), ArtemisTestModule],
                 declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
-                providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService }],
+                providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
             })
                 .compileComponents()
                 .then(() => {
@@ -129,6 +130,16 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 comp.taskRegex = taskRegex;
                 comp.exerciseTestCases = exerciseTestCases;
                 comp.exerciseHints = exerciseHints;
+
+                const completeAnalysis = {
+                    '0': { invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] },
+                    '2': {
+                        invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'],
+                    },
+                };
+
+                analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, missingTestCases });
+
                 comp.ngOnInit();
 
                 triggerChanges(
