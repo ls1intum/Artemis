@@ -955,8 +955,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test1").getId()));
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test2").getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is over 100% -> 105
@@ -965,7 +967,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(response.getScore()).isEqualTo(105);
 
-        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test3").getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
@@ -1482,7 +1485,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     public void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
-        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test" + feedbacks.size()).getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
