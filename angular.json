@@ -71,7 +71,15 @@
               { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
               { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
             ],
-            "styles": ["src/main/webapp/content/scss/global.scss"],
+            "styles": [
+                "src/main/webapp/content/scss/global.scss",
+                "node_modules/bootstrap/scss/bootstrap.scss",
+                "node_modules/ng-pick-datetime/assets/style/picker.min.css",
+                "node_modules/katex/dist/katex.css",
+                "node_modules/highlight.js/styles/vs.css",
+                "node_modules/@swimlane/ngx-datatable/themes/bootstrap.css",
+                "node_modules/@ctrl/ngx-emoji-mart/picker.css"
+            ],
             "scripts": []
           },
           "configurations": {
