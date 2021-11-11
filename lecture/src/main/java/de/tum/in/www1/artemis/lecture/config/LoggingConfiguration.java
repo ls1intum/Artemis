@@ -26,7 +26,7 @@ import tech.jhipster.config.JHipsterProperties;
 public class LoggingConfiguration {
 
     public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, JHipsterProperties jHipsterProperties,
-                                ObjectProvider<BuildProperties> buildProperties, ObjectMapper mapper) throws JsonProcessingException {
+            ObjectProvider<BuildProperties> buildProperties, ObjectMapper mapper) throws JsonProcessingException {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         Map<String, String> map = new HashMap<>();

@@ -47,7 +47,8 @@ public class TokenProvider {
         if (StringUtils.hasLength(secret)) {
             log.warn("Warning: the JWT key used is not Base64-encoded. We recommend using the `jhipster.security.authentication.jwt.base64-secret` key for optimum security.");
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        } else {
+        }
+        else {
             log.debug("Using a Base64-encoded JWT secret key");
             keyBytes = Decoders.BASE64.decode(jHipsterProperties.getSecurity().getAuthentication().getJwt().getBase64Secret());
         }
@@ -94,7 +95,8 @@ public class TokenProvider {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        }
+        catch (JwtException | IllegalArgumentException e) {
             log.info("Invalid JWT token: " + e.getMessage());
             log.trace("Invalid JWT token trace.", e);
         }

@@ -13,7 +13,6 @@ import java.util.*;
 
 import javax.servlet.*;
 
-import de.tum.in.www1.artemis.lecture.config.WebConfigurer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -75,12 +74,12 @@ class WebConfigurerTest {
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
         mockMvc.perform(options("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis").header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
-            .andExpect(status().isOk()).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "de.tum.in.www1.artemis"))
-            .andExpect(header().string(HttpHeaders.VARY, "Origin")).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PUT,DELETE"))
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true")).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "1800"));
+                .andExpect(status().isOk()).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "de.tum.in.www1.artemis"))
+                .andExpect(header().string(HttpHeaders.VARY, "Origin")).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PUT,DELETE"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true")).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "1800"));
 
         mockMvc.perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "de.tum.in.www1.artemis"));
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "de.tum.in.www1.artemis"));
     }
 
     @Test
@@ -94,7 +93,7 @@ class WebConfigurerTest {
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
         mockMvc.perform(get("/test/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
-            .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
     @Test
@@ -104,7 +103,7 @@ class WebConfigurerTest {
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
         mockMvc.perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
-            .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
     @Test
@@ -114,6 +113,6 @@ class WebConfigurerTest {
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
         mockMvc.perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
-            .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 }
