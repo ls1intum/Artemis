@@ -1,104 +1,111 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
     selector: 'jhi-submission-policy-update',
     template: `
-        <div class="form-group-narrow mb-3">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
-            <select
-                #policy
-                required
-                class="form-select"
-                [ngModel]="selectedSubmissionPolicyType"
-                (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
-                name="submissionPolicyType"
-                id="field_submissionPolicy"
-                [disabled]="!editable"
-            >
-                <option value="none">{{ 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate }}</option>
-                <option value="lock_repository">{{ 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate }}</option>
-                <option value="submission_penalty">{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate }}</option>
-            </select>
-        </div>
+        <form [formGroup]="form">
+            <div class="form-group-narrow mb-3">
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
+                <select
+                    #policy
+                    required
+                    class="form-select"
+                    [ngModel]="selectedSubmissionPolicyType"
+                    (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
+                    name="submissionPolicyType"
+                    id="field_submissionPolicy"
+                    [disabled]="!editable"
+                >
+                    <option value="none">{{ 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate }}</option>
+                    <option value="lock_repository">{{ 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate }}</option>
+                    <option value="submission_penalty">{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate }}</option>
+                </select>
+            </div>
 
-        <div class="row mb-3" *ngIf="!isNonePolicy">
-            <div class="col">
-                <ng-container>
-                    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
-                        >Submission Limit</label
-                    >
-                    <fa-icon
-                        icon="question-circle"
-                        class="text-secondary"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription' | artemisTranslate }}"
-                    ></fa-icon>
-                    <div class="input-group">
-                        <input
-                            #submissionLimitInput
-                            required
-                            type="number"
-                            class="form-control"
-                            step="1"
-                            name="submissionLimit"
-                            id="field_submissionLimit"
-                            [pattern]="submissionLimitPattern"
-                            [disabled]="!editable"
-                            [(ngModel)]="this.programmingExercise.submissionPolicy!.submissionLimit"
-                            #penalty="ngModel"
-                        />
-                    </div>
-                    <ng-container *ngFor="let e of penalty.errors! | keyvalue">
-                        <div *ngIf="penalty.invalid && (penalty.dirty || penalty.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
+            <div class="row mb-3" *ngIf="!isNonePolicy">
+                <div class="col">
+                    <ng-container>
+                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
+                            >Submission Limit</label
+                        >
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription' | artemisTranslate }}"
+                        ></fa-icon>
+                        <div class="input-group">
+                            <input
+                                #submissionLimitInput
+                                required
+                                type="number"
+                                formControlName="submissionLimit"
+                                class="form-control"
+                                step="1"
+                                name="submissionLimit"
+                                id="field_submissionLimit"
+                                [pattern]="submissionLimitPattern"
+                                [disabled]="!editable"
+                                [(ngModel)]="this.programmingExercise.submissionPolicy!.submissionLimit"
+                                #penalty="ngModel"
+                            />
                         </div>
+                        <ng-container *ngFor="let e of penalty.errors! | keyvalue">
+                            <div *ngIf="penalty.invalid && (penalty.dirty || penalty.touched)" class="alert alert-danger">
+                                <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
+                            </div>
+                        </ng-container>
                     </ng-container>
-                </ng-container>
-            </div>
-            <div class="col">
-                <ng-container *ngIf="this.isSubmissionPenaltyPolicy">
-                    <label
-                        class="label-narrow"
-                        jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
-                        for="field_submissionLimitExceededPenalty"
-                        >Penalty after Exceeding Submission Limit</label
-                    >
-                    <fa-icon
-                        icon="question-circle"
-                        class="text-secondary"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription' | artemisTranslate }}"
-                    ></fa-icon>
-                    <div class="input-group">
-                        <input
-                            #exceedingPenaltyInput
-                            required
-                            type="number"
-                            class="form-control"
-                            [customMin]="0"
-                            name="submissionLimitExceededPenalty"
-                            id="field_submissionLimitExceededPenalty"
-                            [disabled]="!editable"
-                            [(ngModel)]="this.programmingExercise.submissionPolicy!.exceedingPenalty"
-                            #penalty="ngModel"
-                        />
-                    </div>
-                    <ng-container *ngFor="let e of penalty.errors! | keyvalue">
-                        <div *ngIf="penalty.invalid && (penalty.dirty || penalty.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"></div>
+                </div>
+                <div class="col">
+                    <ng-container *ngIf="this.isSubmissionPenaltyPolicy">
+                        <label
+                            class="label-narrow"
+                            jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
+                            for="field_submissionLimitExceededPenalty"
+                            >Penalty after Exceeding Submission Limit</label
+                        >
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription' | artemisTranslate }}"
+                        ></fa-icon>
+                        <div class="input-group">
+                            <input
+                                #exceedingPenaltyInput
+                                required
+                                type="number"
+                                class="form-control"
+                                formControlName="exceedingPenalty"
+                                [customMin]="0"
+                                name="submissionLimitExceededPenalty"
+                                id="field_submissionLimitExceededPenalty"
+                                [disabled]="!editable"
+                                [(ngModel)]="this.programmingExercise.submissionPolicy!.exceedingPenalty"
+                                #penalty="ngModel"
+                            />
                         </div>
+                        <ng-container *ngFor="let e of penalty.errors! | keyvalue">
+                            <div *ngIf="penalty.invalid && (penalty.dirty || penalty.touched)" class="alert alert-danger">
+                                <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"></div>
+                            </div>
+                        </ng-container>
                     </ng-container>
-                </ng-container>
+                </div>
             </div>
-        </div>
+        </form>
     `,
     styleUrls: ['../../programming/manage/programming-exercise-form.scss'],
 })
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() editable: boolean;
+
+    form: FormGroup;
 
     selectedSubmissionPolicyType: SubmissionPolicyType;
 
@@ -111,6 +118,16 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     ngOnInit(): void {
         this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
+        this.form = new FormGroup({
+            submissionLimit: new FormControl({ value: this.programmingExercise.submissionPolicy?.submissionLimit, disabled: !this.editable }, [
+                Validators.pattern(this.submissionLimitPattern),
+                Validators.required,
+            ]),
+            exceedingPenalty: new FormControl({ value: this.programmingExercise.submissionPolicy?.exceedingPenalty, disabled: !this.editable }, [
+                Validators.min(0),
+                Validators.required,
+            ]),
+        });
     }
 
     private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {

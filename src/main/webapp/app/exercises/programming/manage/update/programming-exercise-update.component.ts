@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
@@ -27,6 +27,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -113,6 +114,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
     public projectTypes: ProjectType[] = [];
+
+    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent: SubmissionPolicyUpdateComponent;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,

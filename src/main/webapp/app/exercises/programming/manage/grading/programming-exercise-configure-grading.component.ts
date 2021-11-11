@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,6 +23,7 @@ import {
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 
 /**
  * Describes the editableField
@@ -89,6 +90,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     submissionPolicy?: SubmissionPolicy;
     hadPolicyBefore: boolean;
+
+    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent: SubmissionPolicyUpdateComponent;
 
     /**
      * Returns the value of testcases
@@ -161,8 +164,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     tap(() => {
                         if (this.programmingExercise.staticCodeAnalysisEnabled) {
                             this.loadStaticCodeAnalysisCategories();
-                        } else if (this.activeTab !== 'test-cases') {
-                            this.selectTab('test-cases');
                         }
                         this.hadPolicyBefore = this.programmingExercise.submissionPolicy !== undefined;
                     }),
