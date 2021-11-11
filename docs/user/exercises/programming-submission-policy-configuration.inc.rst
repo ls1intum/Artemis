@@ -22,8 +22,8 @@ When selecting no submission policy, exercise participants can submit their solu
 
 **2. Lock Repository**
 Participants can submit a fixed number of times within the submission period of a programming exercise. Once the participant reaches the submission limit,
-further participation in the exercise is prevented by locking the participation repository. The participant may still work on their solution. However, Artemis
-does not provide further feedback and does not change the participation score.
+further participation in the exercise is prevented by locking the participation repository. The participant may still work on their solution locally, but
+cannot submit it to Artemis to receive feedback.
 
 .. figure:: programming/submission-policy-lock-repository-form.png
           :align: center
