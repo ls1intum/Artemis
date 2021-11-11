@@ -1,5 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
@@ -40,7 +39,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [TranslateModule.forRoot(), ArtemisTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
                 providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
             })
@@ -103,10 +102,10 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
             // Test cases are not ok according to the analysis.
             expect(testCaseOk).toBe(null);
-            expect(testCaseIssues).not.toBe(undefined);
+            expect(testCaseIssues).not.toBe(null);
 
             // Hints are ok according to the analysis.
-            expect(hintOk).not.toBe(undefined);
+            expect(hintOk).not.toBe(null);
             expect(hintIssues).toBe(null);
         }));
 
@@ -152,7 +151,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 tick(500);
 
                 expect(debugElement.nativeElement.innerHtml).not.toEqual('');
-                expect(debugElement.query(By.css('fa-icon'))).not.toBe(undefined);
+                expect(debugElement.query(By.css('fa-icon'))).not.toBe(null);
                 expect(comp.missingTestCases).toEqual(missingTestCases);
                 expect(comp.invalidTestCases).toEqual(invalidTestCases);
             }));
