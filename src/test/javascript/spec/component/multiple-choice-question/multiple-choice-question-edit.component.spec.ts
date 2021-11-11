@@ -16,7 +16,7 @@ import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/progr
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
@@ -40,7 +40,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DndModule.forRoot()],
+            imports: [ArtemisTestModule, FormsModule, MockModule(DndModule)],
             declarations: [
                 MultipleChoiceQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

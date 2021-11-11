@@ -23,6 +23,8 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { MockModule } from 'ng-mocks';
+import { ClipboardModule } from 'ngx-clipboard';
 
 chai.use(sinonChai);
 const expect = chai.expect;

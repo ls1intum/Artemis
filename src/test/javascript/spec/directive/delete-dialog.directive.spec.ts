@@ -17,7 +17,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
+import { MockDirective, MockModule } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,7 +39,7 @@ describe('DeleteDialogDirective', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgbModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, MockModule(NgbModule)],
             declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, AlertComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService],
         })

@@ -3,7 +3,6 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { ChartsModule } from 'ng2-charts';
-import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -49,7 +48,6 @@ const routes: Routes = [
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ChartsModule,
-        ClipboardModule,
         ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisSidePanelModule,

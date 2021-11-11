@@ -18,7 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
 import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { empty, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -217,7 +217,7 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ChartsModule],
+            imports: [MockModule(ChartsModule)],
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -8,7 +8,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { Course } from 'app/entities/course.model';
 
@@ -26,7 +26,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(ChartsModule)],
             declarations: [CourseDetailDoughnutChartComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -16,6 +16,8 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { MockModule } from 'ng-mocks';
+import { ClipboardModule } from 'ngx-clipboard';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,7 +49,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
         beforeEach(async () => {
             return TestBed.configureTestingModule({
-                imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
+                imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbModule), ArtemisProgrammingExerciseInstructionsEditorModule, MockModule(ClipboardModule)],
             })
                 .compileComponents()
                 .then(() => {

@@ -10,7 +10,7 @@ import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import dayjs from 'dayjs';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -29,7 +29,7 @@ describe('StatisticsGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(ChartsModule)],
             declarations: [StatisticsGraphComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

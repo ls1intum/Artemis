@@ -5,7 +5,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ChartsModule } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
@@ -48,7 +48,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(ChartsModule)],
             declarations: [ExamScoresAverageScoresGraphComponent],
             providers: [
                 MockProvider(CourseManagementService, {

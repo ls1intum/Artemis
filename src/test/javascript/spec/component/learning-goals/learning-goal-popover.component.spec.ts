@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
@@ -27,7 +27,7 @@ describe('LearningGoalPopoverComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                NgbPopoverModule,
+                MockModule(NgbPopoverModule),
                 RouterTestingModule.withRoutes([
                     { path: 'courses/:courseId/statistics', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/goal-management', component: DummyManagementComponent },

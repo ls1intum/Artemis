@@ -18,6 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import dayjs from 'dayjs';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { ClipboardModule } from 'ngx-clipboard';
 import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
@@ -41,6 +42,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [
+                MockModule(ClipboardModule),
                 MockModule(ArtemisExerciseButtonsModule),
                 MockModule(ArtemisProgrammingExerciseActionsModule),
                 MockModule(ArtemisResultModule),

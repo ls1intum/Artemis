@@ -25,7 +25,7 @@ import { CourseExerciseService, CourseManagementService } from 'app/course/manag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
@@ -47,7 +47,7 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeAll(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), MockModule(NgbModule)],
             declarations: [
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),

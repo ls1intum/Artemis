@@ -6,7 +6,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
@@ -103,8 +103,8 @@ describe('StudentExamDetailComponent', () => {
         return TestBed.configureTestingModule({
             imports: [
                 RouterTestingModule.withRoutes([]),
-                NgbModule,
-                NgxDatatableModule,
+                MockModule(NgbModule),
+                MockModule(NgxDatatableModule),
                 FontAwesomeTestingModule,
                 ReactiveFormsModule,
                 TranslateModule.forRoot(),

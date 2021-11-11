@@ -3,7 +3,7 @@ import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockPipe, MockDirective } from 'ng-mocks';
+import { MockPipe, MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -53,7 +53,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ChartsModule, ArtemisTestModule, HttpClientTestingModule],
+            imports: [MockModule(ChartsModule), ArtemisTestModule, HttpClientTestingModule],
             declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

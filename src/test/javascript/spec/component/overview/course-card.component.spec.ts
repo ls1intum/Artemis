@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { MockComponent, MockPipe, MockProvider, MockDirective } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider, MockDirective, MockModule } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import dayjs from 'dayjs';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +36,7 @@ describe('CourseCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ChartsModule],
+            imports: [ArtemisTestModule, MockModule(ChartsModule)],
             declarations: [
                 CourseCardComponent,
                 MockPipe(ArtemisTranslatePipe),

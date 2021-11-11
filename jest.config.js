@@ -1,7 +1,7 @@
 const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common',
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', 'ngx-cookie-service', '@fortawesome/angular-fontawesome', '@angular/cdk', 'ngx-webstorage',
-    '@ctrl/ngx-emoji-mart'].join('|');
+    '@ctrl/ngx-emoji-mart', 'ngx-clipboard'].join('|');
 
 const {
     compilerOptions: { paths = {}, baseUrl = './' },

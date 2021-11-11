@@ -10,6 +10,8 @@ import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programm
 import { FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { MockModule } from 'ng-mocks';
+import { ClipboardModule } from 'ngx-clipboard';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +25,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisProgrammingManualAssessmentModule],
+            imports: [TranslateModule.forRoot(), MockModule(ClipboardModule), ArtemisProgrammingManualAssessmentModule],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()

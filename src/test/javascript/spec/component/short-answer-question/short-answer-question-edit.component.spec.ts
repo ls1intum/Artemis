@@ -3,7 +3,7 @@ import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbModal, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
@@ -57,7 +57,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, AceEditorModule, DndModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, FormsModule, AceEditorModule, MockModule(DndModule), MockModule(NgbPopoverModule)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

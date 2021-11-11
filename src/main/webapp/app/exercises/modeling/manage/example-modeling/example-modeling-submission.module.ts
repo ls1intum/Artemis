@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisExampleModelingSubmissionRoutingModule } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.route';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
@@ -16,7 +15,6 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
         ArtemisExampleModelingSubmissionRoutingModule,
         ModelingAssessmentModule,
         AssessmentInstructionsModule,
-        ClipboardModule,
     ],
     declarations: [ExampleModelingSubmissionComponent],
 })

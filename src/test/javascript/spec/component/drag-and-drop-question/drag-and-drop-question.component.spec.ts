@@ -14,7 +14,7 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
@@ -38,7 +38,7 @@ describe('DragAndDropQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbPopoverModule, ArtemisTestModule, DndModule.forRoot(), AngularFittextModule],
+            imports: [MockModule(NgbPopoverModule), ArtemisTestModule, MockModule(DndModule), MockModule(AngularFittextModule)],
             declarations: [
                 DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),

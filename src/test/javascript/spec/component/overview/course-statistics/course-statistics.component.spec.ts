@@ -5,7 +5,7 @@ import sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -203,7 +203,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(ChartsModule)],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseLearningGoalsComponent),

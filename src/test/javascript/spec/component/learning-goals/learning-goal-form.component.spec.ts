@@ -11,7 +11,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 describe('LearningGoalFormComponent', () => {
@@ -20,7 +20,7 @@ describe('LearningGoalFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbDropdownModule],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbDropdownModule)],
             declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), MockProvider(AlertService), MockProvider(TranslateService)],
             schemas: [],

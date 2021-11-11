@@ -12,7 +12,6 @@ import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
-import { ClipboardModule } from 'ngx-clipboard';
 import { RouterModule } from '@angular/router';
 import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment-locks.route';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
@@ -27,7 +26,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ArtemisSharedModule,
         ArtemisComplaintsForTutorModule,
         ArtemisSharedComponentModule,
-        ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
         ArtemisGradingInstructionLinkIconModule,
