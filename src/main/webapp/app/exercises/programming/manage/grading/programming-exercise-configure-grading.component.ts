@@ -91,8 +91,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     submissionPolicy?: SubmissionPolicy;
     hadPolicyBefore: boolean;
 
-    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent: SubmissionPolicyUpdateComponent;
-
     /**
      * Returns the value of testcases
      */

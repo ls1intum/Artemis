@@ -45,11 +45,15 @@
                     [exercise]="programmingExercise"
                     [isSaving]="isSaving"
                     [hadPolicyBefore]="hadPolicyBefore"
-                    [formInvalid]="submissionPolicyUpdateComponent.form.invalid"
+                    [formInvalid]="policyUpdate.invalid"
                     (onUpdate)="updateSubmissionPolicy()"
                     (onToggle)="toggleSubmissionPolicy()"
                 ></jhi-programming-exercise-grading-submission-policy-configuration-actions>
-                <jhi-submission-policy-update [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor!"></jhi-submission-policy-update>
+                <jhi-submission-policy-update
+                    #policyUpdate
+                    [programmingExercise]="programmingExercise"
+                    [editable]="programmingExercise.isAtLeastInstructor!"
+                ></jhi-submission-policy-update>
                 <ng-container *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy != undefined">
                     <ngb-alert [dismissible]="false" [type]="'info'">
                         <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>

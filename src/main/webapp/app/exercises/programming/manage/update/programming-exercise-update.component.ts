@@ -115,8 +115,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public projectTypes: ProjectType[] = [];
 
-    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent: SubmissionPolicyUpdateComponent;
-
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private modalService: NgbModal,
