@@ -10,8 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.*;
+
 import javax.servlet.*;
 
+import de.tum.in.www1.artemis.lecture.config.WebConfigurer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +21,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -48,7 +51,7 @@ class WebConfigurerTest {
     }
 
     @Test
-    void shouldStartUpProdServletContext() throws ServletException {
+    void shouldStartUpProdServletContext() {
         env.setActiveProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
 
         assertThatCode(() -> webConfigurer.onStartup(servletContext)).doesNotThrowAnyException();
@@ -63,7 +66,7 @@ class WebConfigurerTest {
 
     @Test
     void shouldCorsFilterOnApiPath() throws Exception {
-        props.getCors().setAllowedOrigins(Collections.singletonList("other.domain.com"));
+        props.getCors().setAllowedOrigins(Collections.singletonList("de.tum.in.www1.artemis"));
         props.getCors().setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         props.getCors().setAllowedHeaders(Collections.singletonList("*"));
         props.getCors().setMaxAge(1800L);
@@ -71,23 +74,13 @@ class WebConfigurerTest {
 
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
-        mockMvc
-            .perform(
-                options("/api/test-cors")
-                    .header(HttpHeaders.ORIGIN, "other.domain.com")
-                    .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
-            )
-            .andExpect(status().isOk())
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"))
-            .andExpect(header().string(HttpHeaders.VARY, "Origin"))
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PUT,DELETE"))
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "1800"));
+        mockMvc.perform(options("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis").header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
+            .andExpect(status().isOk()).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "de.tum.in.www1.artemis"))
+            .andExpect(header().string(HttpHeaders.VARY, "Origin")).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PUT,DELETE"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true")).andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "1800"));
 
-        mockMvc
-            .perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
-            .andExpect(status().isOk())
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"));
+        mockMvc.perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "de.tum.in.www1.artemis"));
     }
 
     @Test
@@ -100,9 +93,7 @@ class WebConfigurerTest {
 
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
-        mockMvc
-            .perform(get("/test/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
-            .andExpect(status().isOk())
+        mockMvc.perform(get("/test/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
             .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
@@ -112,9 +103,7 @@ class WebConfigurerTest {
 
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
-        mockMvc
-            .perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
-            .andExpect(status().isOk())
+        mockMvc.perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
             .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
@@ -124,9 +113,7 @@ class WebConfigurerTest {
 
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
-        mockMvc
-            .perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
-            .andExpect(status().isOk())
+        mockMvc.perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "de.tum.in.www1.artemis")).andExpect(status().isOk())
             .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 }

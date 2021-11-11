@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.lecture.web.rest.errors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,11 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/exception-translator-test")
 public class ExceptionTranslatorTestController {
-
-    @GetMapping("/concurrency-failure")
-    public void concurrencyFailure() {
-        throw new ConcurrencyFailureException("test concurrency failure");
-    }
 
     @PostMapping("/method-argument")
     public void methodArgument(@Valid @RequestBody TestDTO testDTO) {

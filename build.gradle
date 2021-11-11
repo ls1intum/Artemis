@@ -270,6 +270,18 @@ gradle.taskGraph.whenReady { graph ->
             }
         }
     }
+
+    def hasRootLectureTask = tasks.contains(":lecture")
+
+    if (!hasRootLectureTask) {
+        graph.getAllTasks().each { task ->
+            def subLectureTask = (task.path =~ /:lecture.+/)
+            if (subLectureTask) {
+                println "TRACER skipping task ${task.path}"
+                task.enabled = false
+            }
+        }
+    }
 }
 
 // Available commands:

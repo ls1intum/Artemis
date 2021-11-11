@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.lecture;
 
-import de.tum.in.www1.artemis.lecture.LectureApp;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

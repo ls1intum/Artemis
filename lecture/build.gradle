@@ -127,7 +127,8 @@ sourceSets {
     }
     externalTest {
         java {
-            // Empty for the moment
+            srcDir file("../src/test")
+            include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
         }
     }
     main {
