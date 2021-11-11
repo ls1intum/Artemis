@@ -15,6 +15,12 @@ Database
     * Run the following command in your terminal / command line: ``./gradlew liquibaseClearChecksums``
     * You can manually adjust the checksum for a breaking changelog: ``UPDATE `DATABASECHANGELOG` SET `MD5SUM` = NULL WHERE `ID` = '<changelogId>'``
 
+Client
+^^^^^^
+
+- If you are using a machine with limited RAM *(e.g. ~8 GB RAM)* you might have issues starting the Artemis Client. You can resolve this by following
+  the description in :ref:`UsingTheCommandLine`
+
 Programming Exercise Setup
 --------------------------
 

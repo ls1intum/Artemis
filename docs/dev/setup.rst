@@ -322,6 +322,8 @@ run configuration that will be delivered with this repository:
 * Select the ``Artemis (Client)`` configuration from the ``npm section``
 * Now you can run the configuration in the upper right corner of IntelliJ
 
+.. _UsingTheCommandLine:
+
 Using the command line
 ^^^^^^^^^^^^^^^^^^^^^^
 
