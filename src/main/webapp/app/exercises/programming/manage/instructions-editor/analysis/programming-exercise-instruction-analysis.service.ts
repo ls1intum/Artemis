@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { compose, filter, flatten, map, reduce, uniq } from 'lodash/fp';
+import { flowRight, filter, flatten, map, reduce, uniq } from 'lodash-es';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/shared/util/global.utils';
 import {
@@ -57,12 +57,11 @@ export class ProgrammingExerciseInstructionAnalysisService {
         // Look for test cases that are not part of the test repository. Could e.g. be typos.
         const invalidTestCaseAnalysis = testCasesInMarkdown
             .map(
-                ([lineNumber, testCases]) =>
-                    [
-                        lineNumber,
-                        testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase())),
-                        ProblemStatementIssue.INVALID_TEST_CASES,
-                    ] as AnalysisItem,
+                ([lineNumber, testCases]): AnalysisItem => [
+                    lineNumber,
+                    testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase())),
+                    ProblemStatementIssue.INVALID_TEST_CASES,
+                ],
             )
             .filter(([, testCases]) => testCases.length);
         // Look for test cases that are part of the test repository but not in the problem statement. Probably forgotten to insert.
@@ -70,10 +69,12 @@ export class ProgrammingExerciseInstructionAnalysisService {
             (testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.map((foundTestCase) => foundTestCase.toLowerCase()).includes(testCase.toLowerCase())),
         );
 
-        const invalidTestCases = compose(
+        /*const invalidTestCases = compose(
             flatten,
             map(([, testCases]) => testCases),
-        )(invalidTestCaseAnalysis);
+        )(invalidTestCaseAnalysis);*/
+
+        const invalidTestCases = flatten(invalidTestCaseAnalysis.map(([, testCases]) => testCases));
 
         return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
     };
@@ -99,10 +100,11 @@ export class ProgrammingExerciseInstructionAnalysisService {
             )
             .filter(([, hints]) => !!hints.length);
 
-        const invalidHints = compose(
+        /*const invalidHints = compose(
             flatten,
             map(([, testCases]) => testCases),
-        )(invalidHintAnalysis);
+        )(invalidHintAnalysis);*/
+        const invalidHints = flatten(invalidHintAnalysis.map(([, hints]) => hints));
 
         return { invalidHints, invalidHintAnalysis };
     };
@@ -113,7 +115,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param analysis arbitrary number of analysis objects to be merged into one.
      */
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>) => {
-        return compose(
+        /*return compose(
             reduce((acc, [lineNumber, values, issueType]) => {
                 const lineNumberValues = acc[lineNumber];
                 const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
@@ -125,7 +127,19 @@ export class ProgrammingExerciseInstructionAnalysisService {
                 issueType,
             ]),
             flatten,
-        )(analysis);
+        )(analysis);*/
+        let intermediate = flatten(analysis);
+        intermediate = intermediate.map(([lineNumber, values, issueType]: AnalysisItem) => [
+            lineNumber,
+            values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
+            issueType,
+        ]);
+
+        return intermediate.reduce((acc, [lineNumber, values, issueType]) => {
+            const lineNumberValues = acc[lineNumber];
+            const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
+            return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
+        }, {}) as ProblemStatementAnalysis;
     };
 
     /**
@@ -152,7 +166,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        return compose(
+        /*return compose(
             map(([lineNumber, match]) => {
                 const cleanedMatches = compose(
                     uniq,
@@ -167,6 +181,44 @@ export class ProgrammingExerciseInstructionAnalysisService {
                 return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, null];
             }),
             filter(([, task]) => !!task),
-        )(tasks) as [number, string[]][];
+        )(tasks) as [number, string[]][];*/
+        const intermediate2 = tasks.filter(([, task]) => !!task);
+        const intermediate3 = intermediate2.filter(([lineNumber, task]) => {
+            const extractedValue = task.match(regex);
+            return extractedValue && extractedValue.length > 1;
+        });
+        const intermediate31 = intermediate3.map(([lineNumber, task]) => {
+            const extractedValue = task.match(regex);
+            return [lineNumber as number, extractedValue![1] as string];
+        }) as [number, string][];
+        const intermediate4 = intermediate31.filter(([, testCases]) => !!testCases);
+        const intermediate6 = intermediate4.map(([lineNumber, match]) => {
+            const result = match
+                .toString()
+                .split(/,(?![^(]*?\))/)
+                .map((m: string) => m.trim());
+            const cleanedMatches = uniq(flatten(result));
+            return [lineNumber, cleanedMatches];
+        });
+
+        // return intermediate6 as [number, string[]][];
+        return tasks // .filter(([, task]) => !!task)
+            .filter(([lineNumber, task]) => {
+                const extractedValue = task.match(regex);
+                return !!task && extractedValue && extractedValue.length > 1;
+            })
+            .map(([lineNumber, task]) => {
+                const extractedValue = task.match(regex);
+                return [lineNumber, extractedValue![1]];
+            })
+            .filter(([, testCases]) => !!testCases)
+            .map(([lineNumber, match]) => {
+                const result = match
+                    .toString()
+                    .split(/,(?![^(]*?\))/)
+                    .map((m: string) => m.trim());
+                const cleanedMatches = uniq(flatten(result));
+                return [lineNumber, cleanedMatches];
+            }) as [number, string[]][];
     }
 }
