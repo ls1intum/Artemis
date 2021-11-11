@@ -249,18 +249,20 @@ public class GroupNotificationServiceTest {
         testCheckNotificationForExerciseReleaseHelper(null, FUTURE_TIME, true);
 
         testCheckNotificationForExerciseReleaseHelper(PAST_TIME, null, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, ANCIENT_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false); // same time -> no change
         testCheckNotificationForExerciseReleaseHelper(PAST_TIME, CURRENT_TIME, false);
         testCheckNotificationForExerciseReleaseHelper(PAST_TIME, FUTURE_TIME, true);
 
         testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, null, false);
         testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, PAST_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false); // same time -> no change
         testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, FUTURE_TIME, true);
 
         testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, null, true);
         testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, PAST_TIME, true);
         testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, CURRENT_TIME, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, true);
     }
 }

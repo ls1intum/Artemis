@@ -90,14 +90,9 @@ public class GroupNotificationService {
             isUpdatedReleaseDateInTheFuture = updatedReleaseDate.isAfter(timeNow);
         }
 
-        // decision matrix based on initial and updated release date to decide if a release notification has to be sent out now, scheduled, or not
-        /*
-         * For readability : (initial & updated Release Dates) initial | updated | send notification ----------------------------------------- undefined | undefined | no undefined
-         * | past | no undefined | current | no undefined | future | schedule past | undefined | no past | past | no past | current | no past | future | schedule current |
-         * undefined | no current | past | no current | current | no current | future | schedule future | undefined | send now future | past | send now future | current | send now
-         * future | future | schedule same | same | no
-         */
+        // "decision matrix" based on initial and updated release date to decide if a release notification has to be sent out now, scheduled, or not
 
+        // if the initial release date is (undefined/past/now) only send a notification if the updated date is in the future
         if (isInitialReleaseDateUndefined || isInitialReleaseDateInThePast || isInitialReleaseDateNow) {
             if (isUpdatedReleaseDateUndefined || isUpdatedReleaseDateInThePast || isUpdatedReleaseDateNow) {
                 return;
@@ -106,10 +101,12 @@ public class GroupNotificationService {
                 shouldNotifyAboutRelease = true;
             }
         }
-        else if (isInitialReleaseDateInTheFuture) {
-            shouldNotifyAboutRelease = true;
+        // no change in the release date
+        else if (!isUpdatedReleaseDateUndefined && initialReleaseDate.isEqual(updatedReleaseDate)) {
+            return;
         }
-        else if (initialReleaseDate.isEqual(updatedReleaseDate)) {
+        // if the initial release date was in the future any other combination (-> undefined/now/past) will lead to an immediate release notification or a scheduled one (future)
+        else if (isInitialReleaseDateInTheFuture) {
             shouldNotifyAboutRelease = true;
         }
 
