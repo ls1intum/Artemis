@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 /**
  * Integration tests {@link ExceptionTranslator} controller advice.
  */
-// @SpringBootTest
 @IntegrationTest
 @WithMockUser
 @AutoConfigureMockMvc

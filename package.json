@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.2.7",
+    "version": "5.3.0",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -184,6 +184,8 @@
         "start-tls": "npm run webapp:dev-ssl",
         "serve": "npm run start --",
         "build": "npm run webapp:prod --",
+        "compile:ts": "tsc --project tsconfig.app.json",
+        "compile:ts:tests": "tsc --project tsconfig.spec.json",
         "jest": "jest --coverage --log-heap-usage --max-workers=4 --config jest.config.js",
         "test": "ng test --coverage --log-heap-usage -w=4",
         "test-diff": "ng test --log-heap-usage -w=4 --pass-with-no-tests --changed-since=origin/develop",

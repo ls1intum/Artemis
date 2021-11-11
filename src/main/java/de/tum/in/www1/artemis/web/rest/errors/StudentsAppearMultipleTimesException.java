@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.web.rest.TeamResource;
 
 /**
  * Exception that will be thrown if the user tries to imports teams that contains students who appears in another imported team. The error response will
@@ -23,7 +23,7 @@ public class StudentsAppearMultipleTimesException extends BadRequestAlertExcepti
     private static final String ERROR_KEY = "studentsAppearMultipleTimes";
 
     public StudentsAppearMultipleTimesException(List<User> students) {
-        super(ErrorConstants.STUDENTS_APPEAR_MULTIPLE_TIMES_TYPE, "Students appear multiple times in team import request.", TeamResource.ENTITY_NAME, ERROR_KEY,
+        super(ErrorConstants.STUDENTS_APPEAR_MULTIPLE_TIMES_TYPE, "Students appear multiple times in team import request.", Constants.TEAM_ENTITY_NAME, ERROR_KEY,
                 getParameters(students));
     }
 

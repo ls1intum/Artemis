@@ -29,6 +29,10 @@ import com.hazelcast.spring.context.SpringManagedContext;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
+/**
+ * Hazelcast is used for caching frequently used data.
+ * Depending on the defined Caching Strategy the data will be cached for future access in a specific manner.
+ */
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
@@ -65,7 +69,7 @@ public class CacheConfiguration {
         this.applicationContext = applicationContext;
     }
 
-    @Autowired(required = false) // ok
+    @Autowired(required = false)
     public void setRegistration(Registration registration) {
         this.registration = registration;
     }
@@ -171,16 +175,19 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
-    @Autowired(required = false) // ok
+    @Autowired(required = false)
     public void setGitProperties(GitProperties gitProperties) {
         this.gitProperties = gitProperties;
     }
 
-    @Autowired(required = false) // ok
+    @Autowired(required = false)
     public void setBuildProperties(BuildProperties buildProperties) {
         this.buildProperties = buildProperties;
     }
 
+    /**
+     * Configure the key generator used for generating keys to store the cached data.
+     */
     @Bean
     public KeyGenerator keyGenerator() {
         return new PrefixedKeyGenerator(this.gitProperties, this.buildProperties);
@@ -189,14 +196,10 @@ public class CacheConfiguration {
     private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
         MapConfig mapConfig = new MapConfig();
 
-        /*
-         * Number of backups. If 1 is set as the backup-count for example, then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0 (no
-         * backup), 1, 2, 3. While we store most of the data in the database, we might use the backup for live quiz exercises and their corresponding hazelcast hash maps
-         */
         mapConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
 
         /*
-         * Valid values are: NONE (no eviction), LRU (Least Recently Used), LFU (Least Frequently Used). LRU is the default.
+         * Valid values for the Eviction Policy are: NONE (no eviction), LRU (Least Recently Used), LFU (Least Frequently Used). LRU is the default.
          */
         mapConfig.setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
         return mapConfig;

@@ -21,7 +21,7 @@ class JWTFilterTest {
 
     private static final long ONE_MINUTE_MS = 60000;
 
-    private MockTokenProvider mockTokenProvider;
+    private TestTokenGenerator testTokenGenerator;
 
     private JWTFilter jwtFilter;
 
@@ -32,7 +32,7 @@ class JWTFilterTest {
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
-        mockTokenProvider = new MockTokenProvider(jHipsterProperties);
+        testTokenGenerator = new TestTokenGenerator(jHipsterProperties);
         jwtFilter = new JWTFilter(tokenProvider);
     }
 
@@ -40,7 +40,7 @@ class JWTFilterTest {
     void testJWTFilter() {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
-        String jwt = mockTokenProvider.createToken(authentication, false);
+        String jwt = testTokenGenerator.createToken(authentication, false);
         MockServerHttpRequest.BaseBuilder request = MockServerHttpRequest.get("/api/test").header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         MockServerWebExchange exchange = MockServerWebExchange.from(request);
         jwtFilter.filter(exchange, it -> Mono.subscriberContext().flatMap(c -> ReactiveSecurityContextHolder.getContext()).map(SecurityContext::getAuthentication)
@@ -77,7 +77,7 @@ class JWTFilterTest {
     void testJWTFilterWrongScheme() {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
-        String jwt = mockTokenProvider.createToken(authentication, false);
+        String jwt = testTokenGenerator.createToken(authentication, false);
         MockServerHttpRequest.BaseBuilder request = MockServerHttpRequest.get("/api/test").header(JWTFilter.AUTHORIZATION_HEADER, "Basic " + jwt);
         MockServerWebExchange exchange = MockServerWebExchange.from(request);
         jwtFilter.filter(exchange, it -> Mono.subscriberContext().flatMap(c -> ReactiveSecurityContextHolder.getContext()).map(SecurityContext::getAuthentication)

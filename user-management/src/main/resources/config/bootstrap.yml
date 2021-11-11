@@ -3,10 +3,6 @@
 # In prod profile, properties will be overwritten by the ones defined in bootstrap-prod.yml
 # ===================================================================
 
-jhipster:
-    registry:
-        password: admin
-
 spring:
     application:
         name: userManagement

@@ -28,7 +28,7 @@ class TokenProviderTest {
 
     private TokenProvider tokenProvider;
 
-    private MockTokenProvider mockTokenProvider;
+    private TestTokenGenerator testTokenGenerator;
 
     @BeforeEach
     public void setup() {
@@ -37,7 +37,7 @@ class TokenProviderTest {
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         tokenProvider = new TokenProvider(jHipsterProperties);
-        mockTokenProvider = new MockTokenProvider(jHipsterProperties);
+        testTokenGenerator = new TestTokenGenerator(jHipsterProperties);
 
         key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
     }
@@ -52,7 +52,7 @@ class TokenProviderTest {
     @Test
     void testReturnFalseWhenJWTisMalformed() {
         Authentication authentication = createAuthentication();
-        String token = mockTokenProvider.createToken(authentication, false);
+        String token = testTokenGenerator.createToken(authentication, false);
         String invalidToken = token.substring(1);
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken);
 
@@ -61,10 +61,10 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWTisExpired() {
-        ReflectionTestUtils.setField(mockTokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE_MS);
+        ReflectionTestUtils.setField(testTokenGenerator, "tokenValidityInMilliseconds", -ONE_MINUTE_MS);
 
         Authentication authentication = createAuthentication();
-        String token = mockTokenProvider.createToken(authentication, false);
+        String token = testTokenGenerator.createToken(authentication, false);
 
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(token);
 

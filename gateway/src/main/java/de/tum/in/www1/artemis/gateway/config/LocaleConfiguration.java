@@ -65,7 +65,7 @@ public class LocaleConfiguration {
 
         private static final String COOKIE_PATH = "/";
 
-        protected final Log logger = LogFactory.getLog(getClass());
+        private static final Log LOGGER = LogFactory.getLog(AngularCookieLocaleContextResolver.class);
 
         @Override
         @Nonnull
@@ -114,8 +114,8 @@ public class LocaleConfiguration {
             Assert.notNull(response, "ServerHttpResponse must not be null");
             ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, cookieValue).path(COOKIE_PATH).build();
             response.addCookie(cookie);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Added cookie with name [" + COOKIE_NAME + "] and value [" + cookieValue + "]");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Added cookie with name [" + COOKIE_NAME + "] and value [" + cookieValue + "]");
             }
         }
 
@@ -123,8 +123,8 @@ public class LocaleConfiguration {
             Assert.notNull(response, "ServerHttpResponse must not be null");
             ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "").path(COOKIE_PATH).maxAge(Duration.ZERO).build();
             response.addCookie(cookie);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Removed cookie with name [" + COOKIE_NAME + "]");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Removed cookie with name [" + COOKIE_NAME + "]");
             }
         }
 
@@ -147,12 +147,14 @@ public class LocaleConfiguration {
                         localePart = value.substring(0, spaceIndex);
                         timeZonePart = value.substring(spaceIndex + 1);
                     }
-                    locale = !"-".equals(localePart) ? StringUtils.parseLocaleString(localePart.replace('-', '_')) : null;
+                    if (!"-".equals(localePart)) {
+                        locale = StringUtils.parseLocaleString(localePart.replace('-', '_'));
+                    }
                     if (timeZonePart != null) {
                         timeZone = StringUtils.parseTimeZoneString(timeZonePart);
                     }
-                    if (logger.isTraceEnabled()) {
-                        logger.trace("Parsed cookie value [" + cookie.getValue() + "] into locale '" + locale + "'"
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace("Parsed cookie value [" + cookie.getValue() + "] into locale '" + locale + "'"
                                 + (timeZone != null ? " and time zone '" + timeZone.getID() + "'" : ""));
                     }
                 }
