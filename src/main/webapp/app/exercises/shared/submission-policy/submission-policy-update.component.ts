@@ -174,6 +174,11 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
         return submissionPolicyType!;
     }
 
+    /**
+     * Returns whether the submission policy form is invalid.
+     *
+     * @returns {boolean} true if the form is invalid, false if the form is valid
+     */
     get invalid(): boolean {
         const type = this.programmingExercise?.submissionPolicy?.type;
         if (!this.form || !type || type === SubmissionPolicyType.NONE) {
@@ -182,10 +187,18 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
         return this.submissionLimitControl.invalid || (type === SubmissionPolicyType.SUBMISSION_PENALTY && this.exceedingPenaltyControl.invalid);
     }
 
+    /**
+     * Ensures synchronization between the submission policy model and the input controller, since
+     * using ngModel with reactive forms has been deprecated in Angular v6
+     */
     updateSubmissionLimit() {
         this.programmingExercise!.submissionPolicy!.submissionLimit = this.submissionLimitControl.value as number;
     }
 
+    /**
+     * Ensures synchronization between the submission policy model and the input controller, since
+     * using ngModel with reactive forms has been deprecated in Angular v6
+     */
     updateExceedingPenalty() {
         this.programmingExercise!.submissionPolicy!.exceedingPenalty = this.exceedingPenaltyControl.value as number;
     }
