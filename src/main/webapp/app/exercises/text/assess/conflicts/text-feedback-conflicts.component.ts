@@ -166,7 +166,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
      */
     canOverride(result: Result): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }

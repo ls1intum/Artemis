@@ -22,13 +22,15 @@ public class TextAssessmentKnowledgeService {
     }
 
     /**
-     * delete only when no exercises use the knowledge
-     * @param knowledgeId
+     * delete only when no other exercise uses the knowledge
+     *
+     * @param knowledgeId the id of the knowledge which should be deleted
+     * @param textExerciseId used to check that the knowledge is only connected to this exercise
      */
-    public void deleteKnowledge(Long knowledgeId) {
+    public void deleteKnowledge(Long knowledgeId, Long textExerciseId) {
         Set<TextExercise> exerciseSet = textExerciseRepository.findAllByKnowledgeId(knowledgeId);
         // If no other exercises use the same knowledge then remove knowledge
-        if (exerciseSet.isEmpty()) {
+        if (exerciseSet.size() == 1 && textExerciseId.equals(exerciseSet.iterator().next().getId())) {
             textAssesmentKnowledgeRepository.deleteById(knowledgeId);
         }
     }

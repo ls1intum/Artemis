@@ -12,6 +12,7 @@ import { MockComponent } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { AlertService } from 'app/core/util/alert.service';
+import { UrlSerializer } from '@angular/router';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
@@ -19,7 +20,12 @@ describe('NotificationSettingsComponent', () => {
 
     const imports = [ArtemisTestModule];
     const declarations = [MockComponent(AlertComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
-    const providers = [MockProvider(AlertService), { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }];
+    const providers = [
+        MockProvider(AlertService),
+        MockProvider(UrlSerializer),
+        { provide: LocalStorageService, useClass: MockSyncStorage },
+        { provide: SessionStorageService, useClass: MockSyncStorage },
+    ];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -52,7 +58,7 @@ describe('NotificationSettingsComponent', () => {
         expect(comp.settingsChanged).toBe(false);
         expect(notificationSettingA.changed).toBe(false);
 
-        comp.toggleSetting(event);
+        comp.toggleSetting(event, true);
 
         expect(notificationSettingA.webapp).not.toEqual(webappStatus);
         expect(notificationSettingA.changed).toBe(true);
