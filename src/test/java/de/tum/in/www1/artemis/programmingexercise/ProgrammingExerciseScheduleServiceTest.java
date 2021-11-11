@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jgit.lib.ObjectId;
@@ -28,6 +30,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.util.TimeUtilService;
@@ -39,6 +42,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository participationRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -60,7 +66,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.enableMockingOfRequests();
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
-        database.addUsers(2, 2, 0, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
 
@@ -75,8 +81,16 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     private void verifyLockStudentRepositoryOperation(boolean wasCalled) {
+        final Set<StudentParticipation> studentParticipations = programmingExercise.getStudentParticipations();
+        verifyLockStudentRepositoryOperation(wasCalled, studentParticipations);
+    }
+
+    private void verifyLockStudentRepositoryOperation(boolean wasCalled, StudentParticipation participation) {
+        verifyLockStudentRepositoryOperation(wasCalled, List.of(participation));
+    }
+
+    private void verifyLockStudentRepositoryOperation(boolean wasCalled, Iterable<StudentParticipation> studentParticipations) {
         int callCount = wasCalled ? 1 : 0;
-        Set<StudentParticipation> studentParticipations = programmingExercise.getStudentParticipations();
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
@@ -244,7 +258,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // has AFTER_DUE_DATE tests and no additional build after due date => update the scores to show those test cases in it
         verify(programmingExerciseGradingService, Mockito.times(1)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
         // make sure to trigger the update only for participants who do not have got an individual due date
-        verify(programmingExerciseGradingService, Mockito.times(0)).updateAllResults(programmingExercise);
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -318,11 +332,45 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
+        final long delayMS = 200;
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS / 2)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var participationIndividualDueDate = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
+        participationIndividualDueDate
+                .setIndividualDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS)));
+        participationIndividualDueDate = participationRepository.save(participationIndividualDueDate);
+
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        mockStudentRepoLocks();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        final List<StudentParticipation> studentParticipationsRegularDueDate = programmingExercise.getStudentParticipations().stream()
+                .filter(participation -> !"student3".equals(participation.getStudent().get().getLogin())).toList();
+        assertThat(studentParticipationsRegularDueDate).allMatch(participation -> participation.getIndividualDueDate() == null);
+
+        // the repo-lock for the participation with a later due date should only have been called after that individual
+        // due date has passed
+        verifyLockStudentRepositoryOperation(true, studentParticipationsRegularDueDate);
+        verifyLockStudentRepositoryOperation(false, participationIndividualDueDate);
+
+        Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        verifyLockStudentRepositoryOperation(true, participationIndividualDueDate);
+    }
+
     // ToDo: participation with individual due date between due date and build and test date
 
     // ToDo: participation with individual due date after due date and build and test date
-
-    // ToDo: participation with individual due date in exercise without build and test date
 
     // ToDo: exercise with mix of participants with and without individual due dates
 
@@ -333,4 +381,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     // ToDo: update of schedule when changing a due date
 
     // ToDo: keeping individual schedule when changing due date of an exercise
+
+    // ToDo: multiple participants with different due dates
 }

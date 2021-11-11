@@ -238,7 +238,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
 
-        scheduleParticipationTasks(exercise);
+        scheduleParticipationTasks(exercise, now);
     }
 
     private void scheduleTemplateCommitCombination(ProgrammingExercise exercise) {
@@ -269,8 +269,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
     }
 
-    private void scheduleParticipationTasks(ProgrammingExercise exercise) {
-        final ZonedDateTime now = ZonedDateTime.now();
+    private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
         final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
 
         final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository.findWithIndividualDueDateByExerciseId(exercise.getId());
@@ -303,6 +302,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 resultRepository.saveAll(updatedResult);
             }
         });
+        log.debug("Scheduled task to lock repository for participation {} at the individual due date.", participation.getId());
     }
 
     private void scheduleBuildAndTestAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation) {
