@@ -76,13 +76,13 @@ under ``localhost:7990``.
 
 **Get evaluation licenses for Atlassian products:** `Atlassian Licenses <https://my.atlassian.com/license/evaluation>`__
 
-1. Get licenses for Bamboo, Bitbucket and Jira Service Management.
+#. Get licenses for Bamboo, Bitbucket and Jira Service Management.
 
    - Bamboo: Select ``Bamboo (Data Center)`` and ``not installed yet``
    - Bitbucket: Select ``Bitbucket (Data Center)`` and ``not installed yet``
    - Jira: Select ``Jira Service Management (formerly Service Desk) (Data Center)`` and ``not installed yet``
 
-2. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
+#. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
    Follow the additional steps for Jira and Bitbucket.
 
@@ -94,7 +94,7 @@ under ``localhost:7990``.
 
    - Bitbucket: Do not connect Bitbucket with Jira yet
 
-3. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
+#. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
 
     .. raw:: html
 
@@ -120,7 +120,7 @@ under ``localhost:7990``.
    groups, users and disabled application links between the 3 applications.
 
 
-4. Enable the created `application
+#. Enable the created `application
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
    between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
    has finished. If not open them manually:
@@ -129,48 +129,48 @@ under ``localhost:7990``.
    - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
    - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
 
- **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
- Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
- ``http://localhost:8085`` **.**
+     **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
+     Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
+     ``http://localhost:8085`` **.**
 
-    **Bamboo:**
+        **Bamboo:**
 
-    .. figure:: bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
+           :align: center
 
-       Bamboo → Bitbucket
+           Bamboo → Bitbucket
 
-    .. figure:: bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
+           :align: center
 
-       Bamboo → Jira
+           Bamboo → Jira
 
 
-    **Bitbucket:**
+        **Bitbucket:**
 
-    .. figure:: bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
+           :align: center
 
-       Bitbucket → Bamboo
+           Bitbucket → Bamboo
 
-    .. figure:: bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
+           :align: center
 
-       Bitbucket → Jira
+           Bitbucket → Jira
 
-    **Jira:**
+        **Jira:**
 
-    .. figure:: bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
+           :align: center
 
-       Jira → Bamboo
+           Jira → Bamboo
 
-    .. figure:: bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
+           :align: center
 
-       Jira → Bitbucket
+           Jira → Bitbucket
 
-5. The script *(step 3)* has already created users and groups but you need to
+#. The script *(step 3)* has already created users and groups but you need to
    manually assign the users into their respective group in Jira. In our
    test setup, users 1-5 are students, 6-10 are tutors, 11-15 are
    editors and 16-20 are instructors. The usernames are \artemis_test_user_{1-20}
@@ -178,7 +178,7 @@ under ``localhost:7990``.
    you have to manually choose the created groups (students, tutors, editors,
    instructors).
 
-6. Use the `user directories in
+#. Use the `user directories in
    Jira <https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html>`__
    to synchronize the users in bitbucket and bamboo:
 
@@ -210,18 +210,18 @@ under ``localhost:7990``.
                 Adding Crowd Server in **Bamboo**
 
 
-7. In Bamboo create a global variable named
+#. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
    ``src/main/resources/config/application-artemis.yml`` as the value of
    ``artemis-authentication-token-value``.
 
-8. Download the
+#. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
    and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
    the downloaded .jar file → Upload
 
-9. Add Maven and JDK:
+#. Add Maven and JDK:
 
    -  Go to Bamboo → Server capabilities → Add capabilities menu →
       Capability type ``Executable`` → select type ``Maven 3.x`` → insert
@@ -230,12 +230,12 @@ under ``localhost:7990``.
    -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK16``
       as JDK label → insert ``/usr/lib/jvm/java-16-oracle`` as Java home.
 
-10. Generate a personal access token
+#. Generate a personal access token
 
    While username and password can still be used as a fallback, this option is already marked as deprecated and will
    be removed in the future.
 
-   10.1 Personal access token for Bamboo.
+   #. Personal access token for Bamboo.
 
       - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
@@ -252,7 +252,7 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-   10.2 Personal access token for Bitbucket.
+   # Personal access token for Bitbucket.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
@@ -269,7 +269,7 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-11. Disable XSRF checking
+#. Disable XSRF checking
     Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
     sending the required headers.
 
@@ -280,7 +280,7 @@ under ``localhost:7990``.
         .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
            :align: center
 
-12. Add a SSH key for the admin user
+#. Add a SSH key for the admin user
 
     Artemis can clone/push the repositories during setup and for the online code editor using SSH.
     If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
@@ -306,7 +306,7 @@ under ``localhost:7990``.
 Configure Artemis
 -----------------
 
-1. Modify ``src/main/resources/config/application-artemis.yml``
+#. Modify ``src/main/resources/config/application-artemis.yml``
 
    .. code:: yaml
 
@@ -339,7 +339,7 @@ Configure Artemis
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
-2. Modify the application-dev.yml
+#. Modify the application-dev.yml
 
    .. code:: yaml
 
