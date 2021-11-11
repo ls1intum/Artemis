@@ -17,7 +17,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
@@ -84,7 +84,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, ImageCropperModule],
+            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(ImageCropperModule)],
             providers: [
                 {
                     provide: ActivatedRoute,

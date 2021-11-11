@@ -16,7 +16,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -48,7 +48,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), RouterTestingModule],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(StudentsExamImportButtonComponent),

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
@@ -25,7 +25,7 @@ describe('ParticipantScoresTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), TranslateModule.forRoot()],
             declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), DataTableComponent, MockDirective(NgbTypeahead)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

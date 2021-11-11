@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
@@ -26,7 +26,7 @@ describe('ParticipantScoresAverageTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), NgbTooltipModule, TranslateModule.forRoot()],
             declarations: [
                 ParticipantScoresAverageTableComponent,
                 MockDirective(TranslateDirective),

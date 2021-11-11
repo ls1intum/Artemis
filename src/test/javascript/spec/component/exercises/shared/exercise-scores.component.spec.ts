@@ -12,7 +12,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import sinonChai from 'sinon-chai';
@@ -92,7 +92,7 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule, FormsModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule, FormsModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
                 MockComponent(AlertComponent),

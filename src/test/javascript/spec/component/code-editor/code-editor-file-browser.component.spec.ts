@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockModule } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
@@ -37,7 +37,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TreeviewModule.forRoot()],
+            imports: [ArtemisTestModule, MockModule(TreeviewModule)],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 CodeEditorFileBrowserFileComponent,

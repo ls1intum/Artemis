@@ -203,7 +203,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(ChartsModule)],
+            imports: [ArtemisTestModule, RouterTestingModule, MockModule(TreeviewModule), MockModule(ChartsModule)],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseLearningGoalsComponent),

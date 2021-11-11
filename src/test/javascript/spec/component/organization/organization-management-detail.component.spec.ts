@@ -16,6 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { UserService } from 'app/core/user/user.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { MockModule } from 'ng-mocks';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;
@@ -32,7 +33,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [OrganizationManagementDetailComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
