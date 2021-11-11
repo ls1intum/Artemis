@@ -135,6 +135,7 @@ information about the setup for programming exercises provided:
 
    Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
    Jenkins and Gitlab <setup/jenkins-gitlab>
+   Common setup problems <setup/common-problems>
    Multiple instances <setup/distributed>
    Programming Exercise adjustments <setup/programming-exercises>
    Kubernetes <setup/kubernetes>
@@ -224,22 +225,6 @@ Other run / debug configurations
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <#athene-service>`__).
-
-
-Typical problems with Liquibase checksums
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-One typical problem in the development setup is that an exception occurs
-during the database initialization. Artemis uses
-`Liquibase <https://www.liquibase.org>`__ to automatically upgrade the
-database scheme after changes to the data model. This ensures that the
-changes can also be applied to the production server. In case you
-encounter errors with liquibase checksum values, run the following
-command in your terminal / command line:
-
-::
-
-   ./gradlew liquibaseClearChecksums
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
