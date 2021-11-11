@@ -47,6 +47,7 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+    @Column(name = "individual_due_date")
     private ZonedDateTime individualDueDate;
 
     // information whether this participation belongs to a test run exam, not relevant for course exercises
