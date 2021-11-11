@@ -78,8 +78,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
 
         if (problem instanceof ConstraintViolationProblem) {
             builder.with(VIOLATIONS_KEY, ((ConstraintViolationProblem) problem).getViolations()).with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION);
-        }
-        else {
+        } else {
             builder.withCause(((DefaultProblem) problem).getCause()).withDetail(problem.getDetail()).withInstance(problem.getInstance());
             problem.getParameters().forEach(builder::with);
             if (!problem.getParameters().containsKey(MESSAGE_KEY) && problem.getStatus() != null) {

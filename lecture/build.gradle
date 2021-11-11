@@ -27,8 +27,8 @@ plugins {
 
 group = "de.tum.in.www1.artemis.lecture"
 
-sourceCompatibility=16
-targetCompatibility=16
+sourceCompatibility = 16
+targetCompatibility = 16
 
 apply from: "gradle/docker.gradle"
 apply from: "../gradle/liquibase.gradle"
@@ -232,7 +232,7 @@ dependencies {
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.liquibase:liquibase-core:${liquibase_core_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
+    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -264,7 +264,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
     }
 
@@ -273,7 +273,7 @@ dependencies {
 
 }
 
-task executeTests (type: Exec) {
+task executeTests(type: Exec) {
     commandLine "./gradlew", "test"
 }
 
@@ -289,11 +289,11 @@ nohttp {
     source.include "build.gradle", "README.md"
 }
 
-task executeCheckstyle (type: Exec) {
+task executeCheckstyle(type: Exec) {
     commandLine "./gradlew", "checkstyleMain"
 }
 
-task buildJarForDocker (type: Exec) {
+task buildJarForDocker(type: Exec) {
     commandLine "./gradlew", ":user-management:build", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 

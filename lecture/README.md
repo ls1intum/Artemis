@@ -1,9 +1,13 @@
 # lecture
 
-This application was generated using JHipster 7.1.0, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v7.1.0](https://www.jhipster.tech/documentation-archive/v7.1.0).
+This application was generated using JHipster 7.1.0, you can find documentation and help
+at [https://www.jhipster.tech/documentation-archive/v7.1.0](https://www.jhipster.tech/documentation-archive/v7.1.0).
 
-This is a "microservice" application intended to be part of a microservice architecture, please refer to the [Doing microservices with JHipster][] page of the documentation for more information.
-This application is configured for Service Discovery and Configuration with the JHipster-Registry. On launch, it will refuse to start if it is not able to connect to the JHipster-Registry at [http://localhost:8761](http://localhost:8761). For more information, read our documentation on [Service Discovery and Configuration with the JHipster-Registry][].
+This is a "microservice" application intended to be part of a microservice architecture, please refer to
+the [Doing microservices with JHipster][] page of the documentation for more information. This application is configured
+for Service Discovery and Configuration with the JHipster-Registry. On launch, it will refuse to start if it is not able
+to connect to the JHipster-Registry at [http://localhost:8761](http://localhost:8761). For more information, read our
+documentation on [Service Discovery and Configuration with the JHipster-Registry][].
 
 ## Development
 
@@ -17,7 +21,8 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 
 ### Doing API-First development using openapi-generator
 
-[OpenAPI-Generator]() is configured for this application. You can generate API code from the `src/main/resources/swagger/api.yml` definition file by running:
+[OpenAPI-Generator]() is configured for this application. You can generate API code from
+the `src/main/resources/swagger/api.yml` definition file by running:
 
 ```bash
 ./gradlew openApiGenerate
@@ -25,7 +30,9 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 
 Then implements the generated delegate classes with `@Service` classes.
 
-To edit the `api.yml` definition file, you can use a tool such as [Swagger-Editor](). Start a local instance of the swagger-editor using docker by running: `docker-compose -f src/main/docker/swagger-editor.yml up -d`. The editor will then be reachable at [http://localhost:7742](http://localhost:7742).
+To edit the `api.yml` definition file, you can use a tool such as [Swagger-Editor](). Start a local instance of the
+swagger-editor using docker by running: `docker-compose -f src/main/docker/swagger-editor.yml up -d`. The editor will
+then be reachable at [http://localhost:7742](http://localhost:7742).
 
 Refer to [Doing API-First development][] for more details.
 
@@ -73,9 +80,12 @@ Sonar is used to analyse code quality. You can start a local Sonar server (acces
 docker-compose -f src/main/docker/sonar.yml up -d
 ```
 
-Note: we have turned off authentication in [src/main/docker/sonar.yml](src/main/docker/sonar.yml) for out of the box experience while trying out SonarQube, for real use cases turn it back on.
+Note: we have turned off authentication in [src/main/docker/sonar.yml](src/main/docker/sonar.yml) for out of the box
+experience while trying out SonarQube, for real use cases turn it back on.
 
-You can run a Sonar analysis with using the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the gradle plugin.
+You can run a Sonar analysis with using
+the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the gradle
+plugin.
 
 Then, run a Sonar analysis:
 
@@ -87,7 +97,8 @@ For more information, refer to the [Code quality page][].
 
 ## Using Docker to simplify development (optional)
 
-You can use Docker to improve your JHipster development experience. A number of docker-compose configuration are available in the [src/main/docker](src/main/docker) folder to launch required third party services.
+You can use Docker to improve your JHipster development experience. A number of docker-compose configuration are
+available in the [src/main/docker](src/main/docker) folder to launch required third party services.
 
 For example, to start a mysql database in a docker container, run:
 
@@ -101,8 +112,8 @@ To stop it and remove the container, run:
 docker-compose -f src/main/docker/mysql.yml down
 ```
 
-You can also fully dockerize your application and all the services that it depends on.
-To achieve this, first build a docker image of your app by running:
+You can also fully dockerize your application and all the services that it depends on. To achieve this, first build a
+docker image of your app by running:
 
 ```
 ./gradlew bootJar -Pprod jibDockerBuild
@@ -114,22 +125,38 @@ Then run:
 docker-compose -f src/main/docker/app.yml up -d
 ```
 
-For more information refer to [Using Docker and Docker-Compose][], this page also contains information on the docker-compose sub-generator (`jhipster docker-compose`), which is able to generate docker configurations for one or several JHipster applications.
+For more information refer to [Using Docker and Docker-Compose][], this page also contains information on the
+docker-compose sub-generator (`jhipster docker-compose`), which is able to generate docker configurations for one or
+several JHipster applications.
 
 ## Continuous Integration (optional)
 
-To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
+To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate
+configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][]
+page for more information.
 
 [jhipster homepage and latest documentation]: https://www.jhipster.tech
+
 [jhipster 7.1.0 archive]: https://www.jhipster.tech/documentation-archive/v7.1.0
+
 [doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/
+
 [using jhipster in development]: https://www.jhipster.tech/documentation-archive/v7.1.0/development/
+
 [service discovery and configuration with the jhipster-registry]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/#jhipster-registry
+
 [using docker and docker-compose]: https://www.jhipster.tech/documentation-archive/v7.1.0/docker-compose
+
 [using jhipster in production]: https://www.jhipster.tech/documentation-archive/v7.1.0/production/
+
 [running tests page]: https://www.jhipster.tech/documentation-archive/v7.1.0/running-tests/
+
 [code quality page]: https://www.jhipster.tech/documentation-archive/v7.1.0/code-quality/
+
 [setting up continuous integration]: https://www.jhipster.tech/documentation-archive/v7.1.0/setting-up-ci/
+
 [openapi-generator]: https://openapi-generator.tech
+
 [swagger-editor]: https://editor.swagger.io
+
 [doing api-first development]: https://www.jhipster.tech/documentation-archive/v7.1.0/doing-api-first-development/

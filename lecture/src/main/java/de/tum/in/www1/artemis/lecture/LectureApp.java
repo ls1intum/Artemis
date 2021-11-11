@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
 @EntityScan("de.tum.in.www1.artemis")
-@SpringBootApplication(scanBasePackages = { "de.tum.in.www1.artemis" })
+@SpringBootApplication(scanBasePackages = {"de.tum.in.www1.artemis"})
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class LectureApp {
 
@@ -78,10 +79,10 @@ public class LectureApp {
         }
         LOGGER.info(
             "\n----------------------------------------------------------\n\t" +
-            "Application '{}' is running! Access URLs:\n\t" +
-            "Local: \t\t{}://localhost:{}{}\n\t" +
-            "External: \t{}://{}:{}{}\n\t" +
-            "Profile(s): \t{}\n----------------------------------------------------------",
+                "Application '{}' is running! Access URLs:\n\t" +
+                "Local: \t\t{}://localhost:{}{}\n\t" +
+                "External: \t{}://{}:{}{}\n\t" +
+                "Profile(s): \t{}\n----------------------------------------------------------",
             env.getProperty("spring.application.name"),
             protocol,
             serverPort,
@@ -99,7 +100,7 @@ public class LectureApp {
         }
         LOGGER.info(
             "\n----------------------------------------------------------\n\t" +
-            "Config Server: \t{}\n----------------------------------------------------------",
+                "Config Server: \t{}\n----------------------------------------------------------",
             configServerStatus
         );
     }

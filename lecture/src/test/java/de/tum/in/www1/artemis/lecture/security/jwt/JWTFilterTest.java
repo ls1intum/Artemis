@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import de.tum.in.www1.artemis.lecture.security.AuthoritiesConstants;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+
 import java.util.Collections;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

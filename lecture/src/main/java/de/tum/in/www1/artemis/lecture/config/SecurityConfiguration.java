@@ -77,8 +77,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
             // When users try to authenticate, Spring will always first ask the remote user authentication provider (e.g. JIRA) if available, and only if this one fails,
             // it will ask the user details service (internal DB) for authentication.
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new BeanInitializationException("Security configuration failed", e);
         }
     }
@@ -103,12 +102,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     RoleHierarchy roleHierarchy() {
         var roleHierarchy = new RoleHierarchyImpl();
         roleHierarchy.setHierarchy("""
-                    ROLE_ADMIN > ROLE_INSTRUCTOR
-                    ROLE_INSTRUCTOR > ROLE_EDITOR
-                    ROLE_EDITOR > ROLE_TA
-                    ROLE_TA > ROLE_USER
-                    ROLE_USER > ROLE_ANONYMOUS
-                """);
+                ROLE_ADMIN > ROLE_INSTRUCTOR
+                ROLE_INSTRUCTOR > ROLE_EDITOR
+                ROLE_EDITOR > ROLE_TA
+                ROLE_TA > ROLE_USER
+                ROLE_USER > ROLE_ANONYMOUS
+            """);
         return roleHierarchy;
     }
 
