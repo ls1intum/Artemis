@@ -16,8 +16,8 @@ import { fail } from 'k6';
 export function newExam(artemis, course) {
     const currentDate = new Date();
     const visibleDate = new Date(currentDate.getTime() + 30000); // Visible in 30 secs
-    const startDate = new Date(currentDate.getTime() + 60000); // Starting in 30 secs
-    const endDate = new Date(currentDate.getTime() + 360000); // Ending in 360 secs
+    const startDate = new Date(currentDate.getTime() + 60000); // Starting in 60 secs
+    const endDate = new Date(currentDate.getTime() + 600000); // Ending in 600 secs
 
     const exam = {
         course: course,
