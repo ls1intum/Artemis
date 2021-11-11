@@ -1,17 +1,15 @@
 <div class="course-info-bar course-info-bar--participation" *ngIf="exercise">
     <div class="row">
         <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
-            <h4>
-                <ng-content select="[pagetitle]"></ng-content>
-            </h4>
+            <h4 class="fw-medium"><ng-content select="[pagetitle]"></ng-content></h4>
             <div class="d-flex align-items-center">
-                <h6 class="me-2 mb-0">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
+                <h6 class="me-2 mb-0 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
                 <span>{{ (exercise.dueDate | artemisDate) || 'N/A' }}</span>
                 <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ms-2">{{ exercise.dueDate | artemisTimeAgo }}</span>
             </div>
             <div *ngIf="exercise.categories" class="d-sm-flex">
-                <h6 class="me-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
-                <h6 *ngFor="let category of exerciseCategories">
+                <h6 class="me-1 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
+                <h6 class="fw-medium" *ngFor="let category of exerciseCategories">
                     <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h6>
             </div>
@@ -20,7 +18,7 @@
             <table class="exercise-details-table">
                 <tr *ngIf="exercise.maxPoints != undefined">
                     <td>
-                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}</h6>
+                        <h6 clas="fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}</h6>
                     </td>
                     <td>
                         <span
@@ -37,7 +35,7 @@
                 </tr>
                 <tr *ngIf="exercise.assessmentDueDate">
                     <td>
-                        <h6>{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h6>
+                        <h6 class="fw-medium">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h6>
                     </td>
                     <td>
                         <span>{{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }}</span>
