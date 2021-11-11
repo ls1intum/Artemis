@@ -13,12 +13,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN add-apt-repository -y ppa:linuxuprising/java
-RUN echo debconf shared/accepted-oracle-license-v1-2 select true | debconf-set-selections && echo debconf shared/accepted-oracle-license-v1-2 seen true | debconf-set-selections
-RUN apt-get install -y --no-install-recommends oracle-java16-installer=16.*
+RUN echo debconf shared/accepted-oracle-license-v1-3 select true | debconf-set-selections && echo debconf shared/accepted-oracle-license-v1-3 seen true | debconf-set-selections
+RUN apt-get install -y --no-install-recommends oracle-java17-installer=17.*
 RUN update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java 1
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 # Add file in /artemis/bin/mvn that uses the correct java version and passes all arguments to mvn
-RUN mkdir /artemis && mkdir /artemis/bin && printf '#!/bin/bash\nJAVA_HOME=/usr/lib/jvm/java-16-oracle /usr/bin/mvn "$@"\n' > /artemis/bin/mvn && chmod 777 /artemis/bin/mvn
+RUN mkdir /artemis && mkdir /artemis/bin && printf '#!/bin/bash\nJAVA_HOME=/usr/lib/jvm/java-17-oracle /usr/bin/mvn "$@"\n' > /artemis/bin/mvn && chmod 777 /artemis/bin/mvn
 
 # Install dependencies for C static analysis
 RUN apt-get update && apt-get install -y --no-install-recommends \
