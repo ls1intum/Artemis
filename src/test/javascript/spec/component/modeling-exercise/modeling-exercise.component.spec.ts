@@ -68,7 +68,7 @@ describe('ModelingExercise Management Component', () => {
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findSpy = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
+        const findStub = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [modelingExercise],
@@ -82,7 +82,7 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findSpy).toHaveBeenCalled();
+        expect(findStub).toHaveBeenCalled();
         expect(comp.modelingExercises[0]).toEqual(modelingExercise);
     });
 
@@ -144,11 +144,11 @@ describe('ModelingExercise Management Component', () => {
     });
 
     it('should delete the given exercise', fakeAsync(() => {
-        const deleteSpy = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
+        const deleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         comp.deleteModelingExercise(2);
-        expect(deleteSpy).toHaveBeenCalledWith(2);
-        expect(deleteSpy).toHaveBeenCalledTimes(1);
+        expect(deleteStub).toHaveBeenCalledWith(2);
+        expect(deleteStub).toHaveBeenCalledTimes(1);
         tick();
         expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'modelingExerciseListModification',

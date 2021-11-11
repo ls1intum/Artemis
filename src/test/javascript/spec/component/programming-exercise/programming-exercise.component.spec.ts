@@ -244,7 +244,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleProgrammingExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises[0]).toEqual(jasmine.objectContaining({ id: programmingExercise.id }));
+            expect(comp.selectedProgrammingExercises[0]).toContainEntry(['id', programmingExercise.id]);
         });
 
         it('Should remove selected exercise to list', () => {
@@ -253,7 +253,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleProgrammingExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises.length).toBe(0);
+            expect(comp.selectedProgrammingExercises).toHaveLength(0);
         });
 
         it('Should select all', () => {
@@ -261,7 +261,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleAllProgrammingExercises();
 
             // THEN
-            expect(comp.selectedProgrammingExercises.length).toBe(comp.programmingExercises.length);
+            expect(comp.selectedProgrammingExercises).toHaveLength(comp.programmingExercises.length);
         });
 
         it('Should deselect all', () => {
@@ -270,7 +270,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleAllProgrammingExercises(); // Deselect all
 
             // THEN
-            expect(comp.selectedProgrammingExercises.length).toBe(0);
+            expect(comp.selectedProgrammingExercises).toHaveLength(0);
         });
 
         it('Should check correctly if selected', () => {
@@ -278,8 +278,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleProgrammingExercise(programmingExercise);
 
             // THEN
-            expect(comp.isExerciseSelected(programmingExercise)).toBeTruthy();
-            expect(comp.isExerciseSelected(programmingExercise2)).toBeFalsy();
+            expect(comp.isExerciseSelected(programmingExercise)).toBe(true);
+            expect(comp.isExerciseSelected(programmingExercise2)).toBe(false);
         });
     });
 });

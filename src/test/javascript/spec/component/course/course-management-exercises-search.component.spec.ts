@@ -11,6 +11,7 @@ import { NgModel } from '@angular/forms';
 describe('Course Management Exercises Search Component', () => {
     let comp: CourseManagementExercisesSearchComponent;
     let fixture: ComponentFixture<CourseManagementExercisesSearchComponent>;
+    let emitSpy: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -25,6 +26,7 @@ describe('Course Management Exercises Search Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesSearchComponent);
         comp = fixture.componentInstance;
+        emitSpy = jest.spyOn(comp.exerciseFilter, 'emit');
     });
 
     afterEach(() => {
@@ -44,7 +46,6 @@ describe('Course Management Exercises Search Component', () => {
     });
 
     it('should change filter on name change', () => {
-        const emitSpy = jest.spyOn(comp.exerciseFilter, 'emit');
         const filter = new ExerciseFilter();
         filter.exerciseNameSearch = 'test';
         fixture.detectChanges();
@@ -58,7 +59,6 @@ describe('Course Management Exercises Search Component', () => {
     it('should change filter on category change', () => {
         const filter = new ExerciseFilter();
         filter.exerciseCategorySearch = 'homework';
-        const emitSpy = jest.spyOn(comp.exerciseFilter, 'emit');
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
         comp.exerciseCategorySearch = filter.exerciseCategorySearch;
@@ -70,7 +70,6 @@ describe('Course Management Exercises Search Component', () => {
     it('should change filter on type change', () => {
         const filter = new ExerciseFilter();
         filter.exerciseTypeSearch = 'programming';
-        const emitSpy = jest.spyOn(comp.exerciseFilter, 'emit');
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
         comp.exerciseTypeSearch = filter.exerciseTypeSearch;
