@@ -42,6 +42,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[] = [];
+    participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -62,6 +63,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isAdmin = false;
 
     isLoading: boolean;
+
+    isSaving: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -206,6 +209,33 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
         });
+    }
+
+    changedIndividualDueDate(participation: StudentParticipation) {
+        this.participationsChangedDueDate.set(participation.id!, participation);
+    }
+
+    removeIndividualDueDate(participation: StudentParticipation) {
+        participation.individualDueDate = undefined;
+        this.participationsChangedDueDate.set(participation.id!, participation);
+    }
+
+    /**
+     * Saves the updated individual due dates for all participants.
+     *
+     * Changes are not updated directly when changing just a single due date, as
+     * an update here might require a full update of the scheduling of the
+     * exercise. Therefore, an explicit save action which can also update the
+     * due date for multiple participants at the same time is preferred.
+     */
+    saveChangedDueDates() {
+        this.isSaving = true;
+        /*
+        ToDo:
+          - send updated participations to server
+          - load updated participations into table
+          - set isSaving to false
+         */
     }
 
     /**

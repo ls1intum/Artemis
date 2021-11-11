@@ -30,6 +30,7 @@
             "buildPlanId": "Build-Plan-Link",
             "initializationState": "Status",
             "initializationDate": "Teilnahme Start",
+            "individualDueDate": "Abgabedatum",
             "initializationNotYetStarted": "Noch nicht gestartet",
             "presentationScore": "Präsentationsergebnis",
             "results": "Ergebnisse",
