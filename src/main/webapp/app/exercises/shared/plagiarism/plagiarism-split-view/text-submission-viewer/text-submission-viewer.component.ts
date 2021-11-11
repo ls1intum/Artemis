@@ -87,7 +87,9 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe(
                     (submission: TextSubmission) => {
                         this.loading = false;
+                        console.log(submission);
                         this.fileContent = this.insertMatchTokens(submission.text || '');
+                        console.log(this.fileContent);
                     },
                     () => {
                         this.loading = false;
@@ -130,7 +132,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
      */
-    downloadCurrentFile() {
+    downloadCurrentFile(): void {
         this.repositoryService.downloadFile(this.currentFile, this.exercise.shortName + '_' + this.plagiarismSubmission.studentLogin + '_' + this.currentFile);
     }
 
