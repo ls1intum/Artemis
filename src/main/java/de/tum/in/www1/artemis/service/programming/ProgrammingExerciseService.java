@@ -649,15 +649,9 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
 
-        final ZonedDateTime releaseDateBeforeUpdate = programmingExercise.getReleaseDate();
-        final ZonedDateTime releaseDateAfterUpdate = updatedProgrammingExercise.getReleaseDate();
-        boolean releaseDateHasChanged = false;
-        if ((releaseDateBeforeUpdate == null) != (releaseDateAfterUpdate == null)) {
-            releaseDateHasChanged = true;
-        }
-        if (releaseDateBeforeUpdate != null && releaseDateAfterUpdate != null && !releaseDateAfterUpdate.isEqual(releaseDateBeforeUpdate)) {
-            releaseDateHasChanged = true;
-        }
+        // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
+        ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
+        programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
 
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
@@ -666,7 +660,7 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(releaseDateHasChanged, savedProgrammingExercise, notificationText,
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, null,
                 instanceMessageSendService);
 
         return savedProgrammingExercise;
