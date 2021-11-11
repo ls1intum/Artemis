@@ -4,6 +4,8 @@ Common Setup Problems
 General Setup Problems
 ----------------------
 
+- Restarting IntelliJ with invalidating caches *(File > Invalidate Caches...)* might resolve the current issue.
+
 Database
 ^^^^^^^^
 - On the first startup, there might be issues with the ``text_block`` table.
