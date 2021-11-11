@@ -134,6 +134,8 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param submission Either submission or 'new'
      */
     getAssessmentLink(exercise: Exercise, participation: Participation, submission: Submission | 'new'): string[] {
+        participation ??= {};
+        submission ??= 'new';
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation.id, submissionUrlParameter, 0, 0);
     }
