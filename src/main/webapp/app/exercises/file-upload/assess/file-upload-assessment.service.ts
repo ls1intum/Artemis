@@ -9,9 +9,7 @@ import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class FileUploadAssessmentService {
     private resourceUrl = SERVER_API_URL + 'api';
 

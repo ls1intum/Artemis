@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ConsistencyCheckService {
     private readonly resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 

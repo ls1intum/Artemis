@@ -16,9 +16,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.
  *
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrionBuildAndTestService {
     private buildFinished = new Subject<void>();
     private resultSubscription: Subscription;

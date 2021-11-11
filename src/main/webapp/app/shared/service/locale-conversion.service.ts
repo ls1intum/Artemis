@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class LocaleConversionService {
     locale = LocaleConversionService.getLang(); // default value, will be overridden by the current language of Artemis
 

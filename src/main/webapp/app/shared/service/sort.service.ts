@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import dayjs from 'dayjs';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class SortService {
     constructor() {}
 

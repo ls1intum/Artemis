@@ -30,9 +30,7 @@ function theWindow(): any {
  * in the browser. This service has to always be available in the native window object, so that if an IDE is connected,
  * it can find the object during the integrated IDE browser instantiation.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrionConnectorService implements ArtemisOrionConnector {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;

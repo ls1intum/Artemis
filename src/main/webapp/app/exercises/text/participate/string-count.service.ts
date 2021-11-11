@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class StringCountService {
     /**
      * includes Latin-1 Supplement 00C0 to 00FF to support german "umlaute"

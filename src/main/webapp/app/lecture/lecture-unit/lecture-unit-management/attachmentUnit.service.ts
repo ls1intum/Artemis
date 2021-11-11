@@ -7,9 +7,7 @@ import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<AttachmentUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AttachmentUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 

@@ -9,9 +9,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 type EntityResponseType = HttpResponse<ExerciseUnit>;
 type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ExerciseUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 

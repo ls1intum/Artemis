@@ -3,9 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Rating } from 'app/entities/rating.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class RatingService {
     private ratingResourceUrl = SERVER_API_URL + 'api/results/';
 

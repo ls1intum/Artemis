@@ -7,9 +7,7 @@ import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<VideoUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class VideoUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 

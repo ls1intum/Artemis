@@ -10,9 +10,7 @@ import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-g
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class LearningGoalService {
     private resourceURL = SERVER_API_URL + 'api';
 

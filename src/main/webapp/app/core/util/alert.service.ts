@@ -17,9 +17,7 @@ export interface Alert {
     close?: (alerts: Alert[]) => void;
 }
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AlertService {
     timeout = 8000;
     toast = false;

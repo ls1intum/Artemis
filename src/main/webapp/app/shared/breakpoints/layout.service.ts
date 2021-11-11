@@ -4,9 +4,7 @@ import { BreakpointsService } from './breakpoints.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class LayoutService {
     activeBreakpoints: string[] = [];
 

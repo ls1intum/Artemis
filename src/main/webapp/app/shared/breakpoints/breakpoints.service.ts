@@ -8,9 +8,7 @@ export const CustomBreakpointNames = {
     extraLarge: 'extraLarge',
 };
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class BreakpointsService {
     breakpoints: object = {
         '(max-width: 576px)': CustomBreakpointNames.extraSmall,

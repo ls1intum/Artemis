@@ -3,9 +3,7 @@ import { Injectable } from '@angular/core';
 /**
  * A utility service for link parsing. Note: this class comes from the jhipster template
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ParseLinks {
     /**
      * Method to parse the links

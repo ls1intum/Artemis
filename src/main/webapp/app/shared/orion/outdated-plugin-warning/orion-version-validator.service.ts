@@ -7,9 +7,7 @@ import { compare } from 'compare-versions';
 import { Observable, of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrionVersionValidator {
     isOrion = isOrion;
     private minVersion: string;

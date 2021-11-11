@@ -9,9 +9,7 @@ export class EventWithContent<T> {
 /**
  * An utility class to manage RX events
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class EventManager {
     observable: Observable<EventWithContent<unknown> | string>;
     observer?: Observer<EventWithContent<unknown> | string>;

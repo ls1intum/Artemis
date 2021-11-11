@@ -7,9 +7,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 
 type EntityResponseType = HttpResponse<TextUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class TextUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 
