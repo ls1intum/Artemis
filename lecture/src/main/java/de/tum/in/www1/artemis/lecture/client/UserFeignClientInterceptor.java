@@ -1,18 +1,20 @@
 package de.tum.in.www1.artemis.lecture.client;
 
-import de.tum.in.www1.artemis.lecture.security.SecurityUtils;
+import org.springframework.stereotype.Component;
+
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import org.springframework.stereotype.Component;
 
 @Component
 public class UserFeignClientInterceptor implements RequestInterceptor {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
+
     private static final String BEARER = "Bearer";
 
     @Override
     public void apply(RequestTemplate template) {
-        SecurityUtils.getCurrentUserJWT().ifPresent(s -> template.header(AUTHORIZATION_HEADER, String.format("%s %s", BEARER, s)));
+        SecurityUtils.getCurrentSecurityContextJWT().ifPresent(s -> template.header(AUTHORIZATION_HEADER, String.format("%s %s", BEARER, s)));
     }
 }

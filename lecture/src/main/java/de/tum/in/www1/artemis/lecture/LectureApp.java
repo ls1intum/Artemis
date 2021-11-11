@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.lecture;
 
-import de.tum.in.www1.artemis.lecture.config.ApplicationProperties;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -12,17 +11,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.env.Environment;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@SpringBootApplication
-@EnableConfigurationProperties({ LiquibaseProperties.class, ApplicationProperties.class })
+@EntityScan("de.tum.in.www1.artemis")
+@SpringBootApplication(scanBasePackages = { "de.tum.in.www1.artemis" })
+@EnableConfigurationProperties(LiquibaseProperties.class)
 public class LectureApp {
 
-    private static final Logger log = LoggerFactory.getLogger(LectureApp.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LectureApp.class);
 
     private final Environment env;
 
@@ -40,21 +41,13 @@ public class LectureApp {
     @PostConstruct
     public void initApplication() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (
-            activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) &&
-            activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)
-        ) {
-            log.error(
-                "You have misconfigured your application! It should not run " + "with both the 'dev' and 'prod' profiles at the same time."
-            );
-        }
-        if (
-            activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) &&
-            activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)
-        ) {
-            log.error(
-                "You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time."
-            );
+        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+                LOGGER.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
+            }
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
+                LOGGER.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
+            }
         }
     }
 
@@ -81,9 +74,9 @@ public class LectureApp {
         try {
             hostAddress = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-            log.warn("The host name could not be determined, using `localhost` as fallback");
+            LOGGER.warn("The host name could not be determined, using `localhost` as fallback");
         }
-        log.info(
+        LOGGER.info(
             "\n----------------------------------------------------------\n\t" +
             "Application '{}' is running! Access URLs:\n\t" +
             "Local: \t\t{}://localhost:{}{}\n\t" +
@@ -104,7 +97,7 @@ public class LectureApp {
         if (configServerStatus == null) {
             configServerStatus = "Not found or not setup for this application";
         }
-        log.info(
+        LOGGER.info(
             "\n----------------------------------------------------------\n\t" +
             "Config Server: \t{}\n----------------------------------------------------------",
             configServerStatus

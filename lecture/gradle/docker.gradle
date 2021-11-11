@@ -1,13 +1,13 @@
 jib {
     from {
-        image = "adoptopenjdk:11-jre-hotspot"
+        image = "openjdk:16-jdk-alpine"
     }
     to {
         image = "lecture:latest"
     }
     container {
-        entrypoint = ["bash", "-c", "/entrypoint.sh"]
-        ports = ["8086", "5701/udp" ]
+        entrypoint = ["/bin/sh", "-c", "/entrypoint.sh"]
+        ports = ["8086"]
         environment = [
             SPRING_OUTPUT_ANSI_ENABLED: "ALWAYS",
             JHIPSTER_SLEEP: "0"

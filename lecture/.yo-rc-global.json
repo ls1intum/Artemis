@@ -1,8 +1,0 @@
-{
-  "generator-jhipster:7.1.0": {
-    "promptValues": {
-      "packageName": "de.tum.in.www1.artemis.lecture",
-      "nativeLanguage": "en"
-    }
-  }
-}

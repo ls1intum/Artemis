@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.lecture.aop.logging;
 
 import java.util.Arrays;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+
 import tech.jhipster.config.JHipsterConstants;
 
 /**
@@ -30,11 +32,8 @@ public class LoggingAspect {
     /**
      * Pointcut that matches all repositories, services and Web REST endpoints.
      */
-    @Pointcut(
-        "within(@org.springframework.stereotype.Repository *)" +
-        " || within(@org.springframework.stereotype.Service *)" +
-        " || within(@org.springframework.web.bind.annotation.RestController *)"
-    )
+    @Pointcut("within(@org.springframework.stereotype.Repository *)" + " || within(@org.springframework.stereotype.Service *)"
+        + " || within(@org.springframework.web.bind.annotation.RestController *)")
     public void springBeanPointcut() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }
@@ -42,11 +41,7 @@ public class LoggingAspect {
     /**
      * Pointcut that matches all Spring beans in the application's main packages.
      */
-    @Pointcut(
-        "within(de.tum.in.www1.artemis.lecture.repository..*)" +
-        " || within(de.tum.in.www1.artemis.lecture.service..*)" +
-        " || within(de.tum.in.www1.artemis.lecture.web.rest..*)"
-    )
+    @Pointcut("within(de.tum.in.www1.artemis.repository..*)" + " || within(de.tum.in.www1.artemis.service..*)" + " || within(de.tum.in.www1.artemis.web.rest..*)")
     public void applicationPackagePointcut() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }
@@ -70,21 +65,11 @@ public class LoggingAspect {
     @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
-            logger(joinPoint)
-                .error(
-                    "Exception in {}() with cause = \'{}\' and exception = \'{}\'",
-                    joinPoint.getSignature().getName(),
-                    e.getCause() != null ? e.getCause() : "NULL",
-                    e.getMessage(),
-                    e
-                );
-        } else {
-            logger(joinPoint)
-                .error(
-                    "Exception in {}() with cause = {}",
-                    joinPoint.getSignature().getName(),
-                    e.getCause() != null ? e.getCause() : "NULL"
-                );
+            logger(joinPoint).error("Exception in {}() with cause = \'{}\' and exception = \'{}\'", joinPoint.getSignature().getName(),
+                e.getCause() != null ? e.getCause() : "NULL", e.getMessage(), e);
+        }
+        else {
+            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), e.getCause() != null ? e.getCause() : "NULL");
         }
     }
 
@@ -107,7 +92,8 @@ public class LoggingAspect {
                 log.debug("Exit: {}() with result = {}", joinPoint.getSignature().getName(), result);
             }
             return result;
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             log.error("Illegal argument: {} in {}()", Arrays.toString(joinPoint.getArgs()), joinPoint.getSignature().getName());
             throw e;
         }

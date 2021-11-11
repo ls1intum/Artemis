@@ -1,5 +1,12 @@
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
 dependencies {
-    developmentOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
+    developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
 }
 
 def profiles = "dev"
@@ -21,7 +28,6 @@ springBoot {
 bootRun {
     args = []
 }
-
 
 processResources {
     inputs.property('version', version)

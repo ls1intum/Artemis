@@ -16,22 +16,14 @@
 logging:
   level:
     ROOT: DEBUG
-    tech.jhipster: DEBUG
-    org.hibernate.SQL: DEBUG
-    de.tum.in.www1.artemis.lecture: DEBUG
-
-eureka:
-  instance:
-    prefer-ip-address: true
-  client:
-    service-url:
-      defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
+    de.tum.in.www1.artemis: DEBUG
+    io.github.jhipster: DEBUG
+    liquibase: ERROR
 
 spring:
   devtools:
     restart:
       enabled: true
-      additional-exclude: static/**
     livereload:
       enabled: false # we use Webpack dev server + BrowserSync for livereload
   jackson:
@@ -47,7 +39,7 @@ spring:
       # it can be set to any label, branch or commit of the configuration source Git repository
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://localhost:3306/lecture?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
     username: root
     password:
     hikari:
@@ -58,14 +50,18 @@ spring:
         prepStmtCacheSize: 250
         prepStmtCacheSqlLimit: 2048
         useServerPrepStmts: true
-  jpa:
+    jpa:
+      database-platform: org.hibernate.dialect.MySQL8Dialect
+      database: MYSQL
+      show-sql: false
   liquibase:
-    # Remove 'faker' if you do not want the sample data to be loaded automatically
-    contexts: dev, faker
+    contexts: dev
   messages:
     cache-duration: PT1S # 1 second, see the ISO 8601 standard
   thymeleaf:
     cache: false
+  hazelcast:
+    localInstances: true
   sleuth:
     sampler:
       probability: 1 # report 100% of traces
@@ -86,12 +82,6 @@ server:
 # ===================================================================
 
 jhipster:
-  cache: # Cache configuration
-    hazelcast: # Hazelcast distributed cache
-      time-to-live-seconds: 3600
-      backup-count: 1
-  registry:
-    password: admin
   # CORS is disabled by default on microservices, as you should access them through a gateway.
   # If you want to enable it, please uncomment the configuration below.
   # cors:
@@ -105,7 +95,7 @@ jhipster:
     authentication:
       jwt:
         # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
-        base64-secret: NWNlZGZlYjViMTEwMDY4YTM5ODQwMzYxNjdhY2NmNzljYmVkYjI0MGM5MmRiMTA3NzM5NGM4MmM2YzczNzkwYzQyZjIyZjgxNmVkYjFhNzQ1NWExZTAxNGUzMTI3MDQzZGI0MmM5MGJlMjFlNDM1MGFiZWUzNjNlZWM3MmU3OWY=
+        base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
         # Token is valid 24 hours
         token-validity-in-seconds: 86400
         token-validity-in-seconds-for-remember-me: 2592000
@@ -116,13 +106,14 @@ jhipster:
       host: localhost
       port: 5000
       queue-size: 512
-# ===================================================================
-# Application specific properties
-# Add your own application properties here, see the ApplicationProperties class
-# to have type-safe configuration, like in the JHipsterProperties above
-#
-# More documentation is available at:
-# https://www.jhipster.tech/common-application-properties/
-# ===================================================================
+  audit-events:
+    retention-period: 120 # Number of days before audit events are deleted.
 
-# application:
+# Eureka configuration
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    enabled: true
+    service-url:
+      defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
