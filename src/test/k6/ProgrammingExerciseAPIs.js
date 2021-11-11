@@ -61,7 +61,6 @@ export function setup() {
         // Login to Artemis
         artemis = login(instructorUsername, instructorPassword);
 
-
         // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
         const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
         if (timeoutExercise > 0) {
