@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -17,7 +18,6 @@ import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.PurgeExistingStrategy;
-import de.tum.in.www1.artemis.web.rest.TeamResource;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
@@ -148,7 +148,7 @@ public class TeamService {
         // If number of students is not same with number of logins and registration numbers combined throw BadRequestAlertException
         // In other words, if there is at least one student without any identifier throw an exception
         if (students.size() != logins.size() + registrationNumbers.size()) {
-            throw new BadRequestAlertException("Students do not have an identifier", TeamResource.ENTITY_NAME, "studentIdentifierNotFound", true);
+            throw new BadRequestAlertException("Students do not have an identifier", Constants.TEAM_ENTITY_NAME, "studentIdentifierNotFound", true);
         }
 
         // Get list of users which has the logins of the students and list of logins with which no user could be found

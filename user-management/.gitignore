@@ -1,0 +1,23 @@
+######################
+# Project Specific
+######################
+/test-results.xml
+
+######################
+# Gradle
+######################
+/build/
+
+######################
+# Directories
+######################
+/bin/
+/deploy/
+
+######################
+# Docker
+######################
+/.cache-loader
+/src/main/generated
+/coverage
+/src/main/resources/config/application-local*.yml

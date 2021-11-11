@@ -61,7 +61,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**", "**/user-management/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
@@ -86,6 +86,28 @@ modernizer {
 }
 
 apply from: "gradle/tasks.gradle"
+
+// configure excluded classes from the test coverage report
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "gateway/**", // exclude the gateway project from test coverage report for the moment until it is activated
+                "user-management/**" // exclude the user-management project from test coverage report for the moment until it is activated
+            ]
+        )
+    }))
+}
+
+jacocoTestReport.configure {
+    // we want to ignore some generated files in the domain folders as well as files from different projects
+    afterEvaluate { excludedClassFilesForReport(classDirectories) }
+}
+jacocoTestCoverageVerification.configure {
+    // we want to ignore some generated files in the domain folders as well as files from different projects
+    afterEvaluate { excludedClassFilesForReport(classDirectories) }
+}
 
 configurations {
     providedRuntime
@@ -224,6 +246,19 @@ tasks.named("dependencyUpdates").configure {
 
 gradle.taskGraph.whenReady { graph ->
     def tasks = gradle.startParameter.taskNames.toString()
+
+    def hasRootUserManagementTask = tasks.contains(":user-management:")
+
+    if (!hasRootUserManagementTask) {
+        graph.getAllTasks().each { task ->
+            def subUserManagementTask = (task.path =~ /:user-management.+/)
+            if (subUserManagementTask) {
+                println "TRACER skipping task ${task.path}"
+                task.enabled = false
+            }
+        }
+    }
+
     def hasRootGatewayTask = tasks.contains(":gateway:")
 
     if (!hasRootGatewayTask) {

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.gateway.security.jwt;
+package de.tum.in.www1.artemis.usermanagement.security.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -17,9 +17,9 @@ import tech.jhipster.config.JHipsterProperties;
 
 /**
  * This class implements token creation in order to test the token verification,
- * since it is not included in {@link TokenProvider} because the Gateway is not responsible for authenticating users.
+ * since it is not included in {@link TokenProvider} because the User Management is not responsible for authenticating users.
  */
-public class MockTokenProvider {
+public class TestTokenGenerator {
 
     private final Key key;
 
@@ -29,7 +29,7 @@ public class MockTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
-    public MockTokenProvider(JHipsterProperties jHipsterProperties) {
+    public TestTokenGenerator(JHipsterProperties jHipsterProperties) {
         byte[] keyBytes;
         String secret = jHipsterProperties.getSecurity().getAuthentication().getJwt().getBase64Secret();
         if (!ObjectUtils.isEmpty(secret)) {
