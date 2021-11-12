@@ -2,6 +2,7 @@ import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
+import { compose, filter, flatten } from 'lodash/fp';
 import { get, isNumber } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -256,7 +257,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         const searchPredicate = (entity: BaseEntity) => {
             return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
         };
-        const filteredEntities = this.allEntities.filter(this.customFilter).filter(searchPredicate);
+        const filteredEntities = compose(filter(searchPredicate), filter(this.customFilter))(this.allEntities);
         this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
@@ -287,10 +288,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param fields Fields to extract from entity (can be paths such as "student.login")
      */
     private entityFieldValues = (entity: BaseEntity, fields: string[]) => {
-        return fields
-            .map((field) => this.collectEntityFieldValues(entity, field))
-            .flat()
-            .filter(Boolean) as string[];
+        return flatten(fields.map((field) => this.collectEntityFieldValues(entity, field))).filter(Boolean) as string[];
     };
 
     /**
@@ -307,7 +305,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         if (tail.length > 0) {
             const resolved = get(entity, head);
             if (Array.isArray(resolved)) {
-                return resolved.map((subEntity) => this.collectEntityFieldValues(subEntity, tail.join(separator))).flat();
+                return flatten(resolved.map((subEntity) => this.collectEntityFieldValues(subEntity, tail.join(separator))));
             }
             return this.collectEntityFieldValues(resolved, tail.join(separator));
         }
