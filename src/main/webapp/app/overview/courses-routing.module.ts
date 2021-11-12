@@ -5,12 +5,9 @@ import { CourseOverviewComponent } from 'app/overview/course-overview.component'
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
-import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
-import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 
 const routes: Routes = [
     {
@@ -50,24 +47,6 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'statistics',
-                component: CourseStatisticsComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.statistics',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'discussion',
-                component: CourseDiscussionComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.discussion',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
                 path: 'exams',
                 component: CourseExamsComponent,
                 data: {
@@ -89,15 +68,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.gradingSystem.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
-        component: TeamComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

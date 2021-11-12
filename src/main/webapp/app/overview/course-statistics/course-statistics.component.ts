@@ -50,7 +50,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private translateSubscription: Subscription;
     course?: Course;
 
-    // TODO: improve the types here and use maps instead of java script objects
+    // TODO: improve the types here and use maps instead of java script objects, also avoid any
 
     // overall points
     overallPoints = 0;

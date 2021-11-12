@@ -84,7 +84,7 @@
                             </a>
                             <a
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'teams']"
+                                [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm me-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>

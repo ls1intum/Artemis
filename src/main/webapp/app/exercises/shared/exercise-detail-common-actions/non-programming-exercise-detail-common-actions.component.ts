@@ -42,12 +42,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     ngOnInit(): void {
         if (!this.isExamExercise) {
-            this.baseResource = `/course-management/${this.course.id!}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.baseResource = `/course-management/${this.course.id!}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/`;
         } else {
             this.baseResource =
                 `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${this.exercise.exerciseGroup?.id}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+                `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
     }
