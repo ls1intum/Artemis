@@ -3,7 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { CourseStatisticsModule } from 'app/overview/course-statistics/course-statistics.module';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
