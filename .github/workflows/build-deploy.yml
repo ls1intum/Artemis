@@ -97,7 +97,7 @@ jobs:
             return "pr-" + context.issue.number;
           }
           if (context.eventName === "push") {
-            if (context.ref.startsWith("refs/tags/") {
+            if (context.ref.startsWith("refs/tags/")) {
               return context.ref.slice(10); 
             }
             if (context.ref === "refs/heads/develop") {
