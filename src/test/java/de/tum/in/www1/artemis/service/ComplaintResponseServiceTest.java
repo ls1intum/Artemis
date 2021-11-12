@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Set;
 
@@ -98,9 +99,9 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         complaintWithResult.setResult(new Result());
         User user = new User();
 
-        assertThrows(IllegalArgumentException.class, () -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null));
-        assertThrows(IllegalArgumentException.class, () -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user));
-        assertThrows(IllegalArgumentException.class, () -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user));
+        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -110,7 +111,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
 
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, instructor));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, instructor)).isTrue();
     }
 
     @Test
@@ -120,7 +121,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
 
-        assertFalse(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, student2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, student2)).isFalse();
     }
 
     @Test
@@ -130,7 +131,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
 
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1)).isTrue();
     }
 
     @Test
@@ -140,7 +141,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
 
-        assertFalse(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2)).isFalse();
     }
 
     @Test
@@ -154,8 +155,8 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(submission.getId()).orElseThrow();
         textExerciseComplaint = this.complaintRepository.findByIdWithEagerAssessor(textExerciseComplaint.getId()).orElseThrow();
 
-        assertFalse(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1));
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1)).isFalse();
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2)).isTrue();
     }
 
     @Test
@@ -169,8 +170,8 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(submission.getId()).orElseThrow();
         textExerciseComplaint = this.complaintRepository.findByIdWithEagerAssessor(textExerciseComplaint.getId()).orElseThrow();
 
-        assertFalse(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1));
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1)).isFalse();
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2)).isTrue();
     }
 
     @Test
@@ -180,8 +181,8 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
 
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1));
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1)).isTrue();
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2)).isTrue();
     }
 
     @Test
@@ -195,8 +196,8 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(submission.getId()).orElseThrow();
         textExerciseComplaint = this.complaintRepository.findByIdWithEagerAssessor(textExerciseComplaint.getId()).orElseThrow();
 
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1));
-        assertFalse(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1)).isTrue();
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2)).isFalse();
     }
 
     @Test
@@ -206,7 +207,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.MORE_FEEDBACK);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
 
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1));
-        assertTrue(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2));
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor1)).isTrue();
+        assertThat(complaintResponseService.isUserAuthorizedToRespondToComplaint(textExerciseComplaint, tutor2)).isTrue();
     }
 }
