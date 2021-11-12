@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { take } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -15,7 +14,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -42,7 +40,6 @@ enum FilterProp {
     selector: 'jhi-exercise-scores',
     styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
-    providers: [ModelingAssessmentService, SourceTreeService],
     encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {

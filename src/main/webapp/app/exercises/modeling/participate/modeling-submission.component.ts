@@ -33,6 +33,7 @@ import dayjs from 'dayjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { getNamesForAssessments } from '../assess/modeling-assessment-util';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -458,7 +459,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     private initializeAssessmentInfo(): void {
         if (this.assessmentResult && this.assessmentResult.feedbacks && this.umlModel) {
-            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
+            this.assessmentsNames = getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
                 totalScore += feedback.credits!;

@@ -13,6 +13,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment-util';
 
 const expect = chai.expect;
 
@@ -213,7 +214,7 @@ describe('Modeling Assessment Service', () => {
                     ],
                 } as unknown as UMLModel;
 
-                expectedResult = service.getNamesForAssessments(elemDefault, uml);
+                expectedResult = getNamesForAssessments(elemDefault, uml);
                 expect(expectedResult).to.deep.equal(expected);
             });
         });
