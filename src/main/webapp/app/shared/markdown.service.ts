@@ -28,18 +28,4 @@ export class ArtemisMarkdownService {
         const convertedString = htmlForMarkdown(markdownText, [...extensions, ...addCSSClass], allowedHtmlTags, allowedHtmlAttributes);
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
-
-    /**
-     * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
-     *
-     * @param {string} markdownText the original markdown text
-     * @returns {string} the resulting html as a string
-     */
-    htmlForGuidedTourMarkdown(markdownText?: string): SafeHtml {
-        if (!markdownText || markdownText === '') {
-            return '';
-        }
-        const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'ol', 'li', 'tt', 'span'], ALLOWED_ATTR: ['class', 'href', 'rel', 'target'] });
-        return this.sanitizer.bypassSecurityTrustHtml(sanitized);
-    }
 }
