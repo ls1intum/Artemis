@@ -45,7 +45,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     private courseExercises: Exercise[];
-    private paramSubscription: Subscription;
+    private paramSubscription?: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
@@ -175,7 +175,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        // Note: due to lazy loading and router outlet, we use parent 2x here
+        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -220,7 +221,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.translateSubscription.unsubscribe();
         this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        this.paramSubscription?.unsubscribe();
     }
 
     calculateCourseGrade() {
@@ -234,18 +235,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     private onCourseLoad() {
-        this.courseExercises = this.course!.exercises!;
-        this.calculateMaxPoints();
-        this.calculateReachablePoints();
-        this.calculateAbsoluteScores();
-        this.calculateRelativeScores();
-        this.calculatePresentationScores();
-        this.calculateCurrentRelativeScores();
-        this.groupExercisesByType();
+        if (this.course?.exercises) {
+            this.courseExercises = this.course.exercises;
+            this.calculateMaxPoints();
+            this.calculateReachablePoints();
+            this.calculateAbsoluteScores();
+            this.calculateRelativeScores();
+            this.calculatePresentationScores();
+            this.calculateCurrentRelativeScores();
+            this.groupExercisesByType();
+        }
     }
 
     groupExercisesByType() {
-        let exercises = this.course!.exercises;
+        if (!this.course?.exercises) {
+            return;
+        }
+        let exercises = this.course.exercises;
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
