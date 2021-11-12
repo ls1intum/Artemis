@@ -23,7 +23,6 @@ import {
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 
 /**
  * Describes the editableField
