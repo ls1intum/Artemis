@@ -101,10 +101,10 @@ jobs:
               return context.ref.slice(10); 
             }
             if (context.ref === "refs/heads/develop") {
-              return "latest"
+              return "latest";
             }
           }
-          return "FALSE"
+          return "FALSE";
 
     # Push to GitHub Container Registry
     - name: Login to GitHub Container Registry
@@ -113,14 +113,14 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ steps.compute-tag.outputs.result != "FALSE" }}
+      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
     - name: Push to GitHub Container Registry
       env:
         TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
         docker tag artemis ghcr.io/ls1intum/artemis:$TAG
         docker push ghcr.io/ls1intum/artemis:$TAG
-      if: ${{ steps.compute-tag.outputs.result != "FALSE" }}
+      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
     # TODO: Push to Docker Hub (develop + tag)
 
