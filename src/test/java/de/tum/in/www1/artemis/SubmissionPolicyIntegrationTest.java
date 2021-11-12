@@ -111,58 +111,58 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_notFound_exerciseNotPresent() throws Exception {
         request.post(requestUrlWrongId(), SubmissionPolicyBuilder.any(), HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_exerciseHasPolicy() throws Exception {
         addAnySubmissionPolicyToExercise();
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.any());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_policyHasId() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().id(12L).policy());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionLimitNull() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().active(true).limit(null).policy());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionLimitSmallerOne() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().active(true).limit(0).policy());
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().active(true).limit(-1000).policy());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionPenaltyNull() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(null).policy());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionPenaltySmallerEqualZero() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(0.0).policy());
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(-12.0).policy());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_badRequest_activeNull() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(null).limit(10).penalty(10.0).policy());
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicy() throws Exception {
         request.post(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(false).limit(10).policy(), HttpStatus.CREATED);
         assertThat(updatedExercise().getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
@@ -171,7 +171,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_addSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicy() throws Exception {
         request.post(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(false).limit(15).penalty(14.0).policy(), HttpStatus.CREATED);
         assertThat(updatedExercise().getSubmissionPolicy().getClass()).isEqualTo(SubmissionPenaltyPolicy.class);
@@ -207,19 +207,19 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_updateSubmissionPolicy_notFound_exerciseNotPresent() throws Exception {
         request.patch(requestUrlWrongId(), SubmissionPolicyBuilder.any(), HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_updateSubmissionPolicy_badRequest_policyNotPresent() throws Exception {
         request.patch(requestUrl(), SubmissionPolicyBuilder.any(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(15).policy(), HttpStatus.OK);
@@ -227,7 +227,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitGreater() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy());
         ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
@@ -243,7 +243,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitSmaller() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy());
         ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
@@ -260,7 +260,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_updateSubmissionPolicy_ok_submissionPenaltyPolicy() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(10.0).policy());
         request.patch(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(true).limit(15).penalty(10.0).policy(), HttpStatus.OK);
