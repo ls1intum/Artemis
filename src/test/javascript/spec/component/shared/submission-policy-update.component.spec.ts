@@ -133,4 +133,18 @@ describe('Submission Policy Update Form Component', () => {
         expect(submissionLimitInputField.value).toBe('');
         expect(submissionLimitExceededPenaltyInputField.value).toBe('');
     }));
+
+    it('Should not be invalid when no policy is undefined', () => {
+        component.programmingExercise.submissionPolicy = undefined;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(component.invalid).toBe(false);
+    });
+
+    it('Should not be invalid when no policy is of type none', () => {
+        component.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(component.invalid).toBe(false);
+    });
 });
