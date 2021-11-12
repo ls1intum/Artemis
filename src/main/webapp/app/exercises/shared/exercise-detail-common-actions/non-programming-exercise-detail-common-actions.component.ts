@@ -26,6 +26,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    teamBaseResource: string;
     baseResource: string;
     shortBaseResource: string;
     readonly ExerciseType = ExerciseType;
@@ -42,10 +43,14 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     ngOnInit(): void {
         if (!this.isExamExercise) {
-            this.baseResource = `/course-management/${this.course.id!}/exercises/${this.exercise.id}/`;
+            this.baseResource = `/course-management/${this.course.id!}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.teamBaseResource = `/course-management/${this.course.id!}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/`;
         } else {
             this.baseResource =
+                `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
+                `/exercise-groups/${this.exercise.exerciseGroup?.id}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.teamBaseResource =
                 `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
