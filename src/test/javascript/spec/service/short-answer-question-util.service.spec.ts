@@ -204,7 +204,7 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(textParts[0][0]).to.contain(textPart1);
         expect(textParts[1][0]).to.contain(textPart2);
 
-        const textPartsInHTML = service.transformTextPartsIntoHTML(textParts, markdownService);
+        const textPartsInHTML = service.transformTextPartsIntoHTML(textParts);
         expect(textPartsInHTML[0][0]).to.contain(`<p>${textPart1}</p>`);
         expect(textPartsInHTML[1][0]).to.contain(`<p><strong>${textPart2.split('**').join('')}</strong></p>`);
     });

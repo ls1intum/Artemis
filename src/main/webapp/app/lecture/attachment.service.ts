@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Attachment } from 'app/entities/attachment.model';
 
 type EntityResponseType = HttpResponse<Attachment>;

@@ -4,7 +4,7 @@ import { Observable, ReplaySubject } from 'rxjs';
 import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';

@@ -8,7 +8,7 @@ import { take } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
+import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

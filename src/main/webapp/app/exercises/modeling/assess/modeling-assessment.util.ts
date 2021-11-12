@@ -5,7 +5,7 @@ import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon
  * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
  */
 // TODO: define a mapping or simplify this complex monster in a another way so that we can support other diagram types as well
-export const getNamesForAssessments = (result: Result, model: UMLModel): Map<string, Map<string, string>> => {
+export function getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
     const assessmentsNames = new Map<string, Map<string, string>>();
     for (const feedback of result.feedbacks!) {
         const referencedModelType = feedback.referenceType! as UMLElementType;
@@ -104,4 +104,4 @@ export const getNamesForAssessments = (result: Result, model: UMLModel): Map<str
         }
     }
     return assessmentsNames;
-};
+}
