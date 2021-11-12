@@ -14,7 +14,6 @@ import { SortableComponent } from 'ng2-dnd';
 import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 
 chai.use(sinonChai);
@@ -164,8 +163,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     });
 
     it('should generate answer markdown', () => {
-        const generatedText = 'explanation';
-        const markdownService = TestBed.inject(ArtemisMarkdownService);
+        const generatedText = 'answer';
 
         const result = component.generateAnswerMarkdown(answer1);
         fixture.detectChanges();
@@ -178,11 +176,12 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
 
         component.onQuestionChange(questionText);
         fixture.detectChanges();
+
+        expect(component.question.text).to.equal(questionText);
     });
 
     it('should get question text', () => {
-        const fakeText = 'fake';
-        const markdownService = TestBed.inject(ArtemisMarkdownService);
+        const fakeText = '';
 
         const text = component.getQuestionText(component.question);
         fixture.detectChanges();
