@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -30,6 +31,9 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
  */
 @Service
 public class CourseExamExportService {
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(CourseExamExportService.class);
 
@@ -82,7 +86,7 @@ public class CourseExamExportService {
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
-        Path tmpCourseDir = Path.of("./exports", cleanCourseDirName);
+        Path tmpCourseDir = Path.of(courseArchivesDirPath, "_temp-exports_", cleanCourseDirName);
         try {
             Files.createDirectories(tmpCourseDir);
         }
@@ -142,7 +146,7 @@ public class CourseExamExportService {
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
-        Path tempExamsDir = Path.of("./exports", cleanExamDirName);
+        Path tempExamsDir = Path.of(courseArchivesDirPath, "_temp-exports_", cleanExamDirName);
         try {
             Files.createDirectories(tempExamsDir);
         }
