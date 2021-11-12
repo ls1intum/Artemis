@@ -188,6 +188,7 @@ public class CourseResource {
         validateRegistrationConfirmationMessage(course);
         validateComplaintsAndRequestMoreFeedbackConfig(course);
         validateOnlineCourseAndRegistrationEnabled(course);
+        validateAccuracyOfScores(course);
 
         createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -318,6 +319,7 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(updatedCourse);
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
+        validateAccuracyOfScores(updatedCourse);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -385,6 +387,16 @@ public class CourseResource {
         if (course.isOnlineCourse() && course.isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    private void validateAccuracyOfScores(Course course) {
+        if (course.getAccuracyOfScores() == null) {
+            throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
+        }
+        if (course.getAccuracyOfScores() < 0 || course.getAccuracyOfScores() > 5) {
+            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
+                    "accuracyOfScoresInvalid", true);
         }
     }
 
@@ -702,9 +714,7 @@ public class CourseResource {
         final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(courseId);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         end = System.currentTimeMillis();
-        log.info("Finished > complaintResponseRepository\n"
-                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull< call for course {} in {}ms",
-                course.getId(), end - start);
+        log.info("Finished > complaintService.countMoreFeedbackRequestResponsesByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 0.12s - a bit slow
@@ -713,6 +723,12 @@ public class CourseResource {
         log.info("Finished >  complaintService.countComplaintsByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         stats.setNumberOfComplaints(numberOfComplaints);
+
+        start = System.currentTimeMillis();
+        final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(courseId);
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        end = System.currentTimeMillis();
+        log.info("Finished > complaintService.countComplaintResponsesByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 10ms - fast

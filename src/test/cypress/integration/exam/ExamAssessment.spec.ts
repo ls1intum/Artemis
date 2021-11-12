@@ -1,9 +1,12 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
+import { COURSE_BASE, CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
+import dayjs, { Dayjs } from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
+import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import { POST } from '../../support/constants';
+
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
@@ -16,6 +19,7 @@ const examAssessment = artemis.pageobjects.assessment.exam;
 const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
+const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -31,6 +35,8 @@ Cypress.on('uncaught:exception', () => {
 });
 
 describe('Exam assessment', () => {
+    let examEnd: Dayjs;
+
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse(true).then((response) => {
@@ -52,7 +58,8 @@ describe('Exam assessment', () => {
 
     describe('Exam exercise assessment', () => {
         beforeEach('Generate new exam name', () => {
-            prepareExam(dayjs().add(30, 'seconds'));
+            examEnd = dayjs().add(30, 'seconds');
+            prepareExam(examEnd);
         });
 
         describe('Modeling exercise assessment', () => {
@@ -124,11 +131,50 @@ describe('Exam assessment', () => {
         });
     });
 
+    describe('Assess a quiz exercise submission', () => {
+        let resultDate: Dayjs;
+
+        beforeEach('Generate new exam name', () => {
+            examEnd = dayjs().add(15, 'seconds');
+            resultDate = examEnd.add(10, 'seconds');
+            prepareExam(examEnd, resultDate);
+        });
+
+        beforeEach('Create exercise and submission', () => {
+            courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then(() => {
+                courseManagementRequests.generateMissingIndividualExams(exam);
+                courseManagementRequests.prepareExerciseStartForExam(exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                cy.contains('Cypress Quiz').click();
+                multipleChoice.tickAnswerOption(0);
+                multipleChoice.tickAnswerOption(2);
+                examNavigation.handInEarly();
+                examStartEnd.finishExam();
+            });
+        });
+
+        it('Assesses quiz automatically', () => {
+            if (dayjs().isBefore(examEnd)) {
+                cy.wait(examEnd.diff(dayjs(), 'ms'));
+            }
+            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
+            cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
+            cy.contains('Evaluate quizzes').click();
+            if (dayjs().isBefore(resultDate)) {
+                cy.wait(examEnd.diff(dayjs(), 'ms'));
+            }
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
+        });
+    });
+
     describe('Exam programming exercise assessment', () => {
-        const examEnd = 155000;
+        const examDuration = 155000;
 
         before('Prepare exam', () => {
-            prepareExam(dayjs().add(examEnd, 'milliseconds'));
+            examEnd = dayjs().add(examDuration, 'milliseconds');
+            prepareExam(examEnd);
         });
 
         beforeEach('Create exam, exercise and submission', () => {
@@ -150,7 +196,7 @@ describe('Exam assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: examEnd }).click();
+            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
             startAssessing();
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
@@ -167,13 +213,13 @@ function startAssessing() {
     cy.contains('You have the lock for this assessment').should('be.visible');
 }
 
-function prepareExam(examEnd: dayjs.Dayjs) {
+function prepareExam(examEnd: dayjs.Dayjs, resultDate = examEnd.add(1, 'seconds')) {
     cy.login(admin);
     const examContent = new CypressExamBuilder(course)
         .visibleDate(dayjs().subtract(1, 'day'))
         .startDate(dayjs())
         .endDate(examEnd)
-        .publishResultsDate(examEnd.add(1, 'seconds'))
+        .publishResultsDate(resultDate)
         .gracePeriod(0)
         .build();
     courseManagementRequests.createExam(examContent).then((examResponse) => {

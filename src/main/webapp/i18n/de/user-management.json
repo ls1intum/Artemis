@@ -20,7 +20,7 @@
         "name": "Name",
         "randomPassword": "Zufälliges Passwort",
         "keepPassword": "Altes Passwort behalten",
-        "passwordConstraints": "Das Passwort muss zwischen 8 und 100 Zeichen enthalten!",
+        "passwordConstraints": "Das Passwort muss zwischen {{min}} und {{max}} Zeichen enthalten!",
         "groups": "Gruppen",
         "addGroup": "+ Gruppe",
         "enterGroup": "Gruppe eingeben",
