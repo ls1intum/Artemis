@@ -83,7 +83,7 @@ jobs:
       with:
         name: Artemis.war
     - name: Download Dockerfile
-      run: curl -O $RAW_URL/src/main/docker/Dockerfile -O $RAW_URL/src/main/docker/entrypoint.sh
+      run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/entrypoint.sh
     - name: Build Docker Image
       run: docker build -t artemis .
     
@@ -169,10 +169,11 @@ jobs:
     - name: Store Artifact Name
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
+
     # Downlaod artemis-server-cli from GH without cloning the Repo
      - name: Fetch Artemis CLI
        run: |
-         wget $RAW_URL/artemis-server-cli
+         wget ${{ env.RAW_URL }}/artemis-server-cli
          chmod +x artemis-server-cli
 
     - name: Install OpenVPN
