@@ -9,7 +9,8 @@ RUN adduser -D -s /bin/sh artemis
 WORKDIR /home/artemis
 USER artemis
 
-COPY build/libs/*.war Artemis.war
+ARG WAR_PATH=build/libs
+COPY $WAR_PATH/*.war Artemis.war
 
 ENTRYPOINT ["java","-jar","Artemis.war"]
 
