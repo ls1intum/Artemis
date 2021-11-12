@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { flowRight, filter, flatten, map, reduce, uniq } from 'lodash-es';
+import { flatten, map, uniq } from 'lodash-es';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/shared/util/global.utils';
 import {
@@ -69,12 +69,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             (testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.map((foundTestCase) => foundTestCase.toLowerCase()).includes(testCase.toLowerCase())),
         );
 
-        /*const invalidTestCases = compose(
-            flatten,
-            map(([, testCases]) => testCases),
-        )(invalidTestCaseAnalysis);*/
-
-        const invalidTestCases = flatten(invalidTestCaseAnalysis.map(([, testCases]) => testCases));
+        const invalidTestCases = flatten(map(invalidTestCaseAnalysis, ([, testCases]) => testCases));
 
         return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
     };
@@ -100,11 +95,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             )
             .filter(([, hints]) => !!hints.length);
 
-        /*const invalidHints = compose(
-            flatten,
-            map(([, testCases]) => testCases),
-        )(invalidHintAnalysis);*/
-        const invalidHints = flatten(invalidHintAnalysis.map(([, hints]) => hints));
+        const invalidHints = flatten(map(invalidHintAnalysis, ([, hints]) => hints));
 
         return { invalidHints, invalidHintAnalysis };
     };
@@ -115,31 +106,17 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param analysis arbitrary number of analysis objects to be merged into one.
      */
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>) => {
-        /*return compose(
-            reduce((acc, [lineNumber, values, issueType]) => {
-                const lineNumberValues = acc[lineNumber];
-                const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
-                return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
-            }, {}),
-            map(([lineNumber, values, issueType]: AnalysisItem) => [
+        return flatten(analysis)
+            .map(([lineNumber, values, issueType]: AnalysisItem) => [
                 lineNumber,
                 values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
                 issueType,
-            ]),
-            flatten,
-        )(analysis);*/
-        let intermediate = flatten(analysis);
-        intermediate = intermediate.map(([lineNumber, values, issueType]: AnalysisItem) => [
-            lineNumber,
-            values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
-            issueType,
-        ]);
-
-        return intermediate.reduce((acc, [lineNumber, values, issueType]) => {
-            const lineNumberValues = acc[lineNumber];
-            const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
-            return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
-        }, {}) as ProblemStatementAnalysis;
+            ])
+            .reduce((acc, [lineNumber, values, issueType]) => {
+                const lineNumberValues = acc[lineNumber as number];
+                const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
+                return { ...acc, [lineNumber as number]: { ...lineNumberValues, [issueType as ProblemStatementIssue]: [...issueValues, ...(values as string[])] } };
+            }, {}) as ProblemStatementAnalysis;
     };
 
     /**
@@ -166,44 +143,8 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        /*return compose(
-            map(([lineNumber, match]) => {
-                const cleanedMatches = compose(
-                    uniq,
-                    filter((m) => !!m),
-                    flatten,
-                )(match.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
-                return [lineNumber, cleanedMatches];
-            }),
-            filter(([, testCases]) => !!testCases),
-            map(([lineNumber, task]) => {
-                const extractedValue = task.match(regex);
-                return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, null];
-            }),
-            filter(([, task]) => !!task),
-        )(tasks) as [number, string[]][];*/
-        const intermediate2 = tasks.filter(([, task]) => !!task);
-        const intermediate3 = intermediate2.filter(([lineNumber, task]) => {
-            const extractedValue = task.match(regex);
-            return extractedValue && extractedValue.length > 1;
-        });
-        const intermediate31 = intermediate3.map(([lineNumber, task]) => {
-            const extractedValue = task.match(regex);
-            return [lineNumber as number, extractedValue![1] as string];
-        }) as [number, string][];
-        const intermediate4 = intermediate31.filter(([, testCases]) => !!testCases);
-        const intermediate6 = intermediate4.map(([lineNumber, match]) => {
-            const result = match
-                .toString()
-                .split(/,(?![^(]*?\))/)
-                .map((m: string) => m.trim());
-            const cleanedMatches = uniq(flatten(result));
-            return [lineNumber, cleanedMatches];
-        });
-
-        // return intermediate6 as [number, string[]][];
         return tasks // .filter(([, task]) => !!task)
-            .filter(([lineNumber, task]) => {
+            .filter(([, task]) => {
                 const extractedValue = task.match(regex);
                 return !!task && extractedValue && extractedValue.length > 1;
             })
