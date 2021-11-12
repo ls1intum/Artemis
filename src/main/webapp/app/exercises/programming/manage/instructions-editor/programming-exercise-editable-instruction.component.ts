@@ -4,6 +4,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { compose, filter, flatten, map, sortBy, toPairs, values } from 'lodash/fp';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -242,10 +243,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
                         if (testCases) {
-                            const sortedTestCaseNames = testCases
-                                .filter((testCase) => testCase.active)
-                                .map((testCase) => testCase.testName)
-                                .sort();
+                            const sortedTestCaseNames = compose(
+                                map(({ testName }) => testName),
+                                filter(({ active }) => active),
+                                sortBy('testName'),
+                            )(testCases);
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
@@ -273,10 +275,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
             rxMap((result) => (!result || !result.feedbacks ? throwError('no result available') : result)),
             rxMap(({ feedbacks }: Result) =>
-                feedbacks!
-                    .filter((feedback) => feedback.text)
-                    .map((feedback) => feedback.text!)
-                    .sort(),
+                compose(
+                    map(({ text }) => text),
+                    sortBy('text'),
+                )(feedbacks),
             ),
             catchError(() => of([])),
         );
@@ -289,7 +291,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param analysis that contains the resulting issues of the problem statement.
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
-        const lineWarnings = analysis.map(({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints)).flat();
+        const mapIssuesToAnnotations = ([lineNumber, issues]: [number, { [issueType: string]: string[] }]) =>
+            compose(
+                map((analysisIssues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + analysisIssues.join('\n - '), type: 'warning' })),
+                values,
+            )(issues);
+
+        const lineWarnings = compose(flatten, map(mapIssuesToAnnotations), toPairs)(analysis);
 
         this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.
@@ -297,19 +305,5 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         setTimeout(() => {
             this.markdownEditor.aceEditorContainer.getEditor().getSession().setAnnotations(lineWarnings);
         }, 0);
-    };
-
-    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], invalidHints?: string[]) => {
-        const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
-
-        const annotations = [];
-        if (invalidTestCases) {
-            annotations.push(mapIssues(invalidTestCases));
-        }
-        if (invalidHints) {
-            annotations.push(mapIssues(invalidHints));
-        }
-
-        return annotations;
     };
 }
