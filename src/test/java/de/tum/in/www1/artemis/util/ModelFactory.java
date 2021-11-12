@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
-    public static final String USER_PASSWORD = "0000";
+    public static final String USER_PASSWORD = "00000000";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
