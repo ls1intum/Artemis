@@ -1,17 +1,11 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -19,8 +13,17 @@ import { SortService } from 'app/shared/service/sort.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const fileUploadExercise1 = {
     id: 22,
     type: ExerciseType.FILE_UPLOAD,
@@ -56,16 +59,26 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, ArtemisTestModule],
-            declarations: [FileUploadAssessmentDashboardComponent],
+            imports: [ArtemisTestModule],
+            declarations: [
+                FileUploadAssessmentDashboardComponent,
+                MockComponent(AssessmentFiltersComponent),
+                MockComponent(AssessmentWarningComponent),
+                MockComponent(ResultComponent),
+                MockDirective(HasAnyAuthorityDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(SortDirective),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
+                TranslatePipeMock,
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [
-                JhiLanguageHelper,
-                { provide: Router, useClass: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                MockProvider(FileUploadSubmissionService),
+                MockProvider(FileUploadAssessmentService),
+                MockProvider(SortService),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -78,7 +91,6 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 },
             ],
         })
-            .overrideTemplate(FileUploadAssessmentDashboardComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadAssessmentDashboardComponent);
