@@ -24,16 +24,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
                 {
-                    // TODO: this is not displayed correctly in the tab bar
-                    path: 'courses/:courseId/statistics',
-                    loadChildren: () => import('./overview/course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
-                },
-                {
-                    // TODO: this is not displayed correctly in the tab bar
-                    path: 'courses/:courseId/discussion',
-                    loadChildren: () => import('./shared/metis/metis.module').then((m) => m.MetisModule),
-                },
-                {
                     path: 'courses/:courseId/lectures/:lectureId',
                     loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
                 },

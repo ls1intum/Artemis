@@ -47,6 +47,14 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
+                path: 'statistics',
+                loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
+            },
+            {
+                path: 'discussion',
+                loadChildren: () => import('../shared/metis/metis.module').then((m) => m.MetisModule),
+            },
+            {
                 path: 'exams',
                 component: CourseExamsComponent,
                 data: {
