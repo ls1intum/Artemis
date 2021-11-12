@@ -172,7 +172,7 @@ public class QuizExerciseResource {
         }
 
         // Forbid conversion between normal course exercise and exam exercise
-        var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
+        final var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
         exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
 
         // check if quiz is has already started
@@ -187,7 +187,7 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(quizExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText, instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
