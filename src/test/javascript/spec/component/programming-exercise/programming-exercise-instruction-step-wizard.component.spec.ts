@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
@@ -10,7 +8,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 
 chai.use(sinonChai);
@@ -23,13 +20,12 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     const stepWizardStep = '.stepwizard-step';
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseInstructionStepWizardComponent],
             providers: [ProgrammingExerciseInstructionService],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);

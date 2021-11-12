@@ -1,18 +1,5 @@
 <div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
     <div class="col-auto row">
-        <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
-        <div *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto pe-2">
-            <a
-                class="linked-context-information"
-                *ngIf="contextInformation.routerLinkComponents"
-                [routerLink]="contextInformation.routerLinkComponents"
-                (click)="onNavigateToContext($event)"
-                routerLinkActive="active"
-            >
-                {{ contextInformation.displayName }}
-            </a>
-            <div class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}</div>
-        </div>
         <!-- Post tags -->
         <div class="col-auto">
             <span *ngFor="let tag of tags" class="post-tag px-1 me-1">

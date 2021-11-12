@@ -44,10 +44,10 @@ public class GatewayApp {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
             if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-                LOGGER.error("You have misconfigured your application! It should not run " + "with both the 'dev' and 'prod' profiles at the same time.");
+                LOGGER.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
             }
             if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
-                LOGGER.error("You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time.");
+                LOGGER.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
             }
         }
     }

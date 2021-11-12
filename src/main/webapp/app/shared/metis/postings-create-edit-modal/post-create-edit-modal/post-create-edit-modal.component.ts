@@ -81,9 +81,9 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         });
-        // start new subscription to value changes of title;
+        // start new subscription to value changes of title for posts that are not announcements;
         // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
-        if (this.editType === this.EditType.CREATE) {
+        if (this.editType === this.EditType.CREATE && !(this.posting.courseWideContext === CourseWideContext.ANNOUNCEMENT)) {
             this.triggerPostSimilarityCheck();
         }
         this.similarPosts = [];
