@@ -22,19 +22,10 @@ import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { TeamsImportFromFileFormComponent } from './teams-import-dialog/teams-import-from-file-form.component';
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
-    imports: [
-        RouterModule.forChild(ENTITY_STATES),
-        ArtemisSharedModule,
-        NgxDatatableModule,
-        ArtemisDataTableModule,
-        ArtemisSharedComponentModule,
-        ArtemisResultModule,
-        ArtemisAssessmentSharedModule,
-    ],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule, ArtemisResultModule],
     declarations: [
         TeamsComponent,
         TeamUpdateButtonComponent,
