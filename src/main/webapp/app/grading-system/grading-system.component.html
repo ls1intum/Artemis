@@ -17,8 +17,6 @@
                 <span jhiTranslate="artemisApp.gradingSystem.csv.importButton">Import (.csv)</span>
                 <input type="file" accept=".json,.csv" style="display: none" (change)="onCSVFileSelect($event)" />
             </label>
-        </div>
-        <div class="d-flex">
             <button (click)="exportGradingStepsToCsv()" class="btn btn-primary me-1 mb-1" type="button">
                 <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton">Export (.csv)</span>
             </button>
