@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import DOMPurify from 'dompurify';
 import { addCSSClass, htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
