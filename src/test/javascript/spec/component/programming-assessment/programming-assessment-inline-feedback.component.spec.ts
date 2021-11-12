@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
+import { NgModel } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
-import { spy } from 'sinon';
 
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
-import { FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -23,7 +22,15 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisProgrammingManualAssessmentModule],
+            imports: [],
+            declarations: [
+                CodeEditorTutorAssessmentInlineFeedbackComponent,
+                MockComponent(GradingInstructionLinkIconComponent),
+                MockComponent(AssessmentCorrectionRoundBadgeComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(NgModel),
+            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
@@ -44,36 +51,43 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should update feedback and emit to parent', () => {
-        const onUpdateFeedbackSpy = spy(comp.onUpdateFeedback, 'emit');
+        const onUpdateFeedbackSpy = jest.spyOn(comp.onUpdateFeedback, 'emit');
         comp.updateFeedback();
 
-        expect(comp.feedback.reference).to.be.equal(`file:${fileName}_line:${codeLine}`);
-        expect(comp.feedback.type).to.be.equal(FeedbackType.MANUAL);
-        expect(onUpdateFeedbackSpy).to.be.calledOnceWithExactly(comp.feedback);
+        expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
+        expect(comp.feedback.type).toBe(FeedbackType.MANUAL);
+
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
     });
 
     it('should enable edit feedback and emit to parent', () => {
-        const onEditFeedbackSpy = spy(comp.onEditFeedback, 'emit');
+        const onEditFeedbackSpy = jest.spyOn(comp.onEditFeedback, 'emit');
         comp.editFeedback(codeLine);
 
-        expect(onEditFeedbackSpy).to.be.calledOnceWithExactly(codeLine);
+        expect(onEditFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onEditFeedbackSpy).toHaveBeenCalledWith(codeLine);
     });
 
     it('should cancel feedback and emit to parent', () => {
-        const onCancelFeedbackSpy = spy(comp.onCancelFeedback, 'emit');
+        const onCancelFeedbackSpy = jest.spyOn(comp.onCancelFeedback, 'emit');
         comp.cancelFeedback();
 
-        expect(onCancelFeedbackSpy).to.be.calledOnceWithExactly(codeLine);
+        expect(onCancelFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
     });
 
     it('should delete feedback and emit to parent', () => {
-        const onDeleteFeedbackSpy = spy(comp.onDeleteFeedback, 'emit');
+        const onDeleteFeedbackSpy = jest.spyOn(comp.onDeleteFeedback, 'emit');
         global.confirm = () => true;
-        const confirmSpy = spy(window, 'confirm');
+        const confirmSpy = jest.spyOn(window, 'confirm');
         comp.deleteFeedback();
 
-        expect(confirmSpy).to.be.calledOnce;
-        expect(onDeleteFeedbackSpy).to.be.calledOnceWithExactly(comp.feedback);
+        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        expect(confirmSpy).toHaveBeenCalledWith('artemisApp.feedback.delete.question');
+
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -87,9 +101,18 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         // Call spy function with empty event
         comp.updateFeedbackOnDrop(new Event(''));
 
-        expect(comp.feedback.gradingInstruction).to.be.equal(instruction);
-        expect(comp.feedback.credits).to.be.equal(instruction.credits);
-        expect(comp.feedback.detailText).to.be.equal(instruction.feedback);
-        expect(comp.feedback.reference).to.be.equal(`file:${fileName}_line:${codeLine}`);
+        expect(comp.feedback.gradingInstruction).toEqual(instruction);
+        expect(comp.feedback.credits).toEqual(instruction.credits);
+        expect(comp.feedback.detailText).toEqual(instruction.feedback);
+        expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
+    });
+
+    it('should count feedback with one credit as positive', () => {
+        comp.feedback = new Feedback();
+        comp.feedback.credits = 1;
+
+        comp.updateFeedback();
+
+        expect(comp.feedback.positive).toBe(true);
     });
 });

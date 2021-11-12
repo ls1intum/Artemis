@@ -73,6 +73,7 @@
                             [showTestDetails]="isTmpOrSolutionProgrParticipation"
                         ></jhi-result>
                         <span
+                            *ngIf="exercise?.isAtLeastInstructor"
                             class="badge"
                             style="border-radius: 0px"
                             jhiDeleteButton
@@ -134,7 +135,7 @@
                 </div>
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column prop="id" [minWidth]="120" [width]="120">
+        <ngx-datatable-column prop="id" [minWidth]="120" [width]="120" *ngIf="exercise?.isAtLeastInstructor">
             <ng-template ngx-datatable-header-template>
                 <span jhiTranslate="artemisApp.participation.participationSubmission.action"></span>
             </ng-template>
