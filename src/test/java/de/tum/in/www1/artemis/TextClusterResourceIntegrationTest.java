@@ -51,7 +51,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @BeforeEach
     public void initTestCase() throws Error {
-        Course course = database.createCourseWithInstructorAndTextExercise("instructor1");
+        Course course = database.createCourseWithInstructorAndTextExercise();
 
         exercise = course.getExercises().iterator().next();
         StudentParticipation studentParticipation = studentParticipationRepository.findAll().get(0);

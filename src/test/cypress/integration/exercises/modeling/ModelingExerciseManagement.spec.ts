@@ -81,7 +81,7 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingExerciseExampleSubmission.assessComponent(2, 'Good');
                     modelingExerciseExampleSubmission.openAssessmentForComponent(3);
                     modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-                    modelingExerciseExampleSubmission.submit();
+                    modelingExerciseExampleSubmission.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
                     cy.get('.apollon-editor').should('exist');
                 });
