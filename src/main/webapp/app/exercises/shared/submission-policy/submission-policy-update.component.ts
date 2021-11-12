@@ -30,12 +30,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                         <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
                             >Submission Limit</label
                         >
-                        <fa-icon
-                            icon="question-circle"
-                            class="text-secondary"
-                            placement="top"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription' | artemisTranslate }}"
-                        ></fa-icon>
+                        <jhi-help-icon placement="top" text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription"></jhi-help-icon>
                         <div class="input-group">
                             <input
                                 required
@@ -63,12 +58,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                             for="field_submissionLimitExceededPenalty"
                             >Penalty after Exceeding Submission Limit</label
                         >
-                        <fa-icon
-                            icon="question-circle"
-                            class="text-secondary"
-                            placement="top"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription' | artemisTranslate }}"
-                        ></fa-icon>
+                        <jhi-help-icon placement="top" text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription"></jhi-help-icon>
                         <div class="input-group">
                             <input
                                 required
