@@ -77,19 +77,19 @@ public class SubmissionPolicyResource {
      * @param exerciseId of the programming exercise for which the submission policy in request body should be added
      * @param submissionPolicy that should be added to the programming exercise
      * @return the ResponseEntity with status 200 (OK) and the added submission policy in body. Status 404 when
-     *         the programming exercise does not exist, status 403 when the requester is not at least an editor
+     *         the programming exercise does not exist, status 403 when the requester is not at least an instructor
      *         in the course the programming exercise belongs to and 400 when the submission policy has an id or
      *         is invalid. More information on submission policy validation can be found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PostMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
 
         SubmissionPolicy addedSubmissionPolicy;
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         if (programmingExercise.getSubmissionPolicy() != null) {
             throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.", ENTITY_NAME,
@@ -197,19 +197,19 @@ public class SubmissionPolicyResource {
      * @param exerciseId of the programming exercise for which the submission policy in request body should be added
      * @param updatedSubmissionPolicy that should replace the old submission policy
      * @return the ResponseEntity with status 200 (OK) and the updated submission policy in body. Status 404 when
-     *         the programming exercise does not exist, status 403 when the requester is not at least an editor
+     *         the programming exercise does not exist, status 403 when the requester is not at least an instructor
      *         in the course the programming exercise belongs to and 400 when the submission policy is invalid.
      *         More information on submission policy validation can be found at
      *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PatchMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy updatedSubmissionPolicy) {
         log.debug("REST request to update the submission policy of programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
