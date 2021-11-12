@@ -171,10 +171,10 @@ jobs:
       run: echo "::set-output name=war-file::$(ls)"
 
     # Downlaod artemis-server-cli from GH without cloning the Repo
-     - name: Fetch Artemis CLI
-       run: |
-         wget ${{ env.RAW_URL }}/artemis-server-cli
-         chmod +x artemis-server-cli
+    - name: Fetch Artemis CLI
+      run: |
+        wget ${{ env.RAW_URL }}/artemis-server-cli
+        chmod +x artemis-server-cli
 
     - name: Install OpenVPN
       run: sudo apt-get --assume-yes --no-install-recommends install openvpn
