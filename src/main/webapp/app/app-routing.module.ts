@@ -25,11 +25,13 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
                 {
+                    // TODO: this is not displayed correctly in the tab bar
                     path: 'courses/:courseId/statistics',
                     loadChildren: () => import('./overview/course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
                 },
                 {
-                    path: 'courses/:courseId/discussions',
+                    // TODO: this is not displayed correctly in the tab bar
+                    path: 'courses/:courseId/discussion',
                     loadChildren: () => import('./shared/metis/metis.module').then((m) => m.MetisModule),
                 },
                 {
