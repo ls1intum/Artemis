@@ -384,7 +384,17 @@
                                     </td>
                                     <td>
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
-                                            <ng-container *jhiExtensionPoint="overrideOpenButton; context: { submission: submission, correctionRound: correctionRound }">
+                                            <ng-container
+                                                *jhiExtensionPoint="
+                                                    overrideOpenAssessmentButton;
+                                                    context: {
+                                                        submission: submission,
+                                                        queryParams: getAssessmentQueryParams(correctionRound),
+                                                        buttonLabel:
+                                                            submission && calculateSubmissionStatusIsDraft(submission, correctionRound) ? 'continueAssessment' : 'openAssessment'
+                                                    }
+                                                "
+                                            >
                                                 <a
                                                     *ngIf="submission && calculateSubmissionStatusIsDraft(submission, correctionRound); else continueButton"
                                                     [routerLink]="getAssessmentLink(submission)"
@@ -432,7 +442,10 @@
 
                                         <td>
                                             <a
-                                                *jhiExtensionPoint="overrideNewButton; context: { correctionRound: correctionRound }"
+                                                *jhiExtensionPoint="
+                                                    overrideOpenAssessmentButton;
+                                                    context: { submission: 'new', queryParams: getAssessmentQueryParams(correctionRound), buttonLabel: 'startAssessment' }
+                                                "
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 [routerLink]="getAssessmentLink('new')"
                                                 [queryParams]="getAssessmentQueryParams(correctionRound)"
@@ -528,26 +541,38 @@
                                     {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
                                 </td>
                                 <td>
-                                    <a
-                                        *ngIf="submissionWithComplaint.complaint.accepted === undefined; else continueButton"
-                                        [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
-                                        [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
-                                        [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                        class="btn btn-success btn-sm"
+                                    <ng-container
+                                        *jhiExtensionPoint="
+                                            overrideOpenAssessmentButton;
+                                            context: {
+                                                submission: submissionWithComplaint.submission,
+                                                queryParams: getComplaintQueryParams(submissionWithComplaint.complaint),
+                                                disabled: isComplaintLocked(submissionWithComplaint.complaint),
+                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint'
+                                            }
+                                        "
                                     >
-                                        <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
-                                    </a>
-                                    <ng-template #continueButton>
                                         <a
+                                            *ngIf="submissionWithComplaint.complaint.accepted === undefined; else continueButton"
+                                            [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
                                             [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                            class="btn btn-primary btn-sm"
+                                            class="btn btn-success btn-sm"
                                         >
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                                            {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                         </a>
-                                    </ng-template>
+                                        <ng-template #continueButton>
+                                            <a
+                                                [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
+                                                [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                class="btn btn-primary btn-sm"
+                                            >
+                                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                                            </a>
+                                        </ng-template>
+                                    </ng-container>
                                 </td>
                             </tr>
                         </tbody>
@@ -604,25 +629,36 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a
-                                        *ngIf="moreFeedbackRequest.complaint.accepted === undefined; else continueButton"
-                                        class="btn btn-success btn-sm"
-                                        [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
-                                        [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                    <ng-container
+                                        *jhiExtensionPoint="
+                                            overrideOpenAssessmentButton;
+                                            context: {
+                                                submission: moreFeedbackRequest.submission,
+                                                queryParams: getComplaintQueryParams(moreFeedbackRequest.complaint),
+                                                buttonLabel: moreFeedbackRequest.complaint.accepted === undefined ? 'evaluateMoreFeedbackRequest' : 'showMoreFeedbackRequests'
+                                            }
+                                        "
                                     >
-                                        <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
-                                    </a>
-                                    <ng-template #continueButton>
-                                        <button
-                                            class="btn btn-primary btn-sm"
+                                        <a
+                                            *ngIf="moreFeedbackRequest.complaint.accepted === undefined; else continueButton"
+                                            class="btn btn-success btn-sm"
                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                         >
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                            {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
-                                        </button>
-                                    </ng-template>
+                                            {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
+                                        </a>
+                                        <ng-template #continueButton>
+                                            <button
+                                                class="btn btn-primary btn-sm"
+                                                [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                                [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                            >
+                                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
+                                            </button>
+                                        </ng-template>
+                                    </ng-container>
                                 </td>
                             </tr>
                         </tbody>
