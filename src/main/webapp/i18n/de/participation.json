@@ -23,6 +23,9 @@
                 "label": "Entferne Präsentation",
                 "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
+            "updateDueDates": {
+                "error": "Die individuellen Abgabefristen konnten nicht aktualisiert werden."
+            },
             "detail": {
                 "title": "Teilnahme"
             },

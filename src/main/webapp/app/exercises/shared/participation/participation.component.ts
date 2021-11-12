@@ -230,12 +230,29 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      */
     saveChangedDueDates() {
         this.isSaving = true;
-        /*
-        ToDo:
-          - send updated participations to server
-          - load updated participations into table
-          - set isSaving to false
-         */
+
+        const changedParticipations = Array.from(this.participationsChangedDueDate.values());
+        this.participationService.updateIndividualDueDates(this.exercise.id!, changedParticipations).subscribe(
+            (response) => {
+                if (!response.body) {
+                    this.participationsChangedDueDate.clear();
+                    this.isSaving = false;
+                    return;
+                }
+
+                response.body.forEach((updatedParticipation) => {
+                    const changedIndex = this.participations.findIndex((participation) => participation.id! === updatedParticipation.id!);
+                    this.participations[changedIndex] = updatedParticipation;
+                });
+
+                this.participationsChangedDueDate.clear();
+                this.isSaving = false;
+            },
+            () => {
+                this.alertService.error('artemisApp.participation.updateDueDates.error');
+                this.isSaving = false;
+            },
+        );
     }
 
     /**

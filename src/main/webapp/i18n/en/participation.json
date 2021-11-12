@@ -23,6 +23,9 @@
                 "label": "Remove presentation",
                 "error": "Could not remove presentation. Please try again."
             },
+            "updateDueDates": {
+                "error": "The individual due dates could not be updated."
+            },
             "detail": {
                 "title": "Participation"
             },

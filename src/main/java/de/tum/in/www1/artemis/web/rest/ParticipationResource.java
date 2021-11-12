@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
@@ -91,13 +93,15 @@ public class ParticipationResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
-            ExerciseDateService exerciseDateService) {
+            ExerciseDateService exerciseDateService, ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -115,6 +119,7 @@ public class ParticipationResource {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseDateService = exerciseDateService;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
     }
 
     /**
@@ -254,6 +259,59 @@ public class ParticipationResource {
         Participation updatedParticipation = studentParticipationRepository.saveAndFlush(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
                 .body(updatedParticipation);
+    }
+
+    /**
+     * PUT /participations/update-individual-due-date : Updates the individual due dates for the given already existing participations.
+     *
+     * If the exercise is a programming exercise, also triggers a scheduling
+     * update for the participations where the individual due date has changed.
+     * @param exerciseId of the exercise the participations belong to.
+     * @param participations for which the individual due date should be updated.
+     * @return all participations where the individual due date actually changed.
+     */
+    @PutMapping("/exercises/{exerciseId}/participations/update-individual-due-date")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<StudentParticipation>> updateParticipations(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
+        final boolean anyInvalidExerciseId = participations.stream()
+                .anyMatch(participation -> participation.getExercise() == null || participation.getExercise().getId() == null || exerciseId != participation.getExercise().getId());
+        if (anyInvalidExerciseId) {
+            throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
+        }
+
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+
+        for (final StudentParticipation toBeUpdated : participations) {
+            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
+            if (originalParticipation.isEmpty()) {
+                continue;
+            }
+
+            ZonedDateTime newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            // individual due dates can only exist if the exercise has a due date
+            // they also have to be after the exercise due date
+            if (exercise.getDueDate() == null || (newIndividualDueDate != null && newIndividualDueDate.isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+
+            if (Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
+                continue;
+            }
+
+            originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
+            changedParticipations.add(originalParticipation.get());
+        }
+
+        final List<StudentParticipation> updatedParticipations = studentParticipationRepository.saveAllAndFlush(changedParticipations);
+
+        if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
+            programmingExerciseScheduleService.updateScheduling(programmingExercise);
+        }
+
+        return ResponseEntity.ok().body(updatedParticipations);
     }
 
     /**

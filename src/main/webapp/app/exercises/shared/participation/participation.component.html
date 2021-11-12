@@ -228,11 +228,16 @@
                                 [(ngModel)]="row.individualDueDate"
                                 [shouldDisplayTimeZoneWarning]="false"
                                 [min]="exercise.dueDate!"
-                                [disabled]="!exercise.isAtLeastInstructor"
+                                [disabled]="!exercise.isAtLeastInstructor || isSaving"
                                 (valueChange)="changedIndividualDueDate(row)"
                             ></jhi-date-time-picker>
                             &nbsp;
-                            <button class="btn btn-danger" *ngIf="exercise?.isAtLeastInstructor && row.individualDueDate" (click)="removeIndividualDueDate(row)">
+                            <button
+                                class="btn btn-danger"
+                                *ngIf="exercise?.isAtLeastInstructor && row.individualDueDate"
+                                [disabled]="isSaving"
+                                (click)="removeIndividualDueDate(row)"
+                            >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>
                         </span>

@@ -33,6 +33,14 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
     }
 
+    updateIndividualDueDates(exerciseId: number, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
+        const copies = participations.map((participation) => this.convertDateFromClient(participation));
+        return this.http
+            .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.adjustRepositoryUrlArrayFromServer(res)));
+    }
+
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
@@ -106,6 +114,7 @@ export class ParticipationService {
         // return a copy of the object
         return Object.assign({}, participation, {
             initializationDate: participation.initializationDate && dayjs(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : undefined,
+            individualDueDate: participation.individualDueDate && dayjs(participation.individualDueDate).isValid() ? participation.individualDueDate.toJSON() : undefined,
         });
     }
 
