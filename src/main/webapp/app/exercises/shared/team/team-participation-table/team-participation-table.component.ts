@@ -2,12 +2,12 @@ import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { get } from 'lodash';
+import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -39,7 +39,7 @@ class ExerciseForTeam extends Exercise {
 })
 export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
+    readonly dayjs = dayjs;
 
     @Input() team: Team;
     @Input() course: Course;
@@ -53,7 +53,7 @@ export class TeamParticipationTableComponent implements OnInit {
     constructor(
         private teamService: TeamService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private router: Router,
         private accountService: AccountService,
     ) {}
@@ -91,11 +91,11 @@ export class TeamParticipationTableComponent implements OnInit {
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
         return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams![0];
-            const participation = get(exercise, 'studentParticipations[0]', null);
+            const participation = get(exercise, 'studentParticipations[0]', undefined);
             exercise.participation = participation;
-            exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
+            exercise.submission = get(exercise, 'participation.submissions[0]', undefined); // only exists for instructor and team tutor
             if (exercise.submission) {
-                setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', null));
+                setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', undefined));
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
                 if (exercise.submission.results) {
                     getLatestSubmissionResult(exercise.submission)!.participation = participation;
@@ -133,9 +133,9 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param participation Participation for which the editor should be opened
      * @param submission Either submission or 'new'
      */
-    getAssessmentLink(exercise: Exercise, participation: Participation, submission: Submission | 'new'): string[] {
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation.id, submissionUrlParameter, 0, 0);
+    getAssessmentLink(exercise: Exercise, participation: Participation | undefined, submission: Submission | 'new' | undefined): string[] {
+        const submissionUrlParameter: number | 'new' = submission === 'new' || submission == undefined ? 'new' : submission.id!;
+        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation?.id, submissionUrlParameter, 0, 0);
     }
 
     /**
@@ -176,7 +176,7 @@ export class TeamParticipationTableComponent implements OnInit {
         // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
         // if the exercise due date has passed
         if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            if (exercise.dueDate.isBefore(moment())) {
+            if (exercise.dueDate.isBefore(dayjs())) {
                 return false;
             }
         } else if (exercise.isAtLeastInstructor) {
@@ -186,7 +186,7 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isLoading = false;
     }
 }

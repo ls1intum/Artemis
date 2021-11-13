@@ -59,9 +59,17 @@ export interface OrionExerciseConnector {
      * Downloads a submission into the opened tutor project. See {@link OrionConnectorService} for details.
      * @param submissionId id of the submission, used to navigate to the corresponding URL
      * @param correctionRound correction round, also needed to navigate to the correct URL
-     * @param downloadURL URL of the zip file containing the student's repository
+     * @param testRun test run flag, also needed for navigation
+     * @param base64data the student's submission as base64
      */
-    downloadSubmission(submissionId: string, correctionRound: string, downloadURL: string): void;
+    downloadSubmission(submissionId: string, correctionRound: string, testRun: boolean, base64data: string): void;
+
+    /**
+     * Initializes the feedback comments. See {@link OrionConnectorService} for details.
+     * @param submissionId if of the submission, for validation purposes
+     * @param feedback current feedback
+     */
+    initializeAssessment(submissionId: string, feedback: string): void;
 
     /**
      * Import a participation. See {@link OrionConnectorService} for details.
@@ -211,6 +219,13 @@ export interface ArtemisClientConnector {
      * @param exerciseId The exercise id.
      */
     startedBuildInOrion(courseId: number, exerciseId: number): void;
+
+    /**
+     * Updates the assessment of the currently open submission
+     * @param submissionId Id of the open submission, for validation
+     * @param feedback all inline feedback, as JSON
+     */
+    updateAssessment(submissionId: number, feedback: string): void;
 }
 
 export interface OrionWindow {

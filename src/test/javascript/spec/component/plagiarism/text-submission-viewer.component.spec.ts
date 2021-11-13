@@ -4,8 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -16,6 +15,10 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;
@@ -32,7 +35,8 @@ describe('Text Submission Viewer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            imports: [ArtemisTestModule],
+            declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -48,7 +52,7 @@ describe('Text Submission Viewer Component', () => {
 
     it('fetches a text submission', () => {
         comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
-        spyOn(textSubmissionService, 'getTextSubmission').and.returnValue(of({ text: 'Test' }));
+        jest.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
@@ -60,7 +64,7 @@ describe('Text Submission Viewer Component', () => {
 
     it('fetches a programming submission', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        spyOn(repositoryService, 'getRepositoryContent').and.returnValue(of([]));
+        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of({}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
@@ -80,9 +84,9 @@ describe('Text Submission Viewer Component', () => {
         comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
-        const expectedHeaders = new Headers([['content-type', 'text/plain']]);
-        spyOn(repositoryService, 'getFileHeaders').and.returnValue(of({ headers: expectedHeaders }));
-        spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
+        const expectedHeaders = new HttpHeaders().append('content-type', 'text/plain');
+        jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
+        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
 
@@ -94,9 +98,9 @@ describe('Text Submission Viewer Component', () => {
         comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
-        const expectedHeaders = new Headers([['content-type', 'audio/mpeg']]);
-        spyOn(repositoryService, 'getFileHeaders').and.returnValue(of({ headers: expectedHeaders }));
-        spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
+        const expectedHeaders = new HttpHeaders().append('content-type', 'audio/mpeg');
+        jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
+        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
 
@@ -153,7 +157,7 @@ describe('Text Submission Viewer Component', () => {
                 } as TextSubmissionElement,
             },
         ];
-        spyOn(comp, 'getMatchesForCurrentFile').and.returnValue(mockMatches);
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor</span> sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr</span>.`;

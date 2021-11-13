@@ -3,13 +3,13 @@
         <div class="course-info-bar">
             <div class="row">
                 <div class="col general-info">
-                    <h3>{{ course.title }}</h3>
-                    <h4 class="d-none d-sm-inline">{{ course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
-                    <h4 class="d-sm-none">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
-                    <h6 class="d-sm-none" *ngIf="enableShowMore && !longTextShown" (click)="showLongDescription()">
+                    <h3 class="fw-medium">{{ course.title }}</h3>
+                    <h4 class="d-none d-sm-inline fw-medium">{{ course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
+                    <h4 class="d-sm-none fw-medium">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
+                    <h6 class="d-sm-none fw-medium" *ngIf="enableShowMore && !longTextShown" (click)="showLongDescription()">
                         {{ 'artemisApp.courseOverview.showMore' | artemisTranslate }}
                     </h6>
-                    <h6 class="d-sm-none" *ngIf="enableShowMore && longTextShown" (click)="showShortDescription()">
+                    <h6 class="d-sm-none fw-medium" *ngIf="enableShowMore && longTextShown" (click)="showShortDescription()">
                         {{ 'artemisApp.courseOverview.showLess' | artemisTranslate }}
                     </h6>
                 </div>
@@ -37,6 +37,9 @@
             </div>
             <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
                 <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
+            </div>
+            <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
+                <b jhiTranslate="artemisApp.courseOverview.menu.discussion">Discussion</b>
             </div>
             <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
                 <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>

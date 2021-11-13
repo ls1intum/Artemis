@@ -3,13 +3,11 @@ import { Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -21,12 +19,14 @@ export class NotificationPopupComponent implements OnInit {
 
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
+    private studentExamExerciseIds: number[];
+
     constructor(
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
         private examExerciseUpdateService: ExamExerciseUpdateService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private examParticipationService: ExamParticipationService,
     ) {}
 
@@ -129,7 +129,7 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target!);
             this.examExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
         } catch (error) {
-            this.jhiAlertService.error(error);
+            this.alertService.error(error);
         }
         // only show pop-up if explicit notification text was set and only inside exam mode
         if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
@@ -147,16 +147,21 @@ export class NotificationPopupComponent implements OnInit {
             return;
         }
         const target = JSON.parse(notification.target);
-        const courseId = target.course;
-        const examId = target.exam;
         const exerciseId = target.exercise;
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(courseId, examId).subscribe((studentExamWithExercises: StudentExam) => {
-            const updatedExerciseIsPartOfStudentExam = studentExamWithExercises?.exercises?.find((studentExamExercise) => studentExamExercise.id === exerciseId);
-            if (updatedExerciseIsPartOfStudentExam != undefined) {
-                this.addExamUpdateNotification(notification);
-                this.setRemovalTimeout(notification);
+
+        if (!this.studentExamExerciseIds) {
+            this.studentExamExerciseIds = this.examParticipationService.getExamExerciseIds();
+            if (!this.studentExamExerciseIds) {
+                // exercises were not loaded yet for current user -> exam update will be loaded when user starts/loads the exam
+                return;
             }
-        });
+        }
+
+        const updatedExerciseIsPartOfStudentExam = this.studentExamExerciseIds?.find((exerciseIdentifier) => exerciseIdentifier === exerciseId);
+        if (updatedExerciseIsPartOfStudentExam) {
+            this.addExamUpdateNotification(notification);
+            this.setRemovalTimeout(notification);
+        }
     }
 
     private setRemovalTimeout(notification: Notification): void {

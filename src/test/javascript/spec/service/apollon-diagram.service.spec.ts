@@ -4,9 +4,8 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
-import { SERVER_API_URL } from 'app/app.constants';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,7 +29,7 @@ describe('ApollonDiagramService', () => {
     }));
 
     it('should create a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
             const responseObject = apollonDiagram;
@@ -41,7 +40,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -53,7 +52,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should update a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
             const responseObject = apollonDiagram;
@@ -64,7 +63,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -76,7 +75,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should find a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const diagramId = 1;
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -88,7 +87,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -100,7 +99,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should delete a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const diagramId = 1;
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -112,7 +111,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();
@@ -124,7 +123,7 @@ describe('ApollonDiagramService', () => {
     ));
 
     it('should get diagrams by course', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, backend: HttpTestingController) => {
+        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
             // Set up
             const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
             const responseObject = [apollonDiagram];
@@ -135,7 +134,7 @@ describe('ApollonDiagramService', () => {
                 response = receivedResponse;
             });
 
-            const requestWrapper = backend.expectOne({ url });
+            const requestWrapper = server.expectOne({ url });
             requestWrapper.flush(responseObject);
 
             tick();

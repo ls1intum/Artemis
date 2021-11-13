@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
@@ -12,7 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
@@ -38,7 +38,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     constructor(
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
@@ -70,7 +70,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     loadAndFilterCourses() {
         this.courseService.findAllForDashboard().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
+                this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
@@ -84,6 +84,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         });
                     }
                 });
+
                 this.nextRelevantExams = this.exams.filter(
                     (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
                 );
@@ -94,7 +95,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
+        this.alertService.error('error.unexpectedError', { error }, undefined);
     }
 
     findNextRelevantExercise() {
@@ -120,7 +121,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                     relevantExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
                     // 3rd priority is the next due exercise
                     relevantExercises.sort((a, b) => {
-                        return moment(a.dueDate).valueOf() - moment(b.dueDate).valueOf();
+                        return dayjs(a.dueDate).valueOf() - dayjs(b.dueDate).valueOf();
                     })[0];
             }
             this.nextRelevantCourse = relevantExercise.course!;
@@ -140,7 +141,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                 relevantExam = this.nextRelevantExams[0];
             } else {
                 relevantExam = this.nextRelevantExams.sort((a, b) => {
-                    return moment(a.startDate).valueOf() - moment(b.startDate).valueOf();
+                    return dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf();
                 })[0];
             }
             this.nextRelevantCourseForExam = relevantExam.course!;

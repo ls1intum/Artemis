@@ -1,24 +1,21 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import * as moment from 'moment';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import dayjs from 'dayjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
 
 describe('CourseExamDetailComponent', () => {
     let component: CourseExamDetailComponent;
     let componentFixture: ComponentFixture<CourseExamDetailComponent>;
 
-    const startDate = moment('2020-06-11 11:29:51');
-    const endDate = moment('2020-06-11 11:59:51');
+    const startDate = dayjs('2020-06-11 11:29:51');
+    const endDate = dayjs('2020-06-11 11:59:51');
 
     const testExam = {
         id: 1,
@@ -26,13 +23,12 @@ describe('CourseExamDetailComponent', () => {
         endDate,
     } as Exam;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
-            declarations: [CourseExamDetailComponent],
+            imports: [ArtemisTestModule],
+            declarations: [CourseExamDetailComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
+            providers: [{ provide: Router, useClass: MockRouter }],
         })
-            .overrideTemplate(CourseExamDetailComponent, '')
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(CourseExamDetailComponent);
@@ -43,6 +39,6 @@ describe('CourseExamDetailComponent', () => {
     it('should calculate exam duration', () => {
         component.exam = testExam;
         componentFixture.detectChanges();
-        expect(component.examDuration).to.deep.equal(30 * 60);
+        expect(component.examDuration).toBe(30 * 60);
     });
 });

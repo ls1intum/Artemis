@@ -19,7 +19,7 @@ import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-que
 import { ShortAnswerSpotCounter } from 'app/entities/quiz/short-answer-spot-counter.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
@@ -52,8 +52,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
     let fixture: ComponentFixture<ShortAnswerQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jasmine.Spy;
-    let quizServiceFindSpy: jasmine.Spy;
+    let accountSpy: jest.SpyInstance;
+    let quizServiceFindSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -74,7 +74,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
-                quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -93,8 +93,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('OnInit', function () {
         it('should call functions on Init', () => {
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const loadQuizSpy = spyOn(comp, 'loadQuiz');
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
             comp.websocketChannelForData = '';
 
             comp.ngOnInit();
@@ -106,8 +106,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
 
         it('should not load Quiz if not authorised', () => {
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
-            const loadQuizSpy = spyOn(comp, 'loadQuiz');
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
 
             comp.ngOnInit();
 
@@ -119,11 +119,11 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadQuiz', function () {
         it('should call functions from loadQuiz', () => {
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const generateStructureSpy = spyOn(comp, 'generateShortAnswerStructure');
-            const generateLettersSpy = spyOn(comp, 'generateLettersForSolutions');
-            const loadLayoutSpy = spyOn(comp, 'loadLayout');
-            const loadDataSpy = spyOn(comp, 'loadData');
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const generateStructureSpy = jest.spyOn(comp, 'generateShortAnswerStructure');
+            const generateLettersSpy = jest.spyOn(comp, 'generateLettersForSolutions');
+            const loadLayoutSpy = jest.spyOn(comp, 'loadLayout');
+            const loadDataSpy = jest.spyOn(comp, 'loadData');
 
             comp.ngOnInit();
             comp.loadQuiz(quizExercise, false);
@@ -139,9 +139,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadLayout', function () {
         it('should call functions from loadLayout', () => {
-            const resetLabelsSpy = spyOn(comp, 'resetLabelsColors');
-            const addLastBarSpy = spyOn(comp, 'addLastBarLayout');
-            const loadInvalidLayoutSpy = spyOn(comp, 'loadInvalidLayout');
+            const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
+            const addLastBarSpy = jest.spyOn(comp, 'addLastBarLayout');
+            const loadInvalidLayoutSpy = jest.spyOn(comp, 'loadInvalidLayout');
 
             comp.ngOnInit();
             comp.loadLayout();
@@ -154,9 +154,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadData', function () {
         it('should call functions from loadData', () => {
-            const resetDataSpy = spyOn(comp, 'resetData');
-            const addDataSpy = spyOn(comp, 'addData');
-            const updateDataSpy = spyOn(comp, 'updateData');
+            const resetDataSpy = jest.spyOn(comp, 'resetData');
+            const addDataSpy = jest.spyOn(comp, 'addData');
+            const updateDataSpy = jest.spyOn(comp, 'updateData');
 
             comp.ngOnInit();
             comp.loadData();
@@ -169,7 +169,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('switchSolution', function () {
         it('should call functions and set values from switchSolution', () => {
-            const loadDataInDiagramSpy = spyOn(comp, 'loadDataInDiagram');
+            const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
 
             comp.ngOnInit();
             comp.showSolution = true;
@@ -182,7 +182,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('switchRated', function () {
         it('should call functions and set values from switchRated', () => {
-            const loadDataInDiagramSpy = spyOn(comp, 'loadDataInDiagram');
+            const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
 
             comp.ngOnInit();
             comp.switchRated();

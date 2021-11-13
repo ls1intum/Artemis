@@ -1,9 +1,10 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -18,6 +19,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     @Input() public exam?: Exam;
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
+    @Input() public submissionPolicy?: SubmissionPolicy;
 
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
@@ -44,9 +46,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
             if (this.isExamMode) {
-                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs(this.exam?.endDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
             }
         }
     }

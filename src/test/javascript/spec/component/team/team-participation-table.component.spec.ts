@@ -1,38 +1,29 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { NgJhipsterModule } from 'ng-jhipster';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
 import { mockTeam, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { Router, RouterModule } from '@angular/router';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider, MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;
@@ -44,7 +35,7 @@ describe('TeamParticipationTableComponent', () => {
         title: 'Course Title',
         isAtLeastInstructor: true,
         isAtLeastEditor: true,
-        endDate: moment().subtract(5, 'minutes'),
+        endDate: dayjs().subtract(5, 'minutes'),
         courseArchivePath: 'some-path',
     } as Course;
     const exercise1 = {
@@ -58,7 +49,7 @@ describe('TeamParticipationTableComponent', () => {
     const submission2 = {
         id: 2,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
         results: [
             {
                 id: 2,
@@ -85,13 +76,13 @@ describe('TeamParticipationTableComponent', () => {
     const submission3 = {
         id: 3,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
     } as Submission;
     const exercise3 = {
         id: 3,
         type: ExerciseType.FILE_UPLOAD,
         mode: ExerciseMode.TEAM,
-        dueDate: moment().subtract(5, 'minutes'),
+        dueDate: dayjs().subtract(5, 'minutes'),
         teams: [mockTeam],
         course,
         studentParticipations: [
@@ -105,12 +96,12 @@ describe('TeamParticipationTableComponent', () => {
     const submission4 = {
         id: 4,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
         results: [
             {
                 id: 2,
                 successful: true,
-                completionDate: moment().subtract(5, 'minutes'),
+                completionDate: dayjs().subtract(5, 'minutes'),
             },
         ],
     } as Submission;
@@ -118,7 +109,7 @@ describe('TeamParticipationTableComponent', () => {
         id: 3,
         type: ExerciseType.PROGRAMMING,
         mode: ExerciseMode.TEAM,
-        dueDate: moment().add(5, 'minutes'),
+        dueDate: dayjs().add(5, 'minutes'),
         teams: [mockTeam],
         course,
         studentParticipations: [
@@ -133,12 +124,12 @@ describe('TeamParticipationTableComponent', () => {
     const submission5 = {
         id: 5,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
         results: [
             {
                 id: 2,
                 successful: true,
-                completionDate: moment().subtract(5, 'minutes'),
+                completionDate: dayjs().subtract(5, 'minutes'),
             },
         ],
     } as Submission;
@@ -146,7 +137,7 @@ describe('TeamParticipationTableComponent', () => {
         id: 5,
         type: ExerciseType.MODELING,
         mode: ExerciseMode.TEAM,
-        dueDate: moment().add(5, 'minutes'),
+        dueDate: dayjs().add(5, 'minutes'),
         teams: [mockTeam],
         course,
         studentParticipations: [
@@ -159,21 +150,23 @@ describe('TeamParticipationTableComponent', () => {
     } as Exercise;
     course.exercises = [exercise1, exercise2, exercise3, exercise4, exercise5];
 
-    let router: any;
+    let router: Router;
 
-    beforeEach(async () => {
-        router = new MockRouter();
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(RouterModule), MockModule(NgJhipsterModule), MockModule(NgbModule)],
-            declarations: [TeamParticipationTableComponent, MockComponent(DataTableComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(RouterModule), MockModule(NgbModule)],
+            declarations: [
+                TeamParticipationTableComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+                MockComponent(DataTableComponent),
+            ],
             providers: [
                 MockProvider(TranslateService),
-                ExerciseService,
-                ParticipationService,
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: Router, useValue: router },
             ],
         })
             .compileComponents()
@@ -182,50 +175,54 @@ describe('TeamParticipationTableComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 teamService = TestBed.inject(TeamService);
+                router = TestBed.inject(Router);
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     beforeEach(fakeAsync(() => {
-        const exercisesStub = sinon.stub(teamService, 'findCourseWithExercisesAndParticipationsForTeam');
-        exercisesStub.returns(of(new HttpResponse({ body: course })));
+        jest.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
         comp.course = course;
         comp.exercise = exercise4;
         comp.team = mockTeam;
+        jest.spyOn(router, 'navigate').mockImplementation();
         comp.ngOnInit();
         tick();
     }));
 
-    it('Exercises for one team are loaded correctly', fakeAsync(() => {
+    it('Exercises for one team are loaded correctly', () => {
         // Make sure that all 3 exercises were received for exercise
-        expect(comp.exercises).to.have.length(course.exercises?.length!);
+        expect(comp.exercises).toHaveLength(course.exercises!.length);
 
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
-        expect(datatable).to.exist;
-    }));
+        expect(datatable).not.toBe(null);
+    });
 
-    it('Assessment Action "continue" is triggered', fakeAsync(() => {
+    it('Assessment Action "continue" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission2);
-        expect(expectedAssessmentAction).to.be.equal('continue');
-    }));
+        expect(expectedAssessmentAction).toBe('continue');
+    });
 
-    it('Assessment Action "start" is triggered', fakeAsync(() => {
+    it('Assessment Action "start" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission3);
-        expect(expectedAssessmentAction).to.be.equal('start');
-    }));
+        expect(expectedAssessmentAction).toBe('start');
+    });
 
-    it('Assessment Action "open" is triggered', fakeAsync(() => {
+    it('Assessment Action "open" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission4);
-        expect(expectedAssessmentAction).to.be.equal('open');
-    }));
+        expect(expectedAssessmentAction).toBe('open');
+    });
 
     it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
         const participation = exercise2.studentParticipations![0];
         comp.openAssessmentEditor(exercise2, participation, 'new');
         tick();
-        expect(router.navigate).to.have.been.calledOnce;
-        const navigationUrl = router.navigate.getCall(0).args[0];
-        expect(navigationUrl).to.deep.equal([
+        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
             course.id!.toString(),
             exercise2.type! + '-exercises',
@@ -236,22 +233,22 @@ describe('TeamParticipationTableComponent', () => {
         ]);
     }));
 
-    it('Check enabled assessment button for exercises without due date', fakeAsync(() => {
+    it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
-        expect(expectedAssessmentActionButtonDisabled).to.be.equal(false);
-    }));
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
 
-    it('Check enabled assessment button for exercises with submission and passed due date', fakeAsync(() => {
+    it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
-        expect(expectedAssessmentActionButtonDisabled).to.be.equal(false);
-    }));
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
 
-    it('Check disabled assessment button for exercises without submission', fakeAsync(() => {
+    it('Check disabled assessment button for exercises without submission', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
-        expect(expectedAssessmentActionButtonDisabled).to.be.equal(true);
-    }));
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+    });
 
-    it('Check disabled assessment button for exercises before due date as tutor', fakeAsync(() => {
+    it('Check disabled assessment button for exercises before due date as tutor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise4,
@@ -259,10 +256,10 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).to.be.equal(true);
-    }));
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+    });
 
-    it('Check disabled assessment button for programming exercises before due date as instructor', fakeAsync(() => {
+    it('Check disabled assessment button for programming exercises before due date as instructor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise4,
@@ -270,10 +267,10 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).to.be.equal(true);
-    }));
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+    });
 
-    it('Check enabled assessment button for exercises before due date as instructor', fakeAsync(() => {
+    it('Check enabled assessment button for exercises before due date as instructor', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
             {
                 ...exercise5,
@@ -281,6 +278,6 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission5,
         );
-        expect(expectedAssessmentActionButtonDisabled).to.be.equal(false);
-    }));
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
 });

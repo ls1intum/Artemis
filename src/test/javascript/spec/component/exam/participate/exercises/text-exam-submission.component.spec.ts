@@ -1,30 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { NgModel } from '@angular/forms';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { JhiAlertService } from 'ng-jhipster';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject } from 'rxjs';
-import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTestModule } from '../../../../test.module';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,32 +29,22 @@ describe('TextExamSubmissionComponent', () => {
     let textSubmission: TextSubmission;
     let exercise: TextExercise;
 
-    const examExerciseIdAndProblemStatementSourceMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: 'initialProblemStatementValue' });
-    const mockExamExerciseUpdateService = {
-        currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSourceMock.asObservable(),
-    };
-
     beforeEach(() => {
         textSubmission = new TextSubmission();
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
-        return TestBed.configureTestingModule({
-            imports: [
-                RouterTestingModule.withRoutes([]),
-                MockModule(ArtemisQuizQuestionTypesModule),
-                MockModule(NgbModule),
-                MockModule(FormsModule),
-                MockModule(FontAwesomeModule),
-                MockModule(ArtemisSharedModule),
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [
+                TextExamSubmissionComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(NgModel),
+                MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(ExamExerciseUpdateHighlighterComponent),
+                MockComponent(ResizeableContainerComponent),
             ],
-            declarations: [TextExamSubmissionComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IncludedInScoreBadgeComponent)],
-            providers: [
-                MockProvider(TextEditorService),
-                MockProvider(JhiAlertService),
-                MockProvider(TranslateService),
-                MockProvider(ArtemisMarkdownService),
-                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
-            ],
+            providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
             .then(() => {
@@ -69,6 +52,7 @@ describe('TextExamSubmissionComponent', () => {
                 component = fixture.componentInstance;
             });
     });
+
     afterEach(() => {
         sinon.restore();
     });
@@ -121,6 +105,16 @@ describe('TextExamSubmissionComponent', () => {
         expect(component.studentSubmission.text).to.equal('Text');
     });
 
+    it('should update problem statement of the exercise', () => {
+        component.exercise = exercise;
+        component.exercise.problemStatement = 'old problem statement';
+        const newProblemStatement = 'new problem statement';
+
+        component.updateProblemStatement(newProblemStatement);
+
+        expect(component.exercise.problemStatement).to.equal(newProblemStatement);
+    });
+
     it('should trigger text editor events', () => {
         component.exercise = exercise;
         textSubmission.text = 'Hello World';
@@ -140,42 +134,6 @@ describe('TextExamSubmissionComponent', () => {
             fixture.detectChanges();
             expect(textarea.value).to.equal('Test\t');
             expect(component.studentSubmission.isSynced).to.be.false;
-        });
-    });
-
-    describe('TextExamSubmissionComponent', () => {
-        const oldProblemStatement = 'problem statement with errors';
-        const updatedProblemStatement = 'new updated ProblemStatement';
-        const exerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
-
-        beforeEach(() => {
-            component.exercise = exerciseDummy;
-            component.studentSubmission = textSubmission;
-            const exerciseId = component.getExercise().id!;
-            const update = { exerciseId, problemStatement: updatedProblemStatement };
-
-            fixture.detectChanges();
-            examExerciseIdAndProblemStatementSourceMock.next(update);
-        });
-
-        it('should update problem statement', () => {
-            // not component.getExercise().problemStatement, due to inserted HTML via Diff-Highlighting
-            const result = component.updatedProblemStatement;
-            expect(result).to.equal(updatedProblemStatement);
-            expect(result).not.to.equal(oldProblemStatement);
-        });
-
-        it('should highlight differences', () => {
-            const result = component.getExercise().problemStatement;
-            expect(result).to.equal(component.updatedProblemStatementWithHighlightedDifferences);
-        });
-
-        it('should display different problem statement after button was clicked', () => {
-            const button = fixture.debugElement.nativeElement.querySelector('#highlightDiffButton');
-            button.click();
-            const result = component.getExercise().problemStatement;
-            expect(result).to.equal(updatedProblemStatement);
-            expect(result).not.to.equal(component.updatedProblemStatementWithHighlightedDifferences);
         });
     });
 });

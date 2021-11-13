@@ -34,14 +34,12 @@ following dependencies/tools on your machine:
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
    e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org>`__: We use Node LTS (>=14.15.0 < 15) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=14.17.0 < 15) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn (>=1.22.4 <2) to
-   manage client side Node dependencies. Depending on your system, you
-   can install Yarn either from source or as a pre-packaged bundle. To
-   do so, please follow the instructions on the `Yarn installation
-   page <https://classic.yarnpkg.com/en/docs/install>`__.
+4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=6.14.0) to
+   manage client side Node dependencies. Npm is typically bundled with Node.js,
+   but can also be installed separately__.
 
 Server Setup
 ------------
@@ -139,6 +137,7 @@ information about the setup for programming exercises provided:
    Jenkins and Gitlab <setup/jenkins-gitlab>
    Multiple instances <setup/distributed>
    Programming Exercise adjustments <setup/programming-exercises>
+   Kubernetes <setup/kubernetes>
 
 
 .. note::
@@ -217,7 +216,7 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
+* **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
@@ -326,7 +325,7 @@ This feature is disabled by default. We can enable it by modifying the configura
 Client Setup
 ------------
 
-You need to install Node and Yarn on your local machine.
+You need to install Node and Npm on your local machine.
 
 Using IntelliJ
 ^^^^^^^^^^^^^^
@@ -347,14 +346,14 @@ need to run this command when dependencies change in ``package.json``.
 
 ::
 
-   yarn install
+   npm install
 
 To start the client application in the browser, use the following
 command:
 
 ::
 
-   yarn start
+   npm run serve
 
 This compiles TypeScript code to JavaScript code, starts the hot module
 replacement feature in Webpack (i.e. whenever you change a TypeScript
@@ -365,13 +364,23 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
-In case you encounter any problems regarding JavaScript heap memory leaks when executing ``yarn start`` or any other scripts from ``package.json``, you can change the memory limit parameter used in the ``webpack-ts`` script in ``package.json`` to the following:
+In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other scripts from ``package.json``,
+you can add a memory limit parameter (``--max_old_space_size=5120``) in the script.
+You can do it by changing the **start** script in ``package.json`` from:
 
 ::
 
-   # This local change in `package.json` should not be committed.
-   "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=5120 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack" # possible higher values are 6144, 7168, and 8192
+   "start": "ng serve --hmr",
 
+to
+
+::
+
+   "start": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
+
+If you still face the issue, you can try to set a higher value than 5120. Possible values are 6144, 7168, and 8192.
+
+The same change could be applied to each **ng** command as in the example above.
 
 Make sure to **not commit this change** in ``package.json``.
 
@@ -405,7 +414,7 @@ docker-compose:
 3. Run ``docker-compose up``
 4. Go to http://localhost:9000
 
-The client and the server will run in different containers. As yarn is
+The client and the server will run in different containers. As Npm is
 used with its live reload mode to build and run the client, any change
 in the client’s codebase will trigger a rebuild automatically. In case
 of changes in the codebase of the server one has to restart the
@@ -462,7 +471,7 @@ HTTP. We need to extend the configuration in the file
 .. _Athene: https://github.com/ls1intum/Athene
 
 Apollon Service
---------------
+---------------
 
 The `Apollon Converter`_ is needed to convert models from their JSON representaiton to PDF.
 Special configuration is required:

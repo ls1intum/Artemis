@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChildren, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
+import { Component, OnInit, Input, ViewChildren, ViewChild, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
@@ -11,7 +11,15 @@ import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainComm
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
+
+export enum GradingInstructionTableColumn {
+    CREDITS = 'CREDITS',
+    SCALE = 'SCALE',
+    DESCRIPTION = 'DESCRIPTION',
+    FEEDBACK = 'FEEDBACK',
+    LIMIT = 'LIMIT',
+}
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -20,9 +28,11 @@ import { cloneDeep } from 'lodash';
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     /** Ace Editor configuration constants **/
-    questionEditorText = '';
-    @ViewChildren('markdownEditor')
+    markdownEditorText = '';
+    @ViewChildren('markdownEditors')
     private markdownEditors: QueryList<MarkdownEditorComponent>;
+    @ViewChild('markdownEditor', { static: false })
+    private markdownEditor: MarkdownEditorComponent;
     @Input()
     exercise: Exercise;
     private instructions: GradingInstruction[];
@@ -37,6 +47,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     instructionDescriptionCommand = new InstructionDescriptionCommand();
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
+
+    showEditMode: boolean;
+    readonly gradingInstructionTableColumn = GradingInstructionTableColumn;
 
     domainCommands: DomainCommand[] = [
         this.creditsCommand,
@@ -61,11 +74,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];
         this.backupExercise = cloneDeep(this.exercise);
-        this.questionEditorText = this.generateMarkdown();
+        this.markdownEditorText = this.generateMarkdown();
+        this.showEditMode = true;
     }
 
     ngAfterContentInit() {
         if (this.exercise.gradingInstructionFeedbackUsed) {
+            this.markdownEditorText = this.initializeExerciseGradingInstructionText();
             this.initializeMarkdown();
         }
     }
@@ -83,24 +98,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     generateMarkdown(): string {
         let markdownText = '';
-        if (this.criteria == undefined || this.criteria.length === 0) {
-            this.criteria = [];
-            const dummyCriterion = new GradingCriterion();
-            const exampleCriterion = new GradingCriterion();
-            exampleCriterion.title = 'This is an example criterion';
-            const exampleInstr = new GradingInstruction();
-            exampleCriterion.structuredGradingInstructions = [];
-            exampleCriterion.structuredGradingInstructions.push(exampleInstr);
-            exampleCriterion.structuredGradingInstructions.push(exampleInstr); // to showcase that a criterion consists of multiple instructions
-            this.criteria.push(dummyCriterion);
-            this.criteria.push(exampleCriterion);
-        }
-        for (const criterion of this.criteria) {
-            if (criterion.title == undefined) {
-                // if it is a dummy criterion, leave out the command identifier
-                markdownText += this.generateInstructionsMarkdown(criterion);
-            } else {
-                markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+        markdownText += this.initializeExerciseGradingInstructionText();
+        if (this.exercise.gradingCriteria) {
+            for (const criterion of this.exercise.gradingCriteria) {
+                if (criterion.title == undefined) {
+                    // if it is a dummy criterion, leave out the command identifier
+                    markdownText += this.generateInstructionsMarkdown(criterion);
+                } else {
+                    markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                }
             }
         }
         return markdownText;
@@ -188,10 +194,30 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         return UsageCountCommand.identifier + ' ' + instruction.usageCount;
     }
 
+    initializeExerciseGradingInstructionText(): string {
+        if (this.exercise.gradingInstructions) {
+            return this.exercise.gradingInstructions + '\n\n';
+        } else {
+            return 'Add Assessment Instruction text here' + '\n\n';
+        }
+    }
+
     prepareForSave(): void {
-        this.markdownEditors.forEach((component) => {
-            component.parse();
-        });
+        this.cleanupExerciseGradingInstructions();
+        this.markdownEditor.parse();
+        if (this.exercise.gradingInstructionFeedbackUsed) {
+            this.markdownEditors.forEach((component) => {
+                component.parse();
+            });
+        }
+    }
+
+    /**
+     * @function cleanupExerciseGradingInstructions
+     * @desc Clear the exercise grading instruction text to avoid double assignments
+     */
+    cleanupExerciseGradingInstructions() {
+        this.exercise.gradingInstructions = undefined;
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
@@ -215,6 +241,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         } else {
             for (const [, command] of domainCommands) {
                 endOfInstructionsCommand++;
+                this.setExerciseGradingInstructionText(domainCommands);
                 if (command instanceof GradingCriterionCommand) {
                     instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
                     if (instructionCommands.length !== 0) {
@@ -238,6 +265,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      */
     setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand | null][]): void {
         for (const [, command] of domainCommands) {
+            this.setExerciseGradingInstructionText(domainCommands);
             if (command instanceof GradingInstructionCommand) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
@@ -422,7 +450,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
         criterion.structuredGradingInstructions.push(new GradingInstruction());
-        this.exercise.gradingCriteria!.push(criterion);
+        if (this.exercise.gradingCriteria == undefined) {
+            this.exercise.gradingCriteria = [criterion];
+        } else {
+            this.exercise.gradingCriteria!.push(criterion);
+        }
     }
 
     /**
@@ -458,5 +490,66 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     deleteGradingCriterion(criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         this.exercise.gradingCriteria!.splice(criterionIndex, 1);
+    }
+
+    /**
+     * @function setExerciseGradingInstructionText
+     * @desc Gets a tuple of text and domainCommandIdentifiers and assigns text values as grading instructions of exercise
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     */
+    setExerciseGradingInstructionText(domainCommands: [string, DomainCommand | null][]): void {
+        const [text, command] = domainCommands[0];
+        if (command === null && text.length > 0) {
+            this.exercise.gradingInstructions = text;
+        }
+    }
+
+    /**
+     * Switches edit mode
+     * Updates markdown text between mode switches
+     */
+    switchMode() {
+        this.showEditMode = !this.showEditMode;
+        this.markdownEditorText = this.generateMarkdown();
+    }
+
+    /**
+     * Updates given grading instruction in exercise
+     *
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
+     */
+    updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = instruction;
+    }
+
+    /**
+     * Updates changed properties of the GradingInstruction.
+     *
+     * @param gradingInstruction that needs to be updated
+     * @param criterion that includes the instruction needs to be updated
+     * @param column that is updated
+     */
+    updateGradingInstructionProperty($event: any, instruction: GradingInstruction, criterion: GradingCriterion, column: GradingInstructionTableColumn) {
+        switch (column) {
+            case GradingInstructionTableColumn.CREDITS:
+                instruction.credits = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.SCALE:
+                instruction.gradingScale = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.DESCRIPTION:
+                instruction.instructionDescription = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.FEEDBACK:
+                instruction.feedback = $event.target.value;
+                break;
+            case GradingInstructionTableColumn.LIMIT:
+                instruction.usageCount = $event.target.value;
+                break;
+        }
+        this.updateGradingInstruction(instruction, criterion);
     }
 }

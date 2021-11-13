@@ -1,23 +1,14 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { CookieService } from 'ngx-cookie-service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -31,6 +22,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import * as sinon from 'sinon';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { MockDirective, MockProvider } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,29 +59,19 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
     let fixture: ComponentFixture<ExamExerciseRowButtonsComponent>;
     let component: ExamExerciseRowButtonsComponent;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                RouterTestingModule.withRoutes([
-                    {
-                        path: 'courses',
-                        component: ExamExerciseRowButtonsComponent,
-                    },
-                ]),
-            ],
-            declarations: [ExamExerciseRowButtonsComponent],
-            schemas: [NO_ERRORS_SCHEMA],
+            imports: [ArtemisTestModule],
+            declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DeviceDetectorService },
+                MockProvider(TextExerciseService),
+                MockProvider(FileUploadExerciseService),
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(ModelingExerciseService),
+                MockProvider(QuizExerciseService),
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
@@ -109,13 +94,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 quizExerciseExportSpy = sinon.spy(quizExerciseService, 'exportQuiz');
             });
     });
+
     describe('isExamOver', () => {
         it('should return true if over', () => {
-            component.latestIndividualEndDate = moment().subtract(1, 'hours');
+            component.latestIndividualEndDate = dayjs().subtract(1, 'hours');
             expect(component.isExamOver()).is.true;
         });
         it('should return false if not yet over', () => {
-            component.latestIndividualEndDate = moment().add(1, 'hours');
+            component.latestIndividualEndDate = dayjs().add(1, 'hours');
             expect(component.isExamOver()).is.false;
         });
         it('should return false if endDate is undefined', () => {
@@ -124,11 +110,11 @@ describe('ExamExerciseRowButtonsComponent', () => {
     });
     describe('hasExamStarted', () => {
         it('should return true if started', () => {
-            component.exam.startDate = moment().subtract(1, 'hours');
+            component.exam.startDate = dayjs().subtract(1, 'hours');
             expect(component.hasExamStarted()).is.true;
         });
         it('should return false if not yet started', () => {
-            component.exam.startDate = moment().add(1, 'hours');
+            component.exam.startDate = dayjs().add(1, 'hours');
             expect(component.hasExamStarted()).is.false;
         });
         it('should return false if startDate is undefined', () => {

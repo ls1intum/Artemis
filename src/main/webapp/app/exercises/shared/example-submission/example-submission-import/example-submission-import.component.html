@@ -1,0 +1,64 @@
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.exampleSubmission.importExampleSubmissionLabel">Import an Example Submission</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group form-inline">
+            <label class="form-control-label" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant">Search for Submission</label>
+            <input
+                class="form-control ms-2"
+                type="text"
+                name="searchParticipant"
+                id="searchParticipant"
+                [(ngModel)]="searchTerm"
+                placeholder="{{ 'artemisApp.exercise.studentName' | artemisTranslate }}"
+            />
+            <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+        </div>
+        <div *ngIf="content.resultsOnPage && content.resultsOnPage.length > 0; else emptyTable" class="table-responsive">
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
+                        <th jhiSortBy="{{ column.ID }}">
+                            <span>#</span>
+                        </th>
+                        <th jhiSortBy="{{ column.STUDENT_NAME }}">
+                            <span jhiTranslate="artemisApp.exercise.studentName">Student Name</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission Date</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.assessment.dashboard.columns.result">Latest Result</span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let submission of content.resultsOnPage; let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td>{{ submission.participation?.participantName }}</td>
+                        <td>{{ submission.submissionDate | artemisDate }}</td>
+                        <td>
+                            <jhi-result [participation]="submission.participation!"></jhi-result>
+                        </td>
+                        <td>
+                            <jhi-button (onClick)="openImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <ng-template #emptyTable>
+            <p jhiTranslate="artemisApp.assessment.dashboard.empty">No Submissions for this exercise!</p>
+        </ng-template>
+
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
+            </ngb-pagination>
+        </div>
+    </div>
+</form>

@@ -38,8 +38,8 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -111,6 +111,9 @@ public class CourseTestService {
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
 
+    @Autowired
+    private GroupNotificationService groupNotificationService;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -121,11 +124,8 @@ public class CourseTestService {
 
     private MockDelegate mockDelegate;
 
-    private GroupNotificationService groupNotificationService;
-
-    public void setup(MockDelegate mockDelegate, GroupNotificationService groupNotificationService) {
+    public void setup(MockDelegate mockDelegate) {
         this.mockDelegate = mockDelegate;
-        this.groupNotificationService = groupNotificationService;
 
         database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
 
@@ -136,14 +136,6 @@ public class CourseTestService {
 
     public void tearDown() {
         database.resetDatabase();
-    }
-
-    public CourseRepository getCourseRepo() {
-        return courseRepo;
-    }
-
-    public UserRepository getUserRepo() {
-        return userRepo;
     }
 
     // Test
@@ -343,7 +335,7 @@ public class CourseTestService {
 
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
-                groupNotificationService.notifyStudentGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
+                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
             }
             request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
@@ -709,19 +701,6 @@ public class CourseTestService {
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
-
-            StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
-                    StatsForDashboardDTO.class);
-
-            if (!isInstructor) {
-                assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
-            }
-            else {
-                assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfSubmissions());
-                assertThat(stats2.getTotalNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison()
-                        .isEqualTo(stats.getTotalNumberOfAssessments());
-            }
         }
     }
 
@@ -739,7 +718,6 @@ public class CourseTestService {
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test

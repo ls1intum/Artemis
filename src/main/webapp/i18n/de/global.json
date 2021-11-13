@@ -68,7 +68,11 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Aufgabenhinweis",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
+                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
+                "metis": {
+                    "post": "Beitrag",
+                    "answerPost": "Antwort"
+                }
             },
             "account": {
                 "main": "Zugang",
@@ -98,6 +102,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
+            "settings": "Einstellungen",
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
             "restartTutorial": "Tutorial wiederholen",
@@ -143,19 +148,19 @@
                 },
                 "newpassword": {
                     "required": "Ein neues Passwort wird benötigt.",
-                    "minlength": "Das neue Passwort muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Das neue Passwort darf nicht länger als 100 Zeichen sein",
+                    "minlength": "Das neue Passwort muss mindestens {{min}} Zeichen lang sein",
+                    "maxlength": "Das neue Passwort darf nicht länger als {{max}} Zeichen sein",
                     "strength": "Passwortstärke:"
                 },
                 "confirmpassword": {
                     "required": "Du musst das Passwort bestätigen.",
-                    "minlength": "Das bestätigte Passwort muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Das bestätigte Passwort darf nicht länger als 100 Zeichen sein"
+                    "minlength": "Das bestätigte Passwort muss mindestens {{min}} Zeichen lang sein",
+                    "maxlength": "Das bestätigte Passwort darf nicht länger als {{max}} Zeichen sein"
                 },
                 "email": {
                     "required": "Deine E-Mail-Adresse wird benötigt.",
                     "invalid": "Deine E-Mail-Adresse ist ungültig.",
-                    "minlength": "Deine E-Mail-Adresse muss mindestens 8 Zeichen lang sein",
+                    "minlength": "Deine E-Mail-Adresse muss mindestens 5 Zeichen lang sein",
                     "maxlength": "Deine E-Mail-Adresse darf nicht länger als 100 Zeichen sein",
                     "pattern": "Deine E-Mail-Adresse entspricht nicht dem geforderten Muster."
                 }
@@ -234,7 +239,6 @@
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
-            "discussion": "Diskussion",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
         },
@@ -279,7 +283,8 @@
             "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
-        }
+        },
+        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
     },
     "error": {
         "internalServerError": "Interner Serverfehler",
@@ -290,6 +295,7 @@
         "userexists": "Login bereits vergeben!",
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid.template.build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "missingname": "Ein neues {{entityName}} braucht einen namen",
         "invalid.solution.build.plan.id": "Die Lösungs-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
@@ -299,6 +305,7 @@
         "invalid.auxiliary.repository.name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang!",
+        "invalid.testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
@@ -307,6 +314,7 @@
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",
     "releaseNotes": "Versionshinweise",
+    "requestChange": "Änderung beantragen",
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
@@ -316,7 +324,8 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken",
-        "exams": "Klausuren"
+        "exams": "Klausuren",
+        "discussion": "Diskussion"
     },
     "connectionStatus": {
         "connected": "Verbunden",

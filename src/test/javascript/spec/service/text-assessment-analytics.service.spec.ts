@@ -4,7 +4,6 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { SERVER_API_URL } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
@@ -37,24 +36,24 @@ describe('TextAssessmentAnalytics Service', () => {
     it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = true;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectOne({ url: `${SERVER_API_URL}/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectOne({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
     }));
 
     it('should not send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = false;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectNone({ url: `${SERVER_API_URL}/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectNone({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
     }));
 
     it('should subscribe to route parameters if artemis analytics is enabled', fakeAsync(() => {
-        const subscribeToRouteParameters = spyOn<any>(service, 'subscribeToRouteParameters');
+        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters').mockImplementation(() => {});
         service.analyticsEnabled = true;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).toHaveBeenCalledTimes(1);
     }));
 
     it('should not subscribe to route parameters if artemis analytics is disabled', fakeAsync(() => {
-        const subscribeToRouteParameters = spyOn<any>(service, 'subscribeToRouteParameters');
+        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters');
         service.analyticsEnabled = false;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).toHaveBeenCalledTimes(0);

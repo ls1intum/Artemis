@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

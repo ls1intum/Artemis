@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
 
@@ -16,15 +15,15 @@ export class OrganizationManagementService {
      * Send GET request to retrieve all organizations
      */
     getOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(this.resourceUrl + '/all');
+        return this.http.get<Organization[]>(this.resourceUrl);
     }
 
     /**
      * Send GET request to retrieve the number of users and courses of
      * all organizations
      */
-    getNumberOfUsersAndCoursesOfOrganizations(): Observable<[OrganizationCountDto]> {
-        return this.http.get<[OrganizationCountDto]>(this.resourceUrl + '/count-all');
+    getNumberOfUsersAndCoursesOfOrganizations(): Observable<OrganizationCountDto[]> {
+        return this.http.get<OrganizationCountDto[]>(this.resourceUrl + '/count-all');
     }
 
     /**
@@ -49,7 +48,7 @@ export class OrganizationManagementService {
      * @param courseId the id of the course to retrieve the organizations from
      */
     getOrganizationsByCourse(courseId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.resourceUrl}/course/${courseId}`);
+        return this.http.get<Organization[]>(`${this.resourceUrl}/courses/${courseId}`);
     }
 
     /**
@@ -57,7 +56,7 @@ export class OrganizationManagementService {
      * @param userId the id of the user to retrieve the organizations from
      */
     getOrganizationsByUser(userId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.resourceUrl}/user/${userId}`);
+        return this.http.get<Organization[]>(`${this.resourceUrl}/users/${userId}`);
     }
 
     /**
@@ -65,7 +64,7 @@ export class OrganizationManagementService {
      * @param organization the organization to update
      */
     update(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.put<Organization>(`${this.resourceUrl}/update`, organization, { observe: 'response' });
+        return this.http.put<Organization>(`${this.resourceUrl}/${organization.id}`, organization, { observe: 'response' });
     }
 
     /**
@@ -73,7 +72,7 @@ export class OrganizationManagementService {
      * @param organization the organization to add
      */
     add(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.post<Organization>(`${this.resourceUrl}/add`, organization, { observe: 'response' });
+        return this.http.post<Organization>(`${this.resourceUrl}`, organization, { observe: 'response' });
     }
 
     /**
@@ -81,7 +80,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove
      */
     deleteOrganization(organizationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/delete/${organizationId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${organizationId}`, { observe: 'response' });
     }
 
     /**
@@ -90,7 +89,7 @@ export class OrganizationManagementService {
      * @param userLogin the user to remove
      */
     removeUserFromOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/user/${userLogin}/organization/${organizationId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
     }
 
     /**
@@ -99,6 +98,10 @@ export class OrganizationManagementService {
      * @param userLogin the user to add
      */
     addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/user/${userLogin}/organization/${organizationId}`, {}, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
+    }
+
+    getTitle(organizationId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${organizationId}/title`, { observe: 'response', responseType: 'text' });
     }
 }

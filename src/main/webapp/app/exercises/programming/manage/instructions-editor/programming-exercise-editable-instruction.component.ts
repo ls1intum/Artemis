@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
@@ -31,7 +31,7 @@ import { Result } from 'app/entities/result.model';
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
     participationValue: Participation;
-    exerciseValue: ProgrammingExercise;
+    programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
     exerciseHints: ExerciseHint[];
@@ -62,7 +62,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() forceRender: Observable<void>;
     @Input()
     get exercise() {
-        return this.exerciseValue;
+        return this.programmingExercise;
     }
     @Input()
     get participation() {
@@ -80,11 +80,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     set exercise(exercise: ProgrammingExercise) {
-        if (this.exerciseValue && exercise.problemStatement !== this.exerciseValue.problemStatement) {
+        if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
             this.unsavedChanges = true;
         }
-        this.exerciseValue = exercise;
-        this.exerciseChange.emit(this.exerciseValue);
+        this.programmingExercise = exercise;
+        const isExamExercise = !!this.programmingExercise.exerciseGroup;
+        if (isExamExercise) {
+            // Note: Exam exercises do not include hints at the moment, therefore, the markdown editor should not offer this command
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+        } else {
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
+        }
+        this.exerciseChange.emit(this.programmingExercise);
     }
 
     set unsavedChanges(hasChanges: boolean) {
@@ -96,7 +103,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseGradingService,
         private exerciseHintService: ExerciseHintService,
@@ -200,7 +207,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 }),
                 catchError(() => {
                     // TODO: move to programming exercise translations
-                    this.jhiAlertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
+                    this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
                     return of(undefined);
                 }),
             )

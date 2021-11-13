@@ -241,7 +241,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * @param <T> submission type
      * @return the latest submission or null
      */
-    public <T extends Submission> Optional<T> findLatesLegalOrIllegalSubmission() {
+    public <T extends Submission> Optional<T> findLatestLegalOrIllegalSubmission() {
         return findLatestSubmission(true);
     }
 

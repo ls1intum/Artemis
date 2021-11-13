@@ -1,8 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -10,9 +8,6 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('LearningGoalService', () => {
     let testBed: TestBed;
@@ -69,7 +64,7 @@ describe('LearningGoalService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoal.body).to.deep.equal(defaultLearningGoal);
+        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoal);
     }));
 
     it('should get Progress for a LearningGoal', fakeAsync(() => {
@@ -83,7 +78,7 @@ describe('LearningGoalService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoalProgress.body).to.deep.equal(defaultLearningGoalProgress);
+        expect(expectedResultLearningGoalProgress.body).toEqual(defaultLearningGoalProgress);
     }));
 
     it('should get all learning goals for a course', fakeAsync(() => {
@@ -98,7 +93,7 @@ describe('LearningGoalService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(response.body).to.deep.equal([{ ...defaultLearningGoalProgress }]);
+        expect(response.body).toEqual([{ ...defaultLearningGoalProgress }]);
     }));
 
     it('should create a LearningGoal', fakeAsync(() => {
@@ -113,7 +108,7 @@ describe('LearningGoalService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoal.body).to.deep.equal(expected);
+        expect(expectedResultLearningGoal.body).toEqual(expected);
     }));
 
     it('should update a LearningGoal', fakeAsync(() => {
@@ -128,6 +123,6 @@ describe('LearningGoalService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoal.body).to.deep.equal(expected);
+        expect(expectedResultLearningGoal.body).toEqual(expected);
     }));
 });

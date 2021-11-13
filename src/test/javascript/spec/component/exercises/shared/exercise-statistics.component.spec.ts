@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
@@ -11,7 +11,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MomentModule } from 'ngx-moment';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
@@ -55,14 +54,14 @@ describe('ExerciseStatisticsComponent', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 ExerciseStatisticsComponent,
                 MockComponent(AlertComponent),
@@ -97,7 +96,7 @@ describe('ExerciseStatisticsComponent', () => {
         expect(statisticsSpy).to.have.been.calledOnce;
         expect(exerciseSpy).to.have.been.calledOnce;
         expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
-        expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
+        expect(component.exerciseStatistics.resolvedPostsInPercent).to.equal(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
     });
 
@@ -114,7 +113,7 @@ describe('ExerciseStatisticsComponent', () => {
         expect(statisticsSpy).to.have.been.calledOnce;
         expect(exerciseSpy).to.have.been.calledOnce;
         expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
-        expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
+        expect(component.exerciseStatistics.resolvedPostsInPercent).to.equal(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
     }));
 });

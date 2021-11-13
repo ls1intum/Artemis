@@ -2,22 +2,16 @@ import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import { SinonStub, spy, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { JhiAlertService } from 'ng-jhipster';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
@@ -46,7 +40,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { TreeviewComponent, TreeviewItem } from 'ngx-treeview';
+import { TreeviewItem, TreeviewComponent } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -73,9 +67,7 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -84,7 +76,7 @@ function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerCom
         credits: pointsAwarded,
     });
     comp.validateFeedback();
-    expect(comp.manualResult?.score).to.equal(scoreExpected);
+    expect(comp.manualResult?.score).toEqual(scoreExpected);
 }
 
 describe('CodeEditorTutorAssessmentContainerComponent', () => {
@@ -99,13 +91,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let programmingSubmissionService: ProgrammingSubmissionService;
     let programmingExerciseService: ProgrammingExerciseService;
     let repositoryFileService: CodeEditorRepositoryFileService;
+    let router: Router;
 
-    let updateAfterComplaintStub: SinonStub;
-    let findByResultIdStub: SinonStub;
-    let getIdentityStub: SinonStub;
-    let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
-    let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
-    let findWithParticipationsStub: SinonStub;
+    let updateAfterComplaintStub: jest.SpyInstance;
+    let findBySubmissionIdStub: jest.SpyInstance;
+    let getIdentityStub: jest.SpyInstance;
+    let getProgrammingSubmissionForExerciseWithoutAssessmentStub: jest.SpyInstance;
+    let lockAndGetProgrammingSubmissionParticipationStub: jest.SpyInstance;
+    let findWithParticipationsStub: jest.SpyInstance;
 
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = <any>{
@@ -191,14 +184,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
+                ExtensionPointDirective,
             ],
             providers: [
-                ProgrammingAssessmentManualResultService,
-                ComplaintService,
-                BuildLogService,
-                AccountService,
-                JhiAlertService,
-                ResultService,
+                MockProvider(Router),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
@@ -219,6 +208,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 fixture = TestBed.createComponent(CodeEditorTutorAssessmentContainerComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                router = TestBed.inject(Router);
 
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
@@ -227,51 +217,48 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
                 repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
 
-                updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
-                lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
-                    of(submission).pipe(delay(100)),
-                );
-                findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
-                getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
-                getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
-                    programmingSubmissionService,
-                    'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment',
-                ).returns(of(unassessedSubmission));
+                updateAfterComplaintStub = jest.spyOn(programmingAssessmentManualResultService, 'updateAfterComplaint').mockReturnValue(of(afterComplaintResult));
+                lockAndGetProgrammingSubmissionParticipationStub = jest
+                    .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
+                    .mockReturnValue(of(submission).pipe(delay(100)));
+                findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+                getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
+                getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
+                    .spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment')
+                    .mockReturnValue(of(unassessedSubmission));
 
-                findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
-                findWithParticipationsStub.returns(of({ body: exercise }));
+                findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+                findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
             });
     });
 
-    afterEach(fakeAsync(() => {
-        updateAfterComplaintStub.restore();
-        findByResultIdStub.restore();
-        lockAndGetProgrammingSubmissionParticipationStub.restore();
-        getProgrammingSubmissionForExerciseWithoutAssessmentStub.restore();
-    }));
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
 
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
-        expect(assessmentLayout).to.exist;
+        expect(assessmentLayout).not.toBe(undefined);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
 
-        expect(getIdentityStub.calledOnce).to.be.true;
-        expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.calledOnce).to.be.true;
-        expect(comp.isAssessor).to.be.true;
-        expect(comp.complaint).to.exist;
+        expect(getIdentityStub).toHaveBeenCalledTimes(1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(1);
+        expect(findBySubmissionIdStub).toHaveBeenCalledTimes(1);
+        expect(comp.isAssessor).toBe(true);
+        expect(comp.complaint).not.toBe(null);
         fixture.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
-        expect(complaintsForm).to.exist;
-        expect(comp.complaint).to.exist;
+        expect(complaintsForm).not.toBe(null);
+        expect(comp.complaint).not.toBe(null);
 
         // Wait until periodic timer has passed out
         tick(100);
+        flush();
     }));
 
     it('should lock a new submission', fakeAsync(() => {
@@ -279,29 +266,31 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         activatedRoute.params = of({ submissionId: 'new' });
         TestBed.inject(ActivatedRoute);
 
-        getProgrammingSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(submission));
 
         comp.ngOnInit();
         tick(100);
-        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledTimes(1);
+        flush();
     }));
 
-    it('should not show complaint when result does not have it', fakeAsync(() => {
-        result.hasComplaint = false;
+    it('should not show complaint when participation contains no complaint', fakeAsync(() => {
+        findBySubmissionIdStub.mockReturnValue(of({ body: undefined }));
         comp.ngOnInit();
         tick(100);
 
-        expect(getIdentityStub.calledOnce).to.be.true;
-        expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.notCalled).to.be.true;
-        expect(comp.complaint).to.not.exist;
+        expect(getIdentityStub).toHaveBeenCalledTimes(1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(1);
+        expect(findBySubmissionIdStub).toHaveBeenCalledTimes(1);
+        expect(comp.complaint).toBe(undefined);
         fixture.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
-        expect(complaintsForm).to.not.exist;
+        expect(complaintsForm).toBe(null);
 
         // Wait until periodic timer has passed out
         tick(100);
+        flush();
     }));
 
     it('should calculate score correctly for IncludedCompletelyWithBonusPointsExercise', fakeAsync(() => {
@@ -321,6 +310,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         addFeedbackAndValidateScore(comp, 5, 150);
         addFeedbackAndValidateScore(comp, 5, 200);
         addFeedbackAndValidateScore(comp, 5, 200);
+        flush();
     }));
 
     it('should calculate score correctly for IncludedCompletelyWithoutBonusPointsExercise', fakeAsync(() => {
@@ -338,6 +328,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         addFeedbackAndValidateScore(comp, 5, 50);
         addFeedbackAndValidateScore(comp, 5, 100);
         addFeedbackAndValidateScore(comp, 5, 100);
+        flush();
     }));
 
     it('should calculate score correctly for IncludedAsBonusExercise', fakeAsync(() => {
@@ -355,6 +346,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         addFeedbackAndValidateScore(comp, 5, 50);
         addFeedbackAndValidateScore(comp, 5, 100);
         addFeedbackAndValidateScore(comp, 5, 100);
+        flush();
     }));
 
     it('should calculate score correctly for NotIncludedExercise', fakeAsync(() => {
@@ -372,6 +364,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         addFeedbackAndValidateScore(comp, 5, 50);
         addFeedbackAndValidateScore(comp, 5, 100);
         addFeedbackAndValidateScore(comp, 5, 100);
+        flush();
     }));
 
     it('should save and submit manual result', fakeAsync(() => {
@@ -384,11 +377,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks?.length).to.be.equal(3);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
-        expect(alertElement).to.exist;
+        expect(comp.manualResult?.feedbacks?.length).toBe(3);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
+        expect(alertElement).not.toBe(null);
 
         // Reset feedbacks
         comp.manualResult!.feedbacks! = [];
@@ -396,32 +389,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.submit();
         const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks?.length).to.be.equal(3);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
-        expect(alertElementSubmit).to.exist;
+        expect(comp.manualResult?.feedbacks?.length).toBe(3);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
+        expect(alertElementSubmit).not.toBe(null);
         flush();
     }));
 
     it('should cancel the assessment and navigate back', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
-        const navigateBackStub = stub(comp, 'navigateBack');
-        const cancelBackStub = stub(programmingAssessmentManualResultService, 'cancelAssessment').returns(of(undefined).pipe(delay(100)));
+        const navigateBackStub = jest.spyOn(comp, 'navigateBack');
+        const cancelBackStub = jest.spyOn(programmingAssessmentManualResultService, 'cancelAssessment').mockReturnValue(of(undefined));
         global.confirm = () => true;
-        const confirmSpy = spy(window, 'confirm');
+        const confirmSpy = jest.spyOn(window, 'confirm');
         comp.cancel();
 
-        expect(confirmSpy).to.be.calledOnce;
+        expect(confirmSpy).toHaveBeenCalledTimes(1);
         tick(100);
-        expect(comp.cancelBusy).to.be.false;
-        expect(navigateBackStub).to.be.calledOnce;
-        expect(cancelBackStub).to.be.calledOnce;
+        expect(comp.cancelBusy).toBe(false);
+        expect(navigateBackStub).toHaveBeenCalledTimes(1);
+        expect(cancelBackStub).toHaveBeenCalledTimes(1);
+        flush();
     }));
 
     it('should go to next submission', fakeAsync(() => {
-        const routerStub = stub(TestBed.inject(Router), 'navigate');
+        const routerStub = jest.spyOn(router, 'navigate');
 
         comp.ngOnInit();
         const courseId = 123;
@@ -440,17 +434,18 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             'assessment',
         ];
         const queryParams = { queryParams: { 'correction-round': 0 } };
-        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
-        expect(routerStub).to.have.been.calledWith(url, queryParams);
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledTimes(1);
+        expect(routerStub).toHaveBeenCalledWith(url, queryParams);
+        flush();
     }));
 
     it('should highlight lines that were changed', fakeAsync(() => {
         // Stub
-        const getFilesWithContentStub = stub(repositoryFileService, 'getFilesWithContent');
-        getFilesWithContentStub.returns(of(templateFileSessionReturn));
+        const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
+        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
         // Stub for ace editor
-        const getFileStub = stub(repositoryFileService, 'getFile');
-        getFileStub.returns(of({ fileContent: 'new file text' }));
+        const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
+        getFileStub.mockReturnValue(of({ fileContent: 'new file text' }));
 
         // Data for file browser
         const treeItems = [
@@ -483,15 +478,17 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         codeEditorFileBrowserComp.isLoadingFiles = false;
         fixture.detectChanges();
         const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        expect(browserComponent).to.exist;
-        expect(browserComponent.filesTreeViewItem).to.have.lengthOf(1);
+        expect(browserComponent).not.toBe(undefined);
+        expect(browserComponent.filesTreeViewItem).toHaveLength(1);
 
         const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
         codeEditorAceComp.isLoading = false;
         fixture.detectChanges();
 
-        expect(codeEditorAceComp.markerIds).to.have.lengthOf(1);
+        expect(codeEditorAceComp.markerIds).toHaveLength(1);
 
+        getFilesWithContentStub.mockRestore();
+        getFileStub.mockRestore();
         fixture.destroy();
         flush();
     }));
@@ -500,8 +497,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
         comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
-        expect(updateAfterComplaintStub).to.be.calledOnce;
-        expect(comp.manualResult!.score).to.be.equal(100);
+        expect(updateAfterComplaintStub).toHaveBeenCalledTimes(1);
+        expect(comp.manualResult!.score).toBe(100);
         flush();
     }));
 });

@@ -2,11 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { sortBy } from 'lodash';
+import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import {
     ABSOLUTE_SCORE,
@@ -18,7 +18,7 @@ import {
     RELATIVE_SCORE,
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ChartType } from 'chart.js';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -249,9 +249,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
-        exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || moment().add(5, 'year')).valueOf()]);
+        exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
-            if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
+            if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || exercise.type === ExerciseType.PROGRAMMING) {
                 let index = exerciseTypes.indexOf(exercise.type!);
                 if (index === -1) {
                     index = exerciseTypes.length;
@@ -282,7 +282,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const roundedParticipationScore = round(participationResult.score!);
+                                const roundedParticipationScore = roundScoreSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = roundedParticipationScore >= 100 ? 100 : roundedParticipationScore;
                                 const missedScore = 100 - cappedParticipationScore;
                                 groupedExercises[index].scores.data.push(roundedParticipationScore);
@@ -385,7 +385,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
         // This score is used to cap bonus points, so that we not have negative values for the missedScores
-        const roundedScore = round(result.score!);
+        const roundedScore = roundScoreSpecifiedByCourseSettings(result.score!, this.course);
         const score = roundedScore >= 100 ? 100 : roundedScore;
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
@@ -562,7 +562,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (filterFunction) {
             courseExercises = courseExercises.filter(filterFunction);
         }
-        return this.courseCalculationService.calculateTotalScores(courseExercises);
+        return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
     }
 
     calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
@@ -576,7 +576,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     calculateTotalScoreForTheCourse(scoreType: string): number {
-        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
         return scores.get(scoreType)!;
     }
 }

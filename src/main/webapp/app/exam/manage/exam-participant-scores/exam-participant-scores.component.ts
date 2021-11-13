@@ -3,11 +3,13 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exam-participant-scores',
@@ -17,6 +19,7 @@ export class ExamParticipantScoresComponent implements OnInit {
     readonly GradeType = GradeType;
 
     courseId: number;
+    course?: Course;
     examId: number;
     isLoading: boolean;
     participantScores: ParticipantScoreDTO[] = [];
@@ -25,19 +28,21 @@ export class ExamParticipantScoresComponent implements OnInit {
     avgRatedScore = 0;
 
     gradingScale?: GradingScale;
-    avgGrade?: String;
-    avgRatedGrade?: String;
+    avgGrade?: string;
+    avgRatedGrade?: string;
 
     constructor(
         private participantScoreService: ParticipantScoresService,
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private gradingSystemService: GradingSystemService,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = +params['courseId'];
+            this.courseManagementService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
             this.examId = +params['examId'];
             if (this.courseId && this.examId) {
                 this.loadData();

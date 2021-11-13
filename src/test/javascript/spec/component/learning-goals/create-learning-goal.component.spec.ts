@@ -1,10 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
@@ -19,16 +16,12 @@ import { HttpResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { By } from '@angular/platform-browser';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 @Component({ selector: 'jhi-learning-goal-form', template: '' })
 class LearningGoalFormStubComponent {
     @Input() formData: LearningGoalFormData;
     @Input() courseId: number;
     @Input() isEditMode = false;
-    @Input()
-    lecturesOfCourseWithLectureUnits: Lecture[] = [];
+    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
     @Output() formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 }
 
@@ -43,7 +36,7 @@ describe('CreateLearningGoal', () => {
             providers: [
                 MockProvider(LearningGoalService),
                 MockProvider(LectureService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -73,12 +66,12 @@ describe('CreateLearningGoal', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         createLearningGoalComponentFixture.detectChanges();
-        expect(createLearningGoalComponent).to.be.ok;
+        expect(createLearningGoalComponent).toBeDefined();
     });
 
     it('should send POST request upon form submission and navigate', () => {
@@ -87,7 +80,7 @@ describe('CreateLearningGoal', () => {
 
         const textUnit: TextUnit = new TextUnit();
         textUnit.id = 1;
-        const formDate: LearningGoalFormData = {
+        const formData: LearningGoalFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             connectedLectureUnits: [textUnit],
@@ -98,27 +91,25 @@ describe('CreateLearningGoal', () => {
             status: 201,
         });
 
-        const createStub = sinon.stub(learningGoalService, 'create').returns(of(response));
-        const navigateSpy = sinon.spy(router, 'navigate');
+        const createSpy = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(response));
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         createLearningGoalComponentFixture.detectChanges();
 
         const learningGoalForm: LearningGoalFormStubComponent = createLearningGoalComponentFixture.debugElement.query(
             By.directive(LearningGoalFormStubComponent),
         ).componentInstance;
-        learningGoalForm.formSubmitted.emit(formDate);
+        learningGoalForm.formSubmitted.emit(formData);
 
         createLearningGoalComponentFixture.whenStable().then(() => {
-            const learningGoalCallArgument: LearningGoal = createStub.getCall(0).args[0];
-            const courseIdCallArgument: number = createStub.getCall(0).args[1];
+            const learningGoal = new LearningGoal();
+            learningGoal.title = formData.title;
+            learningGoal.description = formData.description;
+            learningGoal.lectureUnits = formData.connectedLectureUnits;
 
-            expect(learningGoalCallArgument.title).to.equal(formDate.title);
-            expect(learningGoalCallArgument.description).to.equal(formDate.description);
-            expect(learningGoalCallArgument.lectureUnits).to.equal(formDate.connectedLectureUnits);
-            expect(courseIdCallArgument).to.equal(1);
-
-            expect(createStub).to.have.been.calledOnce;
-            expect(navigateSpy).to.have.been.calledOnce;
+            expect(createSpy).toHaveBeenCalledWith(learningGoal, 1);
+            expect(createSpy).toHaveBeenCalledTimes(1);
+            expect(navigateSpy).toHaveBeenCalledTimes(1);
         });
     });
 });

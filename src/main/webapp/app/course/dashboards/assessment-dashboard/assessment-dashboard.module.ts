@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { assessmentDashboardRoute } from './assessment-dashboard.route';
 import { AssessmentDashboardComponent } from './assessment-dashboard.component';
-import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -12,15 +11,16 @@ import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/d
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
 @NgModule({
     imports: [
+        NgxChartsModule,
         ArtemisSharedModule,
         ArtemisSidePanelModule,
         ArtemisResultModule,
-        MomentModule,
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTutorLeaderboardModule,

@@ -10,10 +10,7 @@ import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learni
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
 
 @Component({ selector: 'jhi-circular-progress-bar', template: '' })
 class CircularProgressBarStubComponent {
@@ -22,9 +19,6 @@ class CircularProgressBarStubComponent {
     @Input()
     progressText = 'Completed';
 }
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
@@ -46,12 +40,12 @@ describe('LearningGoalCardComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         learningGoalCardComponentFixture.detectChanges();
-        expect(learningGoalCardComponent).to.be.ok;
+        expect(learningGoalCardComponent).toBeDefined();
     });
 
     it('should display progress bar when progress is available', () => {
@@ -69,8 +63,8 @@ describe('LearningGoalCardComponent', () => {
         learningGoalCardComponentFixture.detectChanges();
 
         const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent)).componentInstance;
-        expect(circularProgress).to.be.ok;
-        expect(circularProgress.progressInPercent).to.equal(50);
+        expect(circularProgress).toBeDefined();
+        expect(circularProgress.progressInPercent).toEqual(50);
     });
 
     it('should not display progress bar when progress is not available', () => {
@@ -81,7 +75,7 @@ describe('LearningGoalCardComponent', () => {
         learningGoalCardComponentFixture.detectChanges();
 
         const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent));
-        expect(circularProgress).to.not.exist;
+        expect(circularProgress).toBeNull();
     });
 
     it('should open learning details modal when card is clicked', () => {
@@ -92,8 +86,8 @@ describe('LearningGoalCardComponent', () => {
 
         const card = learningGoalCardComponentFixture.debugElement.nativeElement.querySelector('.course-goal-card');
         const modalService = TestBed.inject(NgbModal);
-        const openSpy = sinon.spy(modalService, 'open');
+        const openSpy = jest.spyOn(modalService, 'open');
         card.click();
-        expect(openSpy).to.have.been.called;
+        expect(openSpy).toHaveBeenCalledTimes(1);
     });
 });

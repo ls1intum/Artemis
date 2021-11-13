@@ -1,17 +1,11 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -19,9 +13,17 @@ import { SortService } from 'app/shared/service/sort.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { stub } from 'sinon';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const fileUploadExercise1 = {
     id: 22,
     type: ExerciseType.FILE_UPLOAD,
@@ -55,18 +57,28 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     let accountService: AccountService;
     let sortService: SortService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule],
-            declarations: [FileUploadAssessmentDashboardComponent],
+            imports: [ArtemisTestModule],
+            declarations: [
+                FileUploadAssessmentDashboardComponent,
+                MockComponent(AssessmentFiltersComponent),
+                MockComponent(AssessmentWarningComponent),
+                MockComponent(ResultComponent),
+                MockDirective(HasAnyAuthorityDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(SortDirective),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
+                TranslatePipeMock,
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [
-                JhiLanguageHelper,
-                { provide: Router, useClass: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                MockProvider(FileUploadSubmissionService),
+                MockProvider(FileUploadAssessmentService),
+                MockProvider(SortService),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -79,7 +91,6 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 },
             ],
         })
-            .overrideTemplate(FileUploadAssessmentDashboardComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadAssessmentDashboardComponent);
@@ -90,15 +101,14 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
             });
-    }));
+    });
 
     it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
-        const exerciseServiceFind = stub(exerciseService, 'find');
-        exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
-        spyOn<any>(component, 'setPermissions');
+        const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
+        exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -111,38 +121,35 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         tick(500);
 
         // check
-        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise1.id);
-        expect(component['setPermissions']).toHaveBeenCalled();
+        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
         expect(component.exercise).toEqual(fileUploadExercise1 as FileUploadExercise);
     }));
 
     it('should get Submissions', fakeAsync(() => {
         // test getSubmissions
-        const exerciseServiceFind = stub(exerciseService, 'find');
-        exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
-        const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
-        isAtLeastInstructorInCourseStub.returns(true);
-        spyOn<any>(component, 'setPermissions');
+        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
+        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
+        const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
+        isAtLeastInstructorInCourseStub.mockReturnValue(true);
 
         // call
         component.ngOnInit();
         tick(100);
         // check
-        expect(component['setPermissions']).toHaveBeenCalled();
         expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise1.id, { submittedOnly: true });
         expect(component.submissions).toEqual([fileUploadSubmission1]);
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);
     }));
 
     it('should not get Submissions', () => {
-        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
-        const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
-        isAtLeastInstructorInCourseStub.returns(true);
-        const findExerciseStub = stub(exerciseService, 'find');
-        findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+        const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
+        isAtLeastInstructorInCourseStub.mockReturnValue(true);
+        const findExerciseStub = jest.spyOn(exerciseService, 'find');
+        findExerciseStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
         component.exercise = fileUploadExercise2;
         // call
         component.ngOnInit();
@@ -166,8 +173,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
-        const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentService, 'cancelAssessment').and.returnValue(of(1));
+        const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        const modelAssServiceCancelAssSpy = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.exercise = fileUploadExercise2;
         // call
         component.cancelAssessment(fileUploadSubmission2);
@@ -180,7 +187,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should sortRows', () => {
         // test cancelAssessment
-        const sortServiceSpy = spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
         component.predicate = 'predicate';
         component.reverse = false;
         component.submissions = [fileUploadSubmission2];

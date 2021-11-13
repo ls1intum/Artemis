@@ -30,7 +30,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void initTestCase() {
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        database.addUsers(2, 2, 0, 2);
+        database.addUsers(2, 2, 1, 2);
 
         exercise = exerciseRepository.findAll().get(0);
         database.addHintsToExercise(exercise);
@@ -61,14 +61,21 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getHintForAnExerciseAsAStudentShouldReturnForbidden() throws Exception {
+    public void getHintForAnExerciseAsStudentShouldReturnForbidden() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.FORBIDDEN, ExerciseHint.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getHintForAnExerciseAsATutor() throws Exception {
+    public void getHintForAnExerciseAsTutorForbidden() throws Exception {
+        ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
+        request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.FORBIDDEN, ExerciseHint.class);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void getHintForAnExerciseAsEditor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
     }
@@ -90,7 +97,14 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createHintAsTutor() throws Exception {
+    public void createHintAsTutorForbidden() throws Exception {
+        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void createHintAsEditor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
 
@@ -113,21 +127,29 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updateHintAsAStudentShouldReturnForbidden() throws Exception {
+        updateHintForbidden();
+    }
+
+    private void updateHintForbidden() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         String newContent = "new content value!";
         String contentBefore = exerciseHint.getContent();
-
         exerciseHint.setContent(newContent);
         request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.FORBIDDEN);
 
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(contentBefore);
-
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void updateHintAsTutor() throws Exception {
+    public void updateHintAsTutorForbidden() throws Exception {
+        updateHintForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void updateHintAsEditor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         String newContent = "new content value!";
 
@@ -163,7 +185,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetHintTitleAsInstuctor() throws Exception {
+    public void testGetHintTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetHintTitle();
     }

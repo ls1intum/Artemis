@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
 
@@ -36,20 +36,24 @@ export interface IExerciseHintService {
      * Deletes an exercise hint
      * @param id Id of exercise hint to delete
      */
-    delete(id: number): Observable<HttpResponse<any>>;
+    delete(id: number): Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintService implements IExerciseHintService {
     public resourceUrl = SERVER_API_URL + 'api/exercise-hints';
 
-    constructor(protected http: HttpClient) {}
+    constructor(protected http: HttpClient, private exerciseService: ExerciseService) {}
 
     /**
      * Creates an exercise hint
      * @param exerciseHint Exercise hint to create
      */
     create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+        exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
+        if (exerciseHint.exercise.categories) {
+            exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+        }
         return this.http.post<ExerciseHint>(this.resourceUrl, exerciseHint, { observe: 'response' });
     }
 
@@ -58,15 +62,17 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to update
      */
     update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+        exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }
 
     /**
      * Finds an exercise hint
-     * @param id Id of exercise hint to find
+     * @param exerciseHintId Id of exercise hint to find
      */
-    find(id: number): Observable<ExerciseHintResponse> {
-        return this.http.get<ExerciseHint>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    find(exerciseHintId: number): Observable<ExerciseHintResponse> {
+        return this.http.get<ExerciseHint>(`${this.resourceUrl}/${exerciseHintId}`, { observe: 'response' });
     }
 
     /**
@@ -80,18 +86,18 @@ export class ExerciseHintService implements IExerciseHintService {
     /**
      * Fetches the title of the hint with the given id
      *
-     * @param hintId the id of the hint
+     * @param exerciseHintId the id of the hint
      * @return the title of the hint in an HttpResponse, or an HttpErrorResponse on error
      */
-    getTitle(hintId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${hintId}/title`, { observe: 'response', responseType: 'text' });
+    getTitle(exerciseHintId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseHintId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
      * Deletes an exercise hint
-     * @param id Id of exercise hint to delete
+     * @param exerciseHintId Id of exercise hint to delete
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(exerciseHintId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseHintId}`, { observe: 'response' });
     }
 }

@@ -5,7 +5,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
@@ -56,6 +56,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      */
     onQuestionChange(text: string): void {
         ArtemisMarkdownService.parseTextHintExplanation(text, this.question);
+        this.questionUpdated.emit();
     }
 
     /**
@@ -68,6 +69,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
             return answerOption.id === answer.id;
         });
         this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
+        this.questionUpdated.emit();
     }
 
     /**

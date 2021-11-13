@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -36,22 +35,20 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     toggleAssessmentType() {
         if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            if (this.isExamMode || this.exercise.course?.complaintsEnabled) {
-                this.exercise.allowComplaintsForAutomaticAssessments = true;
-            } else {
-                this.exercise.allowComplaintsForAutomaticAssessments = false;
-            }
-        } else if (this.exercise.allowComplaintsForAutomaticAssessments) {
-            this.exercise.allowComplaintsForAutomaticAssessments = false;
+            this.exercise.assessmentDueDate = undefined;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
         }
+    }
 
-        // when the new value is AssessmentType.AUTOMATIC, we need to reset assessment due date
-        if (this.exercise.assessmentType === AssessmentType.AUTOMATIC) {
-            this.exercise.assessmentDueDate = undefined;
-        }
+    /**
+     * Toggles the assessment type between AUTOMATIC (only tests in repo will be run using build plans) and
+     * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
+     *
+     */
+    toggleComplaintsType() {
+        this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;
     }
 
     /**
@@ -59,8 +56,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      *
      * @param newReleaseDate The new release date
      */
-    updateReleaseDate(newReleaseDate?: Moment) {
-        if (this.exercise.dueDate && newReleaseDate && moment(newReleaseDate).isAfter(this.exercise.dueDate)) {
+    updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
+        if (this.exercise.dueDate && newReleaseDate && dayjs(newReleaseDate).isAfter(this.exercise.dueDate)) {
             this.updateDueDate(newReleaseDate);
         }
         this.exercise.releaseDate = newReleaseDate;
@@ -70,13 +67,13 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * Updates the due Date of the programming exercise
      * @param dueDate the new dueDate
      */
-    private updateDueDate(dueDate: Moment) {
+    private updateDueDate(dueDate: dayjs.Dayjs) {
         alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
         const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
-        if (afterDue && moment(dueDate).isAfter(afterDue)) {
+        if (afterDue && dayjs(dueDate).isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }

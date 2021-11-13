@@ -5,13 +5,13 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 const expect = chai.expect;
@@ -236,7 +236,7 @@ describe('Exam Management Service Tests', () => {
     it('should get latest individual end date of exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockResponse: ExamInformationDTO = { latestIndividualEndDate: moment() };
+        const mockResponse: ExamInformationDTO = { latestIndividualEndDate: dayjs() };
         const expected = { ...mockResponse };
 
         // WHEN
@@ -622,7 +622,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should archive the exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = { id: 1 };
+        const mockExam: Exam = { id: 1, studentExams: [{ id: 1 }] };
 
         // WHEN
         service.archiveExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq({}));
@@ -633,6 +633,25 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/archive`,
         });
         req.flush({});
+        tick();
+    }));
+
+    it('should reset an exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockResponse = { id: 1 };
+        const expected = { id: 1 };
+
+        // WHEN
+        service.reset(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq(expected));
+
+        // THEN
+        const req = httpMock.expectOne({
+            method: 'DELETE',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/reset`,
+        });
+
+        req.flush(mockResponse);
         tick();
     }));
 });

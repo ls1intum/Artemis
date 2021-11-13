@@ -21,18 +21,28 @@
     [showEditorInstructions]="showEditorInstructions"
     [isTutorAssessment]="hasTutorAssessment"
     [readOnlyManualFeedback]="true"
+    [course]="course"
 >
     <div editorTitle>
         <span>{{ exercise?.title }}</span>
-        <!-- prettier-ignore -->
-        <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
-            *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
+        <span
+            >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
+            }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
+            >]
             <jhi-included-in-score-badge
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
+                [includedInOverallScore]="exercise.includedInOverallScore"
+            ></jhi-included-in-score-badge></span
+        ><br />
+        <span *ngIf="exercise.submissionPolicy"
+            >{{ exercise.submissionPolicy.submissionLimit }} {{ 'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed' | artemisTranslate }}</span
+        >
+        <span *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
+            ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}: {{ exercise.submissionPolicy.exceedingPenalty }}P)</span
+        >
     </div>
     <!-- prettier-ignore -->
-    <div editorToolbar class="d-inline-flex">
+    <div editorToolbar class="d-inline-flex align-items-center">
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
                                               class="me-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
@@ -64,6 +74,12 @@
     ></jhi-programming-exercise-instructions>
 </jhi-code-editor-container>
 <div class="row ms-0">
-    <jhi-additional-feedback *ngIf="unreferencedFeedback.length > 0" class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true">
+    <jhi-additional-feedback
+        *ngIf="unreferencedFeedback.length > 0"
+        class="col-xl-8 mt-3 alert unreferencedFeedback"
+        [feedback]="unreferencedFeedback"
+        [additional]="true"
+        [course]="course"
+    >
     </jhi-additional-feedback>
 </div>

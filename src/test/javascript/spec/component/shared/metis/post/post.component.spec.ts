@@ -1,62 +1,172 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { DebugElement, Directive, Input } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { Post } from 'app/entities/metis/post.model';
 import { getElement } from '../../../../helpers/utils/general.utils';
+import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
+import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PageType } from 'app/shared/metis/metis.util';
+import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 
-chai.use(sinonChai);
-const expect = chai.expect;
+// tslint:disable-next-line:directive-selector
+@Directive({ selector: '[routerLink]' })
+export class MockRouterLinkDirective {
+    @Input('routerLink') data: any;
+}
+
+// tslint:disable-next-line:directive-selector
+@Directive({ selector: '[queryParams]' })
+export class MockQueryParamsDirective {
+    @Input('queryParams') data: any;
+}
 
 describe('PostComponent', () => {
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;
-
-    const post = {
-        id: 2,
-        creationDate: undefined,
-        content: 'content',
-        title: 'title',
-        tags: ['tag'],
-    } as Post;
+    let metisService: MetisService;
+    let metisServiceGetLinkSpy: jest.SpyInstance;
+    let metisServiceGetQueryParamsSpy: jest.SpyInstance;
+    let metisServiceIsPostResolvedStub: jest.SpyInstance;
+    let metisServiceGetPageTypeStub: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            declarations: [PostComponent, MockPipe(HtmlForMarkdownPipe)],
-            schemas: [NO_ERRORS_SCHEMA],
-            providers: [],
+            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            declarations: [
+                PostComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(NgbTooltip),
+                MockComponent(PostHeaderComponent),
+                MockComponent(PostingContentComponent),
+                MockComponent(PostFooterComponent),
+                MockComponent(FaIconComponent),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
+                TranslatePipeMock,
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostComponent);
+                metisService = TestBed.inject(MetisService);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                metisServiceIsPostResolvedStub = jest.spyOn(metisService, 'isPostResolved');
+                metisServiceGetPageTypeStub = jest.spyOn(metisService, 'getPageType');
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should be initialized correctly', () => {
+        metisServiceIsPostResolvedStub.mockReturnValue(false);
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        expect(component.postIsResolved).toBe(false);
+    });
+
+    it('should be re-evaluated on changes', () => {
+        // per default not resolved
+        component.posting = metisPostExerciseUser1;
+        metisServiceIsPostResolvedStub.mockReturnValue(false);
+        component.ngOnInit();
+        metisServiceIsPostResolvedStub.mockReturnValue(true);
+        component.ngOnChanges();
+        expect(component.postIsResolved).toBe(true);
     });
 
     it('should contain a post header', () => {
         const header = getElement(debugElement, 'jhi-post-header');
-        expect(header).to.exist;
+        expect(header).not.toBe(null);
     });
 
-    it('should contain a div with markdown content', () => {
-        const header = getElement(debugElement, 'div.markdown-preview');
-        expect(header).to.exist;
+    it('should contain a title with referencable id', () => {
+        metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
+        metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const title = getElement(debugElement, 'a.post-title');
+        expect(title).toBeDefined();
+        const idHash = getElement(debugElement, '.reference-hash');
+        expect(idHash).toBeDefined();
+        expect(idHash.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
+        expect(metisServiceGetLinkSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+        expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+    });
+
+    it('should initialize post without context information when shown in page section', () => {
+        metisServiceGetPageTypeStub.mockReturnValue(PageType.PAGE_SECTION);
+        component.posting = metisPostLectureUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
+        expect(contextLink).toBe(null);
+        component.posting = metisPostExerciseUser1;
+        component.ngOnChanges();
+        fixture.detectChanges();
+        const context = getElement(fixture.debugElement, 'span.context-information');
+        expect(context).toBe(null);
+    });
+
+    it('should have a course-wide context information shown as title prefix in course discussion overview', () => {
+        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
+        component.posting = metisPostTechSupport;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const context = getElement(fixture.debugElement, 'span.context-information');
+        expect(context).not.toBe(null);
+        expect(component.contextInformation.routerLinkComponents).toEqual(undefined);
+    });
+
+    it('should have a lecture context information shown as title prefix in course discussion overview', () => {
+        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
+        component.posting = metisPostLectureUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['lectures']));
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([metisLecture.id]));
+        expect(component.contextInformation.displayName).toEqual(metisLecture.title);
+        expect(contextLink).not.toBe(null);
+    });
+
+    it('should have a exercise context information shown as title prefix in course discussion overview', () => {
+        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['exercises']));
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([metisExercise.id]));
+        expect(component.contextInformation.displayName).toEqual(metisExercise.title);
+        expect(contextLink).not.toBe(null);
+    });
+
+    it('should contain the posting content', () => {
+        const header = getElement(debugElement, 'jhi-posting-content');
+        expect(header).not.toBe(null);
     });
 
     it('should contain a post footer', () => {
         const footer = getElement(debugElement, 'jhi-post-footer');
-        expect(footer).to.exist;
+        expect(footer).not.toBe(null);
     });
 
-    it('should have correct content', () => {
-        component.posting = post;
+    it('should have correct content and title', () => {
+        component.posting = metisPostExerciseUser1;
         component.ngOnInit();
-        expect(component.content).to.be.equal(post.content);
+        expect(component.content).toBe(metisPostExerciseUser1.content);
+        expect(component.posting.title).toBe(metisPostExerciseUser1.title);
     });
 });

@@ -184,9 +184,9 @@ An example for a simple method is finding a single entity by ID:
 
 .. code-block:: java
 
-	default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
-	   return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
-	}
+    default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
+       return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
+    }
 
 
 This approach has several benefits:
@@ -432,7 +432,7 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         public void testExportAll_IOException() throws Exception {
             doThrow(IOException.class).when(fileUploadSubmissionExportService).export(any(), any());
-            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId()", HttpStatus.BAD_REQUEST);
+            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -449,7 +449,7 @@ Now, instead of mocking the whole Service, we can just mock the static method, l
         public void testExportAll_IOException() throws Exception {
             MockedStatic<Files> mockedFiles = mockStatic(Files.class);
             mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
-            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId()", HttpStatus.BAD_REQUEST);
+            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);
 
             mockedFiles.close();
         }

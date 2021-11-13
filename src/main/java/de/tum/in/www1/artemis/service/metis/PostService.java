@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+
+import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -18,13 +23,18 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class PostService extends PostingService {
 
     private static final String METIS_POST_ENTITY_NAME = "metis.post";
+
+    public static final int TOP_K_SIMILARITY_RESULTS = 5;
 
     private final UserRepository userRepository;
 
@@ -32,12 +42,16 @@ public class PostService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final PostContentCompareStrategy postContentCompareStrategy;
+
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
+            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
+            PostContentCompareStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
+        this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
     /**
@@ -52,18 +66,31 @@ public class PostService extends PostingService {
     public Post createPost(Long courseId, Post post) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        // check
+        // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
+        // set default value display priority -> NONE
+        post.setDisplayPriority(DisplayPriority.NONE);
+        // announcements can only be created by instructors
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+            // display priority of announcement is set to pinned per default
+            post.setDisplayPriority(DisplayPriority.PINNED);
+            Post savedPost = postRepository.save(post);
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
+            broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+            return savedPost;
+        }
         Post savedPost = postRepository.save(post);
 
-        sendNotification(savedPost);
+        broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+        sendNotification(savedPost, course);
 
         return savedPost;
     }
@@ -74,26 +101,46 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param courseId id of the course the post belongs to
+     * @param postId   id of the post to update
      * @param post     post to update
      * @return updated post that was persisted
      */
-    public Post updatePost(Long courseId, Post post) {
+    public Post updatePost(Long courseId, Long postId, Post post) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // check
-        if (post.getId() == null) {
+        if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post existingPost = postRepository.findByIdElseThrow(post.getId());
+        Post existingPost = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
-        // update: allow overwriting of values only for depicted fields
+        boolean contextHasChanged = !existingPost.hasSameContext(post);
+        // depending on if there is a context change we need to broadcast different information
+        if (contextHasChanged) {
+            // in case the context changed, a post is moved from one context (page) to another
+            // i.e., it has to be treated as deleted post in the old context
+            broadcastForPost(new MetisPostDTO(existingPost, MetisPostAction.DELETE_POST), course);
+        }
+
+        // update: allow overwriting of values only for depicted fields if user is at least student
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
+
+        // update: allow overwriting of certain values if they are at least TAs in this course
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            existingPost.setDisplayPriority(post.getDisplayPriority());
+            // allow changing the post context (moving it to another context)
+            existingPost.setLecture(post.getLecture());
+            existingPost.setExercise(post.getExercise());
+            existingPost.setCourseWideContext(post.getCourseWideContext());
+            existingPost.setCourse(post.getCourse());
+        }
+
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -101,7 +148,32 @@ public class PostService extends PostingService {
             updatedPost.getExercise().filterSensitiveInformation();
         }
 
+        // depending on if there is a context change we need to broadcast different information
+        if (contextHasChanged) {
+            // in case the context changed, a post is moved from one context (page) to another
+            // i.e., it has to be treated as newly created post in the new context
+            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.CREATE_POST), course);
+        }
+        else {
+            // in case the context did not change we emit with trigger a post update via websocket
+            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        }
         return updatedPost;
+    }
+
+    /**
+     * Invokes the updatePost method to persist the change of displayPriority
+     *
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
+     * @return updated post that was persisted
+     */
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
+        Post post = postRepository.findByIdElseThrow(postId);
+        post.setDisplayPriority(displayPriority);
+
+        return updatePost(courseId, postId, post);
     }
 
     /**
@@ -109,10 +181,89 @@ public class PostService extends PostingService {
      *
      * @param post     post that is reacted on
      * @param reaction reaction that was added by a user
+     * @param courseId id of course the post belongs to
      */
-    public void updateWithReaction(Post post, Reaction reaction) {
+    public void updateWithReaction(Post post, Reaction reaction, Long courseId) {
+        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
-        postRepository.save(post);
+        Post updatedPost = postRepository.save(post);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+    }
+
+    /**
+     * @param courseId          id of the course the fetch posts for
+     * @param courseWideContext course-wide context for which the posts should be fetched
+     * @param exerciseId        id of the exercise for which the posts should be fetched
+     * @param lectureId         id of the lecture for which the posts should be fetched
+     * @return list of posts that match the given context
+     */
+    public List<Post> getPostsInCourse(Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId) {
+        // no filter -> get all posts in course
+        if (courseWideContext == null && exerciseId == null && lectureId == null) {
+            return this.getAllCoursePosts(courseId);
+        }
+        // filter by course-wide context
+        else if (courseWideContext != null && exerciseId == null && lectureId == null) {
+            return this.getAllPostsByCourseWideContext(courseId, courseWideContext);
+        }
+        // filter by exercise
+        else if (courseWideContext == null && exerciseId != null && lectureId == null) {
+            return this.getAllExercisePosts(courseId, exerciseId);
+        }
+        // filter by lecture
+        else if (courseWideContext == null && exerciseId == null && lectureId != null) {
+            return this.getAllLecturePosts(courseId, lectureId);
+        }
+        else {
+            throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+        }
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves all posts for a course by its id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId id of the course the post belongs to
+     * @return list of posts that belong to the course
+     */
+    public List<Post> getAllCoursePosts(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves all posts with a certain course-wide context by course id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId          id of the course the post belongs to
+     * @param courseWideContext specific course-wide context to filter course get posts for
+     * @return list of posts for a certain course-wide context
+     */
+    public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts = postRepository.findPostsForCourseWideContext(courseId, courseWideContext);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
     }
 
     /**
@@ -165,29 +316,6 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves all posts for a course by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId id of the course the post belongs to
-     * @return list of posts that belong to the course
-     */
-    public List<Post> getAllCoursePosts(Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        Course course = preCheckUserAndCourse(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-        // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
-    }
-
-    /**
-     * Checks course, user and post validity,
      * determines authority to delete post and deletes the post
      *
      * @param courseId id of the course the post belongs to
@@ -204,13 +332,14 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
+        broadcastForPost(new MetisPostDTO(post, MetisPostAction.DELETE_POST), course);
     }
 
     /**
      * Checks course and user validity,
      * retrieves all tags for posts in a certain course
      *
-     * @param courseId  id of the course the tags belongs to
+     * @param courseId id of the course the tags belongs to
      * @return tags of all posts that belong to the course
      */
     public List<String> getAllCourseTags(Long courseId) {
@@ -258,22 +387,22 @@ public class PostService extends PostingService {
      *
      * @param post post that triggered the notification
      */
-    void sendNotification(Post post) {
+    void sendNotification(Post post, Course course) {
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
+            return;
+        }
         // notify via exercise
         if (post.getExercise() != null) {
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
         }
     }
 
@@ -293,5 +422,20 @@ public class PostService extends PostingService {
      */
     public Post findById(Long postId) {
         return postRepository.findByIdElseThrow(postId);
+    }
+
+    /**
+     * Calculates k similar posts based on the underlying content comparison strategy
+     *
+     * @param courseId  id of the course in which similar posts are searched for
+     * @param post      post that is to be created and check for similar posts beforehand
+     * @return list of similar posts
+     */
+    public List<Post> getSimilarPosts(Long courseId, Post post) {
+        List<Post> coursePosts = this.getAllCoursePosts(courseId);
+
+        // sort course posts by calculated similarity scores
+        coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
     }
 }

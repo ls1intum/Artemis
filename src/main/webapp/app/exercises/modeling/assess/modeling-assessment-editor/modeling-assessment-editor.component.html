@@ -21,6 +21,7 @@
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     [(highlightDifferences)]="highlightDifferences"
     [correctionRound]="correctionRound"
+    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
@@ -46,6 +47,8 @@
             [explanation]="submission?.explanationText || ''"
             [highlightDifferences]="highlightDifferences"
             [elementCounts]="submission && submission.similarElements"
+            [resizeOptions]="resizeOptions"
+            [course]="course"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -7,11 +7,12 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
 @Component({
     selector: 'jhi-postings-thread',
     templateUrl: './postings-thread.component.html',
-    styleUrls: ['./postings-thread.component.scss'],
+    styleUrls: ['../metis.component.scss'],
 })
-export class PostingsThreadComponent implements OnInit, OnChanges {
+export class PostingsThreadComponent implements OnInit, OnChanges, OnDestroy {
     @Input() post: Post;
-    showAnswers: boolean;
+    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
+    @Input() showAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
@@ -37,8 +38,15 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
     }
 
     /**
+     * on leaving the page, the modal should be closed
+     */
+    ngOnDestroy(): void {
+        this.answerPostCreateEditModal?.modalRef?.close();
+    }
+
+    /**
      * sorts answerPosts by two criteria
-     * 1. criterion: tutorApproved -> true comes first
+     * 1. criterion: resolvesPost -> true comes first
      * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      */
     sortAnswerPosts(): void {
@@ -48,26 +56,19 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
         }
         this.sortedAnswerPosts = this.post.answers.sort(
             (answerPostA, answerPostB) =>
-                Number(answerPostB.tutorApproved) - Number(answerPostA.tutorApproved) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
+                Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );
     }
 
     /**
-     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set tutorApproved flag
+     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
      * @return AnswerPost created empty default answer post
      */
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
         answerPost.post = this.post;
-        answerPost.tutorApproved = this.isAtLeastTutorInCourse;
+        answerPost.resolvesPost = this.isAtLeastTutorInCourse;
         return answerPost;
-    }
-
-    /**
-     * toggles the answers of a post (show/do not show)
-     */
-    toggleAnswers(): void {
-        this.showAnswers = !this.showAnswers;
     }
 }

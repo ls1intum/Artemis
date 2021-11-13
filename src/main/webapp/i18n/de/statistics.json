@@ -23,8 +23,7 @@
         "created_results": "Erstellte Resultate",
         "created_feedbacks": "Erstellte Feedbacks",
         "posts": "Beiträge",
-        "answered_posts": "Beantwortete Beiträge",
-        "score_distribution": "Bewertungsverteilung",
+        "resolved_posts": "Als geklärt markierte Beiträge",
         "submissionsTitle": "# Abgaben",
         "active_usersTitle": "# Nutzer:innen",
         "logged_in_usersTitle": "# Nutzer:innen",
@@ -37,8 +36,9 @@
         "created_resultsTitle": "# Bewertungen",
         "created_feedbacksTitle": "# Feedbacks",
         "postsTitle": "# Beiträge",
-        "answered_postsTitle": "# Beantwortete Beiträge",
-        "score_distributionTitle": "% Studierende"
+        "resolved_postsTitle": "# Beiträge, die als geklärt markiert sind",
+        "score_distributionTitle": "% Studierende",
+        "score_distribution": "Verteilung der Bewertung"
     },
     "calendar_week": "KW",
     "overview": {
@@ -72,8 +72,8 @@
     },
     "exercise-statistics": {
         "title": "Aufgabenstatistiken",
-        "averageScore": "Duschnittspunktzahl",
+        "averageScore": "Durchschnittspunktzahl",
         "participationRate": "Teilnahmen",
-        "answered_posts": "Beantwortete Beiträge"
+        "resolved_posts": "Als geklärt markierte Beiträge"
     }
 }

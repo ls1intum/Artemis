@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -38,9 +38,9 @@ describe('ExerciseDetailStatisticsComponent', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -69,6 +69,6 @@ describe('ExerciseDetailStatisticsComponent', () => {
         fixture.detectChanges();
         expect(component.doughnutStats.absoluteAveragePoints).to.equal(5);
         expect(component.doughnutStats.participationsInPercent).to.equal(100);
-        expect(component.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+        expect(component.doughnutStats.resolvedPostsInPercent).to.equal(50);
     });
 });

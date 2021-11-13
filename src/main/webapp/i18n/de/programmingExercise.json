@@ -87,6 +87,7 @@
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
             "packageName": "Package-Name",
+            "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
@@ -107,7 +108,7 @@
             },
             "problemStatement": {
                 "title": "Aufgabenstellung",
-                "taskCommand": "[task] Aufgabe",
+                "taskCommand": "Aufgabe",
                 "testCaseCommand": "Testfall einfügen",
                 "exerciseHintCommand": "Aufgaben-spezifischen Hinweis hinzufügen"
             },
@@ -228,13 +229,17 @@
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
             "timeline": {
                 "assessmentType": "Art der Bewertung",
+                "manualAssessment": "Manuelle Bewertung",
+                "automaticAssessment": "Automatische Bewertung",
+                "complaintsAllowed": "Beschwerden erlaubt",
                 "automaticTests": "Automatische Tests",
                 "afterDueDate": "Testlauf nach der Einreichungsfrist",
                 "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
                 "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
                 "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen)",
                 "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
-                "assessmentTypeTooltip": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung, eine Bewertung durch Tutor:innen, nur nach einer Beschwerde von Studierenden",
+                "assessmentTypeTooltipAutomaticAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung",
+                "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
                 "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
@@ -242,7 +247,12 @@
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
-                "notSet": "nicht gesetzt"
+                "notSet": "nicht gesetzt",
+                "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
+                "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
+                "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
+                "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
+                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich"
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -282,11 +292,72 @@
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
-                "repositoryNameRequired": "Der Name des Repositories wird benötigt",
-                "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
-                "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
-                "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
-                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+                "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
+                "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
+                "warning": "Hilfs-Repositories können editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen manuell durchgeführt werden.",
+                "repositoryNameRequired": {
+                    "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
+                }
+            },
+            "submissionPolicy": {
+                "title": "Abgaberichtlinie",
+                "updateButton": {
+                    "title": "Speichern",
+                    "tooltip": "Speichert die Änderungen an der Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories betroffen sind!"
+                },
+                "activateButton": {
+                    "title": "Aktivieren",
+                    "tooltip": "Aktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
+                },
+                "deactivateButton": {
+                    "title": "Deaktivieren",
+                    "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG: Für Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories entsperrt werden müssen!"
+                },
+                "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
+                "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
+                "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
+                "submissionsAllowed": "erlaubte Abgaben",
+                "none": {
+                    "optionLabel": "Keine"
+                },
+                "lockRepository": {
+                    "optionLabel": "Repository Sperre"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Punktabzug je Überschreitung",
+                    "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
+                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer oder gleich 0 kann eingetragen werden.",
+                    "penaltyInputFieldValidationWarning": {
+                        "min": "Der Punktabzug muss größer oder gleich 0 sein!",
+                        "required": "Der Punktabzug muss gesetzt sein!"
+                    },
+                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
+                },
+                "submissionPolicyType": {
+                    "title": "Typ der Abgaberichtlinie",
+                    "none": {
+                        "title": "Keine"
+                    },
+                    "lock_repository": {
+                        "title": "Repository Sperre",
+                        "tooltip": "Dein Abgaberepository wird gesperrt, sobald das Abgabelimit erreicht wird. Es wird nicht möglich sein, weiter an der Aufgabe teilzunehmen, sobald das Repository gesperrt wurde."
+                    },
+                    "submission_penalty": {
+                        "title": "Punktabzug je Überschreitung",
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche, innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
+                    }
+                },
+                "submissionLimitTitle": "Abgabelimit",
+                "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
+                "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
+                "submissionLimitWarning": {
+                    "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
+                    "required": "Das Abgabelimit muss gesetzt sein!"
+                }
             }
         },
         "error": {

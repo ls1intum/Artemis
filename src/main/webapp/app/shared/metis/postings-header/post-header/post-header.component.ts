@@ -1,46 +1,27 @@
-import { Component, EventEmitter, OnChanges, Output } from '@angular/core';
+import { Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
-    styleUrls: ['../posting-header.component.scss'],
+    styleUrls: ['../../metis.component.scss'],
 })
-export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges {
-    @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
-    numberOfAnswerPosts: number;
-    showAnswers = false;
+export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnDestroy {
+    @Input() previewMode: boolean;
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
 
     constructor(protected metisService: MetisService) {
         super(metisService);
     }
 
     /**
-     * on changes: updates the number of answer posts
+     * on leaving the page, the modal should be closed
      */
-    ngOnChanges(): void {
-        this.numberOfAnswerPosts = this.getNumberOfAnswerPosts();
-    }
-
-    /**
-     * counts the answer posts of a post, 0 if none exist
-     * @return number number of answer posts
-     */
-    getNumberOfAnswerPosts(): number {
-        return <number>this.posting.answers?.length! ? this.posting.answers?.length! : 0;
-    }
-
-    /**
-     * toggles showAnswers flag to highlight header icon when answers are toggled
-     * emits an event of toggling (show, do not show) the answer posts for a post
-     */
-    toggleAnswers(): void {
-        if (this.getNumberOfAnswerPosts() > 0) {
-            this.showAnswers = !this.showAnswers;
-        }
-        this.toggleAnswersChange.emit();
+    ngOnDestroy(): void {
+        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**

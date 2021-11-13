@@ -6,7 +6,7 @@ With the help of this feature it is possible to store not only the login, name a
 For each user who registers in the system for the first time, a "normal" artemis user is created and the data is taken from the attributes of the Shibboleth request.
 
 * The feature is activated by the *saml2* profile.
-* If you use a **reverse proxy**, you have to redirect the following endpoints to the artemis backend: **/login** and **/saml2** .
+* If you use a **reverse proxy**, you have to redirect the following endpoints to the artemis server: **/login** and **/saml2** .
 * For testing you can use a `preconfigured environment <https://github.com/kit-sdq/Artemis-SAML2-Test-Docker>`__.
 
 If you activate the SAML2 Feature an additional login button will be activated (you can set the text of the button as you like):

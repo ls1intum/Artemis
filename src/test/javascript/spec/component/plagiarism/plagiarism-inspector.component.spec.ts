@@ -5,7 +5,6 @@ import { ExportToCsv } from 'export-to-csv';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { downloadFile } from 'app/shared/util/download.util';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
@@ -13,14 +12,18 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
+import { MockProvider, MockDirective, MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
+import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgModel } from '@angular/forms';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -47,47 +50,63 @@ describe('Plagiarism Inspector Component', () => {
     const activatedRoute = {
         data: of({ exercise: modelingExercise }),
     };
-    const plagiarismResult = {
-        comparisons: [
-            {
-                submissionA: { studentLogin: 'student1A' },
-                submissionB: { studentLogin: 'student1B' },
-                similarity: 0.5,
-                status: PlagiarismStatus.NONE,
-            },
-            {
-                submissionA: { studentLogin: 'student2A' },
-                submissionB: { studentLogin: 'student2B' },
-                similarity: 0.8,
-                status: PlagiarismStatus.NONE,
-            },
-            {
-                submissionA: { studentLogin: 'student3A' },
-                submissionB: { studentLogin: 'student3B' },
-                similarity: 0.7,
-                status: PlagiarismStatus.NONE,
-            },
-        ],
+    const comparisons = [
+        {
+            submissionA: { studentLogin: 'student1A' },
+            submissionB: { studentLogin: 'student1B' },
+            similarity: 0.5,
+            status: PlagiarismStatus.NONE,
+        },
+        {
+            submissionA: { studentLogin: 'student2A' },
+            submissionB: { studentLogin: 'student2B' },
+            similarity: 0.8,
+            status: PlagiarismStatus.NONE,
+        },
+        {
+            submissionA: { studentLogin: 'student3A' },
+            submissionB: { studentLogin: 'student3B' },
+            similarity: 0.7,
+            status: PlagiarismStatus.NONE,
+        },
+    ];
+    const modelingPlagiarismResult = {
+        comparisons,
     } as ModelingPlagiarismResult;
+
+    const textPlagiarismResult = {
+        comparisons,
+    } as TextPlagiarismResult;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            imports: [ArtemisTestModule],
+            declarations: [
+                PlagiarismInspectorComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockDirective(NgModel),
+                MockComponent(PlagiarismDetailsComponent),
+                MockComponent(PlagiarismRunDetailsComponent),
+                MockComponent(PlagiarismSidebarComponent),
+            ],
             providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService), MockProvider(TranslateService)],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(PlagiarismInspectorComponent);
-        comp = fixture.componentInstance;
-        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(PlagiarismInspectorComponent);
+                comp = fixture.componentInstance;
+                modelingExerciseService = TestBed.inject(ModelingExerciseService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
+            });
     });
 
     it('should register to topic and fetch latest results on init', fakeAsync(() => {
         const websocketService = TestBed.inject(JhiWebsocketService);
-        const websocketServiceSpy = sinon.spy(websocketService, 'subscribe');
-        sinon.stub(websocketService, 'receive').returns(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
-        sinon.stub(modelingExerciseService, 'getLatestPlagiarismResult').returns(of(plagiarismResult));
+        const websocketServiceSpy = jest.spyOn(websocketService, 'subscribe');
+        jest.spyOn(websocketService, 'receive').mockReturnValue(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResult));
 
         comp.ngOnInit();
         tick();
@@ -95,7 +114,7 @@ describe('Plagiarism Inspector Component', () => {
         expect(websocketServiceSpy).toHaveBeenCalledWith(comp.getPlagarismDetectionTopic());
         expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
         expect(comp.detectionInProgress).toBe(false);
-        expect(comp.plagiarismResult).toBe(plagiarismResult);
+        expect(comp.plagiarismResult).toBe(modelingPlagiarismResult);
     }));
 
     it('should return the correct topic url', () => {
@@ -126,7 +145,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for modeling exercises', () => {
         comp.exercise = modelingExercise;
-        spyOn(modelingExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
+        jest.spyOn(modelingExerciseService, 'checkPlagiarism').mockReturnValue(of(modelingPlagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -135,7 +154,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
         comp.exercise = programmingExercise;
-        spyOn(programmingExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
+        jest.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -144,7 +163,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for text exercises', () => {
         comp.exercise = textExercise;
-        spyOn(textExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
+        jest.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -152,9 +171,9 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should comparisons by similarity', () => {
-        comp.sortComparisonsForResult(plagiarismResult);
+        comp.sortComparisonsForResult(modelingPlagiarismResult);
 
-        expect(plagiarismResult.comparisons[0].similarity).toEqual(0.8);
+        expect(modelingPlagiarismResult.comparisons[0].similarity).toEqual(0.8);
     });
 
     it('should select a comparison at the given index', () => {
@@ -166,7 +185,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should download the plagiarism detection results as JSON', () => {
         comp.exercise = modelingExercise;
-        comp.plagiarismResult = plagiarismResult;
+        comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsJson();
 
         expect(downloadFile).toHaveBeenCalled();
@@ -174,7 +193,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should download the plagiarism detection results as CSV', () => {
         comp.exercise = modelingExercise;
-        comp.plagiarismResult = plagiarismResult;
+        comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsCsv();
 
         expect(ExportToCsv).toHaveBeenCalled();
@@ -185,11 +204,11 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = modelingExercise;
 
         const mockResult = {} as ModelingPlagiarismResult;
-        spyOn(modelingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
-        spyOn(comp, 'handlePlagiarismResult');
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(true);
+        expect(comp.detectionInProgress).toBe(false);
 
         tick();
 
@@ -201,11 +220,11 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = programmingExercise;
 
         const mockResult = {} as TextPlagiarismResult;
-        spyOn(programmingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
-        spyOn(comp, 'handlePlagiarismResult');
+        jest.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(true);
+        expect(comp.detectionInProgress).toBe(false);
 
         tick();
 
@@ -217,11 +236,11 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = textExercise;
 
         const mockResult = {} as TextPlagiarismResult;
-        spyOn(textExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
-        spyOn(comp, 'handlePlagiarismResult');
+        jest.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(true);
+        expect(comp.detectionInProgress).toBe(false);
 
         tick();
 

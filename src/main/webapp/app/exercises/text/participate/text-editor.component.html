@@ -77,18 +77,19 @@
                         class="col-xl-8 alert unreferencedFeedback"
                         [feedback]="unreferencedFeedback || []"
                         [additional]="true"
+                        [course]="course"
                     >
                     </jhi-additional-feedback>
                     <jhi-rating *ngIf="isOwnerOfParticipation" class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
                 </div>
             </ng-template>
 
-            <jhi-complaint-interactions
+            <jhi-complaint-student-view
                 *ngIf="textExercise && result && participation"
                 [exercise]="textExercise"
                 [result]="resultWithComplaint ? resultWithComplaint : result"
                 [participation]="participation"
-            ></jhi-complaint-interactions>
+            ></jhi-complaint-student-view>
         </div>
     </div>
     <!--endregion-->

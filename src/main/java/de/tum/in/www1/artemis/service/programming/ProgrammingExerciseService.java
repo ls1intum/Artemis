@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -151,10 +152,7 @@ public class ProgrammingExerciseService {
 
         scheduleOperations(programmingExercise.getId());
 
-        // Notify tutors only if this a course exercise
-        if (programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-        }
+        groupNotificationService.checkNotificationForExerciseRelease(programmingExercise, instanceMessageSendService);
 
         return programmingExercise;
     }
@@ -377,19 +375,17 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
-
         setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
         connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
+        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
-        // Only send notification for course exercises
-        if (notificationText != null && programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
+                instanceMessageSendService);
 
         return savedProgrammingExercise;
     }
@@ -594,20 +590,33 @@ public class ProgrammingExerciseService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
-            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
-        }
-
         Map<String, String> replacements = new HashMap<>();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        ProjectType projectType = programmingExercise.getProjectType();
 
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN
-                || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-            replacements.put("${packageName}", programmingExercise.getPackageName());
+        switch (programmingLanguage) {
+            case JAVA, KOTLIN -> {
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
+                        programmingExercise.getPackageFolderName());
+                replacements.put("${packageName}", programmingExercise.getPackageName());
+            }
+            case SWIFT -> {
+                switch (projectType) {
+                    case PLAIN -> {
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
+                                programmingExercise.getPackageName());
+                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
+                        replacements.put("${packageName}", programmingExercise.getPackageName());
+                    }
+                    case XCODE -> {
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+                        replacements.put("${appName}", programmingExercise.getPackageName());
+                    }
+                }
+            }
         }
+
         // there is no need in python to replace package names
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
@@ -638,17 +647,22 @@ public class ProgrammingExerciseService {
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
 
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
+        ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
+        programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
+
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        }
+
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, null,
+                instanceMessageSendService);
+
         return savedProgrammingExercise;
     }
 
@@ -666,9 +680,9 @@ public class ProgrammingExerciseService {
 
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        }
+
+        groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+
         return updatedProgrammingExercise;
     }
 

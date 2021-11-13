@@ -10,10 +10,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -26,15 +25,8 @@ import { Course } from 'app/entities/course.model';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
-import * as Sentry from '@sentry/browser';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
@@ -48,13 +40,9 @@ import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/shor
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
+import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 
 export interface Reason {
-    translateKey: string;
-    translateValues: any;
-}
-
-interface Warning {
     translateKey: string;
     translateValues: any;
 }
@@ -67,12 +55,7 @@ interface Warning {
     styleUrls: ['./quiz-exercise-detail.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class QuizExerciseDetailComponent implements OnInit, OnChanges, ComponentCanDeactivate {
-    // Make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
+export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChildren('editMultipleChoice')
     editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent>;
 
@@ -83,16 +66,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
 
     course?: Course;
-    quizExercise: QuizExercise;
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText?: string;
 
     // TODO: why do we have entity, savedEntity and quizExercise?
     entity: QuizExercise;
-    savedEntity: QuizExercise;
-
-    isExamMode: boolean;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -120,9 +99,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /** Status constants **/
     isSaving = false;
-    quizIsValid: boolean;
-    warningQuizCache = false;
-    pendingChangesCache: boolean;
 
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
@@ -135,9 +111,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /** Route params **/
     examId?: number;
     courseId?: number;
-    private invalidFlaggedQuestions: {
-        [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
-    } = {};
 
     constructor(
         private route: ActivatedRoute,
@@ -150,12 +123,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private location: Location,
         private modalService: NgbModal,
-        private changeDetector: ChangeDetectorRef,
+        public changeDetector: ChangeDetectorRef,
         private exerciseGroupService: ExerciseGroupService,
-    ) {}
+    ) {
+        super();
+    }
 
     /**
      * Initialize variables and load course and quiz from server.
@@ -207,7 +182,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 this.quizExercise = response.body!;
                 this.init();
                 if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
-                    this.jhiAlertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
+                    this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
             });
         }
@@ -228,7 +203,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.entity.isVisibleBeforeStart = false;
             this.entity.isOpenForPractice = false;
             this.entity.isPlannedToStart = false;
-            this.entity.releaseDate = moment();
+            this.entity.releaseDate = dayjs();
             this.entity.randomizeQuestionOrder = true;
             this.entity.quizQuestions = [];
             this.quizExercise = this.entity;
@@ -248,11 +223,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 (response: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
         this.updateDuration();
         this.cacheValidation();
+    }
+
+    cacheValidation() {
+        return super.cacheValidation(this.changeDetector);
     }
 
     /**
@@ -281,10 +260,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     get showDropdown(): string {
         if (this.quizExercise && this.quizExercise.isPlannedToStart) {
             const releaseDate = this.quizExercise.releaseDate!;
-            const plannedEndMoment = moment(releaseDate).add(this.quizExercise.duration, 'seconds');
-            if (plannedEndMoment.isBefore(moment())) {
+            const plannedEndMoment = dayjs(releaseDate).add(this.quizExercise.duration!, 'seconds');
+            if (plannedEndMoment.isBefore(dayjs())) {
                 return 'isOpenForPractice';
-            } else if (moment(releaseDate).isBefore(moment())) {
+            } else if (dayjs(releaseDate).isBefore(dayjs())) {
                 return 'active';
             }
         }
@@ -313,12 +292,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * All dates which are in the past (< today) are disabled
      */
     isDateInPast = (date: NgbDate, current: { month: number }) =>
-        current.month < moment().month() + 1 ||
-        moment()
+        current.month < dayjs().month() + 1 ||
+        dayjs()
             .year(date.year)
             .month(date.month - 1)
             .date(date.day)
-            .isBefore(moment());
+            .isBefore(dayjs());
 
     /**
      * Add an empty multiple choice question to the quiz
@@ -455,7 +434,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -475,7 +454,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -555,21 +534,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * 1. Check whether the inputs in the quiz are valid
-     * 2. Check if warning are needed for the inputs
-     * 3. Display the warnings/invalid reasons in the html file if needed
-     */
-    cacheValidation(): void {
-        this.warningQuizCache = this.computeInvalidWarnings().length > 0;
-        this.quizIsValid = this.validQuiz();
-        this.pendingChangesCache = this.pendingChanges();
-        this.checkForInvalidFlaggedQuestions();
-        this.computeInvalidReasons();
-        this.computeInvalidWarnings();
-        this.changeDetector.detectChanges();
-    }
-
-    /**
      * Remove question from the quiz
      * @param questionToDelete {QuizQuestion} the question to remove
      */
@@ -584,415 +548,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     onQuestionUpdated(): void {
         this.cacheValidation();
         this.quizExercise.quizQuestions = Array.from(this.quizExercise.quizQuestions!);
-    }
-
-    /**
-     * Determine if there are any changes waiting to be saved
-     * @returns {boolean} true if there are any pending changes, false otherwise
-     */
-    pendingChanges(): boolean {
-        if (!this.quizExercise || !this.savedEntity) {
-            return false;
-        }
-        const keysToCompare = [
-            'title',
-            'difficulty',
-            'duration',
-            'isPlannedToStart',
-            'isVisibleBeforeStart',
-            'isOpenForPractice',
-            'randomizeQuestionOrder',
-            'includedInOverallScore',
-        ];
-
-        // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
-        return (
-            keysToCompare.some((key) => this.quizExercise[key] !== this.savedEntity[key]) ||
-            !this.areDatesIdentical(this.quizExercise.releaseDate!, this.savedEntity.releaseDate!) ||
-            !this.areCategoriesIdentical(this.quizExercise.categories, this.savedEntity.categories) ||
-            !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.quizQuestions, this.savedEntity.quizQuestions)
-        );
-    }
-
-    /**
-     * Checks whether the used and saved categories are the same.
-     * @param categoriesUsed the categories currently used
-     * @param categoriesSaved the categories that are saved
-     * @returns {boolean} true if the used and saved categories are identical.
-     */
-    areCategoriesIdentical(categoriesUsed?: ExerciseCategory[], categoriesSaved?: ExerciseCategory[]): boolean {
-        return JSON.stringify(categoriesUsed || []).toLowerCase() === JSON.stringify(categoriesSaved || []).toLowerCase();
-    }
-
-    /**
-     * Compares the provided question array objects
-     * @param QA1 {QuizQuestion[]} First question array to compare
-     * @param QA2 {QuizQuestion[]} Second question array to compare against
-     * @return {boolean} true if the provided Question[] objects are identical, false otherwise
-     */
-    areQuizExerciseEntityQuestionsIdentical(QA1?: QuizQuestion[], QA2?: QuizQuestion[]): boolean {
-        return JSON.stringify(QA1 || []) === JSON.stringify(QA2 || []);
-    }
-
-    /**
-     * This function compares the provided dates with help of the moment library
-     * Since we might be receiving an string instead of a moment object (e.g. when receiving it from the server)
-     * we wrap both dates in a moment object. If it's already a moment object, this will just be ignored.
-     * @param date1 {string|Moment} First date to compare
-     * @param date2 {string|Moment} Second date to compare to
-     * @return {boolean} True if the dates are identical, false otherwise
-     */
-    areDatesIdentical(date1: string | Moment, date2: string | Moment): boolean {
-        return moment(date1).isSame(moment(date2));
-    }
-
-    /**
-     * Check if the current inputs are valid
-     * @returns {boolean} true if valid, false otherwise
-     */
-    private validQuiz(): boolean {
-        if (!this.quizExercise) {
-            return false;
-        }
-        // Release date is valid if it's not null/undefined and a valid date; Precondition: isPlannedToStart is set
-        // Release date should also not be in the past
-        const releaseDateValidAndNotInPastCondition =
-            !this.quizExercise.isPlannedToStart ||
-            (this.quizExercise.releaseDate !== undefined && moment(this.quizExercise.releaseDate).isValid() && moment(this.quizExercise.releaseDate).isAfter(moment()));
-
-        const isGenerallyValid =
-            this.quizExercise.title != undefined &&
-            this.quizExercise.title !== '' &&
-            this.quizExercise.title.length < 250 &&
-            this.quizExercise.duration !== 0 &&
-            releaseDateValidAndNotInPastCondition &&
-            this.quizExercise.quizQuestions != undefined &&
-            !!this.quizExercise.quizQuestions.length;
-        const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined || question.points < 1) {
-                return false;
-            }
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const mcQuestion = question as MultipleChoiceQuestion;
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                    return question.title && question.title !== '' && question.title.length < 250;
-                }
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const dndQuestion = question as DragAndDropQuestion;
-                return (
-                    question.title &&
-                    question.title !== '' &&
-                    question.title.length < 250 &&
-                    dndQuestion.correctMappings &&
-                    dndQuestion.correctMappings.length > 0 &&
-                    this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
-                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
-                );
-            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const shortAnswerQuestion = question as ShortAnswerQuestion;
-                return (
-                    question.title &&
-                    question.title !== '' &&
-                    shortAnswerQuestion.correctMappings &&
-                    shortAnswerQuestion.correctMappings.length > 0 &&
-                    this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
-                    this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
-                    this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
-                    shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
-                    !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
-                    this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
-                );
-            } else {
-                Sentry.captureException(new Error('Unknown question type: ' + question));
-                return question.title && question.title !== '';
-            }
-        }, this);
-
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
-
-        const noTestRunExists = !this.isExamMode || !this.quizExercise.testRunParticipationsExist;
-
-        return (
-            isGenerallyValid &&
-            areAllQuestionsValid === true &&
-            this.isEmpty(this.invalidFlaggedQuestions) &&
-            maxPointsReachableInQuiz !== undefined &&
-            maxPointsReachableInQuiz > 0 &&
-            noTestRunExists
-        );
-    }
-
-    /**
-     * Iterates through the questions is search for invalid flags. Updates {@link invalidFlaggedQuestions} accordingly.
-     * Check the invalid flag of the question as well as all elements which can be set as invalid, for each quiz exercise type.
-     * @param questions optional parameter, if it is not set, it iterates over the exercise questions.
-     */
-    checkForInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {
-        if (!this.quizExercise) {
-            return;
-        }
-        if (questions.length === 0) {
-            questions = this.quizExercise.quizQuestions!;
-        }
-        const invalidQuestions: {
-            [questionId: number]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
-        } = {};
-        questions.forEach(function (question) {
-            const invalidQuestion = question.invalid;
-            const invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions !== undefined) {
-                (<MultipleChoiceQuestion>question).answerOptions!.forEach(function (option) {
-                    if (option.invalid) {
-                        invalidElements.push(option);
-                    }
-                });
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                if ((<DragAndDropQuestion>question).dragItems !== undefined) {
-                    (<DragAndDropQuestion>question).dragItems!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }
-                if ((<DragAndDropQuestion>question).correctMappings !== undefined) {
-                    (<DragAndDropQuestion>question).correctMappings!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }
-                if ((<DragAndDropQuestion>question).dropLocations !== undefined) {
-                    (<DragAndDropQuestion>question).dropLocations!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }
-            } else {
-                if ((<ShortAnswerQuestion>question).solutions !== undefined) {
-                    (<ShortAnswerQuestion>question).solutions!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }
-                if ((<ShortAnswerQuestion>question).correctMappings !== undefined) {
-                    (<ShortAnswerQuestion>question).correctMappings!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }
-                if ((<ShortAnswerQuestion>question).spots !== undefined) {
-                    (<ShortAnswerQuestion>question).spots!.forEach(function (option) {
-                        if (option.invalid) {
-                            invalidElements.push(option);
-                        }
-                    });
-                }
-            }
-            if (invalidQuestion || invalidElements.length !== 0) {
-                invalidQuestions[question.title!] = invalidElements.length !== 0 ? { invalidElements } : {};
-            }
-        });
-        this.invalidFlaggedQuestions = invalidQuestions;
-    }
-
-    /**
-     * Get the reasons, why the quiz needs warnings
-     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
-     */
-    computeInvalidWarnings(): Warning[] {
-        const invalidWarnings = !this.quizExercise
-            ? []
-            : this.quizExercise.quizQuestions
-                  ?.map((question, index) => {
-                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions!.some((option) => !option.explanation)) {
-                          return {
-                              translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
-                              translateValues: { index: index + 1 },
-                          };
-                      }
-                  })
-                  .filter(Boolean);
-
-        return invalidWarnings as Warning[];
-    }
-
-    /**
-     * Get the reasons, why the quiz is invalid
-     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
-     */
-    computeInvalidReasons(): Reason[] {
-        const invalidReasons = new Array<Reason>();
-        if (!this.quizExercise) {
-            return [];
-        }
-
-        if (!this.quizExercise.title || this.quizExercise.title === '') {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitle',
-                translateValues: {},
-            });
-        }
-        if (this.quizExercise.title!.length >= 250) {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
-                translateValues: {},
-            });
-        }
-        if (!this.quizExercise.duration) {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.invalidReasons.quizDuration',
-                translateValues: {},
-            });
-        }
-        if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.invalidReasons.noQuestion',
-                translateValues: {},
-            });
-        }
-        if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.edit.testRunSubmissionsExist',
-                translateValues: {},
-            });
-        }
-
-        /** We only verify the releaseDate if the checkbox is activated **/
-        if (this.quizExercise.isPlannedToStart) {
-            if (!this.quizExercise.releaseDate || !moment(this.quizExercise.releaseDate).isValid()) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
-                    translateValues: {},
-                });
-            }
-            // Release Date valid but lies in the past
-            if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
-                if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.startTimeInPast',
-                        translateValues: {},
-                    });
-                }
-            }
-        }
-        this.quizExercise.quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
-            if (!question.title || question.title === '') {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitle',
-                    translateValues: { index: index + 1 },
-                });
-            }
-            if (question.points == undefined || question.points < 1) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
-                    translateValues: { index: index + 1 },
-                });
-            }
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!mcQuestion.answerOptions!.every((answerOption) => answerOption.explanation !== '')) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-            }
-            if (question.title && question.title.length >= 250) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
-                    translateValues: { index: index + 1 },
-                });
-            }
-
-            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const dndQuestion = question as DragAndDropQuestion;
-                if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionUnsolvable',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-            }
-            if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const shortAnswerQuestion = question as ShortAnswerQuestion;
-                if (!shortAnswerQuestion.correctMappings || shortAnswerQuestion.correctMappings.length === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!(shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-            }
-        }, this);
-        const invalidFlaggedReasons = !this.quizExercise
-            ? []
-            : this.quizExercise.quizQuestions
-                  ?.map((question, index) => {
-                      if (this.invalidFlaggedQuestions[question.title!]) {
-                          return {
-                              translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
-                              translateValues: { index: index + 1 },
-                          };
-                      }
-                  })
-                  .filter(Boolean);
-
-        return invalidReasons.concat(invalidFlaggedReasons as Reason[]);
     }
 
     /**
@@ -1247,7 +802,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private onSaveError = (): void => {
         console.error('Saving Quiz Failed! Please try again later.');
-        this.jhiAlertService.error('artemisApp.quizExercise.saveError');
+        this.alertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;
         this.changeDetector.detectChanges();
     };
@@ -1258,9 +813,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     prepareEntity(quizExercise: QuizExercise): void {
         if (this.isExamMode) {
-            quizExercise.releaseDate = moment(quizExercise.releaseDate);
+            quizExercise.releaseDate = dayjs(quizExercise.releaseDate);
         } else {
-            quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
+            quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
         }
@@ -1271,12 +826,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     onDurationChange(): void {
         if (!this.isExamMode) {
-            const duration = moment.duration(this.duration);
+            const duration = dayjs.duration(this.duration);
             this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
             this.updateDuration();
             this.cacheValidation();
         } else if (this.quizExercise.releaseDate && this.quizExercise.dueDate) {
-            const duration = moment(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
+            const duration = dayjs(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
             this.quizExercise.duration = round(duration);
             this.updateDuration();
             this.cacheValidation();
@@ -1287,7 +842,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Update ui to current value of duration
      */
     updateDuration(): void {
-        const duration = moment.duration(this.quizExercise.duration, 'seconds');
+        const duration = dayjs.duration(this.quizExercise.duration!, 'seconds');
         this.changeDetector.detectChanges();
         // when input fields are empty do not update their values
         if (this.duration.minutes !== undefined) {
@@ -1357,19 +912,48 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     get hasSavedQuizStarted(): boolean {
-        return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate!).isBefore(moment()));
-    }
-
-    /**
-     * check if Dictionary is empty
-     * @param obj the dictionary to be checked
-     */
-    private isEmpty(obj: {}) {
-        return Object.keys(obj).length === 0;
+        return !!(this.savedEntity && this.savedEntity.isPlannedToStart && dayjs(this.savedEntity.releaseDate!).isBefore(dayjs()));
     }
 
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise.includedInOverallScore = includedInOverallScore;
         this.cacheValidation();
+    }
+
+    computeInvalidReasons(): Reason[] {
+        const invalidReasons = new Array<Reason>();
+        if (!this.quizExercise) {
+            return [];
+        }
+        // Release Date valid but lies in the past
+        if (this.quizExercise.isPlannedToStart) {
+            if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
+                    translateValues: {},
+                });
+            }
+            // Release Date valid but lies in the past
+            if (this.quizExercise.releaseDate && dayjs(this.quizExercise.releaseDate).isValid()) {
+                if (dayjs(this.quizExercise.releaseDate).isBefore(dayjs())) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.startTimeInPast',
+                        translateValues: {},
+                    });
+                }
+            }
+        }
+        return super.computeInvalidReasons().concat(invalidReasons);
+    }
+    isValidQuiz(): boolean {
+        if (!this.quizExercise) {
+            return false;
+        }
+        // Release date is valid if it's not null/undefined and a valid date; Precondition: isPlannedToStart is set
+        // Release date should also not be in the past
+        const releaseDateValidAndNotInPastCondition =
+            !this.quizExercise.isPlannedToStart ||
+            (this.quizExercise.releaseDate !== undefined && dayjs(this.quizExercise.releaseDate).isValid() && dayjs(this.quizExercise.releaseDate).isAfter(dayjs()));
+        return releaseDateValidAndNotInPastCondition && super.isValidQuiz();
     }
 }

@@ -1,13 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie-service';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
-import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -16,22 +10,19 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 
 describe('CodeEditorBuildOutputComponent', () => {
     let comp: CodeEditorBuildOutputComponent;
@@ -40,9 +31,9 @@ describe('CodeEditorBuildOutputComponent', () => {
     let codeEditorBuildLogService: CodeEditorBuildLogService;
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
-    let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let getBuildLogsStub: SinonStub;
-    let getFeedbackDetailsForResultStub: SinonStub;
+    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
+    let getBuildLogsStub: jest.SpyInstance;
+    let getFeedbackDetailsForResultStub: jest.SpyInstance;
 
     const buildLogs = [
         {
@@ -91,81 +82,79 @@ describe('CodeEditorBuildOutputComponent', () => {
         priority: '1',
     } as StaticCodeAnalysisIssue;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, ArtemisSharedModule],
-            declarations: [CodeEditorBuildOutputComponent],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, AceEditorModule],
+            declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
+                MockProvider(CodeEditorSubmissionService),
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorBuildOutputComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                codeEditorBuildLogService = debugElement.injector.get(CodeEditorBuildLogService);
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                resultService = debugElement.injector.get(ResultService);
-                subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-                getBuildLogsStub = stub(codeEditorBuildLogService, 'getBuildLogs');
-                getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
+                codeEditorBuildLogService = TestBed.inject(CodeEditorBuildLogService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+                resultService = TestBed.inject(ResultService);
+                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                getBuildLogsStub = jest.spyOn(codeEditorBuildLogService, 'getBuildLogs');
+                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
+                jest.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getBuildingState').mockReturnValue(of());
             });
     });
 
     afterEach(() => {
-        subscribeForLatestResultOfParticipationStub.restore();
-        getBuildLogsStub.restore();
-        getFeedbackDetailsForResultStub.restore();
+        jest.restoreAllMocks();
     });
 
     it('should setup result websocket, fetch result details and build logs on participation change', () => {
         const result = { id: 1 };
         const participation = { id: 1, results: [result] } as Participation;
 
-        subscribeForLatestResultOfParticipationStub.returns(of(null));
-        getFeedbackDetailsForResultStub.returns(of({ body: [] }));
-        getBuildLogsStub.returns(of(buildLogs));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
+        getBuildLogsStub.mockReturnValue(of(buildLogs));
 
         comp.participation = participation;
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(participation.id, result.id);
-        expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true);
-        expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result.id);
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
+        expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).not.to.exist;
+        expect(buildLogIsBuildingHtml).toBe(null);
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.to.exist;
+        expect(buildLogNoResultHtml).toBe(null);
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
-        expect(buildLogHtmlEntries).to.have.lengthOf(buildLogs.length);
+        expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
 
     it('should not retrieve build logs after participation change, if no result is available', () => {
         const participation = { id: 1 } as Participation;
         comp.participation = participation;
-        subscribeForLatestResultOfParticipationStub.returns(of(null));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
-        expect(getBuildLogsStub).to.not.have.been.called;
-        expect(comp.rawBuildLogs).to.deep.equal(new BuildLogEntryArray());
+        expect(getBuildLogsStub).not.toHaveBeenCalled();
+        expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).not.to.exist;
+        expect(buildLogIsBuildingHtml).toBe(null);
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).to.exist;
+        expect(buildLogNoResultHtml).not.toBe(null);
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
-        expect(buildLogHtmlEntries).to.have.lengthOf(0);
+        expect(buildLogHtmlEntries).toHaveLength(0);
     });
 
     it('should not retrieve build logs after participation change, if submission could be built', () => {
@@ -174,44 +163,46 @@ describe('CodeEditorBuildOutputComponent', () => {
         result.submission = submission;
         const participation = { id: 1, results: [result] } as Participation;
         comp.participation = participation;
-        subscribeForLatestResultOfParticipationStub.returns(of(null));
-        getFeedbackDetailsForResultStub.returns(of({ ...result, feedbacks: [] }));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(participation.id!, result.id!);
-        expect(getBuildLogsStub).to.not.have.been.called;
-        expect(comp.rawBuildLogs).to.deep.equal(new BuildLogEntryArray());
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result.id!);
+        expect(getBuildLogsStub).not.toHaveBeenCalled();
+        expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).not.to.exist;
+        expect(buildLogIsBuildingHtml).toBe(null);
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).to.exist;
+        expect(buildLogNoResultHtml).not.toBe(null);
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
-        expect(buildLogHtmlEntries).to.have.lengthOf(0);
+        expect(buildLogHtmlEntries).toHaveLength(0);
     });
 
     it('should retrieve build logs if no result submission is available', () => {
         const result = { id: 1, successful: false };
         const participation = { id: 1 } as Participation;
 
-        getBuildLogsStub.returns(of(buildLogs));
-        subscribeForLatestResultOfParticipationStub.returns(of(result));
+        getBuildLogsStub.mockReturnValue(of(buildLogs));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(result));
 
         comp.participation = participation;
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledWith();
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).not.to.exist;
+        expect(buildLogIsBuildingHtml).toBe(null);
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.to.exist;
+        expect(buildLogNoResultHtml).toBe(null);
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
-        expect(buildLogHtmlEntries).to.have.lengthOf(buildLogs.length);
+        expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
 
     it('should retrieve build logs if result submission could not be built', () => {
@@ -220,24 +211,25 @@ describe('CodeEditorBuildOutputComponent', () => {
         result.submission = submission;
         const participation = { id: 1 } as Participation;
 
-        getBuildLogsStub.returns(of(buildLogs));
-        subscribeForLatestResultOfParticipationStub.returns(of(result));
+        getBuildLogsStub.mockReturnValue(of(buildLogs));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(result));
 
         comp.participation = participation;
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledWith();
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).not.to.exist;
+        expect(buildLogIsBuildingHtml).toBe(null);
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.to.exist;
+        expect(buildLogNoResultHtml).toBe(null);
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
-        expect(buildLogHtmlEntries).to.have.lengthOf(buildLogs.length);
+        expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
 
     it('should create annotation from static code analysis feedback', () => {
@@ -252,18 +244,18 @@ describe('CodeEditorBuildOutputComponent', () => {
             text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
             detailText: JSON.stringify(staticCodeAnalysisIssue),
         } as Feedback;
-        subscribeForLatestResultOfParticipationStub.returns(of(null));
-        getFeedbackDetailsForResultStub.returns(of({ body: [feedback] }));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [feedback] }));
         let emittedAnnotations: Annotation[] = [];
         comp.onAnnotations.subscribe((emitted: any) => {
             emittedAnnotations = emitted;
         });
         triggerChanges(comp, { property: 'participation', currentValue: participation });
 
-        expect(emittedAnnotations).to.have.length(1);
+        expect(emittedAnnotations).toHaveLength(1);
         const annotation = emittedAnnotations[0];
-        expect(annotation.fileName).to.equal(staticCodeAnalysisIssue.filePath);
-        expect(annotation.row).to.equal(staticCodeAnalysisIssue.startLine - 1);
-        expect(annotation.column).to.equal(staticCodeAnalysisIssue.startColumn! - 1);
+        expect(annotation.fileName).toBe(staticCodeAnalysisIssue.filePath);
+        expect(annotation.row).toBe(staticCodeAnalysisIssue.startLine - 1);
+        expect(annotation.column).toBe(staticCodeAnalysisIssue.startColumn! - 1);
     });
 });

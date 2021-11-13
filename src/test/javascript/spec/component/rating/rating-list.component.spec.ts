@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { RouterTestingModule } from '@angular/router/testing';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DifferencePipe } from 'ngx-moment';
-import { RatingModule as StarRatingComponent } from 'ng-starrating';
-
 import { lastValueFrom, of } from 'rxjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { StarRatingComponent } from 'ng-starrating';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortService } from 'app/shared/service/sort.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;
@@ -25,32 +25,19 @@ describe('RatingListComponent', () => {
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([]), StarRatingComponent],
-            declarations: [RatingListComponent, TranslatePipeMock],
-            providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: route,
-                },
-                DifferencePipe,
-                {
-                    provide: RatingService,
-                    useValue: {
-                        getRatingsForDashboard() {
-                            return of(ratings);
-                        },
-                    },
-                },
-            ],
+            imports: [ArtemisTestModule],
+            declarations: [RatingListComponent, TranslatePipeMock, MockComponent(AlertComponent), MockComponent(StarRatingComponent), MockDirective(SortDirective)],
+            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(RatingService), MockProvider(SortService)],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(RatingListComponent);
                 component = fixture.componentInstance;
                 router = TestBed.inject(Router);
+
+                jest.spyOn(TestBed.inject(RatingService), 'getRatingsForDashboard').mockReturnValue(of(ratings));
 
                 component.ngOnInit();
             });

@@ -1,10 +1,11 @@
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -41,11 +42,11 @@ export class ProgrammingExercise extends Exercise {
     public problemStatement?: string;
     public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
-    public allowComplaintsForAutomaticAssessments?: boolean;
     public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
+    public submissionPolicy?: SubmissionPolicy;
 
-    public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
+    public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
@@ -74,6 +75,5 @@ export class ProgrammingExercise extends Exercise {
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.ECLIPSE; // default value
         this.showTestNamesToStudents = false; // default value
-        this.allowComplaintsForAutomaticAssessments = false; // default value
     }
 }

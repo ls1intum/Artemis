@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { getTestBed } from '@angular/core/testing';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';

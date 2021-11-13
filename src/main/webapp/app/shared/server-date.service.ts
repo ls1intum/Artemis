@@ -1,25 +1,39 @@
 import { Injectable } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { HttpClient } from '@angular/common/http';
-import { SERVER_API_URL } from 'app/app.constants';
+
+export interface ServerDateService {
+    readonly http: HttpClient;
+    readonly resourceUrl: string;
+    // offsets of the last synchronizations in ms (max. 5)
+    readonly recentOffsets: Array<number>;
+    // client (!) dates of the last synchronizations (max. 5)
+    readonly recentClientDates: Array<dayjs.Dayjs>;
+    updateTime: () => void;
+    setServerDate: (date: string) => void;
+    now: () => dayjs.Dayjs;
+}
 
 @Injectable({ providedIn: 'root' })
-export class ArtemisServerDateService {
-    private resourceUrl = SERVER_API_URL + 'time';
+export class ArtemisServerDateService implements ServerDateService {
+    resourceUrl: string;
+    recentOffsets: number[];
+    recentClientDates: dayjs.Dayjs[];
+    http: HttpClient;
 
-    // offsets of the last synchronizations in ms (max. 5)
-    private recentOffsets = new Array<number>();
-    // client (!) dates of the last synchronizations (max. 5)
-    private recentClientDates = new Array<moment.Moment>();
-
-    constructor(private http: HttpClient) {}
+    constructor(http: HttpClient) {
+        this.http = http;
+        this.resourceUrl = SERVER_API_URL + 'time';
+        this.recentOffsets = new Array<number>();
+        this.recentClientDates = new Array<dayjs.Dayjs>();
+    }
 
     /**
      * get a new server date if necessary
      */
     updateTime(): void {
         let shouldSync = false;
-        const now = moment(new Date());
+        const now = dayjs(new Date());
         if (this.recentClientDates.length > 4) {
             // only if some recent client dates (i.e. recent syncs) are older than 60s
             shouldSync = this.recentClientDates.some((recentClientDate) => now.diff(recentClientDate, 's') > 60);
@@ -42,8 +56,8 @@ export class ArtemisServerDateService {
      * @param {string} date
      */
     setServerDate(date: string): void {
-        const serverDate = moment(date);
-        const clientDate = moment();
+        const serverDate = dayjs(date);
+        const clientDate = dayjs();
         // save the most recent client date
         this.recentClientDates.push(clientDate);
         // calculate offset
@@ -59,10 +73,10 @@ export class ArtemisServerDateService {
     }
 
     /**
-     * returns the calculated current server date as moment
+     * returns the calculated current server date as dayjs
      */
-    now(): moment.Moment {
-        const clientDate = moment();
+    now(): dayjs.Dayjs {
+        const clientDate = dayjs();
         // return the client date if there are no offsets (e.g. when offline or before any api call was made)
         if (this.recentOffsets.length === 0) {
             return clientDate;

@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -49,48 +51,35 @@ public class PostResource {
     }
 
     /**
-     * PUT /courses/{courseId}/posts : Update an existing post
+     * PUT /courses/{courseId}/posts/{postId} : Update an existing post with given id
      *
      * @param courseId id of the course the post belongs to
+     * @param postId   id of the post to update
      * @param post     post to update
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @PutMapping("courses/{courseId}/posts")
+    @PutMapping("courses/{courseId}/posts/{postId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
-        Post updatedPost = postService.updatePost(courseId, post);
+    public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
+        Post updatedPost = postService.updatePost(courseId, postId, post);
         return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
     /**
-     * GET /courses/{courseId}/exercises/{exerciseId}/posts : Get all posts for an exercise by its id
+     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
      *
-     * @param courseId   id of the course the post belongs to
-     * @param exerciseId id of the exercise for which the posts should be retrieved
-     * @return ResponseEntity with status 200 (OK) containing the a list of posts in the response body,
-     * or 400 (Bad Request) if the checks on user, course, exercise or post validity fail
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post change the displayPriority for
+     * @param displayPriority   new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @GetMapping("courses/{courseId}/exercises/{exerciseId}/posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getAllPostsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        List<Post> exercisePosts = postService.getAllExercisePosts(courseId, exerciseId);
-        return new ResponseEntity<>(exercisePosts, null, HttpStatus.OK);
-    }
-
-    /**
-     * GET /courses/{courseId}/lectures/{lectureId}/posts : Get all posts a lecture by its id
-     *
-     * @param courseId  id of the course the post belongs to
-     * @param lectureId id of the lecture for which the posts should be retrieved
-     * @return ResponseEntity with status 200 (OK) containing the a list of posts in the response body,
-     * or 400 (Bad Request) if the checks on user, course, lecture or post validity fail
-     */
-    @GetMapping("courses/{courseId}/lectures/{lectureId}/posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getAllPostsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        List<Post> lecturePosts = postService.getAllLecturePosts(courseId, lectureId);
-        return new ResponseEntity<>(lecturePosts, null, HttpStatus.OK);
+    @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, displayPriority);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
     /**
@@ -110,14 +99,18 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param courseId id of the course the post belongs to
-     * @return ResponseEntity with status 200 (OK) and with body all posts for course,
+     * @param courseId          id of the course the fetch posts for
+     * @param courseWideContext optional request param if a course-wide topic is the targeted context
+     * @param exerciseId        optional request param if a certain exercise is the targeted context
+     * @param lectureId         optional request param if a certain lecture is the targeted context
+     * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Post>> getAllPostsForCourse(@PathVariable Long courseId) {
-        List<Post> coursePosts = postService.getAllCoursePosts(courseId);
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @RequestParam(required = false) CourseWideContext courseWideContext,
+            @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
+        List<Post> coursePosts = postService.getPostsInCourse(courseId, courseWideContext, exerciseId, lectureId);
         return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
     }
 
@@ -134,5 +127,19 @@ public class PostResource {
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
         postService.deletePostById(courseId, postId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
+    }
+
+    /**
+     * POST /courses/{courseId}/posts/similarity-check : trigger a similarity check for post to be created
+     *
+     * @param courseId id of the course the post should be published in
+     * @param post     post to create
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/posts/similarity-check")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) throws URISyntaxException {
+        List<Post> similarPosts = postService.getSimilarPosts(courseId, post);
+        return ResponseEntity.ok().body(similarPosts);
     }
 }

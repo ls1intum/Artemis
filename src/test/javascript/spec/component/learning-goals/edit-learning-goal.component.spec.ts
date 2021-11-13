@@ -1,10 +1,7 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -19,16 +16,12 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 @Component({ selector: 'jhi-learning-goal-form', template: '' })
 class LearningGoalFormStubComponent {
     @Input() formData: LearningGoalFormData;
     @Input() courseId: number;
     @Input() isEditMode = false;
-    @Input()
-    lecturesOfCourseWithLectureUnits: Lecture[] = [];
+    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
     @Output() formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 }
 
@@ -42,7 +35,7 @@ describe('EditLearningGoalComponent', () => {
             providers: [
                 MockProvider(LectureService),
                 MockProvider(LearningGoalService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -80,12 +73,12 @@ describe('EditLearningGoalComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         editLearningGoalComponentFixture.detectChanges();
-        expect(editLearningGoalComponent).to.be.ok;
+        expect(editLearningGoalComponent).toBeDefined();
     });
 
     it('should set form data correctly', () => {
@@ -105,7 +98,7 @@ describe('EditLearningGoalComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = sinon.stub(learningGoalService, 'findById').returns(of(learningGoalResponse));
+        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(learningGoalResponse));
 
         // mocking lecture service
         const lectureService = TestBed.inject(LectureService);
@@ -118,20 +111,20 @@ describe('EditLearningGoalComponent', () => {
             status: 200,
         });
 
-        const findAllByCourseStub = sinon.stub(lectureService, 'findAllByCourseId').returns(of(lecturesResponse));
+        const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
 
         editLearningGoalComponentFixture.detectChanges();
         const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
             By.directive(LearningGoalFormStubComponent),
         ).componentInstance;
-        expect(findByIdStub).to.have.been.calledOnce;
-        expect(findAllByCourseStub).to.have.been.calledOnce;
+        expect(findByIdSpy).toHaveBeenCalledTimes(1);
+        expect(findAllByCourseSpy).toHaveBeenCalledTimes(1);
 
-        expect(editLearningGoalComponent.formData.title).to.equal(learningGoalOfResponse.title);
-        expect(editLearningGoalComponent.formData.description).to.equal(learningGoalOfResponse.description);
-        expect(editLearningGoalComponent.formData.connectedLectureUnits).to.deep.equal(learningGoalOfResponse.lectureUnits);
-        expect(editLearningGoalComponent.lecturesWithLectureUnits).to.deep.equal([lectureOfResponse]);
-        expect(learningGoalFormStubComponent.formData).to.deep.equal(editLearningGoalComponent.formData);
+        expect(editLearningGoalComponent.formData.title).toEqual(learningGoalOfResponse.title);
+        expect(editLearningGoalComponent.formData.description).toEqual(learningGoalOfResponse.description);
+        expect(editLearningGoalComponent.formData.connectedLectureUnits).toEqual(learningGoalOfResponse.lectureUnits);
+        expect(editLearningGoalComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
+        expect(learningGoalFormStubComponent.formData).toEqual(editLearningGoalComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -151,8 +144,8 @@ describe('EditLearningGoalComponent', () => {
             body: learningGoalDatabase,
             status: 200,
         });
-        const findByIdStub = sinon.stub(learningGoalService, 'findById').returns(of(findByIdResponse));
-        sinon.stub(lectureService, 'findAllByCourseId').returns(
+        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [new Lecture()],
@@ -161,8 +154,8 @@ describe('EditLearningGoalComponent', () => {
             ),
         );
         editLearningGoalComponentFixture.detectChanges();
-        expect(findByIdStub).to.have.been.calledOnce;
-        expect(editLearningGoalComponent.learningGoal).to.deep.equal(learningGoalDatabase);
+        expect(findByIdSpy).toHaveBeenCalledTimes(1);
+        expect(editLearningGoalComponent.learningGoal).toEqual(learningGoalDatabase);
 
         const changedUnit: LearningGoal = {
             ...learningGoalDatabase,
@@ -173,8 +166,8 @@ describe('EditLearningGoalComponent', () => {
             body: changedUnit,
             status: 200,
         });
-        const updatedStub = sinon.stub(learningGoalService, 'update').returns(of(updateResponse));
-        const navigateSpy = sinon.spy(router, 'navigate');
+        const updatedSpy = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         const learningGoalForm: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(By.directive(LearningGoalFormStubComponent)).componentInstance;
         learningGoalForm.formSubmitted.emit({
@@ -183,7 +176,7 @@ describe('EditLearningGoalComponent', () => {
             connectedLectureUnits: changedUnit.lectureUnits,
         });
 
-        expect(updatedStub).to.have.been.calledOnce;
-        expect(navigateSpy).to.have.been.calledOnce;
+        expect(updatedSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 });

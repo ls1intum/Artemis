@@ -22,7 +22,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
         Graphs.CREATED_RESULTS,
         Graphs.CREATED_FEEDBACKS,
         Graphs.POSTS,
-        Graphs.ANSWERED_POSTS,
+        Graphs.RESOLVED_POSTS,
         Graphs.CONDUCTED_EXAMS,
         Graphs.EXAM_PARTICIPATIONS,
         Graphs.EXAM_REGISTRATIONS,

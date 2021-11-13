@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -34,7 +35,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import io.github.jhipster.security.RandomUtil;
+import tech.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -519,8 +520,9 @@ public class UserService {
      *
      * @param user  the user
      * @param group the group
+     * @param role the role
      */
-    public void addUserToGroup(User user, String group) {
+    public void addUserToGroup(User user, String group, Role role) {
         addUserToGroupInternal(user, group); // internal Artemis database
         try {
             artemisAuthenticationProvider.addUserToGroup(user, group);  // e.g. JIRA
@@ -528,7 +530,7 @@ public class UserService {
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
         }
-        // e.g. Gitlab
+        // e.g. Gitlab: TODO: include the role to distinguish more cases
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
     }
@@ -553,8 +555,9 @@ public class UserService {
      *
      * @param user  the user
      * @param group the group
+     * @param role the role
      */
-    public void removeUserFromGroup(User user, String group) {
+    public void removeUserFromGroup(User user, String group, Role role) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab

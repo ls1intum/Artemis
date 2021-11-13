@@ -4,6 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
@@ -16,13 +17,12 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
@@ -31,7 +31,7 @@ import { SinonStub, stub } from 'sinon';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { base64StringToBlob } from 'blob-util';
 
@@ -61,8 +61,8 @@ describe('Course Management Update Component', () => {
         course.title = 'testCourseTitle';
         course.shortName = 'testShortName';
         course.description = 'description';
-        course.startDate = moment();
-        course.endDate = moment();
+        course.startDate = dayjs();
+        course.endDate = dayjs();
         course.semester = 'testSemester';
         course.testCourse = true;
         course.onlineCourse = true;
@@ -105,7 +105,7 @@ describe('Course Management Update Component', () => {
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
             ],
         }).compileComponents();
@@ -183,6 +183,7 @@ describe('Course Management Update Component', () => {
                 registrationEnabled: new FormControl(entity.registrationEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
+                accuracyOfScores: new FormControl(entity.accuracyOfScores),
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
@@ -212,6 +213,7 @@ describe('Course Management Update Component', () => {
                 registrationEnabled: new FormControl(entity.registrationEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
+                accuracyOfScores: new FormControl(entity.accuracyOfScores),
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
@@ -426,7 +428,7 @@ describe('Course Management Update Component', () => {
 
     describe('getSemesters', () => {
         it('should get semesters around current year', () => {
-            const years = moment().year() - 2018 + 1;
+            const years = dayjs().year() - 2018 + 1;
             const semesters = comp.getSemesters();
             expect(semesters[0]).to.equal('');
             for (let i = 0; i <= years; i++) {

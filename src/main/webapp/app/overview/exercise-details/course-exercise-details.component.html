@@ -3,7 +3,7 @@
         <div [innerHTML]="'artemisApp.exercise.welcome' | artemisTranslate"></div>
     </div>
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)">
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -57,7 +57,7 @@
                     <fa-icon [icon]="'signal'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                 </a>
-                <a *ngIf="exercise.type === MODELING" [routerLink]="baseResource + 'statistics'" class="btn btn-info btn-sm me-1">
+                <a *ngIf="exercise.type === MODELING" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1">
                     <fa-icon [icon]="'signal'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                 </a>
@@ -94,18 +94,16 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
-                <button
-                    class="mb-2"
-                    jhi-exercise-action-button
-                    jhiBuildPlanButton
-                    buttonIcon="external-link-alt"
-                    [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate"
-                    [buttonLoading]="exercise!.loading!"
-                    [hideLabelMobile]="false"
-                    [projectKey]="projectKey()"
-                    [buildPlanId]="buildPlanId(exercise.studentParticipations![0])!"
+                <a
+                    class="btn btn-primary btn-sm me-1"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
-                ></button>
+                >
+                    <fa-icon class="me-1" [icon]="'external-link-alt'" [fixedWidth]="true"></fa-icon>
+                    {{ 'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate }}
+                </a>
                 <jhi-programming-exercise-instructions
                     *ngIf="exercise"
                     [exercise]="exercise"
@@ -205,7 +203,7 @@
                 </div>
             </div>
             <!-- RESULTS END -->
-            <jhi-complaint-interactions
+            <jhi-complaint-student-view
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
@@ -220,7 +218,7 @@
                 [participation]="studentParticipation!"
                 [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
-            </jhi-complaint-interactions>
+            </jhi-complaint-student-view>
             <div
                 class="row"
                 *ngIf="

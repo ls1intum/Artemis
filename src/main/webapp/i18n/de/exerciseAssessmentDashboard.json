@@ -65,27 +65,26 @@
             "complaints": "Beschwerden",
             "noComplaints": "Es gibt keine Beschwerden.",
             "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",
-            "evaluateComplaint": "Auswertung der Beschwerde.",
+            "evaluateComplaint": "Beschwerde auswerten",
             "showComplaint": "Beschwerde anzeigen",
             "complaintEvaluated": "Beschwerde ist bereits bewertet",
             "complaintNotEvaluated": "Beschwerde muss noch bewertet werden",
             "moreFeedback": "Anfragen für weiteres Feedback",
             "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen.",
             "noMoreFeedbackRequestsDisplayed": "Es gibt keine Feedbackanfragen (abgesehen von Feedbackanfragen über deine Bewertungen)",
-            "evaluateMoreFeedbackRequest": "Auswertung der Feedbackanfragen",
+            "evaluateMoreFeedbackRequest": "Feedbackanfrage auswerten",
+            "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "moreFeedbackRequestEvaluated": "Die Feedbackanfragen wurden bereits ausgewertet",
             "moreFeedbackRequestNotEvaluated": "Es müssen noch weitere Feedbackanfragen bewertet werden",
-            "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
-            "totalYours": "Gesamt / Deine",
+            "totalYours": "Gesamt | Deine",
             "stats": {
                 "intime": "Zeitgerecht",
                 "late": "Verspätet"
             },
             "numberOfSubmissions": "Gesamte Abgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
-            "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
             "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
             "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
             "nextAssessment": "Nächste Abgabe bewerten",
@@ -103,7 +102,10 @@
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
             "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutor:innen gesperrt",
             "noSubmissionsInfoSecondCorrection": " und {{firstRoundAssessments}} wurden von dir in der ersten Korrekturrunde korrigiert. ",
-            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen, die du nicht selbst in der ersten Korrekturrunde bearbeitet hast, können korrigiert werden."
+            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen, die du nicht selbst in der ersten Korrekturrunde bearbeitet hast, können korrigiert werden.",
+            "openAssessments": "Offene Abgaben",
+            "closedAssessments": "Bewertete Abgaben",
+            "ratings": "Ratings"
         }
     }
 }

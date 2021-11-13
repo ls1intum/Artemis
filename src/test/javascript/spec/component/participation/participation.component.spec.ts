@@ -1,11 +1,8 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ActivatedRoute, Params } from '@angular/router';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
@@ -14,15 +11,19 @@ import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,13 +41,15 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule],
             declarations: [ParticipationComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(TranslateService),
+                MockProvider(ParticipationService),
+                MockProvider(ExerciseService),
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideTemplate(ParticipationComponent, '')
@@ -61,8 +64,7 @@ describe('ParticipationComponent', () => {
             });
     });
 
-    afterEach(function () {
-        // completely restore all fakes created through the sandbox
+    afterEach(() => {
         sinon.restore();
     });
 
@@ -109,12 +111,12 @@ describe('ParticipationComponent', () => {
     it('should format a dates correctly', () => {
         expect(component.formatDate(undefined)).to.equal('');
 
-        const momentDate = moment();
-        expect(component.formatDate(momentDate)).to.equal(momentDate.format(defaultLongDateTimeFormat));
+        const dayjsDate = dayjs();
+        expect(component.formatDate(dayjsDate)).to.equal(dayjsDate.format(defaultLongDateTimeFormat));
 
         const date = new Date();
-        const momentFromDate = moment(date);
-        expect(component.formatDate(date)).to.equal(momentFromDate.format(defaultLongDateTimeFormat));
+        const dayjsFromDate = dayjs(date);
+        expect(component.formatDate(date)).to.equal(dayjsFromDate.format(defaultLongDateTimeFormat));
     });
 
     it('should format student login or team name from participation', () => {

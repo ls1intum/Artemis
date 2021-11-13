@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -12,6 +13,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class ReactionService {
@@ -20,19 +23,19 @@ public class ReactionService {
 
     private final UserRepository userRepository;
 
-    private final ReactionRepository reactionRepository;
-
     private final CourseRepository courseRepository;
+
+    private final ReactionRepository reactionRepository;
 
     private final PostService postService;
 
     private final AnswerPostService answerPostService;
 
-    public ReactionService(UserRepository userRepository, ReactionRepository reactionRepository, CourseRepository courseRepository, PostService postService,
+    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
             AnswerPostService answerPostService) {
         this.userRepository = userRepository;
-        this.reactionRepository = reactionRepository;
         this.courseRepository = courseRepository;
+        this.reactionRepository = reactionRepository;
         this.postService = postService;
         this.answerPostService = answerPostService;
     }
@@ -41,7 +44,7 @@ public class ReactionService {
      * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId if of course the according posting belongs to
      * @param reaction reaction to create
      * @return created reaction that was persisted
      */
@@ -49,7 +52,7 @@ public class ReactionService {
         Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
 
         // checks
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (reaction.getId() != null) {
             throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idexists");
         }
@@ -60,32 +63,20 @@ public class ReactionService {
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post) {
-            postService.preCheckUserAndCourse(user, courseId);
             Post post = postService.findById(posting.getId());
             reaction.setPost(post);
-            reaction.setUser(user);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save post
-            postService.updateWithReaction(post, reaction);
-            // protect sample solution, grading instructions
-            if (post.getExercise() != null) {
-                post.getExercise().filterSensitiveInformation();
-            }
+            postService.updateWithReaction(post, reaction, courseId);
         }
         else {
-            answerPostService.preCheckUserAndCourse(user, courseId);
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
-            reaction.setUser(user);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save answer post
-            answerPostService.updateWithReaction(answerPost, reaction);
-            // protect sample solution, grading instructions, etc.
-            if (answerPost.getPost().getExercise() != null) {
-                answerPost.getPost().getExercise().filterSensitiveInformation();
-            }
+            answerPostService.updateWithReaction(answerPost, reaction, courseId);
         }
         return savedReaction;
     }
@@ -93,19 +84,35 @@ public class ReactionService {
     /**
      * Determines authority to delete reaction and deletes the reaction
      *
-     * @param courseId   id of the course the reaction belongs to
-     * @param reactionId id of the reaction to delete
+     * @param reactionId    id of the reaction to delete
+     * @param courseId      id of the course the according posting belongs to
      */
-    public void deleteReactionById(Long courseId, Long reactionId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        courseRepository.findByIdElseThrow(courseId);
+    public void deleteReactionById(Long reactionId, Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 
         // check if user that wants to delete reaction is user that created the reaction
         if (!user.equals(reaction.getUser())) {
             throw new AccessForbiddenException("Reaction", reaction.getId());
         }
-        reactionRepository.deleteById(reactionId);
 
+        // get affected post that will be sent as payload in according websocket message
+        Post updatedPost;
+        if (reaction.getPost() != null) {
+            updatedPost = reaction.getPost();
+            updatedPost.removeReaction(reaction);
+        }
+        else {
+            AnswerPost updatedAnswerPost = reaction.getAnswerPost();
+            updatedAnswerPost.removeReaction(reaction);
+            updatedPost = updatedAnswerPost.getPost();
+            // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
+            // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
+            updatedPost.removeAnswerPost(updatedAnswerPost);
+            updatedPost.addAnswerPost(updatedAnswerPost);
+        }
+        postService.broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        reactionRepository.deleteById(reactionId);
     }
 }

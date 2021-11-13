@@ -54,10 +54,10 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS,
             GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.POSTS,
-            GraphType.ANSWERED_POSTS);
+            GraphType.RESOLVED_POSTS);
 
     List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS,
-            GraphType.POSTS, GraphType.ANSWERED_POSTS);
+            GraphType.POSTS, GraphType.RESOLVED_POSTS);
 
     @BeforeEach
     public void initTestCase() {
@@ -287,7 +287,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
         answerPost.setContent("Test Answer");
         answerPost.setCreationDate(ZonedDateTime.now().minusHours(1));
-        answerPost.setTutorApproved(true);
+        answerPost.setResolvesPost(true);
         answerPost.setPost(post);
         answerPostRepository.save(answerPost);
 
@@ -300,8 +300,8 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(result.getNumberOfExerciseScores()).isEqualTo(2);
         assertThat(result.getNumberOfParticipations()).isEqualTo(2);
         assertThat(result.getNumberOfStudentsOrTeamsInCourse()).isEqualTo(12);
-        assertThat(result.getNumberOfQuestions()).isEqualTo(1);
-        assertThat(result.getNumberOfAnsweredQuestions()).isEqualTo(1);
+        assertThat(result.getNumberOfPosts()).isEqualTo(1);
+        assertThat(result.getNumberOfResolvedPosts()).isEqualTo(1);
         var expectedScoresResult = new int[10];
         Arrays.fill(expectedScoresResult, 0);
         // We have one assessment with 50% and one with 100%

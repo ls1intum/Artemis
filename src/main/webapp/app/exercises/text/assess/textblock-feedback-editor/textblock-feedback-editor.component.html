@@ -93,9 +93,20 @@
         </div>
     </div>
 
+    <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
+    <div *ngIf="feedback.correctionStatus != undefined">
+        <span>{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+
+        <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
+        <fa-layers *ngIf="feedback.correctionStatus != 'CORRECT'">
+            <fa-icon class="text-warning" [icon]="'exclamation-triangle'"></fa-icon>
+            <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" transform="shrink-10"></fa-icon>
+        </fa-layers>
+    </div>
+
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
-            <h4 class="modal-title">
+            <h4 class="modal-title fw-medium">
                 <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.heading">Automatic Feedback Information</span>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>

@@ -9,12 +9,11 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -26,6 +25,8 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('Course Exam Archive Button Component', () => {
     let comp: CourseExamArchiveButtonComponent;
@@ -46,14 +47,14 @@ describe('Course Exam Archive Button Component', () => {
                 MockComponent(AlertErrorComponent),
                 MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(NgbModal),
             ],
         }).compileComponents();
@@ -67,6 +68,11 @@ describe('Course Exam Archive Button Component', () => {
     describe('OnInit without required properties', () => {
         beforeEach(() => {
             comp.archiveMode = 'Course';
+        });
+
+        afterEach(() => {
+            // Otherwise ngOnDestroy crashes
+            comp.course = { id: 123 };
         });
 
         it('should just return', fakeAsync(() => {
@@ -95,7 +101,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for course that is not over', () => {
-        const course = { id: 123, endDate: moment().subtract(5, 'minutes') };
+        const course = { id: 123, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
             comp.archiveMode = 'Course';
@@ -103,7 +109,7 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should not display archiving and cleanup controls', fakeAsync(() => {
-            sinon.stub(accountService, 'isAtLeastInstructorInCourse').returns(false);
+            jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
 
             comp.ngOnInit();
             tick();
@@ -115,7 +121,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for course that has no archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes') };
+        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
             comp.archiveMode = 'Course';
@@ -133,7 +139,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for course that has an archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
 
         beforeEach(fakeAsync(() => {
             comp.archiveMode = 'Course';
@@ -155,10 +161,10 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should cleanup archive for course', fakeAsync(() => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const cleanupStub = sinon.stub(courseManagementService, 'cleanupCourse').returns(of(response));
+            const cleanupStub = jest.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
 
-            const alertService = TestBed.inject(JhiAlertService);
-            const alertServiceSpy = sinon.spy(alertService, 'success');
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = jest.spyOn(alertService, 'success');
 
             comp.cleanupCourse();
 
@@ -168,7 +174,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should download archive for course', fakeAsync(() => {
             const response: HttpResponse<Blob> = new HttpResponse({ status: 200 });
-            const downloadStub = sinon.stub(courseManagementService, 'downloadCourseArchive').returns(of(response));
+            const downloadStub = jest.spyOn(courseManagementService, 'downloadCourseArchive').mockReturnValue(of(response));
 
             comp.downloadArchive();
 
@@ -177,7 +183,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should archive course', fakeAsync(() => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const downloadStub = sinon.stub(courseManagementService, 'archiveCourse').returns(of(response));
+            const downloadStub = jest.spyOn(courseManagementService, 'archiveCourse').mockReturnValue(of(response));
 
             comp.archive();
 
@@ -185,10 +191,10 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         it('should reload course on archive complete', fakeAsync(() => {
-            const alertService = TestBed.inject(JhiAlertService);
-            const alertServiceSpy = sinon.spy(alertService, 'success');
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = jest.spyOn(alertService, 'success');
 
-            sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: course })));
+            jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
@@ -202,9 +208,9 @@ describe('Course Exam Archive Button Component', () => {
         it('should display warning and reload course on archive complete with warnings', fakeAsync(() => {
             const modalService = TestBed.inject(NgbModal);
 
-            sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: course })));
+            jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
             const ngModalRef: NgbModalRef = { result: Promise.resolve('') } as any;
-            sinon.stub(modalService, 'open').returns(ngModalRef);
+            jest.spyOn(modalService, 'open').mockReturnValue(ngModalRef);
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
             comp.handleArchiveStateChanges(archiveState);
@@ -217,8 +223,8 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for exam that has an archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes') };
-        const exam: Exam = { id: 123, endDate: moment().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
+        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
+        const exam: Exam = { id: 123, endDate: dayjs().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
 
         beforeEach(fakeAsync(() => {
             comp.archiveMode = 'Exam';
@@ -241,7 +247,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should not cleanup archive for exam', fakeAsync(() => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const cleanupStub = sinon.stub(courseManagementService, 'cleanupCourse').returns(of(response));
+            const cleanupStub = jest.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
 
             comp.archiveMode = 'Exam';
             comp.cleanupCourse();
@@ -252,7 +258,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should download archive for exam', fakeAsync(() => {
             const response: HttpResponse<Blob> = new HttpResponse({ status: 200 });
-            const downloadStub = sinon.stub(examManagementService, 'downloadExamArchive').returns(of(response));
+            const downloadStub = jest.spyOn(examManagementService, 'downloadExamArchive').mockReturnValue(of(response));
 
             comp.downloadArchive();
 
@@ -261,7 +267,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should archive course', fakeAsync(() => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const downloadStub = sinon.stub(examManagementService, 'archiveExam').returns(of(response));
+            const downloadStub = jest.spyOn(examManagementService, 'archiveExam').mockReturnValue(of(response));
 
             comp.archive();
 
@@ -269,10 +275,10 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         it('should reload exam on archive complete', fakeAsync(() => {
-            const alertService = TestBed.inject(JhiAlertService);
-            const alertServiceSpy = sinon.spy(alertService, 'success');
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = jest.spyOn(alertService, 'success');
 
-            sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: exam })));
+            jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: exam })));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);

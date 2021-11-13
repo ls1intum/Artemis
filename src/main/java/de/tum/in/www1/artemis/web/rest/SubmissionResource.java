@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,12 +13,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -136,19 +137,57 @@ public class SubmissionResource {
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
      *
      * @param exerciseId of the exercise we are interested in
-     * @param principal that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
     @GetMapping("/exercises/{exerciseId}/submissions-with-complaints")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, isAtLeastInstructor);
+
+        return ResponseEntity.ok(submissionWithComplaintDTOs);
+    }
+
+    /**
+     * Get /exercises/:exerciseId//more-feedback-requests-with-complaints
+     *
+     * Get all more feedback requests associated to an exercise which have more feedback requests in,
+     * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
+     * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
+     *
+     * @param exerciseId of the exercise we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
+     */
+    @GetMapping("/exercises/{exerciseId}/more-feedback-requests-with-complaints")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithMoreFeedbackRequestForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, principal, isAtLeastInstructor);
+        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(exerciseId);
 
         return ResponseEntity.ok(submissionWithComplaintDTOs);
+    }
+
+    /**
+     * Search for all submissions by participant name. The result is pageable since there
+     * might be hundreds of submissions in the DB.
+     *
+     * @param exerciseId exerciseId which submissions belongs to
+     * @param search     the pageable search containing the page size and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("exercises/{exerciseId}/submissions-for-import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {
+        log.debug("REST request to get all Submissions for import : {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        return ResponseEntity.ok(submissionService.getSubmissionsOnPageWithSize(search, exercise.getId()));
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
@@ -161,11 +200,11 @@ public class SubmissionResource {
     }
 
     private Course findCourseFromSubmission(Submission submission) {
-        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Participation participation = submission.getParticipation();
+        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
+            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return studentParticipationRepository.findByIdElseThrow(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 }

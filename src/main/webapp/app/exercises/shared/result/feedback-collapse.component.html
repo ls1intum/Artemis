@@ -4,8 +4,12 @@
 
 <ng-template #longText>
     <div *ngIf="isCollapsed; else opened">
-        <fa-icon class="fa-angle" [icon]="'angle-right'" (click)="isCollapsed = !isCollapsed"></fa-icon>
-        {{ text.substring(0, 100) }} ...
+        <div class="d-inline fa-angle" (click)="isCollapsed = !isCollapsed">
+            <fa-icon [icon]="'angle-right'"></fa-icon>
+            <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
+        </div>
+        <!-- Only show first line as preview -->
+        {{ text.substr(0, text.indexOf('\n')) }} ...
     </div>
     <ng-template #opened>
         <div class="feedback-text">

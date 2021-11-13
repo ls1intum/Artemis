@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -23,7 +23,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     constructor(
         private accountService: AccountService,
         private courseService: CourseManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private profileService: ProfileService,
     ) {}
 
@@ -45,9 +45,11 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         return new Promise<void>((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
                 (registerRes) => {
-                    this.coursesToSelect = registerRes.body!.filter((course) => {
-                        return !this.courses.find((el) => el.id === course.id);
-                    });
+                    this.coursesToSelect = registerRes
+                        .body!.filter((course) => {
+                            return !this.courses.find((el) => el.id === course.id);
+                        })
+                        .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                     resolve();
                 },
                 (response: string) => reject(response),

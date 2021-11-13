@@ -1,26 +1,14 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
-import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
-import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;
@@ -67,38 +55,20 @@ describe('ManualTextblockSelectionComponent', () => {
     ];
     const textBlockRefs = [new TextBlockRef(blocks[0]), new TextBlockRef(blocks[1]), new TextBlockRef(blocks[2]), new TextBlockRef(blocks[3]), new TextBlockRef(blocks[4])];
 
-    beforeEach(async () => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule, TextSharedModule, ArtemisGradingInstructionLinkIconModule],
-            declarations: [
-                TextblockAssessmentCardComponent,
-                TextblockFeedbackEditorComponent,
-                ManualTextblockSelectionComponent,
-                TextAssessmentAreaComponent,
-                AssessmentCorrectionRoundBadgeComponent,
-            ],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
-        })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
-            .compileComponents();
-    });
-
     beforeEach(() => {
-        fixture = TestBed.createComponent(ManualTextblockSelectionComponent);
-        component = fixture.componentInstance;
-        textBlockRefs[1].initFeedback();
-        component.textBlockRefs = textBlockRefs;
-        component.submission = submission;
-        fixture.detectChanges();
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [ManualTextblockSelectionComponent, MockComponent(TextblockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ManualTextblockSelectionComponent);
+                component = fixture.componentInstance;
+                textBlockRefs[1].initFeedback();
+                component.textBlockRefs = textBlockRefs;
+                component.submission = submission;
+                fixture.detectChanges();
+            });
     });
 
     it('should create', () => {
@@ -120,7 +90,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should handle manual text selection correctly', () => {
-        spyOn(component.textBlockRefAdded, 'emit');
+        jest.spyOn(component.textBlockRefAdded, 'emit');
         component.handleTextSelection('Third text. Fourth text.', component.textBlockRefGroups[2]);
         fixture.detectChanges();
 

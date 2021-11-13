@@ -3,7 +3,6 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
-import * as moment from 'moment';
 import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
@@ -20,7 +19,8 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
+            // the pattern ensures that the content must include at least one non-whitespace character
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
         });
     }
 
@@ -29,9 +29,10 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.creationDate = moment();
+        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
+                this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
                 this.modalRef?.close();
@@ -47,6 +48,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
+        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;

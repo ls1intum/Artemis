@@ -115,7 +115,7 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, (TextExercise) result.getParticipation().getExercise());
         }
 
         return response;
@@ -151,7 +151,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (response.getStatusCode().is2xxSuccessful()) {
             final Submission submission = response.getBody().getSubmission();
             final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, textExerciseRepository.findByIdElseThrow(exerciseId));
         }
         return response;
     }
@@ -226,7 +226,7 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise);
 
             // call feedback conflict service
             if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
@@ -261,7 +261,7 @@ public class TextAssessmentResource extends AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
-        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission);
+        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, textExercise);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
@@ -336,9 +336,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
         // return forbidden if caller is not allowed to assess
-        if (!authCheckService.isAllowedToAssesExercise(exercise, user, resultId)) {
-            return forbidden();
-        }
+        authCheckService.checkIsAllowedToAssessExerciseElseThrow(exercise, user, resultId);
 
         Result result;
         if (resultId != null) {
@@ -411,8 +409,8 @@ public class TextAssessmentResource extends AssessmentResource {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();
-        if(!textExercise.getId().equals(exerciseId)){
-            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId "+ exerciseId +" !");
+        if (!textExercise.getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId " + exerciseId + " !");
         }
 
         // If the user is not at least a tutor for this exercise, return error
@@ -550,11 +548,13 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textBlocks received from Client
      * @param textSubmission to associate blocks with
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final TextExercise exercise) {
         if (textBlocks != null) {
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
-            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> tb.setSubmission(textSubmission))
-                    .collect(toSet());
+            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
+                tb.setSubmission(textSubmission);
+                tb.setKnowledge(exercise.getKnowledge());
+            }).collect(toSet());
             textBlockService.saveAll(updatedTextBlocks);
         }
     }

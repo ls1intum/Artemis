@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -28,8 +28,8 @@ export class QuizExercise extends Exercise {
     public status?: QuizStatus;
 
     // helper attributes
-    public adjustedDueDate?: Moment;
-    public adjustedReleaseDate?: Moment;
+    public adjustedDueDate?: dayjs.Dayjs;
+    public adjustedReleaseDate?: dayjs.Dayjs;
     public ended?: boolean;
     public started?: boolean;
 

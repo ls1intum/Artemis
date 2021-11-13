@@ -20,10 +20,34 @@ export enum FeedbackType {
 }
 
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
+export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
 }
+
+/**
+ * Possible tutor feedback states upon validation from the server.
+ */
+export enum FeedbackCorrectionErrorType {
+    INCORRECT_SCORE = 'INCORRECT_SCORE',
+    UNNECESSARY_FEEDBACK = 'UNNECESSARY_FEEDBACK',
+    MISSING_GRADING_INSTRUCTION = 'MISSING_GRADING_INSTRUCTION',
+    INCORRECT_GRADING_INSTRUCTION = 'INCORRECT_GRADING_INSTRUCTION',
+}
+
+/**
+ * Wraps the information returned by the server upon validating tutor feedbacks.
+ */
+export class FeedbackCorrectionError {
+    // Corresponds to `Feedback.reference`. Reference to the assessed element.
+    public reference: string;
+
+    // The correction type of the corresponding feedback.
+    public type: FeedbackCorrectionErrorType;
+}
+
+export type FeedbackCorrectionStatus = FeedbackCorrectionErrorType | 'CORRECT';
 
 export class Feedback implements BaseEntity {
     public id?: number;
@@ -40,6 +64,10 @@ export class Feedback implements BaseEntity {
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;
 
+    // Specifies whether or not the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
+    // Client only property.
+    public correctionStatus?: FeedbackCorrectionStatus;
+
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId?: string;
@@ -55,6 +83,13 @@ export class Feedback implements BaseEntity {
             return false;
         }
         return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+    }
+
+    public static isSubmissionPolicyFeedback(that: Feedback): boolean {
+        if (!that.text) {
+            return false;
+        }
+        return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -99,7 +134,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction.id) {
+        if (dropInfo && dropInfo.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {

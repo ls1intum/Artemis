@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -54,20 +55,24 @@ public class Post extends Posting {
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Lecture lecture;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "display_priority")
+    private DisplayPriority displayPriority;
 
     public String getTitle() {
         return title;
@@ -108,6 +113,11 @@ public class Post extends Posting {
         this.reactions.add(reaction);
     }
 
+    @Override
+    public void removeReaction(Reaction reaction) {
+        this.reactions.remove(reaction);
+    }
+
     public Set<AnswerPost> getAnswers() {
         return answers;
     }
@@ -118,6 +128,10 @@ public class Post extends Posting {
 
     public void addAnswerPost(AnswerPost answerPost) {
         this.answers.add(answerPost);
+    }
+
+    public void removeAnswerPost(AnswerPost answerPost) {
+        this.answers.remove(answerPost);
     }
 
     public Set<String> getTags() {
@@ -164,9 +178,35 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public DisplayPriority getDisplayPriority() {
+        return displayPriority;
+    }
+
+    public void setDisplayPriority(DisplayPriority displayPriority) {
+        this.displayPriority = displayPriority;
+    }
+
+    /**
+     * Helper method to determine if a given post has the same context, i.e. either same exercise, lecture or course-wide context
+     * @param otherPost post that is compared to
+     * @return boolean flag indicating if same context or not
+     */
+    public boolean hasSameContext(Post otherPost) {
+        if (getExercise() != null && otherPost.getExercise() != null && getExercise().getId().equals(otherPost.getExercise().getId())) {
+            return true;
+        }
+        else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
+            return true;
+        }
+        else if (getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext()) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()
-                + "'" + ", votes='" + getVotes() + "'" + "}";
+                + "'" + ", displayPriority='" + getDisplayPriority() + "'" + "}";
     }
 }

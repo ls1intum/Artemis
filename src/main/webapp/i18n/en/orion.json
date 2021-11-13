@@ -5,6 +5,10 @@
                 "outdated": "The version of Orion you are currently using is outdated!",
                 "usedVersion": "You are using version ",
                 "allowedVersion": "The allowed version is (minimum): "
+            },
+            "assessment": {
+                "updateFailed": "Update of assessment failed. Associated assessment could not be found. Ensure the correct page is opened and retry.",
+                "submissionIdDontMatch": "Id of the loaded page does not match the submission opened in Orion. Updating Feedback aborted. Ensure the correct page is opened and retry."
             }
         },
         "orionExerciseAssessmentDashboard": {
@@ -12,6 +16,10 @@
             "startAssessment": "Start new assessment in Orion",
             "continueAssessment": "Continue assessment in Orion",
             "openAssessment": "Open assessment in Orion",
+            "evaluateComplaint": "Evaluate the complaint in Orion",
+            "showComplaint": "Show the complaint in Orion",
+            "evaluateMoreFeedbackRequest": "Evaluate the request in Orion",
+            "showMoreFeedbackRequests": "Show the request in Orion",
             "downloadFailed": "Could not download submission. The file might be too large. Try downloading it manually."
         }
     }

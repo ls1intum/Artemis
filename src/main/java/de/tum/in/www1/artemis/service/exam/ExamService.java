@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -187,6 +188,33 @@ public class ExamService {
     }
 
     /**
+     * Deletes all elements associated with the exam but not the exam itself in order to reset it.
+     *
+     * The deleted elements are:
+     * <ul>
+     *     <li>All StudentExams</li>
+     *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
+           but not the exercises themself. See {@link ExerciseService#reset}</li>
+     * </ul>
+     * @param examId the ID of the exam to be reset
+     */
+    public void reset(@NotNull Long examId) {
+        User user = userRepository.getUser();
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.reset(exercise);
+                }
+            }
+        }
+        studentExamRepository.deleteAll(exam.getStudentExams());
+    }
+
+    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam
@@ -224,8 +252,8 @@ public class ExamService {
                     participantsForExercise = 0L;
                 }
                 numberOfExerciseGroupParticipants += participantsForExercise;
-                exerciseGroupDTO.containedExercises
-                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise));
+                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(),
+                        participantsForExercise, exercise.getClass().getSimpleName()));
             }
             exerciseGroupDTO.numberOfParticipants = numberOfExerciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
@@ -258,7 +286,7 @@ public class ExamService {
                     // In the client, these are now displayed rounded as 1.1 points.
                     // If the student adds up the displayed points, he gets a total of 5.5 points.
                     // In order to get the same total result as the student, we have to round before summing.
-                    double achievedPoints = round(relevantResult.getScore() / 100.0 * exercise.getMaxPoints());
+                    double achievedPoints = roundScoreSpecifiedByCourseSettings(relevantResult.getScore() / 100.0 * exercise.getMaxPoints(), exam.getCourse());
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
@@ -279,7 +307,9 @@ public class ExamService {
                                 double achievedPointsInFirstCorrection = 0.0;
                                 if (firstManualResult != null) {
                                     Double resultScore = firstManualResult.getScore();
-                                    achievedPointsInFirstCorrection = resultScore != null ? round(resultScore / 100.0 * exercise.getMaxPoints()) : 0.0;
+                                    achievedPointsInFirstCorrection = resultScore != null
+                                            ? roundScoreSpecifiedByCourseSettings(resultScore / 100.0 * exercise.getMaxPoints(), exam.getCourse())
+                                            : 0.0;
                                 }
                                 studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                             }
@@ -296,12 +326,15 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
                 // Sets grading scale related properties for exam scores
                 Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
                 if (gradingScale.isPresent()) {
                     // Calculate current student grade
                     GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
                     studentResult.overallGrade = studentGrade.getGradeName();
+                    studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
                     studentResult.hasPassed = studentGrade.getIsPassingGrade();
                 }
             }

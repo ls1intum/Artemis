@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -19,10 +20,13 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
         this.textExerciseRepository = textExerciseRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -39,6 +43,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         TextExercise newExercise = copyTextExerciseBasis(importedExercise);
+        newExercise.setKnowledge(templateExercise.getKnowledge());
         textExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;
@@ -71,8 +76,8 @@ public class TextExerciseImportService extends ExerciseImportService {
         var newTextBlocks = new HashSet<TextBlock>();
         for (TextBlock originalTextBlock : originalTextBlocks) {
             TextBlock newTextBlock = new TextBlock();
-            newTextBlock.setAddedDistance(originalTextBlock.getAddedDistance());
-            newTextBlock.setCluster(originalTextBlock.getCluster());
+            Optional.ofNullable(originalTextBlock.getAddedDistance()).ifPresent(newTextBlock::setAddedDistance);
+            Optional.ofNullable(originalTextBlock.getCluster()).ifPresent(newTextBlock::setCluster);
             newTextBlock.setEndIndex(originalTextBlock.getEndIndex());
             newTextBlock.setStartIndex(originalTextBlock.getStartIndex());
             newTextBlock.setSubmission(newSubmission);
@@ -132,7 +137,43 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
             newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
+            updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);
         }
         return newSubmission;
+    }
+
+    /**
+     * Updates the feedback references with new text block id after making hard copy of original submission
+     * with this update operation, the feedback and newly created text blocks will be matched, and the submission will be copied
+     * with its assessment successfully
+     *
+     * @param originalTextBlocks The original text blocks to be copied
+     * @param newSubmission      The submission which has newly created text blocks
+     */
+    private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
+        Result newResult = newSubmission.getLatestResult();
+        List<Feedback> newFeedbackList = newResult.getFeedbacks();
+        Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
+
+        // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
+        Map<Integer, TextBlock> originalTextBlockMap = originalTextBlocks.stream().collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+
+        Map<String, String> textBlockIdPair = new HashMap<>();
+
+        // collect <original text block id, new text block id> pair, it will help to find the feedback which has old reference
+        newSubmissionTextBlocks.stream().forEach(newTextBlock -> {
+            TextBlock oldTextBlock = originalTextBlockMap.get(newTextBlock.getStartIndex());
+            textBlockIdPair.put(oldTextBlock.getId(), newTextBlock.getId());
+        });
+
+        // for each feedback in result, update the reference with new text block id
+        for (Feedback feedback : newFeedbackList) {
+            feedback.setReference(textBlockIdPair.get(feedback.getReference()));
+        }
+
+        // save the feedback (that is not yet in the database) to prevent null index exception
+        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(newFeedbackList);
+        newResult.updateAllFeedbackItems(savedFeedback, false);
+        resultRepository.save(newResult);
     }
 }

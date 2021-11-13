@@ -68,7 +68,11 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Exercise Hint",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
+                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
+                "metis": {
+                    "post": "Post",
+                    "answerPost": "Reply"
+                }
             },
             "account": {
                 "main": "Account",
@@ -98,6 +102,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Language",
+            "settings": "Settings",
             "guidedTutorial": "Guided tutorial",
             "startTutorial": "Start tutorial",
             "restartTutorial": "Restart tutorial",
@@ -143,14 +148,14 @@
                 },
                 "newpassword": {
                     "required": "Your new password is required.",
-                    "minlength": "Your password is required to be at least 8 characters.",
-                    "maxlength": "Your password cannot be longer than 100 characters.",
+                    "minlength": "Your password is required to be at least {{min}} characters.",
+                    "maxlength": "Your password cannot be longer than {{max}} characters.",
                     "strength": "Password strength:"
                 },
                 "confirmpassword": {
                     "required": "Your confirmation password is required.",
-                    "minlength": "Your confirmation password is required to be at least 8 characters.",
-                    "maxlength": "Your confirmation password cannot be longer than 100 characters."
+                    "minlength": "Your confirmation password is required to be at least {{min}} characters.",
+                    "maxlength": "Your confirmation password cannot be longer than {{max}} characters."
                 },
                 "email": {
                     "required": "Your email is required.",
@@ -235,7 +240,6 @@
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
-            "discussion": "Discussions",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted"
         },
@@ -280,7 +284,8 @@
             "datetimelocal": "This field must be a date and time.",
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern."
-        }
+        },
+        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone."
     },
     "error": {
         "internalServerError": "Internal server error",
@@ -291,6 +296,7 @@
         "userexists": "Login name already in use!",
         "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
+        "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
         "missingname": "A new {{entityName}} needs a name",
         "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
         "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
@@ -300,6 +306,7 @@
         "invalid.auxiliary.repository.name": "At least one Auxiliary Repository name is invalid or duplicated. Please make sure all names are appropriate and do not contain duplications.",
         "invalid.auxiliary.repository.checkout.directory": "At least one Auxiliary Repository checkout directory is invalid or duplicated. Please make sure all checkout directories are appropriate and do not contain duplications.",
         "invalid.auxiliary.repository.description": "The description of at least one Auxiliary Repository is too long!",
+        "invalid.testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
         "unexpectedError": "An unexpected error occurred: {{error}}"
     },
     "aboutUs": "About us",
@@ -307,6 +314,7 @@
     "bug": "Report a bug",
     "feature": "Request a feature",
     "releaseNotes": "Release Notes",
+    "requestChange": "Request change",
     "justNow": "just now",
     "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
     "overview": {
@@ -316,7 +324,8 @@
         "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
-        "exams": "Exams"
+        "exams": "Exams",
+        "discussion": "Discussion"
     },
     "connectionStatus": {
         "connected": "Connected",

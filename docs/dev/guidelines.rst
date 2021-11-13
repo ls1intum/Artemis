@@ -9,6 +9,7 @@ Coding and design guidelines
 
    guidelines/server
    guidelines/client
+   guidelines/client-tests
    guidelines/database
-   guidelines/code-review
+   guidelines/development-process
    guidelines/language-guidelines

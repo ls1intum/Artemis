@@ -1,16 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 
 chai.use(sinonChai);
@@ -23,13 +20,12 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     const stepWizardStep = '.stepwizard-step';
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseInstructionStepWizardComponent],
             providers: [ProgrammingExerciseInstructionService],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);
@@ -43,7 +39,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     it('Should load the expected number of steps according to the provided tests', () => {
         const result = {
             id: 1,
-            completionDate: moment('2019-01-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
         const tasks = [
@@ -68,7 +64,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     it('Should not show any icons for empty tasks list', () => {
         const result = {
             id: 1,
-            completionDate: moment('2019-01-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
         comp.latestResult = result;

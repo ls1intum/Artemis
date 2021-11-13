@@ -1,3 +1,7 @@
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/mixins';
+
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 .text-editor-grid {
@@ -60,23 +64,5 @@ div {
     }
     .unreferencedFeedback {
         background-color: whitesmoke;
-    }
-}
-
-#highlightDiffButton {
-    background-color: #fbc107;
-    border: none;
-    padding: 0 10px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 10px;
-    font-size: 16px;
-    color: #353d47;
-
-    :hover {
-        color: #fff;
     }
 }

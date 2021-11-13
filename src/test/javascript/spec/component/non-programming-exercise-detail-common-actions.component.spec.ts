@@ -1,19 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ArtemisTestModule } from '../test.module';
 import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockDirective } from 'ng-mocks';
-import { TranslateModule } from '@ngx-translate/core';
-import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -27,6 +22,9 @@ import * as sinon from 'sinon';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { MockRouterLinkDirective } from './shared/metis/post/post.component.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,17 +37,21 @@ describe('Exercise detail common actions Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule],
             declarations: [
                 NonProgrammingExerciseDetailCommonActionsComponent,
                 MockComponent(SubmissionExportButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExternalSubmissionButtonComponent),
+                MockRouterLinkDirective,
             ],
-            providers: [JhiLanguageHelper, JhiAlertService, { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService }],
-        })
-            .overrideTemplate(ProgrammingExerciseDetailComponent, '')
-            .compileComponents();
+            providers: [
+                MockProvider(TextExerciseService),
+                { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                MockProvider(ModelingExerciseService),
+                { provide: Router, useClass: MockRouter },
+            ],
+        }).compileComponents();
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });
@@ -112,7 +114,7 @@ describe('Exercise detail common actions Component', () => {
         expect(comp.baseResource).to.equal('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
     });
 
-    it('should call event manager on delete exercises', function () {
+    it('should call event manager on delete exercises', () => {
         const textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
         const fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
         const modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);

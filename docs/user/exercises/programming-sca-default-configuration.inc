@@ -257,3 +257,62 @@ For a description of the various PMD CPD configuration parameters refer to the `
   <!-- Similar to ignoreLiterals but for identifiers, i.e. variable names, methods names.
   If activated, most tokens will be ignored so minimumTokens must be lowered significantly -->
   <ignoreIdentifiers>false</ignoreIdentifiers>
+
+.. _c_sca_default_config:
+
+C
+^
+
+**GCC**
+
+For a description of the rules/warnings refer to the `GCC Documentation <https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html>`__.
+For readability reasons the rule/warning prefix ``-Wanalyzer-`` is omitted.
+
++-------------------------------+---------------------------------------------+
+| Category (Tool/Artemis)       | Rule                                        |
++===============================+=============================================+
+| Memory Management             | free-of-non-heap                            |
+| / Potential Bugs              +---------------------------------------------+
+|                               | malloc-leak                                 |
+|                               +---------------------------------------------+
+|                               | file-leak                                   |
+|                               +---------------------------------------------+
+|                               | mismatching-deallocation                    |
++-------------------------------+---------------------------------------------+
+| Undefined Behavior            | double-free                                 |
+| / Potential Bugs              +---------------------------------------------+
+|                               | null-argument                               |
+|                               +---------------------------------------------+
+|                               | use-after-free                              |
+|                               +---------------------------------------------+
+|                               | use-of-uninitialized-value                  |
+|                               +---------------------------------------------+
+|                               | write-to-const                              |
+|                               +---------------------------------------------+
+|                               | write-to-string-literal                     |
+|                               +---------------------------------------------+
+|                               | possible-null-argument                      |
+|                               +---------------------------------------------+
+|                               | possible-null-dereference                   |
++-------------------------------+---------------------------------------------+
+| Bad Practice/Bad Practice     | double-fclose                               |
+|                               +---------------------------------------------+
+|                               | too-complex                                 |
+|                               +---------------------------------------------+
+|                               | stale-setjmp-buffer                         |
++-------------------------------+---------------------------------------------+
+| Security/Security             | exposure-through-output-file                |
+|                               +---------------------------------------------+
+|                               | unsafe-call-within-signal-handler           |
+|                               +---------------------------------------------+
+|                               | use-of-pointer-in-stale-stack-frame         |
+|                               +---------------------------------------------+
+|                               | tainted-array-index                         |
++-------------------------------+---------------------------------------------+
+| Miscellaneous/Miscellaneous   | Rules not matching to above categories      |
++-------------------------------+---------------------------------------------+
+
+  .. note::
+    ``GCC`` output can still contain normal warnings and compilation errors. That will also be added to the ``Miscellaneous`` category.
+    Usually it's best to disable this category, as it contains errors not related to the SCA.
+    Therefore, if the warning/error does not belong to first four above categories it is not an SCA issue as of ``GCC 11.1.0``.

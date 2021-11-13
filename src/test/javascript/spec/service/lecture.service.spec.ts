@@ -8,11 +8,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 const expect = chai.expect;
 
@@ -39,11 +38,13 @@ describe('Lecture Service', () => {
 
         expectedResult = {} as HttpResponse<Lecture>;
         elemDefault = new Lecture();
-        elemDefault.startDate = moment();
+        elemDefault.startDate = dayjs();
         elemDefault.course = new Course();
         elemDefault.description = 'new service test Lecture';
-        elemDefault.endDate = moment();
+        elemDefault.endDate = dayjs();
         elemDefault.id = 1;
+        elemDefault.isAtLeastEditor = false;
+        elemDefault.isAtLeastInstructor = false;
     });
 
     afterEach(() => {

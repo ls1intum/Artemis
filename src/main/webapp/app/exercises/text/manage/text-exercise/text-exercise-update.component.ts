@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -15,16 +14,18 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { NgForm } from '@angular/forms';
 import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrls: ['./text-exercise-update.scss'],
+    styleUrls: ['../../../shared/exercise/_exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -32,7 +33,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     @ViewChild('editForm') editForm: NgForm;
 
     examCourseId?: number;
-    checkedFlag: boolean;
     isExamMode: boolean;
     isImport = false;
     EditorMode = EditorMode;
@@ -47,17 +47,16 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private textExerciseService: TextExerciseService,
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -75,8 +74,6 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing text exercise
      */
     ngOnInit() {
-        this.checkedFlag = false; // default value of grading instructions toggle
-
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
         window.scroll(0, 0);
@@ -103,7 +100,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                                (error: HttpErrorResponse) => onError(this.alertService, error),
                             );
                         }
                     } else {
@@ -194,14 +191,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isSaving = false;
-    }
-
-    /**
-     * gets the flag of the structured grading instructions slide toggle
-     */
-    getCheckedFlag(event: boolean) {
-        this.checkedFlag = event;
     }
 }

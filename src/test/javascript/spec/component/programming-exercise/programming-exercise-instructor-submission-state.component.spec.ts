@@ -1,30 +1,27 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DebugElement } from '@angular/core';
-import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
-import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DurationPipe } from 'app/shared/pipes/duration.pipe';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
@@ -33,15 +30,12 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let submissionService: ProgrammingSubmissionService;
     let buildRunService: ProgrammingBuildRunService;
 
-    let getExerciseSubmissionStateStub: SinonStub;
+    let getExerciseSubmissionStateStub: jest.SpyInstance;
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let getBuildRunStateStub: SinonStub;
     let getBuildRunStateSubject: Subject<BuildRunState>;
 
-    let triggerAllStub: SinonStub;
-    let triggerParticipationsStub: SinonStub;
+    let triggerAllStub: jest.SpyInstance;
 
     const exercise = { id: 20 } as Exercise;
 
@@ -51,16 +45,24 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         return debugElement.query(By.css(resultEtaId));
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingExerciseActionsModule],
+            imports: [ArtemisTestModule],
+            declarations: [
+                ProgrammingExerciseInstructorSubmissionStateComponent,
+                ProgrammingExerciseTriggerAllButtonComponent,
+                ButtonComponent,
+                FeatureToggleDirective,
+                FeatureToggleLinkDirective,
+                TranslatePipeMock,
+                MockDirective(NgbTooltip),
+                MockDirective(TranslateDirective),
+                MockPipe(DurationPipe),
+            ],
             providers: [
-                JhiLanguageHelper,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
@@ -73,21 +75,18 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 buildRunService = debugElement.injector.get(ProgrammingBuildRunService);
 
                 getExerciseSubmissionStateSubject = new Subject<ExerciseSubmissionState>();
-                getExerciseSubmissionStateStub = stub(submissionService, 'getSubmissionStateOfExercise').returns(getExerciseSubmissionStateSubject);
+                getExerciseSubmissionStateStub = jest.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(getExerciseSubmissionStateSubject);
 
                 getBuildRunStateSubject = new Subject<BuildRunState>();
-                getBuildRunStateStub = stub(buildRunService, 'getBuildRunUpdates').returns(getBuildRunStateSubject);
+                jest.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(getBuildRunStateSubject);
 
-                triggerAllStub = stub(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').returns(of());
-                triggerParticipationsStub = stub(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').returns(of());
+                triggerAllStub = jest.spyOn(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').mockReturnValue(of());
+                jest.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
             });
     });
 
     afterEach(() => {
-        getExerciseSubmissionStateStub.restore();
-        triggerAllStub.restore();
-        getBuildRunStateStub.restore();
-        triggerParticipationsStub.restore();
+        jest.restoreAllMocks();
     });
 
     const getTriggerAllButton = () => {
@@ -106,9 +105,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     };
 
     it('should not show the component before the build summary is retrieved', () => {
-        expect(getTriggerAllButton()).to.be.null;
-        expect(getTriggerFailedButton()).to.be.null;
-        expect(getBuildState()).to.be.null;
+        expect(getTriggerAllButton()).toBe(null);
+        expect(getTriggerFailedButton()).toBe(null);
+        expect(getBuildState()).toBe(null);
     });
 
     it('should show the result eta if there is at least one building submission', fakeAsync(() => {
@@ -126,10 +125,10 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
 
         const resultEta = getResultEtaContainer();
-        expect(resultEta).to.exist;
+        expect(resultEta).not.toBe(null);
     }));
 
-    it('should not show the result eta if there is no building submission', fakeAsync(() => {
+    it('should not show the result eta if there is no building submission', () => {
         const isNotBuildingSubmission = {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 5 },
@@ -139,13 +138,11 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isNotBuildingSubmission);
 
-        tick(500);
-
         fixture.detectChanges();
 
         const resultEta = getResultEtaContainer();
-        expect(resultEta).not.to.exist;
-    }));
+        expect(resultEta).toBe(null);
+    });
 
     it('should show & enable the trigger all button and the build state once the build summary is loaded', fakeAsync(() => {
         const noPendingSubmissionState = {
@@ -163,17 +160,18 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getExerciseSubmissionStateStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(getExerciseSubmissionStateStub).toHaveBeenCalledTimes(1);
+        expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
-        expect(comp.hasFailedSubmissions).to.be.false;
-        expect(comp.isBuildingFailedSubmissions).to.be.false;
-        expect(comp.buildingSummary).to.deep.equal(compressedSummary);
+        expect(comp.hasFailedSubmissions).toBe(false);
+        expect(comp.isBuildingFailedSubmissions).toBe(false);
+        expect(comp.buildingSummary).toEqual(compressedSummary);
 
-        expect(getTriggerAllButton()).to.exist;
-        expect(getTriggerAllButton().disabled).to.be.false;
-        expect(getTriggerFailedButton()).to.exist;
-        expect(getTriggerFailedButton().disabled).to.be.true;
-        expect(getBuildState()).to.exist;
+        expect(getTriggerAllButton()).not.toBe(null);
+        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerFailedButton()).not.toBe(null);
+        expect(getTriggerFailedButton().disabled).toBe(true);
+        expect(getBuildState()).not.toBe(null);
     }));
 
     it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', fakeAsync(() => {
@@ -197,25 +195,25 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getExerciseSubmissionStateStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
-        expect(comp.hasFailedSubmissions).to.be.true;
-        expect(comp.isBuildingFailedSubmissions).to.be.false;
-        expect(comp.buildingSummary).to.deep.equal(compressedSummary);
+        expect(comp.hasFailedSubmissions).toBe(true);
+        expect(comp.isBuildingFailedSubmissions).toBe(false);
+        expect(comp.buildingSummary).toEqual(compressedSummary);
 
-        expect(getResultEtaContainer()).to.exist;
-        expect(getTriggerAllButton()).to.exist;
-        expect(getTriggerAllButton().disabled).to.be.false;
-        expect(getTriggerFailedButton()).to.exist;
-        expect(getTriggerFailedButton().disabled).to.be.false;
-        expect(getBuildState()).to.exist;
+        expect(getResultEtaContainer()).not.toBe(null);
+        expect(getTriggerAllButton()).not.toBe(null);
+        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerFailedButton()).not.toBe(null);
+        expect(getTriggerFailedButton().disabled).toBe(false);
+        expect(getBuildState()).not.toBe(null);
     }));
 
     it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', () => {
         const failedSubmissionParticipationIds = [333];
         const triggerInstructorBuildForParticipationsOfExerciseSubject = new Subject<void>();
-        triggerAllStub.returns(triggerInstructorBuildForParticipationsOfExerciseSubject);
-        const getFailedSubmissionParticipationsForExerciseStub = stub(submissionService, 'getSubmissionCountByType').returns(failedSubmissionParticipationIds);
+        triggerAllStub.mockReturnValue(triggerInstructorBuildForParticipationsOfExerciseSubject);
+        const getFailedSubmissionParticipationsForExerciseStub = jest.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
         // Component must have at least one failed submission for the button to be enabled.
         comp.exercise = exercise as ProgrammingExercise;
         comp.buildingSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
@@ -224,15 +222,15 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
 
         const triggerButton = getTriggerFailedButton();
-        expect(triggerButton).to.exist;
-        expect(triggerButton.disabled).to.be.false;
+        expect(triggerButton).not.toBe(null);
+        expect(triggerButton.disabled).toBe(false);
 
         // Button is clicked.
         triggerButton.click();
 
-        expect(comp.isBuildingFailedSubmissions).to.be.true;
-        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
-        expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exercise.id, failedSubmissionParticipationIds);
+        expect(comp.isBuildingFailedSubmissions).toBe(true);
+        expect(getFailedSubmissionParticipationsForExerciseStub).toHaveBeenCalledWith(comp.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise.id, failedSubmissionParticipationIds);
 
         fixture.detectChanges();
 
@@ -241,7 +239,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.isBuildingFailedSubmissions).to.be.false;
+        expect(comp.isBuildingFailedSubmissions).toBe(false);
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', fakeAsync(() => {
@@ -259,16 +257,16 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).to.be.false;
+        expect(getTriggerAllButton().disabled).toBe(false);
 
         getBuildRunStateSubject.next(BuildRunState.RUNNING);
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).to.be.true;
+        expect(getTriggerAllButton().disabled).toBe(true);
 
         getBuildRunStateSubject.next(BuildRunState.COMPLETED);
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).to.be.false;
+        expect(getTriggerAllButton().disabled).toBe(false);
     }));
 });

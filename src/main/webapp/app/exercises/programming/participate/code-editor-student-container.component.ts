@@ -2,14 +2,14 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -24,6 +24,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { Course } from 'app/entities/course.model';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -32,6 +35,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -39,6 +43,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     participation: StudentParticipation;
     exercise: ProgrammingExercise;
+    course?: Course;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -55,6 +60,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
         private exerciseHintService: ExerciseHintService,
+        private submissionPolicyService: SubmissionPolicyService,
         private route: ActivatedRoute,
     ) {}
 
@@ -75,7 +81,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
                         // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
-                        const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
+                        const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
                         const isEditingAfterDueAllowed =
                             !this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
                             !this.exercise.allowComplaintsForAutomaticAssessments &&
@@ -84,6 +90,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
+                        this.course = getCourseFromExercise(this.exercise);
+                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
+                            this.exercise.submissionPolicy = submissionPolicy;
+                        });
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();

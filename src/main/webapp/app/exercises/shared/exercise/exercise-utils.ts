@@ -1,7 +1,6 @@
 import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -39,7 +38,7 @@ export class SaveExerciseCommand<T extends Exercise> {
             }
         };
 
-        const callBackend = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
+        const callServer = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
             const ex = Exercise.sanitize(exercise);
             switch (this.editType) {
                 case EditType.IMPORT:
@@ -76,7 +75,7 @@ export class SaveExerciseCommand<T extends Exercise> {
         }
 
         return saveObservable.pipe(
-            mergeMap(callBackend),
+            mergeMap(callServer),
             map((res) => res.body! as T),
         );
     }
@@ -104,7 +103,7 @@ export const hasExerciseDueDatePassed = (exercise: Exercise): boolean => {
     if (exercise.dueDate == undefined) {
         return false;
     }
-    return moment(exercise.dueDate).isBefore();
+    return dayjs(exercise.dueDate).isBefore(dayjs());
 };
 
 /**
@@ -169,7 +168,7 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
     return (
         exercise.dueDate == undefined ||
-        moment() <= exercise.dueDate! ||
+        dayjs() <= exercise.dueDate! ||
         (exercise.buildAndTestStudentSubmissionsAfterDueDate == undefined &&
             exercise.assessmentType === AssessmentType.AUTOMATIC &&
             !exercise.allowComplaintsForAutomaticAssessments)
@@ -184,15 +183,15 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
  */
 const participationStatusForQuizExercise = (exercise: Exercise): ParticipationStatus => {
     const quizExercise = exercise as QuizExercise;
-    if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
+    if ((!quizExercise.isPlannedToStart || dayjs(quizExercise.releaseDate!).isAfter(dayjs())) && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_NOT_STARTED;
-    } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
+    } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || dayjs(quizExercise.dueDate!).isAfter(dayjs())) && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_UNINITIALIZED;
     } else if (!hasStudentParticipations(exercise)) {
         return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED && dayjs(exercise.dueDate!).isAfter(dayjs())) {
         return ParticipationStatus.QUIZ_ACTIVE;
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED && dayjs(exercise.dueDate!).isAfter(dayjs())) {
         return ParticipationStatus.QUIZ_SUBMITTED;
     } else {
         return !hasResults(exercise.studentParticipations![0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
@@ -238,7 +237,7 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
     return (
         (!!progEx.isAtLeastTutor || !!progEx.isAtLeastEditor || !!progEx.isAtLeastInstructor) &&
         progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
-        (!relevantDueDate || moment(relevantDueDate).isBefore(now()))
+        (!relevantDueDate || dayjs(relevantDueDate).isBefore(dayjs()))
     );
 };
 

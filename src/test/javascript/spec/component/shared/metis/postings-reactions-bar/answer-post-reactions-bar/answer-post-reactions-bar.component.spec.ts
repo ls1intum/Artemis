@@ -1,14 +1,9 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import * as sinon from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { User } from 'app/core/user/user.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
@@ -17,9 +12,16 @@ import { MockAccountService } from '../../../../../helpers/mocks/service/mock-ac
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { Router } from '@angular/router';
+import { MockRouter } from '../../../../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -30,18 +32,19 @@ describe('AnswerPostReactionsBarComponent', () => {
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
 
-    const user = { id: 1, name: 'username', login: 'login' } as User;
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, OverlayModule, EmojiModule],
-            schemas: [CUSTOM_ELEMENTS_SCHEMA],
+            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
             providers: [
+                MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
-            declarations: [AnswerPostReactionsBarComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [AnswerPostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
         })
             .compileComponents()
             .then(() => {
@@ -51,46 +54,47 @@ describe('AnswerPostReactionsBarComponent', () => {
                 component = fixture.componentInstance;
                 answerPost = new AnswerPost();
                 answerPost.id = 1;
-                answerPost.author = user;
+                answerPost.author = metisUser1;
                 reactionToDelete = new Reaction();
                 reactionToDelete.id = 1;
                 reactionToDelete.emojiId = 'smile';
-                reactionToDelete.user = user;
+                reactionToDelete.user = metisUser1;
                 reactionToDelete.answerPost = answerPost;
                 answerPost.reactions = [reactionToDelete];
                 component.posting = answerPost;
+                metisService.setCourse(metisCourse);
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     it('should invoke metis service method with correctly built reaction to create it', () => {
         component.ngOnInit();
         fixture.detectChanges();
-        const metisServiceCreateReactionSpy = sinon.spy(metisService, 'createReaction');
+        const metisServiceCreateReactionSpy = jest.spyOn(metisService, 'createReaction');
         reactionToCreate = new Reaction();
         reactionToCreate.emojiId = '+1';
         reactionToCreate.answerPost = component.posting;
         component.addOrRemoveReaction(reactionToCreate.emojiId);
-        expect(metisServiceCreateReactionSpy).to.have.been.calledWith(reactionToCreate);
-        expect(component.showReactionSelector).to.be.equal(false);
+        expect(metisServiceCreateReactionSpy).toHaveBeenCalledWith(reactionToCreate);
+        expect(component.showReactionSelector).toEqual(false);
     });
 
     it('should invoke metis service method with own reaction to delete it', () => {
         component.posting!.author!.id = 99;
         component.ngOnInit();
         fixture.detectChanges();
-        const metisServiceCreateReactionSpy = sinon.spy(metisService, 'deleteReaction');
+        const metisServiceCreateReactionSpy = jest.spyOn(metisService, 'deleteReaction');
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
-        expect(metisServiceCreateReactionSpy).to.have.been.calledWith(reactionToDelete);
+        expect(metisServiceCreateReactionSpy).toHaveBeenCalledWith(reactionToDelete);
     });
 
     it('should invoke metis service method with own reaction to delete it', () => {
         component.ngOnInit();
-        const addOrRemoveSpy = sinon.spy(component, 'addOrRemoveReaction');
+        const addOrRemoveSpy = jest.spyOn(component, 'addOrRemoveReaction');
         component.updateReaction(reactionToDelete.emojiId!);
-        expect(addOrRemoveSpy).to.have.been.calledWith(reactionToDelete.emojiId!);
+        expect(addOrRemoveSpy).toHaveBeenCalledWith(reactionToDelete.emojiId!);
     });
 });

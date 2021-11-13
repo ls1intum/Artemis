@@ -1,8 +1,8 @@
 import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -38,10 +38,10 @@ export class ExerciseDetailsStudentActionsComponent {
 
     @Input() examMode: boolean;
 
-    // extension point, see shared/extension-point
+    // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
-    constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
+    constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 
     /**
      * check if practiceMode is available
@@ -49,7 +49,7 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
-        return quizExercise.isPlannedToStart! && quizExercise.isOpenForPractice! && moment(quizExercise.dueDate!).isBefore(moment());
+        return quizExercise.isPlannedToStart! && quizExercise.isOpenForPractice! && dayjs(quizExercise.dueDate!).isBefore(dayjs());
     }
 
     /**
@@ -96,14 +96,14 @@ export class ExerciseDetailsStudentActionsComponent {
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                            this.jhiAlertService.success('artemisApp.exercise.personalRepositoryClone');
+                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                         } else {
-                            this.jhiAlertService.success('artemisApp.exercise.personalRepositoryOnline');
+                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
                         }
                     }
                 },
                 () => {
-                    this.jhiAlertService.warning('artemisApp.exercise.startError');
+                    this.alertService.warning('artemisApp.exercise.startError');
                 },
             );
     }
@@ -123,10 +123,11 @@ export class ExerciseDetailsStudentActionsComponent {
                         participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
+                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
                 (error) => {
-                    this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );
     }

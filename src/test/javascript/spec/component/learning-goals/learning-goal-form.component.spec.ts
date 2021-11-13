@@ -10,15 +10,10 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
 
-chai.use(sinonChai);
-const expect = chai.expect;
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
     let learningGoalFormComponent: LearningGoalFormComponent;
@@ -27,7 +22,7 @@ describe('LearningGoalFormComponent', () => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbDropdownModule],
             declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), MockProvider(JhiAlertService), MockProvider(TranslateService)],
+            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), MockProvider(AlertService), MockProvider(TranslateService)],
             schemas: [],
         })
             .compileComponents()
@@ -38,12 +33,12 @@ describe('LearningGoalFormComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         learningGoalFormComponentFixture.detectChanges();
-        expect(learningGoalFormComponent).to.be.ok;
+        expect(learningGoalFormComponent).toBeDefined();
     });
 
     it('should submit valid form', fakeAsync(() => {
@@ -59,7 +54,7 @@ describe('LearningGoalFormComponent', () => {
             status: 200,
         });
 
-        const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(response));
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(response));
 
         learningGoalFormComponentFixture.detectChanges();
 
@@ -81,17 +76,17 @@ describe('LearningGoalFormComponent', () => {
         lectureUnitRow.click();
         learningGoalFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(learningGoalFormComponent.form.valid).to.be.true;
-        expect(getAllForCourseStub).to.have.been.called;
-        const submitFormSpy = sinon.spy(learningGoalFormComponent, 'submitForm');
-        const submitFormEventSpy = sinon.spy(learningGoalFormComponent.formSubmitted, 'emit');
+        expect(learningGoalFormComponent.form.valid).toBeTrue();
+        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        const submitFormSpy = jest.spyOn(learningGoalFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(learningGoalFormComponent.formSubmitted, 'emit');
 
         const submitButton = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
         learningGoalFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).to.have.been.called;
-            expect(submitFormEventSpy).to.have.been.calledWith({
+            expect(submitFormSpy).toHaveBeenCalledTimes(1);
+            expect(submitFormEventSpy).toHaveBeenCalledWith({
                 title: exampleTitle,
                 description: exampleDescription,
                 connectedLectureUnits: [exampleLectureUnit],
@@ -112,8 +107,8 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.formData = formData;
         learningGoalFormComponent.ngOnChanges();
 
-        expect(learningGoalFormComponent.titleControl?.value).to.equal(formData.title);
-        expect(learningGoalFormComponent.descriptionControl?.value).to.equal(formData.description);
-        expect(learningGoalFormComponent.selectedLectureUnitsInTable).to.equal(formData.connectedLectureUnits);
+        expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
+        expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 });

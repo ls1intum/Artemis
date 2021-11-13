@@ -8,7 +8,7 @@ import org.springframework.boot.actuate.endpoint.web.annotation.EndpointWebExten
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 
-import io.github.jhipster.config.metric.JHipsterMetricsEndpoint;
+import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
 
 /**
  * CustomMetricsExtension.

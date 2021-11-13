@@ -17,7 +17,7 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -28,7 +28,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { filter, debounceTime } from 'rxjs/operators';
@@ -263,6 +263,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const jQueryBackgroundOffset = jQueryBackgroundElement.offset()!;
         const backgroundWidth = jQueryBackgroundElement.width()!;
         const backgroundHeight = jQueryBackgroundElement.height()!;
+        this.mouseMoveAction(event, jQueryBackgroundOffset, backgroundWidth, backgroundHeight);
+    }
+
+    private mouseMoveAction(event: MouseEvent, jQueryBackgroundOffset: { left: number; top: number }, backgroundWidth: number, backgroundHeight: number) {
         if (event.pageX) {
             // Moz
             this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
@@ -812,13 +816,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * Detect of text changes in the markdown editor
-     * 1. Notify the parent component to check the validity of the text
-     * 2. Parse the text in the editor to get the newest values
+     * 1. Parse the text in the editor to get the newest values
+     * 2. Notify the parent component to check the validity of the text
      */
     changesInMarkdown(): void {
+        this.prepareForSave();
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();
-        this.prepareForSave();
     }
 
     /**

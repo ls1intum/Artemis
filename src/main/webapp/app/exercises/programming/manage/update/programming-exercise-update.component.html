@@ -63,80 +63,62 @@
                 [columnMode]="'force'"
                 [rowHeight]="'auto'"
                 [rows]="programmingExercise.auxiliaryRepositories"
-                *ngIf="programmingExercise.auxiliaryRepositories"
+                *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0"
             >
                 <ngx-datatable-column name="Repository Name" prop="repositoryName">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-repositoryName'"
-                                [value]="row.name || ''"
-                                [onValueUpdate]="updateRepositoryName(row)"
-                                [pattern]="invalidRepositoryNamePattern"
-                                [isRequired]="true"
-                                [translationRequiredMessage]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
-                                [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidRepositoryName'"
-                            >
-                            </jhi-table-editable-field>
-                        </div>
-                        <ng-template #auxiliaryRepositoryIsNotEditable>
-                            {{ row.name }}
-                        </ng-template>
+                        <jhi-table-editable-field
+                            [id]="row.id + '-repositoryName'"
+                            [value]="row.name || ''"
+                            [onValueUpdate]="updateRepositoryName(row)"
+                            [pattern]="invalidRepositoryNamePattern"
+                            [isRequired]="true"
+                            [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
+                        >
+                        </jhi-table-editable-field>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-checkoutDirectory'"
-                                [value]="row.checkoutDirectory || ''"
-                                [onValueUpdate]="updateCheckoutDirectory(row)"
-                                [pattern]="invalidDirectoryNamePattern"
-                                [translationInvalidMessage]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
-                            >
-                            </jhi-table-editable-field>
-                        </div>
-                        <ng-template #auxiliaryRepositoryIsNotEditable>
-                            {{ row.checkoutDirectory }}
-                        </ng-template>
+                        <jhi-table-editable-field
+                            [id]="row.id + '-checkoutDirectory'"
+                            [value]="row.checkoutDirectory || ''"
+                            [onValueUpdate]="updateCheckoutDirectory(row)"
+                            [pattern]="invalidDirectoryNamePattern"
+                            [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
+                        >
+                        </jhi-table-editable-field>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Description" prop="description">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                            <jhi-table-editable-field [id]="row.id + '-description'" [value]="row.description || ''" [onValueUpdate]="updateDescription(row)">
-                            </jhi-table-editable-field>
-                        </div>
-                        <ng-template #auxiliaryRepositoryIsNotEditable>
-                            {{ row.description }}
-                        </ng-template>
+                        <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description"> </textarea>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column name="RemoveButton" prop="removeButton">
+                <ngx-datatable-column name="" prop="removeButton">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <div *ngIf="!row.id">
-                            <jhi-remove-auxiliary-repository-button
-                                *ngIf="!row.id"
-                                placement="right"
-                                [programmingExercise]="programmingExercise"
-                                [row]="row"
-                                class="ml-2"
-                            ></jhi-remove-auxiliary-repository-button>
-                            <span *ngIf="isEdit">
-                                <fa-icon
-                                    [icon]="'exclamation-triangle'"
-                                    class="text-warning mr-1"
-                                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-                                ></fa-icon>
-                                <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
-                                    >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
-                                >
-                            </span>
-                        </div>
+                        <jhi-remove-auxiliary-repository-button
+                            placement="right"
+                            [programmingExercise]="programmingExercise"
+                            (onRefresh)="refreshAuxiliaryRepositoryChecks()"
+                            [row]="row"
+                            class="ml-2"
+                        ></jhi-remove-auxiliary-repository-button>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>
-            <jhi-add-auxiliary-repository-button [programmingExercise]="programmingExercise" class="ml-2"></jhi-add-auxiliary-repository-button>
+            <ngb-alert [dismissible]="false" [type]="'danger'" *ngIf="auxiliaryRepositoryDuplicateNames || auxiliaryRepositoryDuplicateDirectories">
+                <span *ngIf="auxiliaryRepositoryDuplicateNames">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate }}</span>
+                <span *ngIf="auxiliaryRepositoryDuplicateDirectories">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate }}</span>
+            </ngb-alert>
+            <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="isEdit">
+                <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
+            </ngb-alert>
+            <jhi-add-auxiliary-repository-button
+                [programmingExercise]="programmingExercise"
+                (onRefresh)="refreshAuxiliaryRepositoryChecks()"
+                class="ml-2"
+            ></jhi-add-auxiliary-repository-button>
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <div>
@@ -200,7 +182,7 @@
             </select>
         </div>
 
-        <div class="form-group" *ngIf="programmingExercise.programmingLanguage && packageNameRequired">
+        <div class="form-group" *ngIf="programmingExercise.programmingLanguage && packageNameRequired && programmingExercise.projectType != ProjectType.XCODE">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
             <input
                 required
@@ -212,6 +194,7 @@
                 [(ngModel)]="programmingExercise.packageName"
                 [readonly]="programmingExercise.id"
                 #packageName="ngModel"
+                [disabled]="isImport || !!programmingExercise.id"
             />
             <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
                 <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
@@ -219,6 +202,28 @@
                 </div>
             </ng-container>
         </div>
+
+        <div class="form-group" *ngIf="programmingExercise.programmingLanguage == ProgrammingLanguage.SWIFT && programmingExercise.projectType == ProjectType.XCODE">
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName">App Name</label>
+            <input
+                required
+                type="text"
+                [pattern]="appNamePatternForSwift"
+                class="form-control"
+                name="packageName"
+                id="field_appName"
+                [(ngModel)]="programmingExercise.packageName"
+                [readonly]="programmingExercise.id"
+                #packageName="ngModel"
+                [disabled]="isImport || !!programmingExercise.id"
+            />
+            <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
+                <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
+                    <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+                </div>
+            </ng-container>
+        </div>
+
         <div class="form-group mt-2">
             <div>
                 <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
@@ -277,6 +282,14 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="form-group">
+            <jhi-submission-policy-update #submissionPolicyForm [editable]="!isEdit" [programmingExercise]="programmingExercise"></jhi-submission-policy-update>
+            <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                <ngb-alert [dismissible]="false" [type]="'info'">
+                    <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
+                </ngb-alert>
+            </ng-container>
         </div>
         <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed && ProjectType.XCODE !== selectedProjectType">
             <div class="form-check custom-control custom-checkbox">
@@ -360,17 +373,9 @@
                 class="form__editable-instructions"
             ></jhi-programming-exercise-editable-instructions>
         </div>
-        <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
-            <jhi-markdown-editor
-                *ngIf="this.checkedFlagForStructuredGradingInstructions === false"
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsGradingInstructions"
-                [(markdown)]="programmingExercise.gradingInstructions"
-                [editorMode]="EditorMode.LATEX"
-                [enableResize]="true"
-            ></jhi-markdown-editor>
-            <jhi-grading-instructions-details *ngIf="this.checkedFlagForStructuredGradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
+        <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
         </div>
         <!-- It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
         <div class="form-group mb-0" *ngIf="sequentialTestRunsAllowed">
@@ -530,9 +535,9 @@
             </div>
         </div>
         <div class="pt-4"></div>
-        <div class="form-group" *ngIf="programmingExercise.id && !isImport && !isExamMode">
+        <div class="form-group" *ngIf="programmingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-            <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+            <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
     <div>
@@ -542,20 +547,12 @@
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [disabled]="editForm.form.invalid || !validIdeSelection()"
+            [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid || submissionPolicyForm.invalid"
             [isLoading]="isSaving"
             [icon]="'save'"
             [title]="submitButtonTitle"
-            (click)="save()"
+            (onClick)="save()"
         >
         </jhi-button>
-        <span *ngIf="isEdit && invalidWarnings">
-            <fa-icon
-                [icon]="'exclamation-triangle'"
-                class="text-warning mr-1"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-            ></fa-icon>
-            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning">This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span>
-        </span>
     </div>
 </form>

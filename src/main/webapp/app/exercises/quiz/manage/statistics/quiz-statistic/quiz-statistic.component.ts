@@ -96,7 +96,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
                 const meta = chartInstance.getDatasetMeta(datasetIndex);
                 meta.data.forEach((bar: any, dataIndex: number) => {
                     const data = round(dataset.data[dataIndex], 2).toString();
-                    const dataPercentage = round(dataset.data[dataIndex] / participants, 3) * 100 || 0;
+                    const dataPercentage = round((dataset.data[dataIndex] / participants) * 100 || 0, 1);
                     ctx.fillText(data, bar._model.x, bar._model.y - 20);
                     ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
                 });
@@ -115,13 +115,22 @@ export interface DataSetProvider {
      */
     loadDataInDiagram(): void;
 }
-
+/**
+ * Wrapper function to ensure that other ng2-implementations still work; should be removed as soon as not used anymore
+ * Calculates the height of the chart depending of the data that has to be displayed
+ * @param dataSetProvider the component instantiating the chart
+ * @returns height depending on the size of the data set
+ */
 export function calculateHeightOfChart(dataSetProvider: DataSetProvider) {
     const data = dataSetProvider.getDataSets().map((dataset) => {
         return dataset.data;
     });
     const flattened = ([] as number[]).concat(...data);
-    const max = Math.max(...flattened);
+    return calculateHeightOfChartData(flattened);
+}
+
+export function calculateHeightOfChartData(data: number[]) {
+    const max = Math.max(...data);
     // we provide 300 as buffer at the top to display labels
     const height = Math.ceil((max + 1) / 10) * 10;
     if (height < 10) {

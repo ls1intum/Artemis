@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -61,14 +60,14 @@ export class StatisticsService {
 
     private static calculatePercentagesForExerciseStatistics(stats: ExerciseManagementStatisticsDto): ExerciseManagementStatisticsDto {
         stats.participationsInPercent = stats.numberOfStudentsOrTeamsInCourse > 0 ? round((stats.numberOfParticipations / stats.numberOfStudentsOrTeamsInCourse) * 100, 1) : 0;
-        stats.questionsAnsweredInPercent = stats.numberOfQuestions > 0 ? round((stats.numberOfAnsweredQuestions / stats.numberOfQuestions) * 100, 1) : 0;
+        stats.resolvedPostsInPercent = stats.numberOfPosts > 0 ? round((stats.numberOfResolvedPosts / stats.numberOfPosts) * 100, 1) : 0;
         stats.absoluteAveragePoints = round((stats.averageScoreOfExercise * stats.maxPointsOfExercise) / 100, 1);
         return stats;
     }
 
     private static convertDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         dto.averageScoresOfExercises.forEach((averageScores) => {
-            averageScores.releaseDate = averageScores.releaseDate !== null ? moment(averageScores.releaseDate) : undefined;
+            averageScores.releaseDate = averageScores.releaseDate !== null ? dayjs(averageScores.releaseDate) : undefined;
         });
         return dto;
     }

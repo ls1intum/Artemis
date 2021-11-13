@@ -1,11 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import { stub } from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
@@ -24,8 +22,42 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgForm, NumberValueAccessor, NgModel, CheckboxControlValueAccessor, DefaultValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-chips';
+import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
+import { OwlDateTimeModule } from 'ng-pick-datetime';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -41,7 +73,49 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, ArtemisProgrammingExerciseUpdateModule, FormDateTimePickerModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(NgbModule), MockModule(OwlDateTimeModule)],
+            declarations: [
+                ProgrammingExerciseUpdateComponent,
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(HelpIconComponent),
+                NgModel,
+                CheckboxControlValueAccessor,
+                DefaultValueAccessor,
+                SelectControlValueAccessor,
+                NumberValueAccessor,
+                RemoveKeysPipe,
+                MockDirective(TranslateDirective),
+                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(TableEditableFieldComponent),
+                MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
+                CategorySelectorComponent,
+                ColorSelectorComponent,
+                MockComponent(TagInputComponent),
+                MockComponent(TagInputDropdown),
+                MockComponent(DeleteIconComponent),
+                AddAuxiliaryRepositoryButtonComponent,
+                DifficultyPickerComponent,
+                TeamConfigFormGroupComponent,
+                ModePickerComponent,
+                ProgrammingExerciseLifecycleComponent,
+                ProgrammingExerciseTestScheduleDatePickerComponent,
+                ArtemisDatePipe,
+                IncludedInOverallScorePickerComponent,
+                MockPipe(ArtemisTranslatePipe),
+                NgForm,
+                MockComponent(SubmissionPolicyUpdateComponent),
+                MockComponent(PresentationScoreComponent),
+                ProgrammingExerciseInstructionComponent,
+                ProgrammingExerciseEditableInstructionComponent,
+                MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
+                GradingInstructionsDetailsComponent,
+                MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
+                MockComponent(MarkdownEditorComponent),
+                MockComponent(ButtonComponent),
+                CustomMinDirective,
+                CustomMaxDirective,
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -64,8 +138,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 123;
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
-            spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
             // WHEN
@@ -80,8 +154,8 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
-            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
             // WHEN
@@ -96,9 +170,9 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should trim the exercise title before saving', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
-            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
 
@@ -129,8 +203,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
-            spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
@@ -157,8 +231,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
@@ -178,12 +252,11 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').and.returnValue(true);
-            const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
-            getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
-            getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
+
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
         });
 
         it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
@@ -233,7 +306,19 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
+            expect(comp.packageNamePattern).toEqual(comp.appNamePatternForSwift);
+        }));
+
+        it('Should activate SCA for C', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+
+            // THEN
+            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -253,8 +338,8 @@ describe('ProgrammingExercise Management Update Component', () => {
         let route: ActivatedRoute;
 
         beforeEach(() => {
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
@@ -360,6 +445,16 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 sequentialTestRuns: false,
                 staticCodeAnalysis: false,
                 plagiarismCheckSupported: false,
+                packageNameRequired: false,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [],
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.C:
+            return {
+                programmingLanguage: ProgrammingLanguage.C,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [],

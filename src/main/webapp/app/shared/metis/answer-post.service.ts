@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-import { SERVER_API_URL } from 'app/app.constants';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 
@@ -36,7 +34,7 @@ export class AnswerPostService extends PostingsService<AnswerPost> {
      */
     update(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(answerPost);
-        return this.http.put<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        return this.http.put<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts/${answerPost.id}`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     /**

@@ -18,7 +18,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -36,6 +35,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
@@ -47,9 +47,6 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    @Value("${artemis.course-archives-path}")
-    private String examsArchivePath;
-
     @Autowired
     private CourseRepository courseRepo;
 
@@ -58,6 +55,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private UserRepository userRepo;
+
+    @Autowired
+    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     @Autowired
     private ExamRepository examRepository;
@@ -628,6 +628,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", null, HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", HttpStatus.FORBIDDEN);
@@ -861,6 +862,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
@@ -870,6 +872,28 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/654555", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testResetEmptyExam_asInstructor() throws Exception {
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        exerciseRepo.save(textExercise);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testResetExamThatDoesNotExist() throws Exception {
+        request.delete("/api/courses/" + course2.getId() + "/exams/654555/reset", HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1457,6 +1481,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser("instructor1");
         final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        exerciseWithNoUsers.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = new GradingScale();
@@ -1588,6 +1613,25 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamStatistics() throws Exception {
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1);
+        ExamChecklistDTO returnedStatistics = request.get("/api/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+        assertThat(returnedStatistics.isAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.isAllExamExercisesAllStudentsPrepared());
+        assertThat(returnedStatistics.getAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.getAllExamExercisesAllStudentsPrepared());
+        assertThat(returnedStatistics.getNumberOfAllComplaints()).isEqualTo(actualStatistics.getNumberOfAllComplaints());
+        assertThat(returnedStatistics.getNumberOfAllComplaintsDone()).isEqualTo(actualStatistics.getNumberOfAllComplaintsDone());
+        assertThat(returnedStatistics.getNumberOfExamsStarted()).isEqualTo(actualStatistics.getNumberOfExamsStarted());
+        assertThat(returnedStatistics.getNumberOfExamsSubmitted()).isEqualTo(actualStatistics.getNumberOfExamsSubmitted());
+        assertThat(returnedStatistics.getNumberOfTestRuns()).isEqualTo(actualStatistics.getNumberOfTestRuns());
+        assertThat(returnedStatistics.getNumberOfGeneratedStudentExams()).isEqualTo(actualStatistics.getNumberOfGeneratedStudentExams());
+        assertThat(returnedStatistics.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound())
+                .isEqualTo(actualStatistics.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound());
+        assertThat(returnedStatistics.getNumberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.getNumberOfTotalParticipationsForAssessment());
     }
 
     @Test

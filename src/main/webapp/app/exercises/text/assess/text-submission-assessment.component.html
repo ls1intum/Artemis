@@ -7,7 +7,7 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="!!exercise?.teamMode"
     [isAssessor]="isAssessor"
-    [isAtLeastInstructor]="isAtLeastInstructor"
+    [isAtLeastInstructor]="exercise?.isAtLeastInstructor || false"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -24,6 +24,7 @@
     (nextSubmission)="nextSubmission()"
     [(highlightDifferences)]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
+    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
@@ -32,7 +33,8 @@
     <div class="row">
         <jhi-resizeable-container class="col-12">
             <!--region Left Panel-->
-            <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore"></jhi-score-display>
+            <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore" [course]="course">
+            </jhi-score-display>
             <jhi-text-assessment-area
                 left-body
                 [submission]="submission!"

@@ -1,5 +1,5 @@
 <!-- If the exercise is not loaded or not programming, show regular component-->
-<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING; else withOrionButtons"></jhi-exercise-assessment-dashboard>
+<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING || !orionState; else withOrionButtons"></jhi-exercise-assessment-dashboard>
 
 <!-- If the exercise is programming, but not opened in Orion, show Orion open button-->
 <ng-template #withOrionButtons>
@@ -17,26 +17,13 @@
     <!-- If the exercise is opened, show download submission buttons -->
     <ng-template #withTable>
         <jhi-exercise-assessment-dashboard>
-            <ng-template #overrideOpenButton let-submission="submission" let-correctionRound="correctionRound">
+            <ng-template #overrideOpenAssessmentButton let-submission="submission" let-queryParams="queryParams" let-buttonLabel="buttonLabel" let-disabled="disabled">
                 <jhi-ide-button
                     class="btn btn-sm"
                     [buttonLoading]="orionState.cloning"
-                    buttonLabel="{{
-                        (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)
-                            ? 'artemisApp.orionExerciseAssessmentDashboard.continueAssessment'
-                            : 'artemisApp.orionExerciseAssessmentDashboard.openAssessment'
-                        ) | artemisTranslate
-                    }}"
-                    (clickHandler)="downloadSubmissionInOrion(submission, correctionRound)"
-                >
-                </jhi-ide-button>
-            </ng-template>
-            <ng-template #overrideNewButton let-correctionRound="correctionRound">
-                <jhi-ide-button
-                    class="btn btn-sm"
-                    [buttonLoading]="orionState.cloning"
-                    buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
-                    (clickHandler)="downloadSubmissionInOrion('new', correctionRound)"
+                    [disabled]="!!disabled"
+                    buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.' + buttonLabel | artemisTranslate }}"
+                    (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'], queryParams['testRun'])"
                 >
                 </jhi-ide-button>
             </ng-template>

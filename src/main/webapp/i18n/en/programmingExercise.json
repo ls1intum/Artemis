@@ -87,6 +87,7 @@
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
             "packageName": "Package Name",
+            "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
@@ -107,7 +108,7 @@
             },
             "problemStatement": {
                 "title": "Problem Statement",
-                "taskCommand": "[task] Task",
+                "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
                 "exerciseHintCommand": "Add task specific hint"
             },
@@ -228,13 +229,17 @@
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
             "timeline": {
                 "assessmentType": "Assessment Type",
+                "automaticAssessment": "Automatic Assessment",
+                "manualAssessment": "Manual Assessment",
+                "complaintsAllowed": "Complaints Allowed",
                 "automaticTests": "Automatic Tests",
                 "afterDueDate": "Run Tests after Due Date",
                 "timelineLabel": "Timeline of the entire programming exercise",
                 "timelineTooltip": "The entire lifecycle of the programming exercise. You can specify different critical dates and decide when which kind of tests should be run on all submissions",
                 "automaticTestsMandatoryTooltip": "Every commit from a participant triggers all tests in the test repository. This does not include tests specified only to be run after the due date.",
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
-                "assessmentTypeTooltip": "The type of assessment after the deadline: No manual assessment, assessment by a tutor, only after a complaint of a student",
+                "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
+                "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
                 "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date",
                 "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
@@ -242,7 +247,12 @@
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
-                "notSet": "not set"
+                "notSet": "not set",
+                "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
+                "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
+                "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
+                "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
+                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible"
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
@@ -282,11 +292,73 @@
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
-                "repositoryNameRequired": "The repository name is required.",
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
-                "invalidDirectoryName": "An existing repository is already checked out into that directory!",
-                "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
-                "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
+                "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
+                "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
+                "warning": "Auxiliary repositories can be edited and removed. Changes do not cascade to the VCS and CIS and must be carried out manually.",
+                "repositoryNameRequired": {
+                    "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
+                }
+            },
+            "submissionPolicy": {
+                "title": "Submission Policy",
+                "updateButton": {
+                    "title": "Update",
+                    "tooltip": "Saves the changes to the submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might (un)lock a lot of affected participation repositories!"
+                },
+                "activateButton": {
+                    "title": "Activate",
+                    "tooltip": "Activates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
+                },
+                "deactivateButton": {
+                    "title": "Deactivate",
+                    "tooltip": "Deactivates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might unlock a lot of affected participation repositories!"
+                },
+                "created": "The submission policy was created successfully!",
+                "updated": "The submission policy was updated successfully!",
+                "deleted": "The submission policy was deleted successfully!",
+                "submissionsAllowed": "allowed Submissions",
+                "none": {
+                    "optionLabel": "None"
+                },
+                "lockRepository": {
+                    "optionLabel": "Lock Repository"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Submission Penalty",
+                    "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
+                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than or equal 0.",
+                    "penaltyInputFieldValidationWarning": {
+                        "min": "The penalty must be greater than or equal 0!",
+                        "required": "The penalty must be set!"
+                    },
+                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
+                },
+                "submissionPolicyType": {
+                    "title": "Submission Policy Type",
+                    "none": {
+                        "title": "None"
+                    },
+                    "lock_repository": {
+                        "title": "Lock Repository",
+                        "tooltip": "Your participation repository will be locked as soon as you reach the submission limit. You won't be able to participate further in the exercise after your repository is locked."
+                    },
+                    "submission_penalty": {
+                        "title": "Submission Penalty",
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
+                    }
+                },
+                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
+                "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
+                "submissionLimitWarning": {
+                    "pattern": "The submission limit must be and integer between 1 and 500!",
+                    "required": "The submission limit must be set!"
+                }
             }
         },
         "error": {

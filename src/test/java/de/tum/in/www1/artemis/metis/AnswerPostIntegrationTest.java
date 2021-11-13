@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,8 +76,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should not be automatically approved
-        assertThat(createdAnswerPost.isTutorApproved()).isFalse();
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -90,8 +88,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should not be automatically approved
-        assertThat(createdAnswerPost.isTutorApproved()).isFalse();
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -102,8 +100,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should not be automatically approved
-        assertThat(createdAnswerPost.isTutorApproved()).isFalse();
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -114,8 +112,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should be automatically approved
-        assertThat(createdAnswerPost.isTutorApproved()).isTrue();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -126,8 +122,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should be automatically approved
-        assertThat(createdAnswerPost.isTutorApproved()).isTrue();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -138,8 +132,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        // should be automatically approved
-        assertThat(createdAnswerPost.isTutorApproved()).isTrue();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -161,7 +153,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         // update post of student1 (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
+                HttpStatus.OK);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
@@ -171,7 +164,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         // update own post (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
+                HttpStatus.OK);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
@@ -181,7 +175,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         // update post from another student (index 1)--> forbidden
         AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
 
-        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostNotToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
+        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(), answerPostNotToUpdate,
+                AnswerPost.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedAnswerPost).isNull();
     }
 
@@ -190,8 +185,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class,
-                HttpStatus.BAD_REQUEST);
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
+                AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
     }
 
@@ -201,9 +196,65 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts", answerPostToUpdate, AnswerPost.class,
-                HttpStatus.BAD_REQUEST);
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
+                AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testToggleResolvesPost() throws Exception {
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+
+        // confirm that answer post resolves the original post
+        answerPost.setResolvesPost(true);
+        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
+                HttpStatus.OK);
+        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+
+        // revoke that answer post resolves the original post
+        answerPost.setResolvesPost(false);
+        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
+                HttpStatus.OK);
+        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testToggleResolvesPost_asPostAuthor() throws Exception {
+        // author of the associated original post is student1
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+
+        // confirm that answer post resolves the original post
+        answerPost.setResolvesPost(true);
+        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
+                HttpStatus.OK);
+        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+
+        // revoke that answer post resolves the original post
+        answerPost.setResolvesPost(false);
+        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
+                HttpStatus.OK);
+        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testToggleResolvesPost_notAuthor_forbidden() throws Exception {
+        // author of the associated original post is student1, author of answer post is also student1
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+
+        // confirm that answer post resolves the original post
+        answerPost.setResolvesPost(true);
+        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(resolvingAnswerPost).isNull();
+
+        // revoke that answer post resolves the original post
+        answerPost.setResolvesPost(false);
+        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(notResolvingAnswerPost).isNull();
     }
 
     // DELETE
@@ -245,28 +296,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testToggleAnswerPostApproved() throws Exception {
-        AnswerPost answerPostToApprove = existingAnswerPosts.get(0);
-
-        // approve answer
-        answerPostToApprove.setTutorApproved(true);
-        AnswerPost approvedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToApprove, AnswerPost.class, HttpStatus.OK);
-        assertThat(approvedAnswerPost).isEqualTo(answerPostToApprove);
-
-        // unapprove answer
-        approvedAnswerPost.setTutorApproved(false);
-        AnswerPost unapprovedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", approvedAnswerPost, AnswerPost.class, HttpStatus.OK);
-        assertThat(unapprovedAnswerPost).isEqualTo(answerPostToApprove);
-    }
-
     // HELPER METHODS
 
     private AnswerPost createAnswerPost(Post post) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent("Content Answer Post");
-        answerPost.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
         return answerPost;
@@ -283,11 +317,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(createdAnswerPost.getId()).isNotNull();
 
         // check if associated post, answerPost content, and creation date are set correctly on creation
-        assertThat(expectedAnswerPost.getPost()).isEqualTo(createdAnswerPost.getPost());
-        assertThat(expectedAnswerPost.getContent()).isEqualTo(createdAnswerPost.getContent());
-        assertThat(expectedAnswerPost.getCreationDate()).isEqualTo(createdAnswerPost.getCreationDate());
+        assertThat(createdAnswerPost.getPost()).isEqualTo(expectedAnswerPost.getPost());
+        assertThat(createdAnswerPost.getContent()).isEqualTo(expectedAnswerPost.getContent());
+        assertThat(createdAnswerPost.getCreationDate()).isNotNull();
 
         // check if default values are set correctly on creation
-        assertThat(expectedAnswerPost.getReactions()).isEmpty();
+        assertThat(createdAnswerPost.getReactions()).isEmpty();
     }
 }

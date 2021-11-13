@@ -6,22 +6,17 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { By } from '@angular/platform-browser';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { AlertService } from 'app/core/util/alert.service';
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -31,6 +26,10 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as sinon from 'sinon';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,36 +62,34 @@ describe('FileUploadExercise Management Detail Component', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
     let statisticsServiceStub: sinon.SinonStub;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisAssessmentSharedModule,
-                RouterTestingModule,
-                TranslateModule.forRoot(),
-                AssessmentInstructionsModule,
-                ExerciseDetailsModule,
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                FileUploadExerciseDetailComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(ExerciseDetailStatisticsComponent),
+                MockComponent(ExerciseDetailsComponent),
             ],
-            declarations: [FileUploadExerciseDetailComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
             providers: [
                 JhiLanguageHelper,
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
             ],
-        })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(FileUploadExerciseService);
@@ -101,10 +98,14 @@ describe('FileUploadExercise Management Detail Component', () => {
         statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(fileUploadExerciseStatistics));
     });
 
+    afterEach(() => {
+        sinon.restore();
+    });
+
     describe('Title should contain exercise id and description list', () => {
         it('Should call load all on init', fakeAsync(() => {
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithCourse,
@@ -137,7 +138,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithCourse,
@@ -152,7 +153,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             // THEN
             expect(statisticsServiceStub).to.have.been.called;
             expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
             expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
             expect(comp.isExamExercise).to.be.false;
             expect(comp.fileUploadExercise).to.equal(fileUploadExerciseWithCourse);
@@ -170,7 +171,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         it('Should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithExerciseGroup,
@@ -184,7 +185,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             // THEN
             expect(statisticsServiceStub).to.have.been.called;
             expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
             expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
             expect(comp.isExamExercise).to.be.true;
             expect(comp.fileUploadExercise).to.equal(fileUploadExerciseWithExerciseGroup);

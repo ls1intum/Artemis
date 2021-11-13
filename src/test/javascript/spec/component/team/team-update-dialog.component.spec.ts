@@ -1,22 +1,27 @@
 import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
-import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, MockTeamService, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
+import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,10 +36,20 @@ describe('TeamUpdateDialogComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisTeamModule],
-            declarations: [],
+            imports: [ArtemisTestModule, FormsModule],
+            declarations: [
+                TeamUpdateDialogComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(AlertErrorComponent),
+                MockComponent(AlertComponent),
+                MockComponent(HelpIconComponent),
+                MockPipe(RemoveKeysPipe),
+                MockComponent(TeamOwnerSearchComponent),
+                MockComponent(TeamStudentSearchComponent),
+                TranslateDirective,
+            ],
             providers: [
-                JhiEventManager,
+                EventManager,
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -72,7 +87,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that title is correct for creating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
-        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Create Team (${mockExercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`artemisApp.team.createTeam.label(${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
@@ -140,7 +155,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that title is correct for updating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
-        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Update Team (${mockExercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`artemisApp.team.updateTeam.label(${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
