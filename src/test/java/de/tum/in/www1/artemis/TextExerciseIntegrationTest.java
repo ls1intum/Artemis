@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -215,13 +216,27 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(newTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExerciseForExam_datesSet() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
+        String title = "New Exam Text Exercise";
+        DifficultyLevel difficulty = DifficultyLevel.HARD;
+        textExercise.setTitle(title);
+        textExercise.setDifficulty(difficulty);
+        textExercise.setDueDate(someMoment);
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(exerciseGroup.getExercises()).doesNotContain(textExercise);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
-
         request.postWithResponseBody("/api/text-exercises/", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -231,7 +246,6 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         textExercise.setCourse(exerciseGroup.getExam().getCourse());
-
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -328,11 +342,10 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         Course newCourse = databaseUtilService.createCourse(newCourseId);
 
         // Assign new course to the text exercise.
-        TextExercise updatedTextExercise = existingTextExercise;
-        updatedTextExercise.setCourse(newCourse);
+        existingTextExercise.setCourse(newCourse);
 
         // Text exercise update with the new course should fail.
-        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", updatedTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", existingTextExercise, TextExercise.class, HttpStatus.CONFLICT);
         assertThat(returnedTextExercise).isNull();
     }
 
@@ -470,6 +483,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(null);
+        textExercise.setDueDate(null);
+        textExercise.setAssessmentDueDate(null);
+        textExercise.setReleaseDate(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);

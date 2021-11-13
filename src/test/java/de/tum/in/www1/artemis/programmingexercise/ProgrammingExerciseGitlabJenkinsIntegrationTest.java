@@ -89,6 +89,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExerciseForExam_datesSet() throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_DatesSet();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
