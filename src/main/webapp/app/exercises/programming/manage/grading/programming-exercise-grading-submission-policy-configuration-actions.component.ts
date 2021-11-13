@@ -19,7 +19,9 @@ import { ButtonType } from 'app/shared/components/button.component';
                 [tooltip]="'artemisApp.programmingExercise.submissionPolicy.updateButton.tooltip'"
                 (onClick)="onUpdate.emit()"
                 [icon]="'save'"
-                [disabled]="isSaving || exercise.submissionPolicy == undefined || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore)"
+                [disabled]="
+                    isSaving || exercise.submissionPolicy == undefined || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore) || formInvalid
+                "
             ></jhi-button>
             <jhi-button
                 *ngIf="exercise.isAtLeastInstructor && hadPolicyBefore && exercise.submissionPolicy!.active"
@@ -46,6 +48,7 @@ export class ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsCompo
 
     @Input() exercise: ProgrammingExercise;
     @Input() isSaving: boolean;
+    @Input() formInvalid: boolean;
     @Input() hadPolicyBefore: boolean;
 
     @Output() onUpdate = new EventEmitter();

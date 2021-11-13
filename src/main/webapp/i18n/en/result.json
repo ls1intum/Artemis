@@ -70,7 +70,8 @@
                     "tooltipOnlineIde": "No result was found / could be generated in time for your most recent submission. Please check your code manually as far as possible."
                 }
             },
-            "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission."
+            "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission.",
+            "seeMore": "See more"
         }
     }
 }

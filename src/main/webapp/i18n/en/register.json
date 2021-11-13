@@ -8,8 +8,8 @@
             "validate": {
                 "login": {
                     "required": "Your username is required.",
-                    "minlength": "Your username is required to be at least 4 characters.",
-                    "maxlength": "Your username cannot be longer than 50 characters.",
+                    "minlength": "Your username is required to be at least {{min}} characters.",
+                    "maxlength": "Your username cannot be longer than {{max}} characters.",
                     "pattern": "Your username can only contain letters and digits."
                 }
             },
