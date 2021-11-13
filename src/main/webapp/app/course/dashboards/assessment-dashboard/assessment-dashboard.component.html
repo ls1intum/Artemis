@@ -123,8 +123,8 @@
                         </jhi-tutor-participation-graph>
                     </td>
                     <td>
-                        <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ </span>
-                        <span *ngIf="exercise.averageRating === undefined"> --- </span>
+                        <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                        <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">

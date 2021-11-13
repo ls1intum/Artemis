@@ -207,6 +207,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private Double averageRatingTransient;
 
+    @Transient
+    private Long numberOfRatingsTransient;
+
     public String getTitle() {
         return title;
     }
@@ -888,6 +891,14 @@ public abstract class Exercise extends DomainObject {
 
     public void setAverageRating(Double averageRating) {
         this.averageRatingTransient = averageRating;
+    }
+
+    public Long getNumberOfRatings() {
+        return numberOfRatingsTransient;
+    }
+
+    public void setNumberOfRatings(Long numberOfRatings) {
+        this.numberOfRatingsTransient = numberOfRatings;
     }
 
     public Boolean getPresentationScoreEnabled() {

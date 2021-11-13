@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Rating;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
 
 /**
  * Spring Data JPA repository for the Rating entity.
@@ -33,13 +34,13 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
     @Query("""
-                SELECT avg(ra.rating)
+                SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount(avg(ra.rating), count(*))
                 FROM
-                    Result r join r.participation p join p.exercise e join r.assessor a
+                    Result r join r.participation p join p.exercise e
                     LEFT JOIN FETCH Rating ra on ra.result = r.id
                 WHERE e.id = :#{#exerciseId}
             """)
-    Double averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);
+    ExerciseRatingCount averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Count all ratings given to submissions for the given course.

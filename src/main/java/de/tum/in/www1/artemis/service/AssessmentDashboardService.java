@@ -125,7 +125,9 @@ public class AssessmentDashboardService {
                     });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
-            exercise.setAverageRating(ratingService.averageRatingByExerciseId(exercise.getId()));
+            var exerciseRating = ratingService.averageRatingByExerciseId(exercise.getId());
+            exercise.setAverageRating(exerciseRating.averageRating());
+            exercise.setNumberOfRatings(exerciseRating.numberOfRatings());
 
             log.debug("Finished >> assessmentDashboardLoopIteration << call for exercise {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start2));
         }
