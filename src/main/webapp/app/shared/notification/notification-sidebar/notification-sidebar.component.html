@@ -16,7 +16,7 @@
                 <a class="ps-2" [routerLink]="['/user-settings/notifications']" (click)="toggleSidebar()">
                     <fa-icon class="ng-fa-icon" [icon]="'cog'"></fa-icon>
                 </a>
-                <h5 class="mb-3 text-center">
+                <h5 class="mb-3 text-center fw-medium">
                     {{ 'artemisApp.notification.notifications' | artemisTranslate }}
                 </h5>
                 <button class="close header-icon border-0 bg-transparent pe-2" (click)="toggleSidebar()">
@@ -35,7 +35,7 @@
             </div>
             <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
                 <div>
-                    <h5>
+                    <h5 class="fw-medium">
                         {{ notification.title }}
                         <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>

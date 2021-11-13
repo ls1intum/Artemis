@@ -2,19 +2,19 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { PlagiarismMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
+import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -39,8 +39,8 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
-            declarations: [MockPipe(ArtemisDatePipe)],
+            imports: [],
+            declarations: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(ModelingSubmissionViewerComponent), MockComponent(TextSubmissionViewerComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

@@ -608,7 +608,7 @@ public class SubmissionService {
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
 
         if (!isAtLeastInstructor) {
-            complaints = complaints.stream().filter(complaint -> !complaint.getResult().getAssessor().equals(userRepository.getUser())).toList();
+            complaints = complaints.stream().filter(complaint -> !userRepository.getUser().equals(complaint.getResult().getAssessor())).toList();
         }
 
         return getSubmissionsWithComplaintsFromComplaints(complaints);
@@ -624,7 +624,8 @@ public class SubmissionService {
         // get all requests which belong to the exercise
         List<Complaint> requests = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
 
-        requests = requests.stream().filter(complaint -> complaint.getResult().getAssessor().equals(userRepository.getUser())).toList();
+        requests = requests.stream().filter(complaint -> complaint.getResult().getAssessor() == null || complaint.getResult().getAssessor().equals(userRepository.getUser()))
+                .toList();
 
         return getSubmissionsWithComplaintsFromComplaints(requests);
     }

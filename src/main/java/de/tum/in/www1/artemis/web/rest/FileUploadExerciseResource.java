@@ -179,7 +179,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
-        FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
+        final FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
@@ -188,7 +188,8 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(updatedExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
+                instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }
