@@ -551,7 +551,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final TextExercise exercise, final List<Feedback> feedbacks) {
         if (textBlocks != null) {
-            Map<String, Feedback> feedbackMap = feedbacks.stream().collect(Collectors.toMap(Feedback::getReference, f -> f));
+            Map<String, Feedback> feedbackMap = feedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
             final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
                 tb.setSubmission(textSubmission);
