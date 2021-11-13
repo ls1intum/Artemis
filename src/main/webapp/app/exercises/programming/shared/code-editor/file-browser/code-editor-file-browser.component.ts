@@ -493,12 +493,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
+                        // Remove binary files as they can't be displayed in an editor
                         .filter(([filename]) => {
                             const fileSplit = filename.split('.');
                             // Either the file has no ending or the file ending is allowed
                             return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
                         })
+                        // Filter Readme file that was historically in the student's assignment repo
                         .filter(([value]) => !value.includes('README.md'))
+                        // Filter root folder
                         .filter(([value]) => value),
                 ),
             ),
@@ -511,11 +514,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
+                        // Remove binary files as they can't be displayed in an editor
                         .filter(([filename]) => {
                             const fileSplit = filename.split('.');
                             // Either the file has no ending or the file ending is allowed
                             return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
                         })
+                        // Filter Readme file that was historically in the student's assignment repo
                         .filter(([value]) => !value.includes('README.md')),
                 ),
             ),
