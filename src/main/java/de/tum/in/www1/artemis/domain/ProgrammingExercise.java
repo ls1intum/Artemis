@@ -14,12 +14,16 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 
 /**
  * A ProgrammingExercise.
@@ -68,9 +72,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private boolean showTestNamesToStudents;
 
-    @Column(name = "allow_complaints_for_automatic_assessments", table = "programming_exercise_details")
-    private boolean allowComplaintsForAutomaticAssessments;
-
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
@@ -100,6 +101,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("exercise")
     private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
 
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "submission_policy_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private SubmissionPolicy submissionPolicy;
+
     @Transient
     private boolean isLocalSimulationTransient;
 
@@ -111,7 +117,7 @@ public class ProgrammingExercise extends Exercise {
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
      * It is not persisted as this setting can not be changed afterwards.
-     * This is currently only supported for HASKELL on BAMBOO, thus the default value is false.
+     * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
     @Transient
     @JsonProperty
@@ -407,6 +413,14 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
+    public SubmissionPolicy getSubmissionPolicy() {
+        return this.submissionPolicy;
+    }
+
+    public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        this.submissionPolicy = submissionPolicy;
+    }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
@@ -539,14 +553,6 @@ public class ProgrammingExercise extends Exercise {
         this.showTestNamesToStudents = showTestNamesToStudents;
     }
 
-    public boolean getAllowComplaintsForAutomaticAssessments() {
-        return allowComplaintsForAutomaticAssessments;
-    }
-
-    public void setAllowComplaintsForAutomaticAssessments(boolean allowComplaintsForAutomaticAssessments) {
-        this.allowComplaintsForAutomaticAssessments = allowComplaintsForAutomaticAssessments;
-    }
-
     @Nullable
     public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
         return buildAndTestStudentSubmissionsAfterDueDate;
@@ -577,7 +583,7 @@ public class ProgrammingExercise extends Exercise {
 
     public boolean needsLockOperation() {
         return isExamExercise() || AssessmentType.AUTOMATIC != getAssessmentType() || getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                || allowComplaintsForAutomaticAssessments;
+                || getAllowComplaintsForAutomaticAssessments();
     }
 
     @Nullable
@@ -619,7 +625,7 @@ public class ProgrammingExercise extends Exercise {
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-        return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || allowComplaintsForAutomaticAssessments)
+        return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments())
                 && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 

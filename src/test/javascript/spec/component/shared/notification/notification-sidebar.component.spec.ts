@@ -8,21 +8,26 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,10 +38,25 @@ describe('Notification Sidebar Component', () => {
     let notificationService: NotificationService;
     let accountService: AccountService;
     let userService: UserService;
+    let userSettingsService: UserSettingsService;
 
     const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
     const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
+
+    const notificationSettingA: NotificationSetting = {
+        webapp: true,
+        email: false,
+        changed: false,
+        settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
+    };
+    const notificationSettingB: NotificationSetting = {
+        webapp: true,
+        email: false,
+        changed: false,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,
+    };
+    const receivedNotificationSettings: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
     const generateQueryResponse = (ns: Notification[]) => {
         return {
@@ -49,8 +69,8 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
-            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(FaIconComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -58,6 +78,7 @@ describe('Notification Sidebar Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useClass: MockUserService },
+                { provide: UserSettingsService, useClass: MockUserSettingsService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -68,6 +89,10 @@ describe('Notification Sidebar Component', () => {
                 notificationService = TestBed.inject(NotificationService);
                 accountService = TestBed.inject(AccountService);
                 userService = TestBed.inject(UserService);
+                userSettingsService = TestBed.inject(UserSettingsService);
+
+                const fake2 = sinon.fake.returns(of(receivedNotificationSettings));
+                sinon.replace(userSettingsService, 'loadSettings', fake2);
             });
     });
 
@@ -82,13 +107,14 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should query notifications', () => {
-            sinon.spy(notificationService, 'query');
+            sinon.spy(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
         });
 
         it('should subscribe to notification updates for user', () => {
             sinon.spy(notificationService, 'subscribeToNotificationUpdates');
+            sinon.mock(notificationService);
             notificationSidebarComponent.ngOnInit();
             expect(notificationService.subscribeToNotificationUpdates).to.have.been.calledOnce;
         });
@@ -172,25 +198,25 @@ describe('Notification Sidebar Component', () => {
         it('should not add already existing notifications', () => {
             notificationSidebarComponent.notifications = [notificationNow];
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'query', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
         });
 
         it('should update sorted notifications array after new notifications were loaded', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
-            sinon.replace(notificationService, 'query', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
             expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
             expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
         });
 
         it('should set total notification count to received X-Total-Count header', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'query', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
         });
 
@@ -213,9 +239,9 @@ describe('Notification Sidebar Component', () => {
         it('should load more notifications only if not all are already loaded', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.totalNotifications = 2;
-            sinon.spy(notificationService, 'query');
+            sinon.spy(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).not.to.be.called;
+            expect(notificationService.queryNotificationsFilteredBySettings).not.to.be.called;
         });
     });
 
@@ -223,9 +249,9 @@ describe('Notification Sidebar Component', () => {
         it('should evaluate recent notifications correctly', () => {
             notificationSidebarComponent.lastNotificationRead = dayjs().subtract(1, 'day');
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'query', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.be.called;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.be.called;
             expect(notificationSidebarComponent.recentNotificationCount).to.be.equal(1);
         });
 
@@ -266,6 +292,28 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponentFixture.detectChanges();
             const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
             expect(errorMessage).to.be.not.null;
+        });
+    });
+
+    describe('Reset Sidebar', () => {
+        it('should listen and catch notification settings change and reset side bar', () => {
+            // preparation to test reloading
+            const lastNotificationRead = dayjs();
+            const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
+            sinon.replace(accountService, 'getAuthenticationState', fake);
+            notificationSidebarComponent.ngOnInit();
+
+            // fake status before reloading the side bar
+            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.totalNotifications = notifications.length;
+            const priorNumberOfNotifications = notifications.length;
+
+            // reload the side bar
+            userSettingsService.sendApplyChangesEvent(reloadNotificationSideBarMessage);
+
+            // test the reloading behavior
+            expect(userSettingsService.loadSettings).to.have.been.calledTwice;
+            expect(priorNumberOfNotifications).not.to.be.equal(notificationSidebarComponent.totalNotifications);
         });
     });
 });

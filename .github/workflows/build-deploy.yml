@@ -33,8 +33,8 @@ on:
 # Keep in sync with codeql-analysis.yml and test.yml
 env:
   CI: true
-  node: 14.x
-  java: 16
+  node: 16.x
+  java: 17
 
 jobs:
 
@@ -55,6 +55,8 @@ jobs:
         cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
+      env:
+        NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -88,7 +90,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const opts = github.issues.listForRepo.endpoint.merge({
+          const opts = github.rest.issues.listForRepo.endpoint.merge({
             owner: context.repo.owner,
             repo: context.repo.repo,
             labels: ['lock:${{ matrix.environment }}']
@@ -99,7 +101,7 @@ jobs:
           } else if (issues.length > 1) {
             core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
           } else if (context.issue && context.issue.number) {
-            await github.issues.addLabels({
+            await github.rest.issues.addLabels({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -115,22 +117,16 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    - name: Install vpnc
-      run: sudo apt-get install vpnc
-    # Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
-    - name: Configure LRZ VPN
-      run: |
-        echo "${{ secrets.LRZ_VPN_CONFIG }}" > lrz.conf
-        sudo mkdir -p /etc/vpnc
-        sudo mv lrz.conf /etc/vpnc/
-        sudo chmod 600 /etc/vpnc/lrz.conf
+    - name: Install OpenVPN
+      run: sudo apt-get --assume-yes --no-install-recommends install openvpn
+    # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
+    - name: Configure LRZ eduVPN
+      run: echo "${{ secrets.LRZ_OVPN_CONFIG }}" > lrz.ovpn
     - name: Connect VPN
-      run: sudo vpnc lrz
-    - name: Ping sophos.lrz.de (only accessible inside MWN)
-      id: vpn-test
-      run: |
-        ping -c 5 sophos.lrz.de
-        echo "::set-output name=success::true"
+      run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
+    - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
+      run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
+      timeout-minutes: 2
 
     # Configure SSH Key
     - name: Setup SSH Keys and known_hosts
@@ -167,6 +163,6 @@ jobs:
     # Always disconnect from VPN
     - name: Disconncet VPN
       run: |
-        sudo vpnc-disconnect
-        sudo rm /etc/vpnc/lrz.conf
-      if: ${{ always() && (steps.vpn-test.outputs.success == 'true') }}
+        sudo killall openvpn
+        rm lrz.ovpn
+      if: always()

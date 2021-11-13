@@ -43,6 +43,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         TextExercise newExercise = copyTextExerciseBasis(importedExercise);
+        newExercise.setKnowledge(templateExercise.getKnowledge());
         textExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;

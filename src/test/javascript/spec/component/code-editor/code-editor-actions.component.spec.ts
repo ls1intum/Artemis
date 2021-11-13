@@ -1,22 +1,13 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
-
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -26,9 +17,11 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockModule } from 'ng-mocks';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;
@@ -36,13 +29,13 @@ describe('CodeEditorActionsComponent', () => {
     let debugElement: DebugElement;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
-    let updateFilesStub: SinonStub;
-    let commitStub: SinonStub;
+    let updateFilesStub: jest.SpyInstance;
+    let commitStub: jest.SpyInstance;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, FeatureToggleModule],
-            declarations: [CodeEditorActionsComponent],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(AceEditorModule)],
+            declarations: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -59,23 +52,22 @@ describe('CodeEditorActionsComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
-                updateFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
+                updateFilesStub = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles');
                 codeEditorRepositoryService = debugElement.injector.get(CodeEditorRepositoryService);
-                commitStub = stub(codeEditorRepositoryService, 'commit');
+                commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
             });
     });
 
     afterEach(() => {
-        updateFilesStub.restore();
-        commitStub.restore();
+        jest.restoreAllMocks();
     });
 
     it('should show refresh and submit button without any inputs', () => {
         fixture.detectChanges();
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
         const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
-        expect(submitButton).to.exist;
-        expect(refreshButton).to.exist;
+        expect(submitButton).not.toBe(null);
+        expect(refreshButton).not.toBe(null);
     });
 
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
@@ -105,8 +97,8 @@ describe('CodeEditorActionsComponent', () => {
             const commitButton = fixture.debugElement.query(By.css('#submit_button'));
             const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
 
-            expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
-            expect(!refreshButton.nativeElement.disabled).to.equal(enableRefreshButton);
+            expect(!commitButton.nativeElement.disabled).toEqual(enableCommitButton);
+            expect(!refreshButton.nativeElement.disabled).toEqual(enableRefreshButton);
         });
     });
 
@@ -119,33 +111,33 @@ describe('CodeEditorActionsComponent', () => {
         comp.isBuilding = true;
         fixture.detectChanges();
         const commitButtonFeedbackAfterStartBuild = commitButton.nativeElement.innerHTML;
-        expect(commitButtonFeedbackAfterStartBuild).to.be.equal(commitButtonFeedbackBeforeStartBuild);
+        expect(commitButtonFeedbackAfterStartBuild).toEqual(commitButtonFeedbackBeforeStartBuild);
     });
 
     it('should call repositoryFileService to save unsavedFiles and emit result on success', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const savedFilesResult: { [fileName: string]: null } = { fileName: null };
-        const onSavedFilesSpy = spy(comp.onSavedFiles, 'emit');
+        const onSavedFilesSpy = jest.spyOn(comp.onSavedFiles, 'emit');
         const saveObservable = new Subject<typeof savedFilesResult>();
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
         comp.unsavedFiles = unsavedFiles;
         fixture.detectChanges();
 
-        updateFilesStub.returns(saveObservable);
+        updateFilesStub.mockReturnValue(saveObservable);
 
         comp.onSave();
 
         // wait for save result
-        expect(comp.editorState).to.be.equal(EditorState.SAVING);
+        expect(comp.editorState).toEqual(EditorState.SAVING);
 
         fixture.detectChanges();
 
         // receive result for save
         saveObservable.next(savedFilesResult);
-        expect(comp.editorState).to.be.equal(EditorState.SAVING);
-        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
-        expect(onSavedFilesSpy).to.have.been.calledOnceWith(savedFilesResult);
+        expect(comp.editorState).toEqual(EditorState.SAVING);
+        expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
+        expect(onSavedFilesSpy).toHaveBeenCalledWith(savedFilesResult);
 
         fixture.detectChanges();
     });
@@ -153,27 +145,27 @@ describe('CodeEditorActionsComponent', () => {
     it('should call repositoryFileService to save unsavedFiles and emit an error on failure', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const errorResponse = { error: 'fatalError' };
-        const onErrorSpy = spy(comp.onError, 'emit');
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         const saveObservable = new Subject<typeof errorResponse>();
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
         comp.unsavedFiles = unsavedFiles;
         fixture.detectChanges();
 
-        updateFilesStub.returns(saveObservable);
+        updateFilesStub.mockReturnValue(saveObservable);
 
         comp.onSave();
 
         // waiting for save result
-        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
-        expect(comp.editorState).to.be.equal(EditorState.SAVING);
+        expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
+        expect(comp.editorState).toEqual(EditorState.SAVING);
 
         fixture.detectChanges();
 
         // receive error for save
         saveObservable.error(errorResponse);
-        expect(onErrorSpy).to.have.been.calledOnceWith('saveFailed');
-        expect(comp.editorState).to.be.equal(EditorState.UNSAVED_CHANGES);
+        expect(onErrorSpy).toHaveBeenCalledWith('saveFailed');
+        expect(comp.editorState).toEqual(EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
     });
 
@@ -185,89 +177,88 @@ describe('CodeEditorActionsComponent', () => {
         comp.unsavedFiles = {};
         fixture.detectChanges();
 
-        commitStub.returns(commitObservable);
+        commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).to.be.false;
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         // start commit, wait for result
         commitButton.nativeElement.click();
-        expect(commitStub).to.have.been.calledOnceWithExactly();
-        expect(comp.isBuilding).to.be.false;
-        expect(comp.commitState).to.equal(CommitState.COMMITTING);
+        expect(commitStub).toHaveBeenNthCalledWith(1);
+        expect(comp.isBuilding).toBe(false);
+        expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).toBe(true);
 
-        // commit result returns
+        // commit result mockReturnValue
         commitObservable.next(null);
-        expect(comp.isBuilding).to.be.true;
-        expect(comp.commitState).to.equal(CommitState.CLEAN);
+        expect(comp.isBuilding).toBe(true);
+        expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.false;
+        expect(commitButton.nativeElement.disabled).toBe(false);
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
         const commitObservable = new Subject<void>();
-        const onErrorSpy = spy(comp.onError, 'emit');
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.CLEAN;
         comp.isBuilding = false;
         comp.unsavedFiles = {};
         fixture.detectChanges();
 
-        commitStub.returns(commitObservable);
+        commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).to.be.false;
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         // start commit, wait for result
         commitButton.nativeElement.click();
-        expect(commitStub).to.have.been.calledOnceWithExactly();
-        expect(comp.isBuilding).to.be.false;
-        expect(comp.commitState).to.equal(CommitState.COMMITTING);
+        expect(commitStub).toHaveBeenNthCalledWith(1);
+        expect(comp.isBuilding).toBe(false);
+        expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).toBe(true);
 
-        // commit result returns an error
+        // commit result mockReturnValue an error
         commitObservable.error('error!');
-        expect(comp.isBuilding).to.be.false;
-        expect(comp.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        expect(onErrorSpy).to.have.been.calledOnceWithExactly('commitFailed');
+        expect(comp.isBuilding).toBe(false);
+        expect(comp.commitState).toEqual(CommitState.UNCOMMITTED_CHANGES);
+        expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'commitFailed');
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.false;
+        expect(commitButton.nativeElement.disabled).toBe(false);
     });
 
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const saveObservable = new Subject<null>();
-        const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
+        const saveChangedFilesStub = jest.spyOn(comp, 'saveChangedFiles');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
 
         comp.unsavedFiles = unsavedFiles;
-        comp.saveChangedFiles = saveChangedFilesStub;
         fixture.detectChanges();
 
-        saveChangedFilesStub.returns(saveObservable);
+        saveChangedFilesStub.mockReturnValue(saveObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).to.be.false;
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         // unsaved changes exist, needs to save files first
         commitButton.nativeElement.click();
 
-        expect(commitStub).to.not.have.been.called;
-        expect(saveChangedFilesStub).to.have.been.calledOnce;
-        expect(comp.commitState).to.equal(CommitState.COMMITTING);
+        expect(commitStub).not.toHaveBeenCalled();
+        expect(saveChangedFilesStub).toHaveBeenCalled;
+        expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         // save + commit completed
         saveObservable.next(null);
-        expect(comp.commitState).to.equal(CommitState.COMMITTING);
+        expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         // Simulate that all files were saved
         comp.ngOnChanges({
@@ -276,11 +267,11 @@ describe('CodeEditorActionsComponent', () => {
 
         tick();
 
-        expect(comp.isBuilding).to.be.true;
-        expect(comp.commitState).to.equal(CommitState.CLEAN);
+        expect(comp.isBuilding).toBe(true);
+        expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.false;
+        expect(commitButton.nativeElement.disabled).toBe(false);
 
         fixture.destroy();
         flush();
@@ -295,13 +286,13 @@ describe('CodeEditorActionsComponent', () => {
         comp.unsavedFiles = unsavedFiles;
         fixture.detectChanges();
 
-        updateFilesStub.returns(saveObservable);
+        updateFilesStub.mockReturnValue(saveObservable);
 
         tick(1000 * 31);
 
         // receive result for save
         saveObservable.next(savedFilesResult);
-        expect(comp.editorState).to.be.equal(EditorState.SAVING);
+        expect(comp.editorState).toEqual(EditorState.SAVING);
 
         fixture.detectChanges();
         fixture.destroy();
@@ -317,7 +308,7 @@ describe('CodeEditorActionsComponent', () => {
         comp.unsavedFiles = unsavedFiles;
         fixture.detectChanges();
 
-        updateFilesStub.returns(saveObservable);
+        updateFilesStub.mockReturnValue(saveObservable);
 
         // receive result for save
         saveObservable.next(savedFilesResult);
@@ -325,6 +316,6 @@ describe('CodeEditorActionsComponent', () => {
         fixture.detectChanges();
         fixture.destroy();
 
-        expect(comp.editorState).to.be.equal(EditorState.SAVING);
+        expect(comp.editorState).toEqual(EditorState.SAVING);
     });
 });

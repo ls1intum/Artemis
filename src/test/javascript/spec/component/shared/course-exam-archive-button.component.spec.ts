@@ -70,6 +70,11 @@ describe('Course Exam Archive Button Component', () => {
             comp.archiveMode = 'Course';
         });
 
+        afterEach(() => {
+            // Otherwise ngOnDestroy crashes
+            comp.course = { id: 123 };
+        });
+
         it('should just return', fakeAsync(() => {
             comp.ngOnInit();
             tick();

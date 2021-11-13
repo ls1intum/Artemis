@@ -1,15 +1,19 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -19,12 +23,14 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -185,5 +191,46 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(AssessmentType.class)
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldAllowTestCaseWeightSumZeroManualAssessment(AssessmentType assessmentType) throws Exception {
+        // for non-automatic exercises the update succeeds and triggers an update
+        if (assessmentType != AssessmentType.AUTOMATIC) {
+            bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+            bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
+        }
+
+        programmingExercise.setAssessmentType(assessmentType);
+        programmingExerciseRepository.save(programmingExercise);
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1"));
+        feedbacks.add(new Feedback().text("test2"));
+        feedbacks.add(new Feedback().text("test3"));
+        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCaseDTO> testCaseDTOs = testCases.stream().map(testCase -> {
+            final ProgrammingExerciseTestCaseDTO testCaseDTO = new ProgrammingExerciseTestCaseDTO();
+            testCaseDTO.setId(testCase.getId());
+            testCaseDTO.setBonusMultiplier(testCase.getBonusMultiplier());
+            testCaseDTO.setBonusPoints(testCase.getBonusPoints());
+            testCaseDTO.setVisibility(testCase.getVisibility());
+            testCaseDTO.setWeight(0.0);
+            return testCaseDTO;
+        }).collect(Collectors.toSet());
+
+        if (assessmentType == AssessmentType.AUTOMATIC) {
+            assertThatThrownBy(() -> testCaseService.update(programmingExercise.getId(), testCaseDTOs)).isInstanceOf(BadRequestAlertException.class)
+                    .hasMessageContaining("The sum of all test case weights is 0 or below.");
+        }
+        else {
+            Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
+            assertThat(updated).hasSize(3);
+            assertThat(updated).allMatch(testCase -> testCase.getWeight() == 0.0);
+        }
     }
 }

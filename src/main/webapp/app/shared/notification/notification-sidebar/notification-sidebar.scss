@@ -1,3 +1,5 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 .light-button {
     border: 0;
     background-color: transparent;
@@ -34,9 +36,6 @@
     }
     .header {
         height: 85px;
-        .close {
-            right: 16px;
-        }
     }
     #notification-sidebar-container {
         height: calc(100vh - 85px);
@@ -60,5 +59,9 @@
     .no-notifications {
         display: block;
         padding: 20px 16px;
+    }
+
+    .ng-fa-icon {
+        color: $artemis-dark;
     }
 }

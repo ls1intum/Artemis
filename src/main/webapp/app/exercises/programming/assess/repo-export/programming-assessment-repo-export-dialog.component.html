@@ -42,7 +42,7 @@
         <!--
         Only show download all checkbox for instructors & admins.
         -->
-        <ng-container *ngIf="isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises">
+        <ng-container *ngIf="exercise.isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
@@ -66,6 +66,7 @@
                 <jhi-date-time-picker
                     [(ngModel)]="this.repositoryExportOptions.filterLateSubmissionsDate"
                     [disabled]="!this.repositoryExportOptions.filterLateSubmissions"
+                    [shouldDisplayTimeZoneWarning]="false"
                     name="filterLateSubmissionsDate"
                 ></jhi-date-time-picker>
             </div>
@@ -90,7 +91,7 @@
                 <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits">Combine all changes after instructor into one commit</strong>
             </label>
         </div>
-        <ng-container *ngIf="isAtLeastInstructor">
+        <ng-container *ngIf="exercise.isAtLeastInstructor">
             <div class="checkbox">
                 <label class="control-label">
                     <input type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />

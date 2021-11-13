@@ -51,9 +51,9 @@ describe('Text exercise management', () => {
 
         // Create an example submission
         exampleSubmissions.clickCreateExampleSubmission();
-        cy.contains(exerciseTitle).should('be.visible');
-        cy.contains(problemStatement).should('be.visible');
-        cy.contains(exampleSolution).should('be.visible');
+        exampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
+        exampleSubmissionCreation.showsProblemStatement(problemStatement);
+        exampleSubmissionCreation.showsExampleSolution(exampleSolution);
         const submission = 'This is an\nexample\nsubmission';
         exampleSubmissionCreation.typeExampleSubmission(submission);
         exampleSubmissionCreation.clickCreateNewExampleSubmission().its('response.body.submission.text').should('eq', submission);
@@ -71,11 +71,11 @@ describe('Text exercise management', () => {
         const exerciseTitle = 'Text exercise' + generateUUID();
 
         beforeEach(() => {
+            cy.login(users.getAdmin(), '/');
             courseManagement.createTextExercise({ course }, exerciseTitle);
         });
 
         it('Deletes an existing text exercise', () => {
-            cy.login(users.getAdmin(), '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
             courseManagementExercises.clickDeleteExercise(exerciseTitle);

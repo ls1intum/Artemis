@@ -7,6 +7,7 @@ import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_US
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-register',
@@ -15,6 +16,11 @@ import { TranslateService } from '@ngx-translate/core';
 export class RegisterComponent implements OnInit, AfterViewInit {
     @ViewChild('login', { static: false })
     login?: ElementRef;
+
+    readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
+    readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
+    readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 
     doNotMatch = false;
     error = false;
@@ -28,10 +34,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     registerForm = this.fb.group({
         firstName: ['', [Validators.required, Validators.minLength(2)]],
         lastName: ['', [Validators.required, Validators.minLength(2)]],
-        login: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(this.usernamePattern)]],
+        login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH), Validators.pattern(this.usernamePattern)]],
         email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
+        password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+        confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
     });
     isRegistrationEnabled = false;
     allowedEmailPattern?: string;

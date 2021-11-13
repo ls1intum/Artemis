@@ -73,6 +73,15 @@
                     >
                         <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
                     </a>
+                    <button
+                        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        (click)="checkConsistencies(programmingExercise)"
+                        class="btn btn-outline-primary btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="'check-double'"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                    </button>
                 </div>
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
@@ -226,6 +235,28 @@
                         <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
                     </dd>
                 </ng-container>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
+                <dd>
+                    <span
+                        jhiTranslate="{{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
+                                (!programmingExercise.submissionPolicy ? 'none' : programmingExercise.submissionPolicy.type!) +
+                                '.title'
+                        }}"
+                    ></span>
+                </dd>
+                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission Limit</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined && programmingExercise.submissionPolicy.exceedingPenalty">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
                 <dd>
                     <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
@@ -298,10 +329,14 @@
                     </div>
                 </dd>
                 <dt>
-                    <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories">Auxiliary Repositories</span>
+                    <span
+                        *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories"
+                        jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories"
+                        >Auxiliary Repositories</span
+                    >
                 </dt>
                 <dd></dd>
-                <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
+                <div *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
                     <ul>
                         <li *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <dt>
@@ -319,7 +354,7 @@
                                     [auxiliaryRepositoryId]="auxiliaryRepository.id!"
                                 ></jhi-programming-exercise-instructor-repo-download>
                                 <div class="auxiliaryRepositoryDescription">
-                                    <span *ngIf="auxiliaryRepository.checkoutDirectory != undefined; else noCheckoutDirectorySet"
+                                    <span *ngIf="auxiliaryRepository.checkoutDirectory; else noCheckoutDirectorySet"
                                         >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
                                     </span>
                                     <ng-template #noCheckoutDirectorySet>

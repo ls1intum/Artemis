@@ -20,6 +20,7 @@ export enum FeedbackType {
 }
 
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
+export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -84,6 +85,13 @@ export class Feedback implements BaseEntity {
         return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
     }
 
+    public static isSubmissionPolicyFeedback(that: Feedback): boolean {
+        if (!that.text) {
+            return false;
+        }
+        return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+    }
+
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != undefined && that.detailText.length > 0;
     }
@@ -126,7 +134,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction.id) {
+        if (dropInfo && dropInfo.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {

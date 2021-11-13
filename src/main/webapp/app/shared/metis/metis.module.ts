@@ -14,7 +14,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
-import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -28,6 +28,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { PostingContentComponent } from './posting-content/posting-content.components';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
+import { PostingContentMarkdownLinebreakPipe } from '../pipes/posting-content-markdown-linebreak.pipe';
 
 @NgModule({
     imports: [
@@ -63,6 +64,7 @@ import { PostingContentPartComponent } from 'app/shared/metis/posting-content/po
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
+        PostingContentMarkdownLinebreakPipe,
     ],
     exports: [
         PostingsThreadComponent,
@@ -81,6 +83,7 @@ import { PostingContentPartComponent } from 'app/shared/metis/posting-content/po
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
+        PostingContentMarkdownLinebreakPipe,
     ],
 })
 export class MetisModule {}

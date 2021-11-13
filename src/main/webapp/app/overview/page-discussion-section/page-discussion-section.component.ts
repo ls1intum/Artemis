@@ -16,7 +16,7 @@ import { HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-page-discussion-section',
     templateUrl: './page-discussion-section.component.html',
-    styleUrls: ['./page-discussion-section.scss'],
+    styleUrls: ['./page-discussion-section.component.scss'],
     providers: [MetisService],
 })
 export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -124,7 +124,7 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
     }
 
     /**
@@ -143,7 +143,7 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 360, height: 0 },
+                        min: { width: 375, height: 0 },
                         max: { width: 600, height: 4000 },
                     }),
                 ],

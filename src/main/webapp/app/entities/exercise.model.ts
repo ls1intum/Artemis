@@ -11,7 +11,7 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -75,6 +75,7 @@ export abstract class Exercise implements BaseEntity {
     public maxPoints?: number;
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
+    public allowComplaintsForAutomaticAssessments?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -133,6 +134,7 @@ export abstract class Exercise implements BaseEntity {
         this.assessmentDueDateError = false;
         this.dueDateError = false;
         this.presentationScoreEnabled = false; // default value;
+        this.allowComplaintsForAutomaticAssessments = false; // default value;
     }
 
     /**

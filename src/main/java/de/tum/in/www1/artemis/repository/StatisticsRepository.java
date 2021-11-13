@@ -349,11 +349,11 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 post.creationDate, count(post.id)
                 )
             from Post post left join post.lecture lectures left join post.exercise exercises
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
             group by post.creationDate
             order by post.creationDate asc
             """)
-    List<StatisticsEntry> getQuestionsAskedForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getPostsForCourseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
 
     @Query("""
             select
@@ -365,21 +365,22 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             group by post.creationDate
             order by post.creationDate asc
             """)
-    List<StatisticsEntry> getQuestionsAskedForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getPostsForExerciseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
+            @Param("exerciseId") Long exerciseId);
 
     @Query("""
             select count(post)
             from Post post left join post.exercise exercise
             where exercise.id = :#{#exerciseId}
             """)
-    long getNumberOfQuestionsAskedForExercise(@Param("exerciseId") Long exerciseId);
+    long getNumberOfExercisePosts(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select count(distinct post.id)
-            from Post post left join post.exercise exercise left join post.answers answers
-            where exercise.id = :#{#exerciseId} and answers.tutorApproved = true
+            from AnswerPost answer left join answer.post post left join post.exercise exercise
+            where exercise.id = :#{#exerciseId} and answer.resolvesPost = true
             """)
-    long getNumberOfQuestionsAnsweredForExercise(@Param("exerciseId") Long exerciseId);
+    long getNumberOfResolvedExercisePosts(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select
@@ -387,11 +388,11 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 answer.creationDate, count(answer.id)
                 )
             from AnswerPost answer left join answer.post post left join post.lecture lectures left join post.exercise exercises
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
             group by answer.creationDate
             order by answer.creationDate asc
             """)
-    List<StatisticsEntry> getQuestionsAnsweredForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getResolvedCoursePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
 
     @Query("""
             select
@@ -399,11 +400,11 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 answer.creationDate, count(answer.id)
                 )
             from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and exercise.course.id = :#{#exerciseId}
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and exercise.course.id = :#{#exerciseId}
             group by answer.creationDate
             order by answer.creationDate asc
             """)
-    List<StatisticsEntry> getQuestionsAnsweredForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
+    List<StatisticsEntry> getResolvedExercisePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseId") Long exerciseId);
 
     @Query("""
@@ -576,21 +577,21 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             case POSTS -> {
                 switch (view) {
                     case COURSE -> {
-                        return getQuestionsAskedForCourse(startDate, endDate, entityId);
+                        return getPostsForCourseInDateRange(startDate, endDate, entityId);
                     }
                     case EXERCISE -> {
-                        return getQuestionsAskedForExercise(startDate, endDate, entityId);
+                        return getPostsForExerciseInDateRange(startDate, endDate, entityId);
                     }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
             }
-            case ANSWERED_POSTS -> {
+            case RESOLVED_POSTS -> {
                 switch (view) {
                     case COURSE -> {
-                        return getQuestionsAnsweredForCourse(startDate, endDate, entityId);
+                        return getResolvedCoursePostsInDateRange(startDate, endDate, entityId);
                     }
                     case EXERCISE -> {
-                        return getQuestionsAnsweredForExercise(startDate, endDate, entityId);
+                        return getResolvedExercisePostsInDateRange(startDate, endDate, entityId);
                     }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }

@@ -1,4 +1,5 @@
-import { POST, BASE_API, GET } from '../../constants';
+import { BASE_API, GET, POST } from '../../constants';
+import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the course overview page (/courses/*).
@@ -8,15 +9,28 @@ export class CourseOverviewPage {
         return cy.get('.course-body-container').contains(exerciseName).parents('.course-exercise-row');
     }
 
-    startExercise(exerciseName: string) {
+    startExercise(exerciseName: string, exerciseType: CypressExerciseType) {
         cy.intercept(POST, BASE_API + 'courses/*/exercises/*/participations').as('participateInExerciseQuery');
-        this.getExerciseCardRootElement(exerciseName).find('.start-exercise').click();
+        switch (exerciseType) {
+            case CypressExerciseType.MODELING:
+                this.getExerciseCardRootElement(exerciseName).find('.btn-sm').should('contain.text', 'Start exercise').click();
+                break;
+            case CypressExerciseType.TEXT:
+                this.getExerciseCardRootElement(exerciseName).find('.start-exercise').click();
+                break;
+            default:
+                throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
+        }
         cy.wait('@participateInExerciseQuery');
     }
 
-    openRunningProgrammingExercise(exerciseName: string) {
+    openRunningExercise(exerciseTitle: string) {
+        this.getExerciseCardRootElement(exerciseTitle).find('[buttonicon="folder-open"]').click();
+    }
+
+    openRunningProgrammingExercise(exerciseTitle: string) {
         cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-        this.getExerciseCardRootElement(exerciseName).find('[buttonicon="folder-open"]').click();
+        this.openRunningExercise(exerciseTitle);
         cy.wait('@initialQuery').wait(2000);
     }
 

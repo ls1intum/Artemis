@@ -30,6 +30,7 @@ export function newCourse(artemis) {
         registrationEnabled: false,
         maxComplaints: 3,
         maxComplaintTimeDays: 7,
+        accuracyOfScores: 1,
     };
 
     const res = artemis.post(COURSES, course);

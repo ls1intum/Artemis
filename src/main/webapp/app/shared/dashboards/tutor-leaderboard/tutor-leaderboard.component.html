@@ -4,39 +4,39 @@
             <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" (sortChange)="sortRows()">
                 <th>#</th>
                 <th jhiSortBy="name">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.name' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.name' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="points">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.points' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.points' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="numberOfAssessments">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAssessments' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="numberOfAcceptedComplaints">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th *ngIf="!isExamMode" jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="numberOfComplaintResponses">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaintResponses' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th *ngIf="!isExamMode" jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="averageScore">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.averageScore' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.averageScore' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="averageRating">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.averageRating' | artemisTranslate }}</a>
+                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.averageRating' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
             </tr>
@@ -44,7 +44,15 @@
         <tbody>
             <tr *ngFor="let tutor of tutorsData; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ tutor.name }}</td>
+                <td>
+                    {{ tutor.name }}
+                    <fa-icon
+                        *ngIf="isAtLeastInstructor && tutor.hasIssuesWithPerformance"
+                        [icon]="'exclamation-triangle'"
+                        class="text-warning"
+                        ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
+                    ></fa-icon>
+                </td>
                 <td>{{ tutor.points }}</td>
                 <td>{{ tutor.numberOfAssessments }}</td>
                 <ng-container *ngIf="!isAtLeastInstructor; else atLeastInstructor">
@@ -85,8 +93,8 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
-                <td>{{ averageScorePercentage(tutor.averageScore) }}%</td>
-                <td>{{ tutor.averageRating.toFixed(1) }} ⭐</td>
+                <td>{{ tutor.averageScore.toFixed(1) }}%</td>
+                <td>{{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }})</td>
             </tr>
         </tbody>
     </table>
