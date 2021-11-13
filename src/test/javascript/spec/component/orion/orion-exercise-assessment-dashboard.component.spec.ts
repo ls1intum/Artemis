@@ -66,6 +66,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         expect(assessExerciseSpy).toHaveBeenCalledTimes(1);
         expect(assessExerciseSpy).toHaveBeenCalledWith(programmingExercise);
     });
+
     it('downloadSubmissionInOrion should call service', () => {
         const downloadSubmissionSpy = jest.spyOn(TestBed.inject(OrionAssessmentService), 'downloadSubmissionInOrion');
 
@@ -74,6 +75,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         expect(downloadSubmissionSpy).toHaveBeenCalledTimes(1);
         expect(downloadSubmissionSpy).toHaveBeenCalledWith(comp.exerciseId, programmingSubmission, 2);
     });
+
     it('ngOnInit should subscribe correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
         const stateObservable = new BehaviorSubject(orionState);
@@ -96,6 +98,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         expect(orionStateStub).toHaveBeenCalledTimes(1);
         expect(orionStateStub).toHaveBeenCalledWith();
     }));
+
     it('ngOnInit should deal with error correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
         const stateObservable = new BehaviorSubject(orionState);

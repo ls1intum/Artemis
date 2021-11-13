@@ -50,6 +50,7 @@ describe('OrionTutorAssessmentComponent', () => {
         expect(initializeAssessmentSpy).toHaveBeenCalledTimes(1);
         expect(initializeAssessmentSpy).toHaveBeenCalledWith(5, [{ id: 5 }, { id: 6 }]);
     });
+
     it('updateFeedback should call connector', () => {
         const updateFeedbackSpy = jest.spyOn(container, 'onUpdateFeedback');
 
@@ -58,6 +59,7 @@ describe('OrionTutorAssessmentComponent', () => {
         expect(updateFeedbackSpy).toHaveBeenCalledTimes(1);
         expect(updateFeedbackSpy).toHaveBeenCalledWith([{ id: 1 }]);
     });
+
     it('updateFeedback should throw error', () => {
         const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
 
@@ -66,6 +68,7 @@ describe('OrionTutorAssessmentComponent', () => {
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.orion.assessment.submissionIdDontMatch');
     });
+
     it('openNextSubmission should call service', () => {
         const sendSubmissionToOrionCancellableSpy = jest.spyOn(TestBed.inject(OrionAssessmentService), 'sendSubmissionToOrionCancellable');
 

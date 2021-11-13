@@ -73,6 +73,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
     it('should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
         const stateObservable = new BehaviorSubject({ opened: exercise.id });
         comp.exercise = exercise;
@@ -87,6 +88,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
     it('should clone the correct repository in the IDE', () => {
         const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
         const programmingExercise = { id: 42, title: 'Test Title' } as Exercise;
@@ -98,6 +100,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         expect(cloneSpy).toHaveBeenCalledTimes(1);
         expect(cloneSpy).toHaveBeenCalledWith('testUrl', programmingExercise);
     });
+
     it('should submit the changes and then forward the build results on submit', () => {
         comp.exercise = exercise;
         comp.submitChanges();
@@ -107,11 +110,13 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         // asserts forwardBuild has been called directly after submit
         expect(forwardBuildSpy.mock.invocationCallOrder[0]).toBe(submitSpy.mock.invocationCallOrder[0] + 1);
     });
+
     it('isOfflineIdeAllowed should work', () => {
         comp.exercise = { allowOfflineIde: true } as any;
 
         expect(comp.isOfflineIdeAllowed).toBe(true);
     });
+
     it('should submit if stated in route', fakeAsync(() => {
         const stateObservable = new BehaviorSubject(ideState);
         comp.exercise = exercise;

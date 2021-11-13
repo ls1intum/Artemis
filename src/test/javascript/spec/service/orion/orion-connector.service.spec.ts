@@ -65,24 +65,28 @@ describe('OrionConnectorService', () => {
         expect((window as any).orionSharedUtilConnector.login).toHaveBeenCalledTimes(1);
         expect((window as any).orionSharedUtilConnector.login).toHaveBeenCalledWith('name', 'pwd');
     });
+
     it('should forward importParticipation', () => {
         serviceUnderTest.importParticipation('name', exercise);
 
         expect((window as any).orionExerciseConnector.importParticipation).toHaveBeenCalledTimes(1);
         expect((window as any).orionExerciseConnector.importParticipation).toHaveBeenCalledWith('name', '{"id":42}');
     });
+
     it('should forward submit', () => {
         serviceUnderTest.submit();
 
         expect((window as any).orionVCSConnector.submit).toHaveBeenCalledTimes(1);
         expect((window as any).orionVCSConnector.submit).toHaveBeenCalledWith();
     });
+
     it('should forward log', () => {
         serviceUnderTest.log('log string');
 
         expect((window as any).orionSharedUtilConnector.log).toHaveBeenCalledTimes(1);
         expect((window as any).orionSharedUtilConnector.log).toHaveBeenCalledWith('log string');
     });
+
     it('should forward onExerciseOpened', () => {
         let localState: OrionState = {} as any;
         serviceUnderTest.state().subscribe((state) => {
@@ -94,18 +98,21 @@ describe('OrionConnectorService', () => {
         expect(localState).toContainEntry(['view', ExerciseView.TUTOR]);
         expect(localState).toContainEntry(['opened', 5]);
     });
+
     it('should forward onBuildStarted', () => {
         serviceUnderTest.onBuildStarted('problem');
 
         expect((window as any).orionBuildConnector.onBuildStarted).toHaveBeenCalledTimes(1);
         expect((window as any).orionBuildConnector.onBuildStarted).toHaveBeenCalledWith('problem');
     });
+
     it('should forward onBuildFinished', () => {
         serviceUnderTest.onBuildFinished();
 
         expect((window as any).orionBuildConnector.onBuildFinished).toHaveBeenCalledTimes(1);
         expect((window as any).orionBuildConnector.onBuildFinished).toHaveBeenCalledWith();
     });
+
     it('should forward onBuildFailed', () => {
         serviceUnderTest.onBuildFailed([{ fileName: 'file', row: 5, column: 4, text: 'error', type: 'error', timestamp: 0 } as Annotation]);
 
@@ -114,12 +121,14 @@ describe('OrionConnectorService', () => {
             '{"errors":{"file":[{"row":5,"column":4,"text":"error","type":"error","ts":0}]},"timestamp":0}',
         );
     });
+
     it('should forward onBuildFinished', () => {
         serviceUnderTest.onTestResult(true, 'name', 'message');
 
         expect((window as any).orionBuildConnector.onTestResult).toHaveBeenCalledTimes(1);
         expect((window as any).orionBuildConnector.onTestResult).toHaveBeenCalledWith(true, 'name', 'message');
     });
+
     it('should forward isBuilding', () => {
         let localState: OrionState = {} as any;
         serviceUnderTest.state().subscribe((state) => {
@@ -130,6 +139,7 @@ describe('OrionConnectorService', () => {
 
         expect(localState).toContainEntry(['building', true]);
     });
+
     it('should forward isCloning', () => {
         let localState: OrionState = {} as any;
         serviceUnderTest.state().subscribe((state) => {
@@ -140,6 +150,7 @@ describe('OrionConnectorService', () => {
 
         expect(localState).toContainEntry(['cloning', true]);
     });
+
     it('should navigate on startedBuildInOrion', () => {
         const navigateSpy = jest.spyOn(router, 'navigateByUrl');
 
@@ -148,6 +159,7 @@ describe('OrionConnectorService', () => {
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         expect(navigateSpy).toHaveBeenCalledWith('/courses/5/exercises/10?withIdeSubmit=true');
     });
+
     it('should throw error in updateAssessment if no component present', () => {
         const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
 
@@ -156,6 +168,7 @@ describe('OrionConnectorService', () => {
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.orion.assessment.updateFailed');
     });
+
     it('should forward in updateAssessment if component present', () => {
         serviceUnderTest.activeAssessmentComponent = { updateFeedback: jest.fn() } as any;
 
@@ -164,6 +177,7 @@ describe('OrionConnectorService', () => {
         expect(serviceUnderTest.activeAssessmentComponent!.updateFeedback).toHaveBeenCalledTimes(1);
         expect(serviceUnderTest.activeAssessmentComponent!.updateFeedback).toHaveBeenCalledWith(10, { id: 5 });
     });
+
     it('should forward editExercise', () => {
         let localState: OrionState = {} as any;
         serviceUnderTest.state().subscribe((state) => {
@@ -176,18 +190,21 @@ describe('OrionConnectorService', () => {
         expect((window as any).orionExerciseConnector.editExercise).toHaveBeenCalledTimes(1);
         expect((window as any).orionExerciseConnector.editExercise).toHaveBeenCalledWith('{"id":42}');
     });
+
     it('should forward selectRepository', () => {
         serviceUnderTest.selectRepository(REPOSITORY.SOLUTION);
 
         expect((window as any).orionVCSConnector.selectRepository).toHaveBeenCalledTimes(1);
         expect((window as any).orionVCSConnector.selectRepository).toHaveBeenCalledWith(REPOSITORY.SOLUTION);
     });
+
     it('should forward buildAndTestLocally', () => {
         serviceUnderTest.buildAndTestLocally();
 
         expect((window as any).orionBuildConnector.buildAndTestLocally).toHaveBeenCalledTimes(1);
         expect((window as any).orionBuildConnector.buildAndTestLocally).toHaveBeenCalledWith();
     });
+
     it('should forward assessExercise', () => {
         let localState: OrionState = {} as any;
         serviceUnderTest.state().subscribe((state) => {
@@ -200,12 +217,14 @@ describe('OrionConnectorService', () => {
         expect((window as any).orionExerciseConnector.assessExercise).toHaveBeenCalledTimes(1);
         expect((window as any).orionExerciseConnector.assessExercise).toHaveBeenCalledWith('{"id":42}');
     });
+
     it('should forward downloadSubmission', () => {
         serviceUnderTest.downloadSubmission(5, 0, 'test');
 
         expect((window as any).orionExerciseConnector.downloadSubmission).toHaveBeenCalledTimes(1);
         expect((window as any).orionExerciseConnector.downloadSubmission).toHaveBeenCalledWith('5', '0', 'test');
     });
+
     it('should forward initializeAssessment', () => {
         const feedbacks = [{ id: 2, positive: false, detailText: 'abc' } as Feedback, { id: 3, positive: true, detailText: 'cde' } as Feedback];
         serviceUnderTest.initializeAssessment(5, feedbacks);

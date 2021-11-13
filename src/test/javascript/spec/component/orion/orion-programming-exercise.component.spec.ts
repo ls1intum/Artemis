@@ -44,6 +44,7 @@ describe('OrionProgrammingExerciseComponent', () => {
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
+
     it('editInIde should call connector', () => {
         const editExerciseSpy = jest.spyOn(orionConnectorService, 'editExercise');
         jest.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(new BehaviorSubject({ body: programmingExercise } as any));
@@ -53,6 +54,7 @@ describe('OrionProgrammingExerciseComponent', () => {
         expect(editExerciseSpy).toHaveBeenCalledTimes(1);
         expect(editExerciseSpy).toHaveBeenCalledWith(programmingExercise);
     });
+
     it('openOrionEditor should navigate to orion editor', () => {
         const navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
         comp.openOrionEditor({ ...programmingExercise, templateParticipation: { id: 1234 } });
@@ -60,6 +62,7 @@ describe('OrionProgrammingExerciseComponent', () => {
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         expect(navigateSpy).toHaveBeenCalledWith(['code-editor', 'ide', 456, 'admin', 1234]);
     });
+
     it('openOrionEditor with error', () => {
         const navigateStub = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => {
             throw 'test error';

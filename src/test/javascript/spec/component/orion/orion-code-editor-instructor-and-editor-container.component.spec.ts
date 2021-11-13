@@ -75,6 +75,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
         expect(selectRepositorySpy).toHaveBeenCalledTimes(1);
         expect(selectRepositorySpy).toHaveBeenCalledWith(REPOSITORY.TEST);
     });
+
     it('ngOnInit should subscribe to orionState', () => {
         const orionStateStub = jest.spyOn(orionConnectorService, 'state');
         const orionState = { opened: 40, building: false, cloning: false } as any;
@@ -86,6 +87,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
+
     it('buildLocally should call connector', () => {
         const buildLocallySpy = jest.spyOn(orionConnectorService, 'buildAndTestLocally');
         const isBuildingSpy = jest.spyOn(orionConnectorService, 'isBuilding');
@@ -97,6 +99,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
         expect(buildLocallySpy).toHaveBeenCalledTimes(1);
         expect(buildLocallySpy).toHaveBeenCalledWith();
     });
+
     it('submit should call connector', () => {
         const submitSpy = jest.spyOn(orionConnectorService, 'submit');
         const isBuildingSpy = jest.spyOn(orionConnectorService, 'isBuilding');

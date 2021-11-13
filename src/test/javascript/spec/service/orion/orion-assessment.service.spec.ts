@@ -69,6 +69,7 @@ describe('OrionAssessmentService', () => {
         expect(getSubmission).to.have.been.calledOnceWithExactly(16, true, 0);
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
     });
+
     it('downloadSubmissionInOrion with number should call send', () => {
         const sendSubmissionToOrion = stub(orionAssessmentService, <any>'sendSubmissionToOrion');
 
@@ -76,6 +77,7 @@ describe('OrionAssessmentService', () => {
 
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
     });
+
     it('sendSubmissionToOrion should convert and call connector', () => {
         const downloadSubmissionSpy = spy(orionConnectorService, 'downloadSubmission');
 
@@ -93,6 +95,7 @@ describe('OrionAssessmentService', () => {
 
         expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, 'testBase64');
     });
+
     it('sendSubmissionToOrion should convert and report error', () => {
         const alertErrorStub = stub(alertService, 'error');
 
@@ -137,6 +140,7 @@ describe('OrionAssessmentService', () => {
         expect(exportSubmissionStub).to.have.been.calledOnceWith(16, [1]);
         expect(readerStub).to.have.been.calledOnce;
     }
+
     it('should cancel lock correctly', fakeAsync(() => {
         const cancelStub = stub(TestBed.inject(ProgrammingAssessmentManualResultService), 'cancelAssessment');
         cancelStub.returns(new Observable());
