@@ -178,9 +178,10 @@ public class PlagiarismResource {
     /**
      * helper class for plagiarism statement update requests
      */
-    private static class PlagiarismStatementDTO {
+    public static class PlagiarismStatementDTO {
 
         public String statement;
+
     }
 
     /**
