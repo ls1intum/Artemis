@@ -182,7 +182,7 @@
                     </li>
                     <div class="dropdown-divider"></div>
                     <li>
-                        <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
+                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language">Language</h6>
                     </li>
                     <div *ngIf="languages && languages.length > 1">
                         <li *ngFor="let language of languages">
@@ -192,7 +192,7 @@
                     <ng-template [ngIf]="isTourAvailable">
                         <div class="dropdown-divider"></div>
                         <li>
-                            <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
+                            <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
                         </li>
                         <li>
                             <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>

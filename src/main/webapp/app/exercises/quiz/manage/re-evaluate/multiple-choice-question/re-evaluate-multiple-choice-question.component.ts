@@ -56,6 +56,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      */
     onQuestionChange(text: string): void {
         ArtemisMarkdownService.parseTextHintExplanation(text, this.question);
+        this.questionUpdated.emit();
     }
 
     /**
@@ -68,6 +69,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
             return answerOption.id === answer.id;
         });
         this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
+        this.questionUpdated.emit();
     }
 
     /**

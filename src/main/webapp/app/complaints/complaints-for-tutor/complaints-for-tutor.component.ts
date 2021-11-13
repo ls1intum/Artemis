@@ -217,6 +217,9 @@ export class ComplaintsForTutorComponent implements OnInit {
             if (this.isTestRun) {
                 return this.isAssessor;
             }
+            if (this.complaint.result && this.complaint.result.assessor == undefined) {
+                return true;
+            }
             return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
         }
     }

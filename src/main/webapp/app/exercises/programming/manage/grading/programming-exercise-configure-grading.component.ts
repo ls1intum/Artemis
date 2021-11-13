@@ -161,8 +161,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     tap(() => {
                         if (this.programmingExercise.staticCodeAnalysisEnabled) {
                             this.loadStaticCodeAnalysisCategories();
-                        } else if (this.activeTab !== 'test-cases') {
-                            this.selectTab('test-cases');
                         }
                         this.hadPolicyBefore = this.programmingExercise.submissionPolicy !== undefined;
                     }),

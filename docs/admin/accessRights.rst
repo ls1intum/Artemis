@@ -12,6 +12,7 @@ An ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
 - **USER:** participates as a Student in courses, can view course content after the release date
 - **ANONYMOUS:** role before login
 
+When changing the access rights of a user, the respective user must logoff and then logon again for the changes to take effect.
 
 In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
 
@@ -170,19 +171,19 @@ Lectures
 +---------------------+------------+--------+--------------------+
 | Edit attachment     |      ✔     |    ✔   |                    |
 +---------------------+------------+--------+--------------------+
-| Delete attachment   |      ✔     |    ✔   |                    |
+| Delete attachment   |      ✔     |        |                    |
 +---------------------+------------+--------+--------------------+
 | Add Lecture Unit    |      ✔     |    ✔   |                    |
 +---------------------+------------+--------+--------------------+
 | Edit Lecture Unit   |      ✔     |    ✔   |                    |
 +---------------------+------------+--------+--------------------+
-| Delete Lecture Unit |      ✔     |    ✔   |                    |
+| Delete Lecture Unit |      ✔     |        |                    |
 +---------------------+------------+--------+--------------------+
 | Create Lecture      |      ✔     |    ✔   |                    |
 +---------------------+------------+--------+--------------------+
 | Edit Lecture        |      ✔     |    ✔   |                    |
 +---------------------+------------+--------+--------------------+
-| Delete Lecture      |      ✔     |    ✔   |                    |
+| Delete Lecture      |      ✔     |        |                    |
 +---------------------+------------+--------+--------------------+
 
 Exam
