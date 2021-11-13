@@ -62,7 +62,7 @@ public class NotificationSettingsResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all NotificationSettings for current user {}", currentUser);
         Set<NotificationSetting> notificationSettingSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
-        notificationSettingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettingSet);
+        notificationSettingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettingSet, currentUser.getId());
         return new ResponseEntity<>(notificationSettingSet, HttpStatus.OK);
     }
 

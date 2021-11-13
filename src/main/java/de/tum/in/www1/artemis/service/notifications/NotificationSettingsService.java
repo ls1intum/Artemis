@@ -175,18 +175,45 @@ public class NotificationSettingsService {
     }
 
     /**
+     * Extracts the settingsIds of a notification settings set
+     * E.g. used to compare two sets of notification settings based on setting id
+     * @param notificationSettings set which setting ids should be extracted
+     * @return a set of settings ids
+     */
+    private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
+        Set<String> settingsIds = new HashSet<>();
+        notificationSettings.forEach(setting -> {
+            settingsIds.add(setting.getSettingId());
+        });
+        return settingsIds;
+    }
+
+    /**
+     * Compares two notification settings sets based on their notification setting ids
+     * @param notificationSettingsA is the first set
+     * @param notificationSettingsB is the second set
+     * @return true if the notification setting ids of both are the same else return false
+     */
+    private boolean compareTwoNotificationSettingsSetsBasedOnSettingsId(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
+        Set<String> settingIdsA = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsA);
+        Set<String> settingIdsB = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsB);
+        return settingIdsA.equals(settingIdsB);
+    }
+
+    /**
      * Checks the personal notificationSettings retrieved from the DB.
      * If the loaded set is empty substitute it with the default settings
      * If the loaded set has a different size from the default settings both sets have to be merged
      * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
      * @return the updated and correct notification settings
      */
-    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
+    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet, Long currentUserId) {
         if (loadedNotificationSettingSet.isEmpty()) {
             return DEFAULT_NOTIFICATION_SETTINGS;
         }
         // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
-        if (loadedNotificationSettingSet.size() != DEFAULT_NOTIFICATION_SETTINGS.size()) {
+
+        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(loadedNotificationSettingSet, DEFAULT_NOTIFICATION_SETTINGS)) {
             Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>();
             updatedNotificationSettingSet.addAll(DEFAULT_NOTIFICATION_SETTINGS);
 
@@ -199,6 +226,9 @@ public class NotificationSettingsService {
                 });
             });
             // update DB to fix inconsistencies and avoid redundant future merges
+            // first remove all settings of the current user in the db
+            notificationSettingRepository.deleteAll(loadedNotificationSettingSet);
+            // save correct merge to db
             notificationSettingRepository.saveAll(updatedNotificationSettingSet);
             return updatedNotificationSettingSet;
         }
