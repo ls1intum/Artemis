@@ -39,6 +39,7 @@ describe('OrionTutorAssessmentComponent', () => {
                 container.referencedFeedback = [{ id: 5 }, { id: 6 }];
                 container.exerciseId = 15;
                 container.correctionRound = 1;
+                container.isTestRun = false;
             });
     });
 
@@ -79,6 +80,6 @@ describe('OrionTutorAssessmentComponent', () => {
         comp.openNextSubmission(2);
 
         expect(sendSubmissionToOrionCancellableSpy).toHaveBeenCalledTimes(1);
-        expect(sendSubmissionToOrionCancellableSpy).toHaveBeenCalledWith(15, 2, 1);
+        expect(sendSubmissionToOrionCancellableSpy).toHaveBeenCalledWith(15, 2, 1, false);
     });
 });

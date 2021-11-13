@@ -64,18 +64,18 @@ describe('OrionAssessmentService', () => {
 
         getSubmission.returns(of(programmingSubmission));
 
-        orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0);
+        orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0, false);
 
         expect(getSubmission).to.have.been.calledOnceWithExactly(16, true, 0);
-        expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
+        expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0, false);
     });
 
     it('downloadSubmissionInOrion with number should call send', () => {
         const sendSubmissionToOrion = stub(orionAssessmentService, <any>'sendSubmissionToOrion');
 
-        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0);
+        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
 
-        expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
+        expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0, false);
     });
 
     it('sendSubmissionToOrion should convert and call connector', () => {
@@ -93,7 +93,7 @@ describe('OrionAssessmentService', () => {
 
         testConversion(mockReader as any);
 
-        expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, 'testBase64');
+        expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, false, 'testBase64');
     });
 
     it('sendSubmissionToOrion should convert and report error', () => {
@@ -132,7 +132,7 @@ describe('OrionAssessmentService', () => {
 
         readerStub.returns(mockReader);
 
-        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission);
+        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
 
         expect(isCloningSpy).to.have.been.calledOnceWithExactly(true);
         expect(lockAndGetStub).to.have.been.calledOnceWith(11, 0);
