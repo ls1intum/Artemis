@@ -77,6 +77,7 @@
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </button>
                                             <button
+                                                *ngIf="lecture.isAtLeastInstructor"
                                                 jhiDeleteButton
                                                 [entityTitle]="attachment?.name || ''"
                                                 deleteQuestion="artemisApp.attachment.deleteQuestion"
