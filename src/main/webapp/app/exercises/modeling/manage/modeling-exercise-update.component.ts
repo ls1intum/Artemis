@@ -5,7 +5,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -144,10 +144,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.modelingExercise.exerciseGroup = undefined;
                         }
-                        // Reset the due dates
-                        this.modelingExercise.dueDate = undefined;
-                        this.modelingExercise.releaseDate = undefined;
-                        this.modelingExercise.assessmentDueDate = undefined;
+                        resetDates(this.modelingExercise);
                     }
                 }),
             )

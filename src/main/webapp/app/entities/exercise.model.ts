@@ -218,3 +218,9 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
     }
     return undefined;
 }
+
+export function resetDates(exercise: Exercise) {
+    exercise.releaseDate = undefined;
+    exercise.dueDate = undefined;
+    exercise.assessmentDueDate = undefined;
+}

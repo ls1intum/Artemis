@@ -6,7 +6,7 @@ import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { switchMap, tap } from 'rxjs/operators';
@@ -126,10 +126,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.textExercise.exerciseGroup = undefined;
                         }
-                        // Reset the due dates
-                        this.textExercise.dueDate = undefined;
-                        this.textExercise.releaseDate = undefined;
-                        this.textExercise.assessmentDueDate = undefined;
+                        resetDates(this.textExercise);
                     }
                 }),
             )
