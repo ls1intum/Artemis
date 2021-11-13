@@ -2,7 +2,7 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [develop, master]
+    branches: [develop, main]
     paths-ignore:
     - 'README.md'
     - 'CODE_OF_CONDUCT.md'
@@ -30,8 +30,8 @@ on:
 # Keep in sync with build.yml and test.yml
 env:
   CI: true
-  node: 14.x
-  java: 16
+  node: 16.x
+  java: 17
 
 
 jobs:

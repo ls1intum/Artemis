@@ -296,7 +296,7 @@ public interface ContinuousIntegrationService {
      */
     static String getDockerImageName(ProgrammingLanguage language, Optional<ProjectType> projectType) {
         return switch (language) {
-            case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java17-1";
+            case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java17-2";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> (projectType.isPresent() && projectType.get().equals(ProjectType.FACT)) ? "codeability/test-frameworks/fact/fact_artemis:latest"
                     : "ls1tum/artemis-c-docker:latest";

@@ -1,20 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisAdminModule } from 'app/admin/admin.module';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockRouterLinkDirective } from '../shared/navbar.component.spec';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;
     let fixture: ComponentFixture<UpcomingExamsAndExercisesComponent>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisAdminModule],
+            imports: [ArtemisTestModule],
+            declarations: [UpcomingExamsAndExercisesComponent, TranslatePipeMock, MockRouterLinkDirective],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 {

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { RouterModule } from '@angular/router';
 import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.component';
 import { ChartsModule } from 'ng2-charts';
@@ -15,7 +16,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 const ENTITY_STATES = [...quizStatisticRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArtemisQuizQuestionTypesModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArtemisQuizQuestionTypesModule, ArtemisMarkdownModule, NgxChartsModule],
     declarations: [
         QuizStatisticComponent,
         QuizPointStatisticComponent,

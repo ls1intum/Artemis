@@ -35,24 +35,25 @@ export class OrionAssessmentService {
      *
      * @param exerciseId if of the exercise the submission belongs to
      * @param submission submission to send to Orion or 'new' if a new one should be loaded
-     * @param correctionRound correction round
+     * @param correctionRound of the assessment
+     * @param testRun true if in a test run, false otherwise
      */
-    downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0) {
+    downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0, testRun: boolean) {
         if (submission === 'new') {
             this.programmingSubmissionService
                 .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => this.sendSubmissionToOrionCancellable(exerciseId, newSubmission.id!, correctionRound));
+                .subscribe((newSubmission) => this.sendSubmissionToOrionCancellable(exerciseId, newSubmission.id!, correctionRound, testRun));
         } else {
-            this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound);
+            this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound, testRun);
         }
     }
 
     /**
      * Calls sendSubmissionToOrion but logs the submission id before so the lock will be freed if the download is cancelled
      */
-    sendSubmissionToOrionCancellable(exerciseId: number, submissionId: number, correctionRound = 0) {
+    sendSubmissionToOrionCancellable(exerciseId: number, submissionId: number, correctionRound = 0, testRun: boolean) {
         this.activeSubmissionId = submissionId;
-        this.sendSubmissionToOrion(exerciseId, submissionId, correctionRound);
+        this.sendSubmissionToOrion(exerciseId, submissionId, correctionRound, testRun);
     }
 
     /**
@@ -60,15 +61,16 @@ export class OrionAssessmentService {
      *
      * @param exerciseId id of the exercise the submission belongs to
      * @param submissionId id of the submission to send to Orion
-     * @param correctionRound correction round
+     * @param correctionRound of the assessment
+     * @param testRun true if in a test run, false otherwise
      */
-    private sendSubmissionToOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
+    private sendSubmissionToOrion(exerciseId: number, submissionId: number, correctionRound = 0, testRun: boolean) {
         this.orionConnectorService.isCloning(true);
         const exportOptions: RepositoryExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
             addParticipantName: false,
-            combineStudentCommits: false,
+            combineStudentCommits: true,
             anonymizeStudentCommits: true,
             normalizeCodeStyle: false,
             hideStudentNameInZippedFolder: true,
@@ -80,7 +82,7 @@ export class OrionAssessmentService {
                     const result = reader.result as string;
                     // remove prefix
                     const base64data = result.substr(result.indexOf(',') + 1);
-                    this.orionConnectorService.downloadSubmission(submissionId, correctionRound, base64data);
+                    this.orionConnectorService.downloadSubmission(submissionId, correctionRound, testRun, base64data);
                 };
                 reader.onerror = () => {
                     this.alertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');

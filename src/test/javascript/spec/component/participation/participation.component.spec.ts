@@ -2,10 +2,7 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ActivatedRoute, Params } from '@angular/router';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
@@ -20,9 +17,13 @@ import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,13 +41,15 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule],
             declarations: [ParticipationComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(TranslateService),
+                MockProvider(ParticipationService),
+                MockProvider(ExerciseService),
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideTemplate(ParticipationComponent, '')
@@ -61,8 +64,7 @@ describe('ParticipationComponent', () => {
             });
     });
 
-    afterEach(function () {
-        // completely restore all fakes created through the sandbox
+    afterEach(() => {
         sinon.restore();
     });
 

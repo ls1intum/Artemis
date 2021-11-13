@@ -20,11 +20,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
-        if (this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
+        this.disableEditScore = !!(this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0);
     }
     private _feedback: Feedback;
     @Input()
@@ -71,15 +67,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * When a inline feedback already exists, we set it back and display it the viewOnly mode.
-     * Otherwise the component is not displayed anymore.
-     * anymore in the parent component
+     * Otherwise the component is not displayed anymore in the parent component
      */
     cancelFeedback() {
         this.feedback = this.oldFeedback;
-        this.viewOnly = false;
-        if (this.feedback.type === this.MANUAL) {
-            this.viewOnly = true;
-        }
+        this.viewOnly = this.feedback.type === this.MANUAL;
         this.onCancelFeedback.emit(this.codeLine);
     }
 
@@ -109,11 +101,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     updateFeedbackOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
+        this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
     }

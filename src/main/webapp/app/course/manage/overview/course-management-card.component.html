@@ -15,7 +15,7 @@
         </div>
 
         <div class="container container-padding" [routerLink]="['/course-management', course.id]">
-            <h3 class="card-title text-center">{{ course.title }} ({{ course.shortName }})</h3>
+            <h3 class="card-title text-center fw-medium">{{ course.title }} ({{ course.shortName }})</h3>
             <div *ngIf="course.description && course.description !== ''" class="text-center">
                 <span class="card-description">{{ course.description }}</span>
             </div>
@@ -169,7 +169,7 @@
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
                     </div>
                     <div *ngIf="(futureExercises?.length || 0) + (currentExercises?.length || 0) + (exercisesInAssessment?.length || 0) + (pastExercises?.length || 0) === 0">
-                        <h4 class="text-center no-exercises mt-3">{{ 'artemisApp.course.noExercises' | artemisTranslate }}</h4>
+                        <h4 class="text-center no-exercises mt-3 fw-medium">{{ 'artemisApp.course.noExercises' | artemisTranslate }}</h4>
                     </div>
                 </div>
             </div>
@@ -243,15 +243,6 @@
         >
             <fa-icon [icon]="'user-check'"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
-        </a>
-        <a
-            *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
-            class="btn btn-info me-1 mb-1"
-            [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
-        >
-            <fa-icon [icon]="'chess-king'"></fa-icon>
-            <span class="d-none d-xl-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"

@@ -108,7 +108,7 @@
             },
             "problemStatement": {
                 "title": "Problem Statement",
-                "taskCommand": "[task] Task",
+                "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
                 "exerciseHintCommand": "Add task specific hint"
             },
@@ -292,11 +292,73 @@
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
-                "repositoryNameRequired": "The repository name is required.",
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
-                "invalidDirectoryName": "An existing repository is already checked out into that directory!",
-                "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
-                "warning": "Auxiliary repositories that are added or changed after the creation of the exercise need to be manually added to the VCS and the build plan!"
+                "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
+                "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
+                "warning": "Auxiliary repositories can be edited and removed. Changes do not cascade to the VCS and CIS and must be carried out manually.",
+                "repositoryNameRequired": {
+                    "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
+                }
+            },
+            "submissionPolicy": {
+                "title": "Submission Policy",
+                "updateButton": {
+                    "title": "Update",
+                    "tooltip": "Saves the changes to the submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might (un)lock a lot of affected participation repositories!"
+                },
+                "activateButton": {
+                    "title": "Activate",
+                    "tooltip": "Activates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
+                },
+                "deactivateButton": {
+                    "title": "Deactivate",
+                    "tooltip": "Deactivates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might unlock a lot of affected participation repositories!"
+                },
+                "created": "The submission policy was created successfully!",
+                "updated": "The submission policy was updated successfully!",
+                "deleted": "The submission policy was deleted successfully!",
+                "submissionsAllowed": "allowed Submissions",
+                "none": {
+                    "optionLabel": "None"
+                },
+                "lockRepository": {
+                    "optionLabel": "Lock Repository"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Submission Penalty",
+                    "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
+                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than or equal 0.",
+                    "penaltyInputFieldValidationWarning": {
+                        "min": "The penalty must be greater than or equal 0!",
+                        "required": "The penalty must be set!"
+                    },
+                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
+                },
+                "submissionPolicyType": {
+                    "title": "Submission Policy Type",
+                    "none": {
+                        "title": "None"
+                    },
+                    "lock_repository": {
+                        "title": "Lock Repository",
+                        "tooltip": "Your participation repository will be locked as soon as you reach the submission limit. You won't be able to participate further in the exercise after your repository is locked."
+                    },
+                    "submission_penalty": {
+                        "title": "Submission Penalty",
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
+                    }
+                },
+                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
+                "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
+                "submissionLimitWarning": {
+                    "pattern": "The submission limit must be and integer between 1 and 500!",
+                    "required": "The submission limit must be set!"
+                }
             }
         },
         "error": {
