@@ -81,24 +81,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void getCompassStatistic_asStudent_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
-    }
-
-    @Test
-    @WithMockUser(roles = "TA")
-    public void getCompassStatistic_asTutor_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
-    public void getCompassStatistic_asInstructor_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
-    }
-
-    @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetModelingExercise_asStudent_Forbidden() throws Exception {
         request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
@@ -207,8 +189,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         Course newCourse = databaseUtilService.createCourse(newCourseId);
 
         // Assign new course to the modeling exercise.
-        ModelingExercise updatedModelingExercise = createdModelingExercise;
-        updatedModelingExercise.setCourse(newCourse);
+        createdModelingExercise.setCourse(newCourse);
 
         // Modeling exercise update with the new course should fail.
         ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.CONFLICT);
@@ -347,6 +328,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         Course course1 = database.addEmptyCourse();
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExercise.setReleaseDate(null);
+        modelingExercise.setDueDate(null);
+        modelingExercise.setAssessmentDueDate(null);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
