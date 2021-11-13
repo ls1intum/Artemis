@@ -27,6 +27,7 @@
                 <tr>
                     <th><span jhiTranslate="global.field.id"></span></th>
                     <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th><span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span></th>
                     <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
                     <th *ngIf="exercise.course.isAtLeastEditor"></th>
                 </tr>
@@ -42,6 +43,9 @@
                         <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
                             {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
                         </a>
+                    </td>
+                    <td>
+                        <jhi-result [result]="exampleSubmission.submission!.results![0]"></jhi-result>
                     </td>
                     <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
                     <td *ngIf="exercise.course.isAtLeastEditor">
