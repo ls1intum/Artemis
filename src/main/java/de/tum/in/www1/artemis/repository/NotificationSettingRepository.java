@@ -15,11 +15,6 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 @Repository
 public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
 
-    /**
-     * Finds all notification settings for a given user
-     * @param userId of the given user
-     * @return the set of all notification settings of the given user that were saved in the db
-     */
     @Query("""
             SELECT notificationSetting
             FROM NotificationSetting notificationSetting
@@ -27,11 +22,4 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
             WHERE user.id = :#{#userId}
             """)
     Set<NotificationSetting> findAllNotificationSettingsForRecipientWithId(@Param("userId") long userId);
-
-    /**
-     * Delete all settings that belong to the given user
-     * @param userId is the id of the user whose settings should be deleted
-     */
-    // void deleteAllNotificationSettingsForRecipientWithId(@Param("userId") long userId);
-    void deleteByUser_Id(long userId);
 }
