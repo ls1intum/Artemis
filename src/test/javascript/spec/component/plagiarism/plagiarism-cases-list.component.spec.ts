@@ -20,8 +20,8 @@ describe('Plagiarism Cases List', () => {
     let comp: PlagiarismCasesListComponent;
     let fixture: ComponentFixture<PlagiarismCasesListComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
-    let sendPlagiarismNotificationStub = jest.SpyInstance;
-    let updatePlagiarismStatusStub = jest.SpyInstance;
+    let sendPlagiarismNotificationStub: jest.SpyInstance;
+    let updatePlagiarismStatusStub: jest.SpyInstance;
 
     const studentLoginA = 'student1A';
     const studentLoginB = 'student1B';
