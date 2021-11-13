@@ -86,7 +86,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should print PDF', fakeAsync(() => {
-        const windowSpy = jest.spyOn(window, 'print');
+        const windowSpy = jest.spyOn(window, 'print').mockImplementation();
 
         comp.printPDF();
 

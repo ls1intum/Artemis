@@ -13,8 +13,9 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -23,7 +24,7 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 export class ExamManagementService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
     /**
      * Create an exam on the server using a POST request.
@@ -60,7 +61,14 @@ export class ExamManagementService {
         const options = createRequestOption({ withStudents, withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
+            .pipe(
+                tap((res: EntityResponseType) => {
+                    if (res.body?.course) {
+                        this.accountService.setAccessRightsForCourse(res.body.course);
+                    }
+                }),
+            );
     }
 
     /**
@@ -332,6 +340,15 @@ export class ExamManagementService {
      */
     updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
         return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, exerciseGroups, { observe: 'response' });
+    }
+
+    /**
+     * Resets an Exam with examId by deleting all its studentExams and participations.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
+    reset(courseId: number, examId: number): Observable<EntityResponseType> {
+        return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
     }
 
     public static convertDateFromClient(exam: Exam): Exam {

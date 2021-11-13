@@ -24,6 +24,8 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
@@ -33,7 +35,7 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
-    public static final String USER_PASSWORD = "0000";
+    public static final String USER_PASSWORD = "00000000";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
@@ -498,6 +500,7 @@ public class ModelFactory {
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
+        course.setAccuracyOfScores(1);
         return course;
     }
 
@@ -881,6 +884,21 @@ public class ModelFactory {
         return apollonDiagram;
     }
 
+    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
+        LockRepositoryPolicy policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(submissionLimit);
+        policy.setActive(active);
+        return policy;
+    }
+
+    public static SubmissionPenaltyPolicy generateSubmissionPenaltyPolicy(int submissionLimit, double penalty, boolean active) {
+        SubmissionPenaltyPolicy policy = new SubmissionPenaltyPolicy();
+        policy.setSubmissionLimit(submissionLimit);
+        policy.setExceedingPenalty(penalty);
+        policy.setActive(active);
+        return policy;
+    }
+
     /**
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
@@ -1154,6 +1172,7 @@ public class ModelFactory {
             case CHECKSTYLE -> "coding";
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
+            case GCC -> "Memory";
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();

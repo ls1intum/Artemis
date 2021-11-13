@@ -12,7 +12,7 @@ public final class Constants {
 
     public static final int USERNAME_MAX_LENGTH = 50;
 
-    public static final int PASSWORD_MIN_LENGTH = 4;
+    public static final int PASSWORD_MIN_LENGTH = 8;
 
     public static final int PASSWORD_MAX_LENGTH = 50;
 
@@ -56,8 +56,6 @@ public final class Constants {
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
-
-    public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = "Live Exam Exercise Update";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -145,6 +143,8 @@ public final class Constants {
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
 
     public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
+
+    public static final String RESET_EXAM = "RESET_EXAM";
 
     // same constant as in the client
     public static final int EXAM_START_WAIT_TIME_MINUTES = 5;

@@ -51,7 +51,7 @@ public class ReactionResource {
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
-        reactionService.deleteReactionById(courseId, reactionId);
+        reactionService.deleteReactionById(reactionId, courseId);
         return ResponseEntity.ok().build();
     }
 }

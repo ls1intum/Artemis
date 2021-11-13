@@ -10,16 +10,11 @@ import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
 describe('LearningGoalDetailModalComponent', () => {
     let learningGoalDetailModalComponentFixture: ComponentFixture<LearningGoalDetailModalComponent>;
     let learningGoalDetailModalComponent: LearningGoalDetailModalComponent;
@@ -58,12 +53,12 @@ describe('LearningGoalDetailModalComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         learningGoalDetailModalComponentFixture.detectChanges();
-        expect(learningGoalDetailModalComponent).to.be.ok;
+        expect(learningGoalDetailModalComponent).toBeDefined();
     });
 
     it('should call sort service', fakeAsync(() => {
@@ -75,8 +70,8 @@ describe('LearningGoalDetailModalComponent', () => {
         learningGoalDetailModalComponent.learningGoalProgress = learningGoalProgress;
         learningGoalDetailModalComponentFixture.detectChanges();
         const sortService = TestBed.inject(SortService);
-        const sortByPropertySpy = sinon.spy(sortService, 'sortByProperty');
+        const sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty');
         learningGoalDetailModalComponent.sortConnectedLectureUnits();
-        expect(sortByPropertySpy).to.have.been.calledOnce;
+        expect(sortByPropertySpy).toHaveBeenCalledTimes(1);
     }));
 });

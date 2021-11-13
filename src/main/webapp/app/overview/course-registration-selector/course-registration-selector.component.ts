@@ -45,9 +45,11 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         return new Promise<void>((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
                 (registerRes) => {
-                    this.coursesToSelect = registerRes.body!.filter((course) => {
-                        return !this.courses.find((el) => el.id === course.id);
-                    });
+                    this.coursesToSelect = registerRes
+                        .body!.filter((course) => {
+                            return !this.courses.find((el) => el.id === course.id);
+                        })
+                        .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                     resolve();
                 },
                 (response: string) => reject(response),

@@ -6,8 +6,9 @@
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
 <!-- If it's only a small change, testing it locally is acceptable and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
-- [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server
+- [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.ase.in.tum.de/dev/guidelines/language-guidelines/).
+- [ ] I chose a title conforming to the [naming conventions for pull requests](https://artemis-platform.readthedocs.io/en/latest/dev/guidelines/development-process.html#naming-conventions-for-github-pull-requests).
 #### Server
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
@@ -16,7 +17,7 @@
 - [ ] I documented the Java code using JavaDoc style.
 #### Client
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client/).
-- [ ] I added multiple integration tests (Jest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client-testing/).
+- [ ] I added multiple integration tests (Jest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client-tests/).
 - [ ] I added `authorities` to all new routes and checked the course groups for displaying navigation elements (links, buttons).
 - [ ] I documented the TypeScript code using JSDoc style.
 - [ ] I added multiple screenshots/screencasts of my UI changes.

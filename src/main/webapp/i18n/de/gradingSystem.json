@@ -15,13 +15,17 @@
                 "lower": "Untere Schranke inklusiv",
                 "upper": "Obere Schranke inklusiv"
             },
+            "csv": {
+                "importButton": "Importieren (.csv)",
+                "exportButton": "Exportieren (.csv)"
+            },
             "firstPassingGrade": "Bestanden ab",
             "min": "Min %",
             "minPoints": "Min Punkte",
             "max": "Max %",
             "maxPoints": "Max Punkte",
             "gradeName": "Notenname",
-            "bonusPoints": "Bonus Punkte",
+            "bonusPoints": "Bonuspunkte",
             "delete": "Löschen",
             "deleteQuestion": "Willst Du den Notenschlüssel wirklich löschen?",
             "add": "Notenstufe hinzufügen",
@@ -47,14 +51,18 @@
                 "firstPassingGrade": {
                     "title": "Erste bestehende Note",
                     "explanation": "Legt für diesen Notenschlüssel fest, ab welcher Note die Leistung als bestanden gewertet wird"
+                },
+                "importExport": {
+                    "title": "Notenschritte importieren/exportieren",
+                    "explanation": "Notenstufen können über eine CSV-Datei importiert und exportiert werden.  Die Struktur ist wie folgt, abhängig von der Notenart. Grade Type 'Grade': 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade'. Grade Type 'Bonus': 'bonusPoints,lowerBoundPercentage,upperBoundPercentage'. Punkte und Inklusivität können nachträglich eingestellt werden."
                 }
             },
             "error": {
                 "empty": "Es gibt keine Notenstufen!",
                 "negativeMaxPoints": "Maximale Punkte können nicht negativ sein",
                 "emptyFields": "Alle Notenstufenfelder müssen ausgefüllt werden!",
-                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen alle zwischen 0 und 100 (jeweils einschließlich) liegen und Min % muss kleiner als Max % sein!",
-                "invalidMinMaxPoints": "Die Punkte der Notenstufen müssen alle zwischen 0 und der maximalen Punktzahl für den Kurs/die Prüfung (jeweils einschließlich) liegen. Min Punkte muss kleiner als Max Punkte sein!",
+                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen größer oder gleich 0 sein und Min % dürfen nicht größer als Max % sein!",
+                "invalidMinMaxPoints": "Die Punkte der Notenstufen müssen alle größer oder gleich 0 sein und die Min Punkte dürfen nicht größer als die Max Punkte sein!",
                 "nonUniqueGradeNames": "Alle Notenstufen müssen eindeutige Namen haben!",
                 "unsetFirstPassingGrade": "Die erste bestehende Note muss gesetzt sein!",
                 "invalidBonusPoints": "Die Bonuspunkte müssen mindestens 0 sein!",

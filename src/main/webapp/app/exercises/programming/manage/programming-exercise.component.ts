@@ -15,7 +15,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
@@ -23,6 +22,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -78,9 +78,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
-                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(getCourseFromExercise(exercise));
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
+                    this.accountService.setAccessRightsForExercise(exercise);
                     if (exercise.projectKey) {
                         if (exercise.solutionParticipation!.buildPlanId) {
                             exercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
@@ -165,9 +163,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     toggleAllProgrammingExercises() {
-        if (this.allChecked) {
-            this.selectedProgrammingExercises = [];
-        } else {
+        this.selectedProgrammingExercises = [];
+        if (!this.allChecked) {
             this.selectedProgrammingExercises = this.selectedProgrammingExercises.concat(this.programmingExercises);
         }
         this.allChecked = !this.allChecked;
@@ -194,6 +191,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             backdrop: 'static',
         });
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
+    }
+
+    /**
+     * Opens modal and executes a consistency check for the selected exercises
+     */
+    checkConsistencies() {
+        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.exercisesToCheck = this.selectedProgrammingExercises;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

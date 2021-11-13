@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -92,23 +93,23 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Override
     public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
         // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(repositoryUrl.getURL());
+        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
     public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
         // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
-        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(repositoryUrl.getURL());
+        doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
     public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl) {
         // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
-        doReturn(projectPath).when(urlService).getRepositoryPathFromUrl(repositoryUrl.getURL());
+        doReturn(projectPath).when(urlService).getRepositoryPathFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
     public void mockGetProjectKeyFromAnyUrl(String projectKey) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(any());
+        doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(any());
     }
 }

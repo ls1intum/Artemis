@@ -127,6 +127,9 @@ export class CourseUpdateComponent implements OnInit {
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
                 }),
+                accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
+                    validators: [Validators.min(1)],
+                }),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
