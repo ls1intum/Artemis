@@ -47,6 +47,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpResponse } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('ModelingSubmission Management Component', () => {
     // needed to make sure ace is defined
@@ -55,6 +56,7 @@ describe('ModelingSubmission Management Component', () => {
     let fixture: ComponentFixture<ModelingSubmissionComponent>;
     let debugElement: DebugElement;
     let service: ModelingSubmissionService;
+    let alertService: AlertService;
     let router: Router;
 
     const route = { params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any as ActivatedRoute;
@@ -104,6 +106,7 @@ describe('ModelingSubmission Management Component', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 service = debugElement.injector.get(ModelingSubmissionService);
+                alertService = debugElement.injector.get(AlertService);
                 router = debugElement.injector.get(Router);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
@@ -233,6 +236,18 @@ describe('ModelingSubmission Management Component', () => {
         comp.submit();
         expect(createStub).toHaveBeenCalledTimes(1);
         expect(comp.submission).toEqual(submission);
+    });
+
+    it('should catch error on submit', () => {
+        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
+        comp.submission = modelSubmission;
+        jest.spyOn(service, 'create').mockReturnValue(throwError({ status: 500 }));
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
+        comp.modelingExercise.id = 1;
+        comp.submit();
+        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submission).toBe(modelSubmission);
     });
 
     it('should set result when new result comes in from websocket', () => {
@@ -374,5 +389,26 @@ describe('ModelingSubmission Management Component', () => {
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = comp.buildFeedbackTextForReview(feedback);
         expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.text);
+    });
+
+    it('should deactivate return true when there are unsaved changes', () => {
+        const currentModel = <UMLModel>(<unknown>{
+            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            version: 'version',
+        });
+        const unsavedModel = <UMLModel>(<unknown>{
+            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
+            version: 'version',
+        });
+
+        const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(currentModel as UMLModel);
+        jest.spyOn(comp.modelingEditor, 'isApollonEditorMounted', 'get').mockReturnValue(true);
+        comp.submission = submission;
+        comp.submission.model = JSON.stringify(unsavedModel);
+
+        const canDeactivate = comp.canDeactivate();
+
+        expect(currentModelStub).toHaveBeenCalledTimes(1);
+        expect(canDeactivate).toBe(false);
     });
 });

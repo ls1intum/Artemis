@@ -57,4 +57,19 @@ describe('Assessment Detail Component', () => {
         expect(comp.assessment.gradingInstruction).toBe(instruction);
         expect(comp.assessment.credits).toBe(instruction.credits);
     });
+
+    it('should emit the assessment change after deletion', () => {
+        comp.assessment = {
+            id: 1,
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+        const emitSpy = jest.spyOn(comp.deleteAssessment, 'emit');
+        const confirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        comp.delete();
+        fixture.detectChanges();
+
+        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(confirmStub).toHaveBeenCalledTimes(1);
+    });
 });
