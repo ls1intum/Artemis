@@ -17,7 +17,7 @@ import { Feedback } from 'app/entities/feedback.model';
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
     const router = new MockRouter();
-    let alertService: AlertService
+    let alertService: AlertService;
 
     const exercise = { id: 42 } as ProgrammingExercise;
 

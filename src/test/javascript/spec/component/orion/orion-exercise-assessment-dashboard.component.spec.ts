@@ -22,7 +22,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
     let orionConnectorService: OrionConnectorService;
     let orionAssessmentService: OrionAssessmentService;
     let exerciseService: ExerciseService;
-    let alertService: AlertService
+    let alertService: AlertService;
 
     const programmingExercise = {
         id: 16,
