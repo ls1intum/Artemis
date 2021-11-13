@@ -42,6 +42,6 @@ export class OrionTutorAssessmentComponent {
      * Triggered on clicking the "next submission" button
      */
     openNextSubmission(submissionId: number) {
-        this.orionAssessmentService.sendSubmissionToOrionCancellable(this.container.exerciseId, submissionId, this.container.correctionRound);
+        this.orionAssessmentService.sendSubmissionToOrionCancellable(this.container.exerciseId, submissionId, this.container.correctionRound, this.container.isTestRun);
     }
 }

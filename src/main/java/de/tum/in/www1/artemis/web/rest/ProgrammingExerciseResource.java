@@ -733,9 +733,9 @@ public class ProgrammingExerciseResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
-        // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
+        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
         else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);

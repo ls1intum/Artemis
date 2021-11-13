@@ -64,37 +64,35 @@
                 rows="4"
                 maxlength="2000"
                 [(ngModel)]="complaintResponse.responseText"
-                [readonly]="handled"
+                [readonly]="handled || isLockedForLoggedInUser"
                 [disabled]="handled || isLockedForLoggedInUser"
             ></textarea>
-            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end mt-3">
-                <div class="col-12 col-lg-6">
-                    <button
-                        id="acceptComplaintButton"
-                        type="button"
-                        class="btn btn-success btn-block"
-                        (click)="respondToComplaint(true)"
-                        [disabled]="isLockedForLoggedInUser"
-                        title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
-                    >
-                        {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
-                    </button>
-                </div>
-                <div class="col-12 col-lg-6">
-                    <button
-                        id="rejectComplaintButton"
-                        type="button"
-                        class="btn btn-danger btn-block"
-                        (click)="respondToComplaint(false)"
-                        [disabled]="isLockedForLoggedInUser"
-                        title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
-                    >
-                        {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}
-                    </button>
-                </div>
+            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="d-flex flex-wrap gap-1 justify-content-between mt-3">
+                <button
+                    id="acceptComplaintButton"
+                    type="button"
+                    class="btn btn-success btn-block"
+                    (click)="respondToComplaint(true)"
+                    [disabled]="isLockedForLoggedInUser"
+                    title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
+                >
+                    {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
+                </button>
+                <button
+                    id="rejectComplaintButton"
+                    type="button"
+                    class="btn btn-danger btn-block"
+                    (click)="respondToComplaint(false)"
+                    [disabled]="isLockedForLoggedInUser"
+                    title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
+                >
+                    {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}
+                </button>
+                <!-- empty div to create additional spacing after the last button, but only for sm or up -->
+                <div class="d-none d-sm-block"></div>
             </div>
 
-            <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end">
+            <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end mt-3">
                 <div class="col-12">
                     <button
                         id="respondToMoreFeedbackButton"

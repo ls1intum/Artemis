@@ -284,7 +284,7 @@
             </div>
         </div>
         <div class="form-group">
-            <jhi-submission-policy-update [editable]="!isEdit" [programmingExercise]="programmingExercise"></jhi-submission-policy-update>
+            <jhi-submission-policy-update #submissionPolicyForm [editable]="!isEdit" [programmingExercise]="programmingExercise"></jhi-submission-policy-update>
             <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
                 <ngb-alert [dismissible]="false" [type]="'info'">
                     <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
@@ -547,7 +547,7 @@
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid"
+            [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid || submissionPolicyForm.invalid"
             [isLoading]="isSaving"
             [icon]="'save'"
             [title]="submitButtonTitle"

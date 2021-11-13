@@ -25,6 +25,11 @@ h4 {
     font-weight: 300;
 }
 
+/* like fw-bold or fw-normal, but with weight 500 */
+.fw-medium {
+    font-weight: 500 !important;
+}
+
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
 a:not(.btn):hover {
