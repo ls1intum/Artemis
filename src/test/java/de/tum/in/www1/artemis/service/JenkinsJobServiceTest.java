@@ -13,7 +13,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import com.offbytwo.jenkins.model.JobWithDetails;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +36,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     private static MockedStatic<XmlFileUtils> mockedXmlFileUtils;
 
     private Document invalidDocument;
+
     private Document validDocument;
 
     @BeforeEach
@@ -63,8 +63,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     @Test
     @WithMockUser(username = "student1")
     public void testCreateIfJobExists() throws IOException {
-        var job = new JobWithDetails();
-        jenkinsRequestMockProvider.mockGetJob("JenkinsFolder", "JenkinsJob", job, false);
+        jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", true);
         // This call shall not fail, since the job already exists ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
         // Create Job shouldn't be invoked on JenkinsServer because it exists
@@ -74,9 +73,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     @Test
     @WithMockUser(username = "student1")
     public void testCreateIfJobDoesNotExist() throws IOException {
-        jenkinsRequestMockProvider.mockGetJob("JenkinsFolder", "JenkinsJob", null, false);
-        jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob");
-
+        jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", false);
         // This call shall not fail, since the job will be created ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
         // Create Job should be invoked on JenkinsServer
