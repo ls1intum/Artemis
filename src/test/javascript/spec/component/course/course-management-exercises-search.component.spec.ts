@@ -40,9 +40,9 @@ describe('Course Management Exercises Search Component', () => {
 
     it('should have empty filter on init', () => {
         comp.ngOnInit();
-        expect(comp.exerciseNameSearch).toEqual('');
-        expect(comp.exerciseCategorySearch).toEqual('');
-        expect(comp.exerciseTypeSearch).toEqual('all');
+        expect(comp.exerciseNameSearch).toBe('');
+        expect(comp.exerciseCategorySearch).toBe('');
+        expect(comp.exerciseTypeSearch).toBe('all');
     });
 
     it('should change filter on name change', () => {
