@@ -5,5 +5,5 @@ import { Exercise } from 'app/entities/exercise.model';
 
 export class PlagiarismCase {
     public exercise: Exercise;
-    public comparisons: Set<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>;
+    public comparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
 }

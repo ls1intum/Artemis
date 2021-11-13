@@ -12,9 +12,6 @@ export class PlagiarismCasesService {
 
     constructor(private http: HttpClient) {}
 
-    /**
-     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days and the given period
-     */
     public getPlagiarismCases(courseId: number): Observable<PlagiarismCase[]> {
         return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}`);
     }
@@ -27,9 +24,6 @@ export class PlagiarismCasesService {
         });
     }
 
-    /**
-     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days and the given period
-     */
     public getAnonymousPlagiarismComparison(plagiarismComparisonId: number): Observable<PlagiarismCase> {
         return this.http.get<PlagiarismCase>(`${this.resourceUrlStud}/${plagiarismComparisonId}`);
     }

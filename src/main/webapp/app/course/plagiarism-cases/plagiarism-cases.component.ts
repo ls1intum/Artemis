@@ -15,12 +15,9 @@ export class PlagiarismCasesComponent implements OnInit {
     courseId: number;
     hideFinished = false;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {
-        this.plagiarismCasesService = plagiarismCasesService;
-    }
+    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
-        console.log(this.route.parent);
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.plagiarismCasesService
             .getPlagiarismCases(this.courseId)

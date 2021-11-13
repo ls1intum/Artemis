@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { PlagiarismCase } from 'app/course/plagiarism-cases/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { Subject } from 'rxjs';
@@ -10,7 +10,7 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
     // since this is the only style we need, there's no need for another file.
     styles: [':host ::ng-deep .gutter{background: none!important;}'],
 })
-export class PlagiarismCasesListComponent implements OnInit {
+export class PlagiarismCasesListComponent {
     @Input() plagiarismCase: PlagiarismCase;
     @Input() hideFinished: boolean;
     notificationText = '';
@@ -24,8 +24,6 @@ export class PlagiarismCasesListComponent implements OnInit {
 
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
-    ngOnInit(): void {}
-
     isStudentANotified(comparisonIndex: number): boolean {
         return this.plagiarismCase.comparisons[comparisonIndex].notificationA !== undefined;
     }
@@ -34,7 +32,7 @@ export class PlagiarismCasesListComponent implements OnInit {
         return this.plagiarismCase.comparisons[comparisonIndex].notificationB !== undefined;
     }
 
-    hideNotificationForm() {
+    hideNotificationForm(): void {
         this.activeStudentLogin = undefined;
         this.activeComparisonId = undefined;
     }
