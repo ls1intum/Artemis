@@ -1,21 +1,26 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
+    submissionSizeHint?: string;
 
     constructor(
         private alertService: AlertService,
@@ -24,6 +29,8 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         private courseService: CourseManagementService,
         private modalService: NgbModal,
         private accountService: AccountService,
+        private stringCountService: StringCountService,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     /**
@@ -36,6 +43,11 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
         });
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.submissionSizeHint = this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.textSubmissionSizeHint');
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.submissionSizeHint = this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.modelingSubmissionSizeHint');
+        }
     }
 
     /**
@@ -105,5 +117,15 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         });
+    }
+
+    getSubmissionSize(submission?: Submission) {
+        if (submission && this.exercise.type === ExerciseType.TEXT) {
+            return this.stringCountService.countWords((submission as TextSubmission).text);
+        } else if (submission && this.exercise.type === ExerciseType.MODELING) {
+            const elements = JSON.parse((submission as ModelingSubmission).model!).elements as string[];
+            return elements.length;
+        }
+        return 0;
     }
 }

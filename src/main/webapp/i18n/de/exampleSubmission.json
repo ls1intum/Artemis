@@ -55,7 +55,10 @@
             "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung",
             "importExampleSubmission": "Beispielabgabe importieren",
             "importExampleSubmissionLabel": "Beispielabgabe importieren",
-            "searchSubmission": "Suche nach Einreichung"
+            "searchSubmission": "Suche nach Einreichung",
+            "submissionSize": "Einreichungsgröße",
+            "textSubmissionSizeHint": "Diese Zahl gibt die Anzahl der Wörter im Text an.",
+            "modelingSubmissionSizeHint": "Diese Zahl gibt die Anzahl der im Modell verwendeten Elemente an."
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"

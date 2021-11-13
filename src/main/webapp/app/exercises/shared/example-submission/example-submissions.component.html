@@ -28,6 +28,10 @@
                     <th><span jhiTranslate="global.field.id"></span></th>
                     <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
                     <th><span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span></th>
+                    <th>
+                        <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
+                        <fa-icon [icon]="'question-circle'" class="text-secondary ps-1" [ngbTooltip]="submissionSizeHint" container="body"></fa-icon>
+                    </th>
                     <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
                     <th *ngIf="exercise.course.isAtLeastEditor"></th>
                 </tr>
@@ -46,6 +50,9 @@
                     </td>
                     <td>
                         <jhi-result [result]="exampleSubmission.submission!.results![0]"></jhi-result>
+                    </td>
+                    <td>
+                        {{ getSubmissionSize(exampleSubmission.submission) }}
                     </td>
                     <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
                     <td *ngIf="exercise.course.isAtLeastEditor">

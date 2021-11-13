@@ -55,7 +55,10 @@
             "assessmentExplanationInfo": "Additional explanation for this example assessment",
             "importExampleSubmission": "Import Example Submission",
             "importExampleSubmissionLabel": "Import an Example Submission",
-            "searchSubmission": "Search for Submission"
+            "searchSubmission": "Search for Submission",
+            "submissionSize": "Submission Size",
+            "textSubmissionSizeHint": "This number shows the number of words in the text.",
+            "modelingSubmissionSizeHint": "This number shows the number of elements used in the model."
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"
