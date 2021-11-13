@@ -52,6 +52,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
             .then(() => {
                 comp = TestBed.createComponent(OrionExerciseAssessmentDashboardComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
+                orionAssessmentService = TestBed.inject(OrionAssessmentService);
                 exerciseService = TestBed.inject(ExerciseService);
                 alertService = TestBed.inject(AlertService);
                 comp.exerciseId = programmingExercise.id!;
@@ -78,7 +79,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         comp.downloadSubmissionInOrion(programmingSubmission, 2);
 
         expect(downloadSubmissionSpy).toHaveBeenCalledTimes(1);
-        expect(downloadSubmissionSpy).toHaveBeenCalledWith(comp.exerciseId, programmingSubmission, 2);
+        expect(downloadSubmissionSpy).toHaveBeenCalledWith(comp.exerciseId, programmingSubmission, 2, false);
     });
 
     it('ngOnInit should subscribe correctly', fakeAsync(() => {

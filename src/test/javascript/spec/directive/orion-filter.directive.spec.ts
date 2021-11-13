@@ -11,7 +11,6 @@ import { isOrion } from 'app/shared/orion/orion';
 class TestComponent {}
 
 describe('OrionFilterDirective', () => {
-    let comp: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;
 
@@ -24,7 +23,6 @@ describe('OrionFilterDirective', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TestComponent);
-                comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
             });
     });

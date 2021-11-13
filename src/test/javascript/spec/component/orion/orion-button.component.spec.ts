@@ -31,7 +31,7 @@ describe('OrionButtonComponent', () => {
         const emitSpy = jest.spyOn(comp.clickHandler, 'emit');
         comp.buttonLoading = true;
 
-        const buttonElement = fixture.debugElement.query(By.css("button"));
+        const buttonElement = fixture.debugElement.query(By.css('button'));
         expect(buttonElement).not.toBe(null);
 
         buttonElement.nativeElement.click();
@@ -43,7 +43,7 @@ describe('OrionButtonComponent', () => {
         const emitSpy = jest.spyOn(comp.clickHandler, 'emit');
         comp.buttonLoading = false;
 
-        const buttonElement = fixture.debugElement.query(By.css("button"));
+        const buttonElement = fixture.debugElement.query(By.css('button'));
         expect(buttonElement).not.toBe(null);
 
         buttonElement.nativeElement.click();
