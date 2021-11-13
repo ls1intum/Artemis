@@ -16,6 +16,10 @@
             "startAssessment": "Start new assessment in Orion",
             "continueAssessment": "Continue assessment in Orion",
             "openAssessment": "Open assessment in Orion",
+            "evaluateComplaint": "Evaluate the complaint in Orion",
+            "showComplaint": "Show the complaint in Orion",
+            "evaluateMoreFeedbackRequest": "Evaluate the request in Orion",
+            "showMoreFeedbackRequests": "Show the request in Orion",
             "downloadFailed": "Could not download submission. The file might be too large. Try downloading it manually."
         }
     }

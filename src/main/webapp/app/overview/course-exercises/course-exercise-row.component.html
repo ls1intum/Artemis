@@ -7,12 +7,12 @@
     <div class="col">
         <div class="row">
             <div class="col-auto d-sm-none">
-                <h4>
+                <h4 class="fw-medium">
                     <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>
                 </h4>
             </div>
             <div class="col-sm col">
-                <h4>{{ exercise.title }}</h4>
+                <h4 class="fw-medium">{{ exercise.title }}</h4>
             </div>
             <jhi-submission-result-status
                 *ngIf="!isPresentationMode"
@@ -36,21 +36,21 @@
                 *ngIf="!isPresentationMode"
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
-                <h4>
+                <h4 class="fw-medium">
                     <jhi-not-released-tag class="me-1" [exercise]="exercise"></jhi-not-released-tag>
                 </h4>
-                <h4 *ngIf="!isPresentationMode">
+                <h4 class="fw-medium" *ngIf="!isPresentationMode">
                     <span class="badge bg-success me-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
                         'artemisApp.courseOverview.exerciseList.live' | artemisTranslate
                     }}</span>
                 </h4>
-                <h4 *ngFor="let category of exerciseCategories">
+                <h4 class="fw-medium" *ngFor="let category of exerciseCategories">
                     <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h4>
-                <h4>
+                <h4 class="fw-medium">
                     <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
-                <h4 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                <h4 class="fw-medium" *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h4>
             </div>
