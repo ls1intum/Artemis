@@ -207,7 +207,7 @@ public class NotificationSettingsService {
      * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
      * @return the updated and correct notification settings
      */
-    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet, Long currentUserId) {
+    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
         if (loadedNotificationSettingSet.isEmpty()) {
             return DEFAULT_NOTIFICATION_SETTINGS;
         }

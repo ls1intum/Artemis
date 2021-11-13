@@ -131,7 +131,7 @@ public class NotificationSettingsServiceTest {
     @Test
     public void testCheckLoadedNotificationSettingsForCorrectness_empty() {
         Set<NotificationSetting> testSet = new HashSet<>();
-        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1.getId());
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         verify(notificationSettingRepository, times(0)).saveAll(any());
     }
@@ -143,7 +143,7 @@ public class NotificationSettingsServiceTest {
     public void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
-        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1.getId());
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         assertThat(testSet).contains(completeNotificationSettingA);
         verify(notificationSettingRepository, times(1)).deleteAll(any());
@@ -157,7 +157,7 @@ public class NotificationSettingsServiceTest {
     public void testCheckLoadedNotificationSettingsForCorrectness_correct() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.addAll(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
-        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1.getId());
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         verify(notificationSettingRepository, times(0)).deleteAll(any());
         verify(notificationSettingRepository, times(0)).saveAll(any());
