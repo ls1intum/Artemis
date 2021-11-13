@@ -20,6 +20,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 
 describe('OrionBuildAndTestService', () => {
     let serviceUnderTest: OrionBuildAndTestService;
+    let programmingSubmissionService: ProgrammingSubmissionService;
 
     let onBuildFinishedSpy: jest.SpyInstance;
     let onBuildStartedSpy: jest.SpyInstance;
@@ -60,6 +61,7 @@ describe('OrionBuildAndTestService', () => {
         });
 
         serviceUnderTest = TestBed.inject(OrionBuildAndTestService);
+        programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
         const orionConnectorService = TestBed.inject(OrionConnectorService);
         const buildLogService = TestBed.inject(BuildLogService);
         const participationService = TestBed.inject(ParticipationWebsocketService);
@@ -150,7 +152,7 @@ describe('OrionBuildAndTestService', () => {
 
     it('should delegate correctly if called buildAndTestExercise', () => {
         const listenOnBuildOutputAndForwardChangesSpy = jest.spyOn(serviceUnderTest, 'listenOnBuildOutputAndForwardChanges');
-        const triggerBuildSpy = jest.spyOn(TestBed.inject(ProgrammingSubmissionService), 'triggerBuild').mockReturnValue(of());
+        const triggerBuildSpy = jest.spyOn(programmingSubmissionService, 'triggerBuild').mockReturnValue(of());
 
         serviceUnderTest.buildAndTestExercise(exercise);
 

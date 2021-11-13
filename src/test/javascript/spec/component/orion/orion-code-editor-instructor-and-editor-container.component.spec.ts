@@ -25,8 +25,8 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;
-
     let orionConnectorService: OrionConnectorService;
+    let orionBuildAndTestService: OrionBuildAndTestService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -59,6 +59,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
             .then(() => {
                 comp = TestBed.createComponent(CodeEditorInstructorAndEditorOrionContainerComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
+                orionBuildAndTestService = TestBed.inject(OrionBuildAndTestService);
             });
     });
 
@@ -77,9 +78,8 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     });
 
     it('ngOnInit should subscribe to orionState', () => {
-        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
         const orionState = { opened: 40, building: false, cloning: false } as any;
-        orionStateStub.mockReturnValue(new BehaviorSubject(orionState));
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(new BehaviorSubject(orionState));
 
         comp.ngOnInit();
 
@@ -103,7 +103,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     it('submit should call connector', () => {
         const submitSpy = jest.spyOn(orionConnectorService, 'submit');
         const isBuildingSpy = jest.spyOn(orionConnectorService, 'isBuilding');
-        const listenOnBuildOutputSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
+        const listenOnBuildOutputSpy = jest.spyOn(orionBuildAndTestService, 'listenOnBuildOutputAndForwardChanges');
 
         const exercise = { id: 5 } as any;
         const participation = { id: 10 } as any;

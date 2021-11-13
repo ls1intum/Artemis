@@ -17,6 +17,7 @@ import { Feedback } from 'app/entities/feedback.model';
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
     const router = new MockRouter();
+    let alertService: AlertService
 
     const exercise = { id: 42 } as ProgrammingExercise;
 
@@ -33,6 +34,7 @@ describe('OrionConnectorService', () => {
         });
 
         serviceUnderTest = TestBed.inject(OrionConnectorService);
+        alertService = TestBed.inject(AlertService);
 
         // Mock all connectors. It may or may not be possible to do this automatically
         (window as any).orionSharedUtilConnector = { login: jest.fn(), log: jest.fn() } as OrionSharedUtilConnector;
@@ -161,7 +163,7 @@ describe('OrionConnectorService', () => {
     });
 
     it('should throw error in updateAssessment if no component present', () => {
-        const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
+        const errorSpy = jest.spyOn(alertService, 'error');
 
         serviceUnderTest.updateAssessment(5, '');
 

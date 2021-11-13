@@ -13,6 +13,8 @@ import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button
 describe('OrionProgrammingExerciseComponent', () => {
     let comp: OrionProgrammingExerciseComponent;
     let orionConnectorService: OrionConnectorService;
+    let router: Router;
+    let programmingExerciseService: ProgrammingExerciseService;
 
     const programmingExercise = { id: 456 } as any;
 
@@ -26,6 +28,8 @@ describe('OrionProgrammingExerciseComponent', () => {
             .then(() => {
                 comp = TestBed.createComponent(OrionProgrammingExerciseComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
+                router = TestBed.inject(Router);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
             });
     });
 
@@ -34,9 +38,8 @@ describe('OrionProgrammingExerciseComponent', () => {
     });
 
     it('ngOnInit should subscribe to state', () => {
-        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
         const orionState = { opened: 40, building: false, cloning: false } as any;
-        orionStateStub.mockReturnValue(new BehaviorSubject(orionState));
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(new BehaviorSubject(orionState));
 
         comp.ngOnInit();
 
@@ -47,7 +50,7 @@ describe('OrionProgrammingExerciseComponent', () => {
 
     it('editInIde should call connector', () => {
         const editExerciseSpy = jest.spyOn(orionConnectorService, 'editExercise');
-        jest.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(new BehaviorSubject({ body: programmingExercise } as any));
+        jest.spyOn(programmingExerciseService, 'find').mockReturnValue(new BehaviorSubject({ body: programmingExercise } as any));
 
         comp.editInIDE(programmingExercise);
 
@@ -56,15 +59,15 @@ describe('OrionProgrammingExerciseComponent', () => {
     });
 
     it('openOrionEditor should navigate to orion editor', () => {
-        const navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+        const navigateSpy = jest.spyOn(router, 'navigate');
         comp.openOrionEditor({ ...programmingExercise, templateParticipation: { id: 1234 } });
 
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         expect(navigateSpy).toHaveBeenCalledWith(['code-editor', 'ide', 456, 'admin', 1234]);
     });
 
-    it('openOrionEditor with error', () => {
-        const navigateStub = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => {
+    it('openOrionEditor should handle error', () => {
+        const navigateStub = jest.spyOn(router, 'navigate').mockImplementation(() => {
             throw 'test error';
         });
 

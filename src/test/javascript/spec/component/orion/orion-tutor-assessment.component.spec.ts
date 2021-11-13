@@ -12,6 +12,8 @@ import { AlertService } from 'app/core/util/alert.service';
 describe('OrionTutorAssessmentComponent', () => {
     let comp: OrionTutorAssessmentComponent;
     let orionConnectorService: OrionConnectorService;
+    let orionAssessmentService: OrionAssessmentService;
+    let alertService: AlertService;
     let container: CodeEditorTutorAssessmentContainerComponent;
 
     beforeEach(() => {
@@ -29,6 +31,8 @@ describe('OrionTutorAssessmentComponent', () => {
             .then(() => {
                 comp = TestBed.createComponent(OrionTutorAssessmentComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
+                orionAssessmentService = TestBed.inject(OrionAssessmentService);
+                alertService = TestBed.inject(AlertService);
                 container = TestBed.inject(CodeEditorTutorAssessmentContainerComponent);
                 comp.container = container;
                 container.submission = { id: 5 };
@@ -61,7 +65,7 @@ describe('OrionTutorAssessmentComponent', () => {
     });
 
     it('updateFeedback should throw error', () => {
-        const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
+        const errorSpy = jest.spyOn(alertService, 'error');
 
         comp.updateFeedback(10, [{ id: 1 }]);
 
@@ -70,7 +74,7 @@ describe('OrionTutorAssessmentComponent', () => {
     });
 
     it('openNextSubmission should call service', () => {
-        const sendSubmissionToOrionCancellableSpy = jest.spyOn(TestBed.inject(OrionAssessmentService), 'sendSubmissionToOrionCancellable');
+        const sendSubmissionToOrionCancellableSpy = jest.spyOn(orionAssessmentService, 'sendSubmissionToOrionCancellable');
 
         comp.openNextSubmission(2);
 

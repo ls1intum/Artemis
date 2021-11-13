@@ -20,6 +20,9 @@ import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button
 describe('OrionExerciseAssessmentDashboardComponent', () => {
     let comp: OrionExerciseAssessmentDashboardComponent;
     let orionConnectorService: OrionConnectorService;
+    let orionAssessmentService: OrionAssessmentService;
+    let exerciseService: ExerciseService;
+    let alertService: AlertService
 
     const programmingExercise = {
         id: 16,
@@ -49,6 +52,8 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
             .then(() => {
                 comp = TestBed.createComponent(OrionExerciseAssessmentDashboardComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
+                exerciseService = TestBed.inject(ExerciseService);
+                alertService = TestBed.inject(AlertService);
                 comp.exerciseId = programmingExercise.id!;
                 comp.exercise = programmingExercise;
             });
@@ -68,7 +73,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
     });
 
     it('downloadSubmissionInOrion should call service', () => {
-        const downloadSubmissionSpy = jest.spyOn(TestBed.inject(OrionAssessmentService), 'downloadSubmissionInOrion');
+        const downloadSubmissionSpy = jest.spyOn(orionAssessmentService, 'downloadSubmissionInOrion');
 
         comp.downloadSubmissionInOrion(programmingSubmission, 2);
 
@@ -79,12 +84,10 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
     it('ngOnInit should subscribe correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
         const stateObservable = new BehaviorSubject(orionState);
-        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
-        orionStateStub.mockReturnValue(stateObservable);
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(stateObservable);
 
         const response = of(new HttpResponse({ body: programmingExercise, status: 200 }));
-        const getForTutorsStub = jest.spyOn(TestBed.inject(ExerciseService), 'getForTutors');
-        getForTutorsStub.mockReturnValue(response);
+        const getForTutorsStub = jest.spyOn(exerciseService, 'getForTutors').mockReturnValue(response);
 
         comp.ngOnInit();
         tick();
@@ -102,14 +105,12 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
     it('ngOnInit should deal with error correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
         const stateObservable = new BehaviorSubject(orionState);
-        const orionStateStub = jest.spyOn(orionConnectorService, 'state');
-        orionStateStub.mockReturnValue(stateObservable);
+        const orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(stateObservable);
 
         const error = new HttpErrorResponse({ status: 400 });
-        const getForTutorsStub = jest.spyOn(TestBed.inject(ExerciseService), 'getForTutors');
-        getForTutorsStub.mockReturnValue(throwError(error));
+        const getForTutorsStub = jest.spyOn(exerciseService, 'getForTutors').mockReturnValue(throwError(error));
 
-        const errorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
+        const errorSpy = jest.spyOn(alertService, 'error');
         // counter the initialization in beforeEach
         comp.exercise = undefined as any;
 

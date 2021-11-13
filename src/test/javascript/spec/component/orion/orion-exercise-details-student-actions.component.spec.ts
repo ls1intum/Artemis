@@ -111,7 +111,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         expect(forwardBuildSpy.mock.invocationCallOrder[0]).toBe(submitSpy.mock.invocationCallOrder[0] + 1);
     });
 
-    it('isOfflineIdeAllowed should work', () => {
+    it('isOfflineIdeAllowed should reflect exercise state', () => {
         comp.exercise = { allowOfflineIde: true } as any;
 
         expect(comp.isOfflineIdeAllowed).toBe(true);
