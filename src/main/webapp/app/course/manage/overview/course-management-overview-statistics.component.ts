@@ -52,6 +52,10 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         }
     }
 
+    /**
+     * Creates chart in order to visualize data provided by the inputs
+     * @private
+     */
     private createChartData() {
         const set: any[] = [];
         this.ngxData = [];
@@ -68,9 +72,19 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         this.ngxData.push({ name: 'active students', series: set });
     }
 
+    /**
+     * Appends a percentage sign to every tick on the y axis
+     * @param value the default tick
+     */
     formatYAxis(value: any) {
         return value.toLocaleString() + ' %';
     }
+
+    /**
+     * Returns the absolute value of active students for a week
+     * @param value the specific week, represented by Object with structure {name, value}
+     * containing the x axis tick as name and the corresponding relative value displayed by the point
+     */
     findAbsoluteValue(value: any) {
         const result = this.absoluteValues.find((entry) => entry.name === value.name);
         return result ? result.absoluteValue : 0;
