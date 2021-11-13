@@ -3,13 +3,12 @@ import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges {
     @Input()
@@ -34,6 +33,16 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
     dataForSpanType: number[] = [];
+
+    // ngx-data
+    ngxData: any[] = [];
+    chartColor: Color = {
+        name: 'vivid',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['rgba(53,61,71,1)'],
+    };
+    absoluteValues: any[] = [];
 
     constructor(private translateService: TranslateService) {}
 
@@ -117,8 +126,11 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     private createChartData() {
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
             this.dataForSpanType = [];
+            let index = 0;
             for (const value of this.initialStats) {
                 this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
+                this.absoluteValues.push({ name: this.barChartLabels[index], absoluteValue: value });
+                index++;
             }
         } else {
             this.dataForSpanType = new Array(4).fill(0);
@@ -135,5 +147,20 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
                 pointHoverBorderColor: 'rgba(53,61,71,1)',
             },
         ];
+        this.ngxData = [];
+        const set: any[] = [];
+        this.dataForSpanType.forEach((data, index) => {
+            set.push({ name: this.barChartLabels[index], value: data });
+        });
+
+        this.ngxData.push({ name: 'active students', series: set });
+    }
+
+    formatYAxis(value: any) {
+        return value.toLocaleString() + ' %';
+    }
+    findAbsoluteValue(value: any) {
+        const result = this.absoluteValues.find((entry) => entry.name === value.name);
+        return result ? result.absoluteValue : 0;
     }
 }

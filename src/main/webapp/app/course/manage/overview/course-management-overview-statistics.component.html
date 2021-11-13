@@ -1,15 +1,26 @@
 <h4 class="col-md-12 mt-3 text-center">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>
-<div class="col-md-12" style="display: flex; justify-content: center; align-items: center">
-    <canvas
-        baseChart
-        height="300"
-        width="750"
-        [datasets]="chartData"
-        [labels]="barChartLabels"
-        [options]="barChartOptions"
-        [legend]="barChartLegend"
-        [chartType]="barChartType"
-    ></canvas>
+<div #containerRef class="col-md-12 text-center" style="max-height: 300px; justify-content: center; align-items: center">
+    <ngx-charts-line-chart
+        [view]="[containerRef.offsetWidth, 250]"
+        [results]="ngxData"
+        [scheme]="chartColor"
+        [xAxis]="true"
+        [yAxis]="true"
+        [yScaleMin]="0"
+        [yScaleMax]="100"
+        [yAxisTickFormatting]="formatYAxis"
+        [rotateXAxisTicks]="false"
+        [animations]="true"
+    >
+        <ng-template #tooltipTemplate let-model="model">
+            <h3 *ngIf="findAbsoluteValue(model) !== 1" class="tooltip-header">{{ findAbsoluteValue(model) }} active students</h3>
+            <h3 *ngIf="findAbsoluteValue(model) === 1" class="tooltip-header">{{ findAbsoluteValue(model) }} active student</h3>
+            <span>{{ model.name }}</span>
+        </ng-template>
+        <ng-template #seriesTooltipTemplate let-model="model">
+            <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
+        </ng-template>
+    </ngx-charts-line-chart>
     <div *ngIf="loading" style="z-index: 1; position: absolute; font-size: large">
         <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
     </div>
