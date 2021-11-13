@@ -18,6 +18,13 @@
         }
     }
 
+    .instruction-delete-button {
+        display: inline-block;
+        padding: 4px;
+        cursor: pointer;
+        color: #dc3545;
+    }
+
     .instructions {
         display: flex;
         align-items: center;
@@ -47,5 +54,9 @@
         .background-file {
             display: flex;
         }
+    }
+
+    .criterion-title-row {
+        background-color: rgb(242 242 242);
     }
 }

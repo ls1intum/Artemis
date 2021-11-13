@@ -38,7 +38,9 @@
                         [diagramType]="modelingExercise.diagramType!"
                         [withExplanation]="true"
                         [(explanation)]="explanation"
+                        [resizeOptions]="resizeOptions"
                     ></jhi-modeling-editor>
+                    <fa-icon [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type!"
@@ -109,19 +111,20 @@
                 class="col-xl-8 mt-3 alert unreferencedFeedback"
                 [feedback]="unreferencedFeedback || []"
                 [additional]="true"
+                [course]="course"
             >
             </jhi-additional-feedback>
         </div>
         <div class="row" *ngIf="result">
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
-        <jhi-complaint-interactions
+        <jhi-complaint-student-view
             *ngIf="modelingExercise && result"
             [exercise]="modelingExercise"
             [participation]="participation"
             [result]="resultWithComplaint ? resultWithComplaint : result"
         >
-        </jhi-complaint-interactions>
+        </jhi-complaint-student-view>
     </div>
     <!--endregion-->
     <!--region Right Panel-->

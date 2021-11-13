@@ -47,17 +47,18 @@ public class AnswerPostResource {
     }
 
     /**
-     * PUT /courses/{courseId}/answer-posts : Update an existing answer post
+     * PUT /courses/{courseId}/answer-posts/{answerPostId} : Update an existing answer post with given id
      *
-     * @param courseId   id of the course the answer post belongs to
-     * @param answerPost answer post to update
+     * @param courseId      id of the course the answer post belongs to
+     * @param answerPostId  id of the answer post to update
+     * @param answerPost    answer post to update
      * @return ResponseEntity with status 200 (OK) containing the updated answer post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
      */
-    @PutMapping("courses/{courseId}/answer-posts")
+    @PutMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) {
-        AnswerPost updatedAnswerPost = answerPostService.updateAnswerPost(courseId, answerPost);
+    public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId, @RequestBody AnswerPost answerPost) {
+        AnswerPost updatedAnswerPost = answerPostService.updateAnswerPost(courseId, answerPostId, answerPost);
         return new ResponseEntity<>(updatedAnswerPost, null, HttpStatus.OK);
     }
 

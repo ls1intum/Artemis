@@ -24,6 +24,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { Course } from 'app/entities/course.model';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -32,7 +35,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly getCourseFromExercise = getCourseFromExercise;
+    readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -40,6 +43,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     participation: StudentParticipation;
     exercise: ProgrammingExercise;
+    course?: Course;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -56,6 +60,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
         private exerciseHintService: ExerciseHintService,
+        private submissionPolicyService: SubmissionPolicyService,
         private route: ActivatedRoute,
     ) {}
 
@@ -85,6 +90,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
+                        this.course = getCourseFromExercise(this.exercise);
+                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
+                            this.exercise.submissionPolicy = submissionPolicy;
+                        });
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();

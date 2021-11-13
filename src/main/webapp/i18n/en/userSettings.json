@@ -7,6 +7,7 @@
             "userSettings": "User Settings",
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
+            "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "accountInformationPage": {
                 "fullName": "Full Name",
                 "login": "Login",
@@ -19,26 +20,33 @@
             "settingGroupNames": {
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
+                "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
                 "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
             "settingNames": {
-                "exerciseCreatedOrStarted": "Exercise created or started",
-                "exerciseOpenForPractice": "Exercise open for Practice",
-                "newPostForExercises": "New Post for Exercises",
-                "newReplyForExercises": "New Reply for Exercises",
+                "exerciseReleased": "Exercise released",
+                "exerciseOpenForPractice": "Exercise Open for Practice",
                 "attachmentChanges": "Attachment Changes",
-                "newPostForLecture": "New Post for Lecture",
-                "newReplyForLecture": "New Reply for Lecture",
+                "newExercisePost": "New Exercise Post",
+                "newReplyForExercisePost": "New Reply for Exercise Post",
+                "newLecturePost": "New Lecture Post",
+                "newReplyForLecturePost": "New Reply for Lecture Post",
+                "newCoursePost": "New Course Post",
+                "newReplyForCoursePost": "New Reply for Course Post",
+                "newAnnouncementPost": "New Announcement",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
             "settingDescriptions": {
-                "exerciseCreatedOrStartedDescription": "Get notified when a (new) exercise has been created or started",
+                "exerciseReleasedDescription": "Get notified when a new exercise has been released",
                 "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
-                "newPostForExercisesDescription": "Get notified when a new post about an exercise has been created",
-                "newReplyForExercisesDescription": "Get notified when a new reply about an exercise has been created",
                 "attachmentChangesDescription": "Receive a notification when an attachment was changed",
-                "newPostForLectureDescription": "Get notified when a new post about an exercise has been created",
-                "newReplyForLectureDescription": "Get notified when a new reply about an exercise has been created",
+                "newExercisePostDescription": "Get notified when a new exercise post has been created",
+                "newReplyForExercisePostDescription": "Get notified when a new reply for an exercise post has been created",
+                "newLecturePostDescription": "Get notified when a new lecture post has been created",
+                "newReplyForLecturePostDescription": "Get notified when a new reply for a lecture post has been created",
+                "newCoursePostDescription": "Receive a notification when a new course-wide post has been created",
+                "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
+                "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
                 "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
             }
         }

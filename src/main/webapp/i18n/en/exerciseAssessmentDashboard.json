@@ -73,12 +73,12 @@
             "noMoreFeedbackRequests": "There are no requests at the moment.",
             "noMoreFeedbackRequestsDisplayed": "There are no requests at the moment (excluding request about your own assessments)",
             "evaluateMoreFeedbackRequest": "Evaluate the request",
+            "showMoreFeedbackRequests": "Show the request",
             "moreFeedbackRequestEvaluated": "More Feedback Request has already been evaluated",
             "moreFeedbackRequestNotEvaluated": "More Feedback Request still needs to be evaluated",
-            "showMoreFeedbackRequests": "Show the request",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
-            "totalYours": "Total / Yours",
+            "totalYours": "Total | Yours",
             "stats": {
                 "intime": "On time",
                 "late": "Late"
@@ -102,7 +102,10 @@
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
             "noSubmissionsInfo": "You may not assess any submissions this round. {{notYetAssessed}} submissions have yet to be assessed, of which {{lockedSubmissionsByOtherTutor}} are currently locked by other tutors ",
             "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round."
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
+            "openAssessments": "Open assessments",
+            "closedAssessments": "Closed assessments",
+            "ratings": "Ratings"
         }
     }
 }

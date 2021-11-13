@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -17,8 +18,9 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 /**
@@ -49,10 +51,12 @@ public class ProgrammingExerciseSimulationService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final SubmissionPolicyService submissionPolicyService;
+
     public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, GroupNotificationService groupNotificationService,
             ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService) {
+            ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -61,6 +65,7 @@ public class ProgrammingExerciseSimulationService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -77,12 +82,18 @@ public class ProgrammingExerciseSimulationService {
         setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
 
         programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
-        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
+        if (programmingExercise.getReleaseDate() == null || !programmingExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            groupNotificationService.notifyAllGroupsAboutReleasedExercise(programmingExercise);
+        }
+        else {
+            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
+        }
 
         return programmingExercise;
     }

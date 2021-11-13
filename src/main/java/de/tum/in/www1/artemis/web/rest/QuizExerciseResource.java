@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -126,12 +127,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // Only notify students and tutors if the exercise is created for a course
-        if (quizExercise.isCourseExercise()) {
-            // notify websocket channel of changes to the quiz exercise
-            quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(quizExercise.getId());
-        }
+        groupNotificationService.checkNotificationForExerciseRelease(quizExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -176,7 +172,7 @@ public class QuizExerciseResource {
         }
 
         // Forbid conversion between normal course exercise and exam exercise
-        var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
+        final var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
         exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
 
         // check if quiz is has already started
@@ -191,13 +187,8 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
-        // Only notify students about changes if a regular exercise in a course was updated
-        if (notificationText != null && quizExercise.isCourseExercise()) {
-            // notify websocket channel of changes to the quiz exercise
-            quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(quizExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText, instanceMessageSendService);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 

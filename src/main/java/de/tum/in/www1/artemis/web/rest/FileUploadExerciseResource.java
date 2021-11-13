@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -111,10 +112,8 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        // Only notify students and tutors when the exercise is created for a course
-        if (fileUploadExercise.isCourseExercise()) {
-            instanceMessageSendService.sendExerciseReleaseNotificationSchedule(fileUploadExercise.getId());
-        }
+        groupNotificationService.checkNotificationForExerciseRelease(fileUploadExercise, instanceMessageSendService);
+
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -180,7 +179,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
-        FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
+        final FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
@@ -189,9 +188,9 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
-        if ((notificationText != null && fileUploadExercise.isCourseExercise()) || fileUploadExercise.isExamExercise()) {
-            groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
-        }
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
+                instanceMessageSendService);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }
 

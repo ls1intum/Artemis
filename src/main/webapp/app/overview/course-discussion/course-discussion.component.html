@@ -19,15 +19,16 @@
                     <fa-icon [icon]="'plus'"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                 </button>
-                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"> </jhi-post-create-edit-modal>
+                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
             </div>
         </div>
         <form [formGroup]="formGroup">
             <!-- filter and sort controls -->
             <div class="row justify-content-between">
-                <!-- context filter -->
+                <!-- filter -->
                 <div class="col-auto">
                     <div class="row">
+                        <!-- context filter -->
                         <div class="col-auto p-0 selection-prefix">
                             <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                         </div>
@@ -53,31 +54,47 @@
                                 </optgroup>
                             </select>
                         </div>
-                        <div class="col-auto px-1 selection-prefix">
-                            <input class="form-check-input" type="checkbox" formControlName="filterResolved" name="filterResolved" (change)="onFilterResolved()" />
-                            <span class="ps-1">{{ 'artemisApp.metis.overview.filterResolved' | artemisTranslate }}</span>
+                        <!-- attribute filter -->
+                        <div class="col-auto px-0 selection-prefix">
+                            <fa-icon [icon]="'filter'"></fa-icon>
+                            <input class="form-check-input" type="checkbox" formControlName="filterToUnresolved" name="filterToUnresolved" (change)="onFilterChange()" />
+                            <span class="px-1">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</span>
+                            <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" (change)="onFilterChange()" />
+                            <span class="px-1">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</span>
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                formControlName="filterToAnsweredOrReacted"
+                                name="filterToAnsweredOrReacted"
+                                (change)="onFilterChange()"
+                            />
+                            <span class="px-1">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</span>
                         </div>
                     </div>
                 </div>
                 <!-- sort dropdown -->
-                <div class="col-auto p-0">
-                    <div class="row">
+                <div class="col-auto ps-0">
+                    <div class="row align-items-baseline">
                         <div class="col-auto pe-0 selection-prefix">
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
-                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortBy">
+                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSortBy()" name="sortBy">
                                 <option *ngFor="let sortByOption of SortBy | keyvalue" [ngValue]="sortByOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
                                 </option>
                             </select>
                         </div>
-                        <div class="col-auto p-0">
-                            <select formControlName="sortDirection" class="form-select ps-0" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortDirection">
-                                <option *ngFor="let sortDirectionOption of SortDirection | keyvalue" [ngValue]="sortDirectionOption.value">
-                                    {{ 'artemisApp.metis.overview.' + sortDirectionOption.value | artemisTranslate }}
-                                </option>
-                            </select>
+                        <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
+                            <fa-icon
+                                [icon]="currentSortDirection === SortDirection.ASC ? 'long-arrow-alt-up' : 'long-arrow-alt-down'"
+                                [ngbTooltip]="
+                                    currentSortDirection === SortDirection.ASC
+                                        ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
+                                        : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
+                                "
+                            >
+                            </fa-icon>
                         </div>
                     </div>
                 </div>

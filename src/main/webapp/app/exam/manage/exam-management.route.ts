@@ -85,7 +85,7 @@ export class ExamResolve implements Resolve<Exam> {
         if (courseId && examId) {
             return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
-                map((exam: HttpResponse<Exam>) => exam.body!),
+                map((response: HttpResponse<Exam>) => response.body!),
             );
         }
         return of(new Exam());
@@ -131,7 +131,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((studentExam: HttpResponse<StudentExam>) => studentExam.body!),
+                map((response: HttpResponse<StudentExam>) => response.body!),
             );
         }
         return of(new StudentExam());
@@ -230,6 +230,10 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/tutor-effort-statistics',
+        loadChildren: () => import('../../exercises/text/manage/tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
     },
     {
         path: ':examId/students',
@@ -804,6 +808,10 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
         loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/text-cluster-statistics',
+        loadChildren: () => import('../../exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions',

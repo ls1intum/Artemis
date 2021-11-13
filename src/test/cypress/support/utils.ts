@@ -18,11 +18,11 @@ export function generateUUID() {
 }
 
 /**
- * Formats the dayjs object with the time format which the backend uses. Also makes sure that dayjs uses the utc timezone.
+ * Formats the dayjs object with the time format which the server uses. Also makes sure that dayjs uses the utc timezone.
  * @param dayjs the dayjs object
  * @returns a formatted string representing the date with utc timezone
  */
 export function dayjsToString(dayjs: day.Dayjs) {
-    // We need to add the Z at the end. Otherwise the backend can't parse it.
+    // We need to add the Z at the end. Otherwise the server can't parse it.
     return dayjs.utc().format(TIME_FORMAT) + 'Z';
 }

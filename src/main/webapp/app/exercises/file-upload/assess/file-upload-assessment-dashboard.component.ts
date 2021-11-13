@@ -45,10 +45,10 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Get Submissions for exercise id.
-     * If No Submissions are found, also get exercise. Otherwise, we get it from the first participation.
+     * Get submissions for exercise id.
+     * If no submissions are found, also get exercise. Otherwise, we get it from the first participation.
      */
-    public async ngOnInit(): Promise<void> {
+    ngOnInit() {
         this.busy = true;
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -71,45 +71,34 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 this.exercise = exercise;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
-                this.setPermissions();
                 this.busy = false;
             });
     }
 
     /**
-     * Fetch submissions for Exercise id.
-     * @param exerciseId
-     * @return Resolved Promise if Submission list contains at least one submission. Rejected Promise if Submission list is empty.
-     * @throws Error if exercise id is of other type.
+     * Fetch submissions for exercise id.
      */
-    private getSubmissions(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.fileUploadSubmissionService
-                .getFileUploadSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
-                .pipe(
-                    map((response: HttpResponse<FileUploadSubmission[]>) =>
-                        response.body!.map((submission: FileUploadSubmission) => {
-                            const tmpResult = getLatestSubmissionResult(submission);
-                            if (tmpResult) {
-                                // reconnect some associations
-                                tmpResult.submission = submission;
-                                tmpResult.participation = submission.participation;
-                                submission.participation!.results = [tmpResult];
-                            }
-                            return submission;
-                        }),
-                    ),
-                )
-                .subscribe((submissions: FileUploadSubmission[]) => {
-                    this.submissions = submissions;
-                    this.filteredSubmissions = submissions;
-                    if (submissions.length > 0) {
-                        resolve();
-                    } else {
-                        reject();
-                    }
-                });
-        });
+    private getSubmissions() {
+        this.fileUploadSubmissionService
+            .getFileUploadSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
+            .pipe(
+                map((response: HttpResponse<FileUploadSubmission[]>) =>
+                    response.body!.map((submission: FileUploadSubmission) => {
+                        const tmpResult = getLatestSubmissionResult(submission);
+                        if (tmpResult) {
+                            // reconnect some associations
+                            tmpResult.submission = submission;
+                            tmpResult.participation = submission.participation;
+                            submission.participation!.results = [tmpResult];
+                        }
+                        return submission;
+                    }),
+                ),
+            )
+            .subscribe((submissions: FileUploadSubmission[]) => {
+                this.submissions = submissions;
+                this.filteredSubmissions = submissions;
+            });
     }
 
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
@@ -128,20 +117,12 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         }
     }
 
-    private setPermissions() {
-        if (this.exercise.course) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-        } else {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
-        }
-    }
-
     public sortRows() {
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
 
     /**
-     * get the link for the assessment of a specific submission of the current exercise
+     * Get the link for the assessment of a specific submission of the current exercise
      * @param participationId
      * @param submissionId
      */

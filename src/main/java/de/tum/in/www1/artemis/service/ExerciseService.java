@@ -108,6 +108,16 @@ public class ExerciseService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final RatingService ratingService;
+
+    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
+    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService,
             QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository,
@@ -117,7 +127,9 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingAssessmentService programmingAssessmentService) {
+            ProgrammingAssessmentService programmingAssessmentService, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
+            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
+            RatingService ratingService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -147,6 +159,11 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.ratingService = ratingService;
+        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
+        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
+        this.textExerciseRepository = textExerciseRepository;
+        this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
     /**
@@ -265,6 +282,8 @@ public class ExerciseService {
                 ComplaintType.MORE_FEEDBACK);
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+
+        stats.setNumberOfRatings(ratingService.countRatingsByExerciseId(exerciseId));
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
@@ -396,9 +415,9 @@ public class ExerciseService {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        log.info("Checking if exercise is modeling exercise", exercise.getId());
+        log.info("Checking if exercise {} is modeling exercise", exercise.getId());
         if (exercise instanceof ModelingExercise) {
-            log.info("Deleting clusters, elements and cancel scheduled operations", exercise.getId());
+            log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
             modelingExerciseService.deleteClustersAndElements((ModelingExercise) exercise);
             modelingExerciseService.cancelScheduledOperations(exerciseId);
@@ -416,7 +435,7 @@ public class ExerciseService {
 
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
-        // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
+        // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         // to avoid a ConcurrentModificationException, we need to use a copy of the set
         var exampleSubmissions = new HashSet<>(exercise.getExampleSubmissions());
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
@@ -444,6 +463,22 @@ public class ExerciseService {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
+            // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
+            if (exercise instanceof TextExercise) {
+                // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
+                TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
+                if (textExercise.getKnowledge() != null) {
+                    textAssessmentKnowledgeService.deleteKnowledge(textExercise.getKnowledge().getId(), textExercise.getId());
+                }
+            }
+            // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
+            else if (exercise instanceof ModelingExercise) {
+                // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
+                ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
+                if (modelingExercise.getKnowledge() != null) {
+                    modelAssessmentKnowledgeService.deleteKnowledge(modelingExercise.getKnowledge().getId(), modelingExercise.getId());
+                }
+            }
             exerciseRepository.delete(exercise);
         }
     }
