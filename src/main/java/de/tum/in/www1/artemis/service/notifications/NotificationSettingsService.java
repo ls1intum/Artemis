@@ -226,9 +226,9 @@ public class NotificationSettingsService {
                 });
             });
             // update DB to fix inconsistencies and avoid redundant future merges
-            // first remove all settings of the current user in the db
+            // first remove all settings of the current user in the DB
             notificationSettingRepository.deleteAll(loadedNotificationSettingSet);
-            // save correct merge to db
+            // save correct merge to DB
             notificationSettingRepository.saveAll(updatedNotificationSettingSet);
             return updatedNotificationSettingSet;
         }
