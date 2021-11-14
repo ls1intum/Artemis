@@ -2,17 +2,9 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { UserService } from 'app/core/user/user.service';
-import { MockUserService } from '../../helpers/mocks/service/mock-user.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
-import { RatingModule as StarratingModule, StarRatingComponent } from 'ng-starrating';
+import { StarRatingComponent } from 'ng-starrating';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/entities/result.model';
@@ -22,6 +14,7 @@ import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { Participation } from 'app/entities/participation/participation.model';
+import { MockComponent } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,14 +26,10 @@ describe('RatingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, StarratingModule],
-            declarations: [RatingComponent],
+            imports: [ArtemisTestModule],
+            declarations: [RatingComponent, MockComponent(StarRatingComponent)],
             providers: [
                 { provide: RatingService, useClass: MockRatingService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: UserService, useClass: MockUserService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })

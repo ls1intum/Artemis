@@ -257,7 +257,7 @@ export class MetisService implements OnDestroy {
      * @return {boolean} tutor flag
      */
     metisUserIsAtLeastTutorInCourse(): boolean {
-        return this.accountService.isAtLeastTutorInCourse(this.course);
+        return !!this.course.isAtLeastTutor;
     }
 
     /**
@@ -265,7 +265,7 @@ export class MetisService implements OnDestroy {
      * @return boolean instructor flag
      */
     metisUserIsAtLeastInstructorInCourse(): boolean {
-        return this.accountService.isAtLeastInstructorInCourse(this.course);
+        return !!this.course.isAtLeastInstructor;
     }
 
     /**
@@ -302,21 +302,12 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * counts the answer posts of a post, 0 if none exist
-     * @param {Post} post of which the answer posts are counted
-     * @return {number} amount of answer posts
-     */
-    getNumberOfAnswerPosts(post: Post): number {
-        return post.answers?.length! ? post.answers?.length! : 0;
-    }
-
-    /**
      * determines if the post is resolved by searching for resolving answer posts
      * @param {Post} post of which the state is determined
      * @return {boolean} flag that indicates if the post is resolved
      */
     isPostResolved(post: Post): boolean {
-        if (this.getNumberOfAnswerPosts(post) > 0) {
+        if (post.answers && post.answers.length > 0) {
             return post.answers!.filter((answer: AnswerPost) => answer.resolvesPost === true).length > 0;
         } else {
             return false;

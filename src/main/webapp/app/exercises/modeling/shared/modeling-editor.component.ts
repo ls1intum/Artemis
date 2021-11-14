@@ -46,7 +46,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     /**
      * Initializes the Apollon editor.
-     * If this is a guided tour, than calls assessModelForGuidedTour.
+     * If this is a guided tour, then calls assessModelForGuidedTour.
      * If resizeOptions is set to true, resizes the editor according to interactions.
      */
     ngAfterViewInit(): void {

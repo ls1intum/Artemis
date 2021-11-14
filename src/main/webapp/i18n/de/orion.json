@@ -16,6 +16,10 @@
             "startAssessment": "Neue Bewertung in Orion starten",
             "continueAssessment": "Bewertung in Orion fortsetzen",
             "openAssessment": "Bewertung in Orion öffnen",
+            "evaluateComplaint": "Beschwerde in Orion auswerten",
+            "showComplaint": "Beschwerde in Orion anzeigen",
+            "evaluateMoreFeedbackRequest": "Feedbackanfrage in Orion auswerten",
+            "showMoreFeedbackRequests": "Feedbackanfragen in Orion anzeigen",
             "downloadFailed": "Abgabe konnte nicht heruntergeladen werden. Datei möglicherweise zu groß. Versuche, sie manuell herunterzuladen."
         }
     }

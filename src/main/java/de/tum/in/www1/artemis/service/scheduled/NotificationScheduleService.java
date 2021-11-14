@@ -91,7 +91,7 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
                     SecurityUtils.setAuthorizationObject();
                 }
                 Exercise foundCurrentVersionOfScheduledExercise;
-                // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the db
+                // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
                 try {
                     foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 }
