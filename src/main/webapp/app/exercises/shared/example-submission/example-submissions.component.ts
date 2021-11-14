@@ -10,9 +10,6 @@ import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-s
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -29,7 +26,6 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         private courseService: CourseManagementService,
         private modalService: NgbModal,
         private accountService: AccountService,
-        private stringCountService: StringCountService,
         private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
@@ -119,13 +115,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         });
     }
 
-    getSubmissionSize(submission?: Submission) {
-        if (submission && this.exercise.type === ExerciseType.TEXT) {
-            return this.stringCountService.countWords((submission as TextSubmission).text);
-        } else if (submission && this.exercise.type === ExerciseType.MODELING) {
-            const elements = JSON.parse((submission as ModelingSubmission).model!).elements as string[];
-            return elements.length;
-        }
-        return 0;
+    /**
+     * Gets the number of elements for the example submission
+     *
+     * @param submission associated with the example submission
+     * @returns number of words for text submission, or number of element for the modeling submission
+     */
+    getSubmissionSize(submission?: Submission): number {
+        return this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
     }
 }

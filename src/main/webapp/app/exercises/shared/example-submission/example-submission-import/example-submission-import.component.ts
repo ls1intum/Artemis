@@ -6,8 +6,9 @@ import { Submission } from 'app/entities/submission.model';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export enum TableColumn {
     ID = 'ID',
@@ -26,6 +27,7 @@ export class ExampleSubmissionImportComponent implements OnInit {
     private sort = new Subject<void>();
 
     submissions: Submission[] = [];
+    submissionSizeHint?: string;
 
     loading = false;
     content: SearchResult<Submission>;
@@ -43,6 +45,7 @@ export class ExampleSubmissionImportComponent implements OnInit {
         private activeModal: NgbActiveModal,
         private exampleSubmissionService: ExampleSubmissionService,
         private pagingService: ExampleSubmissionImportPagingService,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     ngOnInit(): void {
@@ -50,6 +53,11 @@ export class ExampleSubmissionImportComponent implements OnInit {
 
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
+        if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
+            this.submissionSizeHint = this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.textSubmissionSizeHint');
+        } else if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
+            this.submissionSizeHint = this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.modelingSubmissionSizeHint');
+        }
     }
 
     private performSearch(searchSubject: Subject<void>, debounce: number) {
@@ -136,5 +144,15 @@ export class ExampleSubmissionImportComponent implements OnInit {
         if (pageNumber) {
             this.page = pageNumber;
         }
+    }
+
+    /**
+     * Gets the number of elements for the example submission
+     *
+     * @param submission associated with the example submission
+     * @returns number of words for text submission, or number of element for the modeling submission
+     */
+    getSubmissionSize(submission?: Submission): number {
+        return this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
     }
 }
