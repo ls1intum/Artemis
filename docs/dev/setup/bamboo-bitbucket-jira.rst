@@ -104,7 +104,6 @@ under ``localhost:7990``.
        For the installation on the subsystem the above linked explanation can be used.
        <br>
        Make sure to execute the script from the subsystem.
-
        </details>
 
    Make sure that Jira, Bitbucket and Bamboo have finished starting up.
