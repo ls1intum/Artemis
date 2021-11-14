@@ -112,7 +112,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         const getForTutorsStub = jest.spyOn(exerciseService, 'getForTutors').mockReturnValue(throwError(error));
 
         const errorSpy = jest.spyOn(alertService, 'error');
-        // counter the initialization in beforeEach
+        // counter the initialization in beforeEach. as any required to cheat the typecheck
         comp.exercise = undefined as any;
 
         comp.ngOnInit();

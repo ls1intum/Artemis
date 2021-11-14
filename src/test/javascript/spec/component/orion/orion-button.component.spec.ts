@@ -48,6 +48,6 @@ describe('OrionButtonComponent', () => {
 
         buttonElement.nativeElement.click();
 
-        expect(emitSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 });

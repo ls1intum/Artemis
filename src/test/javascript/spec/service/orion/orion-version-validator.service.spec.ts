@@ -3,7 +3,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockProvider } from 'ng-mocks';
 
@@ -54,55 +54,60 @@ describe('OrionValidatorService', () => {
         jest.restoreAllMocks();
     });
 
-    it('should route to the error page if a legacy version is used', () => {
+    it('should route to the error page if a legacy version is used', fakeAsync(() => {
         setUserAgent(userAgent + legacy);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(false));
+        tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         expect(navigateSpy).toHaveBeenCalledWith('/orion-outdated?versionString=soOldThatThereIsNoVersion');
-    });
+    }));
 
-    it('should route to the error page if the version is too low', () => {
+    it('should route to the error page if the version is too low', fakeAsync(() => {
         setUserAgent(userAgent + versionTooLow);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(false));
+        tick();
 
         expect(profileInfoStub).toHaveBeenCalledTimes(1);
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         expect(navigateSpy).toHaveBeenCalledWith(`/orion-outdated?versionString=0.9.0`);
-    });
+    }));
 
-    it('should accept the correct version', () => {
+    it('should accept the correct version', fakeAsync(() => {
         setUserAgent(userAgent + versionCorrect);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(true));
+        tick();
 
         expect(profileInfoStub).toHaveBeenCalledTimes(1);
         expect(navigateSpy).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should not do anything if a normal browser is connected', () => {
+    it('should not do anything if a normal browser is connected', fakeAsync(() => {
         setUserAgent(userAgent);
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(true));
+        tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should return stored value', () => {
+    it('should return stored value', fakeAsync(() => {
         orionVersionValidator.isOrion = true;
         // @ts-ignore
         orionVersionValidator.isValidVersion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(true));
+        tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
-    });
+    }));
 });

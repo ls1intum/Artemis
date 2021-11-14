@@ -152,15 +152,15 @@ describe('OrionBuildAndTestService', () => {
 
     it('should delegate correctly if called buildAndTestExercise', () => {
         const listenOnBuildOutputAndForwardChangesSpy = jest.spyOn(serviceUnderTest, 'listenOnBuildOutputAndForwardChanges');
-        const triggerBuildSpy = jest.spyOn(programmingSubmissionService, 'triggerBuild').mockReturnValue(of());
+        const triggerBuildStub = jest.spyOn(programmingSubmissionService, 'triggerBuild').mockReturnValue(of());
 
         serviceUnderTest.buildAndTestExercise(exercise);
 
         expect(listenOnBuildOutputAndForwardChangesSpy).toHaveBeenCalledTimes(1);
         expect(listenOnBuildOutputAndForwardChangesSpy).toHaveBeenCalledWith(exercise);
 
-        expect(triggerBuildSpy).toHaveBeenCalledTimes(1);
-        expect(triggerBuildSpy).toHaveBeenCalledWith(32);
+        expect(triggerBuildStub).toHaveBeenCalledTimes(1);
+        expect(triggerBuildStub).toHaveBeenCalledWith(32);
     });
 
     it('should unsubscribe from pending subscriptions', () => {
@@ -176,7 +176,7 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.buildAndTestExercise(exercise);
 
-        expect(resultSubscriptionSpy).toHaveBeenCalled();
-        expect(buildLogSubscriptionSpy).toHaveBeenCalled();
+        expect(resultSubscriptionSpy).toHaveBeenCalledTimes(1);
+        expect(buildLogSubscriptionSpy).toHaveBeenCalledTimes(1);
     });
 });

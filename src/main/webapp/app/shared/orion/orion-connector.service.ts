@@ -37,6 +37,7 @@ export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 
+    // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
     constructor(private injector: Injector, private alertService: AlertService) {}
