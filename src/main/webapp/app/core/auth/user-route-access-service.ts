@@ -6,6 +6,7 @@ import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 import { first, switchMap } from 'rxjs/operators';
 import { from, lastValueFrom, of } from 'rxjs';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
@@ -33,6 +34,18 @@ export class UserRouteAccessService implements CanActivate {
         }
 
         const authorities = route.data['authorities'];
+
+        // For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
+        // To ensure this behaviour the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
+        // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
+        if (
+            (route.routeConfig?.path === ':courseId/programming-exercises/:exerciseId/participations/:participationId/submissions' ||
+                ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId') &&
+            route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true'
+        ) {
+            authorities.push(Authority.EDITOR);
+        }
+
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.

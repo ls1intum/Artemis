@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -1340,6 +1341,86 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // misspelled request
         quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * test that a quiz question with an explanation within valid length can be created
+     */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizExplanationLength_Valid() throws Exception {
+        int validityThreshold = 500;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.setExplanation("0".repeat(validityThreshold));
+
+        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        assertNotNull(response);
+    }
+
+    /**
+     * test that a quiz question with an explanation without valid length can't be created
+     */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizExplanationLength_Invalid() throws Exception {
+        int validityThreshold = 500;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.setExplanation("0".repeat(validityThreshold + 1));
+
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * test that a quiz question with an option with an explanation with valid length can be created
+     */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizOptionExplanationLength_Valid() throws Exception {
+        int validityThreshold = 500;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
+
+        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        assertNotNull(response);
+    }
+
+    /**
+     * test that a quiz question with an option with an explanation without valid length can't be created
+     */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizOptionExplanationLength_Inalid() throws Exception {
+        int validityThreshold = 500;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
+
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private QuizExercise createMultipleChoiceQuizExerciseDummy() {
+        Course course = database.createCourse();
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, course);
+
+        question.setScoringType(ScoringType.ALL_OR_NOTHING);
+        question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        question.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        question.setExplanation("Explanation");
+        question.copyQuestionId();
+
+        quizExercise.addQuestions(question);
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
+        quizExercise.setGradingInstructions(null);
+
+        return quizExercise;
     }
 
     /**

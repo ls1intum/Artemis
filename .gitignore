@@ -177,3 +177,4 @@ repos-download/
 /src/main/resources/config/application-local*.yml
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
+/src/test/cypress/build

@@ -35,7 +35,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
 
     private static final String STUDENT_NAME = "student1";
 
-    private static final String STUDENT_PASSWORD = "test123";
+    private static final String STUDENT_PASSWORD = "test1234";
 
     @Autowired
     private TokenProvider tokenProvider;
