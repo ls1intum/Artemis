@@ -20,9 +20,9 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
-        super(userRepository, passwordService, userCreationService);
-    }
+//    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
+//        super(userRepository, passwordService, userCreationService);
+//    }
 
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
@@ -58,6 +58,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     @Override
     public void createUserInExternalUserManagement(User user) {
         // This should not be invoked. As we only use internal management, nothing needs to be done in case it is invoked.
+        throw new UnsupportedOperationException("Cannot create user in external user management when internal authentication provider is configured.");
     }
 
     @Override

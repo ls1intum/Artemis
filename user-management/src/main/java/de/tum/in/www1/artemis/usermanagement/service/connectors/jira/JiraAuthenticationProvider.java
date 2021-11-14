@@ -220,7 +220,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     // The reason is that JIRA is using the readonly LDAP user directory to the TUM on the production server as first choice
     // and the internal directory as second choice. However, users can only be created in the first user directory and there is no option
     // to create them in the second user directory
-
     @Override
     public void createGroup(String groupName) {
         log.info("Create group {} in JIRA", groupName);
@@ -282,9 +281,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
         catch (HttpClientErrorException e) {
             log.warn("JIRA group {} does not exit", group);
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                return false;
-            }
         }
         return false;
     }

@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 @Profile("scheduling")
 public class InstanceMessageReceiveService {
 
+    private static final String USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USER_TOPIC = "user-management-remove-non-activated-user";
+    private static final String USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USER_TOPIC = "user-management-cancel-remove-non-activated-user";
+
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
     private final UserRepository userRepository;
@@ -28,11 +31,11 @@ public class InstanceMessageReceiveService {
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
 
-        hazelcastInstance.<Long>getTopic("user-management-remove-non-activated-user").addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USER_TOPIC).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processRemoveNonActivatedUser((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic("user-management-cancel-remove-non-activated-user").addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USER_TOPIC).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processCancelRemoveNonActivatedUser((message.getMessageObject()));
         });
