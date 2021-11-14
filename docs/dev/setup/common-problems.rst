@@ -38,15 +38,18 @@ Atlassian Setup (Bamboo, Bitbucket and Jira)
 
        <details>
        <summary>Update Atlassian Licenses</summary>
-       You will need to create new Atlassian Licenses, which requires you to retrieve the server id and navigate to the license editing page after
+       You need to create new Atlassian Licenses, which requires you to retrieve the server id and navigate to the license editing page after
        creating new <a href="https://my.atlassian.com/license/evaluation">trial licenses</a>.
-       <br>
-       Bamboo: Retrive the Server ID and edit the license in the <a href="http://localhost:8085/admin/updateLicense!doDefault.action">License key details</a> <i>(Administration > Licensing)</i>
-       <br>
-       Bitbucket: Retrieve the Server ID and edit the license in the <a href="http://localhost:7990/admin/license">License Settings</a> <i>(Administration > Licensing)</i>
-       <br>
-       Jira: Retrieve the <a href="http://localhost:8081/secure/admin/ViewSystemInfo.jspa">Server ID</a> <i>(System > System info)</i> and edit the <b>JIRA Service Desk</b> <i>License key</i>
-             in <a href="http://localhost:8081/plugins/servlet/applications/versions-licenses">Versions & licenses</a>
-       <br>
-
+       <ul>
+           <li>
+            Bamboo: Retrive the Server ID and edit the license in the <a href="http://localhost:8085/admin/updateLicense!doDefault.action">License key details</a> <i>(Administration > Licensing)</i>
+           </li>
+           <li>
+            Bitbucket: Retrieve the Server ID and edit the license in the <a href="http://localhost:7990/admin/license">License Settings</a> <i>(Administration > Licensing)</i>
+           </li>
+           <li>
+            Jira: Retrieve the <a href="http://localhost:8081/secure/admin/ViewSystemInfo.jspa">Server ID</a> <i>(System > System info)</i> and edit the <b>JIRA Service Desk</b> <i>License key</i>
+                  in <a href="http://localhost:8081/plugins/servlet/applications/versions-licenses">Versions & licenses</a>
+           </li>
+       </ul>
        </details>
