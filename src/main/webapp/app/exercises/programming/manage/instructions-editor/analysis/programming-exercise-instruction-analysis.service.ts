@@ -106,12 +106,13 @@ export class ProgrammingExerciseInstructionAnalysisService {
      *
      * @param analysis arbitrary number of analysis objects to be merged into one.
      */
-    private mergeAnalysis = (...analysis: Array<AnalysisItem[]>) => {
-        const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem) => {
+    private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
+        const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc[lineNumber];
             const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
             return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
         };
+
         return analysis
             .flat()
             .map(([lineNumber, values, issueType]: AnalysisItem) => [

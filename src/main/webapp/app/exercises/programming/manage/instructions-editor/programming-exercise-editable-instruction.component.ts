@@ -268,16 +268,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * This is the fallback for older programming exercises without test cases in the database.
      * @param templateParticipationId
      */
-    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
+    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
             rxMap((result) => (!result || !result.feedbacks ? throwError('no result available') : result)),
-            rxMap(({ feedbacks }: Result) =>
-                feedbacks!
-                    .filter((feedback) => feedback.text)
-                    .map((feedback) => feedback.text!)
-                    .sort(),
-            ),
+            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
             catchError(() => of([])),
         );
     };
