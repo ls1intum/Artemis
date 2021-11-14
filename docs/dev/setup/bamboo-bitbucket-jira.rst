@@ -102,13 +102,8 @@ under ``localhost:7990``.
        <summary>xdg-utils for Windows users</summary>
        An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem, which should be activated anyways when running Docker on Windows.
        For the installation on the subsystem the above linked explanation can be used.
-
-    .. raw:: html
-
        <br>
-
        Make sure to execute the script from the subsystem.
-    .. raw:: html
 
        </details>
 
