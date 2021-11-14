@@ -42,10 +42,10 @@ Atlassian Setup (Bamboo, Bitbucket and Jira)
        creating new <a href="https://my.atlassian.com/license/evaluation">trial licenses</a>.
        <ul>
            <li>
-            Bamboo: Retrive the Server ID and edit the license in the <a href="http://localhost:8085/admin/updateLicense!doDefault.action">License key details</a> <i>(Administration > Licensing)</i>
+            Bamboo: Retrive the Server ID and edit the license in <a href="http://localhost:8085/admin/updateLicense!doDefault.action">License key details</a> <i>(Administration > Licensing)</i>
            </li>
            <li>
-            Bitbucket: Retrieve the Server ID and edit the license in the <a href="http://localhost:7990/admin/license">License Settings</a> <i>(Administration > Licensing)</i>
+            Bitbucket: Retrieve the Server ID and edit the license in <a href="http://localhost:7990/admin/license">License Settings</a> <i>(Administration > Licensing)</i>
            </li>
            <li>
             Jira: Retrieve the <a href="http://localhost:8081/secure/admin/ViewSystemInfo.jspa">Server ID</a> <i>(System > System info)</i> and edit the <b>JIRA Service Desk</b> <i>License key</i>
