@@ -899,6 +899,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         TextSubmission textSubmission = (TextSubmission) database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         textSubmission.setExampleSubmission(true);
+        Result result = textSubmission.getLatestResult();
+        result.setExampleResult(true);
+        textSubmission.addResult(result);
         textSubmissionRepository.save(textSubmission);
         exampleSubmissionSet.add(exampleSubmission);
         textExercise.setExampleSubmissions(exampleSubmissionSet);
