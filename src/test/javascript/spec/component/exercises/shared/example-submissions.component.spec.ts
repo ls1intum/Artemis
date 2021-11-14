@@ -113,7 +113,7 @@ describe('Example Submission Component', () => {
         const model = JSON.stringify({ elements, relationships });
         const modelingSubmission = {
             id: 1,
-            model: model,
+            model,
         } as ModelingSubmission;
         const textSubmission = {
             id: 2,
