@@ -64,6 +64,9 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Exercise exercise;
 
+    @Mock
+    private static Exercise updatedExercise;
+
     private final static Long EXERCISE_ID = 13L;
 
     @Mock
@@ -86,7 +89,7 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Exam exam;
 
-    // Problem statement of an exam exercise where the lenght is larger than the allowed max notification target size in the db
+    // Problem statement of an exam exercise where the length is larger than the allowed max notification target size in the db
     // allowed <= 255, this one has ~ 500
     private static final String EXAM_PROBLEM_STATEMENT = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore "
             + "et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. "
@@ -102,6 +105,16 @@ public class GroupNotificationServiceTest {
     private final static Long EXAM_ID = 42L;
 
     private final static String NOTIFICATION_TEXT = "notificationText";
+
+    private final static ZonedDateTime FUTURISTIC_TIME = ZonedDateTime.now().plusHours(2);
+
+    private final static ZonedDateTime FUTURE_TIME = ZonedDateTime.now().plusHours(1);
+
+    private final static ZonedDateTime CURRENT_TIME = ZonedDateTime.now();
+
+    private final static ZonedDateTime PAST_TIME = ZonedDateTime.now().minusHours(1);
+
+    private final static ZonedDateTime ANCIENT_TIME = ZonedDateTime.now().minusHours(2);
 
     private final static int NUMBER_OF_ALL_GROUPS = 4;
 
@@ -135,13 +148,14 @@ public class GroupNotificationServiceTest {
         users.add(user);
 
         userRepository = mock(UserRepository.class);
-        when(userRepository.getStudents(course)).thenReturn(users);
-        when(userRepository.getInstructors(course)).thenReturn(users);
-        when(userRepository.getEditors(course)).thenReturn(users);
+        when(userRepository.getStudents(any())).thenReturn(users);
+        when(userRepository.getInstructors(any())).thenReturn(users);
+        when(userRepository.getEditors(any())).thenReturn(users);
 
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
         groupNotificationRepository = mock(GroupNotificationRepository.class);
+        when(groupNotificationRepository.save(any())).thenReturn(null);
 
         messagingTemplate = mock(SimpMessageSendingOperations.class);
 
@@ -155,12 +169,16 @@ public class GroupNotificationServiceTest {
         when(exam.getId()).thenReturn(EXAM_ID);
         when(exam.getCourse()).thenReturn(course);
 
+        course = mock(Course.class);
+        when(course.getId()).thenReturn(COURSE_ID);
+
         lecture = mock(Lecture.class);
         when(lecture.getCourse()).thenReturn(course);
 
         attachment = mock(Attachment.class);
 
         exercise = mock(Exercise.class);
+        updatedExercise = mock(Exercise.class);
 
         quizExercise = mock(QuizExercise.class);
         when(quizExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
@@ -224,7 +242,7 @@ public class GroupNotificationServiceTest {
     }
 
     /**
-    * Test for notifyAboutExerciseUpdate method with an future release date
+    * Test for notifyAboutExerciseUpdate method with a future release date
     */
     @Test
     public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
@@ -263,7 +281,7 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
-    // CheckNotificationForExerciseRelease
+    /// CheckNotificationForExerciseRelease
 
     /**
      * Auxiliary methods for testing the checkNotificationForExerciseRelease
@@ -305,18 +323,52 @@ public class GroupNotificationServiceTest {
         verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
     }
 
-    // CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
+    /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
 
     /**
-    * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
-    */
-    @Test
-    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
+     * Auxiliary method to set the needed mocks and testing utilities for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
+     */
+    private void testCheckNotificationForExerciseReleaseHelper(ZonedDateTime dueDateOfInitialExercise, ZonedDateTime dueDateOfUpdatedExercise,
+            boolean expectNotifyAboutExerciseRelease) {
+        when(exercise.getReleaseDate()).thenReturn(dueDateOfInitialExercise);
+        when(updatedExercise.getReleaseDate()).thenReturn(dueDateOfUpdatedExercise);
         doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         doNothing().when(groupNotificationService).checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, NOTIFICATION_TEXT, instanceMessageSendService);
+
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT, instanceMessageSendService);
+
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
-        verify(groupNotificationService, times(1)).checkNotificationForExerciseRelease(any(), any());
+        verify(groupNotificationService, times(expectNotifyAboutExerciseRelease ? 1 : 0)).checkNotificationForExerciseRelease(any(), any());
+
+        cleanMocks();
+    }
+
+    /**
+    * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method based on a decision matrix
+    */
+    @Test
+    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise_unchangedReleaseDate_undefinedReleaseDates() {
+        testCheckNotificationForExerciseReleaseHelper(null, null, false);
+        testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(null, FUTURE_TIME, true);
+
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, null, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, ANCIENT_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, CURRENT_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, FUTURE_TIME, true);
+
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, null, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, PAST_TIME, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, FUTURE_TIME, true);
+
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, null, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, PAST_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, CURRENT_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, true);
     }
 
     /// General notifyGroupX Tests

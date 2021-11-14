@@ -457,7 +457,9 @@ public class GroupNotificationService {
             case EDITOR -> foundUsers = userRepository.getEditors(course);
             case TA -> foundUsers = userRepository.getTutors(course);
         }
-        prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+        if (!foundUsers.isEmpty()) {
+            prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+        }
     }
 
     /**

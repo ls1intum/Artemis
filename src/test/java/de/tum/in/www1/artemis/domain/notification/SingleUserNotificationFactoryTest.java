@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -53,7 +54,7 @@ public class SingleUserNotificationFactoryTest {
 
     private NotificationPriority expectedPriority;
 
-    private GroupNotification createdNotification;
+    private SingleUserNotification createdNotification;
 
     private NotificationType notificationType;
 
@@ -87,17 +88,76 @@ public class SingleUserNotificationFactoryTest {
     /// Test for Notifications based on Posts
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_COURSE_POST.
-     * I.e. notifications that originate from a new reply for a course wide post.
+     * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct.
+     */
+    private void createAndCheckNotification() {
+        createdNotification = singleUserNotificationFactory.createNotification(post, notificationType, course);
+
+        assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
+        assertThat(createdNotification.getText()).isEqualTo(expectedText);
+        assertThat(createdNotification.getTarget()).isEqualTo(expectedTarget);
+        assertThat(createdNotification.getPriority()).isEqualTo(expectedPriority);
+        assertThat(createdNotification.getAuthor()).isEqualTo(user);
+    }
+
+    /**
+     * Auxiliary method to create the most common expected target for Post Notifications with specific properties.
+     * @param postId is the id of the post
+     * @param relevantType can be "exerciseId" or "lectureId"
+     * @param idForRelevantType is the id of the exercise or lecture
+     * @param courseId is the course id that is needed for the url
+     * @return is the final notification target as a String.
+     */
+    private String createExpectedTargetForPosts(Long postId, String relevantType, Long idForRelevantType, Long courseId) {
+        return "{\"id\":" + postId + ",\"" + relevantType + "\":" + idForRelevantType + ",\"course\":" + courseId + "}";
+    }
+
+    /**
+     * Auxiliary method to create the most common expected target for course wide Post Notifications with specific properties.
+     * @param postId is the id of the post
+     * @param courseId is the course id that is needed for the url
+     * @return is the final notification target as a String.
+     */
+    private String createExpectedTargetForCourseWidePosts(Long postId, Long courseId) {
+        return "{\"id\":" + postId + ",\"course\":" + courseId + "}";
+    }
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_EXERCISE_POST.
+     * I.e. notifications that originate from a new reply for an exercise post.
      */
     @Test
     public void createNotification_withNotificationType_NewReplyForExercisePost() {
         notificationType = NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
+        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
         createAndCheckNotification();
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_LECTURE_POST.
+     * I.e. notifications that originate from a new reply for a lecture post.
+     */
+    @Test
+    public void createNotification_withNotificationType_NewReplyForLecturePost() {
+        notificationType = NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+        expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
+        expectedPriority = NotificationPriority.MEDIUM;
+        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
+        createAndCheckNotification();
+    }
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_LECTURE_POST.
+     * I.e. notifications that originate from a new reply for a lecture post.
+     */
+    @Test
+    public void createNotification_withNotificationType_NewReplyForCoursePost() {
+        notificationType = NotificationType.NEW_REPLY_FOR_COURSE_POST;
+        expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
+        expectedPriority = NotificationPriority.MEDIUM;
+        expectedTarget = createExpectedTargetForCourseWidePosts(post.getId(), courseId);
+        createAndCheckNotification();
+    }
 }
