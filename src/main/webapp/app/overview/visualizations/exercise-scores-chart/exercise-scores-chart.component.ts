@@ -79,9 +79,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
-            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.scoreOfStudent, ...extraInformation });
-            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.averageScoreAchieved, ...extraInformation });
-            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.maxScoreAchieved, ...extraInformation });
+            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.scoreOfStudent! + 1, ...extraInformation });
+            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.averageScoreAchieved! + 1, ...extraInformation });
+            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.maxScoreAchieved! + 1, ...extraInformation });
         });
 
         const studentScore = { name: 'Your score', series: scoreSeries };
