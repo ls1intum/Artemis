@@ -28,11 +28,10 @@ following dependencies/tools on your machine:
    Artemis uses Hibernate to store entities in a MySQL database.
    Download and install the MySQL Community Server (8.0.x) and configure
    the ‘root’ user with a password. Make sure to change the value in
-   ``application-dev.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``*(within the 'liquibaseCommand' as argument password)*.
+   ``application-dev.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*.
    The required Artemis scheme will be created / updated automatically at startup time of the
-   server application. Alternatively, you can run the MySQL Database
-   Server inside a Docker container using
-   e.g. ``docker-compose -f src/main/docker/mysql.yml up``
+   server application.
+   Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ``docker-compose -f src/main/docker/mysql.yml up``
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=14.17.0 < 15) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.

@@ -4,14 +4,14 @@ Common Setup Problems
 General Setup Problems
 ----------------------
 
-- Restarting IntelliJ with invalidating caches *(File > Invalidate Caches...)* might resolve the current issue.
+- Restarting IntelliJ with invalidated caches *(File > Invalidate Caches...)* might resolve the current issue.
 
 Database
 ^^^^^^^^
 - On the first startup, there might be issues with the ``text_block`` table.
   You can resolve the issue by executing ``ALTER TABLE text_block CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`` in your database.
 - One typical problem in the development setup is that an exception occurs during the database initialization. Artemis uses
-  `Liquibase <https://www.liquibase.org>`__ to automatically upgrade the database scheme after changes to the data model. This ensures that the
+  `Liquibase <https://www.liquibase.org>`__ to automatically upgrade the database scheme after the data model has changed. This ensures that the
   changes can also be applied to the production server. In case you encounter errors with Liquibase checksum values:
 
     * Run the following command in your terminal / command line: ``./gradlew liquibaseClearChecksums``
