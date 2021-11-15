@@ -15,6 +15,10 @@
                 "lower": "Lower Bound Inclusive",
                 "upper": "Upper Bound Inclusive"
             },
+            "csv": {
+                "importButton": "Import (.csv)",
+                "exportButton": "Export (.csv)"
+            },
             "firstPassingGrade": "First Passing Grade",
             "min": "Min %",
             "minPoints": "Min Points",
@@ -47,6 +51,10 @@
                 "firstPassingGrade": {
                     "title": "First Passing Grade",
                     "explanation": "Sets the first passing grade for a grading key. Every grade with higher percentages will be considered passing as well"
+                },
+                "importExport": {
+                    "title": "Import/Export Grade Steps",
+                    "explanation": "Grade steps can be imported and exported via a CSV file.  The structure is as follows, depending on the grade type. Grade Type 'Grade': 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade'. Grade Type 'Bonus': 'bonusPoints,lowerBoundPercentage,upperBoundPercentage'. Points and inclusivity can be set afterwards."
                 }
             },
             "error": {

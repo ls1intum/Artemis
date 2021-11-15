@@ -1,15 +1,11 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
@@ -19,7 +15,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -29,8 +24,9 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
+
 import { EventManager } from 'app/core/util/event-manager.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -69,7 +65,7 @@ describe('Course Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),
@@ -85,15 +81,7 @@ describe('Course Management Detail Component', () => {
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(AlertService),
-                MockProvider(NgbModal),
-                MockProvider(CourseManagementService),
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(CourseManagementService)],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
@@ -111,7 +99,7 @@ describe('Course Management Detail Component', () => {
         tick();
     }));
 
-    afterEach(function () {
+    afterEach(() => {
         sinon.restore();
     });
 
