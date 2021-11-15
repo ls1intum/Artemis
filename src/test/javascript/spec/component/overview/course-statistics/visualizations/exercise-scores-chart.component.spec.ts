@@ -114,7 +114,7 @@ describe('ExerciseScoresChartComponent', () => {
 });
 
 function validateStructureOfDataPoint(dataPoint: any, exerciseId: number, exerciseType: ExerciseType, exerciseTitle: string, score: number) {
-    const expectedStructure = { name: exerciseTitle, value: score, exerciseId, exerciseType };
+    const expectedStructure = { name: exerciseTitle, value: score + 1, exerciseId, exerciseType };
     expect(dataPoint).toEqual(expectedStructure);
 }
 
