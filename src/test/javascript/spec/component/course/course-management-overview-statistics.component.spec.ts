@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,7 +14,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [LineChartModule],
+            imports: [MockModule(LineChartModule)],
             declarations: [CourseManagementOverviewStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [MockProvider(TranslateService)],
         })
@@ -31,7 +31,6 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         component.initialStats = initialStats;
 
         component.ngOnInit();
-        // expect(component).to.be.ok;
 
         expect(component.ngxData).toHaveLength(1);
         expect(component.ngxData[0].name).toBe('active students');

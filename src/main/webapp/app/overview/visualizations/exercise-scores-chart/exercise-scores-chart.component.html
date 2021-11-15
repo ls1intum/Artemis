@@ -1,6 +1,36 @@
 <h3 class="text-center">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
-<div class="chart-wrapper mx-auto">
-    <div class="mx-auto chart" #chartDiv>
+<div #containerRef class="chart-wrapper mx-auto">
+    <!--<div class="mx-auto chart" #chartDiv>
         <canvas baseChart [datasets]="dataSets" [labels]="labels" [options]="chartOptions" [colors]="chartColors" [legend]="true" [chartType]="'line'"></canvas>
+    </div>-->
+    <div>
+        <ngx-charts-line-chart
+            [view]="[containerRef.offsetWidth, 350]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [yAxisLabel]="yAxisLabel"
+            [xAxisLabel]="xAxisLabel"
+            [legend]="true"
+            [legendTitle]="''"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showYAxisLabel]="true"
+            [showXAxisLabel]="true"
+            [yScaleMax]="100"
+            [rotateXAxisTicks]="false"
+            (select)="onSelect($event)"
+        >
+            <ng-template #tooltipTemplate let-model="model">
+                <h6>{{ model.name }}</h6>
+                <span>{{ model.series }}: {{ model.value }} %</span>
+            </ng-template>
+            <ng-template #seriesTooltipTemplate let-model="model">
+                <h6>{{ model[0].name }}</h6>
+                <span> {{ model[0].series }}: {{ model[0].value }} %</span><br />
+                <span> {{ model[1].series }}: {{ model[1].value }} %</span><br />
+                <span> {{ model[2].series }}: {{ model[2].value }} %</span><br />
+                <span style="font-weight: bold"> Exercise Type: {{ model[0].exerciseType }}</span>
+            </ng-template>
+        </ngx-charts-line-chart>
     </div>
 </div>
