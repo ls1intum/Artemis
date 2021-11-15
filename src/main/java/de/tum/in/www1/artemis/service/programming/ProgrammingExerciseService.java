@@ -378,12 +378,14 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
         connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
+        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
+                instanceMessageSendService);
 
         return savedProgrammingExercise;
     }
@@ -645,7 +647,12 @@ public class ProgrammingExerciseService {
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+
+        // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
+        ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
+        programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
+
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
@@ -653,7 +660,8 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, null,
+                instanceMessageSendService);
 
         return savedProgrammingExercise;
     }

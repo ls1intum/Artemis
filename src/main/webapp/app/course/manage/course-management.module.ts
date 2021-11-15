@@ -90,6 +90,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisMarkdownModule,
         ArtemisCourseParticipantScoresModule,
         ArtemisSharedComponentModule,
+        NgxChartsModule,
     ],
     declarations: [
         CourseManagementComponent,

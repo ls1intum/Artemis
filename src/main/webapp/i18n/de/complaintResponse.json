@@ -8,7 +8,7 @@
             "lockInformationYou": "Durch dich gesperrt bis {{endDate}}",
             "notUnlocked": "Nicht gesperrt",
             "lockStatus": "Status der Sperre",
-            "notAllowedToRespond": "Es ist dir nicht erlaubt, auf diese Anfrage zu antworten!\nBei Teamaufgaben sind Teamtutor:innen sowohl für Beschwerden als auch Mehr-Feedback Anfragen verantwortlich.\nBei individuellen Aufgaben werden Beschwerden von anderen Tutor:innen beantwortet und Mehr-Feedback Anfragen von Tutor:innen, die die Aufgabe bewertet haben.\nBei Testläufen für Klausuren dürfen auch bewertende Tutor:innen Beschwerden beantworten."
+            "notAllowedToRespond": "Es ist dir nicht erlaubt, auf diese Anfrage zu antworten!\nBei Teamaufgaben sind Teamtutor:innen sowohl für Beschwerden als auch Mehr-Feedback Anfragen verantwortlich.\nBei individuellen Aufgaben werden Beschwerden von anderen Tutor:innen beantwortet und Mehr-Feedback Anfragen von Tutor:innen, die die Aufgabe bewertet haben.\nBei Testläufen für Klausuren dürfen auch bewertende Tutor:innen Beschwerden beantworten.\nBeschwerden auf automatische Bewertungen können von allen Tutor:innen beantwortet werden."
         },
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",
