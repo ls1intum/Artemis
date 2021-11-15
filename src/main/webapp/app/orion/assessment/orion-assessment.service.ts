@@ -82,12 +82,6 @@ export class OrionAssessmentService {
                     const result = reader.result as string;
                     // remove prefix
                     const base64data = result.substr(result.indexOf(',') + 1);
-                    alert("result first 60 characters " + result.substr(0, 60));
-                    alert("result last 60 characters " + result.substr(result.length - 60, 60));
-                    alert("base64data first 60 characters " + base64data.substr(0, 60));
-                    alert("base64data last 60 characters " + base64data.substr(base64data.length - 60, 60));
-                    alert("result length " + result.length);
-                    alert("base64data length " + base64data.length);
                     this.orionConnectorService.downloadSubmission(submissionId, correctionRound, testRun, base64data);
                 };
                 reader.onerror = () => {
