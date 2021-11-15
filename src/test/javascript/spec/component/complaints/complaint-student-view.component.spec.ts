@@ -21,6 +21,7 @@ import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -33,9 +34,9 @@ describe('ComplaintsStudentViewComponent', () => {
     };
     const courseWithoutFeedback: Course = { id: 1, complaintsEnabled: true, maxComplaintTimeDays: 7, requestMoreFeedbackEnabled: false };
     const examExercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
-    const courseExercise: Exercise = { id: 1, teamMode: false, course, assessmentDueDate: dayjs().subtract(1, 'day') } as Exercise;
+    const courseExercise: Exercise = { id: 1, teamMode: false, course, assessmentDueDate: dayjs().subtract(1, 'day'), assessmentType: AssessmentType.MANUAL } as Exercise;
     const submission: Submission = {} as Submission;
-    const result: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays - 1, 'day') } as Result;
+    const result: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays - 1, 'day'), assessmentType: AssessmentType.MANUAL } as Result;
     const resultWithoutCompletionDate: Result = { id: 1 } as Result;
     const user: User = { id: 1337 } as User;
     const participation: Participation = { id: 2, results: [result], submissions: [submission], student: user } as Participation;
@@ -187,7 +188,7 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should not be available if before or at assessment due date', fakeAsync(() => {
-            const exercise: Exercise = { id: 1, teamMode: false, course: courseWithoutFeedback, assessmentDueDate: dayjs() } as Exercise;
+            const exercise: Exercise = { id: 1, teamMode: false, course, assessmentDueDate: dayjs() } as Exercise;
             const resultMatchingDate: Result = { id: 1, completionDate: dayjs(exercise.assessmentDueDate) } as Result;
             component.exercise = exercise;
             component.result = resultMatchingDate;
@@ -200,8 +201,8 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should not be available if assessment due date not set and completion date is out of period', fakeAsync(() => {
-            const exercise: Exercise = { id: 1, teamMode: false, course: courseWithoutFeedback } as Exercise;
-            const resultDateOutOfLimits: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') } as Result;
+            const exercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
+            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') } as Result;
             component.exercise = exercise;
             component.result = resultDateOutOfLimits;
 
@@ -216,10 +217,10 @@ describe('ComplaintsStudentViewComponent', () => {
             const exercise: Exercise = {
                 id: 1,
                 teamMode: false,
-                course: courseWithoutFeedback,
-                assessmentDueDate: dayjs().subtract(complaintTimeLimitDays + 2),
+                course,
+                assessmentDueDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day'),
             } as Exercise;
-            const resultMatchingDate: Result = { id: 1, completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') } as Result;
+            const resultMatchingDate: Result = { ...result, completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') } as Result;
             component.exercise = exercise;
             component.result = resultMatchingDate;
 
@@ -228,6 +229,57 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.timeOfFeedbackRequestValid).toBe(false);
             expect(component.timeOfComplaintValid).toBe(false);
+        }));
+
+        it('complaints should be available if feedback requests disabled', fakeAsync(() => {
+            component.exercise = {
+                ...courseExercise,
+                course: courseWithoutFeedback,
+                assessmentDueDate: dayjs().subtract(2),
+            } as Exercise;
+            component.course = courseWithoutFeedback;
+
+            fixture.detectChanges();
+            tick(100);
+
+            expect(component.showSection).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+        }));
+
+        it('feedback requests should be available if complaints are disabled', fakeAsync(() => {
+            const courseWithoutComplaints = {
+                ...course,
+                complaintsEnabled: false,
+                maxComplaintTimeDays: undefined,
+                maxComplaints: undefined,
+                maxTeamComplaints: undefined,
+            } as Course;
+            component.exercise = {
+                ...courseExercise,
+                course: courseWithoutComplaints,
+                assessmentDueDate: dayjs().subtract(2),
+            } as Exercise;
+            component.course = courseWithoutComplaints;
+
+            fixture.detectChanges();
+            tick(100);
+
+            expect(component.showSection).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBe(true);
+        }));
+
+        it('no action should be allowed if the result is automatic for a non automatic exercise', fakeAsync(() => {
+            component.exercise = courseExercise;
+            component.result = { ...result, assessmentType: AssessmentType.AUTOMATIC };
+
+            fixture.detectChanges();
+            tick(100);
+
+            expect(component.showSection).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
         }));
 
         function expectCourseDefault() {
