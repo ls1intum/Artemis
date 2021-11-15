@@ -44,6 +44,8 @@ export class FeedbackItem {
     appliedCredits?: number;
 }
 
+export const feedbackPreviewCharacterLimit = 300;
+
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
@@ -161,7 +163,8 @@ export class ResultDetailComponent implements OnInit {
 
     /**
      * Loads the missing feedback details
-     * @param resultId The current result
+     * @param participationId the current participation
+     * @param resultId the current result
      * @private
      */
     private getFeedbackDetailsForResult(participationId: number, resultId: number) {
@@ -185,22 +188,22 @@ export class ResultDetailComponent implements OnInit {
     };
 
     /**
-     * computes the feedback preview for feedback texts with multiple lines or feedback that is longer than 300 characters
+     * computes the feedback preview for feedback texts with multiple lines or feedback that is longer than <feedbackPreviewCharacterLimit> characters
      * @param text the feedback.detail Text
-     * @return the preview text (one line of text with at most 300 characters)
+     * @return the preview text (one line of text with at most <feedbackPreviewCharacterLimit> characters)
      */
     private static computeFeedbackPreviewText(text: string | undefined): string | undefined {
         if (text) {
             if (text.includes('\n')) {
                 // if there are multiple lines, only use the first one
                 const firstLine = text.substr(0, text.indexOf('\n'));
-                if (firstLine.length > 300) {
-                    return firstLine.substr(0, 300);
+                if (firstLine.length > feedbackPreviewCharacterLimit) {
+                    return firstLine.substr(0, feedbackPreviewCharacterLimit);
                 } else {
                     return firstLine;
                 }
-            } else if (text.length > 300) {
-                return text.substr(0, 300);
+            } else if (text.length > feedbackPreviewCharacterLimit) {
+                return text.substr(0, feedbackPreviewCharacterLimit);
             }
         }
         // for all other cases
