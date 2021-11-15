@@ -12,6 +12,24 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExportToCsv } from 'export-to-csv';
+import { parse } from 'papaparse';
+
+const csvColumnsGrade = Object.freeze({
+    gradeName: 'gradeName',
+    lowerBoundPercentage: 'lowerBoundPercentage',
+    upperBoundPercentage: 'upperBoundPercentage',
+    isPassingGrade: 'isPassingGrade',
+});
+
+const csvColumnsBonus = Object.freeze({
+    bonusPoints: 'bonusPoints',
+    lowerBoundPercentage: 'lowerBoundPercentage',
+    upperBoundPercentage: 'upperBoundPercentage',
+});
+
+// needed to map from csv object to grade step
+type CsvGradeStep = object;
 
 @Component({
     selector: 'jhi-grading-system',
@@ -618,5 +636,132 @@ export class GradingSystemComponent implements OnInit {
             gradeSteps,
             gradeType: GradeType.GRADE,
         };
+    }
+
+    /**
+     * Triggered when csv file is uploaded
+     * @param event file read event
+     */
+    async onCSVFileSelect(event: any) {
+        if (event.target.files.length > 0) {
+            await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
+            this.lowerBoundInclusivity = true;
+            this.setInclusivity(this.gradingScale.gradeSteps);
+            this.maxPoints = 100;
+            this.onChangeMaxPoints(this.maxPoints);
+            this.determineFirstPassingGrade();
+            this.gradingScale.gradeSteps.sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage);
+        }
+    }
+
+    /**
+     * Import grade steps from csv file
+     * @param event the read event
+     * @param csvFile the csv file
+     * @private
+     */
+    async readGradingStepsFromCSVFile(event: any, csvFile: File) {
+        let csvGradeSteps: CsvGradeStep[] = [];
+        try {
+            csvGradeSteps = await this.parseCSVFile(csvFile);
+        } catch (error) {
+            return [];
+        }
+
+        if (csvGradeSteps.length === 0 || csvGradeSteps.length > 100) {
+            this.gradingScale.gradeSteps = [];
+            return;
+        }
+
+        // parse and set the grade type
+        const gradeType = csvGradeSteps[0]['bonusPoints'] === undefined ? GradeType.GRADE : GradeType.BONUS;
+        if (gradeType === GradeType.BONUS) {
+            this.gradingScale.gradeType = GradeType.BONUS;
+        } else {
+            this.gradingScale.gradeType = GradeType.GRADE;
+        }
+
+        this.gradingScale.gradeSteps = this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType);
+    }
+
+    /**
+     * Map the imported csv objects to GradeStep object
+     * In case that the grade type of the imported file is bonus, attribute gradeName will be set with the bonusPoints attribute
+     * @param csvGradeSteps Imported grade steps as csv objects
+     * @param gradeType Implicit Grade Type of imported csv file
+     */
+    mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[], gradeType: GradeType): GradeStep[] {
+        return csvGradeSteps.map(
+            (csvGradeStep) =>
+                ({
+                    gradeName: gradeType === GradeType.GRADE ? String(csvGradeStep[csvColumnsGrade.gradeName] ?? '') : String(csvGradeStep[csvColumnsBonus.bonusPoints] ?? ''),
+                    lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage]) : undefined,
+                    upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage]) : undefined,
+                    ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade] === 'TRUE' }),
+                } as GradeStep),
+        );
+    }
+
+    /**
+     * Parse CSV file to a list of CsvGradeStep objects
+     * @param csvFile the read csv file
+     * @private
+     */
+    private parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {
+        return new Promise(async (resolve, reject) => {
+            parse(csvFile, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false,
+                complete: (results) => resolve(results.data as CsvGradeStep[]),
+                error: (error) => reject(error),
+            });
+        });
+    }
+
+    /**
+     * Download the current grade steps to a csv file to the client
+     */
+    exportGradingStepsToCsv(): void {
+        const headers = this.gradingScale.gradeType === GradeType.GRADE ? Object.keys(csvColumnsGrade) : Object.keys(csvColumnsBonus);
+
+        const rows = this.gradingScale.gradeSteps.map((gradeStep) => this.convertToCsvRow(gradeStep));
+
+        this.exportAsCSV(rows, headers);
+    }
+
+    /**
+     * Convert a grade step to a csv row. Undefined values are mapped to empty strings
+     * @param gradeStep
+     */
+    convertToCsvRow(gradeStep: GradeStep): any {
+        return {
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
+            ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
+            lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '',
+            upperBoundPercentage: gradeStep.upperBoundPercentage ?? '',
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade }),
+        };
+    }
+
+    /**
+     * Start the user download for the csv file
+     * @param rows rows representing each a grade step in csv structure
+     * @param headers names of the csv columns
+     */
+    exportAsCSV(rows: any[], headers: string[]): void {
+        const options = {
+            fieldSeparator: ',',
+            quoteStrings: '',
+            decimalSeparator: 'locale',
+            showLabels: true,
+            filename: 'grading_key' + (this.gradingScale.course?.shortName ? '_' + this.gradingScale.course?.shortName : ''),
+            useTextFile: false,
+            useBom: true,
+            headers,
+        };
+
+        const csvExporter = new ExportToCsv(options);
+        csvExporter.generateCsv(rows);
     }
 }
