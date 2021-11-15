@@ -260,6 +260,8 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param base64data the student's submission as base64
      */
     downloadSubmission(submissionId: number, correctionRound: number, testRun: boolean, base64data: string) {
+        // Uncomment this line to also transfer the testRun flag. THIS IS A BREAKING CHANGE that will require all users to upgrade their Orion to a compatible version! Also uncomment in orion.ts
+        // theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), testRun, base64data);
         theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), base64data);
     }
 
