@@ -1,4 +1,4 @@
-<div class="doughnut mx-3">
+<div #containerRef class="doughnut mx-3">
     <a *ngIf="titleLink" [routerLink]="['/course-management', course.id, titleLink]">
         <h4 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>
     </a>
@@ -11,7 +11,7 @@
                 <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             </h1>
         </div>
-        <canvas
+        <!--<canvas
             baseChart
             id="doughnut"
             height="200"
@@ -22,6 +22,33 @@
             [colors]="doughnutChartColors"
             [labels]="doughnutChartLabels"
             [chartType]="doughnutChartType"
-        ></canvas>
+        ></canvas>-->
+        <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
     </div>
+    <!--<ngx-charts-advanced-pie-chart
+        [view]="[containerRef.offsetWidth, containerRef.offsetWidth]"
+        [results]="ngxData"
+        [scheme]="ngxColor"
+        [label]="'Total'"
+        [valueFormatting]="bindFormatting">
+
+    </ngx-charts-advanced-pie-chart>
+    <ngx-charts-pie-chart
+        [view]="[200, 200]"
+        [results]="ngxData"
+        [scheme]="ngxColor"
+        [doughnut]="true"
+        >
+    </ngx-charts-pie-chart>-->
+
+    <!--<ngx-charts-gauge
+        [view]="[containerRef.offsetWidth, containerRef.offsetWidth]"
+        [results]="ngxData"
+        [scheme]="ngxColor"
+        [showAxis]="false"
+        [valueFormatting]="bindFormatting"
+        [angleSpan]="360"
+        [max]="currentMax!"
+    >
+    </ngx-charts-gauge>-->
 </div>
