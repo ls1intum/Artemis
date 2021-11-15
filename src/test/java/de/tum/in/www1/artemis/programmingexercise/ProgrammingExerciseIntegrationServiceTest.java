@@ -761,6 +761,53 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
     }
 
+    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(individualDueDate);
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+        }
+    }
+
+    public void updateExerciseRemoveDueDate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(ZonedDateTime.now().plusHours(20));
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(null);
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(2);
+        }
+    }
+
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var endpoint = "/api" + TIMELINE;

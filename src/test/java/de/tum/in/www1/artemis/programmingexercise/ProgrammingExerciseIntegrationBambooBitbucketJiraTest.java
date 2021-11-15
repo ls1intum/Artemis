@@ -254,6 +254,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateExerciseDueDateWithIndividualDueDateUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateExerciseRemoveDueDate() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateExerciseRemoveDueDate();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTimeline_intructorNotInCourse_forbidden();
