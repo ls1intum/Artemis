@@ -13,6 +13,7 @@ import { Submission } from 'app/entities/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -114,15 +115,21 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (this.isExamMode) {
             return this.isWithinExamReviewPeriod();
         }
-        return this.canFileComplaintWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
+        if (!this.course?.complaintsEnabled) {
+            return false;
+        }
+        return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
     }
 
     /**
      * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
      */
     private isFeedbackRequestAllowed(): boolean {
+        if (!this.course?.requestMoreFeedbackEnabled) {
+            return false;
+        }
         if (!this.isExamMode) {
-            return this.canFileComplaintWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
+            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
         }
         return false;
     }
@@ -131,14 +138,22 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Checks if a complaint (either actual complaint or more feedback request) can be filed
      * The result's completionDate specifies the date when the assessment was submitted
      */
-    private canFileComplaintWithCompletionDate(completionDate: dayjs.Dayjs, complaintThresholdInDays?: number): boolean {
-        if (!complaintThresholdInDays) {
+    private canFileActionWithCompletionDate(completionDate: dayjs.Dayjs, actionThresholdInDays?: number): boolean {
+        // Especially for programming exercises: If there is not yet a manual result for a manual correction, no action should be allowed
+        if (
+            !this.exercise.assessmentType ||
+            !this.result!.assessmentType ||
+            (this.exercise.assessmentType !== AssessmentType.AUTOMATIC && this.result!.assessmentType === AssessmentType.AUTOMATIC)
+        ) {
             return false;
         }
-        if (!this.exercise.assessmentDueDate || dayjs(completionDate).isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return dayjs(completionDate).isAfter(dayjs().subtract(complaintThresholdInDays, 'day'));
+        if (!actionThresholdInDays) {
+            return false;
         }
-        return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(complaintThresholdInDays, 'day'));
+        if (!this.exercise.assessmentDueDate || dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
+            return dayjs().isSameOrBefore(dayjs(completionDate).add(actionThresholdInDays, 'day'));
+        }
+        return false;
     }
 
     /**
