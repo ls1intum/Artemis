@@ -81,19 +81,11 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                 if (res.body !== undefined) {
                     this.course = res.body!;
                     if (this.course?.lectures) {
-                        this.lectures = this.course.lectures.sort(function (lect1: Lecture, lect2: Lecture) {
-                            const title1 = lect1.title!.toUpperCase(); // ignore capitalization
-                            const title2 = lect2.title!.toUpperCase(); // ignore capitalization
-                            if (title1 < title2) {
-                                return -1;
-                            }
-                            if (title1 > title2) {
-                                return 1;
-                            }
-                            return 0;
-                        });
+                        this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
                     }
-                    this.exercises = this.course?.exercises;
+                    if (this.course?.exercises) {
+                        this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
+                    }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({ courseId: this.course!.id });
@@ -315,6 +307,18 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
     }
+
+    overviewContextSortFn = (contextA: Lecture | Exercise, contextB: Lecture | Exercise): number => {
+        const titleA = contextA.title!.toUpperCase(); // ignore capitalization
+        const titleB = contextA.title!.toUpperCase(); // ignore capitalization
+        if (titleA < titleB) {
+            return -1;
+        }
+        if (titleA > titleB) {
+            return 1;
+        }
+        return 0;
+    };
 
     /**
      * defines a function that returns the post id as unique identifier,
