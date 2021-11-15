@@ -34,18 +34,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { RouterModule, Routes } from '@angular/router';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 
-const routes: Routes = [
-    {
-        path: '',
-        component: CourseDiscussionComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'overview.discussion',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-];
-
 @NgModule({
     imports: [
         ArtemisSharedModule,
@@ -62,7 +50,6 @@ const routes: Routes = [
         OverlayModule,
         CommonModule,
         FontAwesomeModule,
-        RouterModule.forChild(routes),
     ],
     declarations: [
         PostingsThreadComponent,
@@ -82,7 +69,6 @@ const routes: Routes = [
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
         PostingContentMarkdownLinebreakPipe,
-        CourseDiscussionComponent,
     ],
     exports: [
         PostingsThreadComponent,

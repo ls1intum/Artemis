@@ -52,7 +52,7 @@ const routes: Routes = [
             },
             {
                 path: 'discussion',
-                loadChildren: () => import('../shared/metis/metis.module').then((m) => m.MetisModule),
+                loadChildren: () => import('../overview/course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
             {
                 path: 'exams',
