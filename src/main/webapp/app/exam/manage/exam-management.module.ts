@@ -43,6 +43,7 @@ import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { UserImportModule } from 'app/shared/import/user-import.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -70,6 +71,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamParticipantScoresModule,
         ArtemisTextSubmissionAssessmentModule,
         ExampleSubmissionsModule,
+        UserImportModule,
     ],
     declarations: [
         ExamManagementComponent,
