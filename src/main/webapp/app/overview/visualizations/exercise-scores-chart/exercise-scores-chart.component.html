@@ -1,8 +1,5 @@
 <h3 class="text-center">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
 <div #containerRef class="chart-wrapper mx-auto">
-    <!--<div class="mx-auto chart" #chartDiv>
-        <canvas baseChart [datasets]="dataSets" [labels]="labels" [options]="chartOptions" [colors]="chartColors" [legend]="true" [chartType]="'line'"></canvas>
-    </div>-->
     <div>
         <ngx-charts-line-chart
             [view]="[containerRef.offsetWidth, 350]"

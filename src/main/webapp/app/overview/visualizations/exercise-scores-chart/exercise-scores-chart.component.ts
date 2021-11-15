@@ -25,7 +25,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     backUpData: any[] = [];
     xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
     yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');
-    ngxColor = { name: 'artemis', selectable: true, group: ScaleType.Ordinal, domain: ['#87ceeb', '#fa8072', '#32cd32'] } as Color;
+    ngxColor = { name: 'Performance in Exercises', selectable: true, group: ScaleType.Ordinal, domain: ['#87ceeb', '#fa8072', '#32cd32'] } as Color;
     backUpColor = cloneDeep(this.ngxColor);
 
     constructor(
@@ -77,7 +77,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         exerciseScoresDTOs.forEach((exerciseScoreDTO) => {
             const extraInformation = {
                 exerciseId: exerciseScoreDTO.exerciseId,
-                // exerciseTitle: exerciseScoreDTO.exerciseTitle, // title really needed?
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
             scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.scoreOfStudent, ...extraInformation });
@@ -94,14 +93,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         this.ngxData = [...this.ngxData];
         this.backUpData = [...this.ngxData];
     }
-    stringify(value: any) {
-        return JSON.stringify(value);
-    }
 
     /**
      * Provides the functionality when the user interacts with the chart by clicking on it.
      * If the users click on a node in the chart, they get delegated to the corresponding exercise detail page.
-     * If the users click on an entry in the legend, the corresponding line disappears
+     * If the users click on an entry in the legend, the corresponding line disappears or reappears depending on its previous state
      * @param data the event sent by the framework
      */
     onSelect(data: any) {
