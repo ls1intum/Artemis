@@ -1,15 +1,15 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
 import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
-import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
-import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
@@ -86,7 +86,7 @@ describe('CourseDiscussionComponent', () => {
             ],
             declarations: [
                 CourseDiscussionComponent,
-                MockComponent(PostingsThreadComponent),
+                MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -94,7 +94,7 @@ describe('CourseDiscussionComponent', () => {
                 MockComponent(ButtonComponent),
             ],
         })
-            .overrideComponent(PageDiscussionSectionComponent, {
+            .overrideComponent(DiscussionSectionComponent, {
                 set: {
                     providers: [{ provide: MetisService, useClass: MetisService }],
                 },

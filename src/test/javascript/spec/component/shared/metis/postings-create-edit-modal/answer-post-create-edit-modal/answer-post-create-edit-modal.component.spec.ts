@@ -5,10 +5,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
-import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
 
@@ -26,8 +26,8 @@ describe('AnswerPostCreateEditModalComponent', () => {
             declarations: [
                 AnswerPostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(PostingsMarkdownEditorComponent),
-                MockComponent(PostingsButtonComponent),
+                MockComponent(PostingMarkdownEditorComponent),
+                MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
         })
