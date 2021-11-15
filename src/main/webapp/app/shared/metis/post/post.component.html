@@ -26,8 +26,9 @@
                     (click)="onNavigateToContext($event)"
                     routerLinkActive="active"
                 >
-                    {{ contextInformation.displayName + ':' }}
+                    {{ contextInformation.displayName }}
                 </a>
+                :
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName + ':' }}</span>
             </span>
             <span class="col-auto">
