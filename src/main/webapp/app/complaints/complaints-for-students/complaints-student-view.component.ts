@@ -114,7 +114,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (this.isExamMode) {
             return this.isWithinExamReviewPeriod();
         }
-        return this.canFileComplaintWithCompletionDate(this.result!.completionDate!);
+        return this.canFileComplaintWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
     }
 
     /**
@@ -122,7 +122,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isFeedbackRequestAllowed(): boolean {
         if (!this.isExamMode) {
-            return this.canFileComplaintWithCompletionDate(this.result!.completionDate!);
+            return this.canFileComplaintWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
         }
         return false;
     }
@@ -131,14 +131,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Checks if a complaint (either actual complaint or more feedback request) can be filed
      * The result's completionDate specifies the date when the assessment was submitted
      */
-    private canFileComplaintWithCompletionDate(completionDate: dayjs.Dayjs): boolean {
-        if (!this.course?.maxRequestMoreFeedbackTimeDays) {
+    private canFileComplaintWithCompletionDate(completionDate: dayjs.Dayjs, complaintThresholdInDays?: number): boolean {
+        if (!complaintThresholdInDays) {
             return false;
         }
         if (!this.exercise.assessmentDueDate || dayjs(completionDate).isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return dayjs(completionDate).isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
+            return dayjs(completionDate).isAfter(dayjs().subtract(complaintThresholdInDays, 'day'));
         }
-        return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
+        return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(complaintThresholdInDays, 'day'));
     }
 
     /**
