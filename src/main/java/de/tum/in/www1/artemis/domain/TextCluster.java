@@ -87,13 +87,13 @@ public class TextCluster extends DomainObject {
     public void addBlocks(TextBlock textBlock) {
         int newPosition = this.blocks.size();
         this.blocks.add(textBlock);
-        textBlock.setCluster(this);
+        textBlock.setCluster(this.exercise.getId(), this);
         textBlock.setPositionInCluster(newPosition);
     }
 
     public void removeBlocks(TextBlock textBlock) {
         this.blocks.remove(textBlock);
-        textBlock.setCluster(null);
+        textBlock.setCluster(this.exercise.getId(), null);
         textBlock.setPositionInCluster(null);
     }
 

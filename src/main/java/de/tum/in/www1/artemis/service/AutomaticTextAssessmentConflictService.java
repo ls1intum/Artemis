@@ -65,9 +65,9 @@ public class AutomaticTextAssessmentConflictService {
         List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS = feedbackList.stream().flatMap(feedback -> {
             Optional<TextBlock> textBlock = textBlockRepository
                     .findById(textBlocks.stream().filter(block -> block.getId().equals(feedback.getReference())).findFirst().get().getId());
-            if (textBlock.isPresent() && textBlock.get().getCluster() != null && feedback.getDetailText() != null) {
-                return Stream.of(new TextFeedbackConflictRequestDTO(textBlock.get().getId(), textBlock.get().getText(), textBlock.get().getCluster().getId(), feedback.getId(),
-                        feedback.getDetailText(), feedback.getCredits()));
+            if (textBlock.isPresent() && textBlock.get().getCluster(exerciseId) != null && feedback.getDetailText() != null) {
+                return Stream.of(new TextFeedbackConflictRequestDTO(textBlock.get().getId(), textBlock.get().getText(), textBlock.get().getCluster(exerciseId).getId(),
+                        feedback.getId(), feedback.getDetailText(), feedback.getCredits()));
             }
             else {
                 return Stream.empty();

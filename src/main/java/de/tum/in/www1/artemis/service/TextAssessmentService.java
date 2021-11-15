@@ -60,7 +60,7 @@ public class TextAssessmentService extends AssessmentService {
             final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
-                automaticTextFeedbackService.get().suggestFeedback(result);
+                automaticTextFeedbackService.get().suggestFeedback(result, exercise.getId());
             }
             result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
         }
@@ -78,7 +78,7 @@ public class TextAssessmentService extends AssessmentService {
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {
-                automaticTextFeedbackService.get().suggestFeedback(result);
+                automaticTextFeedbackService.get().suggestFeedback(result, exercise.getId());
             }
         }
 
@@ -98,7 +98,7 @@ public class TextAssessmentService extends AssessmentService {
 
         // Set each block's impact on other submissions for the current 'textSubmission'
         if (computeFeedbackSuggestions) {
-            textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
+            textBlockService.setNumberOfAffectedSubmissionsPerBlock(result, exercise.getId());
             result.setSubmission(textSubmission);
         }
     }

@@ -186,17 +186,17 @@ public class TextBlock implements Serializable {
         this.submission = textSubmission;
     }
 
-    public TextCluster getCluster() {
-        return cluster;
+    public TextCluster getCluster(Long exerciseId) {
+        return cluster.get(exerciseId);
     }
 
-    public TextBlock cluster(TextCluster textCluster) {
-        this.cluster = textCluster;
+    public TextBlock cluster(Long exerciseId, TextCluster textCluster) {
+        this.cluster.put(exerciseId, textCluster);
         return this;
     }
 
-    public void setCluster(TextCluster textCluster) {
-        this.cluster = textCluster;
+    public void setCluster(Long exerciseId, TextCluster textCluster) {
+        this.cluster.put(exerciseId, textCluster);
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

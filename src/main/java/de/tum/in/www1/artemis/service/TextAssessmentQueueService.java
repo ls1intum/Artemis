@@ -71,8 +71,8 @@ public class TextAssessmentQueueService {
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
         final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
 
-        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
-                .map(TextCluster::getId).collect(toSet());
+        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(textBlock -> textBlock.getCluster(exercise.getId()))
+                .filter(Objects::nonNull).map(TextCluster::getId).collect(toSet());
 
         // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
         final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
@@ -80,8 +80,8 @@ public class TextAssessmentQueueService {
 
         // link up clusters with eager blocks
         submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
-            if (textBlock.getCluster() != null) {
-                textBlock.setCluster(textClusterMap.get(textBlock.getCluster().getId()));
+            if (textBlock.getCluster(exercise.getId()) != null) {
+                textBlock.setCluster(exercise.getId(), textClusterMap.get(textBlock.getCluster(exercise.getId()).getId()));
             }
         });
 
@@ -102,11 +102,11 @@ public class TextAssessmentQueueService {
         var textBlocks = textSubmission.getBlocks();
         double totalScore = 0.0;
         for (TextBlock textBlock : textBlocks) {
-            if (textBlock.isAssessable() || textBlock.getCluster() == null || textBlock.getAddedDistance() == null) {
+            if (textBlock.isAssessable() || textBlock.getCluster(textSubmission.getParticipation().getExercise().getId()) == null || textBlock.getAddedDistance() == null) {
                 continue;
             }
             double textBlockScore = textBlock.getAddedDistance();
-            textBlockScore /= textBlock.getCluster().size();
+            textBlockScore /= textBlock.getCluster(textSubmission.getParticipation().getExercise().getId()).size();
             textBlockScore += smallerClusterMap.get(textBlock);
             totalScore += textBlockScore;
         }
@@ -166,7 +166,7 @@ public class TextAssessmentQueueService {
         }
         textSubmissionList.forEach(textSubmission -> {
             textSubmission.getBlocks().forEach(textBlock -> {
-                if (textBlock.getCluster() == null) {
+                if (textBlock.getCluster(currentExercise.getId()) == null) {
                     return;
                 }
                 OptionalInt optionalLargestClusterSize = clusters.stream().mapToInt(TextCluster::openTextBlockCount).max();
@@ -177,13 +177,13 @@ public class TextAssessmentQueueService {
                     return;
                 }
                 // if cluster is the largest set to smaller percentage to 1
-                if (optionalLargestClusterSize.getAsInt() == textBlock.getCluster().openTextBlockCount()) {
+                if (optionalLargestClusterSize.getAsInt() == textBlock.getCluster(currentExercise.getId()).openTextBlockCount()) {
                     result.put(textBlock, 1.0);
                     return;
                 }
 
                 int smallerClusterCount = clusters.stream().mapToInt(TextCluster::openTextBlockCount).reduce(0, (sum, elem) -> {
-                    if (elem < textBlock.getCluster().openTextBlockCount()) {
+                    if (elem < textBlock.getCluster(currentExercise.getId()).openTextBlockCount()) {
                         return sum + 1;
                     }
                     return sum;

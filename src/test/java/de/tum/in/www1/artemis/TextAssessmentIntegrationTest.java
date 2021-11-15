@@ -473,7 +473,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         result.setSubmission(submissionWithoutAssessment);
 
-        textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
+        textBlockService.setNumberOfAffectedSubmissionsPerBlock(result, textExercise.getId());
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(submissionWithoutAssessment.getBlocks().size()).isEqualTo(1);

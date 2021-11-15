@@ -112,7 +112,7 @@ public class TextBlockService {
      *
      * @param result Result for the Submission acting as a reference for the text submission to be searched.
      */
-    public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result) {
+    public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result, Long exerciseId) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final long sumbissionId = textSubmission.getId();
         final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(sumbissionId);
@@ -121,7 +121,7 @@ public class TextBlockService {
 
         // iterate over blocks of the referenced submission
         blocks.forEach(block -> {
-            final TextCluster cluster = block.getCluster();
+            final TextCluster cluster = block.getCluster(exerciseId);
             final String blockID = block.getId();
             // if TextBlock is part of a cluster, we find how many other submissions of that cluster it will affect
             if (cluster != null) {

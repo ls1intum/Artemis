@@ -288,8 +288,8 @@ public class AtheneService {
         // Link clusters with blocks
         for (TextCluster cluster : savedClusters) {
             cluster.setExercise(textExercise);
-            List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
-                    .collect(toList());
+            List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId()))
+                    .peek(block -> block.setCluster(textExercise.getId(), cluster)).collect(toList());
             textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
             cluster.setBlocks(updatedBlockReferences);
             textBlockRepository.saveAll(updatedBlockReferences);

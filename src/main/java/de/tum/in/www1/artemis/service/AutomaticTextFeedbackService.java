@@ -40,13 +40,13 @@ public class AutomaticTextFeedbackService {
      * @param result Result for the Submission
      */
     @Transactional(readOnly = true)
-    public void suggestFeedback(@NotNull Result result) {
+    public void suggestFeedback(@NotNull Result result, Long exerciseId) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
         textSubmission.setBlocks(blocks);
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
-            final TextCluster cluster = block.getCluster();
+            final TextCluster cluster = block.getCluster(exerciseId);
 
             // if TextBlock is part of a cluster and the cluster is not disabled, we try to find an existing Feedback Element
             if (cluster != null && !cluster.isDisabled()) {

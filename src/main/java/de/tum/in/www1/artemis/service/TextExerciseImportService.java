@@ -77,7 +77,8 @@ public class TextExerciseImportService extends ExerciseImportService {
         for (TextBlock originalTextBlock : originalTextBlocks) {
             TextBlock newTextBlock = new TextBlock();
             Optional.ofNullable(originalTextBlock.getAddedDistance()).ifPresent(newTextBlock::setAddedDistance);
-            Optional.ofNullable(originalTextBlock.getCluster()).ifPresent(newTextBlock::setCluster);
+            Optional.ofNullable(originalTextBlock.getCluster(newSubmission.getParticipation().getExercise().getId()))
+                    .ifPresent(textCluster -> newTextBlock.setCluster(newSubmission.getParticipation().getExercise().getId(), textCluster));
             newTextBlock.setEndIndex(originalTextBlock.getEndIndex());
             newTextBlock.setStartIndex(originalTextBlock.getStartIndex());
             newTextBlock.setSubmission(newSubmission);
