@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -17,7 +17,6 @@ describe('OrionAssessmentService', () => {
     let orionConnectorService: OrionConnectorService;
     let programmingAssessmentExportService: ProgrammingAssessmentRepoExportService;
     let alertService: AlertService;
-    let stateStub: jest.SpyInstance;
     let stateObservable: BehaviorSubject<any>;
 
     const programmingSubmission = { id: 11, participation: { id: 1 } } as any;
@@ -38,7 +37,7 @@ describe('OrionAssessmentService', () => {
             .then(() => {
                 orionConnectorService = TestBed.inject(OrionConnectorService);
                 stateObservable = new BehaviorSubject(orionState);
-                stateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(stateObservable);
+                jest.spyOn(orionConnectorService, 'state').mockReturnValue(stateObservable);
                 orionAssessmentService = TestBed.inject(OrionAssessmentService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 programmingAssessmentExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
@@ -51,26 +50,26 @@ describe('OrionAssessmentService', () => {
     });
 
     it('downloadSubmissionInOrion with new should call send', () => {
-        const sendSubmissionToOrion = jest.spyOn(orionAssessmentService, <any>'sendSubmissionToOrion');
-        const getSubmission = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+        const sendSubmissionToOrionSpy = jest.spyOn(orionAssessmentService, <any>'sendSubmissionToOrion');
+        const getSubmissionStub = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
 
-        getSubmission.mockReturnValue(of(programmingSubmission));
+        getSubmissionStub.mockReturnValue(of(programmingSubmission));
 
         orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0, false);
 
-        expect(getSubmission).toHaveBeenCalledTimes(1);
-        expect(getSubmission).toHaveBeenCalledWith(16, true, 0);
-        expect(sendSubmissionToOrion).toHaveBeenCalledTimes(1);
-        expect(sendSubmissionToOrion).toHaveBeenCalledWith(16, programmingSubmission.id, 0, false);
+        expect(getSubmissionStub).toHaveBeenCalledTimes(1);
+        expect(getSubmissionStub).toHaveBeenCalledWith(16, true, 0);
+        expect(sendSubmissionToOrionSpy).toHaveBeenCalledTimes(1);
+        expect(sendSubmissionToOrionSpy).toHaveBeenCalledWith(16, programmingSubmission.id, 0, false);
     });
 
     it('downloadSubmissionInOrion with number should call send', () => {
-        const sendSubmissionToOrion = jest.spyOn(orionAssessmentService, <any>'sendSubmissionToOrion').mockImplementation();
+        const sendSubmissionToOrionStub = jest.spyOn(orionAssessmentService, <any>'sendSubmissionToOrion').mockImplementation();
 
         orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
 
-        expect(sendSubmissionToOrion).toHaveBeenCalledTimes(1);
-        expect(sendSubmissionToOrion).toHaveBeenCalledWith(16, programmingSubmission.id, 0, false);
+        expect(sendSubmissionToOrionStub).toHaveBeenCalledTimes(1);
+        expect(sendSubmissionToOrionStub).toHaveBeenCalledWith(16, programmingSubmission.id, 0, false);
     });
 
     it('sendSubmissionToOrion should convert and call connector', () => {
@@ -93,7 +92,7 @@ describe('OrionAssessmentService', () => {
     });
 
     it('sendSubmissionToOrion should convert and report error', () => {
-        const alertErrorStub = jest.spyOn(alertService, 'error');
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
 
         // mock FileReader
         const mockReader = {
@@ -107,8 +106,8 @@ describe('OrionAssessmentService', () => {
 
         testConversion(mockReader as any);
 
-        expect(alertErrorStub).toHaveBeenCalledTimes(1);
-        expect(alertErrorStub).toHaveBeenCalledWith('artemisApp.assessmentDashboard.orion.downloadFailed');
+        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.assessmentDashboard.orion.downloadFailed');
     });
 
     /**
@@ -143,7 +142,7 @@ describe('OrionAssessmentService', () => {
 
     it('should cancel lock correctly', fakeAsync(() => {
         const cancelStub = jest.spyOn(TestBed.inject(ProgrammingAssessmentManualResultService), 'cancelAssessment');
-        cancelStub.mockReturnValue(new Observable());
+        cancelStub.mockReturnValue(of());
 
         tick();
 
