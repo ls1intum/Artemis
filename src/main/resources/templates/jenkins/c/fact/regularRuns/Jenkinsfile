@@ -8,7 +8,6 @@ pipeline {
             docker {
                 image '#dockerImage'
                 label 'docker'
-                registryUrl 'https://sharing-codeability.uibk.ac.at:5051'
             }
         }
         stages {
