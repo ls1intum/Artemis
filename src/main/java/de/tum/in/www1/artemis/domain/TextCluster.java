@@ -30,8 +30,10 @@ public class TextCluster extends DomainObject {
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 
-    @OneToMany(mappedBy = "cluster")
-    @OrderBy("position_in_cluster")
+    @ManyToMany(mappedBy = "cluster")
+    @JoinTable(name = "cluster_to_block", joinColumns = { @JoinColumn(name = "cluster_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "block_id", referencedColumnName = "id") })
+    @OrderColumn(name = "position_in_cluster")
     @JsonIgnoreProperties("cluster")
     private List<TextBlock> blocks = new ArrayList<>();
 

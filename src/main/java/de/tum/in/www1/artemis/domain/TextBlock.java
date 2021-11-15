@@ -4,6 +4,8 @@ import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.persistence.*;
@@ -76,9 +78,10 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private TextAssessmentKnowledge knowledge;
 
-    @ManyToOne
+    @ManyToMany
     @JsonIgnore
-    private TextCluster cluster;
+    @MapKey(name = "exercise_id")
+    private Map<Long, TextCluster> cluster = new HashMap<Long, TextCluster>();
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getId() {
