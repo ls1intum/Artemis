@@ -10,13 +10,14 @@
             </div>
         </div>
         <div class="modal-footer">
-            <jhi-button
-                [isLoading]="isLoading"
+            <button
+                jhi-posting-button
+                [buttonLoading]="isLoading"
                 [disabled]="!formGroup.valid"
-                [title]="'artemisApp.metis.savePosting'"
+                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
                 class="btn btn-sm btn-outline-secondary"
                 type="submit"
-            ></jhi-button>
+            ></button>
         </div>
     </form>
 </ng-template>
