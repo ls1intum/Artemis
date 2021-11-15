@@ -80,7 +80,19 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
-                    this.lectures = this.course?.lectures;
+                    if (this.course?.lectures) {
+                        this.lectures = this.course.lectures.sort(function (lect1: Lecture, lect2: Lecture) {
+                            const title1 = lect1.title!.toUpperCase(); // ignore capitalization
+                            const title2 = lect2.title!.toUpperCase(); // ignore capitalization
+                            if (title1 < title2) {
+                                return -1;
+                            }
+                            if (title1 > title2) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                    }
                     this.exercises = this.course?.exercises;
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
