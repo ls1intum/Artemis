@@ -172,6 +172,8 @@ public class MailService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
+        String content = createContentForNotificationEmailByType(notificationType, context);
+        String subject = notification.getTitle();
 
         if (notificationSubject instanceof Exercise) {
             if (notificationSubject instanceof QuizExercise) {
@@ -195,14 +197,12 @@ public class MailService {
         if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+            subject = ((Post) notificationSubject).getTitle() + ", in course: " + ((Post) notificationSubject).getCourse();
         }
         else {
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
         }
         context.setVariable(BASE_URL, artemisServerUrl);
-
-        String content = createContentForNotificationEmailByType(notificationType, context);
-        String subject = notification.getTitle();
 
         sendEmail(user, subject, content, false, true);
     }
