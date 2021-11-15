@@ -107,7 +107,7 @@ public class NotificationSettingsServiceTest {
         assertThat(resultingTypeSet).contains(EXAM_ARCHIVE_STARTED);
         assertThat(resultingTypeSet).contains(COURSE_ARCHIVE_STARTED);
         assertThat(resultingTypeSet).contains(COURSE_ARCHIVE_STARTED);
-        assertThat(!resultingTypeSet.contains(ATTACHMENT_CHANGE));
+        assertThat(resultingTypeSet).doesNotContain(ATTACHMENT_CHANGE);
     }
 
     /**
