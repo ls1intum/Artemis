@@ -310,7 +310,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
 
     overviewContextSortFn = (contextA: Lecture | Exercise, contextB: Lecture | Exercise): number => {
         const titleA = contextA.title!.toUpperCase(); // ignore capitalization
-        const titleB = contextA.title!.toUpperCase(); // ignore capitalization
+        const titleB = contextB.title!.toUpperCase(); // ignore capitalization
         if (titleA < titleB) {
             return -1;
         }
