@@ -289,6 +289,7 @@
             "unlockAllRepositoriesSuccess": "The repositories are now being unlocked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "auxiliaryRepository": {
+                "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",

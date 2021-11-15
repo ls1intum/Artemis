@@ -165,13 +165,16 @@
             },
             "form": {
                 "title": {
+                    "undefined": "Der Titel wurde nicht ausgefüllt!",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
                 },
                 "shortName": {
+                    "undefined": "Der Kurzname wurde nicht ausgefüllt!",
                     "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
                 },
                 "packageName": {
+                    "undefined": "Der Package-Name wurde nicht ausgefüllt!",
                     "pattern": {
                         "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
                         "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
@@ -179,10 +182,12 @@
                     }
                 },
                 "points": {
+                    "undefined": "Die Punkte wurden nicht ausgefüllt!",
                     "customMin": "Die Punkte müssen mindestens 1 betragen.",
                     "customMax": "Die Punkte dürfen höchstens 9999 betragen."
                 },
                 "bonusPoints": {
+                    "undefined": "Die Bonuspunkte wurden nicht ausgefüllt!",
                     "customMin": "Die Punkte müssen mindestens 0 betragen.",
                     "customMax": "Die Punkte dürfen höchstens 9999 betragen."
                 },

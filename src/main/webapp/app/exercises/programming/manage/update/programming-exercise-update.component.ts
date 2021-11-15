@@ -28,6 +28,11 @@ import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
+export interface Reason {
+    translateKey: string;
+    translateValues: any;
+}
+
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -589,5 +594,120 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             return event.target.tagName === 'TEXTAREA';
         }
         return false;
+    }
+
+    getInvalidReasons(): Reason[] {
+        const result: Reason[] = [];
+        if (this.programmingExercise.title === undefined || this.programmingExercise.title === '') {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.title.match(this.titleNamePattern)!.length === 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+        if (this.programmingExercise.shortName === undefined) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.shortName.length <= 3) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.shortName.minlength',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.shortName.match(this.shortNamePattern)!.length === 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.shortName.pattern',
+                translateValues: {},
+            });
+        }
+
+        if (this.programmingExercise.maxPoints === undefined) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.maxPoints < 1) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.maxPoints > 9999) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        }
+
+        if (this.programmingExercise.bonusPoints === undefined) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.bonusPoints! < 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.bonusPoints! > 9999) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMax',
+                translateValues: {},
+            });
+        }
+
+        if (this.programmingExercise.maxStaticCodeAnalysisPenalty?.toString().match(this.maxPenaltyPattern)!.length === 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
+                translateValues: {},
+            });
+        }
+
+        if (this.programmingExercise.packageName === undefined) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        } else {
+            const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
+            const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
+            // window.alert(patternMatchJavaKotlin + ' ; ' + patternMatchSwift);
+            if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                    translateValues: {},
+                });
+            }
+        }
+
+        if (!this.auxiliaryRepositoriesValid) {
+            result.push({
+                translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
+                translateValues: '',
+            });
+        }
+
+        if (!this.validIdeSelection()) {
+            result.push({
+                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateValues: '',
+            });
+        }
+
+        return result;
     }
 }
