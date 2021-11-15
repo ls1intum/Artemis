@@ -79,20 +79,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 }
             });
 
-            this.timeOfFeedbackRequestValid = this.isFeedbackRequestAllowed();
-            this.timeOfComplaintValid = this.isComplaintAllowed();
+            this.timeOfFeedbackRequestValid = this.isTimeOfFeedbackRequestValid();
+            this.timeOfComplaintValid = this.isTimeOfComplaintValid();
             this.showSection = this.getSectionVisibility();
-        }
-    }
-
-    /**
-     * Determines whether or not to show the section
-     */
-    private getSectionVisibility(): boolean {
-        if (this.isExamMode) {
-            return this.isComplaintAllowed();
-        } else {
-            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
         }
     }
 
@@ -109,25 +98,30 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
+     * Determines whether or not to show the section
      */
-    private isComplaintAllowed(): boolean {
+    private getSectionVisibility(): boolean {
         if (this.isExamMode) {
             return this.isWithinExamReviewPeriod();
+        } else {
+            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
         }
-        if (!this.course?.complaintsEnabled) {
-            return false;
+    }
+
+    /**
+     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
+     */
+    private isTimeOfComplaintValid(): boolean {
+        if (!this.isExamMode) {
+            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
         }
-        return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
+        return this.isWithinExamReviewPeriod();
     }
 
     /**
      * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
      */
-    private isFeedbackRequestAllowed(): boolean {
-        if (!this.course?.requestMoreFeedbackEnabled) {
-            return false;
-        }
+    private isTimeOfFeedbackRequestValid(): boolean {
         if (!this.isExamMode) {
             return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
         }

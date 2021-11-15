@@ -251,6 +251,9 @@ describe('ComplaintsStudentViewComponent', () => {
             const courseWithoutComplaints = {
                 ...course,
                 complaintsEnabled: false,
+                maxComplaintTimeDays: undefined,
+                maxComplaints: undefined,
+                maxTeamComplaints: undefined,
             } as Course;
             component.exercise = {
                 ...courseExercise,
