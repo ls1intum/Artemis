@@ -264,6 +264,7 @@ export class ResultDetailComponent implements OnInit {
                         category: this.showTestDetails ? 'Tutor' : 'Feedback',
                         title: feedback.text,
                         text: feedback.detailText ? feedback.gradingInstruction.feedback + '\n' + feedback.detailText : feedback.gradingInstruction.feedback,
+                        previewText,
                         positive: feedback.positive,
                         credits: feedback.credits,
                     };
