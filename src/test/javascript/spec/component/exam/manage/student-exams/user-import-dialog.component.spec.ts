@@ -185,8 +185,8 @@ describe('UsersImportButtonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBeFalse;
-        expect(component.isSubmitDisabled).toBeFalse;
+        expect(component.hasImported).toBe(false);
+        expect(component.isSubmitDisabled).toBe(false);
         const importButton = fixture.debugElement.query(By.css('#import'));
 
         expect(importButton).not.toBe(null);
