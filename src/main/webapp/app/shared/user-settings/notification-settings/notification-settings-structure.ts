@@ -100,6 +100,11 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     descriptionKey: 'courseAndExamArchivingStartedDescription',
                     settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
                 },
+                {
+                    key: 'programmingTestCasesChanged',
+                    descriptionKey: 'programmingTestCasesChangedDescription',
+                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED,
+                },
             ],
         },
     ],
