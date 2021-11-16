@@ -29,7 +29,7 @@ describe('UsersImportButtonComponent', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -38,13 +38,8 @@ describe('UsersImportButtonComponent', () => {
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
         comp.openUsersImportDialog(new MouseEvent('click'));
-
         const openStudentsExamImportDialogButton = fixture.debugElement.query(By.css('jhi-button'));
-
         expect(openStudentsExamImportDialogButton).not.toBe(null);
-
-        expect(modalServiceOpenStub).toHaveBeenCalled;
-
-        modalServiceOpenStub.restore();
+        expect(modalServiceOpenStub).toHaveBeenCalledTimes(1);
     });
 });

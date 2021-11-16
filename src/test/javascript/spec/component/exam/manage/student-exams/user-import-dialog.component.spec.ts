@@ -189,14 +189,14 @@ describe('UsersImportButtonComponent', () => {
         expect(component.isSubmitDisabled).toBeFalse;
         const importButton = fixture.debugElement.query(By.css('#import'));
 
-        expect(importButton).not.toBeNull;
+        expect(importButton).not.toBe(null);
 
         importButton.nativeElement.click();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalled();
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
         expect(component.isImporting).toBe(false);
         expect(component.hasImported).toBe(true);
-        expect(component.notFoundUsers.length).toEqual(studentsNotFound.length);
+        expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
@@ -207,7 +207,6 @@ describe('UsersImportButtonComponent', () => {
         expect(finishButton).not.toBeNull;
 
         finishButton.nativeElement.click();
-
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalled();
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
     });
 });
