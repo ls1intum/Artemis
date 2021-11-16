@@ -211,7 +211,7 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (this.isAtLeastInstructor) {
             return true;
         }
-        if (this.complaint!.team) {
+        if (this.exercise?.teamMode) {
             return this.isAssessor;
         } else {
             if (this.isTestRun) {
