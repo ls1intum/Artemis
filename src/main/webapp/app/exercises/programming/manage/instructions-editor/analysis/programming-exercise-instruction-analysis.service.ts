@@ -70,7 +70,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             (testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.map((foundTestCase) => foundTestCase.toLowerCase()).includes(testCase.toLowerCase())),
         );
 
-        const invalidTestCases = invalidTestCaseAnalysis.map(([, testCases]) => testCases).flat();
+        const invalidTestCases = invalidTestCaseAnalysis.flatMap(([, testCases]) => testCases);
 
         return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
     };
@@ -96,7 +96,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             )
             .filter(([, hints]) => !!hints.length);
 
-        const invalidHints = invalidHintAnalysis.map(([, testCases]) => testCases).flat();
+        const invalidHints = invalidHintAnalysis.flatMap(([, testCases]) => testCases);
 
         return { invalidHints, invalidHintAnalysis };
     };

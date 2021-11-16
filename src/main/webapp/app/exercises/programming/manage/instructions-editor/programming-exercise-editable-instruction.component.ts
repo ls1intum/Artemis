@@ -284,7 +284,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param analysis that contains the resulting issues of the problem statement.
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
-        const lineWarnings = analysis.map(({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints)).flat();
+        const lineWarnings = analysis.flatMap(({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints));
 
         this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.
