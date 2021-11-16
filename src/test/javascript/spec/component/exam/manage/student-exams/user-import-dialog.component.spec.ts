@@ -71,7 +71,6 @@ describe('UsersImportButtonComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).not.toBeNull;
     });
 
     it('should reset dialog when selecting csv file', async () => {
@@ -99,7 +98,7 @@ describe('UsersImportButtonComponent', () => {
         const event = { target: { files: [csv] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport.length).toEqual(2);
+        expect(component.usersToImport).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
     });
 
@@ -126,13 +125,13 @@ describe('UsersImportButtonComponent', () => {
         component.usersToImport = studentsToImport;
         component.importUsers();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalled();
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
         expect(component.isImporting).toBe(false);
         expect(component.hasImported).toBe(true);
-        expect(component.notFoundUsers.length).toEqual(studentsNotFound.length);
+        expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
     });
 
-    it('should compute invalid student entries', function () {
+    it('should compute invalid student entries', () => {
         let rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }]);
         expect(rowNumbersOrNull).toBe('2');
 
@@ -165,8 +164,8 @@ describe('UsersImportButtonComponent', () => {
         component.usersToImport = importedStudents.concat(notImportedStudents);
         component.importUsers();
 
-        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse);
+        importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
