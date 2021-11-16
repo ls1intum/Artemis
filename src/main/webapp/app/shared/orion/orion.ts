@@ -59,9 +59,14 @@ export interface OrionExerciseConnector {
      * Downloads a submission into the opened tutor project. See {@link OrionConnectorService} for details.
      * @param submissionId id of the submission, used to navigate to the corresponding URL
      * @param correctionRound correction round, also needed to navigate to the correct URL
-     * @param downloadURL URL of the zip file containing the student's repository
+     * @param testRun test run flag, also needed for navigation
+     * @param base64data the student's submission as base64
      */
-    downloadSubmission(submissionId: string, correctionRound: string, downloadURL: string): void;
+    // Uncomment this line to also transfer the testRun flag.
+    // THIS IS A BREAKING CHANGE that will require all users to upgrade their Orion to a compatible version!
+    // Also change in orion-connector.service.ts
+    // downloadSubmission(submissionId: string, correctionRound: string, testRun: boolean, base64data: string): void;
+    downloadSubmission(submissionId: string, correctionRound: string, base64data: string): void;
 
     /**
      * Initializes the feedback comments. See {@link OrionConnectorService} for details.
