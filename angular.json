@@ -30,6 +30,7 @@
               "showdown-highlight",
               "brace/mode/markdown",
               "export-to-csv",
+              "@ls1intum/apollon",
               "prop-types",
               "dayjs/locale/de",
               "brace/mode/java",
