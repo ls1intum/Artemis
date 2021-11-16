@@ -56,6 +56,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.lectureId = +params['lectureId'];
             if (this.lectureId) {
+                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
                 this.loadData();
             }
         });
@@ -68,8 +69,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
+        // TODO: we actually would like to have the lecture with all units! Posts and learning goals are not required here
+        // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .find(this.lectureId)
+            .findWithDetails(this.lectureId)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
