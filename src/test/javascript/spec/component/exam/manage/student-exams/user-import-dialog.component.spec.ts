@@ -140,16 +140,16 @@ describe('UsersImportButtonComponent', () => {
         expect(rowNumbersOrNull).toBe('2');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
-        expect(rowNumbersOrNull).toBe(null);
+        expect(rowNumbersOrNull).toBe(undefined);
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
-        expect(rowNumbersOrNull).toBe(null);
+        expect(rowNumbersOrNull).toBe(undefined);
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
         expect(rowNumbersOrNull).toBe('2, 3');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([]);
-        expect(rowNumbersOrNull).toBe(null);
+        expect(rowNumbersOrNull).toBe(undefined);
     });
 
     it('should import correctly', function () {
