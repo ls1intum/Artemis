@@ -40,7 +40,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgForm, NumberValueAccessor, NgModel, CheckboxControlValueAccessor, DefaultValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { CheckboxControlValueAccessor, DefaultValueAccessor, NgForm, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
@@ -414,6 +414,156 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
+    });
+
+    // let exercise: ProgrammingExercise;
+
+    describe('input error validation', () => {
+        beforeEach(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 123;
+            comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
+        });
+
+        it('find validation errors for undefined input values', () => {
+            // invalid input
+            comp.programmingExercise.title = undefined;
+            comp.programmingExercise.shortName = undefined;
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = undefined;
+            comp.programmingExercise.packageName = undefined;
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toHaveLength(5);
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for empty input strings', () => {
+            // invalid input
+            comp.programmingExercise.title = '';
+            comp.programmingExercise.shortName = '';
+            comp.programmingExercise.packageName = '';
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for input values not matching the pattern', () => {
+            comp.programmingExercise.title = '%§"$"§';
+            comp.programmingExercise.shortName = '123';
+            comp.programmingExercise.maxPoints = 0;
+            comp.programmingExercise.bonusPoints = -1;
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = -1;
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.pattern',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for package name not matching the pattern', () => {
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.packageName = 'de/';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for invalid auxiliary repositories', () => {
+            comp.auxiliaryRepositoriesValid = false;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for invalid ide selection', () => {
+            comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOfflineIde = false;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateValues: {},
+            });
+        });
+
+        it('should find no validation errors for valid input', () => {
+            comp.programmingExercise.title = 'New title';
+            comp.programmingExercise.shortName = 'home2';
+            comp.programmingExercise.maxPoints = 10;
+            comp.programmingExercise.bonusPoints = 0;
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = 60;
+            comp.programmingExercise.allowOfflineIde = true;
+            comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            expect(comp.getInvalidReasons()).toBeEmpty();
+        });
     });
 });
 
