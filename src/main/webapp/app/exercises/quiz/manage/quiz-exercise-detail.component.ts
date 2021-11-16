@@ -112,9 +112,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     examId?: number;
     courseId?: number;
 
-    /** Constant for indicating the maximum length of 250 characters **/
-    maxLength = 250;
-
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
