@@ -1,7 +1,5 @@
 import { RouterTestingModule } from '@angular/router/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,10 +21,6 @@ describe('CourseDetailDoughnutChartComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)],
             declarations: [CourseDetailDoughnutChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
         })
             .compileComponents()
             .then(() => {

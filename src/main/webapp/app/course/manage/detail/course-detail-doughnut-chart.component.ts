@@ -107,7 +107,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * Returns absolute value represented by doughnut piece or 0 if the currentMax is 0.
      * This is necessary in order to compensate the workaround for
      * displaying a chart even if no values are there to display (i.e. currentMax is 0)
-     * @param value
+     * @param value the default tooltip content that has to be replaced
      */
     valueFormatting(value: any) {
         return this.currentMax === 0 ? '0' : value.value;
