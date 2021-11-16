@@ -416,8 +416,6 @@ describe('ProgrammingExercise Management Update Component', () => {
         );
     });
 
-    // let exercise: ProgrammingExercise;
-
     describe('input error validation', () => {
         beforeEach(() => {
             // GIVEN
