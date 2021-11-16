@@ -128,6 +128,7 @@ export abstract class QuizExerciseValidationDirective {
                         this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                         this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
+                        shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
                         !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
                         this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                     );
