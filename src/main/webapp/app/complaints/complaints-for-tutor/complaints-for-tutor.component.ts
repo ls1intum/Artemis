@@ -10,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
+import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -208,19 +209,6 @@ export class ComplaintsForTutorComponent implements OnInit {
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
-        if (this.isAtLeastInstructor) {
-            return true;
-        }
-        if (this.exercise?.teamMode) {
-            return this.isAssessor;
-        } else {
-            if (this.isTestRun) {
-                return this.isAssessor;
-            }
-            if (this.complaint.result && this.complaint.result.assessor == undefined) {
-                return true;
-            }
-            return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
-        }
+        return isAllowedToRespondToComplaintAction(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
     }
 }

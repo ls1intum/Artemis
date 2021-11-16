@@ -30,6 +30,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -277,7 +278,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return !isAllowedToModifyFeedback(
+            this.isAtLeastInstructor,
+            this.isTestRun,
+            this.isAssessor,
+            this.hasAssessmentDueDatePassed,
+            this.complaint,
+            this.result,
+            this.modelingExercise,
+        );
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
