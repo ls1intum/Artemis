@@ -596,6 +596,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return false;
     }
 
+    /**
+     * Get a list of all reasons that describe why the current input to update is invalid
+     */
     getInvalidReasons(): Reason[] {
         const result: Reason[] = [];
         if (this.programmingExercise.title === undefined || this.programmingExercise.title === '') {
@@ -603,27 +606,31 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 translateKey: 'artemisApp.exercise.form.title.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.title.match(this.titleNamePattern)!.length === 0) {
+        } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
             result.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
             });
         }
-        if (this.programmingExercise.shortName === undefined) {
+        if (this.programmingExercise.shortName === undefined || this.programmingExercise.title === '') {
             result.push({
                 translateKey: 'artemisApp.exercise.form.shortName.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.shortName.length <= 3) {
-            result.push({
-                translateKey: 'artemisApp.exercise.form.shortName.minlength',
-                translateValues: {},
-            });
-        } else if (this.programmingExercise.shortName.match(this.shortNamePattern)!.length === 0) {
-            result.push({
-                translateKey: 'artemisApp.exercise.form.shortName.pattern',
-                translateValues: {},
-            });
+        } else {
+            if (this.programmingExercise.shortName.length < 3) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.shortName.minlength',
+                    translateValues: {},
+                });
+            }
+            const shortNamePatternMatch = this.programmingExercise.shortName.match(this.shortNamePattern);
+            if (shortNamePatternMatch === null || shortNamePatternMatch.length === 0) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.shortName.pattern',
+                    translateValues: {},
+                });
+            }
         }
 
         if (this.programmingExercise.maxPoints === undefined) {
@@ -660,14 +667,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
 
-        if (this.programmingExercise.maxStaticCodeAnalysisPenalty?.toString().match(this.maxPenaltyPattern)!.length === 0) {
+        const maxStaticCodeAnalysisPenaltyPatternMatch = this.programmingExercise.maxStaticCodeAnalysisPenalty?.toString().match(this.maxPenaltyPattern);
+        if (maxStaticCodeAnalysisPenaltyPatternMatch === null || maxStaticCodeAnalysisPenaltyPatternMatch?.length === 0) {
             result.push({
                 translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
                 translateValues: {},
             });
         }
 
-        if (this.programmingExercise.packageName === undefined) {
+        if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
             result.push({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
                 translateValues: {},
@@ -697,14 +705,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.auxiliaryRepositoriesValid) {
             result.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
-                translateValues: '',
+                translateValues: {},
             });
         }
 
         if (!this.validIdeSelection()) {
             result.push({
                 translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
-                translateValues: '',
+                translateValues: {},
             });
         }
 
