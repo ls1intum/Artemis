@@ -29,7 +29,7 @@ following dependencies/tools on your machine:
    Download and install the MySQL Community Server (8.0.x) and configure
    the ‘root’ user with an empty password.
    (In case you want to use a different password, make sure to change the value in
-   ``application-dev.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *within the 'liquibaseCommand' as argument password*).
+   ``application-dev.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*).
    The required Artemis scheme will be created / updated automatically at startup time of the
    server application.
    Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ``docker-compose -f src/main/docker/mysql.yml up``

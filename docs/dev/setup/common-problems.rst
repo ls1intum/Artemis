@@ -6,7 +6,8 @@ General Setup Problems
 
 - Restarting IntelliJ with invalidated caches *(File > Invalidate Caches...)* might resolve the current issue.
 - When facing issues with deep dependencies and changes were made to the ``package.json`` file, executing ``npm install --force`` might resolve the issue.
-- When encountering a compilation error due to ``invalid source release`` make sure that you have set the Java version properly at 3 places:
+- When encountering a compilation error due to ``invalid source release`` make sure that you have set the Java version properly at 3 places
+
    * File > Project Structure > Project Settings > Project > Project SDK
    * File > Project Structure > Project Settings > Project > Project Language Level
    * File > Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JVM
