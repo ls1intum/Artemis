@@ -62,7 +62,11 @@ export interface OrionExerciseConnector {
      * @param testRun test run flag, also needed for navigation
      * @param base64data the student's submission as base64
      */
-    downloadSubmission(submissionId: string, correctionRound: string, testRun: boolean, base64data: string): void;
+    // Uncomment this line to also transfer the testRun flag.
+    // THIS IS A BREAKING CHANGE that will require all users to upgrade their Orion to a compatible version!
+    // Also change in orion-connector.service.ts
+    // downloadSubmission(submissionId: string, correctionRound: string, testRun: boolean, base64data: string): void;
+    downloadSubmission(submissionId: string, correctionRound: string, base64data: string): void;
 
     /**
      * Initializes the feedback comments. See {@link OrionConnectorService} for details.
