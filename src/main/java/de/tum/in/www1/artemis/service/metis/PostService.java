@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -77,6 +80,7 @@ public class PostService extends PostingService {
         post.setAuthor(user);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
+
         // announcements can only be created by instructors
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
@@ -388,9 +392,20 @@ public class PostService extends PostingService {
      * @param post post that triggered the notification
      */
     void sendNotification(Post post, Course course) {
+        Parser parser = Parser.builder().build();
+        // save markdown content
+        String markdownContent = post.getContent();
+        // create html content
+        Node document = parser.parse(markdownContent);
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        String html = renderer.render(document);
+
+        post.setContent(html);
+
         // notify via course
         if (post.getCourseWideContext() != null) {
             groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
+            post.setContent(markdownContent);
             return;
         }
         // notify via exercise
@@ -398,11 +413,13 @@ public class PostService extends PostingService {
             groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
+            post.setContent(markdownContent);
             return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
+            post.setContent(markdownContent);
         }
     }
 
