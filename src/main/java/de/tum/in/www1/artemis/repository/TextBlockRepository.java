@@ -56,12 +56,12 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
             SELECT tb.id as blockId, COUNT(DISTINCT tball.id) as numberOfOtherBlocks
             FROM TextSubmission s
             LEFT JOIN TextBlock tb ON s.id = tb.submission.id
-            LEFT JOIN TextCluster tc ON tb.cluster.id = tc.id
-            LEFT JOIN TextBlock tball ON tc.id = tball.cluster.id AND tball.id <> tb.id
-            WHERE s.id = :#{#submissionId}
+            LEFT JOIN tb.cluster tc
+            LEFT JOIN tc.blocks tball
+            WHERE s.id = :#{#submissionId} AND tball.id <> tb.id AND tc.exercise.id = :#{#exerciseId}
             GROUP BY tb.id
             """)
-    List<TextBlockCount> countOtherBlocksInSameClusterForSubmissionId(@Param("submissionId") Long submissionId);
+    List<TextBlockCount> countOtherBlocksInSameClusterForSubmissionId(@Param("submissionId") Long submissionId, @Param("exerciseId") Long exerciseId);
 
     /**
      * This function calls query `countOtherBlocksInSameClusterForSubmissionId` and converts the result into a Map
@@ -70,7 +70,8 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * @return a Map data type representing key value pairs where the key is the TextBlock id
      * and the value is the number of other blocks in the same cluster for that TextBlock.
      */
-    default Map<String, Integer> countOtherBlocksInClusterBySubmissionId(Long submissionId) {
-        return countOtherBlocksInSameClusterForSubmissionId(submissionId).stream().collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
+    default Map<String, Integer> countOtherBlocksInClusterBySubmissionId(Long submissionId, Long exerciseId) {
+        return countOtherBlocksInSameClusterForSubmissionId(submissionId, exerciseId).stream()
+                .collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
     }
 }

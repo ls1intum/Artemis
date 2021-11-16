@@ -44,17 +44,18 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
-                textblock.cluster.id,
+                cluster.id,
                 count(DISTINCT textblock.id),
                 SUM(case when feedback.type = 'AUTOMATIC' then 1 else 0 end)
             )
-            FROM TextBlock textblock
+            FROM TextCluster cluster
+            LEFT JOIN cluster.blocks textblock
             LEFT JOIN Submission submission ON textblock.submission.id = submission.id
             LEFT JOIN Result result ON result.submission.id = submission.id
             LEFT JOIN Feedback feedback ON ( feedback.result.id = result.id and feedback.reference = textblock.id )
             LEFT JOIN Participation participation ON participation.id = submission.participation.id
-            WHERE participation.exercise.id = :#{#exerciseId}
-            GROUP BY textblock.cluster.id HAVING textblock.cluster.id > 0
+            WHERE participation.exercise.id = :#{#exerciseId} AND cluster.exercise.id = :#{#exerciseId}
+            GROUP BY cluster.id
             """)
     List<TextClusterStatisticsDTO> getClusterStatistics(@Param("exerciseId") Long exerciseId);
 

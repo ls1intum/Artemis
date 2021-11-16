@@ -78,9 +78,9 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private TextAssessmentKnowledge knowledge;
 
-    @ManyToMany
+    @ManyToMany(mappedBy = "blocks")
     @JsonIgnore
-    @MapKey(name = "exercise_id")
+    @MapKey(name = "exercise")
     private Map<Long, TextCluster> cluster = new HashMap<Long, TextCluster>();
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 

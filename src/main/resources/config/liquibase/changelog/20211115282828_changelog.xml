@@ -1,11 +1,19 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet author="argertboja" id="20211115282828">
+    <changeSet author="argertboja" id="20211115282828-1">
         <createTable tableName="cluster_to_block">
             <column name="cluster_id" type="BIGINT" />
-            <column name="block_id" type="BIGINT" />
+            <column name="block_id" type="char(40)" />
         </createTable>
         <addForeignKeyConstraint baseColumnNames="cluster_id" baseTableName="cluster_to_block" constraintName="fk_text_cluster_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="text_cluster"/>
         <addForeignKeyConstraint baseColumnNames="block_id" baseTableName="cluster_to_block" constraintName="fk_text_block_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="text_block"/>
+    </changeSet>
+    <changeSet author="argertboja" id="20211115282828-2">
+        <sql>
+            <!--map text blocks to text clusters-->
+            INSERT INTO cluster_to_block
+            SELECT tb.cluster_id, id from text_block tb
+            WHERE tb.cluster_id IS NOT NULL;
+        </sql>
     </changeSet>
 </databaseChangeLog>
