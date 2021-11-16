@@ -7,6 +7,7 @@ import { User } from 'app/core/user/user.model';
 
 describe('Assessment Service', () => {
     const user = {} as User;
+    const resultLock = { assessor: user } as Result;
     const result = { completionDate: dayjs().subtract(5, 'day'), assessor: user } as Result;
     const automaticResult = { completionDate: dayjs().subtract(5, 'day') } as Result;
     const complaint = { complaintType: ComplaintType.COMPLAINT, result } as Complaint;
@@ -17,7 +18,7 @@ describe('Assessment Service', () => {
     const teamExercise = { teamMode: true } as Exercise;
     describe('isAllowedToModifyFeedback', () => {
         it('should show during assessment', () => {
-            const isAllowed = isAllowedToModifyFeedback(false, false, true, false, undefined, result, undefined);
+            const isAllowed = isAllowedToModifyFeedback(false, false, true, false, undefined, resultLock, undefined);
             expect(isAllowed).toBe(true);
         });
 

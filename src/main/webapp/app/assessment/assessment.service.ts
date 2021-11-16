@@ -41,7 +41,7 @@ export const isAllowedToModifyFeedback = (
     if (complaint) {
         return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
     }
-    if (!complaint && !result?.completionDate) {
+    if (!!result?.completionDate) {
         return false;
     }
     return !hasAssessmentDueDatePassed;
