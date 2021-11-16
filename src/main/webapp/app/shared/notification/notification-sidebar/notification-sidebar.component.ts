@@ -24,6 +24,7 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
 export class NotificationSidebarComponent implements OnInit {
     // HTML template related
     showSidebar = false;
+    showAllNotificationsInSideBar = true;
     loading = false;
 
     // notification logic related
@@ -32,6 +33,7 @@ export class NotificationSidebarComponent implements OnInit {
     recentNotificationCount = 0;
     totalNotifications = 0;
     lastNotificationRead?: dayjs.Dayjs;
+    hideNotificationsUntil: dayjs.Dayjs | null;
     page = 0;
     notificationsPerPage = 25;
     error?: string;
@@ -102,6 +104,21 @@ export class NotificationSidebarComponent implements OnInit {
     // notification logic related methods
 
     /**
+     * Starts the process to show or hide all notifications in the sidebar
+     */
+    toggleNotificationDisplay(): void {
+        if (this.showAllNotificationsInSideBar) {
+            // all notifications (even the hidden ones) should be displayed
+            this.hideNotificationsUntil = null;
+        } else {
+            // hide all currently displayed notifications
+            this.hideNotificationsUntil = dayjs();
+        }
+        this.resetNotificationsInSidebar();
+        this.showAllNotificationsInSideBar = !this.showAllNotificationsInSideBar;
+    }
+
+    /**
      * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
      * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
      * won't disappear immediately.
@@ -141,6 +158,10 @@ export class NotificationSidebarComponent implements OnInit {
 
     // filter out every exam related notification
     private filterLoadedNotifications(notifications: Notification[]): Notification[] {
+        if (this.hideNotificationsUntil !== null) {
+            // if the user wants to hide certain notifications only display those that arrived after the user pressed that (hide)button
+            notifications = notifications.filter((notification) => notification.notificationDate?.isAfter(this.hideNotificationsUntil));
+        }
         return notifications.filter((notification) => notification.title !== LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
     }
 
@@ -195,13 +216,19 @@ export class NotificationSidebarComponent implements OnInit {
      * Clears all currently loaded notifications and settings, afterwards fetches updated once
      * E.g. is used to update the view after the user changed the notification settings
      */
-    private resetNotificationSidebars(): void {
+    private resetNotificationSidebarsWithSettings(): void {
         // reset notification settings
         this.notificationSettings = [];
         this.notificationTitleActivationMap = new Map<string, boolean>();
         this.loadNotificationSettings();
+        this.resetNotificationsInSidebar();
+    }
 
-        // reset notifications
+    /**
+     * Clears all currently loaded notifications, afterwards fetches updated once
+     * E.g. is used to update the view after the user toggles the button to show/hide all notifications
+     */
+    private resetNotificationsInSidebar(): void {
         this.notifications = [];
         this.sortedNotifications = [];
         this.recentNotificationCount = 0;
@@ -235,7 +262,7 @@ export class NotificationSidebarComponent implements OnInit {
     private listenForNotificationSettingsChanges(): void {
         this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
             if (changeMessage === reloadNotificationSideBarMessage) {
-                this.resetNotificationSidebars();
+                this.resetNotificationSidebarsWithSettings();
             }
         });
     }
