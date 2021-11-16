@@ -544,8 +544,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Send a websocket message about the new state to the client.
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
-        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
-        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        if (testCasesChanged) {
+            groupNotificationService.notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
+        }
+        else {
+            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+        }
     }
 
     private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
