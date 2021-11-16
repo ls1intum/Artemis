@@ -16,7 +16,7 @@ import java.util.Set;
  * Rest controller for managing GuidedTourSetting
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class GuidedTourSettingsResource {
 
     private final Logger log = LoggerFactory.getLogger(GuidedTourSettingsResource.class);
@@ -28,11 +28,11 @@ public class GuidedTourSettingsResource {
     }
 
     /**
-     * PUT /guided-tour-settings: update all guided tour settings of the current user
+     * PUT guided-tour-settings: update all guided tour settings of the current user
      * @param guidedTourSettings updated guided tour object
      * @return the guided tour settings
      */
-    @PutMapping("/guided-tour-settings")
+    @PutMapping("guided-tour-settings")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<GuidedTourSetting>> updateGuidedTourSettings(@RequestBody Set<GuidedTourSetting> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSetting : {}", guidedTourSettings);
@@ -41,11 +41,11 @@ public class GuidedTourSettingsResource {
     }
 
     /**
-     * DELETE /guided-tour-settings/:settingsKey : delete guided tour setting of the current user
+     * DELETE guided-tour-settings/:settingsKey : delete guided tour setting of the current user
      * @param settingsKey the guided tour settings key that of the setting that should be deleted
      * @return the guided tour settings
      */
-    @DeleteMapping("/guided-tour-settings/{settingsKey}")
+    @DeleteMapping("guided-tour-settings/{settingsKey}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<GuidedTourSetting>> deleteGuidedTourSetting(@PathVariable String settingsKey) {
         log.debug("REST request to delete GuidedTourSetting : {}", settingsKey);

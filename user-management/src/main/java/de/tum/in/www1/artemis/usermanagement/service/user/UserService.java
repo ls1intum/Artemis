@@ -52,6 +52,8 @@ import static de.tum.in.www1.artemis.security.Role.STUDENT;
 @Service
 public class UserService {
 
+    public static final int ONE_DAY_IN_SECONDS = 86400;
+
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Value("${artemis.user-management.use-external}")
@@ -187,7 +189,7 @@ public class UserService {
      */
     public Optional<User> completePasswordReset(String newPassword, String key) {
         log.debug("Reset user password for reset key {}", key);
-        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
+        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(ONE_DAY_IN_SECONDS))).map(user -> {
             user.setPassword(passwordService.encodePassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);

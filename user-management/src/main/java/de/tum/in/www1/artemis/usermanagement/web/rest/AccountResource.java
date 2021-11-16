@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  * REST controller for managing the current user's account.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class AccountResource {
 
     @Value("${artemis.user-management.registration.enabled:#{null}}")
@@ -75,7 +75,7 @@ public class AccountResource {
     }
 
     /**
-     * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
+     * The registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
      * A non existing entry or false mean that the registration is not enabled
      * @return whether the registration is enabled or not
      */
@@ -93,14 +93,14 @@ public class AccountResource {
     }
 
     /**
-     * {@code POST  /register} : register the user.
+     * {@code POST  register} : register the user.
      *
      * @param managedUserVM the managed user View Model.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
      */
-    @PostMapping("/register")
+    @PostMapping("register")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
 
@@ -125,12 +125,12 @@ public class AccountResource {
     }
 
     /**
-     * {@code GET  /activate} : activate the registered user.
+     * {@code GET  activate} : activate the registered user.
      *
      * @param key the activation key.
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
      */
-    @GetMapping("/activate")
+    @GetMapping("activate")
     public void activateAccount(@RequestParam(value = "key") String key) {
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -142,24 +142,24 @@ public class AccountResource {
     }
 
     /**
-     * {@code GET  /authenticate} : check if the user is authenticated, and return its login.
+     * {@code GET  authenticate} : check if the user is authenticated, and return its login.
      *
      * @param request the HTTP request.
      * @return the login if the user is authenticated.
      */
-    @GetMapping("/authenticate")
+    @GetMapping("authenticate")
     public String isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
         return request.getRemoteUser();
     }
 
     /**
-     * {@code GET  /account} : get the current user.
+     * {@code GET  account} : get the current user.
      *
      * @return the current user.
      * @throws EntityNotFoundException {@code 404 (User not found)} if the user couldn't be returned.
      */
-    @GetMapping("/account")
+    @GetMapping("account")
     public UserDTO getAccount() {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
@@ -169,11 +169,11 @@ public class AccountResource {
     }
 
     /**
-     * GET /account/password : get the current users password.
+     * GET account/password : get the current users password.
      *
      * @return the ResponseEntity with status 200 (OK) and the current user password in body, or status 500 (Internal Server Error) if the user couldn't be returned
      */
-    @GetMapping(value = "/account/password", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "account/password", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getPassword() {
         // This method is used to show the password for users that have been generated automatically based on LTI
         // It only allows to decrypt and return the password of internal users and only of the currently logged in user
@@ -183,13 +183,13 @@ public class AccountResource {
     }
 
     /**
-     * {@code PUT  /account} : update the current user information.
+     * {@code PUT  account} : update the current user information.
      *
      * @param userDTO the current user information.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
-    @PutMapping("/account")
+    @PutMapping("account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -199,20 +199,17 @@ public class AccountResource {
         if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
             throw new EmailAlreadyUsedException();
         }
-        Optional<User> user = userRepository.findOneByLogin(userLogin);
-        if (user.isEmpty()) {
-            throw new InternalServerErrorException("User could not be found");
-        }
+        userRepository.findOneByLogin(userLogin).orElseThrow(() -> new InternalServerErrorException("User could not be found"));
         userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
     }
 
     /**
-     * {@code POST  /account/change-password} : changes the current user's password.
+     * {@code POST  account/change-password} : changes the current user's password.
      *
      * @param passwordChangeDto current and new password.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the new password is incorrect.
      */
-    @PostMapping(path = "/account/change-password")
+    @PostMapping(path = "account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
         if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -224,11 +221,11 @@ public class AccountResource {
     }
 
     /**
-     * {@code POST   /account/reset-password/init} : Send an email to reset the password of the user.
+     * {@code POST  account/reset-password/init} : Send an email to reset the password of the user.
      *
      * @param mail the mail of the user.
      */
-    @PostMapping(path = "/account/reset-password/init")
+    @PostMapping(path = "account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
         if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -245,13 +242,13 @@ public class AccountResource {
     }
 
     /**
-     * {@code POST   /account/reset-password/finish} : Finish to reset the password of the user.
+     * {@code POST  account/reset-password/finish} : Finish the password reset of the user.
      *
      * @param keyAndPassword the generated key and the new password.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the password could not be reset.
      */
-    @PostMapping(path = "/account/reset-password/finish")
+    @PostMapping(path = "account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");

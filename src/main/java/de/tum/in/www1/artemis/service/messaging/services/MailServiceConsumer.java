@@ -15,6 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.MailService;
 
+/**
+ * Consumer which consumes all messages that are sent from other serices realted to sending emails to the user.
+ */
 @Component
 @EnableJms
 public class MailServiceConsumer {
@@ -31,8 +34,13 @@ public class MailServiceConsumer {
         this.mailService = mailService;
     }
 
+    /**
+     * Consumes messages related to sending account activation emails and sends the actual email.
+     *
+     * @param message the message coming from the message broker
+     */
     @JmsListener(destination = USER_MANAGEMENT_QUEUE_SEND_ACTIVATION_MAIL)
-    public void addUserToGroup(Message message) {
+    public void sendActivationEmail(Message message) {
         Optional<User> user = readUserValue(message.getPayload().toString());
         if (user.isPresent()) {
             mailService.sendActivationEmail(user.get());
@@ -42,8 +50,13 @@ public class MailServiceConsumer {
         }
     }
 
+    /**
+     * Consumes messages related to sending password reset emails and sends the actual email.
+     *
+     * @param message the message coming from the message broker
+     */
     @JmsListener(destination = USER_MANAGEMENT_QUEUE_SEND_PASSWORD_RESET_MAIL)
-    public void createUserGroup(Message message) {
+    public void sendPasswordResetEmail(Message message) {
         Optional<User> user = readUserValue(message.getPayload().toString());
         if (user.isPresent()) {
             mailService.sendPasswordResetMail(user.get());
