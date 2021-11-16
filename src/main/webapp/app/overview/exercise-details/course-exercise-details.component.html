@@ -3,7 +3,7 @@
         <div [innerHTML]="'artemisApp.exercise.welcome' | artemisTranslate"></div>
     </div>
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)">
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -203,7 +203,7 @@
                 </div>
             </div>
             <!-- RESULTS END -->
-            <jhi-complaint-interactions
+            <jhi-complaint-student-view
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
@@ -218,7 +218,7 @@
                 [participation]="studentParticipation!"
                 [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
-            </jhi-complaint-interactions>
+            </jhi-complaint-student-view>
             <div
                 class="row"
                 *ngIf="

@@ -49,6 +49,7 @@ describe('OrionTutorAssessmentComponent', () => {
                 container.referencedFeedback = [{ id: 5 }, { id: 6 }];
                 container.exerciseId = 15;
                 container.correctionRound = 1;
+                container.isTestRun = false;
             });
     });
     afterEach(() => {
@@ -81,6 +82,6 @@ describe('OrionTutorAssessmentComponent', () => {
 
         comp.openNextSubmission(2);
 
-        expect(sendSubmissionToOrionCancellableSpy).to.have.been.calledOnceWithExactly(15, 2, 1);
+        expect(sendSubmissionToOrionCancellableSpy).to.have.been.calledOnceWithExactly(15, 2, 1, false);
     });
 });

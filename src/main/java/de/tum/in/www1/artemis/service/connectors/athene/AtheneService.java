@@ -213,6 +213,8 @@ public class AtheneService {
         List<TextSubmission> submissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
+        // Get knowledge of exercise
+        TextAssessmentKnowledge textAssessmentKnowledge = textExerciseRepository.findById(exerciseId).get().getKnowledge();
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList<>();
         for (Segment segment : segments) {
@@ -223,6 +225,9 @@ public class AtheneService {
             newBlock.setStartIndex(segment.getStartIndex());
             newBlock.setEndIndex(segment.getEndIndex());
             newBlock.automatic();
+
+            // Set TextBlock knowledge
+            newBlock.setKnowledge(textAssessmentKnowledge);
 
             // take the corresponding TextSubmission and add the text blocks.
             // The addBlocks method also sets the submission in the textBlock

@@ -15,6 +15,10 @@
                 "lower": "Untere Schranke inklusiv",
                 "upper": "Obere Schranke inklusiv"
             },
+            "csv": {
+                "importButton": "Importieren (.csv)",
+                "exportButton": "Exportieren (.csv)"
+            },
             "firstPassingGrade": "Bestanden ab",
             "min": "Min %",
             "minPoints": "Min Punkte",
@@ -47,6 +51,10 @@
                 "firstPassingGrade": {
                     "title": "Erste bestehende Note",
                     "explanation": "Legt für diesen Notenschlüssel fest, ab welcher Note die Leistung als bestanden gewertet wird"
+                },
+                "importExport": {
+                    "title": "Notenschritte importieren/exportieren",
+                    "explanation": "Notenstufen können über eine CSV-Datei importiert und exportiert werden.  Die Struktur ist wie folgt, abhängig von der Notenart. Grade Type 'Grade': 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade'. Grade Type 'Bonus': 'bonusPoints,lowerBoundPercentage,upperBoundPercentage'. Punkte und Inklusivität können nachträglich eingestellt werden."
                 }
             },
             "error": {

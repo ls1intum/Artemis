@@ -1,6 +1,6 @@
 <ng-container *ngIf="currentlyLoadedPosts">
     <!-- in preview mode (showing similar posts during creation): content can be expanded and collapsed shown -->
-    <div *ngIf="previewMode">
+    <div *ngIf="previewMode" [ngClass]="isAnnouncement ? 'announcement-post p-2' : ''">
         <span class="clickable p-0">
             <fa-icon [icon]="showContent ? 'angle-up' : 'angle-down'" [size]="'xs'" [ngStyle]="{ color: '#6a737d' }" (click)="showContent = !showContent"> </fa-icon>
         </span>
@@ -12,7 +12,7 @@
         </div>
     </div>
     <!-- not in preview mode: content always shown -->
-    <div *ngIf="!previewMode">
+    <div *ngIf="!previewMode" [ngClass]="isAnnouncement ? 'announcement-post p-2' : ''">
         <jhi-posting-content-part *ngFor="let postingContentPart of postingContentParts" [postingContentPart]="postingContentPart"> </jhi-posting-content-part>
     </div>
 </ng-container>

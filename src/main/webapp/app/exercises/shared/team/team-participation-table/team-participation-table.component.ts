@@ -91,11 +91,11 @@ export class TeamParticipationTableComponent implements OnInit {
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
         return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams![0];
-            const participation = get(exercise, 'studentParticipations[0]', null);
+            const participation = get(exercise, 'studentParticipations[0]', undefined);
             exercise.participation = participation;
-            exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
+            exercise.submission = get(exercise, 'participation.submissions[0]', undefined); // only exists for instructor and team tutor
             if (exercise.submission) {
-                setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', null));
+                setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', undefined));
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
                 if (exercise.submission.results) {
                     getLatestSubmissionResult(exercise.submission)!.participation = participation;
@@ -133,9 +133,9 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param participation Participation for which the editor should be opened
      * @param submission Either submission or 'new'
      */
-    getAssessmentLink(exercise: Exercise, participation: Participation, submission: Submission | 'new'): string[] {
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation.id, submissionUrlParameter, 0, 0);
+    getAssessmentLink(exercise: Exercise, participation: Participation | undefined, submission: Submission | 'new' | undefined): string[] {
+        const submissionUrlParameter: number | 'new' = submission === 'new' || submission == undefined ? 'new' : submission.id!;
+        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation?.id, submissionUrlParameter, 0, 0);
     }
 
     /**
