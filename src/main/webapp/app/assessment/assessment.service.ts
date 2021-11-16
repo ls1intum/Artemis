@@ -11,19 +11,21 @@ export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean
     if (isAtLeastInstructor) {
         return true;
     }
-    if (exercise?.teamMode) {
+    if (exercise?.teamMode || isTestRun) {
         return isAssessor;
-    } else {
-        if (isTestRun) {
-            return isAssessor;
-        }
-        if (complaint.result && complaint.result.assessor == undefined) {
-            return true;
-        }
-        return complaint!.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor;
     }
+    if (complaint.result && complaint.result.assessor == undefined) {
+        return true;
+    }
+    return complaint!.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor;
 };
 
+/**
+ * During assessment, modifying the feedback should be allowed.
+ * After the assessment, modification should be prevented if the deadline hasn't passed yet.
+ * If a feedback request was filed, the feedback should not be modifiable.
+ * If a complaint was filed, the feedback should be only modifiable if the user is allowed to handle the complaint.
+ */
 export const isAllowedToModifyFeedback = (
     isAtLeastInstructor: boolean,
     isTestRun: boolean,
@@ -37,10 +39,10 @@ export const isAllowedToModifyFeedback = (
         return true;
     }
     if (complaint) {
-        return isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+        return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
     }
-    if (!complaint && result?.completionDate) {
-        return hasAssessmentDueDatePassed;
+    if (!complaint && !result?.completionDate) {
+        return false;
     }
-    return true;
+    return !hasAssessmentDueDatePassed;
 };
