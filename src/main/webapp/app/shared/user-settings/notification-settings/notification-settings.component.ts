@@ -45,20 +45,21 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         if (settingId.indexOf(' ') !== -1) {
             settingId = settingId.substr(0, settingId.indexOf(' '));
         }
-        const foundSetting = this.settings.find((setting) => setting.settingId === settingId);
-        if (!foundSetting) {
+        const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
+        if (!settingToUpdate) {
             return;
         }
+        // toggle/inverts previous setting
         switch (communicationChannel) {
             case NotificationSettingsCommunicationChannel.WEBAPP: {
-                foundSetting!.webapp = !foundSetting!.webapp;
+                settingToUpdate!.webapp = !settingToUpdate!.webapp;
                 break;
             }
             case NotificationSettingsCommunicationChannel.EMAIL: {
-                foundSetting!.email = !foundSetting!.email;
+                settingToUpdate!.email = !settingToUpdate!.email;
                 break;
             }
         }
-        foundSetting.changed = true;
+        settingToUpdate.changed = true;
     }
 }

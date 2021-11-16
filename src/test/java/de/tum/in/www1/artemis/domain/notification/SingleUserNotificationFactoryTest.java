@@ -149,8 +149,8 @@ public class SingleUserNotificationFactoryTest {
     }
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_LECTURE_POST.
-     * I.e. notifications that originate from a new reply for a lecture post.
+     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_COURSE_POST.
+     * I.e. notifications that originate from a new reply for a course post.
      */
     @Test
     public void createNotification_withNotificationType_NewReplyForCoursePost() {
