@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { roundScoreSpecifiedByCourseSettings } from '../util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -20,4 +20,8 @@ export class AdditionalFeedbackComponent {
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+
+    public buildFeedbackTextForReview(feedback: Feedback): string {
+        return buildFeedbackTextForReview(feedback);
+    }
 }
