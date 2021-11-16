@@ -242,7 +242,7 @@ public class GroupNotificationServiceTest {
     * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method based on the decision matrix commented in the method
     */
     @Test
-    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise_unchangedReleaseDate_undefinedReleaseDates() {
+    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
         testCheckNotificationForExerciseReleaseHelper(null, null, false);
         testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false);
         testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false);

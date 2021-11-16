@@ -1760,14 +1760,19 @@ public class CourseTestService {
 
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);
+        feedback1.setReference(ModelFactory.generateTextBlock(0, 5, "test1").getId());
         Feedback feedback2 = new Feedback();
         feedback2.setCredits(-0.5);
+        feedback2.setReference(ModelFactory.generateTextBlock(0, 5, "test2").getId());
         Feedback feedback3 = new Feedback();
         feedback3.setCredits(1.5);
+        feedback3.setReference(ModelFactory.generateTextBlock(0, 5, "test3").getId());
         Feedback feedback4 = new Feedback();
         feedback4.setCredits(-1.5);
+        feedback4.setReference(ModelFactory.generateTextBlock(0, 5, "test4").getId());
         Feedback feedback5 = new Feedback();
         feedback5.setCredits(2.0);
+        feedback5.setReference(ModelFactory.generateTextBlock(0, 5, "test5").getId());
         var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
 
         var assessmentUpdate = new TextAssessmentUpdateDTO();
