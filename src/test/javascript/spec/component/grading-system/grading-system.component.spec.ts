@@ -21,6 +21,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExportToCsv } from 'export-to-csv';
+
+const generateCsv = jest.fn();
+
+jest.mock('export-to-csv', () => ({
+    ExportToCsv: jest.fn().mockImplementation(() => ({
+        generateCsv,
+    })),
+}));
 
 describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
@@ -110,7 +119,7 @@ describe('Grading System Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp).toBeDefined();
+        expect(comp).not.toBe(undefined);
         expect(comp.isExam).toBe(true);
         expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
@@ -136,10 +145,10 @@ describe('Grading System Component', () => {
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
         expect(comp.firstPassingGrade).toStrictEqual('4.0');
         expect(comp.lowerBoundInclusivity).toBe(true);
-        expect(comp.gradingScale.gradeSteps.length).toBe(13);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(13);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.id).toBe(undefined);
-            expect(gradeStep.gradeName).toBeDefined();
+            expect(gradeStep.gradeName).not.toBe(undefined);
             expect(gradeStep.lowerBoundInclusive).toBe(true);
             expect(gradeStep.lowerBoundPercentage).toBeWithin(0, 101);
             expect(gradeStep.upperBoundPercentage).toBeWithin(0, 101);
@@ -158,7 +167,7 @@ describe('Grading System Component', () => {
     it('should delete grade step', () => {
         comp.deleteGradeStep(1);
 
-        expect(comp.gradingScale.gradeSteps.length).toBe(2);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(2);
         expect(comp.gradingScale.gradeSteps).not.toContain(gradeStep2);
     });
 
@@ -167,7 +176,7 @@ describe('Grading System Component', () => {
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps.length).toBe(4);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(4);
         expect(comp.gradingScale.gradeSteps[3].id).toBe(undefined);
         expect(comp.gradingScale.gradeSteps[3].gradeName).toStrictEqual('');
         expect(comp.gradingScale.gradeSteps[3].lowerBoundPercentage).toBe(100);
@@ -191,7 +200,7 @@ describe('Grading System Component', () => {
 
         const filteredGradeSteps = comp.gradeStepsWithNonemptyNames();
 
-        expect(filteredGradeSteps.length).toBe(1);
+        expect(filteredGradeSteps).toHaveLength(1);
         expect(filteredGradeSteps[0]).toStrictEqual(gradeStep2);
     });
 
@@ -266,13 +275,13 @@ describe('Grading System Component', () => {
 
     it('should not delete non-existing grading scale', () => {
         comp.existingGradingScale = false;
-        const gradingSystemDeleteForCourseStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse');
-        const gradingSystemDeleteForExamStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam');
+        const gradingSystemDeleteForCourseSpy = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse');
+        const gradingSystemDeleteForExamSpy = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam');
 
         comp.delete();
 
-        expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(0);
-        expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForCourseSpy).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForExamSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should delete grading scale for course', () => {
@@ -318,14 +327,14 @@ describe('Grading System Component', () => {
         comp.course = course;
         const createdGradingScaleForCourse = comp.gradingScale;
         createdGradingScaleForCourse.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForCourseStub = jest
+        const gradingSystemCreateForCourseMock = jest
             .spyOn(gradingSystemService, 'createGradingScaleForCourse')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForCourse })));
 
         comp.save();
 
-        expect(gradingSystemCreateForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemCreateForCourseStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(createdGradingScaleForCourse);
     });
@@ -336,14 +345,14 @@ describe('Grading System Component', () => {
         comp.exam = exam;
         const createdGradingScaleForExam = comp.gradingScale;
         createdGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForExamStub = jest
+        const gradingSystemCreateForExamMock = jest
             .spyOn(gradingSystemService, 'createGradingScaleForExam')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForExam })));
 
         comp.save();
 
-        expect(gradingSystemCreateForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
-        expect(gradingSystemCreateForExamStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+        expect(gradingSystemCreateForExamMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(createdGradingScaleForExam);
     });
@@ -353,14 +362,14 @@ describe('Grading System Component', () => {
         comp.course = course;
         const updateGradingScaleFoCourse = comp.gradingScale;
         updateGradingScaleFoCourse.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForCourseStub = jest
+        const gradingSystemUpdateForCourseMock = jest
             .spyOn(gradingSystemService, 'updateGradingScaleForCourse')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: updateGradingScaleFoCourse })));
 
         comp.save();
 
-        expect(gradingSystemUpdateForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemUpdateForCourseStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(updateGradingScaleFoCourse);
     });
@@ -371,14 +380,14 @@ describe('Grading System Component', () => {
         comp.exam = exam;
         const updatedGradingScaleForExam = comp.gradingScale;
         updatedGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForExamStub = jest
+        const gradingSystemUpdateForCourseMock = jest
             .spyOn(gradingSystemService, 'updateGradingScaleForExam')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: updatedGradingScaleForExam })));
 
         comp.save();
 
-        expect(gradingSystemUpdateForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
-        expect(gradingSystemUpdateForExamStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+        expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
         expect(comp.existingGradingScale).toBe(true);
         expect(comp.gradingScale).toStrictEqual(updatedGradingScaleForExam);
     });
@@ -617,4 +626,153 @@ describe('Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBe(undefined);
         expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBe(undefined);
     });
+
+    const csvColumnsGrade = 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade';
+    const csvColumnsBonus = 'bonusPoints,lowerBoundPercentage,upperBoundPercentage';
+
+    it('should read no grade steps from csv file without data', async () => {
+        const event = { target: { files: [csvColumnsGrade] } };
+        await comp.onCSVFileSelect(event);
+
+        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
+    });
+
+    it('should have validation error for csv without header', async () => {
+        // Csv without header
+        const invalidCsv = `4.0,10,10,TRUE`;
+
+        const event = { target: { files: [invalidCsv] } };
+        await comp.onCSVFileSelect(event);
+
+        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
+    });
+
+    it('should import csv with "grade" as grade type correctly', async () => {
+        // csv representation of gradeSteps
+        const csvRows = [csvColumnsGrade, '1.0,0,40,TRUE', '2.0,40,80,TRUE', '3.0,80,100,FALSE'];
+        const event = { target: { files: [csvRows.join('\n')] } };
+
+        const gradeStepsGrade = [
+            {
+                gradeName: '1.0',
+                lowerBoundPercentage: 0,
+                lowerBoundPoints: 0,
+                upperBoundPercentage: 40,
+                upperBoundPoints: 40,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: false,
+                isPassingGrade: true,
+            },
+            {
+                gradeName: '2.0',
+                lowerBoundPercentage: 40,
+                lowerBoundPoints: 40,
+                upperBoundPercentage: 80,
+                upperBoundPoints: 80,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: false,
+                isPassingGrade: true,
+            },
+            {
+                gradeName: '3.0',
+                lowerBoundPercentage: 80,
+                lowerBoundPoints: 80,
+                upperBoundPercentage: 100,
+                upperBoundPoints: 100,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: true,
+                isPassingGrade: false,
+            },
+        ];
+
+        await comp.onCSVFileSelect(event);
+
+        expect(comp.gradingScale.gradeSteps).toEqual(gradeStepsGrade);
+        expect(comp.gradingScale.gradeType).toBe(GradeType.GRADE);
+    });
+
+    it('should import csv with "bonus" as grade type correctly', async () => {
+        // csv representation of gradeSteps
+        const csvRows = [csvColumnsBonus, '1.0,0,40', '2.0,40,80', '3.0,80,100'];
+        const event = { target: { files: [csvRows.join('\n')] } };
+
+        const gradeStepsBonus = [
+            {
+                gradeName: '1.0',
+                lowerBoundPercentage: 0,
+                lowerBoundPoints: 0,
+                upperBoundPercentage: 40,
+                upperBoundPoints: 40,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: false,
+            },
+            {
+                gradeName: '2.0',
+                lowerBoundPercentage: 40,
+                lowerBoundPoints: 40,
+                upperBoundPercentage: 80,
+                upperBoundPoints: 80,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: false,
+            },
+            {
+                gradeName: '3.0',
+                lowerBoundPercentage: 80,
+                lowerBoundPoints: 80,
+                upperBoundPercentage: 100,
+                upperBoundPoints: 100,
+                lowerBoundInclusive: true,
+                upperBoundInclusive: true,
+            },
+        ];
+
+        await comp.onCSVFileSelect(event);
+
+        expect(comp.gradingScale.gradeSteps).toEqual(gradeStepsBonus);
+        expect(comp.gradingScale.gradeType).toBe(GradeType.BONUS);
+    });
+
+    it('should generate csv correctly', () => {
+        comp.gradingScale.gradeSteps = gradeSteps;
+        const numberOfGradeSteps = gradeSteps.length;
+        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCSV');
+
+        comp.exportGradingStepsToCsv();
+
+        expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
+        const generatedRows = exportAsCsvMock.mock.calls[0][0];
+        expect(generatedRows).toHaveLength(numberOfGradeSteps);
+
+        for (let index = 0; index < numberOfGradeSteps; index++) {
+            const gradeStepRow = generatedRows[index];
+            validateGradeStepRow(gradeStepRow, gradeSteps[index]);
+        }
+    });
+
+    it('should apply maxPoints of 100 to all grade steps after csv importing', async () => {
+        // csv representation of gradeSteps
+        const csvRows = [csvColumnsBonus, '1.0,0,40', '2.0,40,80', '3.0,80,100'];
+        const event = { target: { files: [csvRows.join('\n')] } };
+
+        await comp.onCSVFileSelect(event);
+
+        // percentage equal to points due to max points of 100
+        for (const gradeStep of comp.gradingScale.gradeSteps) {
+            expect(gradeStep.lowerBoundPercentage).toBe(gradeStep.lowerBoundPoints);
+            expect(gradeStep.upperBoundPercentage).toBe(gradeStep.upperBoundPoints);
+        }
+    });
+
+    it('should export as csv', () => {
+        comp.exportGradingStepsToCsv();
+        expect(ExportToCsv).toHaveBeenCalled();
+        expect(generateCsv).toHaveBeenCalled();
+    });
 });
+
+// validating grade step rows
+function validateGradeStepRow(actualGradeStepRow: any, expectedGradeStepRow: GradeStep) {
+    expect(actualGradeStepRow.gradeName).toBe(expectedGradeStepRow.gradeName);
+    expect(actualGradeStepRow.lowerBoundPercentage).toBe(expectedGradeStepRow.lowerBoundPercentage);
+    expect(actualGradeStepRow.upperBoundPercentage).toBe(expectedGradeStepRow.upperBoundPercentage);
+}
