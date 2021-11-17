@@ -112,7 +112,7 @@ describe('UsersImportButtonComponent', () => {
         expect(component.validationError).toHaveLength(1);
     });
 
-    it('should import students', function () {
+    it('should import students', () => {
         const studentsToImport: StudentDTO[] = [
             { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
             { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
