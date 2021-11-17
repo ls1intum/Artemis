@@ -31,6 +31,7 @@ import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/cours
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { MetisModule } from 'app/shared/metis/metis.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
     imports: [
@@ -54,6 +55,7 @@ import { MetisModule } from 'app/shared/metis/metis.module';
         ArtemisLearningGoalsModule,
         MetisModule,
         CourseExerciseDetailsModule, // Important: at the moment, we cannot lazy load this module, because otherwise the LTI integration won't work any more
+        NgxChartsModule,
     ],
     declarations: [
         CoursesComponent,
