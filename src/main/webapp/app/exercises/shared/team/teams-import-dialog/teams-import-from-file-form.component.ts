@@ -34,8 +34,14 @@ export class TeamsImportFromFileFormComponent {
      */
     onFileLoadImport(fileReader: FileReader) {
         try {
-            // Read the file and get list of teams from the file
-            this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
+            if (this.importFile?.type === 'json') {
+                // Read the file and get list of teams from the file
+                this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
+            } else if (this.importFile?.type === 'csv') {
+                this.importedTeams = this.parseCsvFile(fileReader.result as string);
+            } else {
+                throw new Error(this.translate.instant('artemisApp.team.invalidFileType', { fileType: this.importFile?.type }));
+            }
             this.sourceTeams = this.convertTeams(this.importedTeams);
             this.teamsChanged.emit(this.sourceTeams);
             this.loading = false;
@@ -74,10 +80,42 @@ export class TeamsImportFromFileFormComponent {
     }
 
     /**
+     * Parse the content of a csv file to students with teams
+     * @param content All lines of the csv file
+     */
+    parseCsvFile(content: string): StudentWithTeam[] {
+        const lines = content.split('\n');
+        if (lines.length < 2) {
+            return [];
+        }
+        const header = lines[0].split(',').map((p) => p.trim().toLowerCase());
+        const expectedHeader = ['last name', 'first name', 'registration number', 'username', 'team name'];
+        if (header !== expectedHeader) {
+            throw new Error(this.translate.instant('artemisApp.team.invalidCsvHeader', { expectedHeader: expectedHeader.join(',') }));
+        }
+        const studentsWithTeams: StudentWithTeam[] = [];
+        for (let i = 1; i < lines.length; i++) {
+            const options = lines[i].split(',').map((p) => p.trim());
+            if (options.length !== 5) {
+                throw new Error(this.translate.instant('artemisApp.team.invalidCsvLine', { line: i + 1 }));
+            }
+            const studentWithTeam = new StudentWithTeam();
+            studentWithTeam.lastName = options[0].length ? options[0] : undefined;
+            studentWithTeam.firstName = options[1].length ? options[1] : undefined;
+            studentWithTeam.registrationNumber = options[2].length ? options[2] : undefined;
+            studentWithTeam.username = options[3].length ? options[3] : undefined;
+            studentWithTeam.teamName = options[3];
+            studentsWithTeams.push(studentWithTeam);
+        }
+        return studentsWithTeams;
+    }
+
+    /**
      * Convert imported team list to normal teams
      */
     convertTeams(importTeam: StudentWithTeam[]): Team[] {
         const teams: Team[] = [];
+        let entryNr = 1;
         importTeam.forEach((student) => {
             const newStudent = new User();
             newStudent.firstName = student.firstName ?? '';
@@ -86,19 +124,19 @@ export class TeamsImportFromFileFormComponent {
             newStudent.login = student.username;
 
             if ((typeof student.username !== 'string' || !student.username.trim()) && (typeof student.registrationNumber !== 'string' || !student.registrationNumber.trim())) {
-                throw new Error(this.translate.instant('artemisApp.team.missingUserNameOrId'));
+                throw new Error(this.translate.instant('artemisApp.team.missingUserNameOrId', { entryNr }));
             }
+            newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`.trim();
 
             if (typeof student.teamName !== 'string' || !student.teamName.trim()) {
-                throw new Error(this.translate.instant('artemisApp.team.teamName.missingTeamName'));
+                throw new Error(this.translate.instant('artemisApp.team.teamName.missingTeamName', { entryNr, studentName: newStudent.name }));
             }
 
             const shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
             if (!shortName.match(shortNamePattern)) {
-                throw new Error(this.translate.instant('artemisApp.team.teamName.pattern'));
+                throw new Error(this.translate.instant('artemisApp.team.teamName.pattern', { entryNr, teamName: shortName }));
             }
 
-            newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`.trim();
             const index = teams.findIndex((team) => team.name === student.teamName);
             if (index === -1) {
                 const newTeam = new Team();
@@ -109,6 +147,7 @@ export class TeamsImportFromFileFormComponent {
             } else {
                 teams[index].students = [...teams[index].students!, newStudent];
             }
+            entryNr++;
         });
         return teams;
     }
