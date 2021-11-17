@@ -154,7 +154,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
-        verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
+        verify(groupNotificationService, times(1)).notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
     }
 

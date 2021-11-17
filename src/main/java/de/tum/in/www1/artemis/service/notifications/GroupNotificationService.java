@@ -289,7 +289,7 @@ public class GroupNotificationService {
      *
      * @param exercise         that has been updated
      */
-    public void notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(Exercise exercise) {
+    public void notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
     }
 

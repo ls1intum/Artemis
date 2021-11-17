@@ -273,6 +273,21 @@ public class GroupNotificationFactoryTest {
     }
 
     /**
+     * Tests the functionality that deals with notifications that have the notification type of PROGRAMMING_TEST_CASES_CHANGED.
+     * I.e. notifications that originate from changed test cases for programming exercises (after at least one student already started the exercise).
+     */
+    @Test
+    public void createNotificationBasedOnExercise_withNotificationType_ProgrammingTestCasesChanged() {
+        notificationType = NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
+        expectedTitle = PROGRAMMING_TEST_CASES_CHANGED_TITLE;
+        expectedText = "The test cases of the programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
+                + "\" were updated." + " The student submissions should be build and tested so that results with the updated settings can be created.";
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
+        expectedPriority = NotificationPriority.MEDIUM;
+        createAndCheckNotification(Base.EXERCISE);
+    }
+
+    /**
      * Tests the functionality that deals with notifications that have the notification type of EXERCISE_UPDATED and are part of an exam.
      * I.e. notifications that originate from an updated exam exercise.
      */
