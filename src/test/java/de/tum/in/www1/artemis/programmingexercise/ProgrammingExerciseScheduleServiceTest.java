@@ -376,7 +376,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     // ToDo: participation with individual due date in exercise with tests after_due_date but no build and test date
 
-    // ToDo: cancellation of schedules when removing a due date
+    // ToDo: cancellation of schedules when removing the exercise due date
+
+    // ToDo: cancellation of schedules when removing an individual due date
 
     // ToDo: update of schedule when changing a due date
 

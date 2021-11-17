@@ -269,27 +269,45 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
     }
 
+    /**
+     * Schedules all necessary tasks for participations with individual due dates.
+     *
+     * Also removes schedules for individual participations of their individual due date no longer exists.
+     * @param exercise the participations belong to.
+     * @param now the current time.
+     */
     private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
         final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
 
-        final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository.findWithIndividualDueDateByExerciseId(exercise.getId());
+        final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository.findByExerciseId(exercise.getId());
         for (final var participation : participations) {
-            // Update scores on due date
-            if (now.isBefore(participation.getIndividualDueDate())) {
-                scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
+            if (participation.getIndividualDueDate() == null) {
+                scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
+                scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
             }
             else {
-                scheduleService.cancelScheduledTaskForLifecycle(participation.getId(), ParticipationLifecycle.DUE);
+                scheduleParticipationWithIndividualDueDate(now, exercise, participation, isScoreUpdateNeeded);
             }
+        }
+    }
 
-            // Build and test after individual due date
-            if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                    && (now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()) || now.isBefore(participation.getIndividualDueDate()))) {
-                scheduleBuildAndTestAfterDueDateForParticipation(participation);
-            }
-            else {
-                scheduleService.cancelScheduledTaskForLifecycle(participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
-            }
+    private void scheduleParticipationWithIndividualDueDate(final ZonedDateTime now, final ProgrammingExercise exercise,
+            final ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
+        // Update scores on due date
+        if (now.isBefore(participation.getIndividualDueDate())) {
+            scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
+        }
+        else {
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
+        }
+
+        // Build and test after individual due date
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && (now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()) || now.isBefore(participation.getIndividualDueDate()))) {
+            scheduleBuildAndTestAfterDueDateForParticipation(participation);
+        }
+        else {
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
     }
 

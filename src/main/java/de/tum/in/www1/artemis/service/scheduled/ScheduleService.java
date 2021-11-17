@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.ParticipationLifecycleService;
 import de.tum.in.www1.artemis.service.util.Tuple;
@@ -25,19 +23,16 @@ public class ScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(ScheduleService.class);
 
-    private final ParticipationRepository participationRepository;
-
     private final ExerciseLifecycleService exerciseLifecycleService;
 
     private final ParticipationLifecycleService participationLifecycleService;
 
     private final Map<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledExerciseTasks = new HashMap<>();
 
-    private final Map<Tuple<Long, ParticipationLifecycle>, Set<ScheduledFuture<?>>> scheduledParticipationTasks = new HashMap<>();
+    // triple of exercise id, participation id, and lifecycle
+    private final Map<Triple<Long, Long, ParticipationLifecycle>, Set<ScheduledFuture<?>>> scheduledParticipationTasks = new HashMap<>();
 
-    public ScheduleService(ParticipationRepository participationRepository, ExerciseLifecycleService exerciseLifecycleService,
-            ParticipationLifecycleService participationLifecycleService) {
-        this.participationRepository = participationRepository;
+    public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.participationLifecycleService = participationLifecycleService;
     }
@@ -53,12 +48,12 @@ public class ScheduleService {
     }
 
     private void addScheduledTask(Participation participation, ParticipationLifecycle lifecycle, Set<ScheduledFuture<?>> futures) {
-        Tuple<Long, ParticipationLifecycle> taskId = new Tuple<>(participation.getId(), lifecycle);
+        Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(participation.getExercise().getId(), participation.getId(), lifecycle);
         scheduledParticipationTasks.put(taskId, futures);
     }
 
-    private void removeScheduledTask(Long participationId, ParticipationLifecycle lifecycle) {
-        Tuple<Long, ParticipationLifecycle> taskId = new Tuple<>(participationId, lifecycle);
+    private void removeScheduledTask(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
+        Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(exerciseId, participationId, lifecycle);
         scheduledParticipationTasks.remove(taskId);
     }
 
@@ -100,7 +95,7 @@ public class ScheduleService {
      * @param task Runnable task to be executed on the lifecycle hook
      */
     void scheduleTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
-        cancelScheduledTaskForLifecycle(participation.getId(), lifecycle);
+        cancelScheduledTaskForLifecycle(participation.getExercise().getId(), participation.getId(), lifecycle);
         participationLifecycleService.scheduleTask(participation, lifecycle, task).ifPresent(scheduledTask -> addScheduledTask(participation, lifecycle, Set.of(scheduledTask)));
     }
 
@@ -120,25 +115,34 @@ public class ScheduleService {
             removeScheduledTask(exerciseId, lifecycle);
         }
 
-        final Optional<ParticipationLifecycle> participationLifecycle = ParticipationLifecycle.fromExerciseLifecycle(lifecycle);
-        if (participationLifecycle.isPresent()) {
-            final Set<Participation> participations = participationRepository.findWithIndividualDueDateByExerciseId(exerciseId);
-            participations.forEach(participation -> cancelScheduledTaskForLifecycle(participation.getId(), participationLifecycle.get()));
-        }
+        ParticipationLifecycle.fromExerciseLifecycle(lifecycle).ifPresent(participationLifecycle -> {
+            final Stream<Long> participationIds = getScheduledParticipationIdsForExercise(exerciseId);
+            participationIds.forEach(participationId -> cancelScheduledTaskForLifecycle(exerciseId, participationId, participationLifecycle));
+        });
+    }
+
+    /**
+     * Finds all individual participations that belong to the given exercise and are scheduled.
+     *
+     * @param exerciseId the participations belong to.
+     * @return a stream of the IDs of participations.
+     */
+    private Stream<Long> getScheduledParticipationIdsForExercise(Long exerciseId) {
+        return scheduledParticipationTasks.keySet().stream().map(Triple::getLeft).filter(scheduledExerciseId -> Objects.equals(scheduledExerciseId, exerciseId));
     }
 
     /**
      * Cancel possible schedules tasks for a provided participation.
      *
-     * @param participationId if of the participation for which a potential scheduled task is cancelled.
+     * @param participationId of the participation for which a potential scheduled task is cancelled.
      */
-    void cancelScheduledTaskForLifecycle(Long participationId, ParticipationLifecycle lifecycle) {
-        Tuple<Long, ParticipationLifecycle> taskId = new Tuple<>(participationId, lifecycle);
+    void cancelScheduledTaskForLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
+        Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(exerciseId, participationId, lifecycle);
         Set<ScheduledFuture<?>> futures = scheduledParticipationTasks.get(taskId);
         if (futures != null) {
             log.debug("Cancelling scheduled task {} for Participation (#{}).", lifecycle, participationId);
             futures.forEach(future -> future.cancel(false));
-            removeScheduledTask(participationId, lifecycle);
+            removeScheduledTask(exerciseId, participationId, lifecycle);
         }
     }
 }
