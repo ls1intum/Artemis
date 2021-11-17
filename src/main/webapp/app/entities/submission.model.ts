@@ -43,6 +43,8 @@ export abstract class Submission implements BaseEntity {
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;
 
+    public submissionSize?: number;
+
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
         this.submitted = false; // default value

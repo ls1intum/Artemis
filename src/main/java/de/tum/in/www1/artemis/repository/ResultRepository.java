@@ -533,7 +533,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises and example submissions are always to rated
-        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || (result.isExampleResult() != null && result.isExampleResult())) {
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || Boolean.TRUE.equals(result.isExampleResult())) {
             result.setRated(true);
         }
         else {

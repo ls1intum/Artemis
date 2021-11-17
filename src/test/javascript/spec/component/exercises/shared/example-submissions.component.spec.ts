@@ -53,12 +53,7 @@ describe('Example Submission Component', () => {
                 MockComponent(AlertErrorComponent),
                 MockDirective(NgbTooltip),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(ArtemisTranslatePipe),
-                MockProvider(NgbModal),
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal)],
         })
             .compileComponents()
             .then(() => {

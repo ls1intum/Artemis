@@ -30,7 +30,20 @@
                     <th><span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span></th>
                     <th>
                         <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
-                        <fa-icon [icon]="'question-circle'" class="text-secondary ps-1" [ngbTooltip]="submissionSizeHint" container="body"></fa-icon>
+                        <fa-icon
+                            *ngIf="exercise && exercise.type === exerciseType.TEXT"
+                            [icon]="'question-circle'"
+                            class="text-secondary ps-1"
+                            [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
+                        <fa-icon
+                            *ngIf="exercise && exercise.type === exerciseType.MODELING"
+                            [icon]="'question-circle'"
+                            class="text-secondary ps-1"
+                            [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
                     <th *ngIf="exercise.course.isAtLeastEditor"></th>
@@ -52,7 +65,7 @@
                         <jhi-result [result]="exampleSubmission.submission!.results![0]"></jhi-result>
                     </td>
                     <td>
-                        {{ getSubmissionSize(exampleSubmission.submission) }}
+                        {{ exampleSubmission.submission!.submissionSize }}
                     </td>
                     <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
                     <td *ngIf="exercise.course.isAtLeastEditor">

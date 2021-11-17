@@ -10,14 +10,13 @@ import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-s
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
-    submissionSizeHint?: string;
+    readonly exerciseType = ExerciseType;
 
     constructor(
         private alertService: AlertService,
@@ -26,7 +25,6 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         private courseService: CourseManagementService,
         private modalService: NgbModal,
         private accountService: AccountService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     /**
@@ -39,10 +37,10 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
         });
-        if (this.exercise.type === ExerciseType.TEXT) {
-            this.submissionSizeHint = this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.textSubmissionSizeHint');
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            this.submissionSizeHint = this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.modelingSubmissionSizeHint');
+        if (this.exercise) {
+            this.exercise.exampleSubmissions!.forEach((exampleSubmission) => {
+                exampleSubmission.submission!.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise);
+            });
         }
     }
 
@@ -113,15 +111,5 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         });
-    }
-
-    /**
-     * Gets the number of elements for the example submission
-     *
-     * @param submission associated with the example submission
-     * @returns number of words for text submission, or number of element for the modeling submission
-     */
-    getSubmissionSize(submission?: Submission): number {
-        return this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
     }
 }

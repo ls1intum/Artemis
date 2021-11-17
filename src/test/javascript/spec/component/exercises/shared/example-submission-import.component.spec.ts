@@ -51,7 +51,7 @@ describe('ExampleSubmissionImportComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
