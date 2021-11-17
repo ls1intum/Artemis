@@ -183,15 +183,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit?.type) {
             case LectureUnitType.ATTACHMENT:
                 return ['attachment-units', lectureUnit.id, 'edit'];
-                break;
-            case LectureUnitType.VIDEO: {
+            case LectureUnitType.VIDEO:
                 return ['video-units', lectureUnit.id, 'edit'];
-                break;
-            }
-            case LectureUnitType.TEXT: {
+            case LectureUnitType.TEXT:
                 return ['text-units', lectureUnit.id, 'edit'];
-                break;
-            }
             default:
                 return;
         }
