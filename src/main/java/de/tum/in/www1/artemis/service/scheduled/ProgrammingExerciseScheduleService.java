@@ -293,17 +293,19 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleParticipationWithIndividualDueDate(final ZonedDateTime now, final ProgrammingExercise exercise,
             final ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
+        final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
         // Update scores on due date
-        if (now.isBefore(participation.getIndividualDueDate())) {
+        if (isBeforeDueDate) {
             scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
         }
 
-        // Build and test after individual due date
-        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && (now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()) || now.isBefore(participation.getIndividualDueDate()))) {
+        // Build and test after individual due date:
+        // only special scheduling if the individual due date is after the build and test date
+        if (isBeforeDueDate && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && participation.getIndividualDueDate().isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleBuildAndTestAfterDueDateForParticipation(participation);
         }
         else {
@@ -312,7 +314,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
-        scheduleService.scheduleTask(participation, ParticipationLifecycle.DUE, () -> {
+        scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
             lockStudentRepository(participation).run();
 
             if (isScoreUpdateNeeded) {
@@ -324,7 +326,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleBuildAndTestAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation) {
-        scheduleService.scheduleTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
+        scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
             final ProgrammingExercise exercise = participation.getProgrammingExercise();
             SecurityUtils.setAuthorizationObject();
             try {

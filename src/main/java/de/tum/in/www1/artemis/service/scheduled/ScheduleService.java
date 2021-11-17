@@ -94,7 +94,7 @@ public class ScheduleService {
      * @param lifecycle at which the task should be scheduled.
      * @param task Runnable task to be executed on the lifecycle hook
      */
-    void scheduleTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
+    void scheduleParticipationTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
         cancelScheduledTaskForLifecycle(participation.getExercise().getId(), participation.getId(), lifecycle);
         participationLifecycleService.scheduleTask(participation, lifecycle, task).ifPresent(scheduledTask -> addScheduledTask(participation, lifecycle, Set.of(scheduledTask)));
     }
