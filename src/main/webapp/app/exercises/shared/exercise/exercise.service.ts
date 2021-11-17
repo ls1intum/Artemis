@@ -301,8 +301,7 @@ export class ExerciseService {
     }
 
     /**
-     * Converts an exercises' categories into a json string. Does nothing if
-     * no categories exist
+     * Converts an exercises' categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param exercise the exercise
      */
     stringifyExerciseCategories(exercise: Exercise) {
