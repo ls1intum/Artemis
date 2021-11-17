@@ -104,7 +104,7 @@ public class NotificationSettingsService {
         Set<NotificationType> deactivatedTypes;
 
         // the urgent emails were already sent at this point
-        // if the user has not yet changes his settings they will be of size 0 -> use default
+        // if the user has not yet changed his settings they will be of size 0 -> use default
         if (notificationSettings.isEmpty()) {
             deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, DEFAULT_NOTIFICATION_SETTINGS);
         }

@@ -190,9 +190,7 @@ public class MailService {
                 context.setVariable(EXERCISE_TYPE, "upload");
             }
         }
-        else
-
-        if (notificationSubject instanceof Post) {
+        else if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
         }

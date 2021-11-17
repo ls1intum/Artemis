@@ -26,7 +26,8 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     userSettings: UserSettingsStructure<NotificationSetting>;
     settings: Array<NotificationSetting>;
 
-    communicationChannel = NotificationSettingsCommunicationChannel;
+    // needed for HTML access
+    readonly communicationChannel = NotificationSettingsCommunicationChannel;
 
     ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
