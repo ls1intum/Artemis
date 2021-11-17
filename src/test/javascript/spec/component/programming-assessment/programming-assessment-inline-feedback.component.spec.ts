@@ -1,10 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider, MockPipe, MockModule } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTestModule } from '../../test.module';
-
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -12,6 +10,8 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -20,19 +20,19 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     const fileName = 'testFile';
     const codeLine = 1;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorTutorAssessmentInlineFeedbackComponent,
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(NgModel),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors
@@ -96,14 +96,12 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
             comp.feedback.gradingInstruction = instruction;
             comp.feedback.credits = instruction.credits;
-            comp.feedback.detailText = instruction.feedback;
         });
         // Call spy function with empty event
         comp.updateFeedbackOnDrop(new Event(''));
 
         expect(comp.feedback.gradingInstruction).toEqual(instruction);
         expect(comp.feedback.credits).toEqual(instruction.credits);
-        expect(comp.feedback.detailText).toEqual(instruction.feedback);
         expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
     });
 
@@ -114,5 +112,28 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         comp.updateFeedback();
 
         expect(comp.feedback.positive).toBe(true);
+    });
+
+    it('should display the feedback text properly', () => {
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const feedback = {
+            id: 1,
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+
+        let textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
+        expect(textToBeDisplayed).toBe(feedback.detailText);
+
+        feedback.gradingInstruction = gradingInstruction;
+        textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
     });
 });
