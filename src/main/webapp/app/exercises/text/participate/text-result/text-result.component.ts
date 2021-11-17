@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';
@@ -106,5 +106,9 @@ export class TextResultComponent {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 
         return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
+    }
+
+    public buildFeedbackTextForReview(feedback: Feedback): string {
+        return buildFeedbackTextForReview(feedback);
     }
 }

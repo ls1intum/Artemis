@@ -1,0 +1,53 @@
+<div class="card search-card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ 'artemisApp.course.exercise.search.cardTitle' | artemisTranslate }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            <label for="exercise-search-input">
+                {{ 'artemisApp.course.exercise.search.labelExerciseName' | artemisTranslate }}
+            </label>
+            <input
+                id="exercise-search-input"
+                type="search"
+                class="form-control"
+                [placeholder]="'artemisApp.course.exercise.search.fieldExerciseName' | artemisTranslate"
+                [(ngModel)]="exerciseNameSearch"
+                (keydown.enter)="sendUpdate()"
+            />
+        </div>
+        <div class="row">
+            <div class="form-group col">
+                <label for="exercise-search-category-input">
+                    {{ 'artemisApp.course.exercise.search.labelExerciseCategory' | artemisTranslate }}
+                </label>
+                <input
+                    id="exercise-search-category-input"
+                    type="text"
+                    class="form-control form-control"
+                    [placeholder]="'artemisApp.course.exercise.search.fieldExerciseCategory' | artemisTranslate"
+                    [(ngModel)]="exerciseCategorySearch"
+                    (keydown.enter)="sendUpdate()"
+                />
+            </div>
+            <div class="form-group col">
+                <label for="exercise-search-type-input">
+                    {{ 'artemisApp.course.exercise.search.labelExerciseType' | artemisTranslate }}
+                </label>
+                <select id="exercise-search-type-input" class="form-select" [(ngModel)]="exerciseTypeSearch" (ngModelChange)="sendUpdate()">
+                    <option *ngFor="let optionValue of typeOptions" [value]="optionValue">
+                        {{ 'artemisApp.course.exercise.search.type.' + optionValue | artemisTranslate }}
+                    </option>
+                </select>
+            </div>
+        </div>
+        <div class="gap-2 d-flex">
+            <button id="resetFilterButton" class="btn btn-secondary offset-6 col-3" type="button" (click)="reset()">
+                {{ 'artemisApp.course.exercise.search.resetButton' | artemisTranslate }}
+            </button>
+            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="sendUpdate()">
+                {{ 'artemisApp.course.exercise.search.searchButton' | artemisTranslate }}
+            </button>
+        </div>
+    </div>
+</div>
