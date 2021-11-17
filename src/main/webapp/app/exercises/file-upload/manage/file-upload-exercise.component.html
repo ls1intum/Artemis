@@ -2,6 +2,7 @@
     <h4 class="d-flex mb-3 flex-wrap justify-content-end">
         <span class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
+            <span *ngIf="fileUploadExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredFileUploadExercises) }} / </span>
             <span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
         </span>
@@ -17,7 +18,7 @@
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="fileUploadExercises && fileUploadExercises.length > 0">
+    <div class="table-responsive" *ngIf="fileUploadExercises && filteredFileUploadExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -41,7 +42,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                <tr *ngFor="let fileUploadExercise of fileUploadExercises; trackBy: trackId">
+                <tr *ngFor="let fileUploadExercise of filteredFileUploadExercises; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>
