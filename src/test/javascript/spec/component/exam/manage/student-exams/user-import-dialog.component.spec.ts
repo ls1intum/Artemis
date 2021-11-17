@@ -69,10 +69,6 @@ describe('UsersImportButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-    });
-
     it('should reset dialog when selecting csv file', async () => {
         component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1' }];
         component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2' }];
