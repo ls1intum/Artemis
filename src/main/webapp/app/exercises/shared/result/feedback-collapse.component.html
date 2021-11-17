@@ -1,5 +1,5 @@
 <div class="feedback-text">
-    <p *ngIf="text.length < smallCharacterLimit; else longText">{{ text }}</p>
+    <p *ngIf="!previewText; else longText">{{ text }}</p>
 </div>
 
 <ng-template #longText>
@@ -9,7 +9,7 @@
             <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
         </div>
         <!-- Only show first line as preview -->
-        {{ text.substr(0, text.indexOf('\n')) }} ...
+        {{ previewText }} ...
     </div>
     <ng-template #opened>
         <div class="feedback-text">

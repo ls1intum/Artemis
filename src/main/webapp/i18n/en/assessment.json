@@ -6,6 +6,9 @@
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
             "feedback": "Feedback",
+            "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
+            "feedbackCommentPlaceholder": "You can enter feedback here...",
+            "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
