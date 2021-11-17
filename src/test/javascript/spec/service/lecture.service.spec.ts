@@ -82,16 +82,32 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should find a lecture in the database', async () => {
+        it('should find a lecture with details in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService, posts: [] };
-            const id = elemDefault.id!;
+            const lectureId = elemDefault.id!;
             service
-                .find(id)
+                .findWithDetails(lectureId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/${id}`,
+                url: `${resourceUrl}/${lectureId}/details`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).to.deep.equal(expected);
+        });
+
+        it('should find a lecture in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            const lectureId = elemDefault.id!;
+            service
+                .find(lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${lectureId}`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
