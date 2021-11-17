@@ -87,7 +87,7 @@ public class PostService extends PostingService {
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
-            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
+            sendNotification(savedPost, course);
             broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
             return savedPost;
         }
@@ -404,6 +404,11 @@ public class PostService extends PostingService {
 
         // notify via course
         if (post.getCourseWideContext() != null) {
+            if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
+                post.setContent(markdownContent);
+                return;
+            }
             groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
             post.setContent(markdownContent);
             return;
