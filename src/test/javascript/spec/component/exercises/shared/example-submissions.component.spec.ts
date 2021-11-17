@@ -16,7 +16,6 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -99,37 +98,23 @@ describe('Example Submission Component', () => {
     });
 
     it('should get the submission size', () => {
-        const modelingExercise = {
-            id: 1,
-            type: ExerciseType.MODELING,
-        } as Exercise;
-        const elements = [{ id: 1 }, { id: 2 }, { id: 3 }];
-        const relationships = [{ id: 1 }];
-        const model = JSON.stringify({ elements, relationships });
-        const modelingSubmission = {
-            id: 1,
-            model,
-        } as ModelingSubmission;
         const textSubmission = {
             id: 2,
             text: 'test text',
         } as TextSubmission;
-        let submissionSize;
+        const exampleTextSubmission = {
+            id: 1,
+            submission: textSubmission,
+        } as ExampleSubmission;
+        exercise.exampleSubmissions = [exampleTextSubmission];
 
         const getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
 
         component.exercise = exercise;
-        submissionSize = component.getSubmissionSize(textSubmission);
-        expect(submissionSize).toBe(2);
-
-        component.exercise = modelingExercise;
-        submissionSize = component.getSubmissionSize(modelingSubmission);
-        expect(submissionSize).toBe(4);
-
-        submissionSize = component.getSubmissionSize();
-        expect(submissionSize).toBe(0);
-
-        expect(getSubmissionSizeSpy).toHaveBeenCalledTimes(3);
+        component.ngOnInit();
+        expect(component.exercise.exampleSubmissions).not.toBe(undefined);
+        expect(component.exercise.exampleSubmissions![0].submission?.submissionSize).toBe(2);
+        expect(getSubmissionSizeSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should not open import modal', () => {

@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +20,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 
 describe('ExampleSubmissionImportComponent', () => {
@@ -35,6 +34,7 @@ describe('ExampleSubmissionImportComponent', () => {
     let submission: Submission;
     let exercise: Exercise;
     let exampleSubmissionService: ExampleSubmissionService;
+    let getSubmissionSizeSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -62,6 +62,7 @@ describe('ExampleSubmissionImportComponent', () => {
                 exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
                 searchForSubmissionsSpy = jest.spyOn(pagingService, 'searchForSubmissions');
                 sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty');
+                getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
             });
     });
 
@@ -104,6 +105,9 @@ describe('ExampleSubmissionImportComponent', () => {
         expect(component.content).toBe(searchResult);
         component.sortRows();
         expect(sortByPropertySpy).toHaveBeenCalledWith(searchResult.resultsOnPage, component.sortedColumn, component.listSorting);
+        expect(component.content.resultsOnPage).not.toBe(undefined);
+        expect(component.content.resultsOnPage[0].submissionSize).toBe(3);
+        expect(getSubmissionSizeSpy).toHaveBeenCalledTimes(2);
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
@@ -148,38 +152,4 @@ describe('ExampleSubmissionImportComponent', () => {
             expect(component.sortedColumn).toBe(TableColumn.STUDENT_NAME);
         });
     }));
-
-    it('should get the submission size', () => {
-        const modelingExercise = {
-            id: 1,
-            type: ExerciseType.MODELING,
-        } as Exercise;
-        const elements = [{ id: 1 }, { id: 2 }, { id: 3 }];
-        const relationships = [{ id: 1 }];
-        const model = JSON.stringify({ elements, relationships });
-        const modelingSubmission = {
-            id: 1,
-            model,
-        } as ModelingSubmission;
-        const textSubmission = {
-            id: 2,
-            text: 'test text',
-        } as TextSubmission;
-        let submissionSize;
-
-        const getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
-
-        component.exercise = exercise;
-        submissionSize = component.getSubmissionSize(textSubmission);
-        expect(submissionSize).toBe(2);
-
-        component.exercise = modelingExercise;
-        submissionSize = component.getSubmissionSize(modelingSubmission);
-        expect(submissionSize).toBe(4);
-
-        submissionSize = component.getSubmissionSize();
-        expect(submissionSize).toBe(0);
-
-        expect(getSubmissionSizeSpy).toHaveBeenCalledTimes(3);
-    });
 });

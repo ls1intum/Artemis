@@ -37,9 +37,11 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
         });
-        if (this.exercise) {
-            this.exercise.exampleSubmissions!.forEach((exampleSubmission) => {
-                exampleSubmission.submission!.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise);
+        if (this.exercise && this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
+            this.exercise.exampleSubmissions.forEach((exampleSubmission) => {
+                if (exampleSubmission.submission) {
+                    exampleSubmission.submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise);
+                }
             });
         }
     }
