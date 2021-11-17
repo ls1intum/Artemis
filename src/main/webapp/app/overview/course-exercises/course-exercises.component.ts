@@ -16,6 +16,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -181,13 +182,15 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
-        const filtered = this.course?.exercises?.filter(
-            (exercise) =>
+        const filtered = this.course?.exercises?.filter((exercise) => {
+            const participation = exercise.studentParticipations && exercise.studentParticipations.length > 0 ? exercise.studentParticipations[0] : undefined;
+            return (
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
-                (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(dayjs(new Date()))) &&
+                (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
                 (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
-                (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
-        );
+                (!isOrion || exercise.type === ExerciseType.PROGRAMMING)
+            );
+        });
         this.groupExercises(filtered);
     }
 

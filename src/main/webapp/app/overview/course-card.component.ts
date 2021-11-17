@@ -9,6 +9,8 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import dayjs from 'dayjs';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -23,6 +25,7 @@ export class CourseCardComponent implements OnChanges {
     CachingStrategy = CachingStrategy;
 
     nextRelevantExercise?: Exercise;
+    nextExerciseDueDate?: dayjs.Dayjs;
     nextExerciseIcon: IconProp;
     nextExerciseTooltip: string;
     exerciseCount = 0;
@@ -68,6 +71,7 @@ export class CourseCardComponent implements OnChanges {
 
             if (nextExercises.length > 0 && nextExercises[0]) {
                 this.nextRelevantExercise = nextExercises[0];
+                this.updateNextDueDate();
                 this.nextExerciseIcon = getIcon(this.nextRelevantExercise!.type);
                 this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise!.type);
             }
@@ -89,5 +93,17 @@ export class CourseCardComponent implements OnChanges {
         if (this.course.exams) {
             this.examCount = this.course.exams.length;
         }
+    }
+
+    private updateNextDueDate() {
+        let nextExerciseDueDate = undefined;
+        if (this.nextRelevantExercise) {
+            if (this.nextRelevantExercise.studentParticipations && this.nextRelevantExercise.studentParticipations.length > 0) {
+                nextExerciseDueDate = getExerciseDueDate(this.nextRelevantExercise, this.nextRelevantExercise.studentParticipations[0]);
+            } else {
+                nextExerciseDueDate = this.nextRelevantExercise.dueDate;
+            }
+        }
+        this.nextExerciseDueDate = nextExerciseDueDate;
     }
 }

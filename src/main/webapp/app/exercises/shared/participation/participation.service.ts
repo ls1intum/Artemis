@@ -148,6 +148,7 @@ export class ParticipationService {
     protected convertParticipationDateFromServer(participation?: StudentParticipation) {
         if (participation != undefined) {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+            participation.individualDueDate = participation.individualDueDate ? dayjs(participation.individualDueDate) : undefined;
             participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
             participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
         }
@@ -209,6 +210,7 @@ export class ParticipationService {
         combinedParticipation.id = participations[0].id;
         combinedParticipation.initializationState = participations[0].initializationState;
         combinedParticipation.initializationDate = participations[0].initializationDate;
+        combinedParticipation.individualDueDate = participations[0].individualDueDate;
         combinedParticipation.presentationScore = participations[0].presentationScore;
         combinedParticipation.exercise = participations[0].exercise;
         combinedParticipation.type = participations[0].type;

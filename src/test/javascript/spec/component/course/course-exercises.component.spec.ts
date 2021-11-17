@@ -33,6 +33,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -253,5 +254,26 @@ describe('CourseExercisesComponent', () => {
         component.toggleFilters(filters);
 
         expect(component.upcomingExercises.length).to.equal(5);
+    });
+
+    it('should not filter exercises with an individual due date after the current date', () => {
+        component.sortingOrder = ExerciseSortingOrder.DESC;
+
+        // regular due date is in the past, but the individual one in the future
+        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.dueDate = dayjs('2021-01-13T16:11:00+01:00');
+        newExercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00');
+        const participation = new StudentParticipation();
+        participation.individualDueDate = dayjs().add(3, 'days');
+        newExercise.studentParticipations = [participation];
+
+        component.course!.exercises![1] = newExercise;
+
+        component.activeFilters.clear();
+        component.toggleFilters([ExerciseFilter.OVERDUE]);
+
+        // ToDo: check that exercise is shown
+        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.OVERDUE));
+        expect(component.exerciseCountMap.get('modeling')).to.equal(1);
     });
 });

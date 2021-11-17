@@ -20,6 +20,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
 
 /**
  * Enumeration object representing the possible options that
@@ -230,7 +231,7 @@ export class ResultComponent implements OnInit, OnChanges {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
             const inDueTime = isParticipationInDueTime(this.participation, this.exercise);
-            const dueDate = ResultComponent.dateAsDayjs(this.exercise.dueDate);
+            const dueDate = ResultComponent.dateAsDayjs(getExerciseDueDate(this.exercise, this.participation));
             const assessmentDueDate = ResultComponent.dateAsDayjs(this.exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {

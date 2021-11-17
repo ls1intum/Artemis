@@ -4,6 +4,7 @@ import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -57,7 +58,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+            this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
         }
     }
 }

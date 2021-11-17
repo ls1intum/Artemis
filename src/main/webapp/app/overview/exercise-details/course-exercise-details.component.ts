@@ -20,7 +20,7 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -188,7 +188,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
-                (!this.exercise.dueDate || now.isAfter(this.exercise.dueDate)) &&
+                (!this.exercise.dueDate || hasExerciseDueDatePassed(this.exercise, this.studentParticipation)) &&
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
@@ -213,7 +213,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeToTeamAssignmentUpdates();
 
         // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs())) {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && hasExerciseDueDatePassed(this.exercise, this.studentParticipation!)) {
             this.subscribeForNewSubmissions();
         }
 
@@ -307,7 +307,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 // Notify student about late submission result
                 if (
                     changedParticipation.exercise?.dueDate &&
-                    changedParticipation.exercise!.dueDate!.isBefore(dayjs()) &&
+                    hasExerciseDueDatePassed(changedParticipation.exercise!, changedParticipation) &&
                     changedParticipation.results?.length! > this.studentParticipation?.results?.length!
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
@@ -343,7 +343,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 .getLatestPendingSubmissionByParticipationId(this.studentParticipation!.id!, this.exercise?.id!, true)
                 .subscribe(({ submission }) => {
                     // Notify about received late submission
-                    if (submission && this.exercise?.dueDate && this.exercise.dueDate.isBefore(submission.submissionDate)) {
+                    if (submission && getExerciseDueDate(this.exercise!, this.studentParticipation)?.isBefore(submission.submissionDate)) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionReceived');
                     }
                 });

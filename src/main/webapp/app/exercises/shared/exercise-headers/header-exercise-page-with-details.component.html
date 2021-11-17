@@ -23,9 +23,9 @@
             </ng-template>
             <ng-template #courseMode>
                 <h4>
-                    <span class="me-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
-                    <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exercise.dueDate | artemisTimeAgo }}
+                    <span class="me-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (dueDate | artemisDate) || 'N/A' }} </span>
+                    <span *ngIf="dueDate" [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ dueDate | artemisTimeAgo }}
                     </span>
                 </h4>
                 <h4 *ngIf="exercise.assessmentDueDate">
