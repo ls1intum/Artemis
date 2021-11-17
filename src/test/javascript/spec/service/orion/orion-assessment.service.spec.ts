@@ -85,7 +85,7 @@ describe('OrionAssessmentService', () => {
             },
         };
 
-        testConversion(mockReader as any);
+        testConversion(mockReader);
 
         expect(downloadSubmissionSpy).toHaveBeenCalledTimes(1);
         expect(downloadSubmissionSpy).toHaveBeenCalledWith(11, 0, false, 'testBase64');
@@ -104,7 +104,7 @@ describe('OrionAssessmentService', () => {
             },
         };
 
-        testConversion(mockReader as any);
+        testConversion(mockReader);
 
         expect(alertErrorSpy).toHaveBeenCalledTimes(1);
         expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.assessmentDashboard.orion.downloadFailed');
@@ -114,19 +114,19 @@ describe('OrionAssessmentService', () => {
      * Helper to test the conversion with the fileReader
      * @param mockReader mock reader to test
      */
-    function testConversion(mockReader: FileReader) {
+    function testConversion(mockReader: any) {
         const isCloningSpy = jest.spyOn(orionConnectorService, 'isCloning');
-        const exportSubmissionStub = jest.spyOn(programmingAssessmentExportService, 'exportReposByParticipations');
-        const lockAndGetStub = jest.spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation');
-        const readerStub = jest.spyOn(window, 'FileReader');
 
         // first it loads the submission
+        const lockAndGetStub = jest.spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation');
         lockAndGetStub.mockReturnValue(of(programmingSubmission));
         // then the exported file
+        const exportSubmissionStub = jest.spyOn(programmingAssessmentExportService, 'exportReposByParticipations');
         const response = new HttpResponse({ body: new Blob(['Stuff', 'in blob']), status: 200 });
         exportSubmissionStub.mockReturnValue(of(response));
 
-        readerStub.mockReturnValue(mockReader);
+
+        const readerStub = jest.spyOn(window, 'FileReader').mockReturnValue(mockReader);
 
         orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
 
@@ -135,7 +135,7 @@ describe('OrionAssessmentService', () => {
         expect(lockAndGetStub).toHaveBeenCalledTimes(1);
         expect(lockAndGetStub).toHaveBeenCalledWith(11, 0);
         expect(exportSubmissionStub).toHaveBeenCalledTimes(1);
-        // ignore RepositoryExportOptions
+        // expect anything as repository export options, since they are hardcoded anyways
         expect(exportSubmissionStub).toHaveBeenCalledWith(16, [1], expect.anything());
         expect(readerStub).toHaveBeenCalledTimes(1);
     }
