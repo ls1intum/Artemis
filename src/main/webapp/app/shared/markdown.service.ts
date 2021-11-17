@@ -111,6 +111,31 @@ export class ArtemisMarkdownService {
     }
 
     /**
+     * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
+     *
+     * @param {string} markdownText the original markdown text
+     * @param {showdown.ShowdownExtension[]} extensions to use for markdown parsing
+     * @param {string[]} allowedHtmlTags to allow during sanitization
+     * @param {string[]} allowedHtmlAttributes to allow during sanitization
+     * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
+     */
+    safeHtmlForMarkdownWithReferences(
+        markdownText?: string,
+        extensions: showdown.ShowdownExtension[] = [],
+        allowedHtmlTags: string[] | undefined = undefined,
+        allowedHtmlAttributes: string[] | undefined = undefined,
+    ): SafeHtml {
+        if (!markdownText || markdownText === '') {
+            return '';
+        }
+        let convertedString = this.htmlForMarkdown(markdownText, [...extensions, ...addCSSClass], allowedHtmlTags, allowedHtmlAttributes);
+        convertedString = convertedString.replace(/\n/gm, '<br>');
+        const n = convertedString.lastIndexOf('<p>');
+        convertedString = convertedString.slice(0, n) + convertedString.slice(n).replace('<p>', '<p class="manipulated-p">');
+        return this.sanitizer.bypassSecurityTrustHtml(convertedString);
+    }
+
+    /**
      * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
      * Note: If possible, please use safeHtmlForMarkdown
      *
