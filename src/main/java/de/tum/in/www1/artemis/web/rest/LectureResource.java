@@ -142,20 +142,31 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:id : get the "id" lecture.
+     * GET /lectures/:lectureId : get the "lectureId" lecture.
      *
-     * @param id the id of the lecture to retrieve
+     * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
-    @GetMapping("/lectures/{id}")
+    @GetMapping("/lectures/{lectureId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
-        log.debug("REST request to get Lecture : {}", id);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
-        if (lectureOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Lecture lecture = lectureOptional.get();
+    public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {}", lectureId);
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
+        return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * GET /lectures/:lectureId/details : get the "lectureId" lecture.
+     *
+     * @param lectureId the lectureId of the lecture to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     */
+    @GetMapping("/lectures/{lectureId}/details")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {} with details", lectureId);
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
