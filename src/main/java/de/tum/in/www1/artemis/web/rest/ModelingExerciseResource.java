@@ -182,7 +182,7 @@ public class ModelingExerciseResource {
         // validates general settings: points, dates
         exerciseService.validateGeneralSettings(modelingExercise);
 
-        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
 
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
@@ -203,7 +203,8 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
+                instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);
@@ -377,7 +378,8 @@ public class ModelingExerciseResource {
         }
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
-        modelingExerciseRepository.save(newModelingExercise);
+        ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
+        modelingExerciseService.scheduleOperations(result.getId());
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString())).body(newModelingExercise);
     }

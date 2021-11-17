@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { calculateSubmissionStatusIsDraft, Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -18,7 +18,6 @@ import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.se
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
-    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     orionState: OrionState;
 
     exerciseId: number;
@@ -52,7 +51,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     /**
      * Delegates to the {@link OrionAssessmentService} to load a new submission
      */
-    downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound);
+    downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0, testRun = false) {
+        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound, testRun);
     }
 }

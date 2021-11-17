@@ -148,19 +148,19 @@
                 },
                 "newpassword": {
                     "required": "Ein neues Passwort wird benötigt.",
-                    "minlength": "Das neue Passwort muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Das neue Passwort darf nicht länger als 100 Zeichen sein",
+                    "minlength": "Das neue Passwort muss mindestens {{min}} Zeichen lang sein",
+                    "maxlength": "Das neue Passwort darf nicht länger als {{max}} Zeichen sein",
                     "strength": "Passwortstärke:"
                 },
                 "confirmpassword": {
                     "required": "Du musst das Passwort bestätigen.",
-                    "minlength": "Das bestätigte Passwort muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Das bestätigte Passwort darf nicht länger als 100 Zeichen sein"
+                    "minlength": "Das bestätigte Passwort muss mindestens {{min}} Zeichen lang sein",
+                    "maxlength": "Das bestätigte Passwort darf nicht länger als {{max}} Zeichen sein"
                 },
                 "email": {
                     "required": "Deine E-Mail-Adresse wird benötigt.",
                     "invalid": "Deine E-Mail-Adresse ist ungültig.",
-                    "minlength": "Deine E-Mail-Adresse muss mindestens 8 Zeichen lang sein",
+                    "minlength": "Deine E-Mail-Adresse muss mindestens 5 Zeichen lang sein",
                     "maxlength": "Deine E-Mail-Adresse darf nicht länger als 100 Zeichen sein",
                     "pattern": "Deine E-Mail-Adresse entspricht nicht dem geforderten Muster."
                 }
@@ -305,6 +305,7 @@
         "invalid.auxiliary.repository.name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang!",
+        "invalid.testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },

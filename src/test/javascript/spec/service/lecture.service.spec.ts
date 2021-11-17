@@ -43,6 +43,8 @@ describe('Lecture Service', () => {
         elemDefault.description = 'new service test Lecture';
         elemDefault.endDate = dayjs();
         elemDefault.id = 1;
+        elemDefault.isAtLeastEditor = false;
+        elemDefault.isAtLeastInstructor = false;
     });
 
     afterEach(() => {
