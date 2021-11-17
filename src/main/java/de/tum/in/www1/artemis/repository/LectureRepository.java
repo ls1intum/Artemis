@@ -47,6 +47,14 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
 
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.id = :#{#lectureId}
+            """)
+    Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
+
     /**
      * Returns the title of the lecture with the given id
      *
@@ -68,5 +76,10 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @NotNull
     default Lecture findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
         return findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    }
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
+        return findByIdWithLectureUnits(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 }
