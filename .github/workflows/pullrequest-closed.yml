@@ -1,0 +1,19 @@
+name: Pull Request Closed
+
+on:
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  purge-image:
+    name: Delete image from ghcr.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete image
+        uses: r26d/ghcr-delete-image-action@v1.1.0
+        with:
+          owner: ${{ github.repository_owner }}
+          name: artemis
+          token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
+          tag: pr-${{ github.event.pull_request.number }}
+          untagged-older-than: 28
