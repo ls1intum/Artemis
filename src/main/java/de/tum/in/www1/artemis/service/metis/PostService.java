@@ -392,39 +392,42 @@ public class PostService extends PostingService {
      * @param post post that triggered the notification
      */
     void sendNotification(Post post, Course course) {
-        Parser parser = Parser.builder().build();
-        // save markdown content
-        String markdownContent = post.getContent();
-        // create html content
-        Node document = parser.parse(markdownContent);
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
-        String html = renderer.render(document);
+        // create post for notification
+        Post postForNotification = new Post();
+        postForNotification.setId(post.getId());
+        postForNotification.setAuthor(post.getAuthor());
+        postForNotification.setCourse(post.getCourse());
+        postForNotification.setCourseWideContext(post.getCourseWideContext());
+        postForNotification.setLecture(post.getLecture());
+        postForNotification.setExercise(post.getExercise());
+        postForNotification.setTitle(post.getTitle());
 
-        post.setContent(html);
+        // create html content
+        Parser parser = Parser.builder().build();
+        Node document = parser.parse(post.getContent());
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        String htmlPostContent = renderer.render(document);
+        postForNotification.setContent(htmlPostContent);
 
         // notify via course
         if (post.getCourseWideContext() != null) {
             if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
-                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
-                post.setContent(markdownContent);
+                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
                 return;
             }
-            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
-            post.setContent(markdownContent);
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(postForNotification, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(postForNotification, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
-            post.setContent(markdownContent);
             return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
-            post.setContent(markdownContent);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
         }
     }
 
