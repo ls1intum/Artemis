@@ -114,24 +114,28 @@ export class ArtemisMarkdownService {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
-     * @param {showdown.ShowdownExtension[]} extensions to use for markdown parsing
+     * @param {boolean} contentBeforeReference  to indicate if this is markdown content before a possible reference or after
      * @param {string[]} allowedHtmlTags to allow during sanitization
      * @param {string[]} allowedHtmlAttributes to allow during sanitization
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    safeHtmlForMarkdownWithReferences(
+    safeHtmlForPostingMarkdown(
         markdownText?: string,
-        extensions: showdown.ShowdownExtension[] = [],
+        contentBeforeReference = true,
         allowedHtmlTags: string[] | undefined = undefined,
         allowedHtmlAttributes: string[] | undefined = undefined,
     ): SafeHtml {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        let convertedString = this.htmlForMarkdown(markdownText, [...extensions, ...addCSSClass], allowedHtmlTags, allowedHtmlAttributes);
-        convertedString = convertedString.replace(/\n/gm, '<br>');
-        const n = convertedString.lastIndexOf('<p>');
-        convertedString = convertedString.slice(0, n) + convertedString.slice(n).replace('<p>', '<p class="manipulated-p">');
+        let convertedString = this.htmlForMarkdown(markdownText, [], allowedHtmlTags, allowedHtmlAttributes);
+        let paragraphPosition: number;
+        if (contentBeforeReference) {
+            paragraphPosition = convertedString.lastIndexOf('<p>');
+        } else {
+            paragraphPosition = convertedString.indexOf('<p>');
+        }
+        convertedString = convertedString.slice(0, paragraphPosition) + convertedString.slice(paragraphPosition).replace('<p>', '<p class="inline-paragraph">');
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
 
