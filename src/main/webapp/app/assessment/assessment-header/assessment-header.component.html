@@ -30,12 +30,36 @@
         </span>
         <span
             id="moreFeedbackRequest"
-            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintType != ComplaintType.COMPLAINT && !complaintHandled"
+            *ngIf="
+                isAssessor &&
+                !isAtLeastInstructor &&
+                hasComplaint &&
+                complaintType != ComplaintType.COMPLAINT &&
+                !complaintHandled &&
+                exercise?.assessmentType !== AssessmentType.AUTOMATIC
+            "
             class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.moreFeedbackRequest"
         >
             You have to respond to the feedback request.
+        </span>
+        <span
+            id="automaticAssessmentFeedbackRequest"
+            *ngIf="
+                isAssessor &&
+                !isAtLeastInstructor &&
+                hasComplaint &&
+                complaintType != ComplaintType.COMPLAINT &&
+                exercise?.assessmentType === AssessmentType.AUTOMATIC &&
+                !complaintHandled &&
+                !exercise?.teamMode
+            "
+            class="m-2"
+            style="font-size: 65%"
+            jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest"
+        >
+            You may respond to the feedback request.
         </span>
         <span
             id="teamComplaint"
@@ -48,7 +72,15 @@
         </span>
         <span
             id="automaticAssessmentComplaint"
-            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && exercise?.assessmentType === AssessmentType.AUTOMATIC && !complaintHandled && !exercise?.teamMode"
+            *ngIf="
+                isAssessor &&
+                !isAtLeastInstructor &&
+                hasComplaint &&
+                complaintType == ComplaintType.COMPLAINT &&
+                exercise?.assessmentType === AssessmentType.AUTOMATIC &&
+                !complaintHandled &&
+                !exercise?.teamMode
+            "
             class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint"

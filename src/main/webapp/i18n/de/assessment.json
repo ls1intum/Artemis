@@ -20,6 +20,7 @@
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "teamComplaint": "Du musst auf die Beschwerde antworten.",
             "automaticAssessmentComplaint": "Du kannst auf die Beschwerde antworten.",
+            "automaticAssessmentFeedbackRequest": "Du kannst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
             "diffView": {
