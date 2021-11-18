@@ -204,6 +204,10 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private boolean isGradingInstructionFeedbackUsedTransient = false;
 
+    @Nullable
+    @Column(name = "sample_solution_publication_date")
+    private ZonedDateTime sampleSolutionPublicationDate;
+
     public String getTitle() {
         return title;
     }
@@ -1002,6 +1006,19 @@ public abstract class Exercise extends DomainObject {
             newGradingInstructions.add(newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    @Nullable
+    public ZonedDateTime getSampleSolutionPublicationDate() {
+        return sampleSolutionPublicationDate;
+    }
+
+    public void setSampleSolutionPublicationDate(@Nullable ZonedDateTime sampleSolutionPublicationDate) {
+        this.sampleSolutionPublicationDate = sampleSolutionPublicationDate;
+    }
+
+    public boolean isSampleSolutionPublished() {
+        return this.sampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.sampleSolutionPublicationDate);
     }
 
     /**
