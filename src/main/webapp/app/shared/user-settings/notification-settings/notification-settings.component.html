@@ -44,7 +44,7 @@
                             [checked]="setting.webapp"
                             id="{{ setting.settingId }}"
                             value="{{ setting.webapp }}"
-                            (click)="toggleSetting($event, true)"
+                            (click)="toggleSetting($event, communicationChannel.WEBAPP)"
                         />
                         <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                     </div>
@@ -55,7 +55,7 @@
                             [checked]="setting.email"
                             id="{{ setting.settingId }} email"
                             value="{{ setting.email }}"
-                            (click)="toggleSetting($event, false)"
+                            (click)="toggleSetting($event, communicationChannel.EMAIL)"
                         />
                         <label class="form-check-label" for="{{ setting.settingId }} email">Email</label>
                     </div>
