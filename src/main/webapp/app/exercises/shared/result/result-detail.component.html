@@ -41,7 +41,7 @@
                     <span>{{ feedback.category }}</span>
                     <span class="feedback-points" *ngIf="feedback.credits">{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
-                    <jhi-feedback-collapse *ngIf="feedback.text" [text]="feedback.text!"></jhi-feedback-collapse>
+                    <jhi-feedback-collapse *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>
                 </div>
             </div>

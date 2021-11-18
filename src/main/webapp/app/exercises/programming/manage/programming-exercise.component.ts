@@ -30,6 +30,7 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    filteredProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
     selectedProgrammingExercises: ProgrammingExercise[];
@@ -96,10 +97,16 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                         }
                     }
                 });
+                this.applyFilter();
                 this.emitExerciseCount(this.programmingExercises.length);
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
+    }
+
+    protected applyFilter(): void {
+        this.filteredProgrammingExercises = this.programmingExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
     }
 
     trackId(index: number, item: ProgrammingExercise) {

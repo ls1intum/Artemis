@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, AfterViewInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -8,21 +8,16 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     templateUrl: './assessment-detail.component.html',
     styleUrls: ['./assessment-detail.component.scss'],
 })
-export class AssessmentDetailComponent implements AfterViewInit {
+export class AssessmentDetailComponent {
     @Input() public assessment: Feedback;
     @Output() public assessmentChange = new EventEmitter<Feedback>();
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
     @Input() public disabled = false;
     @Input() public readOnly: boolean;
     @Input() highlightDifferences: boolean;
-    disableEditScore = false;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
-
-    ngAfterViewInit(): void {
-        this.computeDisableEditScore();
-    }
 
     /**
      * Emits assessment changes to parent component
@@ -46,11 +41,6 @@ export class AssessmentDetailComponent implements AfterViewInit {
 
     updateAssessmentOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.assessment, event);
-        this.computeDisableEditScore();
         this.assessmentChange.emit(this.assessment);
-    }
-
-    private computeDisableEditScore() {
-        this.disableEditScore = !!(this.assessment.gradingInstruction && this.assessment.gradingInstruction.usageCount !== 0);
     }
 }

@@ -2,10 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import * as sinon from 'sinon';
 import { MockPipe } from 'ng-mocks';
 import { Component, Directive, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -33,9 +30,6 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
 export class MockRouterLinkDirective {
@@ -57,8 +51,9 @@ describe('LectureUnitManagementComponent', () => {
 
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
-    let findLectureStub: sinon.SinonStub;
-    let updateOrderStub: sinon.SinonStub;
+    let findLectureSpy: jest.SpyInstance;
+    let findLectureWithDetailsSpy: jest.SpyInstance;
+    let updateOrderSpy: jest.SpyInstance;
 
     let attachmentUnit: AttachmentUnit;
     let exerciseUnit: ExerciseUnit;
@@ -114,8 +109,9 @@ describe('LectureUnitManagementComponent', () => {
                 lectureService = TestBed.inject(LectureService);
                 lectureUnitService = TestBed.inject(LectureUnitService);
 
-                findLectureStub = sinon.stub(lectureService, 'find');
-                updateOrderStub = sinon.stub(lectureUnitService, 'updateOrder');
+                findLectureSpy = jest.spyOn(lectureService, 'find');
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
+                updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
 
                 textUnit = new TextUnit();
                 textUnit.id = 0;
@@ -130,98 +126,81 @@ describe('LectureUnitManagementComponent', () => {
                 lecture.id = 0;
                 lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
 
-                findLectureStub.returns(
-                    of(
-                        new HttpResponse({
-                            body: lecture,
-                            status: 200,
-                        }),
-                    ),
-                );
-
-                updateOrderStub.returns(
-                    of(
-                        new HttpResponse({
-                            body: [],
-                            status: 200,
-                        }),
-                    ),
-                );
+                const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
+                findLectureSpy.mockReturnValue(returnValue);
+                findLectureWithDetailsSpy.mockReturnValue(returnValue);
+                updateOrderSpy.mockReturnValue(returnValue);
 
                 lectureUnitManagementComponentFixture.detectChanges();
             });
-    });
-    it('should initialize', () => {
-        lectureUnitManagementComponentFixture.detectChanges();
-        expect(lectureUnitManagementComponent).to.be.ok;
     });
 
     it('should move down', () => {
         const originalOrder = [...lecture.lectureUnits!];
         lectureUnitManagementComponentFixture.detectChanges();
-        const moveDownSpy = sinon.spy(lectureUnitManagementComponent, 'moveDown');
-        const moveUpSpy = sinon.spy(lectureUnitManagementComponent, 'moveUp');
+        const moveDownSpy = jest.spyOn(lectureUnitManagementComponent, 'moveDown');
+        const moveUpSpy = jest.spyOn(lectureUnitManagementComponent, 'moveUp');
         const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#up-0'));
-        expect(upButton).to.exist;
+        expect(upButton).toBeDefined();
         upButton.nativeElement.click();
-        expect(moveUpSpy).to.not.have.been.calledOnce;
+        expect(moveUpSpy).toHaveBeenCalledTimes(0);
         // not moved as first one
-        expect(lectureUnitManagementComponent.lectureUnits[0].id).to.equal(originalOrder[0].id);
+        expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[0].id);
         const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
-        expect(downButton).to.exist;
+        expect(downButton).toBeDefined;
         downButton.nativeElement.click();
-        expect(moveDownSpy).to.have.been.calledOnce;
-        expect(lectureUnitManagementComponent.lectureUnits[0].id).to.equal(originalOrder[1].id);
-        expect(lectureUnitManagementComponent.lectureUnits[1].id).to.equal(originalOrder[0].id);
+        expect(moveDownSpy).toHaveBeenCalledTimes(1);
+        expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
+        expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
     });
 
     it('should move up', () => {
         const originalOrder = [...lecture.lectureUnits!];
         lectureUnitManagementComponentFixture.detectChanges();
-        const moveDownSpy = sinon.spy(lectureUnitManagementComponent, 'moveDown');
-        const moveUpSpy = sinon.spy(lectureUnitManagementComponent, 'moveUp');
+        const moveDownSpy = jest.spyOn(lectureUnitManagementComponent, 'moveDown');
+        const moveUpSpy = jest.spyOn(lectureUnitManagementComponent, 'moveUp');
         const lastPosition = lectureUnitManagementComponent.lectureUnits.length - 1;
         const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#down-${lastPosition}`));
-        expect(downButton).to.exist;
+        expect(downButton).toBeDefined();
         downButton.nativeElement.click();
-        expect(moveDownSpy).to.not.have.been.calledOnce;
+        expect(moveDownSpy).toHaveBeenCalledTimes(0);
 
-        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).to.equal(originalOrder[lastPosition].id);
+        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition].id);
         const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
-        expect(upButton).to.exist;
+        expect(upButton).toBeDefined;
         upButton.nativeElement.click();
-        expect(moveUpSpy).to.have.been.calledOnce;
-        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).to.equal(originalOrder[lastPosition - 1].id);
+        expect(moveUpSpy).toHaveBeenCalledTimes(1);
+        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition - 1].id);
     });
 
     it('should navigate to edit attachment unit page', () => {
-        const editButtonClickedSpy = sinon.spy(lectureUnitManagementComponent, 'editButtonRouterLink');
+        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'editButtonRouterLink');
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
             button.nativeElement.click();
         }
         lectureUnitManagementComponentFixture.detectChanges();
-        expect(editButtonClickedSpy).to.have.been.called;
+        expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length * 2); // 3 units with edit button, each method is invoked twice
     });
 
     it('should give the correct delete question translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).to.equal('artemisApp.textUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).to.equal('artemisApp.videoUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toEqual('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toEqual('artemisApp.exerciseUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toEqual('artemisApp.textUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toEqual('artemisApp.videoUnit.delete.question');
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).to.equal('artemisApp.videoUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).to.equal('artemisApp.textUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toEqual('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toEqual('artemisApp.exerciseUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toEqual('artemisApp.videoUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toEqual('artemisApp.textUnit.delete.typeNameToConfirm');
     });
 
     it('should give the correct action type', () => {
-        expect(lectureUnitManagementComponent.getActionType(new AttachmentUnit())).to.equal(ActionType.Delete);
-        expect(lectureUnitManagementComponent.getActionType(new ExerciseUnit())).to.equal(ActionType.Unlink);
-        expect(lectureUnitManagementComponent.getActionType(new TextUnit())).to.equal(ActionType.Delete);
-        expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).to.equal(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new AttachmentUnit())).toEqual(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new ExerciseUnit())).toEqual(ActionType.Unlink);
+        expect(lectureUnitManagementComponent.getActionType(new TextUnit())).toEqual(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).toEqual(ActionType.Delete);
     });
 });
