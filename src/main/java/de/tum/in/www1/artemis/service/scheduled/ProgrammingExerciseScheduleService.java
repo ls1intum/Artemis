@@ -281,9 +281,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository.findByExerciseId(exercise.getId());
         for (final var participation : participations) {
-            if (participation.getIndividualDueDate() == null) {
-                scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
-                scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+            if (exercise.getDueDate() == null || participation.getIndividualDueDate() == null) {
+                scheduleService.cancelAllScheduledParticipationTasks(exercise.getId(), participation.getId());
             }
             else {
                 scheduleParticipationWithIndividualDueDate(now, exercise, participation, isScoreUpdateNeeded);
@@ -299,7 +298,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
         }
         else {
-            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
+            scheduleService.cancelScheduledTaskForParticipationLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
         }
 
         // Build and test after individual due date:
@@ -309,7 +308,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleBuildAndTestAfterDueDateForParticipation(participation);
         }
         else {
-            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+            scheduleService.cancelScheduledTaskForParticipationLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
     }
 

@@ -95,7 +95,7 @@ public class ScheduleService {
      * @param task Runnable task to be executed on the lifecycle hook
      */
     void scheduleParticipationTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
-        cancelScheduledTaskForLifecycle(participation.getExercise().getId(), participation.getId(), lifecycle);
+        cancelScheduledTaskForParticipationLifecycle(participation.getExercise().getId(), participation.getId(), lifecycle);
         participationLifecycleService.scheduleTask(participation, lifecycle, task).ifPresent(scheduledTask -> addScheduledTask(participation, lifecycle, Set.of(scheduledTask)));
     }
 
@@ -117,7 +117,7 @@ public class ScheduleService {
 
         ParticipationLifecycle.fromExerciseLifecycle(lifecycle).ifPresent(participationLifecycle -> {
             final Stream<Long> participationIds = getScheduledParticipationIdsForExercise(exerciseId);
-            participationIds.forEach(participationId -> cancelScheduledTaskForLifecycle(exerciseId, participationId, participationLifecycle));
+            participationIds.forEach(participationId -> cancelScheduledTaskForParticipationLifecycle(exerciseId, participationId, participationLifecycle));
         });
     }
 
@@ -136,13 +136,25 @@ public class ScheduleService {
      *
      * @param participationId of the participation for which a potential scheduled task is cancelled.
      */
-    void cancelScheduledTaskForLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
+    void cancelScheduledTaskForParticipationLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
         Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(exerciseId, participationId, lifecycle);
         Set<ScheduledFuture<?>> futures = scheduledParticipationTasks.get(taskId);
         if (futures != null) {
             log.debug("Cancelling scheduled task {} for Participation (#{}).", lifecycle, participationId);
             futures.forEach(future -> future.cancel(false));
             removeScheduledTask(exerciseId, participationId, lifecycle);
+        }
+    }
+
+    /**
+     * Cancels all scheduled tasks for all {@link ParticipationLifecycle ParticipationLifecycles} for the given participation.
+     *
+     * @param exerciseId of the exercise the participation belongs to.
+     * @param participationId of the participation itself.
+     */
+    void cancelAllScheduledParticipationTasks(Long exerciseId, Long participationId) {
+        for (final ParticipationLifecycle lifecycle : ParticipationLifecycle.values()) {
+            cancelScheduledTaskForParticipationLifecycle(exerciseId, participationId, lifecycle);
         }
     }
 }

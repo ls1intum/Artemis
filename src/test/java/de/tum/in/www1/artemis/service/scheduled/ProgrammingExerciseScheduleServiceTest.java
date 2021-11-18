@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -77,13 +79,20 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
     }
 
     @AfterEach
     void tearDown() {
+        // old scheduled tasks should not influence following tests if they could not be finished during the previous one
+        for (final var lifecycle : ExerciseLifecycle.values()) {
+            scheduleService.cancelScheduledTaskForLifecycle(programmingExercise.getId(), lifecycle);
+        }
+
         database.resetDatabase();
         Mockito.reset(scheduleService);
+        bitbucketRequestMockProvider.reset();
     }
 
     private void verifyLockStudentRepositoryOperation(boolean wasCalled) {
@@ -341,13 +350,13 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
+        mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
-        var participationIndividualDueDate = setupParticipation(now, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
-        mockStudentRepoLocks();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -370,14 +379,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
+        mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
-        var participationIndividualDueDate = setupParticipation(now, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
-        mockStudentRepoLocks();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -390,10 +399,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verifyLockStudentRepositoryOperation(false, participationIndividualDueDate);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
 
-        Thread.sleep(delayMS);
+        Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         // locked after individual due date
-        verifyLockStudentRepositoryOperation(true);
+        verifyLockStudentRepositoryOperation(true, participationIndividualDueDate);
 
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
@@ -405,43 +414,177 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void scheduleIndividualDueDateAfterBuildAndTestDate() throws Exception {
-        // ToDo: participation with individual due date after due date and build and test date
-    }
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void scheduleExerciseWithMixedDueDates() throws Exception {
-        // ToDo: exercise with mix of participants with and without individual due dates
+        setupProgrammingExerciseDates(now, delayMS / 2, delayMS);
+        // individual due date after build and test date
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        // special scheduling for both lock and build and test
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
-        // ToDo: participation with individual due date in exercise with tests after_due_date but no build and test date
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        // no build and test date, but after_due_date tests ⇒ score update needed
+        setupProgrammingExerciseDates(now, delayMS / 2, null);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+
+        verify(scheduleService, times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
-        // ToDo: cancellation of schedules when removing the exercise due date
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        setupProgrammingExerciseDates(now, delayMS / 2, null);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+
+        verify(scheduleService, times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
+
+        // remove due date and schedule again
+        programmingExercise.setDueDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        // all schedules are cancelled
+        InOrder cancelCalls = inOrder(scheduleService);
+        cancelCalls.verify(scheduleService).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.DUE);
+        cancelCalls.verify(scheduleService).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        for (final var participation : programmingExercise.getStudentParticipations()) {
+            cancelCalls.verify(scheduleService).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
+            cancelCalls.verify(scheduleService).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participation.getId(),
+                    ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        }
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
-        // ToDo: cancellation of schedules when removing an individual due date
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        setupProgrammingExerciseDates(now, 5 * delayMS, null);
+
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 10 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+
+        // remove individual due date and schedule again
+        participationIndividualDueDate.setIndividualDueDate(null);
+        participationIndividualDueDate = participationRepository.save(participationIndividualDueDate);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        // called twice: first time when removing potential old schedules before scheduling, second time only cancelling
+        verify(scheduleService, times(2)).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participationIndividualDueDate.getId(),
+                ParticipationLifecycle.DUE);
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateIndividualScheduleOnIndividualDueDateChange() throws Exception {
-        // ToDo: update of schedule when changing a due date
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        setupProgrammingExerciseDates(now, 5 * delayMS, null);
+
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 10 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+
+        // change individual due date and schedule again
+        participationIndividualDueDate.setIndividualDueDate(plusMillis(now, 20 * delayMS));
+        participationIndividualDueDate = participationRepository.save(participationIndividualDueDate);
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        // scheduling called twice, each scheduling cancels potential old schedules
+        verify(scheduleService, times(2)).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participationIndividualDueDate.getId(),
+                ParticipationLifecycle.DUE);
+        verify(scheduleService, times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
-        // ToDo: keeping individual schedule when changing due date of an exercise
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        setupProgrammingExerciseDates(now, delayMS / 2, null);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+
+        verify(scheduleService, times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
+
+        // change exercise due date and schedule again
+        programmingExercise.setDueDate(plusMillis(now, delayMS));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+
+        verify(scheduleService, times(2)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
     }
 
     /**
@@ -469,8 +612,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
-    private ProgrammingExerciseStudentParticipation setupParticipation(final ZonedDateTime reference, Long individualDueDateDelayMillis) {
-        var participationIndividualDueDate = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
+    private ProgrammingExerciseStudentParticipation setupParticipationIndividualDueDate(final ZonedDateTime reference, Long individualDueDateDelayMillis) {
+        var participationIndividualDueDate = programmingExercise.getStudentParticipations().stream()
+                .filter(participation -> "student3".equals(participation.getStudent().get().getLogin())).findFirst().get();
 
         if (individualDueDateDelayMillis != null) {
             participationIndividualDueDate.setIndividualDueDate(plusMillis(reference, individualDueDateDelayMillis));
@@ -479,7 +623,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
             participationIndividualDueDate.setIndividualDueDate(null);
         }
 
-        return participationRepository.save(participationIndividualDueDate);
+        return participationRepository.save((ProgrammingExerciseStudentParticipation) participationIndividualDueDate);
     }
 
     private ZonedDateTime plusMillis(final ZonedDateTime reference, long millis) {
