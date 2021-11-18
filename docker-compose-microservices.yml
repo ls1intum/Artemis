@@ -1,0 +1,107 @@
+version: '2'
+services:
+    artemis-app:
+        image: artemis
+        build:
+            context: .
+            dockerfile: ./src/main/docker/Dockerfile
+        volumes:
+            - ./src/main/resources/config/application-dev.yml:/home/jhipster/application-dev.yml:ro
+            - ./src/main/resources/config/application-artemis.yml:/home/jhipster/application-artemis.yml:ro
+        environment:
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
+            - SPRING_PROFILES_ACTIVE=dev,artemis,openapi
+            - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - SPRING_ARTEMIS_HOST=activemq-broker
+        ports:
+            - 8080:8080
+        networks:
+            - artemis
+        depends_on:
+            - artemis-mysql
+            - jhipster-registry
+    usermanagement-app:
+        image: usermanagement
+        build:
+            context: .
+            dockerfile: ./user-management/src/main/docker/Dockerfile
+        volumes:
+            - ./user-management/src/main/resources/config/application-dev.yml:/home/jhipster/user-management/application-dev.yml:ro
+            - ./src/main/java/resources/config/application-artemis.yml:/home/jhipster/user-management/application-artemis.yml:ro
+        environment:
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
+            - SPRING_PROFILES_ACTIVE=dev,artemis
+            - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - SPRING_ARTEMIS_HOST=activemq-broker
+        ports:
+            - 8087:8087
+        networks:
+            - artemis
+        depends_on:
+            - artemis-mysql
+            - jhipster-registry
+    gateway-app:
+        image: gateway
+        build:
+            context: .
+            dockerfile: ./gateway/src/main/docker/Dockerfile
+        volumes:
+            - ./gateway/src/main/resources/config/application-dev.yml:/home/jhipster/gateway/application-dev.yml:ro
+        environment:
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
+            - SPRING_PROFILES_ACTIVE=prod,api-docs
+            - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+        ports:
+            - 8089:8089
+        networks:
+            - artemis
+        depends_on:
+            - jhipster-registry
+    jhipster-registry:
+        image: jhipster/jhipster-registry:v6.8.0
+        volumes:
+            - ./src/main/docker/central-server-config:/central-config
+        environment:
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
+            - SPRING_PROFILES_ACTIVE=dev,api-docs
+            - SPRING_SECURITY_USER_PASSWORD=admin
+            - JHIPSTER_REGISTRY_PASSWORD=admin
+            - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE=native
+            - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS=file:./central-config/docker-config/
+        ports:
+            - 8761:8761
+        networks:
+            - artemis
+    artemis-mysql:
+        extends:
+            file: src/main/docker/mysql.yml
+            service: artemis-mysql
+    activemq-broker:
+        image: vromero/activemq-artemis:latest
+        environment:
+            - ARTEMIS_USERNAME=guest
+            - ARTEMIS_PASSWORD=guest
+            - ENABLE_JMX=true
+            - JMX_PORT=1199
+            - JMX_RMI_PORT=1198
+            - ENABLE_JMX_EXPORTER=true
+        ports:
+            - 61616:61616
+            - 8161:8161
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
