@@ -612,7 +612,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 translateValues: {},
             });
         }
-        if (this.programmingExercise.shortName === undefined || this.programmingExercise.title === '') {
+        if (this.programmingExercise.shortName === undefined || this.programmingExercise.shortName === '') {
             result.push({
                 translateKey: 'artemisApp.exercise.form.shortName.undefined',
                 translateValues: {},
