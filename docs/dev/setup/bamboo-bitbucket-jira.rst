@@ -60,6 +60,12 @@ Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``.
 If you notice that the used image didn't change, append the flag ``--build``.
 
+If you are using a Mac with an Apple Silicon processor (like the M1 series) there is a special
+docker configuration located at src/main/docker/apple-silicon. This will build the 3 Atlassian tools locally
+when you run it for the first time. This will improve the performance of the Atlassian tools, as they would
+otherwise run over Rosetta. It also includes a MySQL image that will run natively on Apple Silicon.
+You can run this configuration with ``docker-compose -f src/main/docker/apple-silicon/atlassian.yml up -d``.
+
 Error Handling: It can happen that there is an overload with other
 docker networks
 ``ERROR: Pool overlaps with other one on this address space``. Use the
