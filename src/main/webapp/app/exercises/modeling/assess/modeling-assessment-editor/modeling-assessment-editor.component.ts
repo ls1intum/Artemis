@@ -283,8 +283,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.isTestRun,
             this.isAssessor,
             this.hasAssessmentDueDatePassed,
-            this.complaint,
             this.result,
+            this.complaint,
             this.modelingExercise,
         );
     }

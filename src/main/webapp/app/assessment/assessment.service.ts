@@ -1,5 +1,6 @@
 import { Exercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
 
 /**
@@ -14,7 +15,11 @@ export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean
     if (exercise?.teamMode || isTestRun) {
         return isAssessor;
     }
-    if (complaint.result && complaint.result.assessor == undefined) {
+    if (
+        (!exercise?.assessmentType || exercise?.assessmentType !== AssessmentType.AUTOMATIC) &&
+        complaint.result?.assessmentType === AssessmentType.AUTOMATIC &&
+        complaint.result.assessor === undefined
+    ) {
         return true;
     }
     return complaint!.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor;
@@ -31,12 +36,15 @@ export const isAllowedToModifyFeedback = (
     isTestRun: boolean,
     isAssessor: boolean,
     hasAssessmentDueDatePassed: boolean,
-    complaint?: Complaint,
     result?: Result,
+    complaint?: Complaint,
     exercise?: Exercise,
 ): boolean => {
     if (isAtLeastInstructor) {
         return true;
+    }
+    if (!result) {
+        return false;
     }
     if (complaint) {
         return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);

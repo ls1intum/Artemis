@@ -174,11 +174,11 @@ public class ComplaintResource {
         if (!isOwner && !isAtLeastTA) {
             return forbidden();
         }
-        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         var isTeamParticipation = participation.getParticipant() instanceof Team;
         var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
-        if (!isAtLeastInstructor) {
+        if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);
 
             if (!isTeamParticipation || !isTutorOfTeam) {

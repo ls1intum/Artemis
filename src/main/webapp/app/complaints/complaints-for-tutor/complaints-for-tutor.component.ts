@@ -176,10 +176,11 @@ export class ComplaintsForTutorComponent implements OnInit {
             .subscribe(
                 (response) => {
                     this.handled = true;
-                    // eslint-disable-next-line chai-friendly/no-unused-expressions
-                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? this.alertService.success('artemisApp.moreFeedbackResponse.created')
-                        : this.alertService.success('artemisApp.complaintResponse.created');
+                    if (this.complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+                        this.alertService.success('artemisApp.moreFeedbackResponse.created');
+                    } else {
+                        this.alertService.success('artemisApp.complaintResponse.created');
+                    }
                     this.complaintResponse = response.body!;
                     this.complaint = this.complaintResponse.complaint!;
                     this.isLockedForLoggedInUser = false;

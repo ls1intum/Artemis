@@ -476,8 +476,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isTestRun,
             this.isAssessor,
             this.hasAssessmentDueDatePassed,
-            this.complaint,
             this.manualResult,
+            this.complaint,
             this.exercise,
         );
     }
