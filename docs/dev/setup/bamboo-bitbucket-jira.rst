@@ -35,8 +35,8 @@ Docker-Compose
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the Dockerfiles of bamboo stored in
-``src/main/docker/bamboo`` (``src/main/docker/bamboo/Dockerfile``, ``src/main/docker/bamboo/swift/Dockerfile``, ``src/main/docker/bamboo/c/Dockerfile``).
-If the version number is not equal adjust the version number in the Dockerfile.
+``src/main/docker/bamboo`` (``src/main/docker/bamboo/Dockerfile``, ``src/main/docker/bamboo/swift/Dockerfile``, and ``src/main/docker/bamboo/c/Dockerfile``).
+If the version number is not equal, adjust the version number in the Dockerfile.
 
 In case you want to enable Swift or C programming exercises, you need to change
 the specified Dockerfile in the docker-compose file ``atlassian.yml`` stored in ``src/main/docker``.
