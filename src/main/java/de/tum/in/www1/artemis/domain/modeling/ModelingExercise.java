@@ -85,8 +85,10 @@ public class ModelingExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setSampleSolutionModel(null);
-        setSampleSolutionExplanation(null);
+        if (!isSampleSolutionPublished()) {
+            setSampleSolutionModel(null);
+            setSampleSolutionExplanation(null);
+        }
         super.filterSensitiveInformation();
     }
 

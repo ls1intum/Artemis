@@ -22,6 +22,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
 import { isOrion } from 'app/shared/orion/orion';
+import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 
 const routes: Routes = [
     {
@@ -62,6 +63,7 @@ const routes: Routes = [
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
         ArtemisMarkdownModule,
+        ArtemisModelingEditorModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],

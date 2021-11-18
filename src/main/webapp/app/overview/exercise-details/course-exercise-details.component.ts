@@ -43,6 +43,10 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { UMLModel } from '@ls1intum/apollon';
+import { SafeHtml } from '@angular/platform-browser';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -85,6 +89,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
 
+    public modelingExercise?: ModelingExercise;
+    public sampleSolution?: SafeHtml;
+    public sampleSolutionUML?: UMLModel;
+
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
 
@@ -118,6 +126,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
@@ -204,6 +213,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
         }
 
+        this.showIfSampleSolutionPresent(newExercise);
+
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
             this.noVersionControlAndContinuousIntegrationServerAvailable = true;
@@ -222,6 +233,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.discussionComponent.exercise = this.exercise;
         }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+    }
+
+    showIfSampleSolutionPresent(newExercise: Exercise) {
+        this.modelingExercise = undefined;
+        this.sampleSolution = undefined;
+        this.sampleSolutionUML = undefined;
+
+        if (newExercise.type === ExerciseType.MODELING) {
+            this.modelingExercise = newExercise as ModelingExercise;
+            this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+            if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
+                this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            }
+        }
     }
 
     /**

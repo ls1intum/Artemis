@@ -203,6 +203,25 @@
                 </div>
             </div>
             <!-- RESULTS END -->
+            <ng-container *ngIf="modelingExercise && (sampleSolutionUML || sampleSolution)">
+                <div class="row mb-2 mt-2 align-items-baseline" *ngIf="!showResults">
+                    <div class="col-auto">
+                        <h3>{{ 'artemisApp.exercise.sampleSolution' | artemisTranslate }}</h3>
+                    </div>
+                </div>
+                <dl class="row-md jh-entity-details markdown-preview">
+                    <dd class="editor-outline-background">
+                        <jhi-modeling-editor
+                            *ngIf="sampleSolutionUML"
+                            [readOnly]="true"
+                            [diagramType]="modelingExercise.diagramType!"
+                            [umlModel]="sampleSolutionUML!"
+                            [withExplanation]="!!modelingExercise.sampleSolutionExplanation"
+                            [explanation]="modelingExercise.sampleSolutionExplanation || ''"
+                        ></jhi-modeling-editor>
+                    </dd>
+                </dl>
+            </ng-container>
             <jhi-complaint-student-view
                 *ngIf="
                     exercise &&

@@ -675,4 +675,32 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
         request.delete("/api/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetModelingExercise_asStudent_sampleSolutionVisibility() throws Exception {
+        classExercise.setSampleSolutionModel("<Sample solution model>");
+        classExercise.setSampleSolutionExplanation("<Sample solution explanation>");
+
+        classExercise.setSampleSolutionPublicationDate(null);
+        modelingExerciseRepository.save(classExercise);
+
+        ModelingExercise modelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        assertThat(modelingExercise.getSampleSolutionModel()).isNull();
+        assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+
+        classExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseRepository.save(classExercise);
+
+        modelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        assertThat(modelingExercise.getSampleSolutionModel()).isEqualTo(classExercise.getSampleSolutionModel());
+        assertThat(modelingExercise.getSampleSolutionExplanation()).isEqualTo(classExercise.getSampleSolutionExplanation());
+
+        classExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        modelingExerciseRepository.save(classExercise);
+
+        modelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        assertThat(modelingExercise.getSampleSolutionModel()).isEqualTo(classExercise.getSampleSolutionModel());
+        assertThat(modelingExercise.getSampleSolutionExplanation()).isEqualTo(classExercise.getSampleSolutionExplanation());
+    }
 }
