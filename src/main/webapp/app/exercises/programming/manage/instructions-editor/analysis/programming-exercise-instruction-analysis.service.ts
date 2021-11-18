@@ -148,7 +148,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        const cleanMatches = (matches: string[]) => uniq(matches.flat().filter((m) => !!m));
+        const cleanMatches = (matches: string[]) => uniq(matches.flat().filter(Boolean));
 
         return tasks
             .filter(([, task]) => !!task)

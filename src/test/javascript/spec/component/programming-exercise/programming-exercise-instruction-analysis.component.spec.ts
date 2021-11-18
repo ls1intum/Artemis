@@ -87,12 +87,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             tick(500); // Update is debounced, otherwise we would send updates on every change.
             fixture.detectChanges();
 
-            // Check internal state and output of component.
+            // Check internal state of the component.
             expect(comp.missingTestCases).toEqual(missingTestCases);
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
             expect(comp.invalidHints).toEqual(invalidHints);
-            expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
+
+            // Check that an event with the updated analysis is emitted.
             expect(emitAnalysisSpy).toHaveBeenCalledTimes(1);
+            expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
             // Check rendered html.
             const testCaseOk = debugElement.query(By.css(`#${testCaseOkId}`));
