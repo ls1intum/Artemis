@@ -55,15 +55,15 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build Artemis
-      run: ./gradlew -Pprod -Pwar clean bootWar
+      run: ./gradlew -Pprod -Pwar clean bootWar -x webapp
       env:
         NODE_OPTIONS: --max_old_space_size=6144
     - name: Production Build Gateway
-      run: ./gradlew -Pprod -Pwar clean :gateway:bootWar
+      run: ./gradlew -Pprod -Pwar :gateway:clean :gateway:bootWar
       env:
         NODE_OPTIONS: --max_old_space_size=6144
     - name: Production Build User Management
-      run: ./gradlew -Pprod -Pwar clean :user-management:bootWar
+      run: ./gradlew -Pprod -Pwar :user-management:clean :user-management:bootWar
     - name: Upload Artemis Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -78,7 +78,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: user-maganement.war
-        path: gateway/build/libs/user-maganement-*.war
+        path: user-maganement/build/libs/user-maganement-*.war
 #    - name: Upload Release Artifact
 #      if: github.event_name == 'release' && github.event.action == 'created'
 #      uses: actions/upload-release-asset@v1

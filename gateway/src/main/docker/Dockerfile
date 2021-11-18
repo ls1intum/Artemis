@@ -5,11 +5,12 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JAVA_OPTS=""
 
 # Add a jhipster user to run our application so that it doesn't need to run as root
-RUN adduser -D -s /bin/sh jhipster
-WORKDIR /home/jhipster
-USER jhipster
+RUN adduser -D -s /bin/sh artemis
+WORKDIR /home/artemis
+USER artemis
 
-COPY build/libs/*.war gateway/gateway.war
+ARG WAR_PATH=gateway/build/libs
+COPY $WAR_PATH/*.war gateway/gateway.war
 
 ENTRYPOINT ["java","-jar","gateway/gateway.war"]
 
