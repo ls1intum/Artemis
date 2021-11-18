@@ -934,6 +934,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.programmingLanguage(ProgrammingLanguage.C);
+        programmingExercise.setProjectType(ProjectType.FACT);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 

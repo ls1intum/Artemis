@@ -314,10 +314,12 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.ARTEMIS_C);
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toEqual(ProjectType.ARTEMIS_C);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
         }));
 
@@ -331,6 +333,20 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
             expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
+        }));
+
+        it('Should deactivate SCA for C (FACT)', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toEqual(ProjectType.FACT);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(undefined);
         }));
     });
 
@@ -457,7 +473,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [],
+                projectTypes: [ProjectType.FACT, ProjectType.ARTEMIS_C],
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();
