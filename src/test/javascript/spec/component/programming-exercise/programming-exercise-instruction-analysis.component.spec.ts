@@ -150,7 +150,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 fixture.detectChanges();
                 tick(500);
 
-                expect(debugElement.nativeElement.innerHtml).not.toEqual('');
+                expect(debugElement.nativeElement.innerHtml).toBe(undefined);
                 expect(debugElement.query(By.css('fa-icon'))).not.toBe(null);
                 expect(comp.missingTestCases).toEqual(missingTestCases);
                 expect(comp.invalidTestCases).toEqual(invalidTestCases);
