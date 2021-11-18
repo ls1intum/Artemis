@@ -34,6 +34,10 @@ export interface CourseStatisticsDataSet {
     backgroundColor: Array<any>;
 }
 
+type ExerciseTypeMap = {
+    [type in ExerciseType]: number;
+};
+
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
@@ -49,36 +53,30 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private translateSubscription: Subscription;
     course?: Course;
 
-    // TODO: improve the types here and use maps instead of java script objects
-
     // overall points
     overallPoints = 0;
-    overallPointsPerExercise = {};
+    overallPointsPerExercise: ExerciseTypeMap;
 
     // relative score
     totalRelativeScore = 0;
-    relativeScoresPerExercise = {};
+    relativeScoresPerExercise: ExerciseTypeMap;
 
     // max points
     overallMaxPoints = 0;
-    overallMaxPointsPerExercise = {};
+    overallMaxPointsPerExercise: ExerciseTypeMap;
 
     // reachable points
     reachablePoints = 0;
-    reachablePointsPerExercise = {};
+    reachablePointsPerExercise: ExerciseTypeMap;
 
     // current relative score
     currentRelativeScore = 0;
-    currentRelativeScoresPerExercise = {};
+    currentRelativeScoresPerExercise: ExerciseTypeMap;
 
     // presentation score
     overallPresentationScore = 0;
-    presentationScoresPerExercise = {};
-    presentationScoreEnabled = false;
+    presentationScoresPerExercise: ExerciseTypeMap;
 
-    // this is not an actual exercise, it contains more entries
-    // TODO: use a proper type here
-    groupedExercises: any[] = [];
     doughnutChartColors: string[] = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'red'];
 
     public exerciseTitles: object = {
@@ -112,16 +110,21 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         group: ScaleType.Ordinal,
         domain: this.doughnutChartColors,
     } as Color;
+
+    // arrays representing each exercise group
     ngxModelingExercises: any[] = [];
     ngxProgrammingExercises: any[] = [];
     ngxQuizExercises: any[] = [];
     ngxFileUploadExercises: any[] = [];
     ngxTextExercises: any[] = [];
+
+    // flags determining for each exercise group if at least one exercise has presentation score enabled
     quizPresentationScoreEnabled = false;
     programmingPresentationScoreEnabled = false;
     modelingPresentationScoreEnabled = false;
     textPresentationScoreEnabled = false;
-    filePresentationScoreEnabled = false;
+    fileUploadPresentationScoreEnabled = false;
+
     ngxBarColor = {
         name: 'Score per exercise group',
         selectable: true,
@@ -129,49 +132,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         domain: ['#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'],
     } as Color;
 
+    // this is necessary as binding in the html template would kill the performance
     bindDoughnutFormatting = this.valueDoughnutFormatting.bind(this);
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
+    // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
-
-    /*public barChartOptions: any = {
-        scaleShowVerticalLines: false,
-        maintainAspectRatio: false,
-        responsive: true,
-        scales: {
-            xAxes: [
-                {
-                    stacked: true,
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 0,
-                        minRotation: 0,
-                    },
-                    gridLines: {
-                        display: false,
-                    },
-                },
-            ],
-            yAxes: [
-                {
-                    stacked: true,
-                },
-            ],
-        },
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-            width: 120,
-            callbacks: {
-                label: (tooltipItem: any, data: any) => {
-                    return data.datasets[tooltipItem.datasetIndex].tooltips[tooltipItem.index];
-                },
-                afterLabel: (tooltipItem: any, data: any) => {
-                    return data.datasets[tooltipItem.datasetIndex].footer[tooltipItem.index];
-                },
-            },
-        },
-    };
-    public barChartType: ChartType = 'horizontalBar';*/
 
     gradingScaleExists = false;
     isBonus = false;
@@ -258,7 +224,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     groupExercisesByType() {
         let exercises = this.course!.exercises;
-        const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         this.ngxExerciseGroups = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
@@ -267,47 +232,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || exercise.type === ExerciseType.PROGRAMMING) {
                 const index = exerciseTypes.indexOf(exercise.type!);
                 if (index === -1) {
-                    // index = exerciseTypes.length;
                     exerciseTypes.push(exercise.type!);
                 }
-                /*if (!groupedExercises[index]) {
-                    groupedExercises[index] = {
-                        type: exercise.type,
-                        relativeScore: 0,
-                        overallMaxPoints: 0,
-                        absoluteScore: 0,
-                        presentationScore: 0,
-                        presentationScoreEnabled: exercise.presentationScoreEnabled,
-                        names: [],
-                        scores: { data: [], label: 'Score', tooltips: [], footer: [], backgroundColor: [], hoverBackgroundColor: [] }, // part of dataset
-                        missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [], backgroundColor: 'Salmon', hoverBackgroundColor: 'Salmon' }, // part of dataset
-                        notGraded: { data: [], label: 'Not graded', tooltips: [], footer: [], backgroundColor: 'SkyBlue', hoverBackgroundColor: 'SkyBlue' }, // part of dataset
-                        reachableScore: 0,
-                        currentRelativeScore: 0,
-                    };
-                }*/
+                const series = this.generateDefaultSeries();
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
-                    // groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseNotParticipated', false);
-                    const series = [
-                        {
-                            name: 'Achieved (included)',
-                            value: 0,
-                        },
-                        { name: 'Achieved (not included)', value: 0 },
-                        { name: 'Achieved bonus', value: 0 },
-                        { name: 'Not graded', value: 0 },
-                        {
-                            name: 'Missed points',
-                            value: 100,
-                            afterDueDate: false,
-                            notParticipated: true,
-                            exerciseTitle: exercise.title,
-                        },
-                    ];
+                    series[4].value = 100;
+                    series[4].afterDueDate = false;
+                    series[4].notParticipated = true;
+                    series[4].exerciseTitle = exercise.title;
                     this.pushToData(exercise, series);
                 } else {
-                    // const scoreColor = this.getScoreColor(exercise.includedInOverallScore!);
                     exercise.studentParticipations.forEach((participation) => {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
@@ -315,37 +250,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 const roundedParticipationScore = roundScoreSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = roundedParticipationScore >= 100 ? 100 : roundedParticipationScore;
                                 const missedScore = 100 - cappedParticipationScore;
-                                /*groupedExercises[index].scores.data.push(roundedParticipationScore);
-                                groupedExercises[index].scores.backgroundColor.push(scoreColor);
-                                groupedExercises[index].scores.hoverBackgroundColor.push(scoreColor);
-                                groupedExercises[index].missedScores.data.push(missedScore);
-                                groupedExercises[index].notGraded.data.push(0);
-                                groupedExercises[index].notGraded.tooltips.push(null);
-                                groupedExercises[index].names.push(exercise.title);
-                                groupedExercises[index].scores.footer.push(null);
-                                groupedExercises[index].missedScores.footer.push(null);
-                                groupedExercises[index].notGraded.footer.push(null);
-                                this.generateTooltip(participationResult, groupedExercises[index], exercise.includedInOverallScore!);*/
                                 const replaced = participationResult.resultString!.replace(',', '.');
                                 const split = replaced.split(' ');
                                 const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
-                                const series = [
-                                    {
-                                        name: 'Achieved (included)',
-                                        value: 0,
-                                        absoluteValue: 0,
-                                    },
-                                    { name: 'Achieved (not included)', value: 0, absoluteValue: 0 },
-                                    { name: 'Achieved bonus', value: 0, absoluteValue: 0 },
-                                    { name: 'Not graded', value: 0 },
-                                    {
-                                        name: 'Missed points',
-                                        value: missedScore,
-                                        absoluteValue: missedPoints,
-                                        afterDueDate: false,
-                                        notParticipated: false,
-                                    },
-                                ];
+                                series[4].value = missedScore;
+                                series[4].absoluteValue = missedPoints;
+                                series[4].afterDueDate = false;
+                                series[4].notParticipated = false;
+
                                 switch (exercise.includedInOverallScore) {
                                     case IncludedInOverallScore.INCLUDED_COMPLETELY:
                                         series[0].value = roundedParticipationScore;
@@ -367,194 +279,34 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 participation.initializationState === InitializationState.FINISHED &&
                                 (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
                             ) {
-                                // groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseNotGraded', true);
-                                const series = [
-                                    {
-                                        name: 'Achieved (included)',
-                                        value: 0,
-                                    },
-                                    { name: 'Achieved (not included)', value: 0 },
-                                    { name: 'Achieved bonus', value: 0 },
-                                    { name: 'Not graded', value: 100, exerciseTitle: exercise.title },
-                                    {
-                                        name: 'Missed points',
-                                        value: 0,
-                                        afterDueDate: false,
-                                        notParticipated: false,
-                                    },
-                                ];
+                                series[3].value = 100;
+                                series[3].exerciseTitle = exercise.title;
                                 this.pushToData(exercise, series);
                             } else {
-                                /*groupedExercises[index] =
-                                this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseParticipatedAfterDueDate', false);*/
-
-                                const series = [
-                                    { name: 'Achieved points (included)', value: 0 },
-                                    { name: 'Achieved (not included)', value: 0 },
-                                    { name: 'Achieved bonus', value: 0 },
-                                    { name: 'Not graded', value: 0 },
-                                    {
-                                        name: 'Missed points',
-                                        value: 100,
-                                        afterDueDate: true,
-                                        exerciseTitle: exercise.title,
-                                        notParticipated: false,
-                                    },
-                                ];
+                                series[4].value = 100;
+                                series[4].afterDueDate = true;
+                                series[4].exerciseTitle = exercise.title;
                                 this.pushToData(exercise, series);
                             }
                         }
                     });
                 }
-
-                /*groupedExercises[index].relativeScore = this.relativeScoresPerExercise[exercise.type!];
-                groupedExercises[index].overallMaxPoints = this.overallMaxPointsPerExercise[exercise.type!];
-                groupedExercises[index].currentRelativeScore = this.currentRelativeScoresPerExercise[exercise.type!];
-                groupedExercises[index].reachableScore = this.reachablePointsPerExercise[exercise.type!];
-                groupedExercises[index].absoluteScore = this.overallPointsPerExercise[exercise.type!];
-                groupedExercises[index].presentationScore = this.presentationScoresPerExercise[exercise.type!];
-                // check if presentation score is enabled for at least one exercise
-                groupedExercises[index].presentationScoreEnabled = groupedExercises[index].presentationScoreEnabled || exercise.presentationScoreEnabled;
-                groupedExercises[index].values = [groupedExercises[index].scores, groupedExercises[index].missedScores, groupedExercises[index].notGraded];*/
             }
         });
-        this.groupedExercises = groupedExercises;
         const allGroups = [this.ngxProgrammingExercises, this.ngxQuizExercises, this.ngxModelingExercises, this.ngxTextExercises, this.ngxFileUploadExercises];
         const allTypes = [ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
         this.pushExerciseGroupsToData(allGroups, allTypes);
     }
 
-    /*getScoreColor(includedInOverallScore: IncludedInOverallScore): string {
-        const color = {
-            name: '',
-            selectable: true,
-            group: ScaleType.Ordinal,
-            domain: [],
-        } as Color;
-
-        switch (includedInOverallScore) {
-            case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                return '#32cd32';
-            case IncludedInOverallScore.NOT_INCLUDED:
-                return '#e5e5e5';
-            case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                return '#ffd700';
-        }
-    }*/
-
-    /*createPlaceholderChartElement(chartElement: any, exerciseTitle: string, tooltipMessage: string, isNotGraded: boolean) {
-        const tooltip = this.translateService.instant(`artemisApp.courseOverview.statistics.${tooltipMessage}`, { exercise: exerciseTitle });
-        chartElement.notGraded.data.push(isNotGraded ? 100 : 0);
-        chartElement.scores.data.push(0);
-        chartElement.missedScores.data.push(isNotGraded ? 0 : 100);
-        chartElement.names.push(exerciseTitle);
-        chartElement.notGraded.tooltips.push(isNotGraded ? tooltip : null);
-        chartElement.scores.tooltips.push(null);
-        chartElement.missedScores.tooltips.push(isNotGraded ? null : tooltip);
-        chartElement.scores.footer.push(null);
-        chartElement.missedScores.footer.push(
-            tooltipMessage === 'exerciseParticipatedAfterDueDate' ? this.translateService.instant(`artemisApp.courseOverview.statistics.noPointsForExercise`) : null,
-        );
-        chartElement.notGraded.footer.push(null);
-        return chartElement;
+    generateDefaultSeries() {
+        return [
+            { name: 'Achieved (included)', value: 0, absoluteValue: 0 },
+            { name: 'Achieved (not included)', value: 0, absoluteValue: 0 },
+            { name: 'Achieved bonus', value: 0, absoluteValue: 0 },
+            { name: 'Not graded', value: 0, exerciseTitle: '' },
+            { name: 'Missed points', value: 0, absoluteValue: 0, afterDueDate: false, notParticipated: false, exerciseTitle: '' },
+        ];
     }
-
-    generateTooltipExtension(includedInOverallScore: IncludedInOverallScore): string {
-        switch (includedInOverallScore) {
-            case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                return ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.bonusPointTooltip');
-            case IncludedInOverallScore.NOT_INCLUDED:
-                return ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.notIncludedTooltip');
-            default:
-                return '';
-        }
-    }
-
-    generateTooltip(result: Result, groupedExercise: any, includedInOverallScore: IncludedInOverallScore): void {
-        if (!result.resultString) {
-            groupedExercise.scores.tooltips.push(
-                this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
-                    points: 0,
-                    percentage: 0,
-                }) + this.generateTooltipExtension(includedInOverallScore),
-            );
-            groupedExercise.missedScores.tooltips.push(
-                this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                    points: '',
-                    percentage: 100,
-                }),
-            );
-            return;
-        }
-
-        const replaced = result.resultString.replace(',', '.');
-        const split = replaced.split(' ');
-
-        const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
-        // This score is used to cap bonus points, so that we not have negative values for the missedScores
-        const roundedScore = roundScoreSpecifiedByCourseSettings(result.score!, this.course);
-        const score = roundedScore >= 100 ? 100 : roundedScore;
-        // custom result strings
-        if (!replaced.includes('passed') && !replaced.includes('points')) {
-            if (roundedScore! >= 50) {
-                groupedExercise.scores.tooltips.push(`${result.resultString} (${roundedScore}%)` + this.generateTooltipExtension(includedInOverallScore));
-                groupedExercise.missedScores.tooltips.push(`(${100 - score}%)`);
-            } else {
-                groupedExercise.scores.tooltips.push(`(${roundedScore}%)` + this.generateTooltipExtension(includedInOverallScore));
-                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - score}%)`);
-            }
-
-            return;
-        }
-
-        // exercise results strings are mostly 'x points' or 'x of y points'
-        if (replaced.includes('points')) {
-            if (split.length === 2) {
-                groupedExercise.scores.tooltips.push(
-                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
-                        points: parseFloat(split[0]),
-                        percentage: roundedScore,
-                    }) + this.generateTooltipExtension(includedInOverallScore),
-                );
-                groupedExercise.missedScores.tooltips.push(
-                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                        points: '',
-                        percentage: 100 - score,
-                    }),
-                );
-                return;
-            }
-            if (split.length === 4) {
-                groupedExercise.scores.tooltips.push(
-                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
-                        points: parseFloat(split[0]),
-                        percentage: roundedScore,
-                    }) + this.generateTooltipExtension(includedInOverallScore),
-                );
-                groupedExercise.missedScores.tooltips.push(
-                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                        points: missedPoints,
-                        percentage: 100 - score,
-                    }),
-                );
-                return;
-            }
-        }
-
-        // programming exercise result strings are mostly 'x passed' or 'x of y passed'
-        if (replaced.includes('passed')) {
-            if (split.length === 2) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + roundedScore + '%).' + this.generateTooltipExtension(includedInOverallScore));
-                groupedExercise.missedScores.tooltips.push('(' + (100 - score) + '%)');
-                return;
-            }
-            if (split.length === 4) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + roundedScore + '%).' + this.generateTooltipExtension(includedInOverallScore));
-                groupedExercise.missedScores.tooltips.push(missedPoints + ' tests failed (' + (100 - score) + '%).');
-                return;
-            }
-        }
-    }*/
 
     calculateAbsoluteScores(): void {
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
@@ -567,7 +319,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
-        const absoluteScores = {};
+        const absoluteScores = {} as ExerciseTypeMap;
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
         absoluteScores[ExerciseType.MODELING] = modelingExerciseTotalScore;
@@ -589,7 +341,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, MAX_POINTS);
         const textExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, MAX_POINTS);
         const fileUploadExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, MAX_POINTS);
-        const overallMaxPoints = {};
+        const overallMaxPoints = {} as ExerciseTypeMap;
         overallMaxPoints[ExerciseType.QUIZ] = quizzesTotalMaxPoints;
         overallMaxPoints[ExerciseType.PROGRAMMING] = programmingExerciseTotalMaxPoints;
         overallMaxPoints[ExerciseType.MODELING] = modelingExerciseTotalMaxPoints;
@@ -605,7 +357,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
         const textExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, RELATIVE_SCORE);
         const fileUploadExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, RELATIVE_SCORE);
-        const relativeScores = {};
+        const relativeScores = {} as ExerciseTypeMap;
         relativeScores[ExerciseType.QUIZ] = quizzesRelativeScore;
         relativeScores[ExerciseType.PROGRAMMING] = programmingExerciseRelativeScore;
         relativeScores[ExerciseType.MODELING] = modelingExerciseRelativeScore;
@@ -621,7 +373,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const modelingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, REACHABLE_POINTS);
         const textExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, REACHABLE_POINTS);
         const fileUploadExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, REACHABLE_POINTS);
-        const reachablePoints = {};
+        const reachablePoints = {} as ExerciseTypeMap;
         reachablePoints[ExerciseType.QUIZ] = quizzesReachablePoints;
         reachablePoints[ExerciseType.PROGRAMMING] = programmingExercisesReachablePoints;
         reachablePoints[ExerciseType.MODELING] = modelingExercisesReachablePoints;
@@ -637,7 +389,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const modelingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_RELATIVE_SCORE);
         const textExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, CURRENT_RELATIVE_SCORE);
         const fileUploadExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, CURRENT_RELATIVE_SCORE);
-        const currentRelativeScores = {};
+        const currentRelativeScores = {} as ExerciseTypeMap;
         currentRelativeScores[ExerciseType.QUIZ] = quizzesCurrentRelativeScore;
         currentRelativeScores[ExerciseType.PROGRAMMING] = programmingExerciseCurrentRelativeScore;
         currentRelativeScores[ExerciseType.MODELING] = modelingExerciseCurrentRelativeScore;
@@ -653,7 +405,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, PRESENTATION_SCORE);
         const fileUploadExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, PRESENTATION_SCORE);
         // TODO: use a proper type here, e.g. a map
-        const presentationScores = {};
+        const presentationScores = {} as ExerciseTypeMap;
         presentationScores[ExerciseType.QUIZ] = 0;
         presentationScores[ExerciseType.PROGRAMMING] = programmingExercisePresentationScore;
         presentationScores[ExerciseType.MODELING] = modelingExercisePresentationScore;
@@ -695,12 +447,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return value.data.name + ': ' + value.value;
     }
 
-    stringify(value: any) {
-        console.log(JSON.parse(JSON.stringify(value)));
-        return JSON.stringify(value);
-        // return JSON.stringify(value);
-    }
-
     /**
      * Depending on the type of the exercise, it adds a new object containing
      * the different scores of the correspnding exercise group of the chart
@@ -739,7 +485,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     name: exercise.title,
                     series,
                 });
-                this.filePresentationScoreEnabled = this.filePresentationScoreEnabled || exercise.presentationScoreEnabled!;
+                this.fileUploadPresentationScoreEnabled = this.fileUploadPresentationScoreEnabled || exercise.presentationScoreEnabled!;
                 break;
             case ExerciseType.TEXT:
                 this.ngxTextExercises.push({
@@ -783,7 +529,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         exerciseGroup[0].presentationScoreEnabled = this.quizPresentationScoreEnabled;
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        exerciseGroup[0].presentationScoreEnabled = this.filePresentationScoreEnabled;
+                        exerciseGroup[0].presentationScoreEnabled = this.fileUploadPresentationScoreEnabled;
                         break;
                     case ExerciseType.TEXT:
                         exerciseGroup[0].presentationScoreEnabled = this.textPresentationScoreEnabled;

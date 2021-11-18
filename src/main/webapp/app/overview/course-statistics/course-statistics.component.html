@@ -80,7 +80,6 @@
                         [barPadding]="exerciseGroup[0].barPadding"
                     >
                         <ng-template #tooltipTemplate let-model="model">
-                            <span>{{ stringify(model) }}</span>
                             <div *ngIf="['Achieved (included)', 'Achieved bonus', 'Achieved (not included)'].includes(model.name)">
                                 <span
                                     *ngIf="!model.tooltipType"
