@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
@@ -577,20 +578,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
-                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
-        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
-        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
-        testCaseRepository.saveAll(testCases.values());
-
+        var testCases = createTestCases(false);
         var testParticipations = createTestParticipations();
-
-        // change test case weights
-        testCases.get("test1").setWeight(0.);
-        testCases.get("test2").setWeight(1.);
-        testCases.get("test3").setWeight(3.);
-        testCaseRepository.saveAll(testCases.values());
+        changeTestCaseWeights(testCases);
 
         // re-evaluate
         final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
@@ -647,21 +637,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
-                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
-        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
-        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
-        testCases.get("test4").active(true).visibility(Visibility.NEVER).setWeight(1.);
-        testCaseRepository.saveAll(testCases.values());
-
-        var testParticipations = createTestParticipations();
-
-        // change test case weights
-        testCases.get("test1").setWeight(0.);
-        testCases.get("test2").setWeight(1.);
-        testCases.get("test3").setWeight(3.);
-        testCaseRepository.saveAll(testCases.values());
+        final var testCases = createTestCases(true);
+        final var testParticipations = createTestParticipations();
+        changeTestCaseWeights(testCases);
 
         // re-evaluate
         final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
@@ -707,20 +685,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
 
-        final var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
-                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
-        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
-        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
-        testCaseRepository.saveAll(testCases.values());
-
+        final var testCases = createTestCases(false);
         final var testParticipations = createTestParticipations();
-
-        // change test case weights
-        testCases.get("test1").setWeight(0.);
-        testCases.get("test2").setWeight(1.);
-        testCases.get("test3").setWeight(3.);
-        testCaseRepository.saveAll(testCases.values());
+        changeTestCaseWeights(testCases);
 
         for (int student = 1; student <= 5; ++student) {
             final var testParticipation = (ProgrammingExerciseStudentParticipation) testParticipations[student - 1];
@@ -729,6 +696,56 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
             verifyStudentScoreCalculation(testParticipations, student);
         }
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldUpdateOnlyResultsForParticipationsWithoutIndividualDueDate() {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        final var testCases = createTestCases(false);
+        final var testParticipations = createTestParticipations();
+        changeTestCaseWeights(testCases);
+
+        var participationWithIndividualDueDate = testParticipations[3];
+        participationWithIndividualDueDate.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
+        participationWithIndividualDueDate = studentParticipationRepository.save((StudentParticipation) participationWithIndividualDueDate);
+        final Long participationWithIndividualDueDateId = participationWithIndividualDueDate.getId();
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        final var updated = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(programmingExercise);
+        // four student results + template + solution
+        assertThat(updated).hasSize(6);
+
+        final var updatedParticipationIds = updated.stream().map(result -> result.getParticipation().getId()).collect(Collectors.toSet());
+        assertThat(updatedParticipationIds).hasSize(5);
+        assertThat(updatedParticipationIds).allMatch(participationId -> !Objects.equals(participationId, participationWithIndividualDueDateId));
+    }
+
+    private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
+        if (withAdditionalInvisibleTestCase) {
+            testCases.get("test4").active(true).visibility(Visibility.NEVER).setWeight(1.);
+        }
+        testCaseRepository.saveAll(testCases.values());
+
+        return testCases;
+    }
+
+    private void changeTestCaseWeights(final Map<String, ProgrammingExerciseTestCase> testCases) {
+        // change test case weights
+        testCases.get("test1").setWeight(0.);
+        testCases.get("test2").setWeight(1.);
+        testCases.get("test3").setWeight(3.);
+        testCaseRepository.saveAll(testCases.values());
     }
 
     private void verifyStudentScoreCalculations(final Participation[] testParticipations) {
@@ -799,7 +816,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     }
 
     private Participation[] createTestParticipations() {
-
         var testParticipations = new Participation[5];
 
         // template does not pass any tests
