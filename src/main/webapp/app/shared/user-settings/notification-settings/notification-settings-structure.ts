@@ -92,6 +92,17 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
+            key: 'editorExclusiveNotifications',
+            restrictionLevel: Authority.EDITOR,
+            settings: [
+                {
+                    key: 'programmingTestCasesChanged',
+                    descriptionKey: 'programmingTestCasesChangedDescription',
+                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED,
+                },
+            ],
+        },
+        {
             key: 'instructorExclusiveNotifications',
             restrictionLevel: Authority.INSTRUCTOR,
             settings: [
@@ -99,11 +110,6 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     key: 'courseAndExamArchivingStarted',
                     descriptionKey: 'courseAndExamArchivingStartedDescription',
                     settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
-                },
-                {
-                    key: 'programmingTestCasesChanged',
-                    descriptionKey: 'programmingTestCasesChangedDescription',
-                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED,
                 },
             ],
         },

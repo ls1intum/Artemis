@@ -545,7 +545,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
         if (testCasesChanged) {
-            groupNotificationService.notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
+            groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
         }
         else {
             groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);

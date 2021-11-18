@@ -285,12 +285,13 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify instructor groups about changed test cases for a programming exercise.
+     * Notify editor and instructor groups about changed test cases for a programming exercise.
      *
-     * @param exercise         that has been updated
+     * @param exercise that has been updated
      */
-    public void notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+    public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
+                NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
     }
 
     /**

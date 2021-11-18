@@ -524,8 +524,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
-        groupNotificationService.notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise(programmingExercise);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE);
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
+        verifyRepositoryCallWithCorrectNotification(2, NotificationTitleTypeConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE);
     }
 
     // Course Archiving
