@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: Build & Deploy Microservices
 
 on:
   pull_request:
