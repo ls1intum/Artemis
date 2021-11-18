@@ -7,37 +7,19 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ExerciseDateService {
-
-    private final ExerciseRepository exerciseRepository;
 
     private final ParticipationRepository participationRepository;
 
     private final ExamDateService examDateService;
 
-    public ExerciseDateService(ExerciseRepository exerciseRepository, ParticipationRepository participationRepository, ExamDateService examDateService) {
-        this.exerciseRepository = exerciseRepository;
+    public ExerciseDateService(ParticipationRepository participationRepository, ExamDateService examDateService) {
         this.participationRepository = participationRepository;
         this.examDateService = examDateService;
-    }
-
-    /**
-     * Finds the latest individual due date for participants. If no individual due dates exist, then the exercise due date is returned.
-     *
-     * Returns nothing if the exercise itself has no due date.
-     * @param exerciseId of the exercise for which the latest due date should be returned.
-     * @return the latest individual due date, or if not existing the exercise due date.
-     * @throws EntityNotFoundException if no exercise with the given id can be found.
-     */
-    public Optional<ZonedDateTime> getLatestIndividualDueDate(Long exerciseId) {
-        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        return getLatestIndividualDueDate(exercise);
     }
 
     /**
