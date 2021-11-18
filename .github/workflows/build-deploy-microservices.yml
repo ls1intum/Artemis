@@ -77,8 +77,8 @@ jobs:
     - name: Upload User Management Microservice Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: user-maganement.war
-        path: user-maganement/build/libs/user-maganement-*.war
+        name: user-management.war
+        path: user-management/build/libs/user-management-*.war
 #    - name: Upload Release Artifact
 #      if: github.event_name == 'release' && github.event.action == 'created'
 #      uses: actions/upload-release-asset@v1
