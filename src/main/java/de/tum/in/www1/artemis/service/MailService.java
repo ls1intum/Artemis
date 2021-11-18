@@ -214,7 +214,6 @@ public class MailService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
-        String content = createContentForNotificationEmailByType(notificationType, context);
         String subject = notification.getTitle();
 
         if (notificationSubject instanceof Exercise) {
@@ -230,6 +229,8 @@ public class MailService {
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
         }
         context.setVariable(BASE_URL, artemisServerUrl);
+
+        String content = createContentForNotificationEmailByType(notificationType, context);
 
         sendEmail(user, subject, content, false, true);
     }
