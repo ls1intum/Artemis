@@ -97,7 +97,8 @@ public class NotificationSettingsServiceTest {
     public void testFindDeactivatedNotificationTypes() {
         NotificationSetting[] tmpNotificationSettingsArray = Arrays.copyOf(savedNotificationSettings, savedNotificationSettings.length);
         Set<NotificationSetting> tmpNotificationSettingsSet = new HashSet<>(Arrays.asList(tmpNotificationSettingsArray));
-        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(true, tmpNotificationSettingsSet);
+        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
+                tmpNotificationSettingsSet);
         // SettingA : exercise-open-for-practice -> [EXERCISE_PRACTICE] : webapp deactivated
         // SettingB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // SettingC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated

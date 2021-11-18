@@ -103,13 +103,13 @@ public class NotificationSettingsService {
 
         Set<NotificationType> deactivatedTypes;
 
-        // the urgent emails were already sent
-        // if the user has not yet changes his settings they will be of size 0 -> use default
+        // the urgent emails were already sent at this point
+        // if the user has not yet changed his settings they will be of size 0 -> use default
         if (notificationSettings.isEmpty()) {
-            deactivatedTypes = findDeactivatedNotificationTypes(false, DEFAULT_NOTIFICATION_SETTINGS);
+            deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, DEFAULT_NOTIFICATION_SETTINGS);
         }
         else {
-            deactivatedTypes = findDeactivatedNotificationTypes(false, notificationSettings);
+            deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, notificationSettings);
         }
 
         if (deactivatedTypes.isEmpty()) {
@@ -131,12 +131,12 @@ public class NotificationSettingsService {
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationSettings
-     * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
+     * @param communicationChannel indicates if the status should be used/checked for the webapp or for email
      * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
-    public Set<NotificationType> findDeactivatedNotificationTypes(boolean checkForWebapp, Set<NotificationSetting> notificationSettings) {
-        Map<NotificationType, Boolean> notificationSettingWithActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(checkForWebapp,
+    public Set<NotificationType> findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel communicationChannel, Set<NotificationSetting> notificationSettings) {
+        Map<NotificationType, Boolean> notificationSettingWithActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(communicationChannel,
                 notificationSettings);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
         notificationSettingWithActivationStatusMap.forEach((notificationType, isActivated) -> {
@@ -159,16 +159,17 @@ public class NotificationSettingsService {
     /**
      * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
      * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
-     * @param checkForWebapp indicates if the map should look for the email or webapp activity
+     * @param communicationChannel indicates if the map should look for the email or webapp activity
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(boolean checkForWebapp,
+    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(NotificationSettingsCommunicationChannel communicationChannel,
             Set<NotificationSetting> notificationSettings) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         for (NotificationSetting setting : notificationSettings) {
             NotificationType[] tmpNotificationTypes = NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP.getOrDefault(setting.getSettingId(), new NotificationType[0]);
-            for (NotificationType type : tmpNotificationTypes) {
-                resultingMap.put(type, checkForWebapp ? setting.isWebapp() : setting.isEmail());
+            switch (communicationChannel) {
+                case WEBAPP -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isWebapp()));
+                case EMAIL -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isEmail()));
             }
         }
         return resultingMap;
