@@ -224,7 +224,7 @@ describe('OrionConnectorService', () => {
         serviceUnderTest.downloadSubmission(5, 0, false, 'test');
 
         expect((window as any).orionExerciseConnector.downloadSubmission).toHaveBeenCalledTimes(1);
-        expect((window as any).orionExerciseConnector.downloadSubmission).toHaveBeenCalledWith('5', '0', false, 'test');
+        expect((window as any).orionExerciseConnector.downloadSubmission).toHaveBeenCalledWith('5', '0', 'test');
     });
 
     it('should forward initializeAssessment', () => {
