@@ -27,7 +27,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ModelingExerciseRepository extends JpaRepository<ModelingExercise, Long> {
 
-    @Query("SELECT e FROM ModelingExercise e WHERE e.course.id = :#{#courseId}")
+    @Query("""
+            SELECT e FROM ModelingExercise e
+            LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :#{#courseId}
+            """)
     List<ModelingExercise> findByCourseId(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "exampleSubmissions.submission.results" })
