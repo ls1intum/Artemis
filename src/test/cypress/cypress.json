@@ -14,7 +14,7 @@
     "responseTimeout": 120000,
     "reporter": "junit",
     "reporterOptions": {
-        "mochaFile": "build/cypress/test-reports/test-results.xml",
+        "mochaFile": "build/cypress/test-reports/test-results.[hash].xml",
         "toConsole": false
     }
 }

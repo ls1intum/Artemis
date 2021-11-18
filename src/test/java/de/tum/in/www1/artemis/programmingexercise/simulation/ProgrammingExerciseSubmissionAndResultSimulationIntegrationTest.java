@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.programmingexercise.simulation;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResultSimulationResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +15,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 
 public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
@@ -35,8 +31,6 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     @Autowired
     ResultRepository resultRepository;
 
-    private List<Long> participationIds;
-
     private Long exerciseId;
 
     private ProgrammingExercise exercise;
@@ -52,7 +46,6 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
 
         exerciseId = exercise.getId();
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
-        participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).collect(Collectors.toList());
     }
 
     @AfterEach
@@ -70,10 +63,10 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
         final ProgrammingSubmission returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
                 ProgrammingSubmission.class, HttpStatus.CREATED);
         assertThat(submissionRepository.findAll()).hasSize(1);
+
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
         assertThat(returnedSubmission).isEqualTo(submission);
-        assertThat(participationRepository.findById(submission.getParticipation().getId()));
-        assertThat(participationIds.contains(submission.getParticipation().getId()));
+        assertThat(participationRepository.findById(submission.getParticipation().getId())).isPresent();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
     }
