@@ -175,15 +175,15 @@ public class ComplaintResource {
             return forbidden();
         }
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         var isTeamParticipation = participation.getParticipant() instanceof Team;
         var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
         if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);
-
-            if (!isTeamParticipation || !isTutorOfTeam) {
-                complaint.filterSensitiveInformation();
-            }
+        }
+        if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
+            complaint.filterSensitiveInformation();
         }
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().setParticipation(null);
