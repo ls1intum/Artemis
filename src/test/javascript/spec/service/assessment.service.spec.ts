@@ -34,8 +34,15 @@ describe('Assessment Service', () => {
         });
 
         it('should hide if no complaint or completion date is set', () => {
-            const isAllowed = isAllowedToModifyFeedback(false, false, true, true, undefined, {}, undefined);
+            const isAllowed = isAllowedToModifyFeedback(false, false, true, true, undefined, resultLock, undefined);
             expect(isAllowed).toBe(false);
+        });
+
+        it('should show if no complaint is set and the assessment is still running', () => {
+            const isAllowedSubmitted = isAllowedToModifyFeedback(false, false, true, false, undefined, resultLock, undefined);
+            const isAllowedNotSubmitted = isAllowedToModifyFeedback(false, false, true, false, undefined, result, undefined);
+            expect(isAllowedSubmitted).toBe(true);
+            expect(isAllowedNotSubmitted).toBe(true);
         });
     });
 

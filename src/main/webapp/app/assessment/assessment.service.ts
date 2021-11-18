@@ -22,7 +22,7 @@ export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean
 
 /**
  * During assessment, modifying the feedback should be allowed.
- * After the assessment, modification should be prevented if the deadline hasn't passed yet.
+ * After the assessment, modification should be allowed if the deadline hasn't passed yet. After that, it should be prevented.
  * If a feedback request was filed, the feedback should not be modifiable.
  * If a complaint was filed, the feedback should be only modifiable if the user is allowed to handle the complaint.
  */
@@ -40,9 +40,6 @@ export const isAllowedToModifyFeedback = (
     }
     if (complaint) {
         return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
-    }
-    if (!!result?.completionDate) {
-        return false;
     }
     return !hasAssessmentDueDatePassed;
 };
