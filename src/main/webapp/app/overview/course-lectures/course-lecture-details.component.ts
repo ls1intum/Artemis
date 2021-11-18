@@ -43,7 +43,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     loadData() {
         this.isLoading = true;
         this.lectureService
-            .find(this.lectureId!)
+            .findWithDetails(this.lectureId!)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
