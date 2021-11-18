@@ -186,7 +186,7 @@ jobs:
       env:
         TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
-        docker tag artemis ghcr.io/ls1intum/gateway:$TAG
+        docker tag gateway ghcr.io/ls1intum/gateway:$TAG
         docker push ghcr.io/ls1intum/gateway:$TAG
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
@@ -238,7 +238,7 @@ jobs:
       env:
         TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
-        docker tag artemis ghcr.io/ls1intum/usermanagement:$TAG
+        docker tag usermanagement ghcr.io/ls1intum/usermanagement:$TAG
         docker push ghcr.io/ls1intum/usermanagement:$TAG
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
