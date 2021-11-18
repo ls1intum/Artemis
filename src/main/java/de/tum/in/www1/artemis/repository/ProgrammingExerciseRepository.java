@@ -42,6 +42,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results tpr
             LEFT JOIN FETCH sp.results spr
+            LEFT JOIN FETCH pe.categories
             WHERE pe.course.id = :#{#courseId}
                 AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
