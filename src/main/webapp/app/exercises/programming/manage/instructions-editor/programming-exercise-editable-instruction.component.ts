@@ -2,7 +2,6 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Ou
 import { AlertService } from 'app/core/util/alert.service';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { flatMap } from 'lodash-es';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
@@ -285,7 +284,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param analysis that contains the resulting issues of the problem statement.
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
-        const lineWarnings = flatMap(analysis, ({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints));
+        const lineWarnings = Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, invalidHints }) =>
+            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints),
+        );
 
         this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.

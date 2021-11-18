@@ -108,9 +108,10 @@ export class ProgrammingExerciseInstructionAnalysisService {
      */
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
-            const lineNumberValues = acc[lineNumber];
+            const lineNumberValues = acc.get(lineNumber);
             const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
-            return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
+            acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
+            return acc;
         };
 
         return analysis
@@ -120,7 +121,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
                 values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
                 issueType,
             ])
-            .reduce(reducer, []);
+            .reduce(reducer, new Map());
     };
 
     /**
