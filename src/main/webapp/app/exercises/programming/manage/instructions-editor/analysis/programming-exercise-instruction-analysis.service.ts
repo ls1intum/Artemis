@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { uniq } from 'lodash-es';
+import { flatten, uniq } from 'lodash-es';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/shared/util/global.utils';
 import {
@@ -70,7 +70,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             (testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.map((foundTestCase) => foundTestCase.toLowerCase()).includes(testCase.toLowerCase())),
         );
 
-        const invalidTestCases = invalidTestCaseAnalysis.flatMap(([, testCases]) => testCases);
+        const invalidTestCases = flatten(invalidTestCaseAnalysis.map(([, testCases]) => testCases));
 
         return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
     };
@@ -96,7 +96,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             )
             .filter(([, hints]) => !!hints.length);
 
-        const invalidHints = invalidHintAnalysis.flatMap(([, testCases]) => testCases);
+        const invalidHints = flatten(invalidHintAnalysis.map(([, testCases]) => testCases));
 
         return { invalidHints, invalidHintAnalysis };
     };
@@ -113,8 +113,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
         };
 
-        return analysis
-            .flat()
+        return flatten(analysis)
             .map(([lineNumber, values, issueType]: AnalysisItem) => [
                 lineNumber,
                 values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
@@ -147,7 +146,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        const cleanMatches = (matches: string[]) => uniq(matches.flat().filter((m) => !!m));
+        const cleanMatches = (matches: string[]) => uniq(flatten(matches).filter((m) => !!m));
 
         return tasks
             .filter(([, task]) => !!task)
