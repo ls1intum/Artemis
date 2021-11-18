@@ -4,9 +4,9 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Set;
 
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.in.www1.artemis.usermanagement.connector.GitlabRequestMockProvider;
-import de.tum.in.www1.artemis.usermanagement.connector.JenkinsRequestMockProvider;
+//import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.usermanagement.util.AbstractArtemisIntegrationTest;
 
 import org.junit.jupiter.api.AfterEach;
@@ -34,8 +34,8 @@ import de.tum.in.www1.artemis.domain.User;
         "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
-    @SpyBean
-    protected GitLabUserManagementService gitLabUserManagementService;
+//    @SpyBean
+//    protected GitLabUserManagementService gitLabUserManagementService;
 
     @SpyBean
     protected JenkinsServer jenkinsServer;
@@ -48,7 +48,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(gitLabUserManagementService, jenkinsServer);
+        Mockito.reset( jenkinsServer);
         super.resetSpyBeans();
     }
 

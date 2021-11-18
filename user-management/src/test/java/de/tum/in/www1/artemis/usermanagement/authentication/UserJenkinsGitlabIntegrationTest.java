@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.usermanagement.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.usermanagement.util.ModelFactory;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.usermanagement.util.UserTestService;
 
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;

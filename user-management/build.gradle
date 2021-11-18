@@ -171,9 +171,18 @@ sourceSets {
             include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
             include "java/de/tum/in/www1/artemis/util/DatabaseCleanupService.*"
             include "java/de/tum/in/www1/artemis/util/ConfigUtil.*"
+            include "java/de/tum/in/www1/artemis/util/ModelFactory.*"
+            include "java/de/tum/in/www1/artemis/util/TestConstants.*"
+            include "java/de/tum/in/www1/artemis/connector/GitlabRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/JenkinsRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/JiraRequestMockProvider.*"
+
 
             srcDir file("../src/main")
             include "java/de/tum/in/www1/artemis/util/FileUtils.*"
+            include "java/de/tum/in/www1/artemis/service/UrlService.*"
+            include "java/de/tum/in/www1/artemis/service/connectors/bamboo/dto/**"
+            include "java/de/tum/in/www1/artemis/service/connectors/jenkins/dto/**"
         }
     }
     main {

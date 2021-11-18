@@ -5,9 +5,9 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.usermanagement.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.usermanagement.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.usermanagement.util.ModelFactory;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import org.gitlab4j.api.UserApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

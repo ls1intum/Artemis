@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import de.tum.in.www1.artemis.usermanagement.service.user.UserCreationService;
-import de.tum.in.www1.artemis.usermanagement.util.ModelFactory;
 import de.tum.in.www1.artemis.usermanagement.web.rest.AccountResource;
 import de.tum.in.www1.artemis.usermanagement.web.rest.vm.KeyAndPasswordVM;
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +30,7 @@ import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ConfigUtil;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 

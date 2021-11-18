@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.usermanagement.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.usermanagement.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static de.tum.in.www1.artemis.domain.Authority.*;
-import static de.tum.in.www1.artemis.usermanagement.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
