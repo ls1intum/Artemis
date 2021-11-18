@@ -46,7 +46,11 @@ export const isAllowedToModifyFeedback = (
         return true;
     }
     if (complaint) {
-        return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+        if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
+            return isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+        } else {
+            return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+        }
     }
     return !hasAssessmentDueDatePassed;
 };
