@@ -92,7 +92,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
-            key: 'editorExclusiveNotifications',
+            key: 'editorNotifications',
             restrictionLevels: [Authority.EDITOR, Authority.INSTRUCTOR],
             settings: [
                 {
@@ -103,7 +103,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
-            key: 'instructorExclusiveNotifications',
+            key: 'instructorNotifications',
             restrictionLevels: [Authority.INSTRUCTOR],
             settings: [
                 {

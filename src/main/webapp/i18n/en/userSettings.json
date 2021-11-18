@@ -21,8 +21,8 @@
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
-                "editorExclusiveNotifications": "Editor Exclusive Notifications",
-                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
+                "editorNotifications": "Editor Notifications",
+                "instructorNotifications": "Instructor Notifications"
             },
             "settingNames": {
                 "exerciseReleased": "Exercise released",

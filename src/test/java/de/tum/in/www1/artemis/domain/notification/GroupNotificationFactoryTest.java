@@ -281,7 +281,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
         expectedTitle = PROGRAMMING_TEST_CASES_CHANGED_TITLE;
         expectedText = "The test cases of the programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
-                + "\" were updated." + " The student submissions should be build and tested so that results with the updated settings can be created.";
+                + "\" were updated." + " The students' submissions should be rebuilt and tested in order to create new results.";
         expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
         expectedPriority = NotificationPriority.MEDIUM;
         createAndCheckNotification(Base.EXERCISE);

@@ -21,8 +21,8 @@
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
-                "editorExclusiveNotifications": "Exklusive Benachrichtigungen für Editor:innen",
-                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+                "editorExclusiveNotifications": "Benachrichtigungen für Editor:innen",
+                "instructorExclusiveNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
