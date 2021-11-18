@@ -410,8 +410,6 @@ public class UserTestService {
     // Test
     public void createUserWithGroups() throws Exception {
         var course = database.addEmptyCourse();
-//        database.addProgrammingExerciseToCourse(course, false);
-//        course = database.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
 
