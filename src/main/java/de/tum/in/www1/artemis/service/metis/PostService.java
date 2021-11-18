@@ -74,6 +74,7 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
+        mayInteractWithPost(post, user, course);
         preCheckPostValidity(post);
 
         // set author to current user
@@ -81,9 +82,7 @@ public class PostService extends PostingService {
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
 
-        // announcements can only be created by instructors
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
@@ -111,12 +110,13 @@ public class PostService extends PostingService {
      */
     public Post updatePost(Long courseId, Long postId, Post post) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-
         // check
         if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
+        mayInteractWithPost(post, user, course);
+
         Post existingPost = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
@@ -331,6 +331,7 @@ public class PostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
+        mayInteractWithPost(post, user, course);
         preCheckPostValidity(post);
         mayUpdateOrDeletePostingElseThrow(post, user, course);
 
@@ -396,7 +397,7 @@ public class PostService extends PostingService {
         Post postForNotification = new Post();
         postForNotification.setId(post.getId());
         postForNotification.setAuthor(post.getAuthor());
-        postForNotification.setCourse(post.getCourse());
+        postForNotification.setCourse(course);
         postForNotification.setCourseWideContext(post.getCourseWideContext());
         postForNotification.setLecture(post.getLecture());
         postForNotification.setExercise(post.getExercise());
@@ -462,5 +463,19 @@ public class PostService extends PostingService {
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
+    }
+
+    /**
+     * Checks if the requesting user is authorized in the course context,
+     * i.e., if the user is allowed to interact with a certain post
+     *
+     * @param post      post to interact with, i.e., create, update or delete
+     * @param user      requesting user
+     * @param course    course the posting belongs to
+     */
+    private void mayInteractWithPost(Post post, User user, Course course) {
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        }
     }
 }
