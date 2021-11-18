@@ -21,6 +21,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 })
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
+    filteredTextExercises: TextExercise[];
 
     constructor(
         public exerciseService: ExerciseService,
@@ -38,6 +39,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     ) {
         super(courseService, translateService, route, eventManager);
         this.textExercises = [];
+        this.filteredTextExercises = [];
     }
 
     protected loadExercises(): void {
@@ -50,10 +52,16 @@ export class TextExerciseComponent extends ExerciseComponent {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
                 });
+                this.applyFilter();
                 this.emitExerciseCount(this.textExercises.length);
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
+    }
+
+    protected applyFilter(): void {
+        this.filteredTextExercises = this.textExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        this.emitFilteredExerciseCount(this.filteredTextExercises.length);
     }
 
     /**
