@@ -1,0 +1,67 @@
+version: "2"
+services:
+    artemis-mysql:
+        container_name: artemis_mysql
+        image: ubuntu/mysql:8.0-21.10_beta
+        volumes:
+            - ~/volumes/Artemis/MySQL/:/var/lib/mysql/
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_ROOT_PASSWORD=
+            - MYSQL_DATABASE=Artemis
+        ports:
+            - "3306:3306"
+        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
+        networks:
+            artemis:
+                ipv4_address: 172.20.0.5
+    jira:
+        container_name: artemis_jira
+        build: jira
+        volumes:
+          - ~/volumes/Artemis/Jira:/var/atlassian/application-data/jira
+        ports:
+            - "8081:8080"
+        hostname: jira
+        networks:
+            artemis:
+                ipv4_address: 172.20.0.2
+    bitbucket:
+        container_name: artemis_bitbucket
+        build: bitbucket
+        volumes:
+            - ~/volumes/Artemis/BitBucket:/var/atlassian/application-data/bitbucket
+        environment:
+            - SPRING_APPLICATION_JSON={"plugin":{"ssh":{"baseurl":"ssh://bitbucket:7999"}}}
+        ports:
+            - "7990:7990"
+            - "7999:7999"
+        hostname: bitbucket
+        networks:
+            artemis:
+                ipv4_address: 172.20.0.3
+    bamboo:
+        container_name: artemis_bamboo
+        build: bamboo
+        volumes:
+            - ~/volumes/Artemis/Bamboo:/var/atlassian/application-data/bamboo
+        ports:
+            - "54663:54663"
+            - "8085:8085"
+        hostname: bamboo
+        networks:
+            artemis:
+                ipv4_address: 172.20.0.4
+
+networks:
+  artemis:
+      driver: "bridge"
+      ipam:
+        driver: default
+        config:
+            - subnet: 172.20.0.0/24
+
+volumes:
+    artemis-jira:
+    artemis-bitbucket:
+    artemis-bamboo:
