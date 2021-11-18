@@ -5,6 +5,7 @@ import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/tex
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ActivatedRoute } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
@@ -52,6 +53,7 @@ export class AssessmentHeaderComponent {
     private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;
     readonly ComplaintType = ComplaintType;
+    readonly AssessmentType = AssessmentType;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;

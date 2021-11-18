@@ -47,8 +47,25 @@
             You have to respond to the complaint.
         </span>
         <span
+            id="automaticAssessmentComplaint"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && exercise?.assessmentType === AssessmentType.AUTOMATIC && !complaintHandled && !exercise?.teamMode"
+            class="m-2"
+            style="font-size: 65%"
+            jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint"
+        >
+            You may respond to the complaint.
+        </span>
+        <span
             id="assessmentReadOnlyUnhandledComplaint"
-            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !hasMoreFeedbackRequest && !complaintHandled && !exercise?.teamMode"
+            *ngIf="
+                isAssessor &&
+                !isAtLeastInstructor &&
+                hasComplaint &&
+                exercise?.assessmentType !== AssessmentType.AUTOMATIC &&
+                complaintType == ComplaintType.COMPLAINT &&
+                !complaintHandled &&
+                !exercise?.teamMode
+            "
             class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"

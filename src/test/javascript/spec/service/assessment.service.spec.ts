@@ -16,7 +16,7 @@ describe('Assessment Service', () => {
     const complaintOnAutomaticResult = { ...complaint, result: automaticResult };
     const feedbackRequestOnAutomaticResult = { ...feedbackRequest, result: automaticResult };
     const exercise = { teamMode: false, assessmentType: AssessmentType.MANUAL } as Exercise;
-    const exerciseNoAssessmentType = { teamMode: false } as Exercise;
+    const exerciseAutomatic = { teamMode: false, assessmentType: AssessmentType.AUTOMATIC } as Exercise;
     const teamExercise = { teamMode: true, assessmentType: AssessmentType.MANUAL } as Exercise;
     describe('isAllowedToModifyFeedback', () => {
         it('should show during assessment', () => {
@@ -80,14 +80,10 @@ describe('Assessment Service', () => {
         });
 
         it('should allow if assessor is not defined on individual exercises', () => {
-            const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, true, complaintOnAutomaticResult, exercise);
-            const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequestOnAutomaticResult, exercise);
-            const isAllowedComplaintNoAssessmentType = isAllowedToRespondToComplaintAction(false, false, true, complaintOnAutomaticResult, exerciseNoAssessmentType);
-            const isAllowedFeedbackRequestNoAssessmentType = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequestOnAutomaticResult, exerciseNoAssessmentType);
+            const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, true, complaintOnAutomaticResult, exerciseAutomatic);
+            const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequestOnAutomaticResult, exerciseAutomatic);
             expect(isAllowedComplaint).toBe(true);
             expect(isAllowedFeedbackRequest).toBe(true);
-            expect(isAllowedComplaintNoAssessmentType).toBe(true);
-            expect(isAllowedFeedbackRequestNoAssessmentType).toBe(true);
         });
 
         it('should allow correctly for complaint', () => {
