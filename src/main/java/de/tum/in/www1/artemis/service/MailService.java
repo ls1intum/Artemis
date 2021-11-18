@@ -157,7 +157,6 @@ public class MailService {
      * Sets the correct context for the case that the notificationSubject is an Exercise
      * @param notificationSubject which is an Exercise
      * @param context that is modified based on the exercise type
-     * @return the modified context
      */
     private void setExerciseContext(Object notificationSubject, Context context) {
         if (notificationSubject instanceof QuizExercise) {
