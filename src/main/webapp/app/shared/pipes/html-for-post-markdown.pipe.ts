@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { ShowdownExtension } from 'showdown';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
@@ -10,7 +9,7 @@ export class HtmlForPostingMarkdownPipe implements PipeTransform {
     constructor(private markdownService: ArtemisMarkdownService) {}
 
     /**
-     * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
+     * Converts markdown used in posting content into html, sanitizes it and then declares it as safe to bypass further security.
      * @param {string} markdown the original markdown text
      * @param {boolean} contentBeforeReference to indicate if this is markdown content before a possible reference or after
      * @param {string[]} allowedHtmlTags to allow during sanitization

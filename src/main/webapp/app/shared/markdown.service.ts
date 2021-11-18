@@ -111,7 +111,7 @@ export class ArtemisMarkdownService {
     }
 
     /**
-     * Converts markdown specifically used in posting content, into html, sanitizes it and then declares it as safe to bypass further security.
+     * Converts markdown used in posting content, into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
      * @param {boolean} contentBeforeReference  to indicate if this is markdown content before a possible reference or after

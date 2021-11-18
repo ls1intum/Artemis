@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, Directive, Input } from '@angular/core';
-import { getElement, getElements } from '../../../../helpers/utils/general.utils';
+import { getElement, getElements } from 'src/test/javascript/spec/helpers/utils/general.utils';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-post-markdown.pipe';
