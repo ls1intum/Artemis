@@ -46,6 +46,9 @@ export const isAllowedToModifyFeedback = (
     if (!result) {
         return false;
     }
+    if (!result.completionDate) {
+        return true;
+    }
     if (complaint) {
         return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
     }

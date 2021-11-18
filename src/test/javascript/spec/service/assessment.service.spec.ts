@@ -20,8 +20,10 @@ describe('Assessment Service', () => {
     const teamExercise = { teamMode: true, assessmentType: AssessmentType.MANUAL } as Exercise;
     describe('isAllowedToModifyFeedback', () => {
         it('should show during assessment', () => {
-            const isAllowed = isAllowedToModifyFeedback(false, false, true, false, resultLock, undefined, exercise);
-            expect(isAllowed).toBe(true);
+            const isAllowedBeforeDueDate = isAllowedToModifyFeedback(false, false, true, false, resultLock, undefined, exercise);
+            const isAllowedAfterDueDate = isAllowedToModifyFeedback(false, false, true, true, resultLock, undefined, exercise);
+            expect(isAllowedBeforeDueDate).toBe(true);
+            expect(isAllowedAfterDueDate).toBe(true);
         });
 
         it('should hide after assessment without complaint', () => {
@@ -42,8 +44,8 @@ describe('Assessment Service', () => {
             expect(isAllowed).toBe(false);
         });
 
-        it('should hide if no complaint or completion date is set', () => {
-            const isAllowed = isAllowedToModifyFeedback(false, false, true, true, resultLock, undefined, exercise);
+        it('should hide if no complaint is set', () => {
+            const isAllowed = isAllowedToModifyFeedback(false, false, true, true, result, undefined, exercise);
             expect(isAllowed).toBe(false);
         });
 
