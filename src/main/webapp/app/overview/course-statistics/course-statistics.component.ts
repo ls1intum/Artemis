@@ -686,16 +686,28 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return scores.get(scoreType)!;
     }
 
+    /**
+     * Modifies the tooltip content of the doughnut chart
+     * so that it displays {Quiz,Programming, Modeling, Text, File Upload, Missing} Points: the corresponding points
+     * @param value the default tooltip content
+     */
     valueDoughnutFormatting(value: any) {
-        // console.log(JSON.parse(JSON.stringify(value)));
         return value.data.name + ': ' + value.value;
     }
 
     stringify(value: any) {
-        return JSON.parse(JSON.stringify(value));
+        console.log(JSON.parse(JSON.stringify(value)));
+        return JSON.stringify(value);
         // return JSON.stringify(value);
     }
 
+    /**
+     * Depending on the type of the exercise, it adds a new object containing
+     * the different scores of the correspnding exercise group of the chart
+     * @param exercise an arbitrary exercise of a course
+     * @param series an array of dedicated objects containing the students performance in this exercise that is visualized by the chart
+     * @private
+     */
     private pushToData(exercise: Exercise, series: any) {
         switch (exercise.type!) {
             case ExerciseType.MODELING:
@@ -704,7 +716,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     series,
                 });
                 this.modelingPresentationScoreEnabled = this.modelingPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                // this.ngxModelingExercises = [...this.ngxModelingExercises];
                 break;
             case ExerciseType.PROGRAMMING:
                 series.forEach((part: any) => {
@@ -715,7 +726,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     series,
                 });
                 this.programmingPresentationScoreEnabled = this.programmingPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                // this.ngxProgrammingExercises = [...this.ngxProgrammingExercises];
                 break;
             case ExerciseType.QUIZ:
                 this.ngxQuizExercises.push({
@@ -723,7 +733,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     series,
                 });
                 this.quizPresentationScoreEnabled = this.quizPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                // this.ngxQuizExercises = [...this.ngxQuizExercises];
                 break;
             case ExerciseType.FILE_UPLOAD:
                 this.ngxFileUploadExercises.push({
@@ -731,26 +740,22 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     series,
                 });
                 this.filePresentationScoreEnabled = this.filePresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                // this.ngxFileUploadExercises = [...this.ngxFileUploadExercises];
                 break;
             case ExerciseType.TEXT:
                 this.ngxTextExercises.push({
                     name: exercise.title,
                     series,
-                    /*type: ExerciseType.TEXT,
-                    absoluteScore: this.overallPointsPerExercise[exercise.type!],
-                    relativeScore: this.relativeScoresPerExercise[exercise.type!],
-                    reachableScore: this.reachablePointsPerExercise[exercise.type!],
-                    currentRelativeScore: this.currentRelativeScoresPerExercise[exercise.type!],
-                    overallMaxPoints: this.overallMaxPointsPerExercise[exercise.type!],
-                    presentationScore: this.presentationScoresPerExercise[exercise.type!],
-                    presentationScoreEnabled: exercise.presentationScoreEnabled,*/
                 });
                 this.textPresentationScoreEnabled = this.textPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                // this.ngxTextExercises = [...this.ngxTextExercises];
                 break;
         }
     }
+
+    /**
+     * Adds some meta data to every non-empty exercise group and pushes it to ngxExerciseGroups
+     * @param exerciseGroups array containing the exercise groups
+     * @param types array containing all possible exercise types (programming, modeling, quiz, text, file upload)
+     */
     pushExerciseGroupsToData(exerciseGroups: any[], types: ExerciseType[]) {
         exerciseGroups.forEach((exerciseGroup, index) => {
             if (exerciseGroup.length > 0) {
@@ -787,7 +792,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 this.ngxExerciseGroups.push(exerciseGroup);
             }
         });
-        // this.ngxExerciseGroups = [...this.ngxExerciseGroups];
     }
 
     /**

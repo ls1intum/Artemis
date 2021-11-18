@@ -113,8 +113,8 @@
                 "gradeInfo": "(basierend auf der erreichbaren Punktzahl)",
                 "gradeHelp": "Die Note basiert auf der von dir erreichbaren Punktzahl. Sie kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
                 "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
-                "programmingExerciseFailedTests": "{{ tests }} Tests fehlgeschlagen ({{ percentage }})%",
-                "programmingExercisePassedTests": "{{ tests }} Tests erfolgreich ({{ percentage }})%"
+                "programmingExerciseFailedTests": "{{ tests }} Tests fehlgeschlagen ({{ percentage }}%)",
+                "programmingExercisePassedTests": "{{ tests }} Tests erfolgreich ({{ percentage }}%)"
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

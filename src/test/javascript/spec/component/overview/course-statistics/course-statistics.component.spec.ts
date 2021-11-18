@@ -1,8 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
@@ -25,9 +22,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -205,7 +199,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), ChartsModule, MockModule(PieChartModule), MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule)],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseLearningGoalsComponent),
@@ -241,16 +235,17 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
-        expect(comp.ngxExerciseGroups.length).to.equal(1);
+        expect(comp.ngxExerciseGroups.length).toBe(1);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).to.exist;
-        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
-        /*const exercise: any = comp.groupedExercises[0];
-        expect(exercise.presentationScore).to.equal(2);
-        expect(exercise.notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
+        // console.log(modelingWrapper.query(By.css('h2')).nativeElement.textContent);
+        expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
+        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
+        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
+        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
+        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
+        const exercise: any = comp.ngxExerciseGroups[0][0];
+        expect(exercise.presentationScore).toBe(2);
+        /*expect(exercise.notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
         expect(exercise.scores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseAchievedScore']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
@@ -264,11 +259,11 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
-        expect(comp.ngxExerciseGroups.length).to.equal(1);
-        /*let exercise: any = comp.groupedExercises[0];
-        expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(60);
-        expect(exercise.overallMaxPoints).to.equal(60);*/
+        expect(comp.ngxExerciseGroups.length).toBe(1);
+        let exercise: any = comp.ngxExerciseGroups[0][0];
+        expect(exercise.absoluteScore).toBe(20);
+        expect(exercise.reachableScore).toBe(60);
+        expect(exercise.overallMaxPoints).toBe(60);
 
         const newExercise = [
             {
@@ -347,22 +342,22 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
 
         // check that exerciseGroup scores are untouched
-        /*exercise = comp.groupedExercises[0];
-        expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(60);
-        expect(exercise.overallMaxPoints).to.equal(60);*/
+        exercise = comp.ngxExerciseGroups[0][0];
+        expect(exercise.absoluteScore).toBe(20);
+        expect(exercise.reachableScore).toBe(60);
+        expect(exercise.overallMaxPoints).toBe(60);
 
         // check that overall course score is adapted accordingly -> one exercise after assessment, one before
-        expect(comp.overallPoints).to.equal(25.5);
-        expect(comp.reachablePoints).to.equal(70);
-        expect(comp.overallMaxPoints).to.equal(80);
+        expect(comp.overallPoints).toBe(25.5);
+        expect(comp.reachablePoints).toBe(70);
+        expect(comp.overallMaxPoints).toBe(80);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
-        expect(debugElement.nativeElement.textContent).to.equal('artemisApp.courseOverview.statistics.yourPoints');
+        expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
         debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
-        expect(debugElement.nativeElement.textContent).to.equal(' artemisApp.courseOverview.statistics.reachablePoints ');
+        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
-        expect(debugElement.nativeElement.textContent).to.equal(' artemisApp.courseOverview.statistics.totalPoints ');
+        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
     });
 });

@@ -80,6 +80,7 @@
                         [barPadding]="exerciseGroup[0].barPadding"
                     >
                         <ng-template #tooltipTemplate let-model="model">
+                            <span>{{ stringify(model) }}</span>
                             <div *ngIf="['Achieved (included)', 'Achieved bonus', 'Achieved (not included)'].includes(model.name)">
                                 <span
                                     *ngIf="!model.tooltipType"
@@ -111,19 +112,19 @@
                                     >
                                     </span>
                                     <span
-                                        *ngIf="model.notParticipated === true && !model.tooltipType"
+                                        *ngIf="model.notParticipated === true"
                                         jhiTranslate="artemisApp.courseOverview.statistics.exerciseNotParticipated"
                                         [translateValues]="{ exercise: model.exerciseTitle }"
                                     >
                                     </span>
                                     <span
-                                        *ngIf="model.afterDueDate && !model.tooltipType"
+                                        *ngIf="model.afterDueDate"
                                         jhiTranslate="artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate"
                                         [translateValues]="{ exercise: model.exerciseTitle }"
                                     >
                                     </span>
                                     <span
-                                        *ngIf="model.tooltipType"
+                                        *ngIf="model.tooltipType && !model.notParticipated"
                                         jhiTranslate="artemisApp.courseOverview.statistics.programmingExerciseFailedTests"
                                         [translateValues]="{ tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }"
                                     >
