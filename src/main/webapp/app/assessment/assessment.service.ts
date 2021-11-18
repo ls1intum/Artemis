@@ -15,7 +15,7 @@ export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean
     if (exercise?.teamMode || isTestRun) {
         return isAssessor;
     }
-    if (exercise?.assessmentType === AssessmentType.AUTOMATIC && complaint.result?.assessmentType === AssessmentType.AUTOMATIC && complaint.result.assessor === undefined) {
+    if (exercise?.assessmentType === AssessmentType.AUTOMATIC && complaint.result && complaint.result.assessor === undefined) {
         return true;
     }
     return complaint!.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor;
