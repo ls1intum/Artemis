@@ -21,6 +21,7 @@
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
+                "editorExclusiveNotifications": "Exklusive Benachrichtigungen für Editor:innen",
                 "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
             },
             "settingNames": {
