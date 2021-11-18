@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from 'src/test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { getElement } from '../../../../../helpers/utils/general.utils';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { getElement } from 'src/test/javascript/spec//helpers/utils/general.utils';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -14,7 +14,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
-import { metisAnnouncement, metisPostLectureUser1 } from 'src/test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;

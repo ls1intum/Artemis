@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, Directive, Input } from '@angular/core';
-import { getElement, getElements } from 'src/test/javascript/spec/helpers/utils/general.utils';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
-import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-post-markdown.pipe';
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
+import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -52,10 +52,10 @@ describe('PostingContentPartComponent', () => {
             fixture.detectChanges();
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
             expect(markdownRenderedTexts).toHaveLength(1);
-            expect(markdownRenderedTexts![0].innerHTML).toEqual('<p class="inline-paragraph">' + postingContent + '</p>');
+            expect(markdownRenderedTexts![0].innerHTML).toBe('<p class="inline-paragraph">' + postingContent + '</p>');
 
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).toBeDefined();
+            expect(referenceLink).toBe(null);
         });
     });
 
@@ -80,7 +80,8 @@ describe('PostingContentPartComponent', () => {
             expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
             expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).toBeDefined();
+            expect(referenceLink).not.toBe(null);
+            expect(referenceLink.innerHTML).toInclude(referenceStr);
         });
     });
 });
