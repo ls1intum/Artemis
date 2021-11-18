@@ -125,7 +125,6 @@ describe('OrionAssessmentService', () => {
         const response = new HttpResponse({ body: new Blob(['Stuff', 'in blob']), status: 200 });
         exportSubmissionStub.mockReturnValue(of(response));
 
-
         const readerStub = jest.spyOn(window, 'FileReader').mockReturnValue(mockReader);
 
         orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
