@@ -27,6 +27,13 @@ describe('Assessment Service', () => {
             expect(isAllowed).toBe(false);
         });
 
+        it('should show correctly after assessment with complaint', () => {
+            const isAllowedAssessor = isAllowedToModifyFeedback(false, false, true, true, complaint, result, undefined);
+            const isAllowedNotAssessor = isAllowedToModifyFeedback(false, false, false, true, complaint, result, undefined);
+            expect(isAllowedAssessor).toBe(false);
+            expect(isAllowedNotAssessor).toBe(true);
+        });
+
         it('should hide for feedback requests', () => {
             complaint.result = result;
             const isAllowed = isAllowedToModifyFeedback(false, false, true, true, feedbackRequest, result, undefined);
