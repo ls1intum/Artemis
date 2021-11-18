@@ -419,11 +419,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
         });
         this.groupedExercises = groupedExercises;
-        // console.log(this.stringify(groupedExercises));
         const allGroups = [this.ngxProgrammingExercises, this.ngxQuizExercises, this.ngxModelingExercises, this.ngxTextExercises, this.ngxFileUploadExercises];
         const allTypes = [ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
         this.pushExerciseGroupsToData(allGroups, allTypes);
-        console.log(this.stringify(this.ngxExerciseGroups));
     }
 
     /*getScoreColor(includedInOverallScore: IncludedInOverallScore): string {
@@ -767,6 +765,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     overallMaxPoints: this.overallMaxPointsPerExercise[types[index]],
                     presentationScore: this.presentationScoresPerExercise[types[index]],
                     presentationScoreEnabled: false,
+                    barPadding: this.setBarPadding(exerciseGroup.length),
                 };
                 switch (types[index]) {
                     case ExerciseType.MODELING:
@@ -789,5 +788,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
         });
         // this.ngxExerciseGroups = [...this.ngxExerciseGroups];
+    }
+
+    /**
+     * Calculates the bar padding dependent of the amount of exercises in one exercise group
+     * ngx-charts only allows setting an absolute value for the bar padding in px, which leads to unpleasant
+     * proportions in the bar charts for sufficiently large exercise groups
+     * @param groupSize the amount of exercises in a specific group
+     */
+    setBarPadding(groupSize: number) {
+        return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
     }
 }
