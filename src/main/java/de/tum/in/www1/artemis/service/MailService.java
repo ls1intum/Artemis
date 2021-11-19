@@ -190,7 +190,8 @@ public class MailService {
                 context.setVariable(EXERCISE_TYPE, "upload");
             }
         }
-        else if (notificationSubject instanceof Post) {
+
+        if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
         }
@@ -217,6 +218,7 @@ public class MailService {
             case EXERCISE_RELEASED -> templateEngine.process("mail/notification/exerciseReleasedEmail", context);
             case EXERCISE_PRACTICE -> templateEngine.process("mail/notification/exerciseOpenForPracticeEmail", context);
             case NEW_ANNOUNCEMENT_POST -> templateEngine.process("mail/notification/announcementPostEmail", context);
+            case FILE_SUBMISSION_SUCCESSFUL -> templateEngine.process("mail/notification/fileSubmissionSuccessfulEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

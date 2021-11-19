@@ -61,6 +61,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     key: 'fileSubmissionSuccessful',
                     descriptionKey: 'fileSubmissionSuccessfulDescription',
                     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL,
+                    emailSupport: true,
                 },
                 {
                     key: 'newExercisePost',
