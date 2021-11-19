@@ -284,9 +284,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param analysis that contains the resulting issues of the problem statement.
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
-        const lineWarnings = Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, invalidHints }) =>
-            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints),
-        );
+        const lineWarnings = this.mapAnalysisToWarnings(analysis);
 
         this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.
@@ -294,6 +292,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         setTimeout(() => {
             this.markdownEditor.aceEditorContainer.getEditor().getSession().setAnnotations(lineWarnings);
         }, 0);
+    };
+
+    private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints));
     };
 
     private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], invalidHints?: string[]) => {
