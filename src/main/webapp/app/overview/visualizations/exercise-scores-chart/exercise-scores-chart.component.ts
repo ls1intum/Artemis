@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -89,9 +90,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
-            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.scoreOfStudent! + 1, ...extraInformation });
-            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.averageScoreAchieved! + 1, ...extraInformation });
-            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.maxScoreAchieved! + 1, ...extraInformation });
+            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.scoreOfStudent!) + 1, ...extraInformation });
+            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.averageScoreAchieved!) + 1, ...extraInformation });
+            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.maxScoreAchieved!) + 1, ...extraInformation });
         });
 
         const studentScore = { name: this.yourScoreLabel, series: scoreSeries };
