@@ -313,24 +313,6 @@
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
                     "typeNameToConfirm": "Please type in the login of the student to confirm."
-                },
-                "importStudents": {
-                    "buttonLabel": "Import students",
-                    "dialogTitle": "Import students into:",
-                    "introText": "This dialog can be used to import students into this exam.",
-                    "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
-                    "csvFile": {
-                        "label": "Select .csv file",
-                        "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN' or 'REGISTRATION_NUMBER' column values must be present per entry."
-                    },
-                    "studentsForImport": {
-                        "label": "Students to import",
-                        "tooltip": "These students will be imported when clicking on the \"Import\" button."
-                    },
-                    "numberOfStudents": "Number of students:",
-                    "numberOfStudentsImported": "Imported:",
-                    "numberOfStudentsNotImported": "Not found:",
-                    "genericErrorMessage": "Import of students into exam failed!"
                 }
             },
             "exerciseGroups": "Exercise Groups",
@@ -430,32 +412,32 @@
                     "variants": "Variants"
                 }
             }
-        },
-        "studentExamDetail": {
-            "studentExam": "Student exam ({{ examTitle }})",
-            "testRun": "Test Run ({{ examTitle }})",
-            "exercises": "Exercises",
-            "downloadPDF": " Download PDF",
-            "student": "Student",
-            "name": "Name: ",
-            "login": "Login: ",
-            "email": "Email: ",
-            "matriculationNumber": "Matriculation number: ",
-            "id": "ID",
-            "type": "Type",
-            "title": "Title",
-            "result": "Your points",
-            "reviewer": "Reviewer",
-            "openSubmission": "Open Submission",
-            "openAssessment": " Open Assessment",
-            "openLatestAssessment": "Open latest Assessment",
-            "cancelAssessment": " Cancel Assessment",
-            "workingTimeCouldNotBeSaved": "The working time could not be saved.",
-            "saveWorkingTimeSuccessful": "The working time was saved successfully.",
-            "toggleSuccessful": "The submitted status was changed successfully.",
-            "togglefailed": "The submitted status could not be changed!",
-            "hasComplaint": "Has Complaint"
         }
+    },
+    "studentExamDetail": {
+        "studentExam": "Student exam ({{ examTitle }})",
+        "testRun": "Test Run ({{ examTitle }})",
+        "exercises": "Exercises",
+        "downloadPDF": " Download PDF",
+        "student": "Student",
+        "name": "Name: ",
+        "login": "Login: ",
+        "email": "Email: ",
+        "matriculationNumber": "Matriculation number: ",
+        "id": "ID",
+        "type": "Type",
+        "title": "Title",
+        "result": "Your points",
+        "reviewer": "Reviewer",
+        "openSubmission": "Open Submission",
+        "openAssessment": " Open Assessment",
+        "openLatestAssessment": "Open latest Assessment",
+        "cancelAssessment": " Cancel Assessment",
+        "workingTimeCouldNotBeSaved": "The working time could not be saved.",
+        "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+        "toggleSuccessful": "The submitted status was changed successfully.",
+        "togglefailed": "The submitted status could not be changed!",
+        "hasComplaint": "Has Complaint"
     },
     "studentExam": {
         "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
