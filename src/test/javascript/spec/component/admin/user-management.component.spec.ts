@@ -1,18 +1,14 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockModule } from 'ng-mocks/cjs/lib/mock-module/mock-module';
 import { MockComponent } from 'ng-mocks/cjs/lib/mock-component/mock-component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -22,9 +18,9 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ArtemisTestModule } from '../../test.module';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -43,27 +39,25 @@ describe('UserManagementComponent', () => {
     } as any as ActivatedRoute;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(NgbModule), HttpClientTestingModule, MockModule(RouterTestingModule)],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule)],
+            declarations: [
+                UserManagementComponent,
+                MockComponent(AlertErrorComponent),
+                MockComponent(AlertComponent),
+                MockRouterLinkDirective,
+                MockComponent(ItemCountComponent),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(SortDirective),
+            ],
             providers: [
                 {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-            declarations: [
-                UserManagementComponent,
-                MockComponent(AlertErrorComponent),
-                MockComponent(AlertComponent),
-                MockComponent(FaIconComponent),
-                MockRouterLinkDirective,
-                MockComponent(ItemCountComponent),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
+                { provide: Router, useClass: MockRouter },
             ],
         })
             .compileComponents()
@@ -80,28 +74,25 @@ describe('UserManagementComponent', () => {
         expect(comp).not.toBe(null);
     });
 
-    it('should parse the user search result into the correct component state', inject(
-        [],
-        fakeAsync(() => {
-            const headers = new HttpHeaders().append('link', 'link;link').append('X-Total-Count', '1');
-            jest.spyOn(service, 'query').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: [new User(1)],
-                        headers,
-                    }),
-                ),
-            );
+    it('should parse the user search result into the correct component state', fakeAsync(() => {
+        const headers = new HttpHeaders().append('link', 'link;link').append('X-Total-Count', '1');
+        jest.spyOn(service, 'query').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [new User(1)],
+                    headers,
+                }),
+            ),
+        );
 
-            comp.loadAll();
-            // 1 sec of pause, because of the debounce time
-            tick(1000);
+        comp.loadAll();
+        // 1 sec of pause, because of the debounce time
+        tick(1000);
 
-            expect(comp.users && comp.users[0].id).toEqual(1);
-            expect(comp.totalItems).toEqual(1);
-            expect(comp.loadingSearchResult).toEqual(false);
-        }),
-    ));
+        expect(comp.users && comp.users[0].id).toEqual(1);
+        expect(comp.totalItems).toEqual(1);
+        expect(comp.loadingSearchResult).toEqual(false);
+    }));
 
     describe('setActive', () => {
         it('Should update user and call load all', inject(
