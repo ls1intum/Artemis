@@ -90,18 +90,27 @@ jobs:
 #        asset_name: Artemis.war
 #        asset_content_type: application/x-webarchive
 
-  docker_push_artemis:
+  docker_push_images:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - image_name: "artemis-service"
+          dockerfile_path: "src/main/docker"
+        - image_name: "artemis-gateway"
+          dockerfile_path: "gateway/src/main/docker"
+        - image_name: "artemis-usermanagement-service"
+          dockerfile_path: "user-management/src/main/docker"
     steps:
     - name: Download Artifact
       uses: actions/download-artifact@v2
       with:
         name: Artemis.war
     - name: Download Dockerfile
-      run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/entrypoint.sh
+      run: curl -O ${{ env.RAW_URL }}/${{ matrix.dockerfile_path }}/Dockerfile -O ${{ env.RAW_URL }}/${{ matrix.dockerfile_path }}/entrypoint.sh
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis-service .
+      run: docker build --build-arg WAR_PATH=. -t ${{ matrix.image_name }} .
 
     - name: Compute Tag
       uses: actions/github-script@v5
@@ -134,117 +143,13 @@ jobs:
       env:
         TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
-        docker tag artemis-service ghcr.io/ls1intum/artemis-service:$TAG
-        docker push ghcr.io/ls1intum/artemis-service:$TAG
+        docker tag ${{ matrix.image_name }} ghcr.io/ls1intum/${{ matrix.image_name }}:$TAG
+        docker push ghcr.io/ls1intum/${{ matrix.image_name }}:$TAG
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
     # TODO: Push to Docker Hub (develop + tag)
 
     # TODO: Push to Chair Habour (??)
-
-  docker_push_gateway:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: gateway.war
-    - name: Download Dockerfile
-      run: curl -O ${{ env.RAW_URL }}/gateway/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/gateway/src/main/docker/jib/entrypoint.sh
-    - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis-gateway .
-
-    - name: Compute Tag
-      uses: actions/github-script@v5
-      id: compute-tag
-      with:
-        result-encoding: string
-        script: |
-          if (context.eventName === "pull_request") {
-            return "pr-" + context.issue.number;
-          }
-          if (context.eventName === "push") {
-            if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10);
-            }
-            if (context.ref === "refs/heads/develop") {
-              return "latest";
-            }
-          }
-          return "FALSE";
-
-    # Push to GitHub Container Registry
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-    - name: Push to GitHub Container Registry
-      env:
-        TAG: ${{ steps.compute-tag.outputs.result }}
-      run: |
-        docker tag artemis-gateway ghcr.io/ls1intum/artemis-gateway:$TAG
-        docker push ghcr.io/ls1intum/artemis-gateway:$TAG
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-
-    # TODO: Push to Docker Hub (develop + tag)
-
-    # TODO: Push to Chair Habour (??)
-
-  docker_push_user_management:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: user-management.war
-    - name: Download Dockerfile
-      run: curl -O ${{ env.RAW_URL }}/user-management/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/user-management/src/main/docker/jib/entrypoint.sh
-    - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis-usermanagement-service .
-
-    - name: Compute Tag
-      uses: actions/github-script@v5
-      id: compute-tag
-      with:
-        result-encoding: string
-        script: |
-          if (context.eventName === "pull_request") {
-            return "pr-" + context.issue.number;
-          }
-          if (context.eventName === "push") {
-            if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10);
-            }
-            if (context.ref === "refs/heads/develop") {
-              return "latest";
-            }
-          }
-          return "FALSE";
-
-    # Push to GitHub Container Registry
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-    - name: Push to GitHub Container Registry
-      env:
-        TAG: ${{ steps.compute-tag.outputs.result }}
-      run: |
-        docker tag artemis-usermanagement-service ghcr.io/ls1intum/artemis-usermanagement-service:$TAG
-        docker push ghcr.io/ls1intum/artemis-usermanagement-service:$TAG
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-
-      # TODO: Push to Docker Hub (develop + tag)
-
-      # TODO: Push to Chair Habour (??)
 
   deploy:
     needs: build
