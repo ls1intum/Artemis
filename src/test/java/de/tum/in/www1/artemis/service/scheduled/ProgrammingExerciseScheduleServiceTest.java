@@ -85,14 +85,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @AfterEach
     void tearDown() {
-        // old scheduled tasks should not influence following tests if they could not be finished during the previous one
+        // not yet finished scheduled futures may otherwise affect following tests
         for (final var lifecycle : ExerciseLifecycle.values()) {
             scheduleService.cancelScheduledTaskForLifecycle(programmingExercise.getId(), lifecycle);
         }
 
         database.resetDatabase();
         Mockito.reset(scheduleService);
-        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
     }
 
     private void verifyLockStudentRepositoryOperation(boolean wasCalled) {
@@ -502,9 +502,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
 
-        setupProgrammingExerciseDates(now, 5 * delayMS, null);
+        setupProgrammingExerciseDates(now, delayMS, null);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 10 * delayMS);
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -531,9 +531,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
 
-        setupProgrammingExerciseDates(now, 5 * delayMS, null);
+        setupProgrammingExerciseDates(now, delayMS / 2, null);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 10 * delayMS);
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -542,7 +542,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(scheduleService, times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
 
         // change individual due date and schedule again
-        participationIndividualDueDate.setIndividualDueDate(plusMillis(now, 20 * delayMS));
+        participationIndividualDueDate.setIndividualDueDate(plusMillis(now, 3 * delayMS));
         participationIndividualDueDate = participationRepository.save(participationIndividualDueDate);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
