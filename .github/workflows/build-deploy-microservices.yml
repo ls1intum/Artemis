@@ -10,7 +10,7 @@ on:
     - 'SECURITY.md'
     - 'docs/**'
     - '.github/**'
-    - '!.github/workflows/build-deploy.yml'
+    - '!.github/workflows/build-deploy-microservices.yml'
   push:
     branches:
     - develop
@@ -25,7 +25,7 @@ on:
     - 'SECURITY.md'
     - 'docs/**'
     - '.github/**'
-    - '!.github/workflows/build-deploy.yml'
+    - '!.github/workflows/build-deploy-microservices.yml'
   release:
     types:
     - created
@@ -150,97 +150,3 @@ jobs:
     # TODO: Push to Docker Hub (develop + tag)
 
     # TODO: Push to Chair Habour (??)
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - environment: artemistest5
-            url: https://artemistest5.ase.in.tum.de
-    environment:
-      url: ${{ matrix.url }}
-      name: ${{ matrix.environment }}
-    steps:
-    - name: Check "lock:${{ matrix.environment }}" label
-      uses: actions/github-script@v5
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const opts = github.rest.issues.listForRepo.endpoint.merge({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            labels: ['lock:${{ matrix.environment }}']
-          })
-          const issues = await github.paginate(opts)
-          if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
-            core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
-          } else if (issues.length > 1) {
-            core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
-          } else if (context.issue && context.issue.number) {
-            await github.rest.issues.addLabels({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: ['lock:${{ matrix.environment }}']
-            })
-          }
-
-    - name: Download Artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: Artemis.war
-    - name: Store Artifact Name
-      id: artifact-name
-      run: echo "::set-output name=war-file::$(ls)"
-
-    # Downlaod artemis-server-cli from GH without cloning the Repo
-    - name: Fetch Artemis CLI
-      run: |
-        wget ${{ env.RAW_URL }}/artemis-server-cli
-        chmod +x artemis-server-cli
-
-    - name: Install OpenVPN
-      run: sudo apt-get --assume-yes --no-install-recommends install openvpn
-    # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
-    - name: Configure LRZ eduVPN
-      run: echo "${{ secrets.LRZ_OVPN_CONFIG }}" > lrz.ovpn
-    - name: Connect VPN
-      run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
-    - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
-      run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
-      timeout-minutes: 2
-
-    # Configure SSH Key
-    - name: Setup SSH Keys and known_hosts
-      env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
-          SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
-      run: |
-          mkdir -p ~/.ssh
-          for host in $DEPLOYMENT_HOSTS; do
-            ssh-keyscan $host >> ~/.ssh/known_hosts
-          done
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< $SSH_PRIVATE_KEY
-
-    - name: Deploy Artemis WAR artifact
-      env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
-          DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
-          WAR_FILE: ./${{steps.artifact-name.outputs.war-file}}
-      run: |
-        for host in $DEPLOYMENT_HOSTS; do
-          ./artemis-server-cli deploy $DEPLOYMENT_USER@$host -w $WAR_FILE -y
-          sleep 20
-        done
-
-    # Always disconnect from VPN
-    - name: Disconncet VPN
-      run: |
-        sudo killall openvpn
-        rm lrz.ovpn
-      if: always()
