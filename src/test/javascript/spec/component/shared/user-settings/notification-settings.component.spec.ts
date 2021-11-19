@@ -41,7 +41,7 @@ describe('NotificationSettingsComponent', () => {
     });
 
     it('should toggle setting', () => {
-        const settingId = SettingId.NOTIFICATION__LECTURE_NOTIFICATIONS__ATTACHMENT_CHANGES;
+        const settingId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
         const webappStatus = true;
         const notificationSettingA: NotificationSetting = {
             settingId,
