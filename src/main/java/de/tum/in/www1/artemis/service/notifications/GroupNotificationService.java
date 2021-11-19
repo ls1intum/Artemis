@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -475,7 +476,7 @@ public class GroupNotificationService {
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
         // find the users that have this notification type & email communication channel activated
         List<User> usersThatShouldReceiveAnEmail = users.stream()
-                .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
+                .filter(user -> notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, user, EMAIL)).collect(Collectors.toList());
 
         if (!usersThatShouldReceiveAnEmail.isEmpty()) {
             mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);

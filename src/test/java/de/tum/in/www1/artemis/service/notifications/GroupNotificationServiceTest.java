@@ -625,7 +625,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testSaveAndSend_CourseRelatedNotifications() {
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any())).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
 
         setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);

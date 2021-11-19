@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -117,13 +118,13 @@ public class NotificationSettingsServiceTest {
     @Test
     public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
 
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
 
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isFalse();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isFalse();
     }
 
     /**

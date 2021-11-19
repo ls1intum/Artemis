@@ -98,9 +98,10 @@ public class NotificationSettingsService {
      * Checks if a notification (i.e. its type based on title) is allowed by the respective notification settings of the provided user
      * @param notification which type (based on title) should be checked
      * @param user whose notification settings will be used for checking
+     * @param communicationChannel which channel to use (e.g. email or webapp)
      * @return true if the type is allowed else false
      */
-    public boolean checkIfNotificationEmailIsAllowedBySettingsForGivenUser(Notification notification, User user) {
+    public boolean checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(Notification notification, User user, NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
@@ -110,10 +111,10 @@ public class NotificationSettingsService {
         // the urgent emails were already sent at this point
         // if the user has not yet changed his settings they will be of size 0 -> use default
         if (notificationSettings.isEmpty()) {
-            deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, DEFAULT_NOTIFICATION_SETTINGS);
+            deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, DEFAULT_NOTIFICATION_SETTINGS);
         }
         else {
-            deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, notificationSettings);
+            deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
         }
 
         if (deactivatedTypes.isEmpty()) {

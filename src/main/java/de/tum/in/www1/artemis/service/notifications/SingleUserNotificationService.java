@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -106,8 +108,12 @@ public class SingleUserNotificationService {
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
         singleUserNotificationRepository.save(notification);
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
-        prepareSingleUserNotificationEmail(notification, notificationSubject);
+        // we only want to notify one individual user therefore we can check the settings and filter preemptively
+        boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
+        if (isAllowedBySettings) {
+            messagingTemplate.convertAndSend(notification.getTopic(), notification);
+            prepareSingleUserNotificationEmail(notification, notificationSubject);
+        }
     }
 
     /**
@@ -120,8 +126,9 @@ public class SingleUserNotificationService {
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         // checks if this notification type has email support
         if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
-            boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
-            if (isAllowedBySettings) {
+            boolean isAllowedBySettingsForEmail = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(),
+                    EMAIL);
+            if (isAllowedBySettingsForEmail) {
                 mailService.sendNotificationEmail(notification, notification.getRecipient(), notificationSubject);
             }
         }
