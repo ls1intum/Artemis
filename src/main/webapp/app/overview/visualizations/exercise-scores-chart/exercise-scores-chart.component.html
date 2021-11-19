@@ -27,7 +27,7 @@
                 <span> {{ model[0].series }}: {{ model[0].value - 1 }} %</span><br />
                 <span> {{ model[1].series }}: {{ model[1].value - 1 }} %</span><br />
                 <span> {{ model[2].series }}: {{ model[2].value - 1 }} %</span><br />
-                <span style="font-weight: bold"> Exercise Type: {{ model[0].exerciseType }}</span>
+                <span style="font-weight: bold" jhiTranslate="artemisApp.exercise-scores-chart.exerciseType" [translateValues]="{ type: model[0].exerciseType }"></span>
             </ng-template>
         </ngx-charts-line-chart>
     </div>

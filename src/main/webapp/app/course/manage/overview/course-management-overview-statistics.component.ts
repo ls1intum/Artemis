@@ -29,9 +29,8 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['rgba(53,61,71,1)'],
+        domain: ['rgba(53,61,71,1)'], // color: black
     };
-    absoluteValues: any[] = [];
 
     constructor(private translateService: TranslateService) {}
 
@@ -56,13 +55,12 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
      * Creates chart in order to visualize data provided by the inputs
      * @private
      */
-    private createChartData() {
+    private createChartData(): void {
         const set: any[] = [];
         this.ngxData = [];
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
             this.initialStats.forEach((value, index) => {
-                set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse });
-                this.absoluteValues.push({ name: this.lineChartLabels[index], absoluteValue: value });
+                set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse, absoluteValue: value });
             });
         } else {
             this.lineChartLabels.forEach((label) => {
@@ -76,17 +74,7 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
      * Appends a percentage sign to every tick on the y axis
      * @param value the default tick
      */
-    formatYAxis(value: any) {
+    formatYAxis(value: any): string {
         return value.toLocaleString() + ' %';
-    }
-
-    /**
-     * Returns the absolute value of active students for a week
-     * @param value the specific week, represented by Object with structure {name, value}
-     * containing the x axis tick as name and the corresponding relative value displayed by the point
-     */
-    findAbsoluteValue(value: any) {
-        const result = this.absoluteValues.find((entry) => entry.name === value.name);
-        return result ? result.absoluteValue : 0;
     }
 }

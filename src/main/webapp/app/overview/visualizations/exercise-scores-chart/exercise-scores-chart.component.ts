@@ -25,8 +25,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     backUpData: any[] = [];
     xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
     yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');
-    ngxColor = { name: 'Performance in Exercises', selectable: true, group: ScaleType.Ordinal, domain: ['#87ceeb', '#fa8072', '#32cd32'] } as Color;
+    ngxColor = { name: 'Performance in Exercises', selectable: true, group: ScaleType.Ordinal, domain: ['#87ceeb', '#fa8072', '#32cd32'] } as Color; // colors: blue, red, green
     backUpColor = cloneDeep(this.ngxColor);
+    yourScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel');
+    averageScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel');
+    maximumScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel');
 
     constructor(
         private router: Router,
@@ -45,7 +48,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         });
     }
 
-    private loadDataAndInitializeChart() {
+    private loadDataAndInitializeChart(): void {
         this.isLoading = true;
         this.exerciseScoresChartService
             .getExerciseScoresForCourse(this.courseId)
@@ -63,13 +66,20 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
             );
     }
 
-    private initializeChart() {
+    private initializeChart(): void {
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(sortedExerciseScores);
     }
 
-    private addData(exerciseScoresDTOs: ExerciseScoresDTO[]) {
+    /**
+     * Converts the exerciseScoresDTOs into dedicated objects that can be processed by ngx-charts in order to
+     * visualize the scores and pushes them to ngxData and backUpData
+     * @param exerciseScoresDTOs array of objects containing the students score, the average score for this exercise and
+     * the max score achieved for this exercise by a student as well as other detailed information of the exericse
+     * @private
+     */
+    private addData(exerciseScoresDTOs: ExerciseScoresDTO[]): void {
         this.ngxData = [];
         const scoreSeries: any[] = [];
         const averageSeries: any[] = [];
@@ -84,9 +94,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
             bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: exerciseScoreDTO.maxScoreAchieved! + 1, ...extraInformation });
         });
 
-        const studentScore = { name: 'Your score', series: scoreSeries };
-        const averageScore = { name: 'Average score', series: averageSeries };
-        const bestScore = { name: 'Best score', series: bestScoreSeries };
+        const studentScore = { name: this.yourScoreLabel, series: scoreSeries };
+        const averageScore = { name: this.averageScoreLabel, series: averageSeries };
+        const bestScore = { name: this.maximumScoreLabel, series: bestScoreSeries };
         this.ngxData.push(studentScore);
         this.ngxData.push(averageScore);
         this.ngxData.push(bestScore);
@@ -100,20 +110,18 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
      * If the users click on an entry in the legend, the corresponding line disappears or reappears depending on its previous state
      * @param data the event sent by the framework
      */
-    onSelect(data: any) {
+    onSelect(data: any): void {
         // delegate to the corresponding exericse if chart node is clicked
         if (data.exerciseId) {
-            console.log(JSON.parse(JSON.stringify(data)));
             this.navigateToExercise(data.exerciseId);
         } else {
             // if a legend label is clicked, the corresponding line has to disappear or reappear
             const name = JSON.parse(JSON.stringify(data)) as string;
             // find the affected line in the dataset
-            const index = this.ngxData.findIndex((dataPack) => {
+            const index = this.ngxData.findIndex((dataPack: any) => {
                 const dataName = dataPack.name as string;
                 return dataName === name;
             });
-            console.log(index);
             // check whether the line is currently displayed
             if (this.ngxColor.domain[index] !== 'rgba(255,255,255,0)') {
                 const placeHolder = cloneDeep(this.ngxData[index]);
@@ -136,7 +144,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     /**
      * We navigate to the exercise sub page when the user clicks on a data point
      */
-    navigateToExercise(exerciseId: number) {
+    navigateToExercise(exerciseId: number): void {
         this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
     }
 }

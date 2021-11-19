@@ -1,5 +1,5 @@
 <h4 class="col-md-12 mt-3 text-center">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>
-<div #containerRef class="col-md-12 text-center" style="max-height: 300px; justify-content: center; align-items: center">
+<div #containerRef class="col-md-12 text-center">
     <ngx-charts-line-chart
         [view]="[containerRef.offsetWidth, 250]"
         [results]="ngxData"
@@ -10,15 +10,13 @@
         [yScaleMax]="100"
         [yAxisTickFormatting]="formatYAxis"
         [rotateXAxisTicks]="false"
-        [animations]="true"
     >
         <ng-template #tooltipTemplate let-model="model">
-            <h3 *ngIf="findAbsoluteValue(model) !== 1" class="tooltip-header">{{ findAbsoluteValue(model) }} active students</h3>
-            <h3 *ngIf="findAbsoluteValue(model) === 1" class="tooltip-header">{{ findAbsoluteValue(model) }} active student</h3>
+            <h6 jhiTranslate="artemisApp.course.activeStudents" [translateValues]="{ students: model.absoluteValue }"></h6>
             <span>{{ model.name }}</span>
         </ng-template>
         <ng-template #seriesTooltipTemplate let-model="model">
-            <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
+            <span> {{ model[0].name }}: {{ model[0].absoluteValue }} </span>
         </ng-template>
     </ngx-charts-line-chart>
     <div *ngIf="loading" style="z-index: 1; position: absolute; font-size: large">
