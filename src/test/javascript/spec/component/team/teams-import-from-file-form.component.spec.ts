@@ -79,8 +79,8 @@ describe('TeamsImportFromFileFormComponent', () => {
             convertTeamsStub = stub(comp, 'convertTeams').returns(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
             reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
-            comp.importFile = new File([''], 'file.txt', { type: 'text/plain' });
-            comp.importFileName = 'file.txt';
+            comp.importFile = new File([''], 'file.json', { type: 'text/plain' });
+            comp.importFileName = 'file.json';
             getElementStub = stub(document, 'getElementById').returns(control);
         });
         afterEach(() => {
