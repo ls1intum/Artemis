@@ -27,13 +27,12 @@ following dependencies/tools on your machine:
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
    Artemis uses Hibernate to store entities in a MySQL database.
    Download and install the MySQL Community Server (8.0.x) and configure
-   the ‘root’ user with an empty password. (In case you want to use a
-   different password, make sure to change the value in
-   application-dev.yml and in liquibase.gradle). The required Artemis
-   scheme will be created / updated automatically at startup time of the
-   server application. Alternatively, you can run the MySQL Database
-   Server inside a Docker container using
-   e.g. ``docker-compose -f src/main/docker/mysql.yml up``
+   the ‘root’ user with an empty password.
+   (In case you want to use a different password, make sure to change the value in
+   ``application-dev.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*).
+   The required Artemis scheme will be created / updated automatically at startup time of the
+   server application.
+   Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ``docker-compose -f src/main/docker/mysql.yml up``
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=14.17.0 < 15) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
@@ -135,6 +134,7 @@ information about the setup for programming exercises provided:
 
    Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
    Jenkins and Gitlab <setup/jenkins-gitlab>
+   Common setup problems <setup/common-problems>
    Multiple instances <setup/distributed>
    Programming Exercise adjustments <setup/programming-exercises>
    Kubernetes <setup/kubernetes>
@@ -224,22 +224,6 @@ Other run / debug configurations
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <#athene-service>`__).
-
-
-Typical problems with Liquibase checksums
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-One typical problem in the development setup is that an exception occurs
-during the database initialization. Artemis uses
-`Liquibase <https://www.liquibase.org>`__ to automatically upgrade the
-database scheme after changes to the data model. This ensures that the
-changes can also be applied to the production server. In case you
-encounter errors with liquibase checksum values, run the following
-command in your terminal / command line:
-
-::
-
-   ./gradlew liquibaseClearChecksums
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -336,6 +320,8 @@ run configuration that will be delivered with this repository:
 * Choose ``Run | Edit Configurations...``
 * Select the ``Artemis (Client)`` configuration from the ``npm section``
 * Now you can run the configuration in the upper right corner of IntelliJ
+
+.. _UsingTheCommandLine:
 
 Using the command line
 ^^^^^^^^^^^^^^^^^^^^^^
