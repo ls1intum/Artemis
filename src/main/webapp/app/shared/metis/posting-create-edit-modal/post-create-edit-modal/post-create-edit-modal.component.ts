@@ -54,9 +54,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
-        this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
-            this.currentContextSelectorOption = context;
-        });
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
     }
@@ -75,11 +72,15 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.tags = this.posting?.tags ?? [];
+        this.resetCurrentContextSelectorOption();
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the title and content must include at least one non-whitespace character
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
             context: [this.currentContextSelectorOption, [Validators.required]],
+        });
+        this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
+            this.currentContextSelectorOption = context;
         });
         // start new subscription to value changes of title for posts that are not announcements;
         // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
