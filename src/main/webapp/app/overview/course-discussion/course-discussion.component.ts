@@ -297,18 +297,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
-     * this empty post has a default course-wide context as well as the course set as context
+     * sort context (lecture, exercise) by title
      **/
-    createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(
-            this.currentPostContextFilter.courseWideContext,
-            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
-            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
-        );
-    }
-
-    overviewContextSortFn = (contextA: Lecture | Exercise, contextB: Lecture | Exercise): number => {
+    private overviewContextSortFn = (contextA: Lecture | Exercise, contextB: Lecture | Exercise): number => {
         const titleA = contextA.title!.toUpperCase(); // ignore capitalization
         const titleB = contextB.title!.toUpperCase(); // ignore capitalization
         if (titleA < titleB) {
@@ -319,6 +310,18 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         }
         return 0;
     };
+
+    /**
+     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
+     * this empty post has a default course-wide context as well as the course set as context
+     **/
+    createEmptyPost(): void {
+        this.createdPost = this.metisService.createEmptyPostForContext(
+            this.currentPostContextFilter.courseWideContext,
+            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
+            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
+        );
+    }
 
     /**
      * defines a function that returns the post id as unique identifier,
