@@ -36,6 +36,9 @@ public class SingleUserNotificationServiceTest {
     private static Exercise exercise;
 
     @Mock
+    private static FileUploadExercise fileUploadExercise;
+
+    @Mock
     private static SingleUserNotificationRepository singleUserNotificationRepository;
 
     @Mock
@@ -72,15 +75,18 @@ public class SingleUserNotificationServiceTest {
 
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
-        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
-
         messagingTemplate = mock(SimpMessageSendingOperations.class);
 
         notificationSettingsService = mock(NotificationSettingsService.class);
 
+        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
+
         singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
 
         exercise = mock(Exercise.class);
+
+        fileUploadExercise = mock(FileUploadExercise.class);
+        when(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
 
         user = mock(User.class);
 
@@ -149,6 +155,15 @@ public class SingleUserNotificationServiceTest {
     public void testNotifyUserAboutNewAnswerForCoursePost() {
         singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutSuccessfulFileUploadSubmission method
+     */
+    @Test
+    public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
+        singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
+        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE);
     }
 
     /// Save & Send related Tests

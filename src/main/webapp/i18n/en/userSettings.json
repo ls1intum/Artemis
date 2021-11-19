@@ -21,7 +21,7 @@
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
-                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
+                "instructorNotifications": "Instructor Notifications"
             },
             "settingNames": {
                 "exerciseReleased": "Exercise released",
@@ -34,7 +34,8 @@
                 "newCoursePost": "New Course Post",
                 "newReplyForCoursePost": "New Reply for Course Post",
                 "newAnnouncementPost": "New Announcement",
-                "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
+                "courseAndExamArchivingStarted": "Course & Exam Archiving Started",
+                "fileSubmissionSuccessful": "File Submission Successful"
             },
             "settingDescriptions": {
                 "exerciseReleasedDescription": "Get notified when a new exercise has been released",
@@ -47,7 +48,8 @@
                 "newCoursePostDescription": "Receive a notification when a new course-wide post has been created",
                 "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
                 "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
-                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
+                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started",
+                "fileSubmissionSuccessfulDescription": "Receive a notification after you successfully submitted a file upload exercise"
             }
         }
     }

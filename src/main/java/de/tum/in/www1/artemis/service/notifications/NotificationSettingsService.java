@@ -29,23 +29,25 @@ public class NotificationSettingsService {
     private final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST = "notification.course-wide-discussion.new-announcement-post";
 
     // exercise notification setting group
-    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED = "notification.exercise-notification.exercise-released";
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_RELEASED = "notification.exercise-notifications.exercise-released";
 
-    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE = "notification.exercise-notification.exercise-open-for-practice";
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_OPEN_FOR_PRACTICE = "notification.exercise-notifications.exercise-open-for-practice";
 
-    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST = "notification.exercise-notification.new-exercise-post";
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_EXERCISE_POST = "notification.exercise-notifications.new-exercise-post";
 
-    private final static String NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST = "notification.exercise-notification.new-reply-for-exercise-post";
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_REPLY_FOR_EXERCISE_POST = "notification.exercise-notifications.new-reply-for-exercise-post";
+
+    private final static String NOTIFICATION__EXERCISE_NOTIFICATIONS__FILE_SUBMISSION_SUCCESSFUL = "notification.exercise-notifications.file-submission-successful";
 
     // lecture notification settings group
-    private final static String NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES = "notification.lecture-notification.attachment-changes";
+    private final static String NOTIFICATION__LECTURE_NOTIFICATIONS__ATTACHMENT_CHANGES = "notification.lecture-notifications.attachment-changes";
 
-    private final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST = "notification.lecture-notification.new-lecture-post";
+    private final static String NOTIFICATION__LECTURE_NOTIFICATIONS__NEW_LECTURE_POST = "notification.lecture-notifications.new-lecture-post";
 
-    private final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = "notification.lecture-notification.new-reply-for-lecture-post";
+    private final static String NOTIFICATION__LECTURE_NOTIFICATIONS__NEW_REPLY_FOR_LECTURE_POST = "notification.lecture-notifications.new-reply-for-lecture-post";
 
-    // instructor exclusive notification setting group
-    private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-exclusive-notification.course-and-exam-archiving-started";
+    // instructor notification setting group
+    private final static String NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-notifications.course-and-exam-archiving-started";
 
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
@@ -55,33 +57,35 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
             new NotificationSetting(true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
             // exercise notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_RELEASED),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_OPEN_FOR_PRACTICE),
+            new NotificationSetting(false, false, NOTIFICATION__EXERCISE_NOTIFICATIONS__FILE_SUBMISSION_SUCCESSFUL),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_EXERCISE_POST),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_REPLY_FOR_EXERCISE_POST),
             // lecture notification settings group
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
-            // instructor exclusive notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATIONS__ATTACHMENT_CHANGES),
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATIONS__NEW_LECTURE_POST),
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATIONS__NEW_REPLY_FOR_LECTURE_POST),
+            // instructor notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
      * Each SettingId can be based on multiple different NotificationTypes
      */
     private final static Map<String, NotificationType[]> NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED, new NotificationType[] { EXERCISE_RELEASED }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[] { EXERCISE_PRACTICE }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, new NotificationType[] { NEW_EXERCISE_POST }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST, new NotificationType[] { NEW_REPLY_FOR_EXERCISE_POST }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_RELEASED, new NotificationType[] { EXERCISE_RELEASED }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[] { EXERCISE_PRACTICE }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_EXERCISE_POST, new NotificationType[] { NEW_EXERCISE_POST }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_REPLY_FOR_EXERCISE_POST, new NotificationType[] { NEW_REPLY_FOR_EXERCISE_POST }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATIONS__FILE_SUBMISSION_SUCCESSFUL, new NotificationType[] { FILE_SUBMISSION_SUCCESSFUL }),
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATIONS__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATIONS__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
+            Map.entry(NOTIFICATION__LECTURE_NOTIFICATIONS__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
-            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }), Map.entry(
-                    NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
+            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
+            Map.entry(NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST);

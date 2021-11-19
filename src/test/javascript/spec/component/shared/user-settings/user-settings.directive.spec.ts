@@ -50,12 +50,12 @@ describe('User Settings Directive', () => {
     const router = new MockRouter();
 
     const notificationSettingA: NotificationSetting = {
-        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_OPEN_FOR_PRACTICE,
         webapp: false,
         email: false,
     };
     const notificationSettingB: NotificationSetting = {
-        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATIONS__NEW_REPLY_FOR_EXERCISE_POST,
         webapp: false,
         email: false,
     };

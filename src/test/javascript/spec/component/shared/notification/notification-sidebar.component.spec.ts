@@ -48,13 +48,13 @@ describe('Notification Sidebar Component', () => {
         webapp: true,
         email: false,
         changed: false,
-        settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
+        settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATIONS__ATTACHMENT_CHANGES,
     };
     const notificationSettingB: NotificationSetting = {
         webapp: true,
         email: false,
         changed: false,
-        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_RELEASED,
     };
     const receivedNotificationSettings: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 

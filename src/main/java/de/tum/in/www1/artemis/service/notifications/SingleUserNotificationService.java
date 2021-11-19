@@ -6,6 +6,9 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
@@ -34,20 +37,22 @@ public class SingleUserNotificationService {
 
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
-     * @param post that will be used to create the notification
+     * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param notificationType is the discriminator for the factory
-     * @param course that the post belongs to
+     * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
-    private void notifyGroupsWithNotificationType(Post post, NotificationType notificationType, Course course) {
+    private void notifyGroupsWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation) {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types
-            case NEW_REPLY_FOR_EXERCISE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
-            case NEW_REPLY_FOR_LECTURE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
-            case NEW_REPLY_FOR_COURSE_POST -> createNotification(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
+            case NEW_REPLY_FOR_EXERCISE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, (Course) typeSpecificInformation);
+            case NEW_REPLY_FOR_LECTURE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_LECTURE_POST, (Course) typeSpecificInformation);
+            case NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_COURSE_POST, (Course) typeSpecificInformation);
+            // Exercise related
+            case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, NotificationType.FILE_SUBMISSION_SUCCESSFUL, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(resultingGroupNotification, post);
+        saveAndSend(resultingGroupNotification, notificationSubject);
     }
 
     /**
@@ -79,6 +84,17 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
+    }
+
+    /**
+     * Notify student about successful submission of file upload exercise.
+     * Also creates and sends an email.
+     *
+     * @param exercise that was submitted
+     * @param recipient that should be notified
+     */
+    public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
+        notifyGroupsWithNotificationType(exercise, NotificationType.FILE_SUBMISSION_SUCCESSFUL, recipient);
     }
 
     /**

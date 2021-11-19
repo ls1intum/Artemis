@@ -158,7 +158,7 @@ public class GroupNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
-     * @param author is the user who initiated the process of this notifications. Can be null if not specified
+     * @param author is the user who initiated the process of the notifications. Can be null if not specified
      */
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
@@ -201,6 +201,7 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
                         (String) typeSpecificInformation);
                 case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
+                default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
         }

@@ -7,12 +7,12 @@ import { ATTACHMENT_CHANGE_TITLE, COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STA
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 export const notificationSettingA: NotificationSetting = {
-    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATIONS__EXERCISE_OPEN_FOR_PRACTICE,
     webapp: false,
     email: false,
 };
 export const notificationSettingB: NotificationSetting = {
-    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
+    settingId: SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
     webapp: true,
     email: false,
 };
