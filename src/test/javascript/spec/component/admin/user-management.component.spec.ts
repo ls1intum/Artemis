@@ -68,12 +68,6 @@ describe('UserManagementComponent', () => {
             });
     });
 
-    // The admin module is lazy loaded - we therefore need a dummy test to load
-    // the module and verify that there are no dependency related issues.
-    it('should render a component from the admin module', () => {
-        expect(comp).not.toBe(null);
-    });
-
     it('should parse the user search result into the correct component state', fakeAsync(() => {
         const headers = new HttpHeaders().append('link', 'link;link').append('X-Total-Count', '1');
         jest.spyOn(service, 'query').mockReturnValue(
@@ -89,7 +83,8 @@ describe('UserManagementComponent', () => {
         // 1 sec of pause, because of the debounce time
         tick(1000);
 
-        expect(comp.users && comp.users[0].id).toBe(1);
+        expect(comp.users).toHaveLength(1);
+        expect(comp.users[0].id).toBe(1);
         expect(comp.totalItems).toBe(1);
         expect(comp.loadingSearchResult).toBe(false);
     }));
