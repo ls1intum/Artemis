@@ -77,7 +77,7 @@ describe('UserManagementComponent', () => {
     // The admin module is lazy loaded - we therefore need a dummy test to load
     // the module and verify that there are no dependency related issues.
     it('should render a component from the admin module', () => {
-        expect(comp).toBeDefined();
+        expect(comp).not.toBe(null);
     });
 
     it('should parse the user search result into the correct component state', inject(
@@ -126,7 +126,7 @@ describe('UserManagementComponent', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith({ ...user, activated: true });
-                expect(service.query).toHaveBeenCalled();
+                expect(service.query).toHaveBeenCalledTimes(1);
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
             }),
         ));
