@@ -1,6 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -25,7 +24,7 @@ describe('ButtonComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [ArtemisTestModule],
             declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(JhiLanguageHelper, { language: empty() }),
@@ -110,7 +109,7 @@ describe('ButtonComponent', () => {
         expect(loadingIcon).toBe(null);
     });
 
-    it('should disable complete button if disabled is set', async () => {
+    it('should disable complete button if disabled is set', fakeAsync(() => {
         comp.title = 'artemisApp.title.test';
         comp.icon = 'redo';
         comp.disabled = true;
@@ -121,12 +120,12 @@ describe('ButtonComponent', () => {
         expect(button).not.toBe(null);
         expect(button.disabled).toBe(true);
         button.click();
-        await fixture.whenStable();
+        tick();
 
         expect(clickSpy).toHaveBeenCalledTimes(0);
-    });
+    }));
 
-    it('should enable complete button if disabled is set to false', async () => {
+    it('should enable complete button if disabled is set to false', fakeAsync(() => {
         comp.title = 'artemisApp.title.test';
         comp.icon = 'redo';
         comp.disabled = false;
@@ -137,12 +136,12 @@ describe('ButtonComponent', () => {
         expect(button).not.toBe(null);
         expect(button.disabled).toBe(false);
         button.click();
-        await fixture.whenStable();
+        tick();
 
         expect(clickSpy).toHaveBeenCalledTimes(1);
-    });
+    }));
 
-    it('should show loading indicator when loading is set', async () => {
+    it('should show loading indicator when loading is set', fakeAsync(() => {
         comp.title = 'artemisApp.title.test';
         comp.icon = 'redo';
         comp.isLoading = true;
@@ -156,8 +155,8 @@ describe('ButtonComponent', () => {
         expect(loadingIcon).not.toBe(null);
 
         button.click();
-        await fixture.whenStable();
+        tick();
 
         expect(clickSpy).toHaveBeenCalledTimes(0);
-    });
+    }));
 });
