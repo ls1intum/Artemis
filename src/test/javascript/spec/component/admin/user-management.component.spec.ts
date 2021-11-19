@@ -89,9 +89,9 @@ describe('UserManagementComponent', () => {
         // 1 sec of pause, because of the debounce time
         tick(1000);
 
-        expect(comp.users && comp.users[0].id).toEqual(1);
-        expect(comp.totalItems).toEqual(1);
-        expect(comp.loadingSearchResult).toEqual(false);
+        expect(comp.users && comp.users[0].id).toBe(1);
+        expect(comp.totalItems).toBe(1);
+        expect(comp.loadingSearchResult).toBe(false);
     }));
 
     describe('setActive', () => {
