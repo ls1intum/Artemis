@@ -70,7 +70,8 @@ export class ExerciseScoresExportButtonComponent {
                 rows.push(this.formatCsvRow(exercise, gradingCriteria, studentParticipation, resultWithPoints));
             });
 
-            this.resultService.triggerDownloadCSV(rows, `${exercise.shortName}-results-scores.csv`);
+            const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
+            this.resultService.triggerDownloadCSV(rows, `${fileNamePrefix}-results-scores.csv`);
         });
     }
 
@@ -90,7 +91,7 @@ export class ExerciseScoresExportButtonComponent {
         }
         columns.push('Score', 'Points');
 
-        gradingCriteria.forEach((criterion) => columns.push(`"${criterion.title}"`));
+        gradingCriteria.forEach((criterion) => columns.push(`"${criterion.title ?? 'Unnamed Criterion'}"`));
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             columns.push('Repo Link');

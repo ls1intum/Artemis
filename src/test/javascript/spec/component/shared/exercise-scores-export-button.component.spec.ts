@@ -46,7 +46,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     const exercise2 = new ProgrammingExercise(course1, exerciseGroup1);
     exercise2.id = 2;
-    exercise2.shortName = 'ex2';
+    exercise2.title = 'Exercise  title with spaces';
+    exercise2.shortName = undefined;
     exercise2.maxPoints = 200;
 
     const participation1 = setupParticipation('studentA', 'Student A', true);
@@ -169,7 +170,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         expect(getResultsStub).toHaveBeenCalledTimes(2);
         expect(exportCSVStub).toHaveBeenCalledTimes(2);
         expect(exportCSVStub).toHaveBeenNthCalledWith(1, expectedCSVWithCriteria, 'ex1-results-scores.csv');
-        expect(exportCSVStub).toHaveBeenNthCalledWith(2, expectedCSVNoCriteria, 'ex2-results-scores.csv');
+        expect(exportCSVStub).toHaveBeenNthCalledWith(2, expectedCSVNoCriteria, 'Exercise_title_with_spaces-results-scores.csv');
     });
 
     function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvRows: string[], expectedCsvFilename: string) {
