@@ -11,7 +11,7 @@ import { Component, Input } from '@angular/core';
  * text is any string passed to the component
  */
 export class FeedbackCollapseComponent {
-    @Input() text: string;
-    smallCharacterLimit = 200;
+    @Input() text: string; // this is typically feedback.detailText
+    @Input() previewText?: string; // if this is undefined, the whole text is shown
     isCollapsed = true;
 }

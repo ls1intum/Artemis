@@ -49,7 +49,6 @@
             "feedbackEditor": {
                 "dismissFeedback": "Soll das Feedback gelöscht werden?",
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
-                "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein ...",
                 "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
                 "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
                 "automaticFeedbackInformationModal": {
