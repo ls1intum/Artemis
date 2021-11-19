@@ -74,6 +74,15 @@ describe('CourseDiscussionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            declarations: [
+                CourseDiscussionComponent,
+                MockComponent(PostingThreadComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(ButtonComponent),
+            ],
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
@@ -85,15 +94,6 @@ describe('CourseDiscussionComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
-            ],
-            declarations: [
-                CourseDiscussionComponent,
-                MockComponent(PostingThreadComponent),
-                MockComponent(PostCreateEditModalComponent),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-                MockComponent(ButtonComponent),
             ],
         })
             .compileComponents()
@@ -192,6 +192,7 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(2);
     }));
 
     it('should search for posts with certain id when pattern is used', fakeAsync(() => {
@@ -218,7 +219,7 @@ describe('CourseDiscussionComponent', () => {
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.filterToUnresolved).toBe(true);
         // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
         expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
@@ -241,7 +242,7 @@ describe('CourseDiscussionComponent', () => {
         filterOwnCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
         expect(component.filterToUnresolved).toBe(true);
         expect(component.filterToOwn).toBe(true);
         expect(component.filterToAnsweredOrReactedByUser).toBe(false);
@@ -267,7 +268,7 @@ describe('CourseDiscussionComponent', () => {
         filterOwnCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.filterToUnresolved).toBe(false);
         expect(component.filterToOwn).toBe(true);
         expect(component.filterToAnsweredOrReactedByUser).toBe(false);
@@ -294,7 +295,7 @@ describe('CourseDiscussionComponent', () => {
         filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
         expect(component.filterToUnresolved).toBe(true);
         expect(component.filterToOwn).toBe(false);
         expect(component.filterToAnsweredOrReactedByUser).toBe(true);
@@ -324,7 +325,7 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.posts).toEqual(metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.ORGANIZATION));
     }));
 
@@ -344,7 +345,7 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.posts).toEqual(metisExercisePosts);
     }));
 
@@ -364,7 +365,7 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalled;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.posts).toEqual(metisLecturePosts);
     }));
 
@@ -383,6 +384,7 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
     }));
 
     it('should invoke metis service without forcing a reload when sort direction changed', fakeAsync(() => {
@@ -400,6 +402,7 @@ describe('CourseDiscussionComponent', () => {
             },
             false, // forceReload false
         );
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
     }));
 
     describe('sorting of posts', () => {

@@ -14,7 +14,7 @@ import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
@@ -22,13 +22,12 @@ describe('PostCreateEditModalComponent', () => {
     let metisService: MetisService;
     let metisServiceGetPageTypeMock: jest.SpyInstance;
     let metisServiceIsAtLeastInstructorStub: jest.SpyInstance;
-    let metisServiceCreateMock: jest.SpyInstance;
-    let metisServiceUpdateMock: jest.SpyInstance;
+    let metisServiceCreateStub: jest.SpyInstance;
+    let metisServiceUpdateStub: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -40,6 +39,7 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(NgbAccordion),
                 MockComponent(NgbPanel),
             ],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
         })
             .compileComponents()
             .then(() => {
@@ -49,8 +49,8 @@ describe('PostCreateEditModalComponent', () => {
                 metisServiceGetPageTypeMock = jest.spyOn(metisService, 'getPageType');
                 metisServiceIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceIsAtLeastInstructorStub.mockReturnValue(false);
-                metisServiceCreateMock = jest.spyOn(metisService, 'createPost');
-                metisServiceUpdateMock = jest.spyOn(metisService, 'updatePost');
+                metisServiceCreateStub = jest.spyOn(metisService, 'createPost');
+                metisServiceUpdateStub = jest.spyOn(metisService, 'updatePost');
             });
     });
 
@@ -66,9 +66,9 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.modalTitle).toEqual('artemisApp.metis.createModalTitlePost');
 
         // mock metis service will return a course with a default exercise as well as a default lecture
-        expect(component.course).toBeDefined();
-        expect(component.lectures).toHaveLength(1);
-        expect(component.exercises).toHaveLength(1);
+        expect(component.course).not.toBe(null);
+        expect(component.lectures).toHaveLength(metisCourse.lectures!.length);
+        expect(component.exercises).toHaveLength(metisCourse.exercises!.length);
         expect(component.similarPosts).toHaveLength(0);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
         expect(component.currentContextSelectorOption).toEqual({
@@ -112,7 +112,7 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.similarPosts).toEqual(metisCoursePosts.slice(0, 5));
         // trigger the method that is called on clicking the save button
         component.confirm();
-        expect(metisServiceCreateMock).toHaveBeenCalledWith({
+        expect(metisServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting,
             content: newContent,
             title: newTitle,
@@ -121,8 +121,8 @@ describe('PostCreateEditModalComponent', () => {
             metisLecture,
         });
         tick();
-        expect(component.isLoading).toEqual(false);
-        expect(onCreateSpy).toHaveBeenCalled();
+        expect(component.isLoading).toBe(false);
+        expect(onCreateSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should invoke metis service with created announcement in overview', fakeAsync(() => {
@@ -141,7 +141,7 @@ describe('PostCreateEditModalComponent', () => {
         });
         // trigger the method that is called on clicking the save button
         component.confirm();
-        expect(metisServiceCreateMock).toHaveBeenCalledWith({
+        expect(metisServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting,
             content: newContent,
             title: newTitle,
@@ -151,8 +151,8 @@ describe('PostCreateEditModalComponent', () => {
         });
         // debounce time of title input field
         tick(800);
-        expect(component.isLoading).toEqual(false);
-        expect(onCreateSpy).toHaveBeenCalled();
+        expect(component.isLoading).toBe(false);
+        expect(onCreateSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should invoke metis service with updated post in page section', fakeAsync(() => {
@@ -172,12 +172,12 @@ describe('PostCreateEditModalComponent', () => {
         // debounce time of title input field
         tick(800);
         component.confirm();
-        expect(metisServiceUpdateMock).toHaveBeenCalledWith({
+        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
             ...component.posting,
             content: updatedContent,
             title: updatedTitle,
         });
         tick();
-        expect(component.isLoading).toEqual(false);
+        expect(component.isLoading).toBe(false);
     }));
 });
