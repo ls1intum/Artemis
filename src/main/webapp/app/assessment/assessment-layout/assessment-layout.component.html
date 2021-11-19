@@ -26,6 +26,7 @@
     [hasComplaint]="!!complaint"
     [hasMoreFeedbackRequest]="complaint?.complaintType === MORE_FEEDBACK"
     [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
+    [complaintType]="complaint?.complaintType"
     (importExampleSubmission)="importExampleSubmission.emit()"
 ></jhi-assessment-header>
 
