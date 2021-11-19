@@ -64,11 +64,9 @@ export class ExampleSubmissionImportComponent implements OnInit {
                 this.content = resp;
                 this.loading = false;
                 this.total = resp.numberOfPages * this.state.pageSize;
-                if (this.content?.resultsOnPage?.length > 0) {
-                    this.content.resultsOnPage.forEach((submission) => {
-                        submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
-                    });
-                }
+                this.content?.resultsOnPage?.forEach((submission) => {
+                    submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
+                });
             });
     }
 

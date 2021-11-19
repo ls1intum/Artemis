@@ -31,14 +31,14 @@
                     <th>
                         <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
                         <fa-icon
-                            *ngIf="exercise && exercise.type === exerciseType.TEXT"
+                            *ngIf="exercise.type === exerciseType.TEXT"
                             [icon]="'question-circle'"
                             class="text-secondary ps-1"
                             [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                             container="body"
                         ></fa-icon>
                         <fa-icon
-                            *ngIf="exercise && exercise.type === exerciseType.MODELING"
+                            *ngIf="exercise.type === exerciseType.MODELING"
                             [icon]="'question-circle'"
                             class="text-secondary ps-1"
                             [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
