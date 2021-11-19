@@ -699,7 +699,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
                 HttpStatus.OK);
 
         final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
-        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb).isPresent();
         assertThat(submissionInDb.get().getModel()).isEqualTo(validModel);
     }
 

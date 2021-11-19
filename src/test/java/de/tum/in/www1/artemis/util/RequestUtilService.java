@@ -461,7 +461,7 @@ public class RequestUtilService {
 
         if (expectedResponseHeaders != null) {
             for (String header : expectedResponseHeaders) {
-                assertThat(res.getResponse().containsHeader(header));
+                assertThat(res.getResponse().containsHeader(header)).isTrue();
             }
         }
 

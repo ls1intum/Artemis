@@ -28,6 +28,8 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
     private NotificationSetting settingsB;
 
+    private User student1;
+
     /**
      * Prepares the common variables and data for testing
      */
@@ -35,7 +37,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     public void initTestCase() {
         List<User> users = database.addUsers(2, 1, 1, 1);
 
-        User student1 = users.get(0);
+        student1 = users.get(0);
         users.set(0, student1);
         userRepository.save(student1);
 
@@ -65,6 +67,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
         assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned").contains(settingA);
         assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned").contains(settingsB);
+        assertThat(notificationSettings.size()).isEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
     }
 
     /**

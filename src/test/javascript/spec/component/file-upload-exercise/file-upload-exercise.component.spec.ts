@@ -12,15 +12,19 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
     let fixture: ComponentFixture<FileUploadExerciseComponent>;
     let service: CourseExerciseService;
+    let fileUploadExerciseService: FileUploadExerciseService;
 
     const course: Course = { id: 123 } as Course;
     const fileUploadExercise = new FileUploadExercise(course, undefined);
     fileUploadExercise.id = 456;
+    fileUploadExercise.title = 'PDF Upload';
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -40,6 +44,13 @@ describe('FileUploadExercise Management Component', () => {
         fixture = TestBed.createComponent(FileUploadExerciseComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(CourseExerciseService);
+        fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
+
+        comp.fileUploadExercises = [fileUploadExercise];
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('Should call loadExercises on init', () => {
@@ -61,5 +72,47 @@ describe('FileUploadExercise Management Component', () => {
         // THEN
         expect(service.findAllFileUploadExercisesForCourse).toHaveBeenCalled();
         expect(comp.fileUploadExercises[0]).toEqual(fileUploadExercise);
+    });
+
+    it('Should delete exercise', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    headers,
+                }),
+            ),
+        );
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.deleteFileUploadExercise(456);
+        expect(fileUploadExerciseService.delete).toHaveBeenCalledWith(456);
+        expect(fileUploadExerciseService.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should return exercise id', () => {
+        expect(comp.trackId(0, fileUploadExercise)).toBe(456);
+    });
+
+    describe('FileUploadExercise Search Exercises', () => {
+        it('Should show all exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
+
+            // THEN
+            expect(comp.fileUploadExercises).toHaveLength(1);
+            expect(comp.filteredFileUploadExercises).toHaveLength(1);
+        });
+
+        it('Should show no exercises', () => {
+            // WHEN
+            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+
+            // THEN
+            expect(comp.fileUploadExercises).toHaveLength(1);
+            expect(comp.filteredFileUploadExercises).toHaveLength(0);
+        });
     });
 });
