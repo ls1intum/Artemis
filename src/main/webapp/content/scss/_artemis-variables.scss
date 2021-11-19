@@ -33,14 +33,3 @@ $popover-max-width: 100%;
 // Body:
 // Settings for the `<body>` element.
 $body-bg: #e4e5e6;
-
-// Headings:
-// Ensure that we use bootstrap font weight for components that import 'artemis-variables'
-h6,
-h5,
-h4,
-h3,
-h2,
-h1 {
-    font-weight: 500;
-}

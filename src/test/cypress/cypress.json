@@ -11,5 +11,10 @@
     "viewportWidth": 1920,
     "viewportHeight": 1080,
     "defaultCommandTimeout": 20000,
-    "responseTimeout": 120000
+    "responseTimeout": 120000,
+    "reporter": "junit",
+    "reporterOptions": {
+        "mochaFile": "build/cypress/test-reports/test-results.xml",
+        "toConsole": false
+    }
 }
