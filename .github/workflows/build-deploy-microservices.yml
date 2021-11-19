@@ -101,7 +101,7 @@ jobs:
     - name: Download Dockerfile
       run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/entrypoint.sh
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis .
+      run: docker build --build-arg WAR_PATH=. -t artemis-service .
 
     - name: Compute Tag
       uses: actions/github-script@v5
@@ -134,8 +134,8 @@ jobs:
       env:
         TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
-        docker tag artemis ghcr.io/ls1intum/artemis:$TAG
-        docker push ghcr.io/ls1intum/artemis:$TAG
+        docker tag artemis-service ghcr.io/ls1intum/artemis-service:$TAG
+        docker push ghcr.io/ls1intum/artemis-service:$TAG
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
     # TODO: Push to Docker Hub (develop + tag)
@@ -153,7 +153,7 @@ jobs:
     - name: Download Dockerfile
       run: curl -O ${{ env.RAW_URL }}/gateway/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/gateway/src/main/docker/jib/entrypoint.sh
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t gateway .
+      run: docker build --build-arg WAR_PATH=. -t artemis-gateway .
 
     - name: Compute Tag
       uses: actions/github-script@v5
@@ -186,8 +186,8 @@ jobs:
       env:
         TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
-        docker tag gateway ghcr.io/ls1intum/gateway:$TAG
-        docker push ghcr.io/ls1intum/gateway:$TAG
+        docker tag artemis-gateway ghcr.io/ls1intum/artemis-gateway:$TAG
+        docker push ghcr.io/ls1intum/artemis-gateway:$TAG
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
     # TODO: Push to Docker Hub (develop + tag)
@@ -205,7 +205,7 @@ jobs:
     - name: Download Dockerfile
       run: curl -O ${{ env.RAW_URL }}/user-management/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/user-management/src/main/docker/jib/entrypoint.sh
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t usermanagement .
+      run: docker build --build-arg WAR_PATH=. -t artemis-usermanagement-service .
 
     - name: Compute Tag
       uses: actions/github-script@v5
