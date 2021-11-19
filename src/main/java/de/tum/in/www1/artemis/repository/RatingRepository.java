@@ -34,11 +34,15 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
     @Query("""
-                SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount(avg(ra.rating), count(*))
+                SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount(
+                    cast(sum(ra.rating) as double) / sum(case when ra.rating is not null then 1 else 0 end),
+                    sum(case when ra.rating is not null then 1 else 0 end))
                 FROM
-                    Result r join r.participation p join p.exercise e
-                    LEFT JOIN FETCH Rating ra on ra.result = r.id
-                WHERE e.id = :#{#exerciseId}
+                    Result r JOIN r.participation p JOIN p.exercise e
+                    LEFT JOIN FETCH Rating ra ON ra.result = r.id
+                WHERE
+                    r.completionDate is not null AND
+                    e.id = :#{#exerciseId}
             """)
     ExerciseRatingCount averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);
 
