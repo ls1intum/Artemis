@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { of } from 'rxjs';
@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 class MockActivatedRoute {
     parent: any;
@@ -37,7 +38,7 @@ describe('ExerciseScoresChartComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(LineChartModule), RouterTestingModule.withRoutes([]), MockModule(BrowserAnimationsModule)],
-            declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(TranslateService),
