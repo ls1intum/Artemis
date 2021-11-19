@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -56,14 +57,14 @@ public class NotificationSettingsServiceTest {
         student1 = new User();
         student1.setId(555L);
 
-        unsavedNotificationSettingA = new NotificationSetting(false, true, "notification.exercise-notification.exercise-open-for-practice");
-        unsavedNotificationSettingB = new NotificationSetting(true, true, "notification.lecture-notification.attachment-changes");
-        unsavedNotificationSettingC = new NotificationSetting(false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
-        completeNotificationSettingA = new NotificationSetting(student1, false, true, "notification.exercise-notification.exercise-open-for-practice");
-        completeNotificationSettingB = new NotificationSetting(student1, true, true, "notification.lecture-notification.attachment-changes");
-        completeNotificationSettingC = new NotificationSetting(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        completeNotificationSettingA = new NotificationSetting(student1, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
         notificationSettingRepository = mock(NotificationSettingRepository.class);
