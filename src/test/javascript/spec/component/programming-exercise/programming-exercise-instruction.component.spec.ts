@@ -30,6 +30,7 @@ import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+// eslint-disable-next-line @typescript-eslint/tslint/config
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';

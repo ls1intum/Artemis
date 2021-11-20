@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 
 @Directive({
     // tslint:disable-next-line:directive-selector
-    selector: '[routerLink]'
+    selector: '[routerLink]',
 })
 export class MockRouterLinkDirective {
     @Input('routerLink') routerLink: any;
@@ -18,7 +18,7 @@ export class MockRouterLinkDirective {
 
 @Directive({
     // tslint:disable-next-line:directive-selector
-    selector: '[routerLinkActiveOptions]'
+    selector: '[routerLinkActiveOptions]',
 })
 export class MockRouterLinkActiveOptionsDirective {
     @Input('routerLinkActiveOptions') data: any;
@@ -26,7 +26,7 @@ export class MockRouterLinkActiveOptionsDirective {
 
 @Directive({
     // tslint:disable-next-line:directive-selector
-    selector: '[queryParams]'
+    selector: '[queryParams]',
 })
 export class MockQueryParamsDirective {
     @Input('queryParams') data: any;
