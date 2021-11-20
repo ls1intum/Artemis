@@ -51,7 +51,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

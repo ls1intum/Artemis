@@ -15,10 +15,10 @@ import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import sinonChai from 'sinon-chai';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +43,7 @@ class RouterLinkSpy {
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;
     let managementComponent: SystemNotificationManagementComponent;
-    let router: any;
+    let router: MockRouter;
 
     const route = {
         data: of({ pagingParams: {} }),
@@ -52,7 +52,7 @@ describe('SystemNotificationManagementComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.setEvents(of({ id: 1, url: '' } as RouterEvent));
+        router.events = of({ id: 1, url: '' } as RouterEvent);
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -77,11 +77,10 @@ describe('SystemNotificationManagementComponent', () => {
             .then(() => {
                 managementComponentFixture = TestBed.createComponent(SystemNotificationManagementComponent);
                 managementComponent = managementComponentFixture.componentInstance;
-                router = managementComponentFixture.debugElement.injector.get(Router);
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         sinon.restore();
     });
 
@@ -103,7 +102,7 @@ describe('SystemNotificationManagementComponent', () => {
 
         tick();
         expect(router.navigateByUrl).to.have.been.calledOnce;
-        const navigationArray = router.navigateByUrl.getCall(0).args[0];
+        const navigationArray = router.navigateByUrl.mock.calls[0][0];
         expect(navigationArray).to.deep.equal(['./', notification.id]);
     }));
 
@@ -120,7 +119,7 @@ describe('SystemNotificationManagementComponent', () => {
 
         tick();
         expect(router.navigateByUrl).to.have.been.calledOnce;
-        const navigationArray = router.navigateByUrl.getCall(0).args[0];
+        const navigationArray = router.navigateByUrl.mock.calls[0][0];
         expect(navigationArray).to.deep.equal(['./', notification.id, 'edit']);
     }));
 
@@ -138,7 +137,7 @@ describe('SystemNotificationManagementComponent', () => {
         pagination.dispatchEvent(new Event('pageChange'));
 
         tick();
-        const navigationArray = router.navigate.getCall(0).args[0];
+        const navigationArray = router.navigate.mock.calls[0][0];
         expect(navigationArray).to.deep.equal(['/admin/system-notification-management']);
     }));
 });

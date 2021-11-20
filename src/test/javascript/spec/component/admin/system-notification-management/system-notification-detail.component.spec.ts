@@ -8,17 +8,11 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { spy } from 'sinon';
-import sinonChai from 'sinon-chai';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Directive({
     // tslint:disable-next-line:directive-selector
@@ -49,7 +43,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.setEvents(of({ id: 1, url: '' } as RouterEvent));
+        router.events = of({ id: 1, url: '' } as RouterEvent);
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
@@ -66,7 +60,6 @@ describe('SystemNotificationManagementDetailComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -75,15 +68,14 @@ describe('SystemNotificationManagementDetailComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const dataSpy = spy(route.data, 'subscribe');
+        const dataSpy = jest.spyOn(route.data, 'subscribe');
         detailComponentFixture.detectChanges();
-        expect(detailComponent).to.be.ok;
-        expect(dataSpy).to.have.been.calledOnce;
+        expect(dataSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should navigate to edit if edit is clicked', fakeAsync(() => {
@@ -93,8 +85,8 @@ describe('SystemNotificationManagementDetailComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).to.have.been.calledOnce;
-        const navigationArray = router.navigateByUrl.getCall(0).args[0];
-        expect(navigationArray).to.deep.equal(['edit']);
+        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        const navigationArray = router.navigateByUrl.mock.calls[0][0];
+        expect(navigationArray).toEqual(['edit']);
     }));
 });
