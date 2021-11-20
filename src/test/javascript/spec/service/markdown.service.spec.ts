@@ -1,23 +1,9 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { getTestBed } from '@angular/core/testing';
 import { parseTextHintExplanation } from 'app/shared/util/markdown.util';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('Markdown Service', () => {
-    let markdownService: ArtemisMarkdownService;
-
-    beforeEach(() => {
-        const injector = getTestBed();
-        markdownService = injector.get(ArtemisMarkdownService);
-    });
-
     const hintText = 'Add an explanation here (only visible in feedback after quiz has ended)';
     const markdownHint = '[hint] ' + hintText;
     const explanationText = 'Add an explanation here (only visible in feedback after quiz has ended)';
@@ -28,27 +14,27 @@ describe('Markdown Service', () => {
         const markdownString = '[ ] Enter a correct answer option here';
 
         parseTextHintExplanation(markdownString, markdownElement);
-        expect(markdownElement.text).to.equal(markdownString);
-        expect(markdownElement.hint).to.be.undefined;
-        expect(markdownElement.explanation).to.be.undefined;
+        expect(markdownElement.text).toEqual(markdownString);
+        expect(markdownElement.hint).toBeUndefined();
+        expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new MultipleChoiceQuestion();
         parseTextHintExplanation(`${markdownHint}`, markdownElement);
-        expect(markdownElement.text).to.equal('');
-        expect(markdownElement.hint).to.equal(hintText);
-        expect(markdownElement.explanation).to.be.undefined;
+        expect(markdownElement.text).toEqual('');
+        expect(markdownElement.hint).toEqual(hintText);
+        expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new MultipleChoiceQuestion();
         parseTextHintExplanation(`${markdownExplanation}`, markdownElement);
-        expect(markdownElement.text).to.equal('');
-        expect(markdownElement.hint).to.be.undefined;
-        expect(markdownElement.explanation).to.equal(explanationText);
+        expect(markdownElement.text).toEqual('');
+        expect(markdownElement.hint).toBeUndefined();
+        expect(markdownElement.explanation).toEqual(explanationText);
 
         markdownElement = new MultipleChoiceQuestion();
         parseTextHintExplanation(`${markdownString} ${markdownHint} ${markdownExplanation}`, markdownElement);
-        expect(markdownElement.text).to.equal(markdownString);
-        expect(markdownElement.hint).to.equal(hintText);
-        expect(markdownElement.explanation).to.equal(explanationText);
+        expect(markdownElement.text).toEqual(markdownString);
+        expect(markdownElement.hint).toEqual(hintText);
+        expect(markdownElement.explanation).toEqual(explanationText);
     });
 
     it('should return correct parsed text hint and explanation for SA questions', () => {
@@ -60,33 +46,33 @@ describe('Markdown Service', () => {
             'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):';
 
         parseTextHintExplanation(markdownString, markdownElement);
-        expect(markdownElement.text).to.equal(markdownString);
-        expect(markdownElement.hint).to.be.undefined;
-        expect(markdownElement.explanation).to.be.undefined;
+        expect(markdownElement.text).toEqual(markdownString);
+        expect(markdownElement.hint).toBeUndefined();
+        expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new ShortAnswerQuestion();
         parseTextHintExplanation(`${markdownHint}`, markdownElement);
-        expect(markdownElement.text).to.equal('');
-        expect(markdownElement.hint).to.equal(hintText);
-        expect(markdownElement.explanation).to.be.undefined;
+        expect(markdownElement.text).toEqual('');
+        expect(markdownElement.hint).toEqual(hintText);
+        expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new ShortAnswerQuestion();
         parseTextHintExplanation(`${markdownExplanation}`, markdownElement);
-        expect(markdownElement.text).to.equal('');
-        expect(markdownElement.hint).to.be.undefined;
-        expect(markdownElement.explanation).to.equal(explanationText);
+        expect(markdownElement.text).toEqual('');
+        expect(markdownElement.hint).toBeUndefined();
+        expect(markdownElement.explanation).toEqual(explanationText);
 
         markdownElement = new ShortAnswerQuestion();
         parseTextHintExplanation(`${markdownString} ${markdownHint} ${markdownExplanation}`, markdownElement);
-        expect(markdownElement.text).to.equal(markdownString);
-        expect(markdownElement.hint).to.equal(hintText);
-        expect(markdownElement.explanation).to.equal(explanationText);
+        expect(markdownElement.text).toEqual(markdownString);
+        expect(markdownElement.hint).toEqual(hintText);
+        expect(markdownElement.explanation).toEqual(explanationText);
     });
 
     it('should return sanitized markdown for undefined input', () => {
         const emptyMarkdown = undefined;
         const safeMarkdown = htmlForMarkdown(emptyMarkdown);
-        expect(safeMarkdown).to.equal('');
+        expect(safeMarkdown).toEqual('');
     });
 
     it('should return sanitized markdown for html input', () => {
@@ -94,32 +80,32 @@ describe('Markdown Service', () => {
 
         // Don't disable any html tags or tags
         const safeMarkdownWithTagsAndAttributes = htmlForMarkdown(markdownString);
-        expect(safeMarkdownWithTagsAndAttributes).to.equal('<p><b style="background-color: blue">Will this render blue?</b></p>');
+        expect(safeMarkdownWithTagsAndAttributes).toEqual('<p><b style="background-color: blue">Will this render blue?</b></p>');
 
         // Don't disable any html tags but disallow attributes
         const safeMarkdownWithTags = htmlForMarkdown(markdownString, [], undefined, []);
-        expect(safeMarkdownWithTags).to.equal('<p><b>Will this render blue?</b></p>');
+        expect(safeMarkdownWithTags).toEqual('<p><b>Will this render blue?</b></p>');
 
         // Don't disable any html tags and allow one specific attribute
         const safeMarkdownWithTagsAndAttributeA = htmlForMarkdown(markdownString, [], undefined, ['unused']);
-        expect(safeMarkdownWithTagsAndAttributeA).to.equal('<p><b>Will this render blue?</b></p>');
+        expect(safeMarkdownWithTagsAndAttributeA).toEqual('<p><b>Will this render blue?</b></p>');
         const safeMarkdownWithTagsAndAttributeB = htmlForMarkdown(markdownString, [], undefined, ['style']);
-        expect(safeMarkdownWithTagsAndAttributeB).to.equal('<p><b style="background-color: blue">Will this render blue?</b></p>');
+        expect(safeMarkdownWithTagsAndAttributeB).toEqual('<p><b style="background-color: blue">Will this render blue?</b></p>');
 
         // Don't disable any html attributes but disallow tags (attributes of disallowed tags are gone too)
         const safeMarkdownWithAttributes = htmlForMarkdown(markdownString, [], []);
-        expect(safeMarkdownWithAttributes).to.equal('Will this render blue?');
+        expect(safeMarkdownWithAttributes).toEqual('Will this render blue?');
 
         // Only allow one specific html tag but disallow attributes
         const safeMarkdownWithSingleTagAndNoAttributes = htmlForMarkdown(markdownString, [], ['b'], []);
-        expect(safeMarkdownWithSingleTagAndNoAttributes).to.equal('<b>Will this render blue?</b>');
+        expect(safeMarkdownWithSingleTagAndNoAttributes).toEqual('<b>Will this render blue?</b>');
 
         // Only allow one specific html tag and allow all attributes
         const safeMarkdownWithSingleTagAndAttributes = htmlForMarkdown(markdownString, [], ['b']);
-        expect(safeMarkdownWithSingleTagAndAttributes).to.equal('<b style="background-color: blue">Will this render blue?</b>');
+        expect(safeMarkdownWithSingleTagAndAttributes).toEqual('<b style="background-color: blue">Will this render blue?</b>');
 
         // Disable all html tags or attributes
         const safeMarkdownWithoutExtras = htmlForMarkdown(markdownString, [], [], []);
-        expect(safeMarkdownWithoutExtras).to.equal('Will this render blue?');
+        expect(safeMarkdownWithoutExtras).toEqual('Will this render blue?');
     });
 });

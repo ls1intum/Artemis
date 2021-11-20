@@ -34,8 +34,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     @Input()
     backupQuestion: MultipleChoiceQuestion;
 
-    constructor() {}
-
     /**
      * generate the question using the markdown service
      * @param {MultipleChoiceQuestion} question

@@ -13,12 +13,10 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 
-const ENTITY_STATES = [...textEditorRoute];
-
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
+        RouterModule.forChild(textEditorRoute),
         ArtemisResultModule,
         ArtemisComplaintsModule,
         ArtemisSharedComponentModule,
