@@ -1,42 +1,33 @@
-import * as chai from 'chai';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisOrionConnector, OrionState } from 'app/shared/orion/orion';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('OrionExerciseDetailsStudentActionsComponent', () => {
     let comp: OrionExerciseDetailsStudentActionsComponent;
     let fixture: ComponentFixture<OrionExerciseDetailsStudentActionsComponent>;
-    let orionConnector: ArtemisOrionConnector;
+    let orionConnectorService: OrionConnectorService;
 
-    let ideStateStub: SinonStub;
-    let cloneSpy: SinonSpy;
-    let submitSpy: SinonSpy;
-    let forwardBuildSpy: SinonSpy;
+    let orionStateStub: jest.SpyInstance;
+    let cloneSpy: jest.SpyInstance;
+    let submitSpy: jest.SpyInstance;
+    let forwardBuildSpy: jest.SpyInstance;
 
     const exercise = { id: 42 } as Exercise;
-    const ideState = { opened: 40, building: false, cloning: false } as OrionState;
+    const orionState = { opened: 40, building: false, cloning: false } as any;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
                 OrionExerciseDetailsStudentActionsComponent,
@@ -48,86 +39,67 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
             providers: [
                 MockProvider(OrionBuildAndTestService),
                 MockProvider(OrionConnectorService),
-                MockProvider(FeatureToggleService),
                 { provide: ActivatedRoute, useValue: { queryParams: of({ withIdeSubmit: true }) } },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(OrionExerciseDetailsStudentActionsComponent);
                 comp = fixture.componentInstance;
-                orionConnector = TestBed.inject(OrionConnectorService);
-                forwardBuildSpy = spy(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
-                cloneSpy = spy(orionConnector, 'importParticipation');
-                submitSpy = spy(orionConnector, 'submit');
-                ideStateStub = stub(orionConnector, 'state');
+                orionConnectorService = TestBed.inject(OrionConnectorService);
+                orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(new BehaviorSubject(orionState));
+                forwardBuildSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
+                cloneSpy = jest.spyOn(orionConnectorService, 'importParticipation');
+                submitSpy = jest.spyOn(orionConnectorService, 'submit');
             });
     });
+
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
-    it('should not reflect that the represented exercise is opened if another exercise has been opened', fakeAsync(() => {
-        const stateObservable = new BehaviorSubject(ideState);
-        comp.exercise = exercise;
-        ideStateStub.returns(stateObservable);
-
+    it('ngOnInit should subscribe to state', () => {
         comp.ngOnInit();
-        fixture.detectChanges();
-        tick();
 
-        expect(comp.orionState.opened).to.not.equal(exercise.id);
+        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledWith();
+        expect(comp.orionState).toEqual(orionState);
+    });
 
-        fixture.destroy();
-        flush();
-    }));
-    it('should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
-        const stateObservable = new BehaviorSubject({ opened: exercise.id });
-        comp.exercise = exercise;
-        ideStateStub.returns(stateObservable);
-
-        comp.ngOnInit();
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.orionState.opened).to.equal(exercise.id);
-
-        fixture.destroy();
-        flush();
-    }));
     it('should clone the correct repository in the IDE', () => {
         const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
-        const progExercise = { id: 42, title: 'Test Title' } as Exercise;
-        progExercise.studentParticipations = [participation];
-        comp.exercise = progExercise;
+        const programmingExercise = { id: 42, title: 'Test Title' } as Exercise;
+        programmingExercise.studentParticipations = [participation];
+        comp.exercise = programmingExercise;
         comp.courseId = 456;
 
         comp.importIntoIDE();
-        expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', progExercise);
+        expect(cloneSpy).toHaveBeenCalledTimes(1);
+        expect(cloneSpy).toHaveBeenCalledWith('testUrl', programmingExercise);
     });
+
     it('should submit the changes and then forward the build results on submit', () => {
         comp.exercise = exercise;
         comp.submitChanges();
 
-        expect(submitSpy).to.have.been.calledOnce;
-        expect(forwardBuildSpy).to.have.been.calledOnce;
-        expect(forwardBuildSpy).to.have.been.calledImmediatelyAfter(submitSpy);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
+        expect(forwardBuildSpy).toHaveBeenCalledTimes(1);
+        // asserts forwardBuild has been called directly after submit
+        expect(forwardBuildSpy.mock.invocationCallOrder[0]).toBe(submitSpy.mock.invocationCallOrder[0] + 1);
     });
-    it('isOfflineIdeAllowed should work', () => {
+
+    it('isOfflineIdeAllowed should reflect exercise state', () => {
         comp.exercise = { allowOfflineIde: true } as any;
 
-        expect(comp.isOfflineIdeAllowed).to.be.true;
+        expect(comp.isOfflineIdeAllowed).toBe(true);
     });
-    it('should submit if stated in route', fakeAsync(() => {
-        const stateObservable = new BehaviorSubject(ideState);
-        comp.exercise = exercise;
-        ideStateStub.returns(stateObservable);
-        const submitChangesSpy = spy(comp, 'submitChanges');
+
+    it('should submit if stated in route', () => {
+        const submitChangesSpy = jest.spyOn(comp, 'submitChanges');
 
         comp.ngOnInit();
-        tick();
 
-        expect(submitChangesSpy).to.have.been.calledOnceWith();
-    }));
+        expect(submitChangesSpy).toHaveBeenCalledTimes(1);
+        expect(submitChangesSpy).toHaveBeenCalledWith();
+    });
 });

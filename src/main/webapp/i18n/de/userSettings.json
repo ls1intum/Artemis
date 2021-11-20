@@ -21,7 +21,8 @@
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
-                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+                "editorExclusiveNotifications": "Benachrichtigungen für Editor:innen",
+                "instructorExclusiveNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
@@ -34,7 +35,8 @@
                 "newCoursePost": "Neue Beiträge für Kursdiskussionen",
                 "newReplyForCoursePost": "Neue Antworten von Kursdiskussionen",
                 "newAnnouncementPost": "Neue Ankündigungen",
-                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
+                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart",
+                "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben"
             },
             "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
@@ -47,7 +49,8 @@
                 "newCoursePostDescription": "Erhalte eine Mitteilung, wenn ein neuer Beitrag in den Kursdiskussionen erstellt wurde",
                 "newReplyForCoursePostDescription": "Erhalte eine Mitteilung, wenn eine neue Antwort auf einen Beitrag, welcher eine Kursdiskussion betrifft, erstellt wurde",
                 "newAnnouncementPostDescription": "Erhalte eine Mitteilung, wenn eine neue Ankündigung erstellt wurde",
-                "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung, wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
+                "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung, wenn das Archivieren eines Kurses oder einer Klausur angefangen hat",
+                "programmingTestCasesChangedDescription": "Erhalte eine Mitteilung bei Änderungen von Testfällen in Programmieraufgaben"
             }
         }
     }
