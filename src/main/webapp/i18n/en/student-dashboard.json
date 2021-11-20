@@ -122,7 +122,8 @@
                 "modelingPointLabel": "Modeling Points",
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
-                "missingPointsLabel": "Missing Points"
+                "missingPointsLabel": "Missing Points",
+                "achievedPointsLabel": "Achieved Points"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

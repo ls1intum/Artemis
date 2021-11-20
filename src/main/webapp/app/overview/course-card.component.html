@@ -28,25 +28,25 @@
     </div>
 
     <div class="card-body">
-        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
             <div class="chart-text">
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
             </div>
-            <canvas
-                baseChart
-                [routerLink]="['/courses', course.id!]"
+            <ngx-charts-pie-chart
                 id="score-chart"
-                height="175"
-                width="175"
-                [legend]="false"
-                [datasets]="doughnutChartData"
-                [options]="totalScoreOptions"
-                [colors]="doughnutChartColors"
-                [labels]="doughnutChartLabels"
-                [chartType]="'doughnut'"
-            ></canvas>
+                [view]="[200, 200]"
+                [results]="ngxDoughnutData"
+                [scheme]="ngxColor"
+                [doughnut]="true"
+                [tooltipText]="tooltipFormatting"
+                (select)="onSelect($event)"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
+                    <span>: {{ model.value }}</span>
+                </ng-template>
+            </ngx-charts-pie-chart>
         </div>
         <ng-template #noStatistic>
             <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>

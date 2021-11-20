@@ -120,7 +120,8 @@
                 "modelingPointLabel": "Modellierungsaufgaben Punkte",
                 "textPointLabel": "Textaufgaben Punkte",
                 "fileUploadPointLabel": "Dateiupload-Aufgaben Punkte",
-                "missingPointsLabel": "Fehlende Punkte"
+                "missingPointsLabel": "Fehlende Punkte",
+                "achievedPointsLabel": "Erreichte Punkte"
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
