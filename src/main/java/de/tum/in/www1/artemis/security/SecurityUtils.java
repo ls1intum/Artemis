@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.security;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -58,7 +59,7 @@ public final class SecurityUtils {
         if (authentication == null) {
             return null;
         }
-        else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
+        else if (authentication.getPrincipal()instanceof UserDetails springSecurityUser) {
             return springSecurityUser.getUsername();
         }
         else if (authentication.getPrincipal() instanceof String) {
@@ -140,5 +141,36 @@ public final class SecurityUtils {
             }
         };
         context.setAuthentication(authentication);
+    }
+
+    /**
+     * Checks if the current user has any of the authorities.
+     *
+     * @param authorities the authorities to check.
+     * @return true if the current user has any of the authorities, false otherwise.
+     */
+    public static boolean hasCurrentUserAnyOfAuthorities(String... authorities) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (authentication != null && getAuthorities(authentication).anyMatch(authority -> Arrays.asList(authorities).contains(authority)));
+    }
+
+    /**
+     * Checks if the current user has none of the authorities.
+     *
+     * @param authorities the authorities to check.
+     * @return true if the current user has none of the authorities, false otherwise.
+     */
+    public static boolean hasCurrentUserNoneOfAuthorities(String... authorities) {
+        return !hasCurrentUserAnyOfAuthorities(authorities);
+    }
+
+    /**
+     * Checks if the current user has a specific authority.
+     *
+     * @param authority the authority to check.
+     * @return true if the current user has the authority, false otherwise.
+     */
+    public static boolean hasCurrentUserThisAuthority(String authority) {
+        return hasCurrentUserAnyOfAuthorities(authority);
     }
 }
