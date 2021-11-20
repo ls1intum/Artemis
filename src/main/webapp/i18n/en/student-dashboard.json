@@ -116,7 +116,13 @@
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
                 "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
                 "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
-                "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)"
+                "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
+                "programmingPointLabel": "Programming Points",
+                "quizPointLabel": "Quiz Points",
+                "modelingPointLabel": "Modeling Points",
+                "textPointLabel": "Text Points",
+                "fileUploadPointLabel": "File upload Points",
+                "missingPointsLabel": "Missing Points"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

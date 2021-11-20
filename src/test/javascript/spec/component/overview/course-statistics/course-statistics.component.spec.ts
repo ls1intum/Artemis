@@ -237,7 +237,6 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups.length).toBe(1);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        // console.log(modelingWrapper.query(By.css('h2')).nativeElement.textContent);
         expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
         expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
@@ -245,11 +244,6 @@ describe('CourseStatisticsComponent', () => {
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
         const exercise: any = comp.ngxExerciseGroups[0][0];
         expect(exercise.presentationScore).toBe(2);
-        /*expect(exercise.notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
-        expect(exercise.scores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseAchievedScore']);
-        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
-        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
-        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);*/
     });
 
     it('should calculate scores correctly', () => {

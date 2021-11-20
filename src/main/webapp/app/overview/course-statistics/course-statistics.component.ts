@@ -77,7 +77,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     overallPresentationScore = 0;
     presentationScoresPerExercise: ExerciseTypeMap;
 
-    doughnutChartColors: string[] = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'red'];
+    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'red'];
 
     public exerciseTitles: object = {
         quiz: {
@@ -104,11 +104,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     // ngx-charts
     ngxDoughnutData: any[] = [];
+
+    // Labels for the different parts in Your overall points chart
+    programmingPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.programmingPointLabel');
+    quizPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.quizPointLabel');
+    modelingPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.modelingPointLabel');
+    textPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.textPointLabel');
+    fileUploadPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.fileUploadPointLabel');
+    missingPointsLabel = this.translateService.instant('artemisApp.courseOverview.statistics.missingPointsLabel');
+
     ngxDoughnutColor = {
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: this.doughnutChartColors,
+        domain: this.doughnutChartColors, // colors: orange, turquoise, violet, bordeaux, green, red
     } as Color;
 
     // arrays representing each exercise group
@@ -201,7 +210,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
     }
 
-    calculateCourseGrade() {
+    private calculateCourseGrade(): void {
         this.gradingSystemService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists = true;
@@ -211,7 +220,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
     }
 
-    private onCourseLoad() {
+    private onCourseLoad(): void {
         this.courseExercises = this.course!.exercises!;
         this.calculateMaxPoints();
         this.calculateReachablePoints();
@@ -222,7 +231,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.groupExercisesByType();
     }
 
-    groupExercisesByType() {
+    /**
+     * Sorts the exercises of a course into their corresponding exercise groups and creates dedicated objects that
+     * can be processed by ngx-charts in order to visualize the students score for each exercise
+     * @private
+     */
+    private groupExercisesByType(): void {
         let exercises = this.course!.exercises;
         const exerciseTypes: string[] = [];
         this.ngxExerciseGroups = [];
@@ -234,7 +248,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 if (index === -1) {
                     exerciseTypes.push(exercise.type!);
                 }
-                const series = this.generateDefaultSeries();
+                const series = CourseStatisticsComponent.generateDefaultSeries();
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
                     series[4].value = 100;
@@ -298,7 +312,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.pushExerciseGroupsToData(allGroups, allTypes);
     }
 
-    generateDefaultSeries() {
+    /**
+     * Generates array containing default configuration for every possible part in one stacked bar
+     * @private
+     */
+    private static generateDefaultSeries(): any[] {
         return [
             { name: 'Achieved (included)', value: 0, absoluteValue: 0 },
             { name: 'Achieved (not included)', value: 0, absoluteValue: 0 },
@@ -308,7 +326,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         ];
     }
 
-    calculateAbsoluteScores(): void {
+    /**
+     * Calculates absolute score for each exercise group in the course and adds it to the doughnut chart
+     * @private
+     */
+    private calculateAbsoluteScores(): void {
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
         const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ABSOLUTE_SCORE);
         const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ABSOLUTE_SCORE);
@@ -326,16 +348,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.overallPointsPerExercise = absoluteScores;
-        this.ngxDoughnutData.push({ name: 'Quiz Points', value: quizzesTotalScore });
-        this.ngxDoughnutData.push({ name: 'Programming Points', value: programmingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: 'Modeling Points', value: modelingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: 'Text Points', value: textExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: 'File upload Points', value: fileUploadExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: 'Missing Points', value: totalMissedPoints });
+        this.ngxDoughnutData.push({ name: this.programmingPointLabel, value: programmingExerciseTotalScore });
+        this.ngxDoughnutData.push({ name: this.quizPointLabel, value: quizzesTotalScore });
+        this.ngxDoughnutData.push({ name: this.modelingPointLabel, value: modelingExerciseTotalScore });
+        this.ngxDoughnutData.push({ name: this.textPointLabel, value: textExerciseTotalScore });
+        this.ngxDoughnutData.push({ name: this.fileUploadPointLabel, value: fileUploadExerciseTotalScore });
+        this.ngxDoughnutData.push({ name: this.missingPointsLabel, value: totalMissedPoints });
         this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 
-    calculateMaxPoints() {
+    /**
+     * Calculates the maximum of points for the course
+     * @private
+     */
+    private calculateMaxPoints(): void {
         const quizzesTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, MAX_POINTS);
         const programmingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, MAX_POINTS);
         const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, MAX_POINTS);
@@ -351,7 +377,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.overallMaxPoints = this.calculateTotalScoreForTheCourse(MAX_POINTS);
     }
 
-    calculateRelativeScores(): void {
+    /**
+     * Calculates the relative score for each exercise group in the course
+     * @private
+     */
+    private calculateRelativeScores(): void {
         const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, RELATIVE_SCORE);
         const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, RELATIVE_SCORE);
         const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
@@ -367,7 +397,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
     }
 
-    calculateReachablePoints() {
+    /**
+     * Calculates the reachable points for the course
+     * @private
+     */
+    private calculateReachablePoints(): void {
         const quizzesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, REACHABLE_POINTS);
         const programmingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, REACHABLE_POINTS);
         const modelingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, REACHABLE_POINTS);
@@ -383,7 +417,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.reachablePoints = this.calculateTotalScoreForTheCourse(REACHABLE_POINTS);
     }
 
-    calculateCurrentRelativeScores(): void {
+    /**
+     * Calculates the current relative score for the course
+     * @private
+     */
+    private calculateCurrentRelativeScores(): void {
         const quizzesCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, CURRENT_RELATIVE_SCORE);
         const programmingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, CURRENT_RELATIVE_SCORE);
         const modelingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_RELATIVE_SCORE);
@@ -399,7 +437,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.currentRelativeScore = this.calculateTotalScoreForTheCourse(CURRENT_RELATIVE_SCORE);
     }
 
-    calculatePresentationScores(): void {
+    /**
+     * Calculates the presentation score for the course
+     * @private
+     */
+    private calculatePresentationScores(): void {
         const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, PRESENTATION_SCORE);
         const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, PRESENTATION_SCORE);
         const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, PRESENTATION_SCORE);
@@ -415,7 +457,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.overallPresentationScore = this.calculateTotalScoreForTheCourse(PRESENTATION_SCORE);
     }
 
-    calculateScores(filterFunction: (courseExercise: Exercise) => boolean) {
+    /**
+     * Calculates the total score for every exercise in the course satisfying the filter function
+     * @param filterFunction the filter the exercises have to satisfy
+     * @private
+     */
+    private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
         let courseExercises = this.courseExercises;
         if (filterFunction) {
             courseExercises = courseExercises.filter(filterFunction);
@@ -423,7 +470,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
     }
 
-    calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
+    /**
+     * Calculates an arbitrary score type for an arbitrary exercise type
+     * @param exerciseType the exercise type for which the score should be calculates. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
+     * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
+     * @private
+     */
+    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
         if (exerciseType != undefined && scoreType != undefined) {
             const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
             const scores = this.calculateScores(filterFunction);
@@ -433,7 +486,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         }
     }
 
-    calculateTotalScoreForTheCourse(scoreType: string): number {
+    /**
+     * Calculates a score type for the whole course
+     * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
+     * @private
+     */
+    private calculateTotalScoreForTheCourse(scoreType: string): number {
         const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
         return scores.get(scoreType)!;
     }
@@ -443,7 +501,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * so that it displays {Quiz,Programming, Modeling, Text, File Upload, Missing} Points: the corresponding points
      * @param value the default tooltip content
      */
-    valueDoughnutFormatting(value: any) {
+    valueDoughnutFormatting(value: any): string {
         return value.data.name + ': ' + value.value;
     }
 
@@ -454,7 +512,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @param series an array of dedicated objects containing the students performance in this exercise that is visualized by the chart
      * @private
      */
-    private pushToData(exercise: Exercise, series: any) {
+    private pushToData(exercise: Exercise, series: any): void {
         switch (exercise.type!) {
             case ExerciseType.MODELING:
                 this.ngxModelingExercises.push({
@@ -501,8 +559,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * Adds some meta data to every non-empty exercise group and pushes it to ngxExerciseGroups
      * @param exerciseGroups array containing the exercise groups
      * @param types array containing all possible exercise types (programming, modeling, quiz, text, file upload)
+     * @private
      */
-    pushExerciseGroupsToData(exerciseGroups: any[], types: ExerciseType[]) {
+    private pushExerciseGroupsToData(exerciseGroups: any[], types: ExerciseType[]): void {
         exerciseGroups.forEach((exerciseGroup, index) => {
             if (exerciseGroup.length > 0) {
                 exerciseGroup[0] = {
@@ -546,7 +605,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * proportions in the bar charts for sufficiently large exercise groups
      * @param groupSize the amount of exercises in a specific group
      */
-    setBarPadding(groupSize: number) {
+    setBarPadding(groupSize: number): number {
         return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
     }
 }
