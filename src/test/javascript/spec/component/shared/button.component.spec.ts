@@ -22,7 +22,7 @@ describe('ButtonComponent', () => {
 
     let clickSpy: jest.SpyInstance;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(TranslateDirective)],
