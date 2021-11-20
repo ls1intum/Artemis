@@ -28,7 +28,7 @@ describe('OrionFilterDirective', () => {
     });
 
     it('should show/hide elements if isOrion is true', fakeAsync(() => {
-        // @ts-ignore
+        // eslint-disable-next-line  no-unused-vars
         isOrion = true;
 
         fixture.detectChanges();
@@ -44,7 +44,7 @@ describe('OrionFilterDirective', () => {
     }));
 
     it('should show/hide elements if isOrion is false', fakeAsync(() => {
-        // @ts-ignore
+        // eslint-disable-next-line  no-unused-vars
         isOrion = false;
 
         fixture.detectChanges();
