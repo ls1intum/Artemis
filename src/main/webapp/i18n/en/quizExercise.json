@@ -175,6 +175,7 @@
                 "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping is duplicated.",
                 "questionTitleLength": "Question {{index}}: The question is too long. Please shorten it to fewer than {{threshold}} characters.",
                 "quizTitleLength": "Quiz: The title is too long. Please shorten it to fewer than {{threshold}} characters.",
+                "quizAnswerOptionLength": "Question {{index}}: At least one answer option is too long. Please shorten it to fewer than {{threshold}} characters.",
                 "explanationIsMissing": "Question {{index}}: Not every answer option contains an explanation. Please add an explanation!",
                 "questionHasInvalidFlaggedElements": "<strong>Question {{index}} </strong>: This question has been previously marked as invalid or contains invalid elements.",
                 "questionExplanationLength": "Question {{index}}: The provided explanation is too long. Please shorten it to {{threshold}} characters.",

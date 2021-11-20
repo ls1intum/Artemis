@@ -31,6 +31,16 @@ export class LectureService {
     find(lectureId: number): Observable<EntityResponseType> {
         return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
+                this.convertDateFromServer(res);
+                this.setAccessRightsLecture(res.body);
+                return res;
+            }),
+        );
+    }
+
+    findWithDetails(lectureId: number): Observable<EntityResponseType> {
+        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
                     if (res.body.posts === undefined) {

@@ -153,13 +153,14 @@ public class GroupNotificationService {
 
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
+     *
      * @param groups is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
      * @param author is the user who initiated the process of this notifications. Can be null if not specified
      */
-    public void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
+    private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
         for (GroupNotificationType group : groups) {
             GroupNotification resultingGroupNotification;
@@ -200,6 +201,9 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
                         (String) typeSpecificInformation);
                 case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
+                // Additional Types
+                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PROGRAMMING_TEST_CASES_CHANGED,
+                        (String) typeSpecificInformation);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
         }
@@ -259,7 +263,6 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups about a newly released exercise at the moment of its release date.
-     *
      * This notification can be deactivated in the notification settings
      *
      * @param exercise that has been created
@@ -279,6 +282,16 @@ public class GroupNotificationService {
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
                 exercise, notificationText, null);
+    }
+
+    /**
+     * Notify editor and instructor groups about changed test cases for a programming exercise.
+     *
+     * @param exercise that has been updated
+     */
+    public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
+                NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
     }
 
     /**
@@ -457,13 +470,16 @@ public class GroupNotificationService {
             case EDITOR -> foundUsers = userRepository.getEditors(course);
             case TA -> foundUsers = userRepository.getTutors(course);
         }
-        prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+        if (!foundUsers.isEmpty()) {
+            prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+        }
     }
 
     /**
      * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
      * If the checks are successful creates and sends a corresponding email
      * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
+     *
      * @param notification that should be checked
      * @param users which will be filtered based on their notification (email) settings
      * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)

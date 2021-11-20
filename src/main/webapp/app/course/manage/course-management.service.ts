@@ -24,6 +24,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -371,6 +372,16 @@ export class CourseManagementService {
      */
     addUserToCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Add users to the registered users for an course.
+     * @param courseId The course id.
+     * @param studentDtos Student DTOs of users to add to the course.
+     * @return studentDtos of users that were not found in the system.
+     */
+    addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, studentDtos, { observe: 'response' });
     }
 
     /**

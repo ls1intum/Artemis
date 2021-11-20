@@ -12,11 +12,17 @@ export class StructuredGradingCriterionService {
      */
     updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: any) {
         event.preventDefault();
-        const data = event.dataTransfer.getData('artemis/sgi');
-        const instruction = JSON.parse(data);
-        feedback.gradingInstruction = instruction;
-        feedback.credits = instruction.credits;
-        feedback.detailText = instruction.feedback;
+        try {
+            const data = event.dataTransfer.getData('text/plain');
+            const instruction = JSON.parse(data);
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
+        } catch (err) {
+            // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
+            if (!(err instanceof SyntaxError)) {
+                throw err;
+            }
+        }
     }
     computeTotalScore(assessments: Feedback[]) {
         let score = 0;
