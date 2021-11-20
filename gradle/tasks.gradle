@@ -1,0 +1,99 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+task cleanResources(type: Delete) {
+    delete "build/resources"
+}
+
+// Execute the test cases: ./gradlew executeTests
+
+test {
+    useJUnitPlatform()
+    exclude "**/*IT*", "**/*IntTest*"
+    testLogging {
+        events "FAILED", "SKIPPED"
+    }
+    testLogging.showStandardStreams = true
+    reports.html.required = false
+    jvmArgs "--illegal-access=warn"
+}
+
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+    reportOn test
+}
+
+jacoco {
+    toolVersion = "0.8.7"
+}
+
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "gateway/**" // exclude the gateway project for test coverage report for the moment until it is activated
+            ]
+        )
+    }))
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                // TODO: in the future the following value should become at least 0.90
+                minimum = 0.892
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                // TODO: in the future the following value should become less than 20
+                maximum = 25
+            }
+        }
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
+
+// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+tasks.withType(Test) {
+    testLogging {
+        // set options for log level LIFECYCLE
+        events TestLogEvent.FAILED,
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED
+        exceptionFormat TestExceptionFormat.FULL
+        showExceptions true
+        showCauses true
+        showStackTraces true
+
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = "|  ", endItem = "  |"
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+            }
+        }
+    }
+}

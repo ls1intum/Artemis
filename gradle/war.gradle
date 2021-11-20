@@ -14,3 +14,9 @@ war {
     extension = "war.original"
     includes = ["WEB-INF/**", "META-INF/**"]
 }
+
+task serverBootWar(type: War) {
+    webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
+    enabled = true
+    includes = ["WEB-INF/**", "META-INF/**"]
+}

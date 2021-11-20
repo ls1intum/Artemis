@@ -1,6 +1,3 @@
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
-
 buildscript {
     repositories {
         mavenLocal()
@@ -28,8 +25,11 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.3.3"
-description = "Interactive Learning with Individual Feedback"
+
+allprojects {
+    version = "5.3.3"
+    description = "Interactive Learning with Individual Feedback"
+}
 
 sourceCompatibility=16
 targetCompatibility=16
@@ -61,7 +61,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
@@ -85,248 +85,91 @@ modernizer {
     includeTestClasses = true
 }
 
-// Execute the test cases: ./gradlew executeTests
-
-test {
-    useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
-    testLogging {
-        events "FAILED", "SKIPPED"
-    }
-    testLogging.showStandardStreams = true
-    reports.html.required = false
-    jvmArgs "--illegal-access=warn"
-}
-
-task testReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn test
-}
-
-jacoco {
-    toolVersion = "0.8.7"
-}
-
-private excludedClassFilesForReport(classDirectories) {
-    classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it,
-            exclude: [
-                "**/de/tum/in/www1/artemis/domain/**/*_*",
-            ]
-        )
-    }))
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = true
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-
-jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                counter = "INSTRUCTION"
-                value = "COVEREDRATIO"
-                // TODO: in the future the following value should become at least 0.90
-                minimum = 0.892
-            }
-            limit {
-                counter = "CLASS"
-                value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 20
-                maximum = 25
-            }
-        }
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-check.dependsOn jacocoTestCoverageVerification
+apply from: "gradle/tasks.gradle"
 
 configurations {
     providedRuntime
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
 }
 
+apply from: "gradle/dependencies.gradle"
+
 dependencies {
-    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
-    implementation "org.gitlab4j:gitlab4j-api:4.18.0"
+    implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
+    implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
 
-    implementation files("libs/jplag-3.0.0.jar")
-    implementation files("libs/athene-protobuf-client-0.0.1.jar")
+    implementation files("libs/jplag-${jplag_version}.jar")
+    implementation files("libs/athene-protobuf-client-${athene_protobuf_client_version}.jar")
 
-
-    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2021.12"
-    implementation "org.imsglobal:basiclti-util:1.2.0"
-    implementation "org.jasypt:jasypt:1.9.3"
-    implementation "me.xdrop:fuzzywuzzy:1.3.1"
-    implementation "com.atlassian.bamboo:bamboo-specs:7.2.5"
-    implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:5.3.0"
-    implementation "io.sentry:sentry-logback:5.3.0"
-    implementation "org.jsoup:jsoup:1.14.3"
-    implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
+    implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
+    implementation "org.imsglobal:basiclti-util:${imsglobal_basiclti_util_version}"
+    implementation "me.xdrop:fuzzywuzzy:${xdrop_fuzzywuzzy_version}"
+    implementation "com.atlassian.bamboo:bamboo-specs:${atlassian_bamboo_specs_version}"
+    implementation "com.thoughtworks.qdox:qdox:${thoughtworks_qdox_version}"
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.5.12"
+    implementation "org.springdoc:springdoc-openapi-ui:${springdoc_openapi_ui_version}"
 
-    // import JHipster dependencies BOM
-    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
-
-    implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
-    implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.7.5"
-    implementation "net.logstash.logback:logstash-logback-encoder:6.6"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-hibernate53:2.2.1"
-    implementation "javax.cache:cache-api:1.1.1"
+    implementation "com.hazelcast:hazelcast-hibernate53:${hazelcast_hibernate53_version}"
     implementation "org.hibernate:hibernate-core:${hibernate_version}"
-    implementation "com.zaxxer:HikariCP:5.0.0"
-    implementation "org.apache.commons:commons-text:1.9"
-    implementation 'org.apache.commons:commons-math3:3.6.1'
-    implementation "javax.transaction:javax.transaction-api:1.3"
+    implementation "com.zaxxer:HikariCP:${zaxxer_HikariCP_version}"
+    implementation "org.apache.commons:commons-text:${apache_commons_text_version}"
+    implementation "org.apache.commons:commons-math3:${apache_commons_math3_version}"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    implementation "org.liquibase:liquibase-core:4.6.1"
-    implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
+    implementation "org.liquibase:liquibase-core:${liquibase_core_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:2.3.4.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.5.6"
+    implementation "org.springframework.ldap:spring-ldap-core:${spring_ldap_core_version}"
+    implementation "org.springframework.data:spring-data-ldap:${spring_data_ldap_version}"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.4"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.5"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
+    implementation "io.netty:netty-all:${netty_version}"
+    implementation "io.projectreactor.netty:reactor-netty:${netty_reactor_version}"
+    implementation "org.springframework:spring-messaging:${spring_messaging_version}"
 
-    implementation "io.netty:netty-all:4.1.70.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.12"
-    implementation "org.springframework:spring-messaging:5.3.12"
-
-    implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-web:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.20"
-    implementation "io.jsonwebtoken:jjwt-api:0.11.2"
-    implementation "org.bouncycastle:bcprov-jdk15on:1.69"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
-    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
-    implementation ("io.springfox:springfox-swagger2:3.0.0") {
-        exclude module: "mapstruct"
-    }
-    implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.27"
+    implementation "org.xmlbeam:xmlprojector:${xmlbeam_xmlprojector_version}"
+    implementation "io.springfox:springfox-bean-validators:${springfox_version}"
+    implementation "mysql:mysql-connector-java:${mysql_connector_java_version}"
 
-    implementation "org.zalando:problem-spring-web:0.27.0"
-    implementation "com.ibm.icu:icu4j:70.1"
-    implementation "com.github.seancfoley:ipaddress:5.3.3"
-    implementation "org.apache.maven:maven-model:3.8.3"
-    implementation "org.apache.pdfbox:pdfbox:2.0.24"
-    implementation "com.google.protobuf:protobuf-java:3.19.1"
+    implementation "org.zalando:problem-spring-web:${zalando_problem_version}"
+    implementation "com.ibm.icu:icu4j:${ibm_icu4j_version}"
+    implementation "com.github.seancfoley:ipaddress:${github_seancfoley_ipaddress_version}"
+    implementation "org.apache.maven:maven-model:${apache_model_version}"
+    implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
+    implementation "com.google.protobuf:protobuf-java:${google_protobuf_java_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
     }
-    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
-        exclude group: "com.vaadin.external.google", module: "android-json"
-    }
-    testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
-        exclude module: "junit"
-        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-        exclude group: "com.vaadin.external.google", module: "android-json"
-    }
-    testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
-    testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.21.0"
-    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
-    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.22.0"
-    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.22.0"
-    testImplementation "org.mockito:mockito-core:${mockito_version}"
-    testImplementation "org.mockito:mockito-inline:${mockito_version}"
-    testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "org.hamcrest:hamcrest-library:2.2"
-    testImplementation "com.h2database:h2:1.4.200"
-    testImplementation "org.awaitility:awaitility:4.1.1"
-    testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
-    testImplementation "com.opencsv:opencsv:5.5.2"
-
-    // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20210307"
-}
-
-task cleanResources(type: Delete) {
-    delete "build/resources"
+    testImplementation "com.h2database:h2:${h2_database_version}"
+    testImplementation "com.opencsv:opencsv:${opencsv_version}"
 }
 
 task executeTests (type: Exec) {
     commandLine "./gradlew", "test", "-x", "webapp"
 }
 
-// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
-tasks.withType(Test) {
-    testLogging {
-        // set options for log level LIFECYCLE
-        events TestLogEvent.FAILED,
-            TestLogEvent.PASSED,
-            TestLogEvent.SKIPPED
-        exceptionFormat TestExceptionFormat.FULL
-        showExceptions true
-        showCauses true
-        showStackTraces true
-
-        info.events = debug.events
-        info.exceptionFormat = debug.exceptionFormat
-
-        afterSuite { desc, result ->
-            if (!desc.parent) { // will match the outermost suite
-                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-                def startItem = "|  ", endItem = "  |"
-                def repeatLength = startItem.length() + output.length() + endItem.length()
-                println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
-            }
-        }
+allprojects {
+    wrapper {
+        gradleVersion = "7.2"
     }
-}
-
-wrapper {
-    gradleVersion = "7.2"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -380,6 +223,21 @@ tasks.named("dependencyUpdates").configure {
     }
 }
 
+gradle.taskGraph.whenReady { graph ->
+    def tasks = gradle.startParameter.taskNames.toString()
+    def hasRootGatewayTask = tasks.contains(":gateway:")
+
+    if (!hasRootGatewayTask) {
+        graph.getAllTasks().each { task ->
+            def subGatewayTask = (task.path =~ /:gateway.+/)
+            if (subGatewayTask) {
+                println "TRACER skipping task ${task.path}"
+                task.enabled = false
+            }
+        }
+    }
+}
+
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
@@ -393,3 +251,4 @@ tasks.named("dependencyUpdates").configure {
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
+// 10) Build server only in a war:                  ./gradlew -Pwar clean serverBootWar
