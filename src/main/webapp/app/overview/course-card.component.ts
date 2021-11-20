@@ -87,10 +87,10 @@ export class CourseCardComponent implements OnChanges {
         }
     }
 
-    tooltipFormatting(value: any): string {
-        return value.name;
-    }
-
+    /**
+     * Takes the click event by ngx-charts and forwards the uer to the corresponding course
+     * @param event
+     */
     onSelect(event: any) {
         this.router.navigate(['courses', this.course.id]);
     }
