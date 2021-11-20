@@ -91,10 +91,6 @@ export class CourseCardComponent implements OnChanges {
         return value.name;
     }
 
-    stringify(value: any) {
-        console.log(JSON.parse(JSON.stringify(value)));
-    }
-
     onSelect(event: any) {
         this.router.navigate(['courses', this.course.id]);
     }
