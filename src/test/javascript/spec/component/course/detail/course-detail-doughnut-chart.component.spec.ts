@@ -67,7 +67,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
         component.ngOnInit();
 
         expect(component.doughnutChartTitle).toBe('moreFeedback');
-        expect(component.titleLink).toBe(undefined);
+        expect(component.titleLink).toBe('more-feedback-requests');
 
         component.contentType = DoughnutChartType.AVERAGE_COURSE_SCORE;
 
