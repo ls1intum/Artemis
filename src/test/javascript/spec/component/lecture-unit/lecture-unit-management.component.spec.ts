@@ -4,7 +4,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { MockPipe } from 'ng-mocks';
-import { Component, Directive, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';

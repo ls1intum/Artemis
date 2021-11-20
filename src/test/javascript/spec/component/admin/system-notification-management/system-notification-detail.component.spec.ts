@@ -15,7 +15,6 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;
-    let detailComponent: SystemNotificationManagementDetailComponent;
     let router: any;
 
     const route = {
@@ -46,7 +45,6 @@ describe('SystemNotificationManagementDetailComponent', () => {
             .compileComponents()
             .then(() => {
                 detailComponentFixture = TestBed.createComponent(SystemNotificationManagementDetailComponent);
-                detailComponent = detailComponentFixture.componentInstance;
             });
     });
 
