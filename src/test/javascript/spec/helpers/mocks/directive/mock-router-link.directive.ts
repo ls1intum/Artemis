@@ -1,4 +1,4 @@
-import { Directive, HostListener, Input } from '@angular/core';
+import { Directive, HostListener, Input, Optional } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Directive({
@@ -6,13 +6,13 @@ import { Router } from '@angular/router';
     selector: '[routerLink]',
 })
 export class MockRouterLinkDirective {
-    @Input('routerLink') routerLink: any;
+    @Input('routerLink') data: any;
 
-    constructor(private router: Router) {}
+    constructor(@Optional() private router: Router) {}
 
     @HostListener('click')
     onClick() {
-        this.router.navigateByUrl(this.routerLink);
+        this.router.navigateByUrl(this.data);
     }
 }
 
