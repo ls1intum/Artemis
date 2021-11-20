@@ -1,4 +1,3 @@
-import { Directive, HostListener, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
@@ -19,26 +18,10 @@ import { ArtemisTestModule } from '../../../test.module';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
-
-@Directive({
-    // tslint:disable-next-line:directive-selector
-    selector: '[routerLink]',
-})
-// tslint:disable-next-line:directive-class-suffix
-class RouterLinkSpy {
-    @Input()
-    routerLink = '';
-
-    constructor(private router: Router) {}
-
-    @HostListener('click')
-    onClick() {
-        this.router.navigateByUrl(this.routerLink);
-    }
-}
 
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;
@@ -60,7 +43,7 @@ describe('SystemNotificationManagementComponent', () => {
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                RouterLinkSpy,
+                MockRouterLinkDirective,
                 MockDirective(RouterOutlet),
                 MockDirective(AlertComponent),
                 MockDirective(DeleteButtonDirective),

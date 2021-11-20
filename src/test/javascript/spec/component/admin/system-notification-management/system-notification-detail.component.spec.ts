@@ -1,4 +1,3 @@
-import { Directive, HostListener, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
@@ -12,24 +11,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-
-
-@Directive({
-    // tslint:disable-next-line:directive-selector
-    selector: '[routerLink]',
-})
-// tslint:disable-next-line:directive-class-suffix
-class RouterLinkSpy {
-    @Input()
-    routerLink = '';
-
-    constructor(private router: Router) {}
-
-    @HostListener('click')
-    onClick() {
-        this.router.navigateByUrl(this.routerLink);
-    }
-}
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;
@@ -49,7 +31,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 SystemNotificationManagementDetailComponent,
-                RouterLinkSpy,
+                MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(RouterOutlet),

@@ -29,12 +29,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLink]' })
-export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
-}
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
 class LearningGoalsPopoverStubComponent {

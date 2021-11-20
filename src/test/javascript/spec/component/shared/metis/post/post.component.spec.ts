@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { DebugElement, Directive, Input } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
@@ -14,18 +14,10 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLink]' })
-export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
-}
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[queryParams]' })
-export class MockQueryParamsDirective {
-    @Input('queryParams') data: any;
-}
+import {
+    MockQueryParamsDirective,
+    MockRouterLinkDirective,
+} from '../../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('PostComponent', () => {
     let component: PostComponent;

@@ -12,7 +12,7 @@ import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockQueryParamsDirective } from '../shared/metis/post/post.component.spec';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
