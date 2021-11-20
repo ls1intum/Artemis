@@ -57,7 +57,8 @@ describe('AuditsComponent', () => {
             declarations: [AuditsComponent],
         })
             .overrideTemplate(AuditsComponent, '')
-            .compileComponents().then(() => {
+            .compileComponents()
+            .then(() => {
                 fixture = TestBed.createComponent(AuditsComponent);
                 comp = fixture.componentInstance;
                 service = fixture.debugElement.injector.get(AuditsService);
@@ -65,7 +66,7 @@ describe('AuditsComponent', () => {
                 mockActivatedRoute.setParameters({
                     sort: 'id,desc',
                 });
-        });
+            });
     });
 
     describe('today function', () => {

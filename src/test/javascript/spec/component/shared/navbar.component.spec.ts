@@ -29,10 +29,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import {
-    MockRouterLinkActiveOptionsDirective,
-    MockRouterLinkDirective,
-} from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;

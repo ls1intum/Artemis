@@ -5,10 +5,7 @@ import { PostingContentPartComponent } from 'app/shared/metis/posting-content/po
 import { PostingContentPart } from 'app/shared/metis/metis.util';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostingContentMarkdownLinebreakPipe } from 'app/shared/pipes/posting-content-markdown-linebreak.pipe';
-import {
-    MockQueryParamsDirective,
-    MockRouterLinkDirective,
-} from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
