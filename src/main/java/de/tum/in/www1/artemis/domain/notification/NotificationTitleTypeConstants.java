@@ -66,6 +66,7 @@ public class NotificationTitleTypeConstants {
             .put(NotificationType.COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE).put(NotificationType.COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE)
             .put(NotificationType.EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE).put(NotificationType.EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE)
             .put(NotificationType.PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE).build();
+
     /**
      * Finds the corresponding NotificationType for the provided notification title
      * @param title based on NotificationTitleTypeConstants

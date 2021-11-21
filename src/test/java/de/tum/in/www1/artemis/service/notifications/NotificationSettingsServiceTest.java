@@ -59,12 +59,12 @@ public class NotificationSettingsServiceTest {
 
         unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED);
+        unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
         completeNotificationSettingA = new NotificationSetting(student1, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED);
+        completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
         notificationSettingRepository = mock(NotificationSettingRepository.class);

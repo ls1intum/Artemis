@@ -104,7 +104,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                 {
                     key: 'programmingTestCasesChanged',
                     descriptionKey: 'programmingTestCasesChangedDescription',
-                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED,
+                    settingId: SettingId.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED,
                 },
             ],
         },
@@ -115,7 +115,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                 {
                     key: 'courseAndExamArchivingStarted',
                     descriptionKey: 'courseAndExamArchivingStartedDescription',
-                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
+                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED,
                 },
             ],
         },
