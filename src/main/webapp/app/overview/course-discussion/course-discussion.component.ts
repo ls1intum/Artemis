@@ -250,6 +250,21 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * @return number indicating the order of two elements
      */
     overviewSortFn = (postA: Post, postB: Post): number => {
+        // sort by priority
+        if (
+            postA.courseWideContext === CourseWideContext.ANNOUNCEMENT &&
+            postA.displayPriority === DisplayPriority.PINNED &&
+            postB.courseWideContext !== CourseWideContext.ANNOUNCEMENT
+        ) {
+            return -1;
+        }
+        if (
+            postA.courseWideContext !== CourseWideContext.ANNOUNCEMENT &&
+            postB.courseWideContext === CourseWideContext.ANNOUNCEMENT &&
+            postB.displayPriority === DisplayPriority.PINNED
+        ) {
+            return 1;
+        }
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
             return -1;
         }
