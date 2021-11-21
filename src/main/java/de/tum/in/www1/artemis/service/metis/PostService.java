@@ -74,7 +74,7 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
-        mayInteractWithPost(post, user, course);
+        mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
 
         // set author to current user
@@ -115,7 +115,7 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
-        mayInteractWithPost(post, user, course);
+        mayInteractWithPostElseThrow(post, user, course);
 
         Post existingPost = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
@@ -331,7 +331,7 @@ public class PostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        mayInteractWithPost(post, user, course);
+        mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
         mayUpdateOrDeletePostingElseThrow(post, user, course);
 
@@ -473,7 +473,7 @@ public class PostService extends PostingService {
      * @param user      requesting user
      * @param course    course the posting belongs to
      */
-    private void mayInteractWithPost(Post post, User user, Course course) {
+    private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
