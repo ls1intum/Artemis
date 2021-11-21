@@ -180,10 +180,6 @@ describe('TextFeedbackConflictsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).not.toBe(undefined);
-    });
-
     it('should set passed parameters correctly in constructor', () => {
         expect(component.leftSubmission).toBe(textSubmission);
         expect(component.leftFeedbackId).toBe(1);
@@ -192,7 +188,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     it('should use jhi-text-feedback-conflicts-header', () => {
         const headerComponent = fixture.debugElement.query(By.directive(TextFeedbackConflictsHeaderComponent));
-        expect(headerComponent).not.toBe(undefined);
+        expect(headerComponent).not.toBe(null);
     });
 
     it('should set conflicting submission correctly', () => {
@@ -208,7 +204,7 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
         const textAssessmentAreaComponent = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        expect(textAssessmentAreaComponent).not.toBe(undefined);
+        expect(textAssessmentAreaComponent).not.toBe(null);
     });
 
     it('should solve conflict by overriding left submission', () => {
