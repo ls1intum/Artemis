@@ -49,6 +49,9 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
+import { UserImportModule } from 'app/shared/import/user-import.module';
+import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
     imports: [
@@ -88,6 +91,8 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
         ArtemisMarkdownModule,
         ArtemisCourseParticipantScoresModule,
         ArtemisSharedComponentModule,
+        UserImportModule,
+        NgxChartsModule,
     ],
     declarations: [
         CourseManagementComponent,
@@ -103,6 +108,7 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
         CourseManagementOverviewStatisticsComponent,
         CourseDetailDoughnutChartComponent,
         CourseDetailLineChartComponent,
+        CourseManagementExercisesSearchComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

@@ -2,6 +2,7 @@
     <h4 class="d-flex mb-3 flex-wrap justify-content-end">
         <span class="mb-1 me-auto">
             <span *ngIf="course && !showHeading"> {{ course.title }} - </span>
+            <span *ngIf="programmingExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredProgrammingExercises) }} / </span>
             <span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
             <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
         </span>
@@ -30,7 +31,7 @@
         </ng-container>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
+    <div class="table-responsive" *ngIf="programmingExercises && filteredProgrammingExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -65,7 +66,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
+                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
@@ -323,6 +324,10 @@
                 <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportSubmissions.title">Download Repos</span>
             </button>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
+            <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
+                <fa-icon [icon]="'check-double'"></fa-icon>
+                <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+            </button>
         </div>
     </div>
 </div>

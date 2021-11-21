@@ -29,20 +29,29 @@ export class LectureService {
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => {
-                    if (res.body) {
-                        // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                        if (res.body.posts === undefined) {
-                            res.body.posts = [];
-                        }
+        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                this.convertDateFromServer(res);
+                this.setAccessRightsLecture(res.body);
+                return res;
+            }),
+        );
+    }
+
+    findWithDetails(lectureId: number): Observable<EntityResponseType> {
+        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                if (res.body) {
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
                     }
-                    return res;
-                }),
-            )
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+                }
+                this.convertDateFromServer(res);
+                this.setAccessRightsLecture(res.body);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -71,7 +80,7 @@ export class LectureService {
             })
             .pipe(
                 map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
-                map((res: EntityArrayResponseType) => this.checkPermission(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
             );
     }
 
@@ -114,16 +123,31 @@ export class LectureService {
         return res;
     }
 
-    private checkPermission<ERT extends EntityArrayResponseType>(res: ERT): ERT {
+    private setAccessRightsLectureEntityArrayResponseType<ERT extends EntityArrayResponseType>(res: ERT): ERT {
         if (res.body) {
             res.body.forEach((lecture: Lecture) => {
-                if (lecture.course) {
-                    lecture.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(lecture.course);
-                    lecture.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(lecture.course);
-                }
+                this.setAccessRightsLecture(lecture);
             });
         }
         return res;
+    }
+
+    /**
+     * Besides the within the lecture included variables for access rights the access rights of the
+     * respective course are set aswell.
+     *
+     * @param lecture for which the access rights shall be set
+     * @return lecture that with set access rights if the course was set
+     */
+    private setAccessRightsLecture(lecture: Lecture | null) {
+        if (lecture) {
+            if (lecture.course) {
+                this.accountService.setAccessRightsForCourse(lecture.course);
+                lecture.isAtLeastEditor = lecture.course.isAtLeastEditor;
+                lecture.isAtLeastInstructor = lecture.course.isAtLeastInstructor;
+            }
+        }
+        return lecture;
     }
 
     public convertDatesForLectureFromServer(lecture?: Lecture) {

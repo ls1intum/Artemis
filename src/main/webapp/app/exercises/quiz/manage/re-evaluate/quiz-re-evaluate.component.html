@@ -54,7 +54,7 @@
                 <jhi-re-evaluate-multiple-choice-question
                     [question]="question"
                     [questionIndex]="i + 1"
-                    [backupQuestion]="backupQuiz.quizQuestions![i]"
+                    [backupQuestion]="savedEntity.quizQuestions![i]"
                     (questionUpdated)="onQuestionUpdated()"
                     (questionDeleted)="deleteQuestion(question)"
                     (questionMoveUp)="moveUp(question)"
@@ -93,17 +93,45 @@
                 <div></div>
                 <div class="form-group">
                     <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"> </span>
-                    <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"> </span>
+                    <span *ngIf="pendingChanges() && isValidQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"> </span>
                     <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"> </span>
-                    <span *ngIf="!validQuiz()" jhiTranslate="artemisApp.quizExercise.edit.invalidInput" class="badge bg-danger"> </span>
+                    <ng-template #tooltipTranslate>
+                        <div *ngFor="let reason of invalidReasons">
+                            <p
+                                *ngIf="(reason.translateValues | json) != '{}'"
+                                jhiTranslate="{{ reason.translateKey }}"
+                                [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
+                            ></p>
+                            <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
+                        </div>
+                    </ng-template>
+                    <ng-template #warningTranslate>
+                        <div *ngFor="let warning of computeInvalidWarnings()">
+                            <p
+                                *ngIf="(warning.translateValues | json) != '{}'"
+                                jhiTranslate="{{ warning.translateKey }}"
+                                [translateValues]="{ index: warning.translateValues.index }"
+                            ></p>
+                            <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
+                        </div>
+                    </ng-template>
+                    <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
+                        <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                        <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
+                        <span>({{ invalidReasons.length }})</span>
+                    </span>
+                    <span *ngIf="warningQuizCache" class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
+                        <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                        <span>({{ invalidWarnings.length }})</span>
+                    </span>
                     <button
                         class="btn btn-warning"
                         (click)="resetAll()"
-                        [disabled]="!pendingChanges() || !validQuiz() || isSaving"
+                        [disabled]="!pendingChanges() || !isValidQuiz() || isSaving"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                     ></button>
                     <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
-                    <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !validQuiz() || isSaving" jhiTranslate="entity.action.save"></button>
+                    <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !isValidQuiz() || isSaving" jhiTranslate="entity.action.save"></button>
                 </div>
             </div>
         </div>

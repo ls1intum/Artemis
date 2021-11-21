@@ -161,7 +161,7 @@ describe('Exam assessment', () => {
             cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
             cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
             cy.contains('Evaluate quizzes').click();
-            if (dayjs().isBefore(examEnd)) {
+            if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);

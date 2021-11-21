@@ -162,8 +162,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
         // All not automatically generated result must have a detail text
-        if (!newManualResult.getFeedbacks().isEmpty()
-                && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED && feedback.getDetailText() == null)) {
+        if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream()
+                .anyMatch(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED && feedback.getGradingInstruction() == null && feedback.getDetailText() == null)) {
+            // if unreferenced feedback is associated with grading instruction, detail text is not needed
             throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
         if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {

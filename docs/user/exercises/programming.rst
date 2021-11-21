@@ -57,6 +57,13 @@ The following sections list the rules that are active for the default static cod
 
 .. include:: programming-sca-default-configuration.inc
 
+Submission Policy Configuration
+-------------------------------
+
+The following sections explains the configuration options for submission policies:
+
+.. include:: programming-submission-policy-configuration.inc.rst
+
 Online Editor
 -------------
 
