@@ -21,7 +21,8 @@
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
-                "instructorExclusiveNotifications": "Benachrichtigungen für Lehrende"
+                "editorNotifications": "Benachrichtigungen für Editor:innen",
+                "instructorNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
@@ -36,6 +37,7 @@
                 "newAnnouncementPost": "Neue Ankündigungen",
                 "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart",
                 "fileSubmissionSuccessful": "Erfolgreiche Einreichung von Dateiupload-Aufgaben"
+                "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben"
             },
             "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
@@ -50,6 +52,7 @@
                 "newAnnouncementPostDescription": "Erhalte eine Mitteilung, wenn eine neue Ankündigung erstellt wurde",
                 "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung, wenn das Archivieren eines Kurses oder einer Klausur angefangen hat",
                 "fileSubmissionSuccessfulDescription": "Erhalte eine Mitteilung nach dem erfolgreichen Einreichen von Dateiupload-Aufgaben"
+                "programmingTestCasesChangedDescription": "Erhalte eine Mitteilung bei Änderungen von Testfällen in Programmieraufgaben"
             }
         }
     }

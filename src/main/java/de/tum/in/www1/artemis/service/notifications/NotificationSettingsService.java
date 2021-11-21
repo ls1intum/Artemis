@@ -49,6 +49,8 @@ public class NotificationSettingsService {
     // instructor notification setting group
     public final static String NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-notification.course-and-exam-archiving-started";
 
+    private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED = "notification.instructor-exclusive-notification.programming-test-cases-changed";
+
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -66,8 +68,10 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
+            // editor notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED)));
             // instructor notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -85,7 +89,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
-            Map.entry(NOTIFICATION__INSTRUCTOR_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
+            Map.entry(NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED, new NotificationType[] { PROGRAMMING_TEST_CASES_CHANGED }), Map.entry(
+                    NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
