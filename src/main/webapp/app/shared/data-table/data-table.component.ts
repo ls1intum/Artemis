@@ -256,7 +256,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         const searchPredicate = (entity: BaseEntity) => {
             return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
         };
-        const filteredEntities = this.allEntities.filter(this.customFilter).filter(searchPredicate);
+        const filteredEntities = this.allEntities.filter((entity) => this.customFilter(entity) && searchPredicate(entity));
         this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
