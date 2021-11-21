@@ -26,12 +26,7 @@ describe('ButtonComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(TranslateDirective)],
-            providers: [
-                MockProvider(JhiLanguageHelper, { language: empty() }),
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-            ],
+            providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })
             .compileComponents()
             .then(() => {
@@ -122,7 +117,7 @@ describe('ButtonComponent', () => {
         button.click();
         tick();
 
-        expect(clickSpy).toHaveBeenCalledTimes(0);
+        expect(clickSpy).not.toHaveBeenCalled();
     }));
 
     it('should enable complete button if disabled is set to false', fakeAsync(() => {
@@ -157,6 +152,6 @@ describe('ButtonComponent', () => {
         button.click();
         tick();
 
-        expect(clickSpy).toHaveBeenCalledTimes(0);
+        expect(clickSpy).not.toHaveBeenCalled();
     }));
 });
