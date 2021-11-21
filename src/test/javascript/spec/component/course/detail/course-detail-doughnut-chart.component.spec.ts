@@ -41,14 +41,14 @@ describe('CourseDetailDoughnutChartComponent', () => {
         component.ngOnChanges();
         const expected = [absolute, max - absolute];
         expect(component.stats).toEqual(expected);
-        expect(component.ngxData[0].value).toEqual(expected[0]);
-        expect(component.ngxData[1].value).toEqual(expected[1]);
+        expect(component.ngxData[0].value).toBe(expected[0]);
+        expect(component.ngxData[1].value).toBe(expected[1]);
 
         component.currentMax = 0;
         component.ngOnChanges();
 
-        expect(component.ngxData[0].value).toEqual(1);
-        expect(component.ngxData[1].value).toEqual(0);
+        expect(component.ngxData[0].value).toBe(1);
+        expect(component.ngxData[1].value).toBe(0);
     });
 
     it('should set the right title and link', () => {

@@ -138,7 +138,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         name: 'Score per exercise group',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'],
+        domain: ['#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'], // colors: green, grey, yellow, lightblue, red
     } as Color;
 
     // this is necessary as binding in the html template would kill the performance

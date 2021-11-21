@@ -88,10 +88,9 @@ export class CourseCardComponent implements OnChanges {
     }
 
     /**
-     * Takes the click event by ngx-charts and forwards the uer to the corresponding course
-     * @param event
+     * Delegates the user to the corresponding course page when clicking on the chart
      */
-    onSelect(event: any) {
+    onSelect(): void {
         this.router.navigate(['courses', this.course.id]);
     }
 }

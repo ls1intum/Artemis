@@ -33,7 +33,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#32cd32', '#ff0000'],
+        domain: ['#32cd32', '#ff0000'], // colors: green, red
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
@@ -96,7 +96,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * @param values the values that should be displayed by the chart
      * @private
      */
-    private assignValuesToData(values: number[]) {
+    private assignValuesToData(values: number[]): void {
         this.ngxData[0].value = values[0];
         this.ngxData[1].value = values[1];
         this.ngxData = [...this.ngxData];
@@ -109,7 +109,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * displaying a chart even if no values are there to display (i.e. currentMax is 0)
      * @param value the default tooltip content that has to be replaced
      */
-    valueFormatting(value: any) {
+    valueFormatting(value: any): string {
         return this.currentMax === 0 ? '0' : value.value;
     }
 }

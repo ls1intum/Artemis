@@ -33,7 +33,7 @@
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
             </div>
-            <ngx-charts-pie-chart id="score-chart" [view]="[200, 200]" [results]="ngxDoughnutData" [scheme]="ngxColor" [doughnut]="true" (select)="onSelect($event)">
+            <ngx-charts-pie-chart id="score-chart" [view]="[200, 200]" [results]="ngxDoughnutData" [scheme]="ngxColor" [doughnut]="true" (select)="onSelect()">
                 <ng-template #tooltipTemplate let-model="model">
                     <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
                     <span>: {{ model.value }}</span>
