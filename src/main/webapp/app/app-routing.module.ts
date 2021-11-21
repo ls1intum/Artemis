@@ -37,6 +37,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'course-management/:courseId/exercises/:exerciseId/teams',
                     loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
                 },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/teams',
+                    loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
+                },
                 // ===== COURSE MANAGEMENT =====
                 {
                     path: 'course-management',
