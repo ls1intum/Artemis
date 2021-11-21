@@ -20,7 +20,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
     groups: [
         {
             key: 'courseWideDiscussionNotifications',
-            restrictionLevel: Authority.USER,
+            restrictionLevels: [Authority.USER],
             settings: [
                 {
                     key: 'newCoursePost',
@@ -43,7 +43,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
         },
         {
             key: 'exerciseNotifications',
-            restrictionLevel: Authority.USER,
+            restrictionLevels: [Authority.USER],
             settings: [
                 {
                     key: 'exerciseReleased',
@@ -71,7 +71,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
         },
         {
             key: 'lectureNotifications',
-            restrictionLevel: Authority.USER,
+            restrictionLevels: [Authority.USER],
             settings: [
                 {
                     key: 'attachmentChanges',
@@ -92,8 +92,19 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
-            key: 'instructorExclusiveNotifications',
-            restrictionLevel: Authority.INSTRUCTOR,
+            key: 'editorNotifications',
+            restrictionLevels: [Authority.EDITOR, Authority.INSTRUCTOR],
+            settings: [
+                {
+                    key: 'programmingTestCasesChanged',
+                    descriptionKey: 'programmingTestCasesChangedDescription',
+                    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED,
+                },
+            ],
+        },
+        {
+            key: 'instructorNotifications',
+            restrictionLevels: [Authority.INSTRUCTOR],
             settings: [
                 {
                     key: 'courseAndExamArchivingStarted',
