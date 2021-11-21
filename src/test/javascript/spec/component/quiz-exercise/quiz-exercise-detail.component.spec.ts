@@ -1062,6 +1062,15 @@ describe('QuizExercise Management Detail Component', () => {
                 removeQuestionTitleAndExpectInvalidQuiz(question);
             });
 
+            it('should not be valid with SA question with too long answer option', () => {
+                const { question } = createValidSAQuestion();
+                // @ts-ignore
+                question.solutions[0].text = new Array(251).join('a');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toEqual(false);
+            });
+
             it('should not be valid if SA question has no correct mapping', () => {
                 const { question } = createValidSAQuestion();
                 removeCorrectMappingsAndExpectInvalidQuiz(question);
@@ -1650,6 +1659,11 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should put reason when there is an empty solution ', () => {
                     shortAnswerSolution1.text = '';
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue');
+                });
+
+                it('should put reason for too long answer option', () => {
+                    shortAnswerSolution1.text = new Array(251).join('a');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength');
                 });
 
                 it('should put reason when duplicate mappings', () => {

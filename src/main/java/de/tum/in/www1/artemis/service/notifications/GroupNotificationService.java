@@ -202,6 +202,9 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
                         (String) typeSpecificInformation);
                 case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
+                // Additional Types
+                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PROGRAMMING_TEST_CASES_CHANGED,
+                        (String) typeSpecificInformation);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
         }
@@ -280,6 +283,16 @@ public class GroupNotificationService {
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
                 exercise, notificationText, null);
+    }
+
+    /**
+     * Notify editor and instructor groups about changed test cases for a programming exercise.
+     *
+     * @param exercise that has been updated
+     */
+    public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
+                NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
     }
 
     /**

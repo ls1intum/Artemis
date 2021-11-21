@@ -526,6 +526,15 @@ public class GroupNotificationServiceTest {
         verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
+    /**
+     * Test for notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise method
+     */
+    @Test
+    public void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
+        verifyRepositoryCallWithCorrectNotification(2, NotificationTitleTypeConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE);
+    }
+
     // Course Archiving
 
     /**
