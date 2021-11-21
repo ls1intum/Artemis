@@ -26,4 +26,5 @@ export enum SettingId {
 
     // instructor exclusive notification setting group
     NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = 'notification.instructor-exclusive-notification.course-and-exam-archiving-started',
+    NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED = 'notification.instructor-exclusive-notification.programming-test-cases-changed',
 }
