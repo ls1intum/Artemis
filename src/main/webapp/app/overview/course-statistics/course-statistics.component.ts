@@ -48,7 +48,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     private courseExercises: Exercise[];
-    private paramSubscription: Subscription;
+    private paramSubscription?: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
@@ -161,7 +161,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        // Note: due to lazy loading and router outlet, we use parent 2x here
+        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -207,7 +208,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.translateSubscription.unsubscribe();
         this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        this.paramSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {
@@ -221,14 +222,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     private onCourseLoad(): void {
-        this.courseExercises = this.course!.exercises!;
-        this.calculateMaxPoints();
-        this.calculateReachablePoints();
-        this.calculateAbsoluteScores();
-        this.calculateRelativeScores();
-        this.calculatePresentationScores();
-        this.calculateCurrentRelativeScores();
-        this.groupExercisesByType();
+        if (this.course?.exercises) {
+            this.courseExercises = this.course.exercises;
+            this.calculateMaxPoints();
+            this.calculateReachablePoints();
+            this.calculateAbsoluteScores();
+            this.calculateRelativeScores();
+            this.calculatePresentationScores();
+            this.calculateCurrentRelativeScores();
+            this.groupExercisesByType();
+        }
     }
 
     /**
@@ -236,8 +239,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * can be processed by ngx-charts in order to visualize the students score for each exercise
      * @private
      */
-    private groupExercisesByType(): void {
-        let exercises = this.course!.exercises;
+    groupExercisesByType(): void {
+        if (!this.course?.exercises) {
+            return;
+        }
+        let exercises = this.course.exercises;
         const exerciseTypes: string[] = [];
         this.ngxExerciseGroups = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
