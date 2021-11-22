@@ -93,8 +93,14 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
-                <td>{{ tutor.averageScore.toFixed(1) }}%</td>
-                <td>{{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }})</td>
+                <td>
+                    <span *ngIf="tutor.numberOfAssessments > 0"> {{ tutor.averageScore.toFixed(1) }}% </span>
+                    <span *ngIf="tutor.numberOfAssessments === 0"> n.a. </span>
+                </td>
+                <td>
+                    <span *ngIf="tutor.numberOfTutorRatings > 0"> {{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }}) </span>
+                    <span *ngIf="tutor.numberOfTutorRatings === 0"> n.a. </span>
+                </td>
             </tr>
         </tbody>
     </table>

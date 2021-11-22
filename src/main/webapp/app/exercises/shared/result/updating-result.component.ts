@@ -11,7 +11,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
+import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 
