@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs';
 import { TreeviewModule } from 'ngx-treeview';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
@@ -208,11 +206,7 @@ describe('CourseStatisticsComponent', () => {
                 ArtemisTranslatePipe,
                 MockDirective(NgbTooltip),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
             .compileComponents()
             .then(() => {

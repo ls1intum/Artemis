@@ -106,12 +106,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ngxDoughnutData: any[] = [];
 
     // Labels for the different parts in Your overall points chart
-    programmingPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.programmingPointLabel');
-    quizPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.quizPointLabel');
-    modelingPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.modelingPointLabel');
-    textPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.textPointLabel');
-    fileUploadPointLabel = this.translateService.instant('artemisApp.courseOverview.statistics.fileUploadPointLabel');
-    missingPointsLabel = this.translateService.instant('artemisApp.courseOverview.statistics.missingPointsLabel');
+    programmingPointLabel = 'programmingPointLabel';
+    quizPointLabel = 'quizPointLabel';
+    modelingPointLabel = 'modelingPointLabel';
+    textPointLabel = 'textPointLabel';
+    fileUploadPointLabel = 'fileUploadPointLabel';
+    missingPointsLabel = 'missingPointsLabel';
 
     ngxDoughnutColor = {
         name: 'Your overall points color',
@@ -141,8 +141,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         domain: ['#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'], // colors: green, grey, yellow, lightblue, red
     } as Color;
 
-    // this is necessary as binding in the html template would kill the performance
-    bindDoughnutFormatting = this.valueDoughnutFormatting.bind(this);
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
     // array containing every non-empty exercise group
@@ -503,15 +501,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Modifies the tooltip content of the doughnut chart
-     * so that it displays {Quiz,Programming, Modeling, Text, File Upload, Missing} Points: the corresponding points
-     * @param value the default tooltip content
-     */
-    valueDoughnutFormatting(value: any): string {
-        return value.data.name + ': ' + value.value;
-    }
-
-    /**
      * Depending on the type of the exercise, it adds a new object containing
      * the different scores of the correspnding exercise group of the chart
      * @param exercise an arbitrary exercise of a course
@@ -529,7 +518,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 break;
             case ExerciseType.PROGRAMMING:
                 series.forEach((part: any) => {
-                    part.tooltipType = true;
+                    part.isProgrammingExercise = true;
                 });
                 this.ngxProgrammingExercises.push({
                     name: exercise.title,

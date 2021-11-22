@@ -23,6 +23,7 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
     imports: [
@@ -41,6 +42,7 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         ArtemisComplaintsModule,
         FeatureToggleModule,
         RatingModule,
+        NgxChartsModule,
     ],
     declarations: [
         CoursesComponent,

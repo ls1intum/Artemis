@@ -7,7 +7,10 @@
                     <h2 class="text-center">{{ currentRelativeScore }} %</h2>
                     <h4 class="text-center">{{ overallPoints }} / {{ reachablePoints }} Pts</h4>
                 </div>
-                <ngx-charts-pie-chart [view]="[250, 250]" [results]="ngxDoughnutData" [scheme]="ngxDoughnutColor" [doughnut]="true" [tooltipText]="bindDoughnutFormatting">
+                <ngx-charts-pie-chart [view]="[250, 250]" [results]="ngxDoughnutData" [scheme]="ngxDoughnutColor" [doughnut]="true">
+                    <ng-template #tooltipTemplate let-model="model">
+                        <span>{{ 'artemisApp.courseOverview.statistics.' + model.name | artemisTranslate }}: {{ model.value }}</span>
+                    </ng-template>
                 </ngx-charts-pie-chart>
             </div>
             <h4 class="text-center" id="absolute-course-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: overallPoints } }}</h4>
@@ -79,60 +82,53 @@
                         [xAxisTicks]="[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]"
                         [barPadding]="exerciseGroup[0].barPadding"
                     >
+                        <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
                         <ng-template #tooltipTemplate let-model="model">
                             <div *ngIf="['Achieved (included)', 'Achieved bonus', 'Achieved (not included)'].includes(model.name)">
-                                <span
-                                    *ngIf="!model.tooltipType"
-                                    jhiTranslate="artemisApp.courseOverview.statistics.exerciseAchievedScore"
-                                    [translateValues]="{ points: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }"
-                                >
+                                <span *ngIf="!model.isProgrammingExercise">
+                                    {{
+                                        'artemisApp.courseOverview.statistics.exerciseAchievedScore'
+                                            | artemisTranslate: { points: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
+                                    }}
                                 </span>
-                                <span
-                                    *ngIf="model.tooltipType"
-                                    jhiTranslate="artemisApp.courseOverview.statistics.programmingExercisePassedTests"
-                                    [translateValues]="{ tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }"
-                                >
+                                <span *ngIf="model.isProgrammingExercise">
+                                    {{
+                                        'artemisApp.courseOverview.statistics.programmingExercisePassedTests'
+                                            | artemisTranslate: { points: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
+                                    }}
                                 </span>
                                 <span *ngIf="model.name === 'Achieved bonus'">
-                                    <span>|</span>
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.bonusPointTooltip"> </span>
+                                    <span>| {{ 'artemisApp.courseOverview.statistics.bonusPointTooltip' | artemisTranslate }}</span>
                                 </span>
                                 <span *ngIf="model.name === 'Achieved (not included)'">
-                                    <span>|</span>
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.notIncludedTooltip"> </span>
+                                    <span>| {{ 'artemisApp.courseOverview.statistics.notIncludedTooltip' | artemisTranslate }}</span>
                                 </span>
                             </div>
-                            <span [ngSwitch]="model.name">
+                            <div [ngSwitch]="model.name">
                                 <div *ngSwitchCase="'Missed points'">
-                                    <span
-                                        *ngIf="!model.afterDueDate && !model.notParticipated && !model.tooltipType"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.exerciseMissedScore"
-                                        [translateValues]="{ points: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }"
-                                    >
+                                    <span *ngIf="!model.afterDueDate && !model.notParticipated && !model.isProgrammingExercise">
+                                        {{
+                                            'artemisApp.courseOverview.statistics.exerciseMissedScore'
+                                                | artemisTranslate: { points: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
+                                        }}
                                     </span>
-                                    <span
-                                        *ngIf="model.notParticipated === true"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.exerciseNotParticipated"
-                                        [translateValues]="{ exercise: model.exerciseTitle }"
-                                    >
+                                    <span *ngIf="model.notParticipated">
+                                        {{ 'artemisApp.courseOverview.statistics.exerciseNotParticipated' | artemisTranslate: { exercise: model.exerciseTitle } }}
                                     </span>
-                                    <span
-                                        *ngIf="model.afterDueDate"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate"
-                                        [translateValues]="{ exercise: model.exerciseTitle }"
-                                    >
+                                    <span *ngIf="model.afterDueDate">
+                                        {{ 'artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate' | artemisTranslate: { exercise: model.exerciseTitle } }}
                                     </span>
-                                    <span
-                                        *ngIf="model.tooltipType && !model.notParticipated"
-                                        jhiTranslate="artemisApp.courseOverview.statistics.programmingExerciseFailedTests"
-                                        [translateValues]="{ tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }"
-                                    >
+                                    <span *ngIf="model.isProgrammingExercise && !model.notParticipated">
+                                        {{
+                                            'artemisApp.courseOverview.statistics.programmingExerciseFailedTests'
+                                                | artemisTranslate: { tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
+                                        }}
                                     </span>
                                 </div>
                                 <div *ngSwitchCase="'Not graded'">
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.exerciseNotGraded" [translateValues]="{ exercise: model.exerciseTitle }"> </span>
+                                    <span> {{ 'artemisApp.courseOverview.statistics.exerciseNotGraded' | artemisTranslate: { exercise: model.exerciseTitle } }}</span>
                                 </div>
-                            </span>
+                            </div>
                         </ng-template>
                     </ngx-charts-bar-horizontal-normalized>
                 </div>

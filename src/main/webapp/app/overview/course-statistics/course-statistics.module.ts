@@ -9,6 +9,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 const routes: Routes = [
     {
@@ -23,7 +24,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisLearningGoalsModule, ArtemisExerciseScoresChartModule, ArtemisSharedModule, ChartsModule, FontAwesomeModule, RouterModule.forChild(routes)],
+    imports: [ArtemisLearningGoalsModule, ArtemisExerciseScoresChartModule, ArtemisSharedModule, ChartsModule, FontAwesomeModule, RouterModule.forChild(routes), NgxChartsModule],
     declarations: [CourseStatisticsComponent, CourseLearningGoalsComponent],
 })
 export class CourseStatisticsModule {}
