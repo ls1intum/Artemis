@@ -40,7 +40,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgForm, NumberValueAccessor, NgModel, CheckboxControlValueAccessor, DefaultValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { CheckboxControlValueAccessor, DefaultValueAccessor, NgForm, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
@@ -53,7 +53,7 @@ import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picke
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-chips';
+import { TagInputComponent, TagInputDropdown } from 'ngx-chips';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -90,26 +90,17 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(TableEditableFieldComponent),
                 MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
                 MockComponent(CategorySelectorComponent),
-                MockComponent(ColorSelectorComponent),
-                MockComponent(TagInputComponent),
-                MockComponent(TagInputDropdown),
-                MockComponent(DeleteIconComponent),
                 MockComponent(AddAuxiliaryRepositoryButtonComponent),
                 MockComponent(DifficultyPickerComponent),
                 MockComponent(TeamConfigFormGroupComponent),
-                MockComponent(ModePickerComponent),
                 MockComponent(ProgrammingExerciseLifecycleComponent),
-                MockPipe(ArtemisDatePipe),
                 MockComponent(IncludedInOverallScorePickerComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(PresentationScoreComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
-                MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
                 MockComponent(GradingInstructionsDetailsComponent),
-                MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
-                MockComponent(MarkdownEditorComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(CustomMinDirective),
                 MockDirective(CustomMaxDirective),
