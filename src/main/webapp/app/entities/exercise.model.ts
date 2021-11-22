@@ -108,6 +108,8 @@ export abstract class Exercise implements BaseEntity {
     public studentAssignedTeamIdComputed = false;
     public numberOfParticipations?: number;
     public testRunParticipationsExist?: boolean;
+    public averageRating?: number;
+    public numberOfRatings?: number;
 
     // helper attributes
     public secondCorrectionEnabled = false;
@@ -217,4 +219,10 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
             return ExerciseType.QUIZ;
     }
     return undefined;
+}
+
+export function resetDates(exercise: Exercise) {
+    exercise.releaseDate = undefined;
+    exercise.dueDate = undefined;
+    exercise.assessmentDueDate = undefined;
 }
