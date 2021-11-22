@@ -17,8 +17,8 @@ services:
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
             - SPRING_ARTEMIS_HOST=activemq-broker
-        ports:
-            - 8080:8080
+        expose:
+            - "8080"
         networks:
             - artemis
         depends_on:
@@ -41,8 +41,8 @@ services:
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
             - SPRING_ARTEMIS_HOST=activemq-broker
-        ports:
-            - 8087:8087
+        expose:
+            - "8087"
         networks:
             - artemis
         depends_on:
@@ -97,8 +97,9 @@ services:
             - JMX_RMI_PORT=1198
             - ENABLE_JMX_EXPORTER=true
         ports:
-            - 61616:61616
             - 8161:8161
+        expose:
+            - "61616"
         networks:
             - artemis
 
