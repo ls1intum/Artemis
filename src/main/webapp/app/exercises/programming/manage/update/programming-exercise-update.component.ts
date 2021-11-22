@@ -87,7 +87,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // '-' or '/' characters.
     invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
 
-    readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
+    // length of < 3 is also accepted in order to provide more accurate validation error messages
+    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
