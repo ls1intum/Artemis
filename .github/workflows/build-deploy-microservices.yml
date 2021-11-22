@@ -98,15 +98,18 @@ jobs:
         include:
         - image_name: "artemis-service"
           dockerfile_path: "src/main/docker"
+          war_name: "Artemis.war"
         - image_name: "artemis-gateway"
           dockerfile_path: "gateway/src/main/docker"
+          war_name: "gateway.war"
         - image_name: "artemis-usermanagement-service"
           dockerfile_path: "user-management/src/main/docker"
+          war_name: "user-management.war"
     steps:
     - name: Download Artifact
       uses: actions/download-artifact@v2
       with:
-        name: Artemis.war
+        name: ${{ matrix.war_name }}
     - name: Download Dockerfile
       run: curl -O ${{ env.RAW_URL }}/${{ matrix.dockerfile_path }}/Dockerfile -O ${{ env.RAW_URL }}/${{ matrix.dockerfile_path }}/entrypoint.sh
     - name: Build Docker Image

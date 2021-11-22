@@ -1,13 +1,13 @@
 version: '2'
 services:
     artemis-app:
-        image: ghcr.io/ls1intum/artemis-service
+        image: ghcr.io/ls1intum/artemis-service:pr-4329
         build:
             context: .
             dockerfile: ./src/main/docker/Dockerfile
         volumes:
-            - ./src/main/resources/config/application-dev.yml:/home/jhipster/application-dev.yml:ro
-            - ./src/main/resources/config/application-artemis.yml:/home/jhipster/application-artemis.yml:ro
+            - ./src/main/resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
+            - ./src/main/resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=dev,artemis,openapi
@@ -25,13 +25,13 @@ services:
             - artemis-mysql
             - jhipster-registry
     usermanagement-app:
-        image: ghcr.io/ls1intum/artemis-usermanagement-service
+        image: ghcr.io/ls1intum/artemis-usermanagement-service:pr-4329
         build:
             context: .
             dockerfile: ./user-management/src/main/docker/Dockerfile
         volumes:
-            - ./user-management/src/main/resources/config/application-dev.yml:/home/jhipster/user-management/application-dev.yml:ro
-            - ./src/main/java/resources/config/application-artemis.yml:/home/jhipster/user-management/application-artemis.yml:ro
+            - ./user-management/src/main/resources/config/application-dev.yml:/home/artemis/user-management/application-dev.yml:ro
+            - ./src/main/java/resources/config/application-artemis.yml:/home/artemis/user-management/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=dev,artemis
@@ -49,15 +49,15 @@ services:
             - artemis-mysql
             - jhipster-registry
     gateway-app:
-        image: ghcr.io/ls1intum/artemis-gateway
+        image: ghcr.io/ls1intum/artemis-gateway:pr-4329
         build:
             context: .
             dockerfile: ./gateway/src/main/docker/Dockerfile
         volumes:
-            - ./gateway/src/main/resources/config/application-dev.yml:/home/jhipster/gateway/application-dev.yml:ro
+            - ./gateway/src/main/resources/config/application-dev.yml:/home/artemis/gateway/application-dev.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=prod,api-docs
+            - SPRING_PROFILES_ACTIVE=dev,api-docs
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
