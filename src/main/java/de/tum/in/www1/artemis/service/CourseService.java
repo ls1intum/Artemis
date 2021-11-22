@@ -227,9 +227,7 @@ public class CourseService {
 
     private void deleteNotificationsOfCourse(Course course) {
         List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
-        for (GroupNotification notification : notifications) {
-            groupNotificationRepository.delete(notification);
-        }
+        groupNotificationRepository.deleteAll(notifications);
     }
 
     private void deleteLecturesOfCourse(Course course) {
@@ -248,17 +246,6 @@ public class CourseService {
         for (LearningGoal learningGoal : course.getLearningGoals()) {
             learningGoalRepository.deleteById(learningGoal.getId());
         }
-    }
-
-    /**
-     * Given a Course object, it returns the number of users enrolled in the course
-     *
-     * @param course - the course object we are interested in
-     * @return the number of students for that course
-     */
-    public long countNumberOfStudentsForCourse(Course course) {
-        String groupName = course.getStudentGroupName();
-        return userRepository.countByGroupsIsContaining(groupName);
     }
 
     /**
@@ -375,7 +362,7 @@ public class CourseService {
      * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex, int length) {
+    public Integer[] getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
