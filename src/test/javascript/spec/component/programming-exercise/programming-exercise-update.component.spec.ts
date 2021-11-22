@@ -32,7 +32,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { NgbAlertModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
@@ -63,7 +63,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(NgbAlertModule)],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 NgForm,
@@ -90,6 +90,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),
