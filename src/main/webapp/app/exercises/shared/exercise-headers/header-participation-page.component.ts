@@ -4,7 +4,7 @@ import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -22,6 +22,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
 
+    dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
 
     constructor() {}
@@ -54,6 +55,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exercise?.categories || [];
+        this.dueDate = getExerciseDueDate(this.exercise, this.participation);
     }
 
     private setExerciseStatusBadge(): void {
