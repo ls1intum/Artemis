@@ -1,6 +1,15 @@
 <div class="row">
-    <div class="col-md-7">
+    <div #containerRef class="col-md-7">
         <canvas baseChart [height]="height" [datasets]="chartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="chartLegend" [chartType]="barChartType"></canvas>
-        <!--<ngx-charts-bar-horizontal></ngx-charts-bar-horizontal>-->
+        <ngx-charts-bar-horizontal
+            [view]="[containerRef.offsetWidth, 200]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [xAxis]="true"
+            [yAxis]="true"
+            [xAxisTicks]="[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]"
+            [xAxisTickFormatting]="formatTicks"
+        >
+        </ngx-charts-bar-horizontal>
     </div>
 </div>

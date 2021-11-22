@@ -211,4 +211,12 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
         navigateToExamExercise(this.router, this.courseId, this.examId, this.averageScores.exerciseGroupId, exerciseType, exerciseId, 'scores');
     }
+
+    /**
+     * Appends to every xAxis tick a pertencage sign
+     * @param value the initial xiAxis tick
+     */
+    formatTicks(value: any): string {
+        return value + '%';
+    }
 }
