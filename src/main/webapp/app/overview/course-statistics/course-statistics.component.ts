@@ -237,7 +237,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * can be processed by ngx-charts in order to visualize the students score for each exercise
      * @private
      */
-    groupExercisesByType(): void {
+    private groupExercisesByType(): void {
         if (!this.course?.exercises) {
             return;
         }
