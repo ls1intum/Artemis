@@ -4,6 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
 
 /**
  * Check if the participation has changed.
@@ -97,7 +98,7 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
     const submission = participation.submissions[0];
     if (submission.submissionDate) {
         submission.submissionDate = dayjs(submission.submissionDate);
-        return submission.submissionDate.isBefore(exercise.dueDate);
+        return submission.submissionDate.isBefore(getExerciseDueDate(exercise, participation));
     }
 
     // If the submission has no submissionDate set, the submission cannot be in time.
