@@ -1,7 +1,7 @@
 version: '2'
 services:
     artemis-app:
-        image: ghcr.io/ls1intum/artemis-service:pr-4329
+        image: ghcr.io/ls1intum/artemis-service
         build:
             context: .
             dockerfile: ./src/main/docker/Dockerfile
@@ -25,7 +25,7 @@ services:
             - artemis-mysql
             - jhipster-registry
     usermanagement-app:
-        image: ghcr.io/ls1intum/artemis-usermanagement-service:pr-4329
+        image: ghcr.io/ls1intum/artemis-usermanagement-service
         build:
             context: .
             dockerfile: ./user-management/src/main/docker/Dockerfile
@@ -49,7 +49,7 @@ services:
             - artemis-mysql
             - jhipster-registry
     gateway-app:
-        image: ghcr.io/ls1intum/artemis-gateway:pr-4329
+        image: ghcr.io/ls1intum/artemis-gateway
         build:
             context: .
             dockerfile: ./gateway/src/main/docker/Dockerfile

@@ -1,4 +1,4 @@
-FROM openjdk:16-jdk-alpine
+FROM openjdk:17-jdk-alpine
 
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
@@ -6,12 +6,12 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 
 ## Add a jhipster user to run our application so that it doesn't need to run as root
 RUN adduser -D -s /bin/sh artemis
-WORKDIR /home/artemis
+WORKDIR /home/artemis/user-management
 USER artemis
 
-ARG WAR_PATH=user-management/build/libs
-COPY $WAR_PATH/*.war user-management/user-management.war
+ARG WAR_PATH=build/libs
+COPY $WAR_PATH/*.war user-management.war
 
-ENTRYPOINT ["java","-jar","user-management/user-management.war"]
+ENTRYPOINT ["java","-jar","user-management.war"]
 
-EXPOSE 8080
+EXPOSE 8087
