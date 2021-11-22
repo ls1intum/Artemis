@@ -11,7 +11,7 @@ import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
+import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { AlertService } from 'app/core/util/alert.service';
 
 /**

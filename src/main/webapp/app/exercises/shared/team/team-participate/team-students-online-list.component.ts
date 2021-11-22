@@ -19,7 +19,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     readonly showTypingDuration = 2000; // ms
     readonly sendTypingInterval = this.showTypingDuration / 1.5;
 
-    @Input() typing$: Observable<any> | null;
+    @Input() typing$: Observable<any>;
     @Input() participation: StudentParticipation;
 
     currentUser: User;
