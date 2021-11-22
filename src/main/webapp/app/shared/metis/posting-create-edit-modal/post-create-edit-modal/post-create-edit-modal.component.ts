@@ -62,7 +62,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * on initialization: reset all input field of the modal, determine the post context;
      */
     ngOnChanges(): void {
-        this.resetCurrentContextSelectorOption();
         super.ngOnChanges();
     }
 
@@ -70,8 +69,11 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * resets the pageType, initialContext, post tags, post title, and post content
      */
     resetFormGroup(): void {
+        console.log('reset formgroup');
         this.pageType = this.metisService.getPageType();
         this.tags = this.posting?.tags ?? [];
+        this.similarPosts = [];
+        this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the title and content must include at least one non-whitespace character
@@ -81,13 +83,15 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         });
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
+            // announcements should no show similar posts
+            if (this.currentContextSelectorOption.courseWideContext === CourseWideContext.ANNOUNCEMENT) {
+                this.similarPosts = [];
+            }
         });
-        // start new subscription to value changes of title for posts that are not announcements;
         // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
-        if (this.editType === this.EditType.CREATE && !(this.posting.courseWideContext === CourseWideContext.ANNOUNCEMENT)) {
+        if (this.editType === this.EditType.CREATE) {
             this.triggerPostSimilarityCheck();
         }
-        this.similarPosts = [];
     }
 
     /**
@@ -95,7 +99,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.setPostProperties(this.posting);
+        this.posting = this.setPostProperties(this.posting);
         this.metisService.createPost(this.posting).subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
@@ -116,11 +120,11 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             .get('title')
             ?.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged())
             .subscribe((title: string) => {
-                const tempPost = new Post();
-                this.setPostProperties(tempPost);
+                let tempPost = new Post();
+                tempPost = this.setPostProperties(tempPost);
                 // determine if title is provided
-                if (title.length > 0) {
-                    // if title input field is not empty, invoke metis service to get similar posts
+                if (title.length > 0 && this.currentContextSelectorOption.courseWideContext !== CourseWideContext.ANNOUNCEMENT) {
+                    // if title input field is not empty, or context other than announcement invoke metis service to get similar posts
                     this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
                         this.similarPosts = similarPosts;
                     });
@@ -136,7 +140,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.setPostProperties(this.posting);
+        this.posting = this.setPostProperties(this.posting);
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
@@ -174,7 +178,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         return false;
     }
 
-    private setPostProperties(post: Post): void {
+    private setPostProperties(post: Post): Post {
         post.title = this.formGroup.get('title')?.value;
         post.tags = this.tags;
         post.content = this.formGroup.get('content')?.value;
@@ -184,13 +188,14 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             courseWideContext: undefined,
             ...this.formGroup.get('context')?.value,
         };
-        this.posting = {
-            ...this.posting,
+        post = {
+            ...post,
             ...currentContextSelectorOption,
         };
         if (currentContextSelectorOption.courseWideContext) {
-            this.posting.course = { id: this.course.id, title: this.course.title };
+            post.course = { id: this.course.id, title: this.course.title };
         }
+        return post;
     }
 
     private resetCurrentContextSelectorOption(): void {

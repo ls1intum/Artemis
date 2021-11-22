@@ -27,20 +27,20 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
     }
 
     /**
-     * on initialization: sets the content, and the modal title (edit or create) and reset the form group
+     * on initialization: sets the content, and the modal title (edit or create)
      */
     ngOnInit(): void {
         this.content = this.posting.content ?? '';
         this.updateModalTitle();
-        this.resetFormGroup();
     }
 
     /**
-     * on changes: sets the content, and the modal title (edit or create)
+     * on changes: sets the content, and the modal title (edit or create), resets the from
      */
     ngOnChanges(): void {
         this.content = this.posting.content ?? '';
         this.updateModalTitle();
+        console.log('ng on changes');
         this.resetFormGroup();
     }
 
