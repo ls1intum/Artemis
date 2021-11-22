@@ -5,13 +5,14 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { matchesRegexFully } from 'app/utils/regex.util';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-course-registration-selector',
     templateUrl: './course-registration-selector.component.html',
 })
 export class CourseRegistrationSelectorComponent implements OnInit {
-    @Input() courses: Course[];
+    courses: Course[];
     @Output() courseRegistered = new EventEmitter();
     public coursesToSelect: Course[] = [];
     public courseToRegister: Course | undefined;
@@ -28,6 +29,9 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.courseService.findAllForDashboard().subscribe((res: HttpResponse<Course[]>) => {
+            this.courses = res.body!;
+        });
         this.accountService.identity().then((user) => {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (profileInfo) {
