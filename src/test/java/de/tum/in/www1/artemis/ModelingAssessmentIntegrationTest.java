@@ -518,23 +518,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
-    // TODO: Reactivate this with the Compass statistics PR
-    // @Test
-    // @WithMockUser(username = "instructor1", roles = "ADMIN")
-    // public void testStatistics() throws Exception {
-    // saveModelingSubmissionAndAssessment(true);
-    // database.createAndSaveParticipationForExercise(classExercise, "instructor1");
-    // ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
-    // ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-    // ModelingSubmission.class, HttpStatus.OK);
-    // compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
-    //
-    // request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.OK, String.class); // void == empty string
-    // String statistics = request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
-    // assertThat(statistics).isNotNull();
-    // // TODO: assert that the statistics is correct
-    // }
-
     @Test
     @WithMockUser(username = "student2")
     public void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
@@ -942,6 +925,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(manualFeedback.size()).as("number of manual feedback elements is correct").isEqualTo(newFeedback.size());
         assertThat(automaticFeedback.size()).as("number of automatic feedback elements is correct").isEqualTo(existingFeedback.size() - 2);
         assertThat(adaptedFeedback.size()).as("number of adapted feedback elements is correct").isEqualTo(2);
+        assertThat(manualUnreferencedFeedback.size()).as("number of manual unreferenced feedback elements is correct").isEqualTo(0);
     }
 
     @Test
