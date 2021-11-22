@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration/course-registration-selector/course-registration-selector.component';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -90,7 +90,7 @@ describe('CoursesComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
-                MockComponent(CourseRegistrationSelectorComponent),
+                MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
             ],
             providers: [

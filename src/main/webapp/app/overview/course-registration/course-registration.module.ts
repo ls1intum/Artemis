@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration/course-registration-selector/course-registration-selector.component';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -9,10 +9,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 const routes: Routes = [
     {
         path: '',
-        component: CourseRegistrationSelectorComponent,
+        component: CourseRegistrationComponent,
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'overview.registration',
+            pageTitle: 'artemisApp.studentDashboard.register.signUp',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -20,6 +20,6 @@ const routes: Routes = [
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule.forChild(routes)],
-    declarations: [CourseRegistrationSelectorComponent],
+    declarations: [CourseRegistrationComponent],
 })
 export class CourseRegistrationModule {}

@@ -2,8 +2,8 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration/course-registration-selector/course-registration-selector.component';
+import { Router } from '@angular/router';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,38 +14,33 @@ import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('CourseRegistrationSelectorComponent', () => {
-    let fixture: ComponentFixture<CourseRegistrationSelectorComponent>;
-    let component: CourseRegistrationSelectorComponent;
+describe('CourseRegistrationComponent', () => {
+    let fixture: ComponentFixture<CourseRegistrationComponent>;
+    let component: CourseRegistrationComponent;
     let courseService: CourseManagementService;
-    let mockRouter: any;
-    let mockActivatedRoute: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CourseRegistrationSelectorComponent],
+            declarations: [CourseRegistrationComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useValue: mockActivatedRoute },
-                { provide: Router, useValue: mockRouter },
+                { provide: Router, useClass: MockRouter },
                 MockProvider(TranslateService),
             ],
         })
-            .overrideTemplate(CourseRegistrationSelectorComponent, '')
+            .overrideTemplate(CourseRegistrationComponent, '')
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseRegistrationSelectorComponent);
+                fixture = TestBed.createComponent(CourseRegistrationComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-
-                mockRouter = sinon.createStubInstance(Router);
-                mockActivatedRoute = sinon.createStubInstance(ActivatedRoute);
             });
     });
 
@@ -65,12 +60,6 @@ describe('CourseRegistrationSelectorComponent', () => {
         expect(component.trackCourseById(indexNumber, course)).to.equal(indexNumber);
     }));
 
-    it('should cancel the registration', fakeAsync(() => {
-        component.showCourseSelection = true;
-        component.cancelRegistration();
-        expect(component.showCourseSelection).to.be.false;
-    }));
-
     it('should show registratable courses', fakeAsync(() => {
         const course1 = new Course();
         course1.id = 1;
@@ -80,37 +69,20 @@ describe('CourseRegistrationSelectorComponent', () => {
         component.courses = [course2];
         sinon.replace(courseService, 'findAllToRegister', fake);
 
-        component.startRegistration();
+        component.loadAndFilterCourses();
         tick();
 
         expect(component.coursesToSelect.length).to.equal(1);
     }));
 
-    it('should wait until timeout', fakeAsync(() => {
-        const course1 = new Course();
-        course1.id = 1;
-        const course2 = new Course();
-        course2.id = 2;
-        const fake = sinon.fake.returns(of(new HttpResponse({ body: [course1] })));
-        component.courses = [course1, course2];
-        sinon.replace(courseService, 'findAllToRegister', fake);
-
-        component.startRegistration();
-        tick(4000);
-
-        expect(component.courseToRegister).to.be.undefined;
-        expect(component.showCourseSelection).to.be.false;
-    }));
-
     it('should  register for course', fakeAsync(() => {
         const course = new Course();
         course.id = 1;
-        component.courseToRegister = course;
 
         const fake = sinon.fake.returns(of(new HttpResponse({ body: new User() })));
         sinon.replace(courseService, 'registerForCourse', fake);
 
-        component.registerForCourse();
+        component.registerForCourse(1);
         tick();
 
         expect(component.addedSuccessful).to.be.true;

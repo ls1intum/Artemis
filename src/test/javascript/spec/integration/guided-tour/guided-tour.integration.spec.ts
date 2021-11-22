@@ -32,7 +32,7 @@ import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration/course-registration-selector/course-registration-selector.component';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
@@ -76,7 +76,7 @@ describe('Guided tour integration', () => {
                 NotificationSidebarComponent,
                 MockHasAnyAuthorityDirective,
                 MockComponent(FaIconComponent),
-                MockComponent(CourseRegistrationSelectorComponent),
+                MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(CoursesComponent),

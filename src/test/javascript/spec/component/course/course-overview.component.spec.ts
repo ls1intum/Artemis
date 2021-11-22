@@ -19,7 +19,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration/course-registration-selector/course-registration-selector.component';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -96,7 +96,7 @@ describe('CourseOverviewComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
-                MockComponent(CourseRegistrationSelectorComponent),
+                MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(AlertComponent),
