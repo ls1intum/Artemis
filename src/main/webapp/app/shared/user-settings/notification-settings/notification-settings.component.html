@@ -20,7 +20,7 @@
 </div>
 <div class="list-group d-block" *ngIf="userSettings">
     <div *ngFor="let settingGroup of userSettings.groups">
-        <div *jhiHasAnyAuthority="[settingGroup.restrictionLevel]" class="list-group-item">
+        <div *jhiHasAnyAuthority="settingGroup.restrictionLevels" class="list-group-item">
             <h3>
                 <!--GroupName-->
                 <!-- please look at the README.md file to understand how the translation works -->
@@ -44,7 +44,7 @@
                             [checked]="setting.webapp"
                             id="{{ setting.settingId }}"
                             value="{{ setting.webapp }}"
-                            (click)="toggleSetting($event, true)"
+                            (click)="toggleSetting($event, communicationChannel.WEBAPP)"
                         />
                         <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                     </div>
@@ -55,7 +55,7 @@
                             [checked]="setting.email"
                             id="{{ setting.settingId }} email"
                             value="{{ setting.email }}"
-                            (click)="toggleSetting($event, false)"
+                            (click)="toggleSetting($event, communicationChannel.EMAIL)"
                         />
                         <label class="form-check-label" for="{{ setting.settingId }} email">Email</label>
                     </div>

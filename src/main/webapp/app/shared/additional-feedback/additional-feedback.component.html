@@ -16,6 +16,6 @@
         <strong>
             <span> {{ roundScoreSpecifiedByCourseSettings(singleFeedback.credits, course) + ' Points: ' }} </span>
         </strong>
-        <span> {{ singleFeedback.detailText }} </span>
+        <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
     </div>
 </div>

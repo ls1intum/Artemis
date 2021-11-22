@@ -23,8 +23,7 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockModule } from 'ng-mocks';
-import { ClipboardModule } from 'ngx-clipboard';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -153,5 +152,18 @@ describe('TriggerBuildButtonSpec', () => {
         fixture.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).not.to.exist;
+    });
+
+    it('should set the latest result correctly to manual', () => {
+        gradedResult1.assessmentType = AssessmentType.AUTOMATIC;
+        gradedResult2.assessmentType = AssessmentType.MANUAL;
+
+        comp.participation = { ...participation, results: [gradedResult1, gradedResult2], initializationState: InitializationState.INITIALIZED };
+        comp.exercise = { id: 5, dueDate: dayjs().subtract(1, 'day') } as ProgrammingExercise;
+
+        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
+        fixture.detectChanges();
+
+        expect(comp.lastResultIsManual).to.be.true;
     });
 });

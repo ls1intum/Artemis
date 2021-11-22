@@ -9,7 +9,6 @@ import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/as
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { RouterModule } from '@angular/router';
@@ -37,7 +36,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,
-        AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
         ExternalSubmissionDialogComponent,
         AssessmentLocksComponent,
@@ -49,7 +47,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,
-        AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
         AssessmentLocksComponent,
         UnreferencedFeedbackComponent,

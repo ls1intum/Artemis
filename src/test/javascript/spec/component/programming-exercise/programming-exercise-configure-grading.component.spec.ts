@@ -20,6 +20,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import {
     ProgrammingExerciseGradingService,
@@ -441,13 +442,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.changedTestCaseIds).toHaveLength(0);
     });
 
-    it('should show error alert when test case weights are less or equal zero', () => {
-        initGradingComponent({ showInactive: true });
-
-        fixture.detectChanges();
-
-        const orderedTests = sortedTestCases(testCases1);
-
+    const setAllWeightsToZero = () => {
         const table = debugElement.query(By.css(testCaseTableId));
 
         // get all input fields
@@ -463,6 +458,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weightInput.value = '0';
             weightInput.dispatchEvent(new Event('blur'));
         }
+    };
+
+    const checkBehaviourForZeroWeight = (assessmentType: AssessmentType) => {
+        initGradingComponent({ showInactive: true });
+        comp.programmingExercise.assessmentType = assessmentType;
+
+        fixture.detectChanges();
+
+        const orderedTests = sortedTestCases(testCases1);
+        setAllWeightsToZero();
 
         fixture.detectChanges();
         expect(comp.changedTestCaseIds).toEqual(orderedTests.map((test) => test.id));
@@ -482,7 +487,24 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        if (assessmentType === AssessmentType.AUTOMATIC) {
+            expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
+        } else {
+            expect(alertServiceSpy).not.toHaveBeenCalled();
+        }
+    };
+
+    it('should show an error alert when test case weights are less or equal zero for exercises with automatic feedback', () => {
+        checkBehaviourForZeroWeight(AssessmentType.AUTOMATIC);
+    });
+
+    it('should NOT show an error alert when test case weights are zero for exercises with semiautomatic feedback', () => {
+        checkBehaviourForZeroWeight(AssessmentType.SEMI_AUTOMATIC);
+    });
+
+    it('should NOT show an error alert when test case weights are zero for exercises with manual feedback', () => {
+        checkBehaviourForZeroWeight(AssessmentType.MANUAL);
     });
 
     it('should be able to update the value of the visibility', () => {

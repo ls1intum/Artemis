@@ -20,8 +20,8 @@ import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { stub } from 'sinon';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,7 +53,6 @@ spot2.spotNr = 1;
 describe('ShortAnswerQuestionEditComponent', () => {
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
     let component: ShortAnswerQuestionEditComponent;
-    let artemisMarkdown: ArtemisMarkdownService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -69,7 +68,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
         component = fixture.componentInstance;
-        artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
     });
 
     beforeEach(() => {
@@ -393,7 +391,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return '';
             },
         } as string;
-        jest.spyOn(artemisMarkdown, 'markdownForHtml').mockReturnValue(markdownHelper);
+        jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
         const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];

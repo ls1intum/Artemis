@@ -672,6 +672,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_testCaseMultiplierSmallerThanZero_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseBonusPointsNull() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_testCaseBonusPointsNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void resetTestCaseWeights_asInstructor() throws Exception {
         programmingExerciseIntegrationServiceTest.resetTestCaseWeights_asInstructor();
     }

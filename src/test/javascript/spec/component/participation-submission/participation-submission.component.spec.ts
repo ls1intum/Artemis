@@ -171,6 +171,7 @@ describe('ParticipationSubmissionComponent', () => {
             },
         ] as TextSubmission[];
         const exercise = { type: ExerciseType.TEXT } as Exercise;
+        exercise.isAtLeastInstructor = true;
         stub(exerciseService, 'find').returns(of(new HttpResponse({ body: exercise })));
         findAllSubmissionsOfParticipationStub.returns(of({ body: submissions }));
 

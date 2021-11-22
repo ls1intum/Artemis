@@ -660,4 +660,30 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(getRepositoryContenStub).toHaveBeenCalledTimes(1);
         expect(comp.selectedFile).toBe(undefined);
     });
+
+    it('should load information about changed files', fakeAsync(() => {
+        const changeInformation = {
+            'Class.java': true,
+            'Document.md': false,
+            'README.md': true,
+            'binary1.exe': true,
+            'binary2.zip': false,
+        };
+        const filteredChangeInformation = {
+            'Class.java': true,
+            'Document.md': false,
+        };
+        const getFilesWithChangeInfoStub = jest.fn().mockReturnValue(of(changeInformation));
+        codeEditorRepositoryFileService.getFilesWithInformationAboutChange = getFilesWithChangeInfoStub;
+
+        const loadFiles = comp.loadFilesWithInformationAboutChange().subscribe((result) => {
+            expect(result).toEqual(filteredChangeInformation);
+        });
+
+        tick();
+
+        expect(getFilesWithChangeInfoStub).toHaveBeenCalledTimes(1);
+
+        loadFiles.unsubscribe();
+    }));
 });

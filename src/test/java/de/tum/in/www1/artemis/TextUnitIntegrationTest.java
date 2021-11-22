@@ -119,7 +119,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();

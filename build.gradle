@@ -24,11 +24,11 @@ plugins {
     id "com.diffplug.spotless" version "5.15.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
-    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.1"
+    id "com.github.andygoossens.modernizer" version "1.6.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.3.0"
+version = "5.3.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -81,7 +81,7 @@ bootRun {
 }
 
 modernizer {
-    failOnViolations = true
+    failOnViolations = false
     includeTestClasses = true
 }
 
@@ -285,6 +285,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.1.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
+    testImplementation "com.opencsv:opencsv:5.5.2"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20210307"
