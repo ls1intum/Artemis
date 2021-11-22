@@ -183,13 +183,13 @@
                 },
                 "points": {
                     "undefined": "Die Punkte wurden nicht ausgefüllt!",
-                    "customMin": "Die Punkte müssen mindestens 1 betragen.",
-                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
+                    "customMin": "Die Punkte müssen mindestens 1 betragen!",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen!"
                 },
                 "bonusPoints": {
                     "undefined": "Die Bonuspunkte wurden nicht ausgefüllt!",
-                    "customMin": "Die Punkte müssen mindestens 0 betragen.",
-                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
+                    "customMin": "Die Punkte müssen mindestens 0 betragen!",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen!"
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
