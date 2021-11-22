@@ -9,7 +9,7 @@ RUN adduser -D -s /bin/sh artemis
 WORKDIR /home/artemis/user-management
 USER artemis
 
-ARG WAR_PATH=build/libs
+ARG WAR_PATH=user-management/build/libs
 COPY $WAR_PATH/*.war user-management.war
 
 ENTRYPOINT ["java","-jar","user-management.war"]

@@ -9,7 +9,7 @@ RUN adduser -D -s /bin/sh artemis
 WORKDIR /home/artemis/gateway
 USER artemis
 
-ARG WAR_PATH=build/libs
+ARG WAR_PATH=gateway/build/libs
 COPY $WAR_PATH/*.war gateway.war
 
 ENTRYPOINT ["java","-jar","gateway.war"]
