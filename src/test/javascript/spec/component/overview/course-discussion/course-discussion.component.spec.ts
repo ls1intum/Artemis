@@ -66,8 +66,10 @@ describe('CourseDiscussionComponent', () => {
 
     const id = metisCourse.id;
     const parentRoute = {
-        params: of({ id }),
-        queryParams: of({ searchText: '' }),
+        parent: {
+            params: of({ id }),
+            queryParams: of({ searchText: '' }),
+        },
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 

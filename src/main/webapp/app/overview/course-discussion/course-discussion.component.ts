@@ -70,10 +70,14 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
-        this.paramSubscription = combineLatest(this.activatedRoute.parent!.params, this.activatedRoute.parent!.queryParams, (params: Params, queryParams: Params) => ({
-            params,
-            queryParams,
-        })).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+        this.paramSubscription = combineLatest(
+            this.activatedRoute.parent!.parent!.params,
+            this.activatedRoute.parent!.parent!.queryParams,
+            (params: Params, queryParams: Params) => ({
+                params,
+                queryParams,
+            }),
+        ).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.searchText = queryParams.searchText;

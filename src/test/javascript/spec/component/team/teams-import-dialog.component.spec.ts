@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
-import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
+import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';

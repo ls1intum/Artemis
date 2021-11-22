@@ -26,6 +26,8 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -53,6 +55,8 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
         ExerciseDetailStatisticsComponent,
         ItemCountComponent,
         ConsistencyCheckComponent,
+        AssessmentWarningComponent,
+        HtmlForMarkdownPipe,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -82,6 +86,8 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
         ExerciseDetailStatisticsComponent,
         ItemCountComponent,
         ConsistencyCheckComponent,
+        AssessmentWarningComponent,
+        HtmlForMarkdownPipe,
     ],
 })
 export class ArtemisSharedModule {}
