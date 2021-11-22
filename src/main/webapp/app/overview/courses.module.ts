@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
@@ -31,7 +30,6 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ChartsModule,
         ClipboardModule,
         ArtemisSharedPipesModule,
         ArtemisResultModule,

@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { ChartsModule } from 'ng2-charts';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { RouterModule, Routes } from '@angular/router';
@@ -24,7 +23,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisLearningGoalsModule, ArtemisExerciseScoresChartModule, ArtemisSharedModule, ChartsModule, FontAwesomeModule, RouterModule.forChild(routes), NgxChartsModule],
+    imports: [ArtemisLearningGoalsModule, ArtemisExerciseScoresChartModule, ArtemisSharedModule, FontAwesomeModule, RouterModule.forChild(routes), NgxChartsModule],
     declarations: [CourseStatisticsComponent, CourseLearningGoalsComponent],
 })
 export class CourseStatisticsModule {}
