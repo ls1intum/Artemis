@@ -5,13 +5,10 @@ import { CourseOverviewComponent } from 'app/overview/course-overview.component'
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
-import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismCasesReviewComponent } from 'app/course/plagiarism-cases/plagiarism-cases-review.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
-import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 
 const routes: Routes = [
     {
@@ -52,21 +49,11 @@ const routes: Routes = [
             },
             {
                 path: 'statistics',
-                component: CourseStatisticsComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.statistics',
-                },
-                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
             },
             {
                 path: 'discussion',
-                component: CourseDiscussionComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.discussion',
-                },
-                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../overview/course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
             {
                 path: 'exams',
@@ -99,15 +86,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.gradingSystem.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
-        component: TeamComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

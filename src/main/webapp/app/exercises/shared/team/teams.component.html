@@ -67,7 +67,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a [routerLink]="['/course-management', exercise?.course?.id, exercise?.type + '-exercises', exercise?.id, 'teams', value]">
+                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value]">
                             {{ value }}
                         </a>
                     </ng-template>
@@ -93,7 +93,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="row">
-                        <a [routerLink]="['/course-management', exercise?.course?.id, exercise?.type + '-exercises', exercise?.id, 'teams', value.id]">
+                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value.id]">
                             {{ value.shortName }}
                         </a>
                     </ng-template>

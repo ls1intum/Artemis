@@ -1,8 +1,11 @@
-export type ProblemStatementAnalysis = Array<{
-    lineNumber: number;
-    invalidTestCases?: string[];
-    invalidHints?: string[];
-}>;
+export type ProblemStatementAnalysis = Map<
+    number,
+    {
+        lineNumber: number;
+        invalidTestCases?: string[];
+        invalidHints?: string[];
+    }
+>;
 
 export enum ProblemStatementIssue {
     INVALID_TEST_CASES = 'invalidTestCases',

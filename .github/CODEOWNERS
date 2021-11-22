@@ -1,0 +1,14 @@
+# The CODEOWNERS file defines individuals or teams that are
+# responsible for code this repository.
+
+# Code owners are automatically requested for review when someone opens a
+# pull request that modifies code that they own.
+# Code owners are not automatically requested to review draft pull requests
+# Each line is a file pattern followed by one or more owners.
+
+# These owners will be the default owners for everything in the repo.
+# Unless a later match takes precedence, @krusche and @jpbernius will be
+# requested for review when someone opens a pull request.
+
+*    @ls1intum/artemis-maintainers
+
