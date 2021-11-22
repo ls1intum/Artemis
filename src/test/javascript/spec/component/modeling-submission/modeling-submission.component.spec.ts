@@ -361,6 +361,7 @@ describe('ModelingSubmission Management Component', () => {
         const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
         comp.updateSubmissionWithCurrentValues();
+        fixture.detectChanges();
         expect(currentModelStub).toHaveBeenCalledTimes(2);
         expect(comp.hasElements).toBe(true);
         expect(comp.submission).not.toBe(undefined);
