@@ -62,6 +62,7 @@ describe('PostCreateEditModalComponent', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
         component.ngOnInit();
+        component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
         expect(component.modalTitle).toEqual('artemisApp.metis.createModalTitlePost');
 
@@ -97,7 +98,7 @@ describe('PostCreateEditModalComponent', () => {
     it('should invoke metis service with created post in overview', fakeAsync(() => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting = metisPostToCreateUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         // provide some input before creating the post
         const newContent = 'New Content';
         const newTitle = 'New Title';
@@ -130,6 +131,7 @@ describe('PostCreateEditModalComponent', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting = metisPostToCreateUser1;
         component.ngOnInit();
+        component.ngOnChanges();
         // provide some input before creating the post
         const newContent = 'New Content';
         const newTitle = 'New Title';
@@ -158,7 +160,7 @@ describe('PostCreateEditModalComponent', () => {
     it('should invoke metis service with updated post in page section', fakeAsync(() => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.PAGE_SECTION);
         component.posting = metisPostLectureUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.PAGE_SECTION);
         expect(component.modalTitle).toEqual('artemisApp.metis.editPosting');
         // provide some updated input before creating the post

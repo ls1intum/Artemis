@@ -22,7 +22,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 AnswerPostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -30,6 +29,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
         })
             .compileComponents()
             .then(() => {
@@ -72,14 +72,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke updatePosting when confirming', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalled;
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalled;
     });
@@ -88,7 +88,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         const metisServiceCreateSpy = jest.spyOn(metisService, 'createAnswerPost');
         const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
         component.posting = metisAnswerPostToCreateUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         const newContent = 'New Content';
         component.formGroup.setValue({
             content: newContent,
@@ -103,7 +103,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     it('should invoke metis service with updated answer post', fakeAsync(() => {
         const metisServiceCreateSpy = jest.spyOn(metisService, 'updateAnswerPost');
         component.posting = metisAnswerPostUser2;
-        component.ngOnInit();
+        component.ngOnChanges();
         const updatedContent = 'Updated Content';
         component.formGroup.setValue({
             content: updatedContent,
