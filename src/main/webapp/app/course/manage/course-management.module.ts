@@ -84,6 +84,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
+        NgxChartsModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedPipesModule,
