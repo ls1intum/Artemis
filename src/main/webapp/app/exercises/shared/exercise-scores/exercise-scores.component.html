@@ -161,10 +161,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a
-                            *ngIf="exercise.teamMode; else defaultMode"
-                            [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'teams', value.team.id]"
-                        >
+                        <a *ngIf="exercise.teamMode; else defaultMode" [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.team.id]">
                             {{ value.team.shortName }}
                         </a>
                         <ng-template #defaultMode>
