@@ -8,9 +8,19 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
     declarations: [ExamScoresComponent, ExamScoresAverageScoresGraphComponent],
-    imports: [ArtemisSharedModule, ChartsModule, ArtemisExamScoresRoutingModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedComponentModule],
+    imports: [
+        ArtemisSharedModule,
+        ChartsModule,
+        ArtemisExamScoresRoutingModule,
+        ArtemisDataTableModule,
+        NgxDatatableModule,
+        ArtemisResultModule,
+        ArtemisSharedComponentModule,
+        NgxChartsModule,
+    ],
 })
 export class ArtemisExamScoresModule {}

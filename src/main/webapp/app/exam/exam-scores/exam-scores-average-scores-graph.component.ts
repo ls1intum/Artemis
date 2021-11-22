@@ -12,6 +12,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 const BAR_HEIGHT = 15;
 
@@ -42,6 +43,15 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
     absolutePoints: (number | undefined)[] = [];
+
+    // ngx
+    ngxData: any[] = [];
+    ngxColor = {
+        name: 'exercise groups',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [GraphColors.BLUE],
+    } as Color;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -74,11 +84,14 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
         const labels = [this.averageScores.title];
         const absoluteData = [this.averageScores.averagePoints!];
         const relativeData: number[] = [this.averageScores.averagePercentage!];
+        this.ngxData.push({ name: this.averageScores.title, value: this.averageScores.averagePercentage! });
         this.averageScores.exerciseResults.forEach((exercise) => {
             labels.push(exercise.exerciseId + ' ' + exercise.title);
             colors.push(GraphColors.DARK_BLUE);
             absoluteData.push(exercise.averagePoints!);
             relativeData.push(exercise.averagePercentage!);
+            this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exercise.averagePercentage });
+            this.ngxColor.domain.push(GraphColors.DARK_BLUE);
 
             this.height += BAR_HEIGHT;
             this.exerciseIds.push(exercise.exerciseId);
@@ -96,6 +109,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
                 barPercentage: 0.9,
             },
         ];
+        this.ngxData = [...this.ngxData];
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
