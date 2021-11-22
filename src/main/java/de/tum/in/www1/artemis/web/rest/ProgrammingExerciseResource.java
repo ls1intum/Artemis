@@ -332,6 +332,11 @@ public class ProgrammingExerciseResource {
                     "staticCodeAnalysisNotSupportedForLanguage");
         }
 
+        // Check that FACT has no SCA enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled() && ProjectType.FACT.equals(programmingExercise.getProjectType()))) {
+            throw new BadRequestAlertException("The static code analysis is not supported for FACT programming exercises", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
         // Static code analysis max penalty must only be set if static code analysis is enabled
         if (Boolean.FALSE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getMaxStaticCodeAnalysisPenalty() != null) {
             throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
