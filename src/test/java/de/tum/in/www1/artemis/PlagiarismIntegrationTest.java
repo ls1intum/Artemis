@@ -76,7 +76,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         plagiarismComparisonRepository.save(plagiarismComparison1);
         plagiarismComparisonRepository.save(plagiarismComparison2);
 
-        var cases = request.getList("/api/plagiarism-cases/1", HttpStatus.OK, PlagiarismCaseDTO.class);
+        var cases = request.getList("/api/plagiarism-cases/" + course.getId(), HttpStatus.OK, PlagiarismCaseDTO.class);
         assertThat(cases.size()).isEqualTo(1);
         assertThat(cases.get(0).getComparisons().size()).isEqualTo(2);
     }
