@@ -39,7 +39,7 @@
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
             "toRead": "zum Lesen",
             "toReview": "zur Überprüfung",
-            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
+            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toRead}} zum Lesen und {{toAssess}} zur Bewertung.",
             "readSubmissions": "Überprüfung von Beispielabgaben",
             "start": "",
             "continue": "",
