@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';

@@ -4,8 +4,6 @@ import { CypressCredentials } from '../users';
  * A class which encapsulates UI selectors and actions for the Login Page.
  */
 export class LoginPage {
-    readonly footerSelector = '.footer';
-
     enterUsername(name: string) {
         cy.get('#username').type(name, { log: false });
     }
@@ -15,7 +13,7 @@ export class LoginPage {
     }
 
     clickLoginButton() {
-        cy.get('.btn-primary').click();
+        cy.get('#login-button').click();
     }
 
     login(credentials: CypressCredentials) {
@@ -25,26 +23,26 @@ export class LoginPage {
     }
 
     shouldShowFooter() {
-        cy.get(this.footerSelector).should('be.visible');
+        cy.get('#footer').should('be.visible');
     }
 
     shouldShowAboutUsInFooter() {
-        cy.get(this.footerSelector).find('[jhitranslate="aboutUs"]').should('be.visible').and('have.attr', 'href', '/about');
+        cy.get('#about').should('be.visible').and('have.attr', 'href', '/about');
     }
 
     shouldShowRequestChangeInFooter() {
-        cy.get(this.footerSelector).find('[jhitranslate="requestChange"]').should('be.visible').and('have.attr', 'href');
+        cy.get('#request-change').should('be.visible').and('have.attr', 'href');
     }
 
     shouldShowReleaseNotesInFooter() {
-        cy.get(this.footerSelector).find('[jhitranslate="releaseNotes"]').should('be.visible').and('have.attr', 'href');
+        cy.get('#release-notes').should('be.visible').and('have.attr', 'href');
     }
 
     shouldShowPrivacyStatementInFooter() {
-        cy.get(this.footerSelector).find('[jhitranslate="legal.privacy.title"]').should('be.visible').and('have.attr', 'href', '/privacy');
+        cy.get('#privacy').should('be.visible').and('have.attr', 'href', '/privacy');
     }
 
     shouldShowImprintInFooter() {
-        cy.get(this.footerSelector).find('[jhitranslate="legal.imprint.title"]').should('be.visible').and('have.attr', 'href', '/imprint');
+        cy.get('#imprint').should('be.visible').and('have.attr', 'href', '/imprint');
     }
 }

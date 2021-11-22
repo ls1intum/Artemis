@@ -14,5 +14,5 @@ export class TeamParticipateInfoBoxComponent {
     @Input() stickyEnabled = true;
     @Input() dockedToLeftSide = false;
     @Input() dockedToRightSide = false;
-    @Input() typing$: Observable<any> | null;
+    @Input() typing$: Observable<any>;
 }

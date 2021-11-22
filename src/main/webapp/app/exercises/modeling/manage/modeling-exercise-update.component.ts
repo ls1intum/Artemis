@@ -17,7 +17,7 @@ import { cloneDeep } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
