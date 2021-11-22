@@ -18,7 +18,7 @@ import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
-import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 

@@ -62,15 +62,14 @@ export class ShortAnswerQuestionComponent {
      * Update html for text, hint and explanation for the question and every answer option
      */
     watchCollection() {
-        const artemisMarkdown = this.artemisMarkdown;
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
 
-        this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.text);
-        this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.hint);
-        this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.explanation);
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.explanation);
     }
 
     /**

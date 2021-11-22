@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
