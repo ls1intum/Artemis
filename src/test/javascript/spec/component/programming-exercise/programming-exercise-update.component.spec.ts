@@ -137,7 +137,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -153,7 +153,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should trim the exercise title before saving', fakeAsync(() => {
@@ -171,7 +171,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
+            expect(entity.title).toBe('My Exercise');
         }));
     });
 
@@ -201,9 +201,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isSaving).toEqual(false);
-            expect(comp.programmingExercise).toEqual(expectedExamProgrammingExercise);
-            expect(comp.isExamMode).toBeTruthy();
+            expect(comp.isSaving).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
+            expect(comp.isExamMode).toBe(true);
         }));
     });
 
@@ -229,9 +229,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.isSaving).toEqual(false);
-            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
-            expect(comp.isExamMode).toBeFalsy();
+            expect(comp.isSaving).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
+            expect(comp.isExamMode).toBe(false);
         }));
     });
 
@@ -267,8 +267,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
 
-            expect(scaCheckbox.checked).toBeTruthy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTruthy();
+            expect(scaCheckbox.checked).toBe(true);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
 
             // Switch to another programming language not supporting sca
@@ -279,9 +279,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
             scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
-            expect(scaCheckbox).toBeFalsy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalsy();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            expect(scaCheckbox).toBe(null);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
 
@@ -293,9 +293,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.appNamePatternForSwift);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
         }));
 
         it('Should activate SCA for C', fakeAsync(() => {
@@ -306,8 +306,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -317,9 +317,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
 
             // THEN
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
         }));
     });
 
@@ -356,15 +356,15 @@ describe('ProgrammingExercise Management Update Component', () => {
                 const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
                 const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
 
-                expect(comp.isImport).toBeTruthy();
+                expect(comp.isImport).toBe(true);
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
-                expect(recreateBuildPlanCheckbox.checked).toBeFalsy();
-                expect(updateTemplateCheckbox.checked).toBeFalsy();
-                expect(comp.programmingExercise).toEqual(programmingExercise);
+                expect(recreateBuildPlanCheckbox.checked).toBe(false);
+                expect(updateTemplateCheckbox.checked).toBe(false);
+                expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
                 // Activate SCA and set a max penalty
@@ -377,7 +377,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // SCA penalty field disappears or appears after the sca checkbox click
                 maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
                 if (scaActivatedOriginal) {
-                    expect(maxPenaltyInput).toBeFalsy();
+                    expect(maxPenaltyInput).toBe(null);
                 } else {
                     maxPenaltyInput.value = newMaxPenalty;
                     maxPenaltyInput.dispatchEvent(new Event('input'));
@@ -388,9 +388,9 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // Recreate build plan and template update should be automatically selected
                 expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(scaActivatedOriginal ? undefined : newMaxPenalty);
-                expect(comp.recreateBuildPlans).toBeTruthy();
-                expect(comp.updateTemplate).toBeTruthy();
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
+                expect(comp.recreateBuildPlans).toBe(true);
+                expect(comp.updateTemplate).toBe(true);
 
                 // Deactivate recreation of build plans
                 recreateBuildPlanCheckbox.click();
@@ -399,8 +399,8 @@ describe('ProgrammingExercise Management Update Component', () => {
                 tick();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
-                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(comp.originalStaticCodeAnalysisEnabled);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             }),
         );
     });
