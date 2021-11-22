@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 
@@ -92,5 +93,15 @@ public class RatingService {
         Rating updatedRating = this.ratingRepository.findRatingByResultId(resultId).orElseThrow();
         updatedRating.setRating(ratingValue);
         return ratingRepository.save(updatedRating);
+    }
+
+    /**
+     * Computes rating information for the given exercise.
+     *
+     * @param exerciseId - id of the exercise
+     * @return the rating information of the exercise
+     */
+    public ExerciseRatingCount averageRatingByExerciseId(Long exerciseId) {
+        return ratingRepository.averageRatingByExerciseId(exerciseId);
     }
 }
