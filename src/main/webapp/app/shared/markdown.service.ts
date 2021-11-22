@@ -47,7 +47,7 @@ export class ArtemisMarkdownService {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        let convertedString = hmlForMarkdown(markdownText, [], allowedHtmlTags, allowedHtmlAttributes);
+        let convertedString = htmlForMarkdown(markdownText, [], allowedHtmlTags, allowedHtmlAttributes);
         // determine the first paragraph before (in contentBeforeReference) and the first paragraph after (in contentAfterReference) a reference
         let paragraphPosition: number;
         if (contentBeforeReference) {
