@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
 

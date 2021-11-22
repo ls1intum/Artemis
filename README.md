@@ -117,6 +117,8 @@ Please note, that the actual database model is more complex. The UML class diagr
 There is a growing community of university instructors who are using Artemis.
 
 #### Communication
+    
+[![Matrix Chat](https://img.shields.io/matrix/artemis-platform:matrix.org?label=matrix:%20%23artemis:in.tum.de)](https://matrix.to/#/#artemis:in.tum.de)
 
 We communicate using Github issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
 
