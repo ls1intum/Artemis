@@ -650,7 +650,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
 
-        if (this.programmingExercise.bonusPoints === undefined) {
+        if (this.programmingExercise.bonusPoints === undefined || typeof this.programmingExercise.bonusPoints !== 'number') {
             result.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
                 translateValues: {},
