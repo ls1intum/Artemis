@@ -64,15 +64,15 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'plagiarism',
-                loadChildren: () => import('app/course/plagiarism-cases/plagiarism-cases.module').then((m) => m.PlagiarismCasesModule),
-            },
-            {
                 path: '',
                 redirectTo: 'exercises',
                 pathMatch: 'full',
             },
         ],
+    },
+    {
+        path: 'courses/:courseId/plagiarism',
+        loadChildren: () => import('app/course/plagiarism-cases/plagiarism-cases.module').then((m) => m.PlagiarismCasesModule),
     },
     {
         path: 'courses/:courseId/statistics/grading-key',
