@@ -63,7 +63,7 @@
                 "courseWideContext": "Course-wide Topics",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
-                "announcementHint": "Announcements are pinned per default and listed at the top of the course overview. Possible replies cannot be marked as resolving. Only instructors can create announcements.",
+                "announcementHint": "Announcements are pinned per default and listed at the top of the course overview. Possible replies cannot be marked as resolving. Only instructors can create announcements. All course participants who have not disabled this explicitly will automatically receive an email notification with the announcement content.",
                 "title": "Title",
                 "postMarkedAsResolvedTooltip": "Post has been resolved",
                 "postMarkedAsAnnouncementTooltip": "Announcement",
