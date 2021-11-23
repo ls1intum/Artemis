@@ -36,8 +36,8 @@ describe('CourseRegistrationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseRegistrationComponent);
                 component = fixture.componentInstance;
-
                 courseService = TestBed.inject(CourseManagementService);
+                
                 findAllToRegisterStub = jest.spyOn(courseService, 'findAllToRegister').mockReturnValue(of(new HttpResponse({ body: [course1] })));
                 registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
             });
