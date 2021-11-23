@@ -25,9 +25,9 @@
                     [routerLink]="contextInformation.routerLinkComponents"
                     (click)="onNavigateToContext($event)"
                     routerLinkActive="active"
-                    >{{ contextInformation.displayName + ':' }}</a
+                    >{{ contextInformation.displayName }}:</a
                 >
-                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName + ':' }}</span>
+                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
             <span class="col-auto">
                 <a
@@ -36,9 +36,8 @@
                     [queryParams]="metisService.getQueryParamsForPost(posting)"
                     (click)="onNavigateToPostById($event)"
                     routerLinkActive="active"
+                    >{{ posting.title }}</a
                 >
-                    {{ posting.title }}
-                </a>
                 <span class="reference-hash">#{{ posting.id }}</span>
             </span>
         </div>
