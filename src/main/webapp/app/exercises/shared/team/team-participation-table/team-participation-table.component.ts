@@ -16,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 

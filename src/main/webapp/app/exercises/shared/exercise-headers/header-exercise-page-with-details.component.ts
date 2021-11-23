@@ -6,7 +6,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',

@@ -10,7 +10,7 @@ import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-s
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({
     selector: 'jhi-overview-course-card',

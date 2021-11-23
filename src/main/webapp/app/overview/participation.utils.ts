@@ -4,7 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 /**
  * Check if the participation has changed.

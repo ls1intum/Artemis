@@ -27,7 +27,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({
     selector: 'jhi-participation-submission',

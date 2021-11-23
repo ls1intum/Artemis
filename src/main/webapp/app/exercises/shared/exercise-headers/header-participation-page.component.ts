@@ -4,7 +4,7 @@ import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({
     selector: 'jhi-header-participation-page',

@@ -16,7 +16,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',

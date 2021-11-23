@@ -14,7 +14,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.

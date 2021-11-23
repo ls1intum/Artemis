@@ -20,7 +20,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 /**
  * Enumeration object representing the possible options that

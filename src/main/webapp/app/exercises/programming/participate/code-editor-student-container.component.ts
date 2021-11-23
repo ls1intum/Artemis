@@ -26,7 +26,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({
     selector: 'jhi-code-editor-student',
