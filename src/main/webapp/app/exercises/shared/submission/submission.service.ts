@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';

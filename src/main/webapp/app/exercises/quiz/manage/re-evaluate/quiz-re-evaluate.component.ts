@@ -1,11 +1,12 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
@@ -13,48 +14,47 @@ import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
     styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [],
+    providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
 })
-export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
-    // Make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
+export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
     private subscription: Subscription;
 
-    quizExercise: QuizExercise;
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
 
     isSaving: boolean;
     duration: Duration;
-    // Create Backup Quiz for resets
-    backupQuiz: QuizExercise;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
         private route: ActivatedRoute,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalServiceC: NgbModal,
         private quizExercisePopupService: QuizExercisePopupService,
+        public changeDetector: ChangeDetectorRef,
         private navigationUtilService: ArtemisNavigationUtilService,
-    ) {}
+    ) {
+        super();
+    }
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.prepareEntity(this.quizExercise);
-                this.backupQuiz = cloneDeep(this.quizExercise);
+                this.savedEntity = cloneDeep(this.quizExercise);
             });
         });
-
+        this.quizIsValid = true;
         this.modalService = this.modalServiceC;
         this.popupService = this.quizExercisePopupService;
 
@@ -66,7 +66,8 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.quizExercise && changes.quizExercise.currentValue !== null) {
             this.prepareEntity(this.quizExercise);
-            this.backupQuiz = cloneDeep(this.quizExercise);
+            this.savedEntity = cloneDeep(this.quizExercise);
+            this.cacheValidation(this.changeDetector);
         }
     }
 
@@ -77,6 +78,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      */
     deleteQuestion(questionToBeDeleted: QuizQuestion): void {
         this.quizExercise.quizQuestions = this.quizExercise.quizQuestions?.filter((question) => question !== questionToBeDeleted);
+        this.cacheValidation(this.changeDetector);
     }
 
     /**
@@ -85,25 +87,8 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      *                                      (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
+        this.cacheValidation(this.changeDetector);
         this.quizExercise.quizQuestions = Array.from(this.quizExercise.quizQuestions!);
-    }
-
-    /**
-     * @function pendingChanges
-     * @desc Determine if there are any changes waiting to be saved
-     * @returns {boolean} true if there are any pending changes, false otherwise
-     */
-    pendingChanges(): boolean {
-        return JSON.stringify(this.quizExercise) !== JSON.stringify(this.backupQuiz);
-    }
-
-    /**
-     * @function
-     * @desc Check if the current inputs are valid
-     * @returns {boolean} true if valid, false otherwise
-     */
-    validQuiz(): boolean {
-        return !!this.quizExercise && !!this.quizExercise.title && this.quizExercise.title !== '' && !!this.quizExercise.duration;
     }
 
     /**
@@ -116,7 +101,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     save(): void {
         this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise).then((res) => {
             res.result.then(() => {
-                this.backupQuiz = cloneDeep(this.quizExercise);
+                this.savedEntity = cloneDeep(this.quizExercise);
             });
         });
     }
@@ -159,7 +144,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Resets the whole Quiz
      */
     resetAll(): void {
-        this.quizExercise = cloneDeep(this.backupQuiz);
+        this.quizExercise = cloneDeep(this.savedEntity);
     }
 
     /**
@@ -167,7 +152,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Resets the quiz title
      */
     resetQuizTitle() {
-        this.quizExercise.title = this.backupQuiz.title;
+        this.quizExercise.title = this.savedEntity.title;
     }
 
     /**
@@ -221,5 +206,6 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      */
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise.includedInOverallScore = includedInOverallScore;
+        this.cacheValidation(this.changeDetector);
     }
 }

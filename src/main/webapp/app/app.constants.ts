@@ -10,10 +10,10 @@ export const DEBUG_INFO_ENABLED = __DEBUG_INFO_ENABLED__;
 export const MIN_SCORE_GREEN = 80;
 export const MIN_SCORE_ORANGE = 40;
 
-// NOTE: those values have to be the same as in Constant.java
+// NOTE: those values have to be the same as in Constants.java
 export const USERNAME_MIN_LENGTH = 4;
 export const USERNAME_MAX_LENGTH = 50;
-export const PASSWORD_MIN_LENGTH = 4;
+export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 50;
 
 export const EXAM_START_WAIT_TIME_MINUTES = 5;

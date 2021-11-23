@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -288,6 +289,65 @@ public class CourseService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
+    }
+
+    /**
+     * Add multiple users to the course so that they can access it
+     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
+     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * <p>
+     * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     *
+     * @param courseId      the id of the course
+     * @param studentDTOs   the list of students (with at least registration number)
+     * @param courseGroup   the group the students should be added to
+     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        String courseGroupName = defineCourseGroupName(course, courseGroup);
+        Role courseGroupRole = defineCourseRole(courseGroup);
+        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
+        for (var studentDto : studentDTOs) {
+            var registrationNumber = studentDto.getRegistrationNumber();
+            var login = studentDto.getLogin();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login);
+            if (optionalStudent.isEmpty()) {
+                notFoundStudentsDTOs.add(studentDto);
+            }
+        }
+
+        return notFoundStudentsDTOs;
+    }
+
+    /**
+     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
+     * use this method to return the customized courseGroup name
+     *
+     * @param course the course we want to add a user to
+     * @param courseGroup the courseGroup we want to add the user to
+     *
+     * @return the customized userGroupName
+     */
+    private String defineCourseGroupName(Course course, String courseGroup) {
+        return switch (courseGroup) {
+            case "students" -> course.getStudentGroupName();
+            case "tutors" -> course.getTeachingAssistantGroupName();
+            case "instructors" -> course.getInstructorGroupName();
+            case "editors" -> course.getEditorGroupName();
+            default -> throw new IllegalArgumentException();
+        };
+    }
+
+    private Role defineCourseRole(String courseGroup) {
+        return switch (courseGroup) {
+            case "students" -> Role.STUDENT;
+            case "tutors" -> Role.TEACHING_ASSISTANT;
+            case "instructors" -> Role.INSTRUCTOR;
+            case "editors" -> Role.EDITOR;
+            default -> Role.ANONYMOUS;
+        };
     }
 
     /**

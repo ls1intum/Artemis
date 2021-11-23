@@ -65,7 +65,8 @@
                 "points": "Punkte",
                 "averageScore": "Durchschnittliche Punktzahl",
                 "averageRating": "Durchschnittliches Rating"
-            }
+            },
+            "exerciseAverageRating": "Durchschnittliches Rating"
         }
     }
 }

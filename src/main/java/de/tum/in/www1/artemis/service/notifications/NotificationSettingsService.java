@@ -47,6 +47,8 @@ public class NotificationSettingsService {
     // instructor exclusive notification setting group
     private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-exclusive-notification.course-and-exam-archiving-started";
 
+    private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED = "notification.instructor-exclusive-notification.programming-test-cases-changed";
+
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -64,7 +66,8 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
             // instructor exclusive notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED),
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -80,7 +83,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
-            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }), Map.entry(
+            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
+            Map.entry(NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__PROGRAMMING_TEST_CASES_CHANGED, new NotificationType[] { PROGRAMMING_TEST_CASES_CHANGED }), Map.entry(
                     NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
@@ -103,13 +107,13 @@ public class NotificationSettingsService {
 
         Set<NotificationType> deactivatedTypes;
 
-        // the urgent emails were already sent
-        // if the user has not yet changes his settings they will be of size 0 -> use default
+        // the urgent emails were already sent at this point
+        // if the user has not yet changed his settings they will be of size 0 -> use default
         if (notificationSettings.isEmpty()) {
-            deactivatedTypes = findDeactivatedNotificationTypes(false, DEFAULT_NOTIFICATION_SETTINGS);
+            deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, DEFAULT_NOTIFICATION_SETTINGS);
         }
         else {
-            deactivatedTypes = findDeactivatedNotificationTypes(false, notificationSettings);
+            deactivatedTypes = findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.EMAIL, notificationSettings);
         }
 
         if (deactivatedTypes.isEmpty()) {
@@ -131,12 +135,12 @@ public class NotificationSettingsService {
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationSettings
-     * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
+     * @param communicationChannel indicates if the status should be used/checked for the webapp or for email
      * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
-    public Set<NotificationType> findDeactivatedNotificationTypes(boolean checkForWebapp, Set<NotificationSetting> notificationSettings) {
-        Map<NotificationType, Boolean> notificationSettingWithActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(checkForWebapp,
+    public Set<NotificationType> findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel communicationChannel, Set<NotificationSetting> notificationSettings) {
+        Map<NotificationType, Boolean> notificationSettingWithActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(communicationChannel,
                 notificationSettings);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
         notificationSettingWithActivationStatusMap.forEach((notificationType, isActivated) -> {
@@ -159,19 +163,81 @@ public class NotificationSettingsService {
     /**
      * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
      * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
-     * @param checkForWebapp indicates if the map should look for the email or webapp activity
+     * @param communicationChannel indicates if the map should look for the email or webapp activity
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(boolean checkForWebapp,
+    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(NotificationSettingsCommunicationChannel communicationChannel,
             Set<NotificationSetting> notificationSettings) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         for (NotificationSetting setting : notificationSettings) {
             NotificationType[] tmpNotificationTypes = NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP.getOrDefault(setting.getSettingId(), new NotificationType[0]);
-            for (NotificationType type : tmpNotificationTypes) {
-                resultingMap.put(type, checkForWebapp ? setting.isWebapp() : setting.isEmail());
+            switch (communicationChannel) {
+                case WEBAPP -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isWebapp()));
+                case EMAIL -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isEmail()));
             }
         }
         return resultingMap;
+    }
+
+    /**
+     * Extracts the settingsIds of a notification settings set
+     * E.g. used to compare two sets of notification settings based on setting id
+     * @param notificationSettings set which setting ids should be extracted
+     * @return a set of settings ids
+     */
+    private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
+        Set<String> settingsIds = new HashSet<>();
+        notificationSettings.forEach(setting -> {
+            settingsIds.add(setting.getSettingId());
+        });
+        return settingsIds;
+    }
+
+    /**
+     * Compares two notification settings sets based on their notification setting ids
+     * @param notificationSettingsA is the first set
+     * @param notificationSettingsB is the second set
+     * @return true if the notification setting ids of both are the same else return false
+     */
+    private boolean compareTwoNotificationSettingsSetsBasedOnSettingsId(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
+        Set<String> settingIdsA = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsA);
+        Set<String> settingIdsB = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsB);
+        return settingIdsA.equals(settingIdsB);
+    }
+
+    /**
+     * Checks the personal notificationSettings retrieved from the DB.
+     * If the loaded set is empty substitute it with the default settings
+     * If the loaded set has different notification setting ids than the default settings both sets have to be merged
+     * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
+     * @return the updated and correct notification settings
+     */
+    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
+        if (loadedNotificationSettingSet.isEmpty()) {
+            return DEFAULT_NOTIFICATION_SETTINGS;
+        }
+        // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
+
+        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(loadedNotificationSettingSet, DEFAULT_NOTIFICATION_SETTINGS)) {
+            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>();
+            updatedNotificationSettingSet.addAll(DEFAULT_NOTIFICATION_SETTINGS);
+
+            loadedNotificationSettingSet.forEach(loadedSetting -> {
+                DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
+                    if (defaultSetting.getSettingId().equals(loadedSetting.getSettingId())) {
+                        updatedNotificationSettingSet.remove(defaultSetting);
+                        updatedNotificationSettingSet.add(loadedSetting);
+                    }
+                });
+            });
+            // update DB to fix inconsistencies and avoid redundant future merges
+            // first remove all settings of the current user in the DB
+            notificationSettingRepository.deleteAll(loadedNotificationSettingSet);
+            // save correct merge to DB
+            notificationSettingRepository.saveAll(updatedNotificationSettingSet);
+            return updatedNotificationSettingSet;
+        }
+        return loadedNotificationSettingSet;
     }
 
     /**

@@ -45,14 +45,14 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
-        programmingExerciseIntegrationServiceTest.textProgrammingExerciseIsReleased_IsReleasedAndHasResults();
+    void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseIsReleased_IsReleasedAndHasResults();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
-        programmingExerciseIntegrationServiceTest.textProgrammingExerciseIsReleased_IsNotReleasedAndHasResults();
+    void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults();
     }
 
     @Test
@@ -63,14 +63,14 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void textProgrammingExerciseIsReleased_forbidden() throws Exception {
-        programmingExerciseIntegrationServiceTest.textProgrammingExerciseIsReleased_forbidden();
+    void testProgrammingExerciseIsReleased_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseIsReleased_forbidden();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByParticipationIds() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds();
+    void testExportSubmissionsByParticipationIds() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds();
     }
 
     @Test
@@ -81,19 +81,19 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
+    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
     }
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
+    void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByStudentLogins() throws Exception {
+    void testExportSubmissionsByStudentLogins() throws Exception {
         programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins();
     }
 
@@ -737,6 +737,18 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTestCases_testCaseWeightSmallerThanZero_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_testCaseMultiplierSmallerThanZero_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseBonusPointsNull() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_testCaseBonusPointsNull();
     }
 
     @Test

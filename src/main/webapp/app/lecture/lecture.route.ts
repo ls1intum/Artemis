@@ -16,12 +16,12 @@ import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-manageme
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
-    constructor(private service: LectureService) {}
+    constructor(private lectureService: LectureService) {}
 
     resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
-        const id = route.params['lectureId'];
-        if (id) {
-            return this.service.find(id).pipe(
+        const lectureId = route.params['lectureId'];
+        if (lectureId) {
+            return this.lectureService.find(lectureId).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),
                 map((lecture: HttpResponse<Lecture>) => lecture.body!),
             );
