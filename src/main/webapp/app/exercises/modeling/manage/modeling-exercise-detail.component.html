@@ -6,12 +6,8 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
-                <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="course"
-                    [isExamExercise]="isExamExercise"
-                    [course]="course"
-                    [exercise]="modelingExercise"
-                ></jhi-non-programming-exercise-detail-common-actions>
+                <jhi-non-programming-exercise-detail-common-actions *ngIf="course" [isExamExercise]="isExamExercise" [course]="course" [exercise]="modelingExercise">
+                </jhi-non-programming-exercise-detail-common-actions>
                 <a *ngIf="modelingExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
@@ -47,12 +43,8 @@
                     </button>
                 </dt>
                 <dd class="editor-outline-background">
-                    <jhi-modeling-editor
-                        *ngIf="sampleSolutionUML"
-                        [readOnly]="true"
-                        [diagramType]="modelingExercise.diagramType!"
-                        [umlModel]="sampleSolutionUML!"
-                    ></jhi-modeling-editor>
+                    <jhi-modeling-editor *ngIf="sampleSolutionUML" [readOnly]="true" [diagramType]="modelingExercise.diagramType!" [umlModel]="sampleSolutionUML!">
+                    </jhi-modeling-editor>
                 </dd>
 
                 <div *ngIf="modelingExercise.sampleSolutionExplanation">
@@ -63,6 +55,11 @@
                         <span [innerHTML]="sampleSolution"></span>
                     </dd>
                 </div>
+                <dt><span jhiTranslate="artemisApp.exercise.sampleSolutionPublicationDate">Sample Solution Publication Date</span></dt>
+                <dd>
+                    <span *ngIf="modelingExercise.sampleSolutionPublicationDate">{{ modelingExercise.sampleSolutionPublicationDate | artemisDate }}</span>
+                    <span *ngIf="!modelingExercise.sampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
             </dl>
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
                 <dl class="row-md">
