@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -212,14 +213,14 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
     }
 
-    // ToDo: flaky test when running all tests, works fine when running only this test suite probably due to tight timing constraints in combination with system load
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
-        submissionWithoutResult.setSubmissionDate(futureTimestamp);
+        // comparison of dates including nanos would make this test flaky
+        submissionWithoutResult.setSubmissionDate(futureTimestamp.truncatedTo(ChronoUnit.MILLIS));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
