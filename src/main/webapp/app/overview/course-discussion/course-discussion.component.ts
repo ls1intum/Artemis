@@ -84,8 +84,12 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
-                    this.lectures = this.course?.lectures;
-                    this.exercises = this.course?.exercises;
+                    if (this.course?.lectures) {
+                        this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
+                    }
+                    if (this.course?.exercises) {
+                        this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
+                    }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({ courseId: this.course!.id });
@@ -250,6 +254,21 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * @return number indicating the order of two elements
      */
     overviewSortFn = (postA: Post, postB: Post): number => {
+        // sort by priority
+        if (
+            postA.courseWideContext === CourseWideContext.ANNOUNCEMENT &&
+            postA.displayPriority === DisplayPriority.PINNED &&
+            postB.courseWideContext !== CourseWideContext.ANNOUNCEMENT
+        ) {
+            return -1;
+        }
+        if (
+            postA.courseWideContext !== CourseWideContext.ANNOUNCEMENT &&
+            postB.courseWideContext === CourseWideContext.ANNOUNCEMENT &&
+            postB.displayPriority === DisplayPriority.PINNED
+        ) {
+            return 1;
+        }
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
             return -1;
         }
@@ -292,6 +311,21 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             if (postAAnswerCount < postBAnswerCount) {
                 return this.currentSortDirection === SortDirection.DESC ? 1 : -1;
             }
+        }
+        return 0;
+    };
+
+    /**
+     * sort context (lecture, exercise) by title
+     **/
+    private overviewContextSortFn = (contextA: Lecture | Exercise, contextB: Lecture | Exercise): number => {
+        const titleA = contextA.title!.toUpperCase(); // ignore capitalization
+        const titleB = contextB.title!.toUpperCase(); // ignore capitalization
+        if (titleA < titleB) {
+            return -1;
+        }
+        if (titleA > titleB) {
+            return 1;
         }
         return 0;
     };

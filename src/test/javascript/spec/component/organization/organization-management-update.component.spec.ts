@@ -5,12 +5,10 @@ import { OrganizationManagementUpdateComponent } from 'app/admin/organization-ma
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import { ArtemisTestModule } from '../../test.module';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { HttpResponse } from '@angular/common/http';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockDirective } from 'ng-mocks';
 
 describe('OrganizationManagementUpdateComponent', () => {
     let component: OrganizationManagementUpdateComponent;
@@ -26,13 +24,8 @@ describe('OrganizationManagementUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [OrganizationManagementUpdateComponent],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: route },
-            ],
+            declarations: [OrganizationManagementUpdateComponent, MockDirective(TranslateDirective)],
+            providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .overrideTemplate(OrganizationManagementUpdateComponent, '')
             .compileComponents();

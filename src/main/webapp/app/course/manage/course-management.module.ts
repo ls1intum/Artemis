@@ -85,6 +85,7 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
+        NgxChartsModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedPipesModule,
