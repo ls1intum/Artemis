@@ -405,9 +405,15 @@ public class PostService extends PostingService {
 
         // create html content
         Parser parser = Parser.builder().build();
-        Node document = parser.parse(post.getContent());
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
-        String htmlPostContent = renderer.render(document);
+        String htmlPostContent;
+        try {
+            Node document = parser.parse(post.getContent());
+            HtmlRenderer renderer = HtmlRenderer.builder().build();
+            htmlPostContent = renderer.render(document);
+        }
+        catch (Exception e) {
+            htmlPostContent = "";
+        }
         postForNotification.setContent(htmlPostContent);
 
         // notify via course

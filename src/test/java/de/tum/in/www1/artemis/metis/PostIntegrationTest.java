@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.metis;
 
 import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Set;
@@ -14,6 +15,7 @@ import javax.validation.Validator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -52,6 +55,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Long lectureId;
 
     private Validator validator;
+
+    @Mock
+    private GroupNotificationService groupNotificationService;
 
     @BeforeEach
     public void initTestCase() {
@@ -81,6 +87,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseId = existingExercisePosts.get(0).getExercise().getId();
 
         lectureId = existingLecturePosts.get(0).getLecture().getId();
+
+        groupNotificationService = mock(GroupNotificationService.class);
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(any(), any());
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(any(), any());
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewCoursePost(any(), any());
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
     @AfterEach
@@ -100,6 +112,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
         assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 
     @Test
