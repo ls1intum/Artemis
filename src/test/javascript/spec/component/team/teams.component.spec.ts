@@ -25,7 +25,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
-import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
