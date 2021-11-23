@@ -165,8 +165,7 @@ public class ReachabilityGraphCorrectionService {
                 }
             }
 
-            // TODO: setting the correct submission causes the result to not be saved
-            Result result = (new Result()).participation(modelingSubmission.getParticipation()).submission(null);
+            Result result = (new Result()).participation(modelingSubmission.getParticipation()).submission(submission);
             result.setScore(Math.max(0, feedbacks.stream().mapToDouble(Feedback::getCredits).sum()), transformationModelingExercise.getMaxPoints());
             result = resultService.createNewRatedAutomaticResult(result, feedbacks);
             modelingSubmission.addResult(result);
