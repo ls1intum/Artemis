@@ -69,7 +69,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * resets the pageType, initialContext, post tags, post title, and post content
      */
     resetFormGroup(): void {
-        console.log('reset formgroup');
         this.pageType = this.metisService.getPageType();
         this.tags = this.posting?.tags ?? [];
         this.similarPosts = [];
