@@ -135,9 +135,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private canFileActionWithCompletionDate(completionDate: dayjs.Dayjs, actionThresholdInDays?: number): boolean {
         // Especially for programming exercises: If there is not yet a manual result for a manual correction, no action should be allowed
         if (
-            !this.exercise.assessmentType ||
             !this.result!.assessmentType ||
-            (this.exercise.assessmentType !== AssessmentType.AUTOMATIC && this.result!.assessmentType === AssessmentType.AUTOMATIC)
+            (this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC && this.result!.assessmentType === AssessmentType.AUTOMATIC)
         ) {
             return false;
         }

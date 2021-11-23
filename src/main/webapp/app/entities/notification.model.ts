@@ -66,5 +66,7 @@ export const EXAM_ARCHIVE_FINISHED_TITLE = 'Exam archival finished';
 
 export const EXAM_ARCHIVE_FAILED_TITLE = 'Exam archival failed';
 
+export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'Test cases for programming exercise changed';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

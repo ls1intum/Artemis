@@ -170,7 +170,8 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score"
-            }
+            },
+            "activeStudents": "Active students: {{ students }}"
         },
         "courseStatistics": {
             "statistics": "Statistics",
