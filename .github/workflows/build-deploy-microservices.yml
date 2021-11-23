@@ -251,7 +251,7 @@ jobs:
           scp docker-compose-microservices* $DEPLOYMENT_USER@$host:/opt/artemis/
 
           # Pull and Start images
-          ssh -t $DEPLOYMENT_USER@$host "cd /opt/artemis && export TAG=${{ steps.compute-tag.outputs.result }} && docker-compose -f docker-compose-microservices.yml pull && docker-compose -f docker-compose-microservices.yml up"
+          ssh -t $DEPLOYMENT_USER@$host "cd /opt/artemis && echo TAG=${{ steps.compute-tag.outputs.result }} > .env && docker-compose -f docker-compose-microservices.yml pull && docker-compose -f docker-compose-microservices.yml up"
 
           sleep 20
         done
