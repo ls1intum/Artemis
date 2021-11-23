@@ -77,13 +77,12 @@ export class CourseManagementRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
+     * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param releaseDate when the programming exercise should be available (default is now)
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
-     * @param body an object containing either the course or exercise group the exercise will be added to
-     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
-     * @param releaseDate when the programming exercise should be available (default is now)
-     * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @param assessmentDate the due date of the assessment
      * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
      * @returns <Chainable> request response
@@ -99,7 +98,6 @@ export class CourseManagementRequests {
         assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
-        const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const template = {
             ...programmingExerciseTemplate,
             title,
@@ -108,6 +106,7 @@ export class CourseManagementRequests {
             assessmentType: CypressAssessmentType[assessmentType],
         };
         const exercise: any = Object.assign({}, template, body);
+        const isExamExercise = body.hasOwnProperty('exerciseGroup');
         if (!isExamExercise) {
             exercise.releaseDate = dayjsToString(releaseDate);
             exercise.dueDate = dayjsToString(dueDate);

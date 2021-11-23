@@ -20,7 +20,7 @@ import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/as
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
