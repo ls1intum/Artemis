@@ -12,6 +12,10 @@ import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruct
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockModule } from 'ng-mocks';
+import { ClipboardModule } from 'ngx-clipboard';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { OverlayModule } from '@angular/cdk/overlay';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -72,6 +76,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     it('should cancel feedback and emit to parent', () => {
         const onCancelFeedbackSpy = jest.spyOn(comp.onCancelFeedback, 'emit');
         comp.cancelFeedback();
+        fixture.detectChanges();
 
         expect(onCancelFeedbackSpy).toHaveBeenCalledTimes(1);
         expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);

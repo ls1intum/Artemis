@@ -48,6 +48,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     archiveButtonText = '';
     archiveWarnings: string[] = [];
     displayDownloadArchiveButton = false;
+    archiveWebsocketRegistered = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -85,7 +86,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
      * On destroy unsubscribe all subscriptions.
      */
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.getArchiveStateTopic());
+        if (this.archiveWebsocketRegistered) {
+            this.websocketService.unsubscribe(this.getArchiveStateTopic());
+            this.archiveWebsocketRegistered = false;
+        }
         this.dialogErrorSource.unsubscribe();
     }
 
@@ -96,6 +100,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             .receive(topic)
             .pipe(tap((archiveState: CourseExamArchiveState) => this.handleArchiveStateChanges(archiveState)))
             .subscribe();
+        this.archiveWebsocketRegistered = true;
     }
 
     handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {

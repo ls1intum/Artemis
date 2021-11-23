@@ -93,7 +93,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, RouterTestingModule, NgxDatatableModule],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
@@ -190,7 +190,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         // check if the right amount of rows is visible
         const row = debugElement.query(By.css('#participationSubmissionTable'));
-        expect(row.childNodes.length).to.equal(1);
+        expect(row.childNodes.filter((n) => n).length).to.equal(1);
 
         fixture.destroy();
         flush();

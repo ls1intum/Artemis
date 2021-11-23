@@ -39,7 +39,7 @@ describe('DeleteDialogDirective', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, MockModule(NgbModule)],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgbModule],
             declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, AlertComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService],
         })
@@ -63,6 +63,7 @@ describe('DeleteDialogDirective', () => {
         // Check that button was assigned with proper classes and type.
         const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
         expect(deleteButton).to.exist;
+        console.log(deleteButton.nativeElement.nativeElement);
         expect(deleteButton.properties['type']).to.be.equal('submit');
 
         // Check that delete text span was added to the DOM.
