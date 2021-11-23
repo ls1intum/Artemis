@@ -567,6 +567,41 @@ public class ParticipationService {
     }
 
     /**
+     * Updates the individual due date for each given participation.
+     *
+     * Only sets individual due dates if the exercise has a due date and the
+     * individual due date is after this regular due date.
+     *
+     * @param exercise the {@code participations} belong to.
+     * @param participations for which the individual due date should be updated.
+     * @return all participations where the individual due date actually changed.
+     */
+    public List<StudentParticipation> updateIndividualDueDates(final Exercise exercise, final List<StudentParticipation> participations) {
+        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+
+        for (final StudentParticipation toBeUpdated : participations) {
+            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
+            if (originalParticipation.isEmpty()) {
+                continue;
+            }
+
+            ZonedDateTime newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            // individual due dates can only exist if the exercise has a due date
+            // they also have to be after the exercise due date
+            if (exercise.getDueDate() == null || (newIndividualDueDate != null && newIndividualDueDate.isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+
+            if (!Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation.get());
+            }
+        }
+
+        return changedParticipations;
+    }
+
+    /**
      * Delete the participation by participationId.
      *
      * @param participationId  the participationId of the entity

@@ -272,7 +272,7 @@ public class ParticipationResource {
      */
     @PutMapping("/exercises/{exerciseId}/participations/update-individual-due-date")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<StudentParticipation>> updateParticipations(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
+    public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
         final boolean anyInvalidExerciseId = participations.stream()
                 .anyMatch(participation -> participation.getExercise() == null || participation.getExercise().getId() == null || exerciseId != participation.getExercise().getId());
         if (anyInvalidExerciseId) {
@@ -282,33 +282,25 @@ public class ParticipationResource {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        final List<StudentParticipation> changedParticipations = new ArrayList<>();
-
-        for (final StudentParticipation toBeUpdated : participations) {
-            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
-            if (originalParticipation.isEmpty()) {
-                continue;
-            }
-
-            ZonedDateTime newIndividualDueDate = toBeUpdated.getIndividualDueDate();
-            // individual due dates can only exist if the exercise has a due date
-            // they also have to be after the exercise due date
-            if (exercise.getDueDate() == null || (newIndividualDueDate != null && newIndividualDueDate.isBefore(exercise.getDueDate()))) {
-                newIndividualDueDate = null;
-            }
-
-            if (Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
-                continue;
-            }
-
-            originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
-            changedParticipations.add(originalParticipation.get());
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");
         }
 
+        if (exercise instanceof QuizExercise) {
+            throw new BadRequestAlertException("Cannot set individual due dates for quiz exercises", ENTITY_NAME, "quizexercise");
+        }
+
+        final List<StudentParticipation> changedParticipations = participationService.updateIndividualDueDates(exercise, participations);
         final List<StudentParticipation> updatedParticipations = studentParticipationRepository.saveAllAndFlush(changedParticipations);
 
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
+            log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
             programmingExerciseScheduleService.updateScheduling(programmingExercise);
+
+            // when changing the individual due date after the regular due date, the repository might already have been locked
+            final ZonedDateTime now = ZonedDateTime.now();
+            updatedParticipations.stream().filter(participation -> Optional.ofNullable(participation.getIndividualDueDate()).map(now::isBefore).orElse(false)).forEach(
+                    participation -> programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
