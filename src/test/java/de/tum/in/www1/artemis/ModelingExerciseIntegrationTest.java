@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -55,6 +57,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private CourseRepository courseRepo;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepo;
 
     private ModelingExercise classExercise;
 
@@ -679,28 +684,69 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetModelingExercise_asStudent_sampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_sampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetModelingExercise_asInstructor_sampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_sampleSolutionVisibility(false, "instructor1");
+    }
+
+    private void testGetModelingExercise_sampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        // Utility function to avoid duplication
+        Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
+                .get();
+
         classExercise.setSampleSolutionModel("<Sample solution model>");
         classExercise.setSampleSolutionExplanation("<Sample solution explanation>");
 
+        if (isStudent) {
+            User user = userRepo.findOneByLogin(username).get();
+            StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, classExercise, user);
+            studentParticipationRepo.save(participation);
+        }
+
+        // Test sample solution publication date not set.
         classExercise.setSampleSolutionPublicationDate(null);
         modelingExerciseRepository.save(classExercise);
 
-        ModelingExercise modelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
-        assertThat(modelingExercise.getSampleSolutionModel()).isNull();
-        assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+        Course course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
 
+        if (isStudent) {
+            assertThat(modelingExercise.getSampleSolutionModel()).isNull();
+            assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+        }
+        else {
+            assertThat(modelingExercise.getSampleSolutionModel()).isEqualTo(classExercise.getSampleSolutionModel());
+            assertThat(modelingExercise.getSampleSolutionExplanation()).isEqualTo(classExercise.getSampleSolutionExplanation());
+        }
+
+        // Test sample solution publication date in the past.
         classExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        modelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        modelingExercise = modelingExerciseGetter.apply(course);
+
         assertThat(modelingExercise.getSampleSolutionModel()).isEqualTo(classExercise.getSampleSolutionModel());
         assertThat(modelingExercise.getSampleSolutionExplanation()).isEqualTo(classExercise.getSampleSolutionExplanation());
 
+        // Test sample solution publication date in the future.
         classExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        modelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
-        assertThat(modelingExercise.getSampleSolutionModel()).isEqualTo(classExercise.getSampleSolutionModel());
-        assertThat(modelingExercise.getSampleSolutionExplanation()).isEqualTo(classExercise.getSampleSolutionExplanation());
+        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        modelingExercise = modelingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(modelingExercise.getSampleSolutionModel()).isNull();
+            assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+        }
+        else {
+            assertThat(modelingExercise.getSampleSolutionModel()).isEqualTo(classExercise.getSampleSolutionModel());
+            assertThat(modelingExercise.getSampleSolutionExplanation()).isEqualTo(classExercise.getSampleSolutionExplanation());
+        }
     }
 }
