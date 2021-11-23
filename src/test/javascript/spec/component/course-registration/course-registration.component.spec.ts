@@ -2,7 +2,6 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../test.module';
@@ -14,7 +13,6 @@ import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,12 +26,7 @@ describe('CourseRegistrationComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseRegistrationComponent],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: Router, useClass: MockRouter },
-                MockProvider(TranslateService),
-            ],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
             .overrideTemplate(CourseRegistrationComponent, '')
             .compileComponents()
