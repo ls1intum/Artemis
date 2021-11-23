@@ -17,7 +17,8 @@
                 "INCORRECT_SCORE": "Falsche Punktzahl",
                 "UNNECESSARY_FEEDBACK": "Redundantes Feedback",
                 "MISSING_GRADING_INSTRUCTION": "Fehlende Bewertungsanweisung",
-                "INCORRECT_GRADING_INSTRUCTION": "Falsche Bewertungsanweisung"
+                "INCORRECT_GRADING_INSTRUCTION": "Falsche Bewertungsanweisung",
+                "EMPTY_NEGATIVE_FEEDBACK": "Feedback ist notwendig für negative Punktzahl"
             },
             "submissionValidation": {
                 "missing": "Zu wenig Feedback gegeben. In der Musterbewertung wurde an mehr Stellen Feedback gegeben.",
