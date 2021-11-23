@@ -376,7 +376,6 @@
                 "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                 "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
             },
-
             "reset": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
@@ -449,37 +448,37 @@
                     "variants": "Varianten"
                 }
             }
+        },
+        "studentExamDetail": {
+            "studentExam": "Klausur ({{ examTitle }})",
+            "testRun": "Testlauf ({{ examTitle }})",
+            "exercises": "Aufgaben",
+            "downloadPDF": " PDF herunterladen",
+            "student": "Student",
+            "name": "Name: ",
+            "login": "Login: ",
+            "email": "E-Mail: ",
+            "matriculationNumber": "Matrikelnummer: ",
+            "id": "ID",
+            "type": "Typ",
+            "title": "Titel",
+            "result": "Ergebnis",
+            "reviewer": "Reviewer",
+            "openSubmission": "Einreichung öffnen",
+            "openAssessment": " Bewertung öffnen",
+            "openLatestAssessment": "Aktuellste Bewertung öffnen",
+            "cancelAssessment": " Bewertung abbrechen",
+            "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
+            "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
+            "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
+            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
+            "hasComplaint": "Beschwerde existiert"
+        },
+        "studentExam": {
+            "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",
+            "alreadySubmitted": "Du hast bereits abgegeben.",
+            "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
+            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
         }
-    },
-    "studentExamDetail": {
-        "studentExam": "Klausur ({{ examTitle }})",
-        "testRun": "Testlauf ({{ examTitle }})",
-        "exercises": "Aufgaben",
-        "downloadPDF": " PDF herunterladen",
-        "student": "Student",
-        "name": "Name: ",
-        "login": "Login: ",
-        "email": "E-Mail: ",
-        "matriculationNumber": "Matrikelnummer: ",
-        "id": "ID",
-        "type": "Typ",
-        "title": "Titel",
-        "result": "Ergebnis",
-        "reviewer": "Reviewer",
-        "openSubmission": "Einreichung öffnen",
-        "openAssessment": " Bewertung öffnen",
-        "openLatestAssessment": "Aktuellste Bewertung öffnen",
-        "cancelAssessment": " Bewertung abbrechen",
-        "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
-        "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
-        "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
-        "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
-        "hasComplaint": "Beschwerde existiert"
-    },
-    "studentExam": {
-        "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",
-        "alreadySubmitted": "Du hast bereits abgegeben.",
-        "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
-        "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
     }
 }
