@@ -87,9 +87,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe(
                     (submission: TextSubmission) => {
                         this.loading = false;
-                        console.log(submission);
                         this.fileContent = this.insertMatchTokens(submission.text || '');
-                        console.log(this.fileContent);
                     },
                     () => {
                         this.loading = false;
