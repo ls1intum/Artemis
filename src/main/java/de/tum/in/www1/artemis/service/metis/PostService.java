@@ -401,6 +401,7 @@ public class PostService extends PostingService {
         postForNotification.setCourseWideContext(post.getCourseWideContext());
         postForNotification.setLecture(post.getLecture());
         postForNotification.setExercise(post.getExercise());
+        postForNotification.setCreationDate(post.getCreationDate());
         postForNotification.setTitle(post.getTitle());
 
         // create html content
