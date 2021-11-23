@@ -61,7 +61,6 @@ const routes: Routes = [
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
-        ArtemisMarkdownModule,
         ArtemisModelingEditorModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
