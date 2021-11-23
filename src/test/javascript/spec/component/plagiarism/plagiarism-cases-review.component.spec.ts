@@ -7,7 +7,7 @@ import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/pl
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { NgModel } from '@angular/forms';
-import { MockRouterLinkDirective } from '../admin/user-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
