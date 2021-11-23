@@ -224,7 +224,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
-            scheduleScoreUpdateAfterDueDate(exercise);
+            scheduleDueDateLockAndScoreUpdate(exercise);
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
@@ -249,7 +249,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 exercise.getReleaseDate());
     }
 
-    private void scheduleScoreUpdateAfterDueDate(ProgrammingExercise exercise) {
+    private void scheduleDueDateLockAndScoreUpdate(ProgrammingExercise exercise) {
         // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
         final boolean updateScores = isScoreUpdateAfterDueDateNeeded(exercise);
 
