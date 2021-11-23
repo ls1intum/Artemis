@@ -5,9 +5,10 @@ import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exerci
 import { ChartsModule } from 'ng2-charts';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ArtemisAppModule } from 'app/app.module';
 
 @NgModule({
-    imports: [ChartsModule, TranslateModule, CommonModule, ArtemisSharedModule, NgxChartsModule],
+    imports: [ChartsModule, TranslateModule, CommonModule, ArtemisSharedModule, NgxChartsModule, ArtemisAppModule],
     declarations: [ExerciseScoresChartComponent],
     exports: [ExerciseScoresChartComponent],
 })
