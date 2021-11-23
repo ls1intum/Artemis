@@ -61,6 +61,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -96,6 +97,13 @@ describe('CourseExerciseDetailsComponent', () => {
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
+    const modelingExercise = {
+        id: 23,
+        type: ExerciseType.MODELING,
+        studentParticipations: [],
+        sampleSolutionModel: '{ "key": "value" }',
+        sampleSolutionExplanation: 'Solution<br>Explanation',
+    } as unknown as ModelingExercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(() => {
@@ -276,4 +284,14 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.wasSubmissionSimulated).to.be.false;
         expect(comp.exercise?.participationStatus).to.equal(ParticipationStatus.EXERCISE_SUBMITTED);
     }));
+
+    it('should fill & empty sample modeling solution', () => {
+        comp.showIfSampleSolutionPresent({ ...modelingExercise });
+        expect(comp.sampleSolution).to.not.be.undefined;
+        expect(comp.sampleSolutionUML).to.not.be.undefined;
+
+        comp.showIfSampleSolutionPresent({ ...exercise });
+        expect(comp.sampleSolution).to.be.undefined;
+        expect(comp.sampleSolutionUML).to.be.undefined;
+    });
 });
