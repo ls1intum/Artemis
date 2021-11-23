@@ -43,6 +43,7 @@ describe('Navigation Util Service', () => {
         expect(backSpy).toHaveBeenCalledTimes(1);
         expect(backSpy).toHaveBeenCalledWith();
     });
+
     it('should use fallback', () => {
         service.navigateBack(['a', 'b', 'c']);
 
@@ -56,6 +57,7 @@ describe('Navigation Util Service', () => {
         expect(router.navigate).toHaveBeenCalledTimes(1);
         expect(router.navigate).toHaveBeenCalledWith(['a', 'b', 'c']);
     });
+
     it('should use with optional', () => {
         service.navigateBackWithOptional(['a', 'b', 'c'], 'd');
 
