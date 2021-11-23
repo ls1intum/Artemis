@@ -12,7 +12,7 @@ public final class Constants {
 
     public static final int USERNAME_MAX_LENGTH = 50;
 
-    public static final int PASSWORD_MIN_LENGTH = 4;
+    public static final int PASSWORD_MIN_LENGTH = 8;
 
     public static final int PASSWORD_MAX_LENGTH = 50;
 
@@ -57,8 +57,6 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
 
-    public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = "Live Exam Exercise Update";
-
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
@@ -97,8 +95,6 @@ public final class Constants {
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
-
-    public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
     public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
@@ -145,6 +141,8 @@ public final class Constants {
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
 
     public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
+
+    public static final String RESET_EXAM = "RESET_EXAM";
 
     // same constant as in the client
     public static final int EXAM_START_WAIT_TIME_MINUTES = 5;

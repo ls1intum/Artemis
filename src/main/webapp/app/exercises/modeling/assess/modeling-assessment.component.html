@@ -2,13 +2,16 @@
     <div *ngIf="title || displayPoints" class="card-header bg-primary text-white">
         <span *ngIf="title">{{ title }}</span>
         <span class="flex-fill"></span>
-        <jhi-score-display *ngIf="displayPoints" [score]="totalScore" [maxPoints]="maxScore" [maxBonusPoints]="maxBonusPoints"></jhi-score-display>
+        <jhi-score-display *ngIf="displayPoints" [score]="totalScore" [maxPoints]="maxScore" [maxBonusPoints]="maxBonusPoints" [course]="course"></jhi-score-display>
     </div>
     <div class="apollon-row">
         <div #editorContainer class="apollon-container"></div>
-        <div *ngIf="resizeOptions" class="draggable-right">
+        <div *ngIf="resizeOptions && resizeOptions.horizontalResize" class="draggable-right">
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
         </div>
+    </div>
+    <div *ngIf="resizeOptions && resizeOptions.verticalResize" class="draggable-bottom">
+        <fa-icon [icon]="'grip-lines'"></fa-icon>
     </div>
     <jhi-modeling-explanation-editor *ngIf="explanation" [explanation]="explanation" [readOnly]="true"></jhi-modeling-explanation-editor>
 </div>

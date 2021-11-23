@@ -7,7 +7,7 @@
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
     </div>
 
-    <div class="col-12 col-lg-4 text-end" *ngIf="isAtLeastEditor && !readOnly && !toComplete">
+    <div class="col-12 col-lg-4 text-end" *ngIf="exercise.isAtLeastEditor && !readOnly && !toComplete">
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
@@ -50,8 +50,8 @@
                 </fa-layers>
             </div>
 
-            <!-- extra logic for the display warning icon -->
-            <div class="pe-5" style="display: inline-block">
+            <!-- Extra logic for displaying warning icon. It should only be shown for tutors that are assessing example submissions -->
+            <div *ngIf="toComplete" class="pe-5" style="display: inline-block">
                 <span>{{ legend[3].text | artemisTranslate }}</span>
                 <fa-layers>
                     <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
@@ -110,6 +110,7 @@
                         [maxBonusPoints]="exercise.bonusPoints || 0"
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
+                        [course]="course"
                         (feedbackChanged)="onFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>

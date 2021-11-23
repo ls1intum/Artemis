@@ -25,10 +25,12 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -40,6 +42,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     submission?: ModelingSubmission;
     model?: UMLModel;
     modelingExercise?: ModelingExercise;
+    course?: Course;
     result?: Result;
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
@@ -67,6 +70,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     resultId: number;
     loadingInitialSubmission = true;
     highlightDifferences = false;
+    resizeOptions = { verticalResize: true };
 
     private cancelConfirmationText: string;
 
@@ -157,6 +161,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
+        this.course = getCourseFromExercise(this.modelingExercise);
         if (this.resultId > 0) {
             this.result = getSubmissionResultById(submission, this.resultId);
             this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
@@ -273,7 +278,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return !isAllowedToModifyFeedback(
+            this.isAtLeastInstructor,
+            this.isTestRun,
+            this.isAssessor,
+            this.hasAssessmentDueDatePassed,
+            this.result,
+            this.complaint,
+            this.modelingExercise,
+        );
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {

@@ -20,7 +20,7 @@ import * as sinon from 'sinon';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 
@@ -42,9 +42,9 @@ describe('TextExercise Management Detail Component', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -100,7 +100,7 @@ describe('TextExercise Management Detail Component', () => {
             expect(comp.isExamExercise).to.be.false;
             expect(comp.textExercise).to.deep.equal(textExerciseWithCourse);
             expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
             expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
         });
     });

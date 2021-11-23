@@ -25,7 +25,7 @@ import { CypressCredentials } from './users';
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { authTokenKey, GROUP_SYNCHRONIZATION } from './constants';
+import { authTokenKey, BASE_API, POST } from './constants';
 
 export {};
 
@@ -36,7 +36,7 @@ declare global {
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
             getSettled(selector: string, options?: {}): Chainable<Cypress>;
-            waitForGroupSynchronization(): void;
+            reloadUntilFound(selector: string): Chainable<Cypress>;
         }
     }
 }
@@ -45,8 +45,7 @@ declare global {
  * Overwrite the normal cypress request to always add the authorization token.
  */
 Cypress.Commands.overwrite('request', (originalFn, options) => {
-    const token = Cypress.env(authTokenKey);
-
+    const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
     if (!!token) {
         const authHeader = 'Bearer ' + token;
         if (!!options.headers) {
@@ -66,48 +65,28 @@ Cypress.Commands.overwrite('request', (originalFn, options) => {
 Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     const username = credentials.username;
     const password = credentials.password;
+    // IMPORTANT: The "log" and "failOnStatusCode" fields need to be set to false to prevent leakage of the credentials via the Cypress Dashboard!
+    // log = false does not prevent cypress to log the request if it failed, so failOnStatusCode also needs to be set to false, so that the request is never logged.
+    // We still want to the test to fail if the authentication is unsuccessful, so we expect the status code in the then block. This only logs the status code, so it is safe.
     cy.request({
-        url: '/api/authenticate',
-        method: 'POST',
+        url: BASE_API + 'authenticate',
+        method: POST,
         followRedirect: true,
-        retryOnStatusCodeFailure: true,
         body: {
             username,
             password,
             rememberMe: true,
         },
-    })
-        .its('body')
-        .then((res) => {
-            localStorage.setItem(authTokenKey, '"' + res.id_token + '"');
-            Cypress.env(authTokenKey, res.id_token);
-        });
+        log: false,
+        failOnStatusCode: false,
+    }).then((response) => {
+        expect(response.status).to.equal(200);
+        localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
+        cy.wait(50);
+    });
     if (url) {
         cy.visit(url);
     }
-});
-
-/**
- * Log out and removes all references to authToken
- * */
-Cypress.Commands.add('logout', () => {
-    localStorage.removeItem(authTokenKey);
-    // The 'jhi-previousurl' can cause issues when it is not cleared
-    sessionStorage.clear();
-    Cypress.env(authTokenKey, '');
-    cy.visit('/');
-    cy.location('pathname').should('eq', '/');
-    cy.log('Logged out');
-});
-
-/**
- * Logs in using GUI and sets authToken in Cypress.env
- * */
-Cypress.Commands.add('loginWithGUI', (credentials) => {
-    cy.visit('/');
-    cy.get('#username').type(credentials.username);
-    cy.get('#password').type(credentials.password).type('{enter}');
-    Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
 });
 
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
@@ -143,9 +122,21 @@ Cypress.Commands.add('getSettled', (selector, opts = {}) => {
 });
 
 /**
- * Servers that use bamboo and bitbucket need a sleep between creating a course and creating a programming exercise for group synchronization.
- * */
-Cypress.Commands.add('waitForGroupSynchronization', () => {
-    cy.log('Sleeping for group synchronization...');
-    cy.wait(GROUP_SYNCHRONIZATION);
+ * Periodically refreshes the page until an element with the specified selector is found. The command fails if the time exceeds the timeout.
+ */
+Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, timeout = 20000) => {
+    return cy.waitUntil(
+        () => {
+            const found = Cypress.$(selector).length > 0;
+            if (!found) {
+                cy.reload();
+            }
+            return found;
+        },
+        {
+            interval,
+            timeout,
+            errorMsg: `Timed out finding an element matching the "${selector}" selector`,
+        },
+    );
 });

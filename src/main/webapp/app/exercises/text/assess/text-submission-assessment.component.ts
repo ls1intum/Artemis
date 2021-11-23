@@ -28,10 +28,13 @@ import {
 } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -57,7 +60,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     cancelBusy: boolean;
     nextSubmissionBusy: boolean;
     isAssessor: boolean;
-    isAtLeastInstructor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
@@ -75,10 +77,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
     courseId: number;
+    course?: Course;
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
     isExamMode = false;
+    isAtLeastInstructor = false;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -129,7 +133,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.cancelBusy = false;
         this.nextSubmissionBusy = false;
         this.isAssessor = false;
-        this.isAtLeastInstructor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
         this.highlightDifferences = false;
@@ -144,6 +147,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
@@ -171,6 +175,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
+        this.course = getCourseFromExercise(this.exercise);
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
         if (this.resultId > 0) {
@@ -222,8 +227,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private checkPermissions(result?: Result): void {
         this.isAssessor = result?.assessor?.id === this.userId;
-        // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }
 
     /**
@@ -429,7 +432,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -449,7 +452,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
     }
 
     protected handleError(error: HttpErrorResponse): void {

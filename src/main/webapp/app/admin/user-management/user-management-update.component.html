@@ -18,8 +18,8 @@
                         #loginInput="ngModel"
                         [(ngModel)]="user.login"
                         required
-                        minlength="1"
-                        maxlength="50"
+                        [minLength]="USERNAME_MIN_LENGTH"
+                        [maxLength]="USERNAME_MAX_LENGTH"
                         pattern="^[_.@A-Za-z0-9-]*$"
                     />
 
@@ -78,14 +78,19 @@
                         name="password"
                         id="password"
                         placeholder="{{ 'global.menu.account.password' | artemisTranslate }}"
-                        minlength="8"
-                        maxlength="100"
+                        [minLength]="PASSWORD_MIN_LENGTH"
+                        [maxLength]="PASSWORD_MAX_LENGTH"
                         #password="ngModel"
                         [(ngModel)]="user.password"
                     />
                     <div *ngIf="password.dirty && password.invalid">
-                        <small class="form-text text-danger" *ngIf="password.errors?.maxlength" [translateValues]="{ max: 100 }" jhiTranslate="userManagement.passwordConstraints">
-                            The password has to contain 8-100 characters!
+                        <small
+                            class="form-text text-danger"
+                            *ngIf="password.errors?.maxlength"
+                            jhiTranslate="userManagement.passwordConstraints"
+                            [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
+                        >
+                            The password has to contain 8-50 characters!
                         </small>
                     </div>
                 </div>

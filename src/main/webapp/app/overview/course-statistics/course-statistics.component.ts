@@ -18,7 +18,7 @@ import {
     RELATIVE_SCORE,
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ChartType } from 'chart.js';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -46,12 +46,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     private courseExercises: Exercise[];
-    private paramSubscription: Subscription;
+    private paramSubscription?: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
 
-    // TODO: improve the types here and use maps instead of java script objects
+    // TODO: improve the types here and use maps instead of java script objects, also avoid the use of 'any'
 
     // overall points
     overallPoints = 0;
@@ -180,7 +180,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        // Note: due to lazy loading and router outlet, we use parent 2x here
+        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -225,7 +226,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.translateSubscription.unsubscribe();
         this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        this.paramSubscription?.unsubscribe();
     }
 
     calculateCourseGrade() {
@@ -239,18 +240,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     private onCourseLoad() {
-        this.courseExercises = this.course!.exercises!;
-        this.calculateMaxPoints();
-        this.calculateReachablePoints();
-        this.calculateAbsoluteScores();
-        this.calculateRelativeScores();
-        this.calculatePresentationScores();
-        this.calculateCurrentRelativeScores();
-        this.groupExercisesByType();
+        if (this.course?.exercises) {
+            this.courseExercises = this.course.exercises;
+            this.calculateMaxPoints();
+            this.calculateReachablePoints();
+            this.calculateAbsoluteScores();
+            this.calculateRelativeScores();
+            this.calculatePresentationScores();
+            this.calculateCurrentRelativeScores();
+            this.groupExercisesByType();
+        }
     }
 
     groupExercisesByType() {
-        let exercises = this.course!.exercises;
+        if (!this.course?.exercises) {
+            return;
+        }
+        let exercises = this.course.exercises;
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
@@ -287,7 +293,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const roundedParticipationScore = round(participationResult.score!);
+                                const roundedParticipationScore = roundScoreSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = roundedParticipationScore >= 100 ? 100 : roundedParticipationScore;
                                 const missedScore = 100 - cappedParticipationScore;
                                 groupedExercises[index].scores.data.push(roundedParticipationScore);
@@ -390,7 +396,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
         // This score is used to cap bonus points, so that we not have negative values for the missedScores
-        const roundedScore = round(result.score!);
+        const roundedScore = roundScoreSpecifiedByCourseSettings(result.score!, this.course);
         const score = roundedScore >= 100 ? 100 : roundedScore;
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
@@ -567,7 +573,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (filterFunction) {
             courseExercises = courseExercises.filter(filterFunction);
         }
-        return this.courseCalculationService.calculateTotalScores(courseExercises);
+        return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
     }
 
     calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
@@ -581,7 +587,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     calculateTotalScoreForTheCourse(scoreType: string): number {
-        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
         return scores.get(scoreType)!;
     }
 }

@@ -16,7 +16,7 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import * as chai from 'chai';
 import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -106,6 +106,7 @@ describe('CourseScoresComponent', () => {
             fileBonusWith10Points0BonusPoints,
             modelingIncludedWith10Points0BonusPoints,
         ],
+        accuracyOfScores: 1,
     } as Course;
 
     const user1 = {
@@ -172,12 +173,12 @@ describe('CourseScoresComponent', () => {
     courseScoreStudent1.studentId = user1.id;
     courseScoreStudent1.pointsAchieved = 40;
     courseScoreStudent1.studentLogin = user1.login;
-    courseScoreStudent1.scoreAchieved = round((40 / 30) * 100, 1);
+    courseScoreStudent1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(40 / 30, course);
     const courseScoreStudent2 = new ScoresDTO();
     courseScoreStudent2.studentId = user2.id;
     courseScoreStudent2.pointsAchieved = 15;
     courseScoreStudent2.studentLogin = user2.login;
-    courseScoreStudent2.scoreAchieved = round((15 / 30) * 100, 1);
+    courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 30, course);
     let findCourseScoresSpy: SinonStub;
     const participation9 = {
         id: 9,
@@ -306,12 +307,12 @@ describe('CourseScoresComponent', () => {
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
         cs1.studentLogin = user1.login;
-        cs1.scoreAchieved = round((40 / 30) * 100, 1);
+        cs1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(40 / 30, course);
         const cs2 = new ScoresDTO();
         cs2.studentId = user2.id;
         cs2.pointsAchieved = 99;
         cs2.studentLogin = user2.login;
-        cs2.scoreAchieved = round((15 / 30) * 100, 1);
+        cs2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 30, course);
         findCourseScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2] })));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -407,7 +408,7 @@ describe('CourseScoresComponent', () => {
             '10',
             '0%',
             '40',
-            round((40 / 30) * 100, 1).toLocaleString() + '%',
+            roundScorePercentSpecifiedByCourseSettings(40 / 30, course).toLocaleString() + '%',
         );
         const user2Row = generatedRows[1];
         validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');

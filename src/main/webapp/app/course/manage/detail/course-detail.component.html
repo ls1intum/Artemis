@@ -46,10 +46,6 @@
                 <fa-icon [icon]="'user-check'"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'chess-king'"></fa-icon>
-                <span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
-            </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'table'"></fa-icon>
                 <span jhiTranslate="entity.action.scores">Scores</span>
@@ -131,7 +127,7 @@
             </div>
             <jhi-course-detail-line-chart
                 class="col-md-8"
-                [courseId]="course.id!"
+                [course]="course"
                 [numberOfStudentsInCourse]="course.numberOfStudents!"
                 [initialStats]="activeStudents"
             ></jhi-course-detail-line-chart>

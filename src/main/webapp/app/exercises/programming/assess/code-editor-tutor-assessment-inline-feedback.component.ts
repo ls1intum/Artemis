@@ -3,7 +3,9 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { round } from 'app/shared/util/utils';
+import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
+import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -18,12 +20,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     set feedback(feedback: Feedback) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
-        this.viewOnly = feedback ? true : false;
-        if (this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
+        this.viewOnly = !!feedback;
     }
     private _feedback: Feedback;
     @Input()
@@ -34,6 +31,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readOnly: boolean;
     @Input()
     highlightDifferences: boolean;
+    @Input()
+    course?: Course;
 
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
@@ -45,11 +44,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onEditFeedback = new EventEmitter<number>();
 
     // Expose the function to the template
-    readonly round = round;
+    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
 
     viewOnly: boolean;
     oldFeedback: Feedback;
-    disableEditScore = false;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
@@ -68,15 +66,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * When a inline feedback already exists, we set it back and display it the viewOnly mode.
-     * Otherwise the component is not displayed anymore.
-     * anymore in the parent component
+     * Otherwise the component is not displayed anymore in the parent component
      */
     cancelFeedback() {
         this.feedback = this.oldFeedback;
-        this.viewOnly = false;
-        if (this.feedback.type === this.MANUAL) {
-            this.viewOnly = true;
-        }
+        this.viewOnly = this.feedback.type === this.MANUAL;
         this.onCancelFeedback.emit(this.codeLine);
     }
 
@@ -106,12 +100,29 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     updateFeedbackOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
+    }
+
+    /**
+     * Builds the feedback text. When the feedback has a link with grading instruction it merges the feedback of
+     * the grading instruction with the feedback text provided by the assessor. Otherwise, it returns detail_text.
+     *
+     * @param feedback that contains feedback detail_text and grading instruction
+     * @returns {string} formatted string representing the feedback text ready to display
+     */
+    public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
+        let feedbackText = '';
+        if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+            feedbackText = feedback.gradingInstruction.feedback;
+            if (feedback.detailText) {
+                feedbackText = feedbackText + '\n' + feedback.detailText;
+            }
+            return convertToHtmlLinebreaks(feedbackText);
+        }
+        if (feedback.detailText) {
+            return feedback.detailText;
+        }
+        return feedbackText;
     }
 }

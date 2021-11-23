@@ -25,6 +25,7 @@ import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter } from 'rxjs/operators';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -106,8 +107,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
@@ -221,7 +220,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back(): Promise<void> {
-        const courseId = this.course?.id;
+        const courseId = getCourseFromExercise(this.exercise!)?.id;
         // check if exam exercise
         if (!!this.exercise?.exerciseGroup) {
             const examId = this.exercise.exerciseGroup.exam?.id;
@@ -252,7 +251,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
     /**
      * Checks the assessment of the tutor to the example submission tutorial.
-     * The tutor is informed if the given points of the assessment are fine, too low or too high.
+     * The tutor is informed if its assessment is different from the one of the instructor.
      */
     checkAssessment(): void {
         this.validateFeedback();

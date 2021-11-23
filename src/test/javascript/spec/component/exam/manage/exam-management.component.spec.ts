@@ -17,14 +17,13 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -44,7 +43,6 @@ describe('Exam Management Component', () => {
     let service: ExamManagementService;
     let courseManagementService: CourseManagementService;
     let sortService: SortService;
-    let accountService: AccountService;
     let eventManager: EventManager;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
@@ -77,7 +75,6 @@ describe('Exam Management Component', () => {
         service = TestBed.inject(ExamManagementService);
         courseManagementService = TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
-        accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
     });
 
@@ -86,7 +83,7 @@ describe('Exam Management Component', () => {
         sinon.restore();
     });
 
-    it('Should call courseService on init', () => {
+    it('should call find of courseManagementService to get course on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
@@ -99,7 +96,7 @@ describe('Exam Management Component', () => {
         expect(comp.course).to.eq(course);
     });
 
-    it('Should call loadAllExamsForCourse on init', () => {
+    it('should call loadAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
@@ -114,37 +111,7 @@ describe('Exam Management Component', () => {
         expect(comp.exams).to.deep.eq([exam]);
     });
 
-    it('Should call isAtLeastInstructorInCourse on init', () => {
-        // GIVEN
-        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
-        const expectedAtLeastInstructor = true;
-        sinon.replace(accountService, 'isAtLeastInstructorInCourse', sinon.fake.returns(expectedAtLeastInstructor));
-
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(accountService.isAtLeastInstructorInCourse).to.have.been.calledOnce;
-        expect(comp.isAtLeastInstructor).to.eq(expectedAtLeastInstructor);
-    });
-
-    it('Should call isAtLeastTutorInCourse on init', () => {
-        // GIVEN
-        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
-        const expectedAtLeastTutor = true;
-        sinon.replace(accountService, 'isAtLeastTutorInCourse', sinon.fake.returns(expectedAtLeastTutor));
-
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(accountService.isAtLeastTutorInCourse).to.have.been.calledOnce;
-        expect(comp.isAtLeastTutor).to.eq(expectedAtLeastTutor);
-    });
-
-    it('Should call getLatestIndividualDate on init', () => {
+    it('should call getLatestIndividualDate on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
@@ -164,7 +131,7 @@ describe('Exam Management Component', () => {
         expect(comp.exams[0].latestIndividualEndDate).to.eq(examInformationDTO.latestIndividualEndDate);
     });
 
-    it('Should call findAllExamsForCourse on examListModification event being fired after registering for exam changes ', () => {
+    it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes ', () => {
         // GIVEN
         comp.course = course;
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
@@ -179,7 +146,7 @@ describe('Exam Management Component', () => {
         expect(comp.exams).to.deep.eq([exam]);
     });
 
-    it('Should delete an exam when delete exam is called', () => {
+    it('should delete an exam when delete exam is called', () => {
         // GIVEN
         comp.exams = [exam];
         comp.course = course;
@@ -196,7 +163,7 @@ describe('Exam Management Component', () => {
         expect(comp.exams.length).to.eq(0);
     });
 
-    it('Should return false for examHasFinished when component has no exam information ', () => {
+    it('should return false for examHasFinished when component has no exam information ', () => {
         // GIVEN
         exam.latestIndividualEndDate = undefined;
 
@@ -207,7 +174,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).to.be.false;
     });
 
-    it('Should return true for examHasFinished when exam is in the past ', () => {
+    it('should return true for examHasFinished when exam is in the past ', () => {
         // GIVEN
         exam.latestIndividualEndDate = dayjs().subtract(1, 'days');
 
@@ -218,7 +185,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).to.be.true;
     });
 
-    it('Should return false for examHasFinished when exam is in the future ', () => {
+    it('should return false for examHasFinished when exam is in the future ', () => {
         // GIVEN
         exam.latestIndividualEndDate = dayjs().add(1, 'minute');
 
@@ -229,7 +196,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).to.be.false;
     });
 
-    it('Should return exam.id, when item in the exam table is being tracked ', () => {
+    it('should return exam.id, when item in the exam table is being tracked ', () => {
         // WHEN
         const itemId = comp.trackId(0, exam);
 
@@ -237,7 +204,7 @@ describe('Exam Management Component', () => {
         expect(itemId).to.eq(exam.id);
     });
 
-    it('Should call sortService when sortRows is called ', () => {
+    it('should call sortService when sortRows is called ', () => {
         // GIVEN
         sinon.replace(sortService, 'sortByProperty', sinon.fake.returns([]));
 

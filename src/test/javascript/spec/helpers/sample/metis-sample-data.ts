@@ -8,7 +8,9 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
+export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
+export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
 export const metisUser2 = { id: 2, name: 'username2', login: 'login2', groups: ['metisStudents'] } as User;
@@ -22,11 +24,40 @@ export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefin
 export const metisCourse = {
     id: 1,
     title: 'Metis Course',
-    exercises: [metisExercise],
-    lectures: [metisLecture],
+    exercises: [metisExercise, metisExercise2],
+    lectures: [metisLecture, metisLecture2],
     postsEnabled: true,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
+
+export const metisResolvingAnswerPostUser1 = {
+    id: 1,
+    author: metisUser1,
+    content: 'metisAnswerPostUser3',
+    creationDate: undefined,
+    resolvesPost: true,
+} as AnswerPost;
+
+export const metisAnswerPostUser2 = {
+    id: 2,
+    author: metisUser2,
+    content: 'metisAnswerPostUser3',
+    creationDate: undefined,
+} as AnswerPost;
+
+export const metisApprovedAnswerPostTutor = {
+    id: 3,
+    author: metisTutor,
+    content: 'metisApprovedAnswerPostTutor',
+    resolvesPost: true,
+    creationDate: undefined,
+} as AnswerPost;
+
+export const metisAnswerPostToCreateUser1 = {
+    author: metisUser1,
+    content: 'metisAnswerPostToCreateUser1',
+    creationDate: undefined,
+} as AnswerPost;
 
 export const metisPostTechSupport = {
     id: 1,
@@ -58,10 +89,20 @@ export const metisPostOrganization = {
     creationDate: undefined,
 } as Post;
 
+export const metisAnnouncement = {
+    id: 4,
+    author: metisUser1,
+    courseWideContext: CourseWideContext.ORGANIZATION,
+    course: metisCourse,
+    title: 'title',
+    content: 'metisPostOrganization',
+    creationDate: undefined,
+} as Post;
+
 export const metisCoursePostsWithCourseWideContext = [metisPostTechSupport, metisPostRandom, metisPostOrganization];
 
 export const metisPostExerciseUser1 = {
-    id: 4,
+    id: 5,
     author: metisUser1,
     exercise: metisExercise,
     title: 'title',
@@ -70,7 +111,7 @@ export const metisPostExerciseUser1 = {
 } as Post;
 
 export const metisPostExerciseUser2 = {
-    id: 5,
+    id: 6,
     author: metisUser2,
     exercise: metisExercise,
     title: 'title',
@@ -81,7 +122,7 @@ export const metisPostExerciseUser2 = {
 export const metisExercisePosts = [metisPostExerciseUser1, metisPostExerciseUser2];
 
 export const metisPostLectureUser1 = {
-    id: 6,
+    id: 7,
     author: metisUser1,
     lecture: metisLecture,
     title: 'title',
@@ -90,13 +131,16 @@ export const metisPostLectureUser1 = {
 } as Post;
 
 export const metisPostLectureUser2 = {
-    id: 7,
+    id: 8,
     author: metisUser2,
     lecture: metisLecture,
     title: 'title',
     content: 'metisPostLectureUser2',
     creationDate: undefined,
+    answers: [metisResolvingAnswerPostUser1],
 } as Post;
+
+metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
 export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 
@@ -107,33 +151,3 @@ export const metisPostToCreateUser1 = {
     content: 'metisAnswerToCreateUser1',
     creationDate: undefined,
 } as Post;
-
-export const metisAnswerPostUser1 = {
-    id: 1,
-    author: metisUser1,
-    content: 'metisAnswerPostUser3',
-    creationDate: undefined,
-} as AnswerPost;
-
-export const metisAnswerPostUser2 = {
-    id: 2,
-    author: metisUser2,
-    content: 'metisAnswerPostUser3',
-    creationDate: undefined,
-} as AnswerPost;
-
-export const metisApprovedAnswerPostTutor = {
-    id: 3,
-    author: metisTutor,
-    content: 'metisApprovedAnswerPostTutor',
-    tutorApproved: true,
-    creationDate: undefined,
-} as AnswerPost;
-
-export const metisAnswerPostToCreateUser1 = {
-    author: metisUser1,
-    content: 'metisAnswerPostToCreateUser1',
-    creationDate: undefined,
-} as AnswerPost;
-
-export const metisAnswerPosts = [metisAnswerPostUser1, metisAnswerPostUser2, metisApprovedAnswerPostTutor];

@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
-import { Directive, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, UrlSerializer } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -21,7 +20,7 @@ import { LoadingNotificationComponent } from 'app/shared/notification/loading-no
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -30,21 +29,10 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLink]' })
-export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
-}
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLinkActiveOptions]' })
-export class MockRouterLinkActiveOptionsDirective {
-    @Input('routerLinkActiveOptions') data: any;
-}
 
 class MockBreadcrumb {
     label: string;
@@ -89,8 +77,8 @@ describe('NavbarComponent', () => {
                 MockDirective(NgbDropdown),
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(MockRouterLinkDirective),
-                MockDirective(MockRouterLinkActiveOptionsDirective),
+                MockRouterLinkDirective,
+                MockRouterLinkActiveOptionsDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
                 MockComponent(NotificationSidebarComponent),
@@ -98,6 +86,7 @@ describe('NavbarComponent', () => {
                 MockComponent(LoadingNotificationComponent),
             ],
             providers: [
+                MockProvider(UrlSerializer),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

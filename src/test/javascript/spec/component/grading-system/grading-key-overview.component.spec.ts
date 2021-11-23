@@ -8,7 +8,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -86,7 +86,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should print PDF', fakeAsync(() => {
-        const windowSpy = jest.spyOn(window, 'print');
+        const windowSpy = jest.spyOn(window, 'print').mockImplementation();
 
         comp.printPDF();
 

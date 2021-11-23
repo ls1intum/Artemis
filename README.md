@@ -3,8 +3,6 @@
 [![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml)
 [![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
 [![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.ase.in.tum.de)
-[![Dependency Status](https://img.shields.io/david/ls1intum/Artemis)](package.json)
-[![Dev Dependency Status](https://img.shields.io/david/dev/ls1intum/Artemis)](package.json)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 
@@ -119,6 +117,8 @@ Please note, that the actual database model is more complex. The UML class diagr
 There is a growing community of university instructors who are using Artemis.
 
 #### Communication
+    
+[![Matrix Chat](https://img.shields.io/matrix/artemis-platform:matrix.org?label=matrix:%20%23artemis:in.tum.de)](https://matrix.to/#/#artemis:in.tum.de)
 
 We communicate using Github issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
 
@@ -156,3 +156,8 @@ The following universities are actively using Artemis or are currently evaluatin
 
 * https://artemis.praktomat.cs.kit.edu
 * Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)
+
+##### Hochschule München
+
+* https://artemis.cs.hm.edu
+* Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)

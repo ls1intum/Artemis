@@ -37,7 +37,36 @@
                 "title": "Exercise Table",
                 "courseInformation": "Exercise table displays all exercises in this course. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions.",
                 "examInformation": "Exercise table displays all exercises in this exam. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions."
-            }
+            },
+            "tutorPerformanceIssues": {
+                "title": "Issues with tutor performance",
+                "tutor": "Tutor {{ tutorName }} has performance issues",
+                "ratings": {
+                    "below": "{{tutorName}} has received {{numberOfTutorItems}} ratings with an average of {{averageTutorValue}} ⭐️️ which is below {{threshold}} ⭐."
+                },
+                "score": {
+                    "above": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is above {{threshold}}%.",
+                    "below": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is below {{threshold}}%."
+                },
+                "complaints": {
+                    "above": "{{tutorName}} has received {{numberOfTutorItems}} complaints, having a complaint ratio of {{averageTutorValue}}% which is above {{threshold}}%."
+                }
+            },
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor Course Leaderboard",
+                "examTitle": "Tutor Exam Leaderboard",
+                "id": "ID",
+                "name": "Name",
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Accepted complaints",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Open requests",
+                "numberOfComplaintResponses": "Complaint responses",
+                "numberOfAnsweredMoreFeedbackRequests": "Answered requests",
+                "points": "Points",
+                "averageScore": "Average score",
+                "averageRating": "Average rating"
+            },
+            "exerciseAverageRating": "Average rating"
         }
     }
 }

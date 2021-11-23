@@ -492,6 +492,30 @@ public class ExamResource {
     }
 
     /**
+     * DELETE /courses/{courseId}/exams/{examId}/reset : Reset the exam with the given id.
+     * The reset operation deletes all studentExams, participations, submissions and feedback.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @param examId    the id of the exam to reset
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Exam> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to reset exam : {}", examId);
+        var exam = examRepository.findByIdElseThrow(examId);
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        examService.reset(exam.getId());
+        Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        examService.setExamProperties(returnExam);
+        return ResponseEntity.ok(returnExam);
+    }
+
+    /**
      * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
      *
      * @param courseId     the id of the course
@@ -698,7 +722,6 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-
         List<StudentDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }

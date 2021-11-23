@@ -18,9 +18,9 @@
                 "points": {
                     "exercise": "Exercise",
                     "overview": "Overview",
-                    "yourPoints": "Your points",
+                    "yourPoints": "Your Points",
                     "maxPoints": "Points",
-                    "bonus": "Bonus points",
+                    "bonus": "Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
@@ -157,8 +157,8 @@
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
-            "points": "points",
-            "bonus": "bonus points",
+            "points": "Points",
+            "bonus": "Bonus Points",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
@@ -242,6 +242,8 @@
             }
         },
         "examManagement": {
+            "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
+            "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "editExam": "Edit an existing exam",
@@ -309,25 +311,8 @@
                 "registerAllFromCourseTooltip": "Register all students enrolled in this course",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
-                    "deleteParticipationsAndSubmission": "Delete this student's participation and submissions in the associated exam?"
-                },
-                "importStudents": {
-                    "buttonLabel": "Import students",
-                    "dialogTitle": "Import students into:",
-                    "introText": "This dialog can be used to import students into this exam.",
-                    "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
-                    "csvFile": {
-                        "label": "Select .csv file",
-                        "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN' or 'REGISTRATION_NUMBER' column values must be present per entry."
-                    },
-                    "studentsForImport": {
-                        "label": "Students to import",
-                        "tooltip": "These students will be imported when clicking on the \"Import\" button."
-                    },
-                    "numberOfStudents": "Number of students:",
-                    "numberOfStudentsImported": "Imported:",
-                    "numberOfStudentsNotImported": "Not found:",
-                    "genericErrorMessage": "Import of students into exam failed!"
+                    "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
+                    "typeNameToConfirm": "Please type in the login of the student to confirm."
                 }
             },
             "exerciseGroups": "Exercise Groups",
@@ -353,6 +338,10 @@
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+            },
+            "reset": {
+                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
             },
             "checklist": {
@@ -423,32 +412,32 @@
                     "variants": "Variants"
                 }
             }
-        },
-        "studentExamDetail": {
-            "studentExam": "Student exam ({{ examTitle }})",
-            "testRun": "Test Run ({{ examTitle }})",
-            "exercises": "Exercises",
-            "downloadPDF": " Download PDF",
-            "student": "Student",
-            "name": "Name: ",
-            "login": "Login: ",
-            "email": "Email: ",
-            "matriculationNumber": "Matriculation number: ",
-            "id": "ID",
-            "type": "Type",
-            "title": "Title",
-            "result": "Your points",
-            "reviewer": "Reviewer",
-            "openSubmission": "Open Submission",
-            "openAssessment": " Open Assessment",
-            "openLatestAssessment": "Open latest Assessment",
-            "cancelAssessment": " Cancel Assessment",
-            "workingTimeCouldNotBeSaved": "The working time could not be saved.",
-            "saveWorkingTimeSuccessful": "The working time was saved successfully.",
-            "toggleSuccessful": "The submitted status was changed successfully.",
-            "togglefailed": "The submitted status could not be changed!",
-            "hasComplaint": "Has Complaint"
         }
+    },
+    "studentExamDetail": {
+        "studentExam": "Student exam ({{ examTitle }})",
+        "testRun": "Test Run ({{ examTitle }})",
+        "exercises": "Exercises",
+        "downloadPDF": " Download PDF",
+        "student": "Student",
+        "name": "Name: ",
+        "login": "Login: ",
+        "email": "Email: ",
+        "matriculationNumber": "Matriculation number: ",
+        "id": "ID",
+        "type": "Type",
+        "title": "Title",
+        "result": "Your points",
+        "reviewer": "Reviewer",
+        "openSubmission": "Open Submission",
+        "openAssessment": " Open Assessment",
+        "openLatestAssessment": "Open latest Assessment",
+        "cancelAssessment": " Cancel Assessment",
+        "workingTimeCouldNotBeSaved": "The working time could not be saved.",
+        "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+        "toggleSuccessful": "The submitted status was changed successfully.",
+        "togglefailed": "The submitted status could not be changed!",
+        "hasComplaint": "Has Complaint"
     },
     "studentExam": {
         "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",

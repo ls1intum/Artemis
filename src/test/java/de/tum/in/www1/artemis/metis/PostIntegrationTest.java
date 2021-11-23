@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.metis;
 
+import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -87,7 +88,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.resetDatabase();
     }
 
-    // CREATE
+    // POST
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
@@ -95,7 +96,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToSave = createPostWithoutContext();
         Exercise exercise = existingExercisePosts.get(0).getExercise();
         postToSave.setExercise(exercise);
-        postToSave.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
@@ -109,7 +109,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToSave = createPostWithoutContext();
         Exercise examExercise = exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
         postToSave.setExercise(examExercise);
-        examExercise.setCourse(course);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
@@ -121,7 +120,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToSave = createPostWithoutContext();
         Lecture lecture = existingLecturePosts.get(0).getLecture();
         postToSave.setLecture(lecture);
-        postToSave.setCourse(lecture.getCourse());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
@@ -140,6 +138,32 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
         assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateAnnouncement() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        postToSave.setDisplayPriority(DisplayPriority.PINNED);
+        checkCreatedPost(postToSave, createdPost);
+
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
+        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateAnnouncement_asStudent_forbidden() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(existingPosts.size()).isEqualTo(postRepository.count());
     }
 
     @Test
@@ -191,7 +215,28 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(constraintViolations.size()).isEqualTo(1);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSimilarityCheck() throws Exception {
+        Post postToCheck = new Post();
+        postToCheck.setTitle("Title Post");
+
+        List<Post> similarPosts = request.postWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, List.class, HttpStatus.OK);
+        assertThat(similarPosts).size().isEqualTo(TOP_K_SIMILARITY_RESULTS);
+    }
+
     // UPDATE
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditAnnouncement_asTutor_forbidden() throws Exception {
+        Post postToUpdate = editExistingPost(existingCourseWidePosts.get(0));
+        // simulate as if it was an announcement
+        postToUpdate.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
@@ -199,24 +244,93 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // update post of student1 (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext1_asTutor() throws Exception {
+        // update exercise post
+        Post postToUpdate = existingExercisePosts.get(0);
+        // change to context to lecture
+        postToUpdate.setExercise(null);
+        postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext2_asTutor() throws Exception {
+        // update lecture post
+        Post postToUpdate = existingLecturePosts.get(0);
+        // change to context to exercise
+        postToUpdate.setLecture(null);
+        postToUpdate.setExercise(this.existingExercisePosts.get(0).getExercise());
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext3_asTutor() throws Exception {
+        // update course-wide post
+        Post postToUpdate = existingCourseWidePosts.get(0);
+        // change to context to lecture
+        postToUpdate.setCourseWideContext(null);
+        postToUpdate.setCourse(null);
+        postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditPostByChangingContext4_asTutor() throws Exception {
+        // update course post
+        Post postToUpdate = existingCourseWidePosts.get(0);
+        // change to course post with different course-wide context
+        postToUpdate.setCourseWideContext(CourseWideContext.RANDOM);
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditPost_asStudent() throws Exception {
+    public void testEditPost_forbidden() throws Exception {
         // update own post (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
 
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.get(1));
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testEditPostByChangingContext_asStudent() throws Exception {
+        // update exercise post
+        Post postToNotUpdate = existingExercisePosts.get(0);
+        // change to context to lecture
+        postToNotUpdate.setExercise(null);
+        postToNotUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
+
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.OK);
+        // no effect on post context
+        assertThat(notUpdatedPost.getCourseWideContext()).isEqualTo(null);
+        assertThat(notUpdatedPost.getCourse()).isEqualTo(null);
+        assertThat(notUpdatedPost.getLecture()).isEqualTo(null);
+        assertThat(notUpdatedPost.getExercise()).isEqualTo(existingExercisePosts.get(2).getExercise());
     }
 
     @Test
@@ -225,7 +339,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.get(1));
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -235,7 +349,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToUpdate = existingPosts.get(0);
         postToUpdate.setId(null);
 
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedPost).isNull();
     }
 
@@ -387,6 +501,18 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testDeletePosts_asStudent_forbidden() throws Exception {
         // delete post from another student (index 1) --> forbidden
         Post postToNotDelete = existingPosts.get(1);
+
+        request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
+        assertThat(postRepository.count()).isEqualTo(existingPosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteAnnouncement_asTutor_forbidden() throws Exception {
+        Post postToNotDelete = existingCourseWidePosts.get(1);
+        // simulate as if it was an announcement
+        postToNotDelete.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+        postRepository.save(postToNotDelete);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
         assertThat(postRepository.count()).isEqualTo(existingPosts.size());

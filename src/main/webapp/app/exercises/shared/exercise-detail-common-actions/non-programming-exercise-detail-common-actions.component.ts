@@ -7,6 +7,7 @@ import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
@@ -25,8 +26,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    teamBaseResource: string;
     baseResource: string;
     shortBaseResource: string;
+    readonly ExerciseType = ExerciseType;
+
+    readonly AssessmentType = AssessmentType;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -39,11 +44,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     ngOnInit(): void {
         if (!this.isExamExercise) {
             this.baseResource = `/course-management/${this.course.id!}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.teamBaseResource = `/course-management/${this.course.id!}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/`;
         } else {
             this.baseResource =
                 `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.teamBaseResource =
+                `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
+                `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
     }

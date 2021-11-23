@@ -10,7 +10,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { Exercise } from 'app/entities/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
@@ -38,9 +38,9 @@ describe('ExerciseDetailStatisticsComponent', () => {
         numberOfParticipations: 10,
         numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
-        numberOfQuestions: 4,
-        numberOfAnsweredQuestions: 2,
-        questionsAnsweredInPercent: 50,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -69,6 +69,6 @@ describe('ExerciseDetailStatisticsComponent', () => {
         fixture.detectChanges();
         expect(component.doughnutStats.absoluteAveragePoints).to.equal(5);
         expect(component.doughnutStats.participationsInPercent).to.equal(100);
-        expect(component.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+        expect(component.doughnutStats.resolvedPostsInPercent).to.equal(50);
     });
 });

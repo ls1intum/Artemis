@@ -18,7 +18,7 @@ import dayjs from 'dayjs';
 import { of } from 'rxjs';
 import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
@@ -28,7 +28,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -66,7 +66,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
     generateShortAnswerStructure() {
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
     }
 
     generateLettersForSolutions() {

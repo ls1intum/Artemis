@@ -5,14 +5,13 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     template: '',
@@ -23,16 +22,12 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      */
 
     exercise?: TextExercise;
-    isAtLeastEditor: boolean;
-    isAtLeastInstructor: boolean;
     protected userId?: number;
     textBlockRefs: TextBlockRef[];
     unusedTextBlockRefs: TextBlockRef[];
     submission?: TextSubmission;
 
-    protected get course(): Course | undefined {
-        return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
-    }
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     protected constructor(
         protected alertService: AlertService,
@@ -45,8 +40,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;
-        this.isAtLeastEditor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR]);
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
@@ -88,7 +81,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
             // last iteration, nextIndex = lastIndex. PreviousIndex > lastIndex is a sign for illegal state.
             if (!ref && previousIndex > nextIndex) {
-                console.error('Illegal State: previous index cannot be greated than the last index!');
+                console.error('Illegal State: previous index cannot be greater than the last index!');
 
                 // new text block starts before previous one ended (overlap)
             } else if (previousIndex > nextIndex) {

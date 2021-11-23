@@ -8,7 +8,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -123,6 +123,7 @@ export class ExerciseDetailsStudentActionsComponent {
                         participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
+                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
                 (error) => {

@@ -63,9 +63,18 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private Double addedDistance;
 
+    // There is a foreign key on delete set null
+    @OneToOne
+    @JsonIgnore
+    private Feedback feedback;
+
     @ManyToOne
     @JsonIgnore
     private TextSubmission submission;
+
+    @ManyToOne
+    @JsonIgnore
+    private TextAssessmentKnowledge knowledge;
 
     @ManyToOne
     @JsonIgnore
@@ -162,6 +171,14 @@ public class TextBlock implements Serializable {
         return this;
     }
 
+    public Feedback getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(Feedback feedback) {
+        this.feedback = feedback;
+    }
+
     public void setSubmission(TextSubmission textSubmission) {
         this.submission = textSubmission;
     }
@@ -225,5 +242,13 @@ public class TextBlock implements Serializable {
 
     public void setNumberOfAffectedSubmissions(int numberOfAffectedSubmissions) {
         this.numberOfAffectedSubmissions = numberOfAffectedSubmissions;
+    }
+
+    public TextAssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(TextAssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 }

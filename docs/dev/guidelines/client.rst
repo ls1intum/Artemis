@@ -44,7 +44,7 @@ Some general aspects:
 4. ``null`` and ``undefined``
 =============================
 
-1. Use **undefined**. Do not use null.
+Use **undefined**. Do not use null.
 
 5. General Assumptions
 ======================
@@ -55,7 +55,7 @@ Some general aspects:
 6. Comments
 ============
 
-1. Use JSDoc style comments for functions, interfaces, enums, and classes.
+Use JSDoc style comments for functions, interfaces, enums, and classes.
 
 7. Strings
 ============
@@ -70,8 +70,34 @@ Some general aspects:
 2. Buttons are best used to trigger certain functionalities (e.g. ``<button (click)='deleteExercise(exercise)'>...</button``)
 3. Links are best for navigating on Artemis (e.g. ``<a [routerLink]='getLinkForExerciseEditor(exercise)' [queryParams]='getQueryParamsForEditor(exercise)'>...</a>``)
 
-9. Style
-========
+9. Icons with Text
+====================
+
+If you use icons next to text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
+
+Do this:
+
+.. code-block:: html+ng2
+
+    <fa-icon [icon]="'times'"></fa-icon>
+    <span>Text</span>
+
+Don't do one of these or any other combination of whitespaces:
+
+.. code-block:: html+ng2
+
+    <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
+
+    <fa-icon [icon]="'times'"></fa-icon><span> Text</span>
+    <fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
+
+    <fa-icon [icon]="'times'"></fa-icon>
+    <span> Text</span>
+
+Ignoring this will lead to inconsistent spacing between icons and text.
+
+10. Style
+=========
 
 1. Use arrow functions over anonymous function expressions.
 2. Always surround arrow function parameters.
@@ -97,7 +123,7 @@ Some general aspects:
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
 You can find the corresponding commands to invoke those tools in ``package.json``.
 
-10. Preventing Memory Leaks
+11. Preventing Memory Leaks
 ===========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
@@ -173,7 +199,7 @@ or
    jest --detectLeaks
 
 
-11. Defining Routes and Breadcrumbs
+12. Defining Routes and Breadcrumbs
 ===================================
 
 The ideal schema for routes is that every variable in a path is preceded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``
@@ -185,30 +211,30 @@ When creating a completely new route you will have to register the new paths in 
 
 .. code-block:: ts
 
-	const mapping = {
-		courses: 'artemisApp.course.home.title',
-		lectures: 'artemisApp.lecture.home.title',
-		// put your new directly translated url segments here
-		// the index is the path segment in which '-' have to be replaced by '_'
-		// the value is the translation string
-		your_case: 'artemisApp.cases.title',
-	};
+    const mapping = {
+        courses: 'artemisApp.course.home.title',
+        lectures: 'artemisApp.lecture.home.title',
+        // put your new directly translated url segments here
+        // the index is the path segment in which '-' have to be replaced by '_'
+        // the value is the translation string
+        your_case: 'artemisApp.cases.title',
+    };
 
-	addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
-		switch (this.lastRouteUrlSegment) {
-			case 'course-management':
-				// handles :courseId
-				break;
-			case 'lectures':
-				// handles :lectureId
-				break;
-			case 'your-case':
-				// add a case here for your :variable which is preceded in the path by 'your-case'
-				break;
-		}
-	}
+    addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
+        switch (this.lastRouteUrlSegment) {
+            case 'course-management':
+                // handles :courseId
+                break;
+            case 'lectures':
+                // handles :lectureId
+                break;
+            case 'your-case':
+                // add a case here for your :variable which is preceded in the path by 'your-case'
+                break;
+        }
+    }
 
-12. Strict Template Check
+13. Strict Template Check
 =========================
 
 To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.
@@ -225,4 +251,54 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
-Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md
+14. Chart Instantiation
+=======================
+
+We are using the framework ngx-charts in order to instantiate charts and diagrams in Artemis.
+
+The following is an example HTML template for a vertical bar chart:
+
+.. code-block:: html+ng2
+
+    <div #containerRef class="col-md-9">
+        <ngx-charts-bar-vertical
+            [view]="[containerRef.offsetWidth, 300]"
+            [results]="ngxData"
+            [scheme]="color"
+            [legend]="false"
+            [xAxis]="true"
+            [yAxis]="true"
+            [yScaleMax]="20"
+            [roundEdges]="true"
+            [showDataLabel]="true">
+            <ng-template #tooltipTemplate let-model="model">
+                {{ labelTitle }}: {{ round((model.value / totalValue) * 100, 1) }}%
+            </ng-template>
+        </ngx-charts-bar-vertical>
+    </div>
+
+Here are a few tips when using this framework:
+
+    1. In order to configure the content of the tooltips in the chart, declare a `ng-template <https://angular.io/api/core/ng-template>`_ with the reference ``#tooltipTemplate``
+       containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
+       the tooltips are configured in order to present the percentage value corresponding to the absolute value represented by the bar.
+       Depending on the chart type, there is more than one type of tooltip configurable.
+       For more information visit https://swimlane.gitbook.io/ngx-charts/
+
+    2. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
+       The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
+       a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
+
+       .. code-block:: css
+
+           ::ng-deep .textDataLabel {
+               font-weight: bolder;
+               font-size: 15px !important;
+           }
+
+    3. In order to make the chart responsive in width, bind it to the width of its parent container.
+       First, annotate the parent container with a reference (in the example ``#containerRef``).
+       Then, when configuring the dimensions of the chart in ``[view]``, insert ``containerRef.offsetWidth`` instead
+       of an specific value for the width.
+
+Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md

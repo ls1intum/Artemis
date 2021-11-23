@@ -143,13 +143,3 @@ export function getFirstResultWithComplaint(submission: Submission | undefined):
         }
     }
 }
-
-/**
- * Calculates the status of a submission by inspecting the result. Returns true if the submission is a draft, or false if it is done
- * @param submission which to check
- * @param correctionRound for which to get status
- */
-export function calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
-    const tmpResult = submission.results?.[correctionRound];
-    return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
-}

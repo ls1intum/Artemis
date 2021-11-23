@@ -38,14 +38,14 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
-        programmingExerciseIntegrationServiceTest.textProgrammingExerciseIsReleased_IsReleasedAndHasResults();
+    void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseIsReleased_IsReleasedAndHasResults();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
-        programmingExerciseIntegrationServiceTest.textProgrammingExerciseIsReleased_IsNotReleasedAndHasResults();
+    void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults();
     }
 
     @Test
@@ -56,8 +56,8 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void textProgrammingExerciseIsReleased_forbidden() throws Exception {
-        programmingExerciseIntegrationServiceTest.textProgrammingExerciseIsReleased_forbidden();
+    void testProgrammingExerciseIsReleased_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseIsReleased_forbidden();
     }
 
     @Test
@@ -69,13 +69,13 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError();
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByParticipationIds() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds();
+    void testExportSubmissionsByParticipationIds() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds();
     }
 
     @Test
@@ -86,25 +86,25 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
+    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
     }
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
+    void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByStudentLogins() throws Exception {
+    void testExportSubmissionsByStudentLogins() throws Exception {
         programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void textExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
+    void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any(), eq(false));
         programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins_failToCreateZip();
     }
@@ -465,8 +465,8 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should fail for all ProgrammingExercises except Haskell
-    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    // It should fail for all ProgrammingExercises except Haskell and ocaml
+    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
     }
@@ -668,6 +668,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTestCases_testCaseWeightSmallerThanZero_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_testCaseMultiplierSmallerThanZero_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseBonusPointsNull() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_testCaseBonusPointsNull();
     }
 
     @Test

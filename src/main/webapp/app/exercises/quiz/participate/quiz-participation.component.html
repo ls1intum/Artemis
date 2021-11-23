@@ -11,7 +11,11 @@
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
         jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
-        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: round(result.score) }"
+        [translateValues]="{
+            userScore: userScore,
+            maxScore: totalScore,
+            percentage: roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(quizExercise))
+        }"
     ></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
@@ -152,7 +156,12 @@
             <div *ngIf="showingResult && mode !== 'solution'" class="text-center">
                 <div id="quiz-score" [ngClass]="{ incorrect: userScore < totalScore }">
                     <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
-                    <span id="quiz-score-result">{{ userScore }}/{{ totalScore }} ({{ round(result.score) }} %)</span>
+                    <span id="quiz-score-result"
+                        >{{ userScore }}/{{ totalScore }} ({{
+                            roundScoreSpecifiedByCourseSettings(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course)
+                        }}
+                        %)</span
+                    >
                 </div>
                 <div *ngIf="mode === 'practice'">
                     <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
@@ -167,7 +176,7 @@
             <jhi-button
                 *ngIf="mode === 'live' && !quizExercise.started && !quizExercise.isPlannedToStart"
                 id="refresh-quiz"
-                (click)="refreshQuiz(true)"
+                (onClick)="refreshQuiz(true)"
                 [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
                 [btnType]="ButtonType.PRIMARY"
                 [title]="'artemisApp.exercise.refresh'"
@@ -178,7 +187,7 @@
                 <jhi-button
                     *ngIf="!showingResult"
                     id="submit-quiz"
-                    (click)="onSubmit()"
+                    (onClick)="onSubmit()"
                     [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
                     [btnType]="ButtonType.SUCCESS"
                     [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"

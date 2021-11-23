@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.Objects;
+
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -15,10 +16,13 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
+import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
 
 @Service
 public class AnswerPostService extends PostingService {
@@ -37,8 +41,8 @@ public class AnswerPostService extends PostingService {
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate) {
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
@@ -63,18 +67,19 @@ public class AnswerPostService extends PostingService {
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        Course course = preCheckUserAndCourse(user, courseId);
+
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
-        // answer post is automatically approved if written by an instructor
-        answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
+        // on creation of an answer post, we set the resolves_post field to false per default
+        answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-
-        sendNotification(savedAnswerPost);
+        this.preparePostAndBroadcast(savedAnswerPost, course);
+        sendNotification(post, answerPost, course);
 
         return savedAnswerPost;
     }
@@ -84,34 +89,36 @@ public class AnswerPostService extends PostingService {
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId   id of the course the answer post belongs to
-     * @param answerPost answer post to update
+     * @param courseId      id of the course the answer post belongs to
+     * @param answerPostId  id of the answer post to update
+     * @param answerPost    answer post to update
      * @return updated answer post that was persisted
      */
-    public AnswerPost updateAnswerPost(Long courseId, AnswerPost answerPost) {
+    public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, AnswerPost answerPost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        if (answerPost.getId() == null) {
+        if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
-        AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
-        Course course = preCheckUserAndCourse(user, courseId);
-        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
+        AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPostId);
+        final Course course = preCheckUserAndCourse(user, courseId);
 
-        // update: allow overwriting of values only for depicted fields
-        existingAnswerPost.setContent(answerPost.getContent());
-        // tutor approval can only be toggled by a tutor
-        if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            existingAnswerPost.setTutorApproved(answerPost.isTutorApproved());
+        AnswerPost updatedAnswerPost;
+
+        // determine if the update operation is to mark the answer post as resolving the original post
+        if (existingAnswerPost.doesResolvePost() != answerPost.doesResolvePost()) {
+            // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
+            mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
+            existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
         }
-        AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
-
-        if (updatedAnswerPost.getPost().getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedAnswerPost.getPost().getExercise().filterSensitiveInformation();
+        else {
+            // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
+            mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
+            existingAnswerPost.setContent(answerPost.getContent());
         }
-
+        updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }
 
@@ -120,10 +127,13 @@ public class AnswerPostService extends PostingService {
      *
      * @param answerPost answer post that is reacted on
      * @param reaction   reaction that was added by a user
+     * @param courseId   id of the course the answer post belongs to
      */
-    public void updateWithReaction(AnswerPost answerPost, Reaction reaction) {
+    public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
+        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
-        answerPostRepository.save(answerPost);
+        AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
     /**
@@ -143,37 +153,55 @@ public class AnswerPostService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerPostId);
+
+        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
+        Post updatedPost = answerPost.getPost();
+        updatedPost.removeAnswerPost(answerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
      * Sends notification to affected groups
      *
-     * @param answerPost answer post that triggered the notification
+     * @param post which is answered
+     * @param answerPost which is created
      */
-    void sendNotification(AnswerPost answerPost) {
+    void sendNotification(Post post, AnswerPost answerPost, Course course) {
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, answerPost, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
+            return;
+        }
         // notify via exercise
-        if (answerPost.getPost().getExercise() != null) {
-            Post post = answerPost.getPost();
-            // set exercise retrieved from database to show title in notification
-            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
-            post.setExercise(exercise);
-            answerPost.setPost(post);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(answerPost);
-            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(answerPost);
-
+        if (post.getExercise() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, answerPost, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
             // protect Sample Solution, Grading Instructions, etc.
-            answerPost.getPost().getExercise().filterSensitiveInformation();
+            post.getExercise().filterSensitiveInformation();
+            return;
         }
         // notify via lecture
-        if (answerPost.getPost().getLecture() != null) {
-            Post post = answerPost.getPost();
-            // set lecture retrieved from database to show title in notification
-            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
-            post.setLecture(lecture);
-            answerPost.setPost(post);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(answerPost);
-            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(answerPost);
+        if (post.getLecture() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
+            singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
         }
+    }
+
+    /**
+     * Helper method to prepare the post included in the websocket message and initiate the broadcasting
+     *
+     * @param updatedAnswerPost answer post that was updated
+     * @param course            course the answer post belongs to
+     */
+    private void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
+        Post updatedPost = updatedAnswerPost.getPost();
+        // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
+        // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
+        updatedPost.removeAnswerPost(updatedAnswerPost);
+        updatedPost.addAnswerPost(updatedAnswerPost);
+        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
     }
 
     /**
@@ -192,5 +220,18 @@ public class AnswerPostService extends PostingService {
      */
     public AnswerPost findById(Long answerPostId) {
         return answerPostRepository.findByIdElseThrow(answerPostId);
+    }
+
+    /**
+     * Checks if the requesting user is authorized in the course context,
+     * i.e. user has to be author of original post associated with the answer post or at least teaching assistant
+     *
+     * @param answerPost    answer post that should be marked as resolving
+     * @param user          requesting user
+     */
+    void mayMarkAnswerPostAsResolvingElseThrow(AnswerPost answerPost, User user, Course course) {
+        if (!answerPost.getPost().getAuthor().equals(user)) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        }
     }
 }

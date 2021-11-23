@@ -34,15 +34,6 @@ public class Post extends Posting {
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
-    /**
-     * Track the votes for a "Post"
-     *
-     * @deprecated This will be removed with the introduction of Metis, where every Post will have an emoji reaction bar.
-     */
-    @Deprecated
-    @Column(name = "votes", columnDefinition = "integer default 0")
-    private Integer votes = 0;
-
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
@@ -63,7 +54,7 @@ public class Post extends Posting {
     private Lecture lecture;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
     @Enumerated(EnumType.STRING)
@@ -90,14 +81,6 @@ public class Post extends Posting {
         this.visibleForStudents = visibleForStudents;
     }
 
-    public Integer getVotes() {
-        return votes;
-    }
-
-    public void setVotes(Integer votes) {
-        this.votes = votes;
-    }
-
     @Override
     public Set<Reaction> getReactions() {
         return reactions;
@@ -113,6 +96,11 @@ public class Post extends Posting {
         this.reactions.add(reaction);
     }
 
+    @Override
+    public void removeReaction(Reaction reaction) {
+        this.reactions.remove(reaction);
+    }
+
     public Set<AnswerPost> getAnswers() {
         return answers;
     }
@@ -123,6 +111,10 @@ public class Post extends Posting {
 
     public void addAnswerPost(AnswerPost answerPost) {
         this.answers.add(answerPost);
+    }
+
+    public void removeAnswerPost(AnswerPost answerPost) {
+        this.answers.remove(answerPost);
     }
 
     public Set<String> getTags() {
@@ -175,6 +167,24 @@ public class Post extends Posting {
 
     public void setDisplayPriority(DisplayPriority displayPriority) {
         this.displayPriority = displayPriority;
+    }
+
+    /**
+     * Helper method to determine if a given post has the same context, i.e. either same exercise, lecture or course-wide context
+     * @param otherPost post that is compared to
+     * @return boolean flag indicating if same context or not
+     */
+    public boolean hasSameContext(Post otherPost) {
+        if (getExercise() != null && otherPost.getExercise() != null && getExercise().getId().equals(otherPost.getExercise().getId())) {
+            return true;
+        }
+        else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
+            return true;
+        }
+        else if (getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext()) {
+            return true;
+        }
+        return false;
     }
 
     @Override

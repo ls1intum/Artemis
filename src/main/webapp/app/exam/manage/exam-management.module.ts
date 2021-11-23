@@ -22,8 +22,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
-import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
-import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-button.component';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
@@ -44,12 +42,15 @@ import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { UserImportModule } from 'app/shared/import/user-import.module';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
+        NgxChartsModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
         ArtemisExamScoresModule,
@@ -70,6 +71,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamParticipantScoresModule,
         ArtemisTextSubmissionAssessmentModule,
         ExampleSubmissionsModule,
+        UserImportModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -83,8 +85,6 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamsComponent,
         TestRunManagementComponent,
         CreateTestRunModalComponent,
-        StudentsExamImportDialogComponent,
-        StudentsExamImportButtonComponent,
         StudentExamDetailComponent,
         DurationPipe,
         StudentExamSummaryComponent,

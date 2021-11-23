@@ -46,19 +46,17 @@
                 [numberOfTutorAssessments]="numberOfTutorAssessments"
                 [courseId]="courseId"
                 [tutorId]="tutor.id!"
-                [numberOfTutorComplaints]="numberOfTutorComplaints"
-                [numberOfTutorMoreFeedbackRequests]="numberOfTutorMoreFeedbackRequests"
-                [numberOfAssessmentLocks]="numberOfAssessmentLocks"
                 [examId]="examId"
                 [totalNumberOfAssessments]="totalNumberOfAssessments"
                 [numberOfSubmissions]="numberOfSubmissions"
                 [numberOfCorrectionRounds]="numberOfCorrectionRounds"
                 [totalAssessmentPercentage]="totalAssessmentPercentage"
                 [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                [isAtLeastInstructor]="isAtLeastInstructor"
-                [numberOfComplaints]="numberOfComplaints"
-                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
-                [totalNumberOfAssessmentLocks]="totalNumberOfAssessmentLocks"
+                [isAtLeastInstructor]="course?.isAtLeastInstructor || false"
+                [complaints]="complaints"
+                [moreFeedbackRequests]="moreFeedbackRequests"
+                [assessmentLocks]="assessmentLocks"
+                [ratings]="ratings"
             >
             </jhi-assessment-dashboard-information>
         </div>
@@ -84,6 +82,10 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
+                    <th jhiSortBy="averageRating">
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="dueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -120,6 +122,10 @@
                         >
                         </jhi-tutor-participation-graph>
                     </td>
+                    <td>
+                        <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                        <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
+                    </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                             {{ exercise.dueDate | artemisTimeAgo }}
@@ -146,7 +152,7 @@
 
                         <ng-template #teamsLink>
                             <a
-                                [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'teams']"
+                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
                                 [queryParams]="{ filter: TeamFilterProp.OWN }"
                                 class="btn btn-info btn-sm me-1"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
@@ -158,7 +164,7 @@
                         <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <ng-container
                                 class="col-lg-3 col-md-6 col-sm-6"
-                                *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
+                                *ngIf="course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
                             >
                                 <jhi-second-correction-enable-button
                                     class="me-1"
@@ -167,7 +173,7 @@
                                     [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                            <a class="btn btn-primary btn-sm" *ngIf="isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                            <a class="btn btn-primary btn-sm" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                 <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                             </a>
                         </ng-container>
@@ -177,9 +183,39 @@
         </table>
     </div>
 
-    <div class="container-fluid" style="padding-top: 25px">
-        <h4 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
-        <h4 *ngIf="isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
+    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
+        <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
+        <ul *ngFor="let issue of tutorIssues">
+            <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">
+                {{
+                    issue.translationKey + '.below'
+                        | artemisTranslate
+                            : {
+                                  tutorName: issue.tutorName,
+                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                  threshold: issue.allowedRange.lowerBound.toFixed(1)
+                              }
+                }}
+            </li>
+            <li *ngIf="issue.averageTutorValue > issue.allowedRange.upperBound">
+                {{
+                    issue.translationKey + '.above'
+                        | artemisTranslate
+                            : {
+                                  tutorName: issue.tutorName,
+                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                  threshold: issue.allowedRange.upperBound.toFixed(1)
+                              }
+                }}
+            </li>
+        </ul>
+    </div>
+
+    <div class="container-fluid pt-4">
+        <h4 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
+        <h4 *ngIf="isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
 
         <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
     </div>

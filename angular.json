@@ -84,7 +84,19 @@
               "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true,
-              "ngswConfigPath": "ngsw-config.json"
+              "ngswConfigPath": "ngsw-config.json",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "3mb",
+                  "maximumError": "4.5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "1mb",
+                  "maximumError": "2mb"
+                }
+              ]
             },
             "development": {
               "buildOptimizer": false,
@@ -124,6 +136,7 @@
   },
   "defaultProject": "artemis",
   "cli": {
+    "analytics": false,
     "packageManager": "npm"
   }
 }

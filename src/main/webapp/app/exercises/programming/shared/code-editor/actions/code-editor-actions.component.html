@@ -8,12 +8,16 @@
         (click)="resetRepository()"
         data-toggle="tooltip"
         data-placement="left"
-        title="Reset your repository to continue with your participation"
+        title="{{ 'artemisApp.editor.conflict.resetRepository' | artemisTranslate }}"
     >
-        <span *ngIf="isResolvingConflict"
-            ><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span></span
-        >
-        <span *ngIf="!isResolvingConflict"><fa-icon [icon]="'times'"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span></span>
+        <span *ngIf="isResolvingConflict; else notResolvingConflict">
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
+        </span>
+        <ng-template #notResolvingConflict>
+            <fa-icon [icon]="'times'"> </fa-icon>
+            <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span>
+        </ng-template>
     </button>
 </div>
 <ng-template #standardActions>
@@ -26,14 +30,16 @@
         (click)="onRefresh()"
         data-toggle="tooltip"
         data-placement="left"
-        title="Refresh all files. This will overwrite all uncommitted changes."
+        title="{{ 'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate }}"
     >
-        <span *ngIf="editorState === EditorState.REFRESHING">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
+        <span *ngIf="editorState === EditorState.REFRESHING; else notRefreshing">
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
         </span>
-        <span *ngIf="editorState !== EditorState.REFRESHING"
-            ><fa-icon [icon]="['fas', 'sync']"></fa-icon> <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span></span
-        >
+        <ng-template #notRefreshing>
+            <fa-icon [icon]="['fas', 'sync']"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span>
+        </ng-template>
     </button>
     <button
         id="submit_button"
@@ -49,8 +55,11 @@
         (click)="commit()"
         data-toggle="tooltip"
         data-placement="left"
-        title="Stage, commit, push, build and test your changes."
+        title="{{ 'artemisApp.editor.submitDescription' | artemisTranslate }}"
     >
-        <span><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="artemisApp.editor.submit">Submit</span></span>
+        <span>
+            <fa-icon [icon]="['far', 'play-circle']"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.submit">Submit</span>
+        </span>
     </button>
 </ng-template>

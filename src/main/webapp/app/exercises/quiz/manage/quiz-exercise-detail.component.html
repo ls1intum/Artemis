@@ -249,7 +249,7 @@
                                     type="text"
                                     placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
                                     class="form-control flex-fill"
-                                    name="notificationtText"
+                                    name="notificationText"
                                     id="field_notification_text"
                                     [(ngModel)]="notificationText"
                                 />
@@ -266,7 +266,7 @@
                                     <p
                                         *ngIf="(reason.translateValues | json) != '{}'"
                                         jhiTranslate="{{ reason.translateKey }}"
-                                        [translateValues]="{ index: reason.translateValues.index }"
+                                        [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
                                     ></p>
                                     <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
                                 </div>

@@ -13,7 +13,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ProgrammingAssessmentManualResultService } from '../manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
+import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 
@@ -75,7 +75,6 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
                 this.exercise = exercise;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
-                this.setPermissions();
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             });
     }
@@ -132,13 +131,6 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
             return `artemisApp.AssessmentType.${result.assessmentType}`;
         }
         return 'artemisApp.AssessmentType.null';
-    }
-    private setPermissions() {
-        if (this.exercise.course) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-        } else {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
-        }
     }
 
     /**

@@ -48,8 +48,8 @@ public class AutomaticTextFeedbackService {
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
 
-            // if TextBlock is part of a cluster, we try to find an existing Feedback Element
-            if (cluster != null) {
+            // if TextBlock is part of a cluster and the cluster is not disabled, we try to find an existing Feedback Element
+            if (cluster != null && !cluster.isDisabled()) {
                 // Find all Feedbacks for other Blocks in Cluster.
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
                 final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackRepository.getFeedbackForTextExerciseInCluster(cluster);
@@ -69,8 +69,18 @@ public class AutomaticTextFeedbackService {
                         String originBlockReference = mostSimilarBlockInClusterWithFeedback.get().getId();
                         Long originSubmissionReference = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
                         Long originparticipationReference = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
-                        return new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
+
+                        Feedback feedback = new Feedback().reference(block.getId()).credits(similarFeedback.getCredits())
                                 .suggestedFeedbackOrigin(originBlockReference, originSubmissionReference, originparticipationReference).type(FeedbackType.AUTOMATIC);
+
+                        if (similarFeedback.getGradingInstruction() != null) {
+                            feedback.setGradingInstruction(similarFeedback.getGradingInstruction());
+                        }
+                        else {
+                            feedback.setDetailText(similarFeedback.getDetailText());
+                        }
+
+                        return feedback;
                     }
                 }
             }

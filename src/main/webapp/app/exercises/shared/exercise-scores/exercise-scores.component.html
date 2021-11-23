@@ -161,10 +161,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a
-                            *ngIf="exercise.teamMode; else defaultMode"
-                            [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'teams', value.team.id]"
-                        >
+                        <a *ngIf="exercise.teamMode; else defaultMode" [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.team.id]">
                             {{ value.team.shortName }}
                         </a>
                         <ng-template #defaultMode>
@@ -271,7 +268,7 @@
                             Online editor
                         </a>
                         <a
-                            *ngIf="exercise.course && newManualResultAllowed"
+                            *ngIf="exercise.course && (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor))"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
@@ -281,7 +278,7 @@
                         <a
                             *ngIf="
                                 exercise.exerciseGroup &&
-                                newManualResultAllowed &&
+                                (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor)) &&
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
                                 exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                             "

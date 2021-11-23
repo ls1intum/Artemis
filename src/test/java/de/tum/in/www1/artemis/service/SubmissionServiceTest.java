@@ -1,28 +1,33 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,6 +42,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
 
     private User student1;
 
@@ -77,10 +85,10 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(2, 2, 0, 1);
+        List<User> users = database.addUsers(3, 2, 0, 1);
         student1 = users.get(0);
-        tutor1 = users.get(2);
-        tutor2 = users.get(3);
+        tutor1 = users.get(3);
+        tutor2 = users.get(4);
 
         Course course = database.createCourse();
         Exam exam = database.addExam(course);
@@ -128,7 +136,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         userRepository.save(student1);
         Optional<ResponseEntity<Submission>> result = submissionService.checkSubmissionAllowance(examTextExercise, null, student1);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get()).isEqualTo(forbidden());
+        assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     private void queryTestingBasics(Exercise exercise) {
@@ -175,7 +183,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testProgrammingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
 
         submission1 = new ProgrammingSubmission();
@@ -199,7 +207,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessment() {
         submission1 = new FileUploadSubmission();
         submission2 = new FileUploadSubmission();
@@ -221,7 +229,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessmentWithoutSubmission() {
         // setup
         queryTestingBasics(this.examFileUploadExercise);
@@ -242,7 +250,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -264,7 +272,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithoutLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -302,7 +310,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -334,7 +342,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithoutLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -365,7 +373,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -401,7 +409,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -424,7 +432,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithoutLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -462,7 +470,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -494,7 +502,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithoutLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -525,7 +533,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -558,4 +566,100 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(submissionListTutor2CorrectionRound1.get(0)).isEqualTo(submission1);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetSubmissionsWithComplaintsForExerciseAsInstructor() {
+        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, "student3");
+        // noinspection unused
+        var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
+        var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "instructor1");
+        var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
+        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2", ComplaintType.COMPLAINT);
+        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3", ComplaintType.COMPLAINT);
+
+        List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
+
+        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
+        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+
+        assertThat(dtoList.size()).isEqualTo(2);
+        assertThat(complaintsFromDTO.size()).isEqualTo(2);
+        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintSameTutor, submissionWithComplaintOtherTutor));
+
+        dtoList.forEach(dto -> {
+            if (dto.submission().equals(submissionWithComplaintSameTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student2");
+            }
+            else if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student3");
+            }
+            else {
+                fail("Unreachable statement");
+            }
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetSubmissionsWithComplaintsForExerciseAsTutor() {
+        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, "student3");
+        // noinspection unused
+        var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
+        var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "tutor1");
+        var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
+        database.addComplaintToSubmission(submissionWithComplaintSameTutor, "student2", ComplaintType.COMPLAINT);
+        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, "student3", ComplaintType.COMPLAINT);
+
+        List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
+
+        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
+        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+
+        assertThat(dtoList.size()).isEqualTo(1);
+        assertThat(complaintsFromDTO.size()).isEqualTo(1);
+        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintOtherTutor));
+        dtoList.forEach(dto -> {
+            if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student3");
+            }
+            else {
+                fail("Unreachable statement");
+            }
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetSubmissionsWithMoreFeedbackRequestsForExerciseAsTutor() {
+        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, "student3");
+        // noinspection unused
+        var submissionWithoutRequest = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), "tutor2");
+        var submissionWithRequestSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), "tutor1");
+        var submissionWithRequestOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), "tutor2");
+        database.addComplaintToSubmission(submissionWithRequestSameTutor, "student2", ComplaintType.MORE_FEEDBACK);
+        database.addComplaintToSubmission(submissionWithRequestOtherTutor, "student3", ComplaintType.MORE_FEEDBACK);
+
+        List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(examTextExercise.getId());
+
+        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
+        List<Complaint> requestsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+
+        assertThat(dtoList.size()).isEqualTo(1);
+        assertThat(requestsFromDTO.size()).isEqualTo(1);
+        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithRequestSameTutor));
+        dtoList.forEach(dto -> {
+            if (dto.submission().equals(submissionWithRequestSameTutor)) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo("student2");
+            }
+            else {
+                fail("Unreachable statement");
+            }
+        });
+    }
 }

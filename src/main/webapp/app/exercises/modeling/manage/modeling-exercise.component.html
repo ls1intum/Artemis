@@ -1,30 +1,35 @@
 <div>
-    <h4>
-        <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
-        <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
-        <button
-            id="modeling-exercise-import-button"
-            *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-end jh-create-entity create-modeling-exercise me-1"
-            (click)="openImportModal()"
-        >
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
-        </button>
+    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
+        <span class="mb-1 me-auto">
+            <span *ngIf="course && !showHeading">{{ course.title }} - </span>
+            <span *ngIf="modelingExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredModelingExercises) }} / </span>
+            <span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
+            <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
+        </span>
+
         <a
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-end jh-create-entity create-modeling-exercise me-1"
+            class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create new Modeling Exercise</span>
         </a>
+        <button
+            id="modeling-exercise-import-button"
+            *ngIf="course && course.isAtLeastEditor"
+            class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
+        </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="modelingExercises && modelingExercises.length > 0">
+    <div class="table-responsive" *ngIf="modelingExercises && filteredModelingExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -48,7 +53,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let modelingExercise of modelingExercises; trackBy: trackId">
+                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
@@ -100,7 +105,7 @@
                             </a>
                             <a
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'teams']"
+                                [routerLink]="['/course-management', modelingExercise.course?.id, 'exercises', modelingExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm me-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>

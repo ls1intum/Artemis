@@ -8,7 +8,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs';

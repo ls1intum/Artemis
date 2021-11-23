@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.*;
 
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelElement;
@@ -28,6 +29,8 @@ public class FeedbackSelector {
         Map<Double, Integer> creditCount = new HashMap<>();
         // collects the feedback texts of the feedback elements that have the same credits assigned, i.e. maps "credits -> set of feedback text" for every unique credit number
         Map<Double, Set<String>> creditFeedbackText = new HashMap<>();
+        // collects associated grading instruction of the feedback that have the same credits assigned, i.e. maps "credits -> GradingInstruction" for every unique credit number
+        Map<Double, GradingInstruction> creditGradingInstruction = new HashMap<>();
 
         for (Feedback existingFeedback : feedbackList) {
             double credits = existingFeedback.getCredits();
@@ -38,6 +41,9 @@ public class FeedbackSelector {
                 feedbackTextForCredits.add(existingFeedback.getText());
                 creditFeedbackText.put(credits, feedbackTextForCredits);
             }
+            if (existingFeedback.getGradingInstruction() != null) {
+                creditGradingInstruction.put(credits, existingFeedback.getGradingInstruction());
+            }
         }
 
         double maxCount = creditCount.values().stream().mapToInt(i -> i).max().orElse(0);
@@ -45,6 +51,7 @@ public class FeedbackSelector {
         double maxCountCredits = creditCount.entrySet().stream().filter(entry -> entry.getValue() == maxCount).map(Map.Entry::getKey).findFirst().orElse(0.0);
         Set<String> feedbackTextForMaxCountCredits = creditFeedbackText.getOrDefault(maxCountCredits, new HashSet<>());
         String text = feedbackTextForMaxCountCredits.stream().filter(Objects::nonNull).max(Comparator.comparingInt(String::length)).orElse("");
+        GradingInstruction gradingInstruction = creditGradingInstruction.getOrDefault(maxCountCredits, new GradingInstruction());
 
         if (confidence < CompassConfiguration.ELEMENT_CONFIDENCE_THRESHOLD) {
             return null;
@@ -53,10 +60,15 @@ public class FeedbackSelector {
         Feedback feedback = new Feedback();
         feedback.setCredits(roundCredits(maxCountCredits));
         feedback.setPositive(feedback.getCredits() >= 0);
-        feedback.setText(text);
         feedback.setReference(buildReferenceString(modelElement));
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setResult(result);
+        if (gradingInstruction.getId() != null) {
+            feedback.setGradingInstruction(gradingInstruction);
+        }
+        else {
+            feedback.setText(text);
+        }
         return feedback;
     }
 
@@ -74,15 +86,14 @@ public class FeedbackSelector {
     /**
      * Round credits to avoid machine precision errors, make the credits more readable and give a slight advantage which makes 100% scores easier reachable.
      * <p>
-     * Positive values > [x.0, x.15[ gets rounded to x.0 > [x.15, x.65[ gets rounded to x.5 > [x.65, x + 1[ gets rounded to x + 1
+     * Positive values > [x.0, x.15) gets rounded to x.0 > [x.15, x.65) gets rounded to x.5 > [x.65, x + 1) gets rounded to x + 1
      * <p>
-     * Negative values > [-x - 1, -x.85[ gets rounded to -x - 1 > [-x.85, -x.35[ gets rounded to -x.5 > [-x.35, -x.0[ gets rounded to -x.0
+     * Negative values > [-x - 1, -x.85) gets rounded to -x - 1 > [-x.85, -x.35) gets rounded to -x.5 > [-x.35, -x.0) gets rounded to -x.0
      *
      * @param credits to round
      * @return the rounded compass credits
      */
     private static double roundCredits(double credits) {
-
         BigDecimal point = new BigDecimal(String.valueOf(credits));
         boolean isNegative = point.doubleValue() < 0;
         // get the fractional part of the entry score and subtract 0.15 (e.g. 1.5 -> 0.35 or -1.5 -> -0.65)
@@ -98,7 +109,7 @@ public class FeedbackSelector {
         }
 
         if (fractionalPart >= 0.5) {
-            point = point.add(new BigDecimal(String.valueOf(1)));
+            point = point.add(BigDecimal.ONE);
         }
         else if (fractionalPart >= 0) {
             point = point.add(new BigDecimal(String.valueOf(0.5)));

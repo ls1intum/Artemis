@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 
@@ -49,6 +50,24 @@ public class RatingService {
     }
 
     /**
+     * Get number of ratings for the "courseId" Course
+     * @param courseId - Id of the course that the ratings are fetched for
+     * @return number of Ratings given for exercises of this course
+     */
+    public long countRatingsByCourse(long courseId) {
+        return ratingRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    /**
+     * Count all ratings for the "exerciseId" Exerise
+     * @param exerciseId - Id of the exercise that the ratings are fetched for
+     * @return number of ratings for the exercise
+     */
+    public long countRatingsByExerciseId(long exerciseId) {
+        return ratingRepository.countByResult_Participation_Exercise_Id(exerciseId);
+    }
+
+    /**
      * Persist a new Rating
      *
      * @param resultId    - Id of the rating that should be persisted
@@ -74,5 +93,15 @@ public class RatingService {
         Rating updatedRating = this.ratingRepository.findRatingByResultId(resultId).orElseThrow();
         updatedRating.setRating(ratingValue);
         return ratingRepository.save(updatedRating);
+    }
+
+    /**
+     * Computes rating information for the given exercise.
+     *
+     * @param exerciseId - id of the exercise
+     * @return the rating information of the exercise
+     */
+    public ExerciseRatingCount averageRatingByExerciseId(Long exerciseId) {
+        return ratingRepository.averageRatingByExerciseId(exerciseId);
     }
 }

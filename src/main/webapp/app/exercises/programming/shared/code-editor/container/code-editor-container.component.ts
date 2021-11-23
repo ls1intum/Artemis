@@ -1,7 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { fromPairs, toPairs, uniq } from 'lodash/fp';
-import { isEmpty as _isEmpty } from 'lodash-es';
+import { fromPairs, toPairs, uniq, isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -25,6 +24,7 @@ import { CodeEditorAceComponent, Annotation } from 'app/exercises/programming/sh
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-code-editor-container',
@@ -67,6 +67,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onUpdateFeedback = new EventEmitter<Feedback[]>();
     @Output()
     onFileLoad = new EventEmitter<string>();
+    @Input()
+    course?: Course;
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 

@@ -9,10 +9,11 @@ import { StudentWithTeam } from 'app/entities/team.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { downloadFile } from 'app/shared/util/download.util';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import dayjs from 'dayjs';
 import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
+import { EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -220,8 +221,11 @@ export class TeamService implements ITeamService {
      * @param {Course} course - Course which to find
      * @param {Team} team - Team for which to find exercises and participations (by team short name)
      */
+    // TODO: Move this method to the CourseManagementService and delete the only here used duplicated setAccessRightsCourseEntityResponseType() helper method
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
-        return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
+        return this.http
+            .get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)));
     }
 
     /**
@@ -322,5 +326,12 @@ export class TeamService implements ITeamService {
             createdDate: dayjs(team.createdDate).isValid() ? dayjs(team.createdDate).toJSON() : undefined,
             lastModifiedDate: team.lastModifiedDate && dayjs(team.lastModifiedDate).isValid() ? dayjs(team.lastModifiedDate).toJSON() : undefined,
         });
+    }
+
+    private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.accountService.setAccessRightsForCourse(res.body);
+        }
+        return res;
     }
 }

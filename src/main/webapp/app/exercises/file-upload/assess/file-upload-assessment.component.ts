@@ -29,6 +29,8 @@ import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -44,6 +46,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     result?: Result;
     unreferencedFeedback: Feedback[] = [];
     exercise?: FileUploadExercise;
+    course?: Course;
     exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -191,6 +194,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
+        this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
@@ -470,7 +474,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
     }
 
     private onError(error: string) {

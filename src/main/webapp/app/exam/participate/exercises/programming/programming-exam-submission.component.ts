@@ -4,7 +4,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CommitState, DomainType, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import dayjs from 'dayjs';
@@ -28,7 +28,6 @@ import {
         CodeEditorBuildLogService,
         CodeEditorRepositoryFileService,
         CodeEditorRepositoryService,
-        DomainService,
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
@@ -49,6 +48,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     hasSubmittedOnce = false;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly getCourseFromExercise = getCourseFromExercise;
 
     getSubmission() {
         if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {

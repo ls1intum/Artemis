@@ -1,35 +1,37 @@
 <div>
-    <h4>
-        <span *ngIf="course && !showHeading">{{ course.title }} - </span
-        ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
-        <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
+    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
+        <span class="mb-1 me-auto">
+            <span *ngIf="course && !showHeading"> {{ course.title }} - </span>
+            <span *ngIf="programmingExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredProgrammingExercises) }} / </span>
+            <span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
+            <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
+        </span>
+
         <ng-container *jhiExtensionPoint="overrideGenerateAndImportButton">
-            <button
-                *ngIf="course && course.isAtLeastEditor"
-                id="jh-import-entity"
-                class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
-                [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                (click)="openImportModal()"
-            >
-                <fa-icon [icon]="'plus'"></fa-icon>
-                <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
-            </button>
             <a
                 *ngIf="course && course.isAtLeastEditor"
                 id="jh-create-entity"
-                class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
+                class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
             >
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
             </a>
+            <button
+                *ngIf="course && course.isAtLeastEditor"
+                id="jh-import-entity"
+                class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
+                [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                (click)="openImportModal()"
+            >
+                <fa-icon [icon]="'plus'"></fa-icon>
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
+            </button>
         </ng-container>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="row"></div>
-    <br />
-    <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
+    <div class="table-responsive" *ngIf="programmingExercises && filteredProgrammingExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -64,7 +66,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
+                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
@@ -209,7 +211,7 @@
                                 </a>
                                 <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'teams']"
+                                    [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
@@ -322,6 +324,10 @@
                 <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportSubmissions.title">Download Repos</span>
             </button>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
+            <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
+                <fa-icon [icon]="'check-double'"></fa-icon>
+                <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+            </button>
         </div>
     </div>
 </div>

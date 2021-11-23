@@ -3,13 +3,13 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
 import { Result } from 'app/entities/result.model';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -155,7 +155,7 @@ export class ResultService implements IResultService {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
         link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `${csvFileName}.csv`);
+        link.setAttribute('download', `${csvFileName}`);
         document.body.appendChild(link); // Required for FF
         link.click();
     }

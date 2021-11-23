@@ -10,7 +10,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
-import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-button.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -24,6 +23,7 @@ import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { StudentDTO } from 'app/entities/student-dto.model';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
@@ -51,7 +51,7 @@ describe('ExamStudentsComponent', () => {
             imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
             declarations: [
                 ExamStudentsComponent,
-                MockComponent(StudentsExamImportButtonComponent),
+                MockComponent(UsersImportButtonComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(AlertComponent),
                 MockDirective(TranslateDirective),

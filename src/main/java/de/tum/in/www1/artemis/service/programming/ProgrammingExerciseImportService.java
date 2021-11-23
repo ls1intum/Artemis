@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
@@ -59,11 +60,14 @@ public class ProgrammingExerciseImportService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            SubmissionPolicyRepository submissionPolicyRepository) {
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -77,6 +81,7 @@ public class ProgrammingExerciseImportService {
         this.userRepository = userRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     /**
@@ -125,6 +130,8 @@ public class ProgrammingExerciseImportService {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
             newExercise.setTeamAssignmentConfig(null);
         }
+
+        importSubmissionPolicy(newExercise);
 
         // Re-adding auxiliary repositories
         List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
@@ -311,6 +318,21 @@ public class ProgrammingExerciseImportService {
             staticCodeAnalysisCategoryRepository.save(categoryCopy);
             return categoryCopy;
         }).collect(Collectors.toSet()));
+    }
+
+    /**
+     * Persists the submission policy of the new exercise. We ensure that the submission policy does not
+     * have any id or programming exercise set.
+     *
+     * @param newExercise containing the submission policy to persist
+     */
+    private void importSubmissionPolicy(ProgrammingExercise newExercise) {
+        if (newExercise.getSubmissionPolicy() != null) {
+            SubmissionPolicy newSubmissionPolicy = newExercise.getSubmissionPolicy();
+            newSubmissionPolicy.setId(null);
+            newSubmissionPolicy.setProgrammingExercise(null);
+            newExercise.setSubmissionPolicy(submissionPolicyRepository.save(newSubmissionPolicy));
+        }
     }
 
     /**

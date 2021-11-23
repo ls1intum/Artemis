@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

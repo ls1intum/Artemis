@@ -12,7 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
@@ -85,6 +85,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             this.exercise = quizExercise;
         }
         this.exerciseCategories = this.exercise.categories || [];
+        this.exercise.course = this.course;
     }
 
     ngOnDestroy() {

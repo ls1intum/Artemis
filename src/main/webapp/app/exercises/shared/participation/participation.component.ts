@@ -9,7 +9,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
+import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -125,7 +125,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
-                this.hasAccessRights();
+                this.isAdmin = this.accountService.isAdmin();
             });
         });
     }
@@ -133,15 +133,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     formatDate(date: dayjs.Dayjs | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
         return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
-    }
-
-    hasAccessRights() {
-        if (this.exercise.course) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
-        } else if (this.exercise.exerciseGroup) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup.exam?.course!);
-        }
-        this.isAdmin = this.accountService.isAdmin();
     }
 
     updateParticipationFilter(newValue: FilterProp) {
