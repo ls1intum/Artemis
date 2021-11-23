@@ -34,7 +34,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 1, 1, 1);
+        database.addUsers(3, 1, 1, 1);
     }
 
     @AfterEach
@@ -163,7 +163,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void sendStatement() throws Exception {
+    public void sendStatementForStudentA() throws Exception {
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         var notification = new SingleUserNotification();
         notification.setRecipient(database.getUserByLogin("student1"));
@@ -175,6 +175,39 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         request.put("/api/plagiarism-cases/" + plagiarismComparison.getId() + "/statement", statement, HttpStatus.OK);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getStatementA()).as("should update statement").isEqualTo("test statement");
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void sendStatementForStudentB() throws Exception {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        var notification = new SingleUserNotification();
+        notification.setRecipient(database.getUserByLogin("student2"));
+        plagiarismComparison.setNotificationB(notification);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+        var statement = new PlagiarismResource.PlagiarismStatementDTO();
+        statement.statement = "test statement";
+
+        request.put("/api/plagiarism-cases/" + plagiarismComparison.getId() + "/statement", statement, HttpStatus.OK);
+        var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        assertThat(comparison.getStatementB()).as("should update statement").isEqualTo("test statement");
+    }
+
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    public void sendStatementForUnknownStudent() throws Exception {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        var notificationA = new SingleUserNotification();
+        notificationA.setRecipient(database.getUserByLogin("student1"));
+        plagiarismComparison.setNotificationA(notificationA);
+        var notificationB = new SingleUserNotification();
+        notificationB.setRecipient(database.getUserByLogin("student2"));
+        plagiarismComparison.setNotificationB(notificationA);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+        var statement = new PlagiarismResource.PlagiarismStatementDTO();
+        statement.statement = "test statement";
+
+        request.put("/api/plagiarism-cases/" + plagiarismComparison.getId() + "/statement", statement, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -195,14 +228,33 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void sendPlagiarismNotificationForStudentB() throws Exception {
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
         PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
+        submissionA.setStudentLogin("student1");
         submissionB.setStudentLogin("student2");
-        plagiarismComparison.setSubmissionA(submissionB);
+        plagiarismComparison.setSubmissionA(submissionA);
+        plagiarismComparison.setSubmissionB(submissionB);
         plagiarismComparisonRepository.save(plagiarismComparison);
         var notification = new PlagiarismNotificationDTO("student2", plagiarismComparison.getId(), "test message");
 
         var returnedNotification = request.putWithResponseBody("/api/plagiarism-cases/notification", notification, Notification.class, HttpStatus.OK);
         assertThat(returnedNotification.getText()).as("Notification for student should be saved").isEqualTo(notification.getInstructorMessage());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void sendPlagiarismNotificationForUnknownStudent() throws Exception {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
+        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
+        submissionA.setStudentLogin("student1");
+        submissionB.setStudentLogin("student2");
+        plagiarismComparison.setSubmissionA(submissionA);
+        plagiarismComparison.setSubmissionB(submissionB);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+        var notification = new PlagiarismNotificationDTO("student3", plagiarismComparison.getId(), "test message");
+
+        request.put("/api/plagiarism-cases/notification", notification, HttpStatus.NOT_FOUND);
     }
 
     @Test
