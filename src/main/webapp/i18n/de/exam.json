@@ -320,7 +320,7 @@
             "exerciseGroup": {
                 "create": "Neue Aufgabengruppe erstellen",
                 "update": "Aufgabengruppe bearbeiten",
-                "type": "Type",
+                "type": "Typ",
                 "title": "Titel",
                 "points": "Punktzahl",
                 "mandatory": "Verpflichtend",
