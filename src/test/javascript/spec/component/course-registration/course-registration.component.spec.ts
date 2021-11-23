@@ -21,6 +21,7 @@ describe('CourseRegistrationComponent', () => {
     const course1 = {
         id: 1,
     } as Course;
+    
     const course2 = {
         id: 2,
     };
