@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -16,7 +16,6 @@ import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
-import { stub } from 'sinon';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -43,12 +42,12 @@ describe('ModelingEditorComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingEditorComponent);
-                stub(TestBed.inject(GuidedTourService), 'checkModelingComponent').returns(of());
+                jest.spyOn(TestBed.inject(GuidedTourService), 'checkModelingComponent').mockReturnValue(of());
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('ngAfterViewInit', () => {
@@ -150,5 +149,83 @@ describe('ModelingEditorComponent', () => {
         // test
         const umlElement = fixture.componentInstance.elementWithMethod('method', model);
         expect(umlElement).toBeTruthy();
+    });
+
+    it('should not show save indicator without savedStatus set', () => {
+        fixture.componentInstance.savedStatus = undefined;
+        fixture.componentInstance.readOnly = true;
+        fixture.detectChanges();
+        fixture.componentInstance.ngAfterViewInit();
+
+        const statusHint = fixture.debugElement.query(By.css('.status-hint'));
+        expect(statusHint).toBe(null);
+    });
+
+    it('should not show save indicator in read only mode', () => {
+        fixture.componentInstance.savedStatus = { isSaving: false, isChanged: false };
+        fixture.componentInstance.readOnly = true;
+        fixture.detectChanges();
+        fixture.componentInstance.ngAfterViewInit();
+
+        const statusHint = fixture.debugElement.query(By.css('.status-hint'));
+        expect(statusHint).toBe(null);
+    });
+
+    it('should not show save indicator in fullscreen mode', () => {
+        fixture.componentInstance.savedStatus = { isSaving: false, isChanged: false };
+        jest.spyOn(fixture.componentInstance, 'isFullScreen', 'get').mockReturnValue(true);
+        fixture.detectChanges();
+        fixture.componentInstance.ngAfterViewInit();
+
+        const statusHint = fixture.debugElement.query(By.css('.status-hint'));
+        expect(statusHint).toBe(null);
+    });
+
+    it('should show green checkmark save indicator if everything is saved', () => {
+        fixture.componentInstance.savedStatus = { isSaving: false, isChanged: false };
+        fixture.detectChanges();
+        fixture.componentInstance.ngAfterViewInit();
+
+        const statusHint = fixture.debugElement.query(By.css('.status-hint.text-success'));
+        expect(statusHint).not.toBe(null);
+
+        const icon = statusHint.query(By.css('fa-icon'));
+        expect(icon).not.toBe(null);
+        expect(icon.attributes['ng-reflect-icon']).toBe('fas,check');
+
+        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
+        expect(spanText).toBe('All changes saved');
+    });
+
+    it('should show yellow times save indicator if something is unsaved', () => {
+        fixture.componentInstance.savedStatus = { isSaving: false, isChanged: true };
+        fixture.detectChanges();
+        fixture.componentInstance.ngAfterViewInit();
+
+        const statusHint = fixture.debugElement.query(By.css('.status-hint.text-warning'));
+        expect(statusHint).not.toBe(null);
+
+        const icon = statusHint.query(By.css('fa-icon'));
+        expect(icon).not.toBe(null);
+        expect(icon.attributes['ng-reflect-icon']).toBe('fas,times');
+
+        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
+        expect(spanText).toBe('Unsaved changes');
+    });
+
+    it('should show saving indicator if it is currently saving', () => {
+        fixture.componentInstance.savedStatus = { isSaving: true, isChanged: true };
+        fixture.detectChanges();
+        fixture.componentInstance.ngAfterViewInit();
+
+        const statusHint = fixture.debugElement.query(By.css('.status-hint.text-info'));
+        expect(statusHint).not.toBe(null);
+
+        const icon = statusHint.query(By.css('fa-icon'));
+        expect(icon).not.toBe(null);
+        expect(icon.attributes['ng-reflect-icon']).toBe('fas,circle-notch');
+
+        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
+        expect(spanText).toBe('Saving ...');
     });
 });
