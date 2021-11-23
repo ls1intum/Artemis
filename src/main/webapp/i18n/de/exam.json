@@ -37,7 +37,7 @@
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
-            "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausuren Übersicht des Kurses auf diese Klausur klickst.",
+            "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
             "points": "Punkte",
@@ -163,7 +163,7 @@
             "notSynced": "Aufgabe nicht gespeichert",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
             "notSubmitted": "Aufgabe nicht eingereicht",
-            "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind",
+            "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig abgeben",
@@ -215,8 +215,8 @@
             "evaluateQuizExerciseSuccess": "{{number}} Quiz-Aufgaben erfolgreich ausgewertet!",
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Alle Klausuren der Studierenden überprüft und die nicht eingereichten oder leeren Modellierungs- und Textaufgaben mit 0 Punkten bewertet.",
-            "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet",
-            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Wenn Sie fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
+            "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet.",
+            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
@@ -232,7 +232,7 @@
             "confirmDialog": {
                 "titleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
                 "titleToSubmitted": "Setze Studierenden-Klausur auf abgegeben",
-                "question": "Sind Sie sich sicher, dass Sie den Abgabestatus ändern wollen?",
+                "question": "Soll der Abgabestatus wirklich geändert werden?",
                 "submitText": "Das Abgabedatum wird auf diesen Zeitpunkt gesetzt, und der Abgabestatus wird auf 'Ja' gesetzt. Die Abgabe kann auch wieder rückgängig gemacht werden.\n",
                 "unSubmitText": "Das Abgabedatum wird gelöscht und der Abgabestatus wird auf 'Nein' gesetzt.",
                 "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
@@ -262,7 +262,7 @@
             "studentReviewEnabled": "Klausureinsicht ist offen",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
-                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."
             },
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
@@ -335,7 +335,7 @@
                 "addFileUploadExercise": "Datei-Upload-Aufgabe hinzufügen",
                 "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
-                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
+                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden."
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -347,7 +347,7 @@
             },
             "checklist": {
                 "title": "Checkliste für die Durchführung von Prüfungen",
-                "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Artemis Klausur informieren:",
+                "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Klausur in Artemis informieren:",
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Aufgabe",
                 "description": "Beschreibung",
@@ -355,7 +355,7 @@
                 "goTo": "Seite",
                 "tableItem": {
                     "register": "Registrieren der Studierenden zur Klausur",
-                    "exerciseGroups": "Erstellen Sie mindestens eine Aufgaben Gruppe mit mindestens einer Aufgabe",
+                    "exerciseGroups": "Erstellen Sie mindestens eine Aufgabengruppe mit mindestens einer Aufgabe",
                     "generateStudentExams": "Generieren aller Klausuren",
                     "prepareExerciseStart": "Aufgabenstart vorbereiten",
                     "examDetails": "Ausfüllen aller Klausurdetails",
@@ -368,7 +368,7 @@
                     "exportResults": "Exportiere die Klausurergebnisse"
                 },
                 "descriptionItem": {
-                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder Sie können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal anmelden",
+                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
                     "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
                     "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
@@ -390,7 +390,7 @@
                     "totalpointspossible": "Gesamtpunktzahl der Klausur kann mit der aktuellen Aufgabenkonfiguration erreicht werden",
                     "hasExercises": "hat",
                     "zeroexercises": "0",
-                    "exerciseStart": "Aufgaben Gruppe",
+                    "exerciseStart": "Aufgabengruppe",
                     "exercise": "Aufgabenvariante.",
                     "exercises": "Aufgabenvarianten.",
                     "leastonestudent": "Mindestens ein Studierender angemeldet zur Klausur",
