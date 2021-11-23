@@ -62,7 +62,7 @@ describe('CourseRegistrationComponent', () => {
         expect(findAllToRegisterStub).toHaveBeenCalledTimes(1);
     }));
 
-    it('should  register for course', fakeAsync(() => {
+    it('should register for course', fakeAsync(() => {
         component.registerForCourse(1);
         tick();
 
