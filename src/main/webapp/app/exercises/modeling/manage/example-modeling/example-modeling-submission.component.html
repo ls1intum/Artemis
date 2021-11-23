@@ -50,8 +50,8 @@
                 </fa-layers>
             </div>
 
-            <!-- extra logic for the display warning icon -->
-            <div class="pe-5" style="display: inline-block">
+            <!-- Extra logic for displaying warning icon. It should only be shown for tutors that are assessing example submissions -->
+            <div *ngIf="toComplete" class="pe-5" style="display: inline-block">
                 <span>{{ legend[3].text | artemisTranslate }}</span>
                 <fa-layers>
                     <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
