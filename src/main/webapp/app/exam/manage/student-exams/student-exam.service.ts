@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 
 type EntityResponseType = HttpResponse<StudentExam>;

@@ -14,7 +14,6 @@ import { SortableComponent } from 'ng2-dnd';
 import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 
 chai.use(sinonChai);
@@ -154,12 +153,9 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     });
 
     it('should react to answer option changes', () => {
-        const markdownSpy = sinon.spy(ArtemisMarkdownService, 'parseTextHintExplanation');
-
         component.onAnswerOptionChange('solution[wrong]answer', answer1);
         fixture.detectChanges();
 
-        expect(markdownSpy).to.have.been.calledOnce;
         expect(component.question.answerOptions!.length).to.equal(1);
 
         const answer = component.question.answerOptions![0];
@@ -167,36 +163,29 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     });
 
     it('should generate answer markdown', () => {
-        const generatedText = 'explanation';
-        const markdownService = TestBed.inject(ArtemisMarkdownService);
-        const markdownStub = sinon.stub(markdownService, 'generateTextHintExplanation').returns(generatedText);
+        const generatedText = 'answer';
 
         const result = component.generateAnswerMarkdown(answer1);
         fixture.detectChanges();
 
-        expect(markdownStub).to.have.been.called;
         expect(result).to.equal(IncorrectOptionCommand.identifier + ' ' + generatedText);
     });
 
     it('should react to question changes', () => {
         const questionText = 'new text';
-        const markdownSpy = sinon.spy(ArtemisMarkdownService, 'parseTextHintExplanation');
 
         component.onQuestionChange(questionText);
         fixture.detectChanges();
 
-        expect(markdownSpy).to.have.been.called;
+        expect(component.question.text).to.equal(questionText);
     });
 
     it('should get question text', () => {
-        const fakeText = 'fake';
-        const markdownService = TestBed.inject(ArtemisMarkdownService);
-        const markdownStub = sinon.stub(markdownService, 'generateTextHintExplanation').returns(fakeText);
+        const fakeText = '';
 
         const text = component.getQuestionText(component.question);
         fixture.detectChanges();
 
-        expect(markdownStub).to.have.been.called;
         expect(text).to.equal(fakeText);
     });
 });

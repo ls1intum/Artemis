@@ -13,7 +13,7 @@ import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instr
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
