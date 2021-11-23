@@ -1,33 +1,100 @@
 <ng-container *ngIf="course">
-    <h3>
-        <span
-            >{{ course.title }} - {{ quizExercisesCount + programmingExercisesCount + modelingExercisesCount + fileUploadExercisesCount + textExercisesCount }}
-            {{ 'artemisApp.course.exercises' | artemisTranslate }}</span
-        >
-    </h3>
+    <div class="row">
+        <div class="col">
+            <h3>
+                <span>
+                    {{ course.title }}
+                    - {{ getExerciseCount() }}
+                    {{ 'artemisApp.course.exercises' | artemisTranslate }}
+                </span>
+            </h3>
+        </div>
+        <div class="col text-end align-self-center">
+            <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
+                {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
+            </button>
+        </div>
+    </div>
+
+    <jhi-course-management-exercises-search *ngIf="showSearch" (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
+    <div *ngIf="showSearch && getFilteredExerciseCount() == 0 && !exerciseFilter.isEmpty()" class="alert alert-secondary" role="alert">
+        {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
+    </div>
     <jhi-alert></jhi-alert>
-    <jhi-course-exercise-card headingJhiTranslate="artemisApp.course.programmingExercises">
+
+    <jhi-course-exercise-card [hidden]="shouldHideExerciseCard('programming')" headingJhiTranslate="artemisApp.course.programmingExercises">
         <jhi-programming-exercise
-            *jhiExtensionPoint="overrideProgrammingExerciseCard; context: { embedded: true, course: course, exerciseCountCallback: setProgrammingExerciseCount.bind(this) }"
+            *jhiExtensionPoint="
+                overrideProgrammingExerciseCard;
+                context: {
+                    embedded: true,
+                    course: course,
+                    programmingExerciseCountCallback: setProgrammingExerciseCount.bind(this),
+                    exerciseFilter: exerciseFilter,
+                    filteredProgrammingExercisesCountCallback: setFilteredProgrammingExerciseCount.bind(this)
+                }
+            "
             [embedded]="true"
             [course]="course"
+            [exerciseFilter]="exerciseFilter"
             (exerciseCount)="programmingExercisesCount = $event"
+            (filteredExerciseCount)="filteredProgrammingExercisesCount = $event"
         ></jhi-programming-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.quizExercises">
-        <jhi-quiz-exercise [embedded]="true" [course]="course" (exerciseCount)="quizExercisesCount = $event"></jhi-quiz-exercise>
+    <jhi-course-exercise-card
+        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
+        headingJhiTranslate="artemisApp.course.quizExercises"
+        [hidden]="shouldHideExerciseCard('quiz')"
+    >
+        <jhi-quiz-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="quizExercisesCount = $event"
+            (filteredExerciseCount)="filteredQuizExercisesCount = $event"
+        ></jhi-quiz-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.modelingExercises">
-        <jhi-modeling-exercise [embedded]="true" [course]="course" (exerciseCount)="modelingExercisesCount = $event"></jhi-modeling-exercise>
+    <jhi-course-exercise-card
+        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
+        headingJhiTranslate="artemisApp.course.modelingExercises"
+        [hidden]="shouldHideExerciseCard('modeling')"
+    >
+        <jhi-modeling-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="modelingExercisesCount = $event"
+            (filteredExerciseCount)="filteredModelingExercisesCount = $event"
+        ></jhi-modeling-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.textExercises">
-        <jhi-text-exercise [embedded]="true" [course]="course" (exerciseCount)="textExercisesCount = $event"></jhi-text-exercise>
+    <jhi-course-exercise-card
+        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
+        headingJhiTranslate="artemisApp.course.textExercises"
+        [hidden]="shouldHideExerciseCard('text')"
+    >
+        <jhi-text-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="textExercisesCount = $event"
+            (filteredExerciseCount)="filteredTextExercisesCount = $event"
+        ></jhi-text-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.fileUploadExercises">
-        <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
+    <jhi-course-exercise-card
+        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
+        headingJhiTranslate="artemisApp.course.fileUploadExercises"
+        [hidden]="shouldHideExerciseCard('file-upload')"
+    >
+        <jhi-file-upload-exercise
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="fileUploadExercisesCount = $event"
+            (filteredExerciseCount)="filteredFileUploadExercisesCount = $event"
+        ></jhi-file-upload-exercise>
     </jhi-course-exercise-card>
 </ng-container>

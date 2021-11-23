@@ -27,6 +27,20 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/lectures/:lectureId',
                     loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
                 },
+                {
+                    // TODO: check that the LTI integration still works correctly (if not, we should implement it differently)
+                    path: 'courses/:courseId/exercises/:exerciseId',
+                    loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+                },
+                // ===== TEAM ====
+                {
+                    path: 'course-management/:courseId/exercises/:exerciseId/teams',
+                    loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
+                },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/teams',
+                    loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
+                },
                 // ===== COURSE MANAGEMENT =====
                 {
                     path: 'course-management',

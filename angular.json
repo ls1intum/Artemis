@@ -88,8 +88,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "5mb",
-                  "maximumError": "9mb"
+                  "maximumWarning": "3mb",
+                  "maximumError": "4.5mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -136,6 +136,7 @@
   },
   "defaultProject": "artemis",
   "cli": {
+    "analytics": false,
     "packageManager": "npm"
   }
 }
