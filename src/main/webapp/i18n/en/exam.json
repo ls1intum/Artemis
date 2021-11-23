@@ -281,6 +281,7 @@
                 "title": "Test Run Management: ",
                 "setup": "Create a Test Run",
                 "author": "Author",
+                "setWorkingTime": "Set a working time (minutes and seconds):",
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
