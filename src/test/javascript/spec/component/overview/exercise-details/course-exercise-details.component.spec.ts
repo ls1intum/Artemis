@@ -62,6 +62,7 @@ import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-st
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { expect as jestExpect } from '@jest/globals';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -287,11 +288,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample modeling solution', () => {
         comp.showIfSampleSolutionPresent({ ...modelingExercise });
-        expect(comp.sampleSolution).to.not.be.undefined;
-        expect(comp.sampleSolutionUML).to.not.be.undefined;
+        jestExpect(comp.sampleSolution).not.toBe(undefined);
+        jestExpect(comp.sampleSolutionUML).not.toBe(undefined);
 
         comp.showIfSampleSolutionPresent({ ...exercise });
-        expect(comp.sampleSolution).to.be.undefined;
-        expect(comp.sampleSolutionUML).to.be.undefined;
+        jestExpect(comp.sampleSolution).toBe(undefined);
+        jestExpect(comp.sampleSolutionUML).toBe(undefined);
     });
 });
