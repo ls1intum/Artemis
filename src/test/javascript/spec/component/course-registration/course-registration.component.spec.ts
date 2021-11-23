@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { Course } from 'app/entities/course.model';
@@ -14,13 +11,19 @@ import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('CourseRegistrationComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationComponent>;
     let component: CourseRegistrationComponent;
     let courseService: CourseManagementService;
+    let findAllToRegisterStub: jest.SpyInstance;
+    let registerForCourseStub: jest.SpyInstance;
+
+    const course1 = {
+        id: 1,
+    } as Course;
+    const course2 = {
+        id: 2,
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -33,52 +36,38 @@ describe('CourseRegistrationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseRegistrationComponent);
                 component = fixture.componentInstance;
+
                 courseService = TestBed.inject(CourseManagementService);
+                findAllToRegisterStub = jest.spyOn(courseService, 'findAllToRegister').mockReturnValue(of(new HttpResponse({ body: [course1] })));
+                registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
-        fixture.detectChanges();
-        expect(component).to.be.ok;
-    }));
-
-    it('should track course by Id', fakeAsync(() => {
+    it('should track course by Id', () => {
         const indexNumber = 1;
-        const course = new Course();
-        course.id = 1;
-        expect(component.trackCourseById(indexNumber, course)).to.equal(indexNumber);
-    }));
+        expect(component.trackCourseById(indexNumber, course1)).toEqual(indexNumber);
+    });
 
     it('should show registratable courses', fakeAsync(() => {
-        const course1 = new Course();
-        course1.id = 1;
-        const course2 = new Course();
-        course2.id = 2;
-        const fake = sinon.fake.returns(of(new HttpResponse({ body: [course1] })));
         component.courses = [course2];
-        sinon.replace(courseService, 'findAllToRegister', fake);
 
         component.loadAndFilterCourses();
         tick();
 
-        expect(component.coursesToSelect.length).to.equal(1);
+        expect(component.coursesToSelect.length).toEqual(1);
+        expect(findAllToRegisterStub).toHaveBeenCalledTimes(1);
     }));
 
     it('should  register for course', fakeAsync(() => {
-        const course = new Course();
-        course.id = 1;
-
-        const fake = sinon.fake.returns(of(new HttpResponse({ body: new User() })));
-        sinon.replace(courseService, 'registerForCourse', fake);
-
         component.registerForCourse(1);
         tick();
 
-        expect(component.addedSuccessful).to.be.true;
+        expect(component.addedSuccessful).toBe(true);
+        expect(registerForCourseStub).toHaveBeenCalledTimes(1);
         flush();
     }));
 });
