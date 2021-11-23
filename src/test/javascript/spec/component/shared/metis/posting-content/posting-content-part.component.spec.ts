@@ -1,21 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement, Directive, Input } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLink]' })
-export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
-}
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[queryParams]' })
-export class MockQueryParamsDirective {
-    @Input('queryParams') data: any;
-}
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
