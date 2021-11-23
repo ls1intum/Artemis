@@ -40,7 +40,6 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
     ngOnChanges(): void {
         this.content = this.posting.content ?? '';
         this.updateModalTitle();
-        console.log('ng on changes');
         this.resetFormGroup();
     }
 
