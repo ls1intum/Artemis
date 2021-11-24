@@ -263,7 +263,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 if (!groupedExercises[index]) {
                     groupedExercises[index] = {
                         type: exercise.type,
-                        includedInOverallScore: exercise.includedInOverallScore,
                         relativeScore: 0,
                         overallMaxPoints: 0,
                         absoluteScore: 0,
