@@ -27,11 +27,13 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
         } else {
             reactingUsersString = reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltip');
         }
-        // replace last comma by and
-        let lastComma = reactingUsersString.lastIndexOf(',');
-        let beforeLastComma = reactingUsersString.substring(0, lastComma);
-        let afterLastComma = reactingUsersString.substring(lastComma + reactingUsersString.length);
-
-        return beforeLastComma + this.artemisTranslate.transform('artemisApp.metis.and') + afterLastComma;
+        // replace last comma by "and"
+        const lastCommaIndex = reactingUsersString.lastIndexOf(',');
+        if (lastCommaIndex > -1) {
+            const beforeLastComma = reactingUsersString.substring(0, lastCommaIndex);
+            const afterLastComma = reactingUsersString.substring(lastCommaIndex + 2, reactingUsersString.length);
+            return beforeLastComma + this.artemisTranslate.transform('artemisApp.metis.and') + afterLastComma;
+        }
+        return reactingUsersString;
     }
 }

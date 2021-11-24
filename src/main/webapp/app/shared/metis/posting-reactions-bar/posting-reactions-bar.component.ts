@@ -155,11 +155,11 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     buildEmojiIdMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
         return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
-            const reactingUser = reaction.user?.id === this.metisService.getUser().id ? 'REPLACE_WITH_TRANSLATED_YOU' : reaction.user?.name!;
+            const reactingUser = hasReacted ? 'REPLACE_WITH_TRANSLATED_YOU' : reaction.user?.name!;
             const reactionMetaData: ReactionMetaData = {
                 count: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].count + 1 : 1,
                 hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
-                reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reaction.user?.name!) : [reactingUser],
+                reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reactingUser) : [reactingUser],
             };
             return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
         }, {});

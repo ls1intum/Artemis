@@ -31,7 +31,7 @@
             "removeArchivePostTutorTooltip": "Click to de-archive this post",
             "chooseReaction": "Choose a reaction...",
             "you": "You",
-            "and": "und",
+            "and": " and ",
             "reactedTooltip": " reacted.",
             "reactedTooltipTrimmed": " and {{ number }} other user(s) reacted.",
             "searchEmoji": "Search emoji",
