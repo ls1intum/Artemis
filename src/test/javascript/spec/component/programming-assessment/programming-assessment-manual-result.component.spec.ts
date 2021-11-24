@@ -148,7 +148,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = { params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any as ActivatedRoute;
+    const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any as ActivatedRoute);
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
@@ -195,7 +195,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: route() },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

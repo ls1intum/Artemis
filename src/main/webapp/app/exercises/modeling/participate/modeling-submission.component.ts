@@ -402,7 +402,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     ngOnDestroy(): void {
-        this.subscription.unsubscribe();
+        this.subscription?.unsubscribe();
         clearInterval(this.autoSaveInterval);
         clearInterval(this.teamSyncInterval);
         if (this.automaticSubmissionWebsocketChannel) {
