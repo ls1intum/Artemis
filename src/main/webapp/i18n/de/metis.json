@@ -30,6 +30,8 @@
             "removePinPostTutorTooltip": "Klicke, um den Pin für diesen Beitrag zu entfernen",
             "removeArchivePostTutorTooltip": "Klicke, um den Post wieder chronologisch einzuordnen",
             "chooseReaction": "Wähle eine Reaktion...",
+            "you": "Du",
+            "and": "und",
             "reactedTooltip": " reagierte(n).",
             "reactedTooltipTrimmed": " und {{ number }} User mehr haben reagiert.",
             "searchEmoji": "Emoji suchen",
