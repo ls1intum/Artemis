@@ -62,7 +62,7 @@ describe('Exam assessment', () => {
             prepareExam(examEnd);
         });
 
-        describe.only('Modeling exercise assessment', () => {
+        describe('Modeling exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
                 courseManagementRequests.createModelingExercise({ exerciseGroup }).then((modelingResponse) => {
                     courseManagementRequests.generateMissingIndividualExams(exam);
