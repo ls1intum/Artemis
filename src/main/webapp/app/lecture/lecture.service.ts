@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -30,6 +30,16 @@ export class LectureService {
 
     find(lectureId: number): Observable<EntityResponseType> {
         return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                this.convertDateFromServer(res);
+                this.setAccessRightsLecture(res.body);
+                return res;
+            }),
+        );
+    }
+
+    findWithDetails(lectureId: number): Observable<EntityResponseType> {
+        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)

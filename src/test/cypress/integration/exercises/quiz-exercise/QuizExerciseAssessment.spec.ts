@@ -14,6 +14,8 @@ const courseManagementRequest = artemis.requests.courseManagement;
 let course: any;
 let quizExercise: any;
 
+const resultSelector = '[jhitranslate="artemisApp.result.score"]';
+
 describe('Quiz Exercise Assessment', () => {
     before('Set up course', () => {
         cy.login(admin);
@@ -43,7 +45,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            waitUntilServerAssessmentIsAvailable();
+            cy.reloadUntilFound(resultSelector);
             cy.contains('Score 50%').should('be.visible');
         });
     });
@@ -58,7 +60,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            waitUntilServerAssessmentIsAvailable();
+            cy.reloadUntilFound(resultSelector);
             cy.contains('Score 66.7%').should('be.visible');
         });
     });
@@ -76,21 +78,4 @@ function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
 function deleteQuiz() {
     cy.login(admin);
     courseManagementRequest.deleteQuizExercise(quizExercise.id);
-}
-
-function waitUntilServerAssessmentIsAvailable() {
-    cy.waitUntil(
-        () => {
-            const found = Cypress.$('[jhitranslate="artemisApp.result.score"]').length > 0;
-            if (!found) {
-                cy.reload();
-            }
-            return found;
-        },
-        {
-            interval: 2000,
-            timeout: 20000,
-            errorMsg: 'Timed out finding the score',
-        },
-    );
 }

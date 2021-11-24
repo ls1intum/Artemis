@@ -21,13 +21,3 @@ jobs:
           project: Artemis Development
           column: In progress
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
-
-  commentOnNonDraft:
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false && !contains(github.event.issue.labels.*.name, 'ready for review') && github.event.pull_request.user.login != 'dependabot[bot]'
-    steps:
-      - name: Comment PR
-        uses: thollander/actions-comment-pull-request@main
-        with:
-          message: 'Still in progress? Consider converting to draft.'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

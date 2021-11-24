@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -39,6 +40,30 @@ public class SingleUserNotificationFactory {
                 title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
                 notification.setTarget(targetService.getCoursePostTarget(post, course));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification.
+     *
+     * @param exercise for which a notification should be created
+     * @param notificationType type of the notification that should be created
+     * @param recipient who should be notified
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(Exercise exercise, NotificationType notificationType, User recipient) {
+        String title;
+        String notificationText;
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case FILE_SUBMISSION_SUCCESSFUL -> {
+                title = NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
+                notificationText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
+                notification = new SingleUserNotification(recipient, title, notificationText);
+                notification.setTarget(targetService.getExerciseTarget(exercise, title));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }

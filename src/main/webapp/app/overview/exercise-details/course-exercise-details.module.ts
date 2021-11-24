@@ -12,20 +12,19 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
 import { isOrion } from 'app/shared/orion/orion';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 const routes: Routes = [
     {
-        path: 'courses/:courseId/exercises/:exerciseId',
+        path: '',
         component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
         data: {
             authorities: [Authority.USER],
@@ -36,7 +35,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
+                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
             },
         ],
     },
@@ -57,11 +56,10 @@ const routes: Routes = [
         OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
-        ArtemisTeamModule,
+        FontAwesomeModule,
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
-        ArtemisMarkdownModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
