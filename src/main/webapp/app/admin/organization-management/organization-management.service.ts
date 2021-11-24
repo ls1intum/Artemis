@@ -15,7 +15,7 @@ export class OrganizationManagementService {
      * Send GET request to retrieve all organizations
      */
     getOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(this.resourceUrl + '/all');
+        return this.http.get<Organization[]>(this.resourceUrl);
     }
 
     /**
@@ -48,7 +48,7 @@ export class OrganizationManagementService {
      * @param courseId the id of the course to retrieve the organizations from
      */
     getOrganizationsByCourse(courseId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.resourceUrl}/course/${courseId}`);
+        return this.http.get<Organization[]>(`${this.resourceUrl}/courses/${courseId}`);
     }
 
     /**
@@ -56,7 +56,7 @@ export class OrganizationManagementService {
      * @param userId the id of the user to retrieve the organizations from
      */
     getOrganizationsByUser(userId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.resourceUrl}/user/${userId}`);
+        return this.http.get<Organization[]>(`${this.resourceUrl}/users/${userId}`);
     }
 
     /**
@@ -64,7 +64,7 @@ export class OrganizationManagementService {
      * @param organization the organization to update
      */
     update(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.put<Organization>(`${this.resourceUrl}/update`, organization, { observe: 'response' });
+        return this.http.put<Organization>(`${this.resourceUrl}/${organization.id}`, organization, { observe: 'response' });
     }
 
     /**
@@ -72,7 +72,7 @@ export class OrganizationManagementService {
      * @param organization the organization to add
      */
     add(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.post<Organization>(`${this.resourceUrl}/add`, organization, { observe: 'response' });
+        return this.http.post<Organization>(`${this.resourceUrl}`, organization, { observe: 'response' });
     }
 
     /**
@@ -80,7 +80,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove
      */
     deleteOrganization(organizationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/delete/${organizationId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${organizationId}`, { observe: 'response' });
     }
 
     /**
@@ -88,8 +88,8 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove the user from
      * @param userLogin the user to remove
      */
-    removeUserFromOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/user/${userLogin}/organization/${organizationId}`, { observe: 'response' });
+    removeUserFromOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
     }
 
     /**
@@ -97,8 +97,8 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to add the user to
      * @param userLogin the user to add
      */
-    addUserToOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/user/${userLogin}/organization/${organizationId}`, {}, { observe: 'response' });
+    addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
     }
 
     getTitle(organizationId: number): Observable<HttpResponse<string>> {

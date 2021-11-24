@@ -40,7 +40,6 @@ describe('TextUnitFormComponent', () => {
             providers: [
                 MockProvider(ArtemisMarkdownService, {
                     safeHtmlForMarkdown: () => exampleHTML,
-                    htmlForMarkdown: () => exampleHTML,
                 }),
             ],
             schemas: [],

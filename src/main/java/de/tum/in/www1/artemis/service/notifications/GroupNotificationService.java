@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
@@ -48,13 +49,71 @@ public class GroupNotificationService {
 
     /**
      * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
-     * @param exercise which is updated
+     * @param exerciseBeforeUpdate is the initial exercise before it gets updated
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      * @param notificationText holds the custom change message for the notification process
      * @param instanceMessageSendService can initiate a scheduled notification
      */
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exercise, String notificationText, InstanceMessageSendService instanceMessageSendService) {
-        notifyAboutExerciseUpdate(exercise, notificationText);
-        checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
+            InstanceMessageSendService instanceMessageSendService) {
+        // send exercise update notification
+        notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
+
+        // handle and check exercise released notification
+
+        final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
+        final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
+        ZonedDateTime timeNow = ZonedDateTime.now();
+
+        boolean shouldNotifyAboutRelease = false;
+
+        boolean isInitialReleaseDateUndefined = initialReleaseDate == null;
+        boolean isInitialReleaseDateInThePast = false;
+        boolean isInitialReleaseDateNow = false;
+        boolean isInitialReleaseDateInTheFuture = false;
+
+        boolean isUpdatedReleaseDateUndefined = updatedReleaseDate == null;
+        boolean isUpdatedReleaseDateInThePast = false;
+        boolean isUpdatedReleaseDateNow = false;
+        boolean isUpdatedReleaseDateInTheFuture = false;
+
+        if (!isInitialReleaseDateUndefined) {
+            isInitialReleaseDateInThePast = initialReleaseDate.isBefore(timeNow);
+            // with buffer of 1 minute
+            isInitialReleaseDateNow = !initialReleaseDate.isBefore(timeNow.minusMinutes(1)) && !initialReleaseDate.isAfter(timeNow.plusMinutes(1));
+            isInitialReleaseDateInTheFuture = initialReleaseDate.isAfter(timeNow);
+        }
+
+        if (!isUpdatedReleaseDateUndefined) {
+            isUpdatedReleaseDateInThePast = updatedReleaseDate.isBefore(timeNow);
+            // with buffer of 1 minute
+            isUpdatedReleaseDateNow = !updatedReleaseDate.isBefore(timeNow.minusMinutes(1)) && !updatedReleaseDate.isAfter(timeNow.plusMinutes(1));
+            isUpdatedReleaseDateInTheFuture = updatedReleaseDate.isAfter(timeNow);
+        }
+
+        // "decision matrix" based on initial and updated release date to decide if a release notification has to be sent out now, scheduled, or not
+
+        // if the initial release date is (undefined/past/now) only send a notification if the updated date is in the future
+        if (isInitialReleaseDateUndefined || isInitialReleaseDateInThePast || isInitialReleaseDateNow) {
+            if (isUpdatedReleaseDateUndefined || isUpdatedReleaseDateInThePast || isUpdatedReleaseDateNow) {
+                return;
+            }
+            else if (isUpdatedReleaseDateInTheFuture) {
+                shouldNotifyAboutRelease = true;
+            }
+        }
+        // no change in the release date
+        else if (!isUpdatedReleaseDateUndefined && initialReleaseDate.isEqual(updatedReleaseDate)) {
+            return;
+        }
+        // if the initial release date was in the future any other combination (-> undefined/now/past) will lead to an immediate release notification or a scheduled one (future)
+        else if (isInitialReleaseDateInTheFuture) {
+            shouldNotifyAboutRelease = true;
+        }
+
+        if (shouldNotifyAboutRelease) {
+            checkNotificationForExerciseRelease(exerciseAfterUpdate, instanceMessageSendService);
+        }
     }
 
     /**
@@ -95,13 +154,14 @@ public class GroupNotificationService {
 
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
+     *
      * @param groups is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
      * @param author is the user who initiated the process of this notifications. Can be null if not specified
      */
-    public void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
+    private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
         for (GroupNotificationType group : groups) {
             GroupNotification resultingGroupNotification;
@@ -142,6 +202,9 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
                         (String) typeSpecificInformation);
                 case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
+                // Additional Types
+                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PROGRAMMING_TEST_CASES_CHANGED,
+                        (String) typeSpecificInformation);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
         }
@@ -201,7 +264,6 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups about a newly released exercise at the moment of its release date.
-     *
      * This notification can be deactivated in the notification settings
      *
      * @param exercise that has been created
@@ -221,6 +283,16 @@ public class GroupNotificationService {
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
                 exercise, notificationText, null);
+    }
+
+    /**
+     * Notify editor and instructor groups about changed test cases for a programming exercise.
+     *
+     * @param exercise that has been updated
+     */
+    public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
+                NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
     }
 
     /**
@@ -285,22 +357,24 @@ public class GroupNotificationService {
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param post that has been answered
+     * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, post.getAuthor());
+                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param post that has been answered
+     * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, post.getAuthor());
+                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
@@ -319,17 +393,18 @@ public class GroupNotificationService {
      * Notify tutor, editor and instructor groups about a new answer post for a lecture.
      *
      * @param post that has been answered
+     * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, post.getAuthor());
+                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
-     * Notify tutor and instructor groups about a new answer post for a lecture.
+     * Notify tutor and instructor groups about course archival state.
      *
-     * @param course           course the answered post belongs to
+     * @param course           course that is archived
      * @param notificationType state of the archiving process
      * @param archiveErrors    list of errors that happened during archiving
      */
@@ -399,13 +474,16 @@ public class GroupNotificationService {
             case EDITOR -> foundUsers = userRepository.getEditors(course);
             case TA -> foundUsers = userRepository.getTutors(course);
         }
-        prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+        if (!foundUsers.isEmpty()) {
+            prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+        }
     }
 
     /**
      * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
      * If the checks are successful creates and sends a corresponding email
      * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
+     *
      * @param notification that should be checked
      * @param users which will be filtered based on their notification (email) settings
      * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)

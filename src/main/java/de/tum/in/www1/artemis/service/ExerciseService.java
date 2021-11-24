@@ -881,7 +881,6 @@ public class ExerciseService {
                 if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
                     feedback.setCredits(instruction.getCredits());
                     feedback.setPositive(feedback.getCredits() >= 0);
-                    feedback.setDetailText(instruction.getFeedback());
                 }
             }
         }

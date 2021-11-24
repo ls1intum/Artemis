@@ -49,6 +49,8 @@ public class NotificationTitleTypeConstants {
 
     public static final String EXAM_ARCHIVE_FAILED_TITLE = "Exam archival failed";
 
+    public static final String PROGRAMMING_TEST_CASES_CHANGED_TITLE = "Test cases for programming exercise changed";
+
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(NotificationType.ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(NotificationType.EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
@@ -60,7 +62,8 @@ public class NotificationTitleTypeConstants {
             .put(NotificationType.NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_COURSE_POST_TITLE).put(NotificationType.COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED_TITLE)
             .put(NotificationType.NEW_ANNOUNCEMENT_POST, NEW_ANNOUNCEMENT_POST_TITLE).put(NotificationType.COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE)
             .put(NotificationType.COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE).put(NotificationType.EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE)
-            .put(NotificationType.EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE).build();
+            .put(NotificationType.EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE).put(NotificationType.PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE)
+            .build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

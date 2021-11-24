@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
@@ -59,6 +59,16 @@ export class SubmissionService {
     getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
             .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
+    /**
+     * Find more feedback requests for tutor in this exercise.
+     * @param exerciseId
+     */
+    getSubmissionsWithMoreFeedbackRequestsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
+        return this.http
+            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 

@@ -13,6 +13,7 @@ import { Submission } from 'app/entities/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -21,7 +22,7 @@ import { HttpResponse } from '@angular/common/http';
 export class ComplaintsStudentViewComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
-    @Input() result: Result;
+    @Input() result?: Result;
     @Input() exam: Exam;
     // flag to indicate exam test run. Default set to false.
     @Input() testRun = false;
@@ -54,14 +55,12 @@ export class ComplaintsStudentViewComponent implements OnInit {
     ngOnInit(): void {
         this.course = this.exercise.course;
         this.isExamMode = this.exam != undefined;
-        if (this.participation?.id && this.participation.results && this.participation.results.length > 0) {
+        if (this.participation && this.result?.completionDate) {
             // Make sure results and participation are connected
-            this.result = this.participation.results[0];
             this.result.participation = this.participation;
-        }
-        if (this.participation && this.result.completionDate) {
+
             if (this.participation.submissions && this.participation.submissions.length > 0) {
-                this.submission = this.participation.submissions[0];
+                this.submission = this.participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
@@ -80,20 +79,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 }
             });
 
-            this.timeOfFeedbackRequestValid = this.isFeedbackRequestAllowed();
-            this.timeOfComplaintValid = this.isComplaintAllowed();
+            this.timeOfFeedbackRequestValid = this.isTimeOfFeedbackRequestValid();
+            this.timeOfComplaintValid = this.isTimeOfComplaintValid();
             this.showSection = this.getSectionVisibility();
-        }
-    }
-
-    /**
-     * Determines whether or not to show the section
-     */
-    private getSectionVisibility(): boolean {
-        if (this.isExamMode) {
-            return this.isComplaintAllowed();
-        } else {
-            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
         }
     }
 
@@ -110,21 +98,32 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
+     * Determines whether or not to show the section
      */
-    private isComplaintAllowed(): boolean {
+    private getSectionVisibility(): boolean {
         if (this.isExamMode) {
             return this.isWithinExamReviewPeriod();
+        } else {
+            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
         }
-        return this.canFileComplaintWithCompletionDate(this.result.completionDate!);
+    }
+
+    /**
+     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
+     */
+    private isTimeOfComplaintValid(): boolean {
+        if (!this.isExamMode) {
+            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
+        }
+        return this.isWithinExamReviewPeriod();
     }
 
     /**
      * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
      */
-    private isFeedbackRequestAllowed(): boolean {
+    private isTimeOfFeedbackRequestValid(): boolean {
         if (!this.isExamMode) {
-            return this.canFileComplaintWithCompletionDate(this.result.completionDate!);
+            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
         }
         return false;
     }
@@ -133,14 +132,21 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Checks if a complaint (either actual complaint or more feedback request) can be filed
      * The result's completionDate specifies the date when the assessment was submitted
      */
-    private canFileComplaintWithCompletionDate(completionDate: dayjs.Dayjs): boolean {
-        if (!this.course?.maxRequestMoreFeedbackTimeDays) {
+    private canFileActionWithCompletionDate(completionDate: dayjs.Dayjs, actionThresholdInDays?: number): boolean {
+        // Especially for programming exercises: If there is not yet a manual result for a manual correction, no action should be allowed
+        if (
+            !this.result!.assessmentType ||
+            (this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC && this.result!.assessmentType === AssessmentType.AUTOMATIC)
+        ) {
             return false;
         }
-        if (!this.exercise.assessmentDueDate || dayjs(completionDate).isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return dayjs(completionDate).isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
+        if (!actionThresholdInDays) {
+            return false;
         }
-        return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(this.course.maxRequestMoreFeedbackTimeDays, 'day'));
+        if (!this.exercise.assessmentDueDate || dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
+            return dayjs().isSameOrBefore(dayjs(completionDate).add(actionThresholdInDays, 'day'));
+        }
+        return false;
     }
 
     /**

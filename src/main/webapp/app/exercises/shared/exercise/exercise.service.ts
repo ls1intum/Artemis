@@ -301,8 +301,7 @@ export class ExerciseService {
     }
 
     /**
-     * Converts an exercises' categories into a json string. Does nothing if
-     * no categories exist
+     * Converts an exercises' categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param exercise the exercise
      */
     stringifyExerciseCategories(exercise: Exercise) {
@@ -321,8 +320,8 @@ export class ExerciseService {
     }
 
     /**
-     * Parsses the exercise categories JSON string into ExerciseCategory objects.
-     * @param exercise - the exericse
+     * Parses the exercise categories JSON string into ExerciseCategory objects.
+     * @param exercise - the exercise
      */
     parseExerciseCategories(exercise: Exercise) {
         if (exercise.categories) {
@@ -335,7 +334,7 @@ export class ExerciseService {
      * @param { string[] } categories that are converted to categories
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
-        return categories.map((el) => JSON.parse(el));
+        return categories.map((category) => JSON.parse(category));
     }
 
     /**
