@@ -9,28 +9,29 @@ const PIN_EMOJI_UNICODE = '1F4CC';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
 const ARCHIVE_EMOJI_UNICODE = '1F4C2';
 
-/*
-event triggered by the emoji mart component, including EmojiData
+/**
+ * event triggered by the emoji mart component, including EmojiData
  */
 interface ReactionEvent {
     $event: Event;
     emoji?: EmojiData;
 }
 
-/*
-represents the amount of users that reacted
-hasReacted indicates if the currently logged in user is among those counted users
+/**
+ * represents the amount of users that reacted
+ * hasReacted indicates if the currently logged in user is among those counted users
  */
-interface ReactionCount {
+interface ReactionMetaData {
     count: number;
     hasReacted: boolean;
+    reactingUsers: string[];
 }
 
-/*
-data structure used for displaying emoji reactions with counts on postings
+/**
+ * data structure used for displaying emoji reactions with meta data on postings
  */
-interface ReactionCountMap {
-    [emojiId: string]: ReactionCount;
+interface ReactionMetaDataMap {
+    [emojiId: string]: ReactionMetaData;
 }
 
 @Directive()
@@ -60,7 +61,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * map that lists associated reaction (by emojiId) for the current posting together with its count
      * and a flag that indicates if the current user has used this reaction
      */
-    reactionCountMap: ReactionCountMap = {};
+    reactionCountMap: ReactionMetaDataMap = {};
 
     constructor(protected metisService: MetisService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
@@ -148,17 +149,19 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     }
 
     /**
-     * builds the ReactionCountMap data structure out of a given array of reactions
+     * builds the ReactionMetaDataMap data structure out of a given array of reactions
      * @param reactions array of reactions associated to the current posting
      */
-    buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
-        return reactions.reduce((countMap: ReactionCountMap, reaction: Reaction) => {
+    buildEmojiIdMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
+        return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
-            const reactionCount = {
-                count: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].count + 1 : 1,
-                hasReacted: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
+            const reactingUser = reaction.user?.name!;
+            const reactionMetaData: ReactionMetaData = {
+                count: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].count + 1 : 1,
+                hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
+                reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reaction.user?.name!) : [reactingUser],
             };
-            return { ...countMap, [reaction.emojiId!]: reactionCount };
+            return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
         }, {});
     }
 
@@ -169,7 +172,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         if (this.posting.reactions && this.posting.reactions.length > 0) {
             // filter out emoji for pin and archive as they should not be listed in the reactionCountMap
             const filteredReactions = this.posting.reactions.filter((reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId);
-            this.reactionCountMap = this.buildEmojiIdCountMap(filteredReactions);
+            this.reactionCountMap = this.buildEmojiIdMetaDataMap(filteredReactions);
         } else {
             this.reactionCountMap = {};
         }
