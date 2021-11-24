@@ -61,7 +61,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * map that lists associated reaction (by emojiId) for the current posting together with its count
      * and a flag that indicates if the current user has used this reaction
      */
-    reactionCountMap: ReactionMetaDataMap = {};
+    reactionMetaDataMap: ReactionMetaDataMap = {};
 
     constructor(protected metisService: MetisService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
@@ -155,7 +155,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     buildEmojiIdMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
         return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
-            const reactingUser = reaction.user?.name!;
+            const reactingUser = reaction.user?.id === this.metisService.getUser().id ? 'REPLACE_WITH_TRANSLATED_YOU' : reaction.user?.name!;
             const reactionMetaData: ReactionMetaData = {
                 count: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].count + 1 : 1,
                 hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
@@ -166,15 +166,15 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     }
 
     /**
-     * updates the posting's reactions by calling the build function for the reactionCountMap if there are any reaction on the posting
+     * updates the posting's reactions by calling the build function for the reactionMetaDataMap if there are any reaction on the posting
      */
     updatePostingWithReactions(): void {
         if (this.posting.reactions && this.posting.reactions.length > 0) {
-            // filter out emoji for pin and archive as they should not be listed in the reactionCountMap
+            // filter out emoji for pin and archive as they should not be listed in the reactionMetaDataMap
             const filteredReactions = this.posting.reactions.filter((reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId);
-            this.reactionCountMap = this.buildEmojiIdMetaDataMap(filteredReactions);
+            this.reactionMetaDataMap = this.buildEmojiIdMetaDataMap(filteredReactions);
         } else {
-            this.reactionCountMap = {};
+            this.reactionMetaDataMap = {};
         }
     }
 }

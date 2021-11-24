@@ -14,11 +14,19 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      * @returns {string} concatenated, shortened if required
      */
     transform(reactingUsers: string[]): string {
+        let reactingUsersString: string;
+        if (reactingUsers.includes('REPLACE_WITH_TRANSLATED_YOU')) {
+            // remove placeholder
+            reactingUsers = reactingUsers.filter((user) => user !== 'REPLACE_WITH_TRANSLATED_YOU');
+            reactingUsers = [this.artemisTranslate.transform('artemisApp.metis.you')].concat(reactingUsers);
+        }
         if (reactingUsers.length > USER_COUNT_LIMIT) {
             reactingUsers = reactingUsers.slice(0, USER_COUNT_LIMIT - 1);
-            return reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltipTrimmed', { number: reactingUsers.length - USER_COUNT_LIMIT });
+            reactingUsersString =
+                reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltipTrimmed', { number: reactingUsers.length - USER_COUNT_LIMIT });
         } else {
-            return reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltip');
+            reactingUsersString = reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltip');
         }
+        return reactingUsersString;
     }
 }

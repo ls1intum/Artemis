@@ -86,7 +86,7 @@ describe('PostReactionsBarComponent', () => {
         fixture.detectChanges();
         const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).toBeDefined();
-        expect(component.reactionCountMap).toEqual({
+        expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
                 hasReacted: false,
@@ -104,7 +104,7 @@ describe('PostReactionsBarComponent', () => {
         const reactions = getElements(debugElement, 'ngx-emoji');
         // emojis to be displayed it the user reaction, the pin emoji and the archive emoji
         expect(reactions).toHaveLength(3);
-        expect(component.reactionCountMap).toEqual({
+        expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
                 hasReacted: true,
