@@ -1,3 +1,5 @@
+require('jest-preset-angular/ngcc-jest-processor');
+
 const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common',
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', 'ngx-cookie-service', '@fortawesome/angular-fontawesome', '@angular/cdk',
@@ -38,8 +40,9 @@ module.exports = {
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],
+    moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
-    transformIgnorePatterns: [`/node_modules/(?!${esModules})/(?!.*\\.m?js$)`],
+    transformIgnorePatterns: [`/node_modules/(?!.*\\.m?js$)`],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',
     },

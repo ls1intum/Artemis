@@ -73,7 +73,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(NgbModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbModule, OwlDateTimeModule],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 MockComponent(AlertComponent),
