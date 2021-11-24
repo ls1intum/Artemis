@@ -24,6 +24,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostReactionsBarComponent', () => {
@@ -40,6 +41,13 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
+            declarations: [
+                PostReactionsBarComponent,
+                MockPipe(ReactingUsersOnPostingPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(FaIconComponent),
+            ],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -49,7 +57,6 @@ describe('PostReactionsBarComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
-            declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -90,6 +97,7 @@ describe('PostReactionsBarComponent', () => {
             smile: {
                 count: 1,
                 hasReacted: false,
+                reactingUsers: ['username1'],
             },
         });
     });
@@ -108,6 +116,7 @@ describe('PostReactionsBarComponent', () => {
             smile: {
                 count: 1,
                 hasReacted: true,
+                reactingUsers: ['REPLACE_WITH_TRANSLATED_YOU'],
             },
         });
         // set correct tooltips for tutor and post that is not pinned and not archived

@@ -25,7 +25,7 @@
             [disabled]="!currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && toggleArchive()"
         >
-            <ngx-emoji class="emoji" [ngbTooltip]="archiveTooltip | artemisTranslate" [emoji]="archiveEmojiId" [size]="16"></ngx-emoji>
+            <ngx-emoji class="emoji" [emoji]="archiveEmojiId" [size]="16" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></ngx-emoji>
         </button>
     </div>
     <div class="col-auto px-0">
