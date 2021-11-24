@@ -70,7 +70,7 @@ describe('ExerciseScoresChartComponent', () => {
 
     it('should load exercise scores and generate chart', () => {
         const firstExercise = generateExerciseScoresDTO(ExerciseType.TEXT, 1, 50, 70, 100, dayjs(), 'First Exercise');
-        const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 1, 40, 80, 90, dayjs().add(5, 'days'), 'Second Exercise');
+        const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 40, 80, 90, dayjs().add(5, 'days'), 'Second Exercise');
 
         const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
         const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
@@ -85,39 +85,58 @@ describe('ExerciseScoresChartComponent', () => {
         expect(component.ngxData[0].series).toHaveLength(2);
         const studentFirstExerciseDataPoint = component.ngxData[0].series[0];
         const sutdentSecondExerciseDataPoint = component.ngxData[0].series[1];
-        validateStructureOfDataPoint(studentFirstExerciseDataPoint, firstExercise.exerciseId!, ExerciseType.TEXT, firstExercise.exerciseTitle!, firstExercise.scoreOfStudent!);
-        validateStructureOfDataPoint(sutdentSecondExerciseDataPoint, secondExercise.exerciseId!, ExerciseType.QUIZ, secondExercise.exerciseTitle!, secondExercise.scoreOfStudent!);
+        validateStructureOfDataPoint(studentFirstExerciseDataPoint, firstExercise, firstExercise.scoreOfStudent!);
+        validateStructureOfDataPoint(sutdentSecondExerciseDataPoint, secondExercise, secondExercise.scoreOfStudent!);
 
         // datasets[1] is average score
         expect(component.ngxData[1].series).toHaveLength(2);
         const averageFirstExerciseDataPoint = component.ngxData[1].series[0];
         const averageSecondExerciseDataPoint = component.ngxData[1].series[1];
-        validateStructureOfDataPoint(
-            averageFirstExerciseDataPoint,
-            firstExercise.exerciseId!,
-            ExerciseType.TEXT,
-            firstExercise.exerciseTitle!,
-            firstExercise.averageScoreAchieved!,
-        );
-        validateStructureOfDataPoint(
-            averageSecondExerciseDataPoint,
-            secondExercise.exerciseId!,
-            ExerciseType.QUIZ,
-            secondExercise.exerciseTitle!,
-            secondExercise.averageScoreAchieved!,
-        );
+        validateStructureOfDataPoint(averageFirstExerciseDataPoint, firstExercise, firstExercise.averageScoreAchieved!);
+        validateStructureOfDataPoint(averageSecondExerciseDataPoint, secondExercise, secondExercise.averageScoreAchieved!);
 
         // datasets[2] is best score
         expect(component.ngxData[2].series).toHaveLength(2);
         const bestFirstExerciseDataPoint = component.ngxData[2].series[0];
         const bestSecondExerciseDataPoint = component.ngxData[2].series[1];
-        validateStructureOfDataPoint(bestFirstExerciseDataPoint, firstExercise.exerciseId!, ExerciseType.TEXT, firstExercise.exerciseTitle!, firstExercise.maxScoreAchieved!);
-        validateStructureOfDataPoint(bestSecondExerciseDataPoint, secondExercise.exerciseId!, ExerciseType.QUIZ, secondExercise.exerciseTitle!, secondExercise.maxScoreAchieved!);
+        validateStructureOfDataPoint(bestFirstExerciseDataPoint, firstExercise, firstExercise.maxScoreAchieved!);
+        validateStructureOfDataPoint(bestSecondExerciseDataPoint, secondExercise, secondExercise.maxScoreAchieved!);
+    });
+
+    it('should filter exercises correctly', () => {
+        let exercises = [];
+        for (let i = 0; i < 10; i++) {
+            exercises.push(generateExerciseScoresDTO(ExerciseType.QUIZ, i, i * 5, 100 - i * 4, 100 - i * 4, dayjs().add(i, 'days'), i + 'th Exercise'));
+        }
+
+        const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
+        const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
+            body: exercises,
+            status: 200,
+        });
+
+        const getScoresStub = jest.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
+        component.ngAfterViewInit();
+
+        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+        component.filteredExerciseIDs = [2, 4, 5];
+        component.ngOnChanges();
+        // should not have to reload the data from the server
+        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        // should only contain the not filtered exercises
+        expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 3, 6, 7, 8, 9]);
+
+        component.filteredExerciseIDs = [];
+        component.ngOnChanges();
+        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 });
 
-function validateStructureOfDataPoint(dataPoint: any, exerciseId: number, exerciseType: ExerciseType, exerciseTitle: string, score: number) {
-    const expectedStructure = { name: exerciseTitle, value: score + 1, exerciseId, exerciseType };
+function validateStructureOfDataPoint(dataPoint: any, exerciseScoresDTO: any, score: number) {
+    const expectedStructure = { name: exerciseScoresDTO.exerciseTitle, value: score + 1, exerciseId: exerciseScoresDTO.exerciseId, exerciseType: exerciseScoresDTO.exerciseType };
     expect(dataPoint).toEqual(expectedStructure);
 }
 
