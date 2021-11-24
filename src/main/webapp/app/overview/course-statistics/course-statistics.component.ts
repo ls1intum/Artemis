@@ -50,6 +50,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private translateSubscription: Subscription;
     course?: Course;
 
+    private courseExercisesNotScoreRelevant: Exercise[];
+    currentlyHidingExcludedExercises = false;
+    filteredExerciseIDs: number[];
+
     // TODO: improve the types here and use maps instead of java script objects, also avoid the use of 'any'
 
     // overall points
@@ -326,10 +330,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
         this.groupedExercises = groupedExercises;
     }
-
-    private courseExercisesNotScoreRelevant: Exercise[];
-    currentlyHidingExcludedExercises = false;
-    filteredExerciseIDs: number[];
 
     toggleNotScoreRelevantExercises() {
         if (this.currentlyHidingExcludedExercises) {
