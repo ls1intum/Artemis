@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.3.3"
+    version = "5.3.4"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -153,6 +153,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:${apache_model_version}"
     implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
     implementation "com.google.protobuf:protobuf-java:${google_protobuf_java_version}"
+    implementation "org.commonmark:commonmark:${commonmark_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

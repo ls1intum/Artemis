@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
@@ -201,6 +202,9 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
                         (String) typeSpecificInformation);
                 case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
+                // Additional Types
+                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PROGRAMMING_TEST_CASES_CHANGED,
+                        (String) typeSpecificInformation);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
         }
@@ -282,6 +286,16 @@ public class GroupNotificationService {
     }
 
     /**
+     * Notify editor and instructor groups about changed test cases for a programming exercise.
+     *
+     * @param exercise that has been updated
+     */
+    public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
+                NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+    }
+
+    /**
      * Notify all groups about a new post in an exercise.
      *
      * @param post that has been posted
@@ -343,22 +357,24 @@ public class GroupNotificationService {
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param post that has been answered
+     * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, post.getAuthor());
+                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
      * Notify tutor, editor and instructor groups about a new answer post for an exercise.
      *
      * @param post that has been answered
+     * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, post.getAuthor());
+                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
@@ -377,17 +393,18 @@ public class GroupNotificationService {
      * Notify tutor, editor and instructor groups about a new answer post for a lecture.
      *
      * @param post that has been answered
+     * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, post.getAuthor());
+                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
-     * Notify tutor and instructor groups about a new answer post for a lecture.
+     * Notify tutor and instructor groups about course archival state.
      *
-     * @param course           course the answered post belongs to
+     * @param course           course that is archived
      * @param notificationType state of the archiving process
      * @param archiveErrors    list of errors that happened during archiving
      */

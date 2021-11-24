@@ -19,7 +19,7 @@ export interface UserSettingsStructure<T> {
  */
 export interface SettingGroup<T> {
     key: string;
-    restrictionLevel: Authority;
+    restrictionLevels: Authority[];
     settings: T[];
 }
 

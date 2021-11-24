@@ -13,8 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { MockActivatedRoute } from '../../helpers/mocks/service/mock-route.service';
 import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 chai.use(sinonChai);
 const expect = chai.expect;
