@@ -65,7 +65,8 @@
                 "points": "Points",
                 "averageScore": "Average score",
                 "averageRating": "Average rating"
-            }
+            },
+            "exerciseAverageRating": "Average rating"
         }
     }
 }

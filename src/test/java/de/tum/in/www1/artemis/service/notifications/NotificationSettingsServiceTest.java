@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -55,14 +57,14 @@ public class NotificationSettingsServiceTest {
         student1 = new User();
         student1.setId(555L);
 
-        unsavedNotificationSettingA = new NotificationSetting(false, true, "notification.exercise-notification.exercise-open-for-practice");
-        unsavedNotificationSettingB = new NotificationSetting(true, true, "notification.lecture-notification.attachment-changes");
-        unsavedNotificationSettingC = new NotificationSetting(false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
-        completeNotificationSettingA = new NotificationSetting(student1, false, true, "notification.exercise-notification.exercise-open-for-practice");
-        completeNotificationSettingB = new NotificationSetting(student1, true, true, "notification.lecture-notification.attachment-changes");
-        completeNotificationSettingC = new NotificationSetting(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        completeNotificationSettingA = new NotificationSetting(student1, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
         notificationSettingRepository = mock(NotificationSettingRepository.class);
@@ -97,7 +99,8 @@ public class NotificationSettingsServiceTest {
     public void testFindDeactivatedNotificationTypes() {
         NotificationSetting[] tmpNotificationSettingsArray = Arrays.copyOf(savedNotificationSettings, savedNotificationSettings.length);
         Set<NotificationSetting> tmpNotificationSettingsSet = new HashSet<>(Arrays.asList(tmpNotificationSettingsArray));
-        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(true, tmpNotificationSettingsSet);
+        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
+                tmpNotificationSettingsSet);
         // SettingA : exercise-open-for-practice -> [EXERCISE_PRACTICE] : webapp deactivated
         // SettingB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // SettingC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated
@@ -116,13 +119,13 @@ public class NotificationSettingsServiceTest {
     @Test
     public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
 
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
 
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isFalse();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isFalse();
     }
 
     /**

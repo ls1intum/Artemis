@@ -54,6 +54,8 @@ export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'New reply for lecture post';
 
 export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'New reply for course-wide post';
 
+export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'File submission successful';
+
 export const COURSE_ARCHIVE_STARTED_TITLE = 'Course archival started';
 
 export const COURSE_ARCHIVE_FINISHED_TITLE = 'Course archival finished';
@@ -65,6 +67,8 @@ export const EXAM_ARCHIVE_STARTED_TITLE = 'Exam archival started';
 export const EXAM_ARCHIVE_FINISHED_TITLE = 'Exam archival finished';
 
 export const EXAM_ARCHIVE_FAILED_TITLE = 'Exam archival failed';
+
+export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'Test cases for programming exercise changed';
 
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

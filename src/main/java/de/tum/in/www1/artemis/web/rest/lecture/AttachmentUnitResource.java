@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,11 +105,7 @@ public class AttachmentUnitResource {
         if (attachmentUnit.getId() != null) {
             return badRequest();
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            return badRequest();
-        }
-        Lecture lecture = lectureOptional.get();
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             return conflict();
         }
@@ -120,11 +116,13 @@ public class AttachmentUnitResource {
         attachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
         attachmentUnit.setLecture(lecture);
         lecture.addLectureUnit(attachmentUnit);
-        Lecture updatedLecture = lectureRepository.save(lecture);
+        lectureRepository.save(lecture);
 
-        AttachmentUnit persistedAttachmentUnit = (AttachmentUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
-
-        return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedAttachmentUnit);
+        // cleanup before sending to client
+        attachmentUnit.getLecture().setLectureUnits(null);
+        attachmentUnit.getLecture().setAttachments(null);
+        attachmentUnit.getLecture().setPosts(null);
+        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(attachmentUnit);
     }
 }

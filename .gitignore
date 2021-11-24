@@ -58,6 +58,7 @@ local.properties
 # Intellij
 ######################
 .idea/
+!.idea/runConfigurations/*
 *.iml
 *.iws
 *.ipr
