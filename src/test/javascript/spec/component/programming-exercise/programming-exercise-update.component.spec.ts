@@ -66,6 +66,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
+                // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
+                // Mocking that interaction defeats the purpose of interacting with the UI in the first place.
                 NgForm,
                 NgModel,
                 CheckboxControlValueAccessor,
