@@ -44,9 +44,9 @@ describe('Modeling Exercise Assessment Spec', () => {
         assessmentEditor.addNewFeedback(1, 'Thanks, good job.');
         assessmentEditor.openAssessmentForComponent(1);
         assessmentEditor.assessComponent(-1, 'False');
-        assessmentEditor.openAssessmentForComponent(2);
+        assessmentEditor.clickNextAssessment();
         assessmentEditor.assessComponent(2, 'Good');
-        assessmentEditor.openAssessmentForComponent(3);
+        assessmentEditor.clickNextAssessment();
         assessmentEditor.assessComponent(0, 'Unnecessary');
         assessmentEditor.submit();
     });
