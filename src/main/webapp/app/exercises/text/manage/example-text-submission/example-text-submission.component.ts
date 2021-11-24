@@ -251,7 +251,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
     /**
      * Checks the assessment of the tutor to the example submission tutorial.
-     * The tutor is informed if the given points of the assessment are fine, too low or too high.
+     * The tutor is informed if its assessment is different from the one of the instructor.
      */
     checkAssessment(): void {
         this.validateFeedback();

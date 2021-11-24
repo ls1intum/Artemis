@@ -3,7 +3,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockComponent, MockPipe, MockDirective, MockModule } from 'ng-mocks';
