@@ -1,17 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.lecture;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+package de.tum.in.www1.artemis.lecture.web.rest.lecture;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -19,11 +6,23 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class AttachmentUnitResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -46,40 +45,40 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * GET /lectures/:lectureId/attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
+     * GET lectures/:lectureId/attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
      *
      * @param attachmentUnitId the id of the attachmentUnit to retrieve
      * @param lectureId the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
-    @GetMapping("/lectures/{lectureId}/attachment-units/{attachmentUnitId}")
+    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException();
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(attachmentUnit);
     }
 
     /**
-     * PUT /lectures/:lectureId/attachment-units : Updates an existing attachment unit .
+     * PUT lectures/:lectureId/attachment-units : Updates an existing attachment unit .
      *
      * @param lectureId      the id of the lecture to which the attachment unit belongs to update
      * @param attachmentUnit the attachment unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
-    @PutMapping("/lectures/{lectureId}/attachment-units")
+    @PutMapping("lectures/{lectureId}/attachment-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         if (attachmentUnit.getId() == null) {
-            return badRequest();
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "id is null");
         }
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException();
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
@@ -92,27 +91,27 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST /lectures/:lectureId/attachment-units : creates a new attachment unit.
+     * POST lectures/:lectureId/attachment-units : creates a new attachment unit.
      *
      * @param lectureId      the id of the lecture to which the attachment unit should be added
      * @param attachmentUnit the attachment unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/attachment-units")
+    @PostMapping("lectures/{lectureId}/attachment-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit : {}", attachmentUnit);
         if (attachmentUnit.getId() != null) {
-            return badRequest();
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "id is null");
         }
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
-            return badRequest();
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "not found");
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException();
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -125,7 +124,7 @@ public class AttachmentUnitResource {
 
         AttachmentUnit persistedAttachmentUnit = (AttachmentUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
-        return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))
+        return ResponseEntity.created(new URI("api/attachment-units/" + persistedAttachmentUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedAttachmentUnit);
     }
 }
