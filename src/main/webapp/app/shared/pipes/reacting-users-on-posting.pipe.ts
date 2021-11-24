@@ -10,13 +10,11 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      * @returns {string} concatenated, shortened if required
      */
     transform(reactingUsers: string[]): string {
-        let reactingUsersString = '';
         if (reactingUsers.length > 10) {
             reactingUsers = reactingUsers.slice(0, 9);
-            reactingUsersString = reactingUsers.join(', ') + ' and ' + (reactingUsers.length - 10) + 'user reacted.';
+            return reactingUsers.join(', ') + ' and ' + (reactingUsers.length - 10) + 'user reacted.';
         } else {
-            reactingUsersString = reactingUsers.join(', ') + ' reacted.';
+            return reactingUsers.join(', ') + ' reacted.';
         }
-        return reactingUsersString;
     }
 }
