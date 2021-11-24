@@ -264,6 +264,7 @@
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
+            "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
@@ -347,8 +348,9 @@
             },
             "checklist": {
                 "title": "Exam Checklist",
-                "introduction": "You can find detailed documentation with screenshots about the exam mode in the",
-                "linkDescription": "Instructors Guide",
+                "introduction": "This page gives an overview over the various steps when conducting an exam. In the",
+                "linkDescription": "external documentation",
+                "introductionPart2": "you can find more details about the individual steps.",
                 "checklistItem": "Task",
                 "description": "Description",
                 "status": "Current status",

@@ -181,7 +181,7 @@
         "studentExams": {
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
-            "generateStudentMissingExams": "Fehlende individuelle Klausuren erstellen",
+            "generateMissingStudentExams": "Fehlende individuelle Klausuren erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
             "evaluateQuizExercises": "Quizzes auswerten",
             "assessUnsubmittedStudentExams": "Nicht eingereichte Klausuren bewerten",
@@ -264,6 +264,7 @@
                 "title": "Erreichbare Punktzahl",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."
             },
+            "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
@@ -285,13 +286,13 @@
                 "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
-                "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor:in bewerten. Das Ergebnis, kannst du als Studierende:r einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor:in bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
+                "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend kannst du die Abgabe als Tutor:in bewerten. Das Ergebnis kannst du als Studierende:r einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor:in bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht zu den Klausurergebnissen gezählt.",
                 "createTestRunDisabled": "Keine Aufgaben gefunden",
                 "reminderToDelete": "Achte darauf, dass du alle Testläufe vor der Durchführung der Klausur löschst. Alle Testläufe werden automatisch gelöscht, wenn du die nicht abgegebenen Klausuren und leeren Abgaben bewertest.",
                 "secondCorrectionHint": "Hinweis: Die zweite Korrektur gilt nicht für Testläufe.",
                 "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
-                    "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
+                    "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
                     "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein."
                 }
             },
@@ -347,8 +348,9 @@
             },
             "checklist": {
                 "title": "Checkliste für die Durchführung von Prüfungen",
-                "introduction": "Unter folgendem Link kannst du dich über den Ablauf einer Klausur in Artemis informieren:",
-                "linkDescription": "Instructors Guide",
+                "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Prüfungen. Genauere Erklärungen zu den einzelnen Schritten können in der",
+                "linkDescription": "externen Dokumentation",
+                "introductionPart2": "eingesehen werden.",
                 "checklistItem": "Aufgabe",
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
