@@ -1,13 +1,11 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import dayjs from 'dayjs';
 import { restore, SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
@@ -53,9 +51,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
@@ -178,19 +173,19 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).to.be.false;
+        expect(comp.isLoading).toBe(false);
         // check if findAllSubmissionsOfParticipationStub() is called and works
-        expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
-        expect(comp.participation).to.be.deep.equal(participation);
-        expect(comp.submissions).to.be.deep.equal(submissions);
+        expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
+        expect(comp.participation).toEqual(participation);
+        expect(comp.submissions).toEqual(submissions);
 
         // check if delete button is available
         const deleteButton = debugElement.query(By.css('#deleteButton'));
-        expect(deleteButton).to.exist;
+        expect(deleteButton).not.toBe(null);
 
         // check if the right amount of rows is visible
         const row = debugElement.query(By.css('#participationSubmissionTable'));
-        expect(row.childNodes.filter((n) => n).length).to.equal(1);
+        expect(row.childNodes).toHaveLength(1);
 
         fixture.destroy();
         flush();
@@ -219,11 +214,11 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).to.be.false;
-        expect(findWithTemplateAndSolutionParticipationStub).to.have.been.called;
-        expect(comp.exercise).to.be.deep.equal(programmingExercise);
-        expect(comp.participation).to.be.deep.equal(templateParticipation);
-        expect(comp.submissions).to.be.deep.equal(templateParticipation.submissions);
+        expect(comp.isLoading).toBe(false);
+        expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
+        expect(comp.exercise).toEqual(programmingExercise);
+        expect(comp.participation).toEqual(templateParticipation);
+        expect(comp.submissions).toEqual(templateParticipation.submissions);
 
         // Create correct url for commit hash
         const submission = templateParticipation.submissions[0] as ProgrammingSubmission;
@@ -256,10 +251,10 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).to.be.false;
-        expect(findWithTemplateAndSolutionParticipationStub).to.have.been.called;
-        expect(comp.participation).to.be.deep.equal(solutionParticipation);
-        expect(comp.submissions).to.be.deep.equal(solutionParticipation.submissions);
+        expect(comp.isLoading).toBe(false);
+        expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
+        expect(comp.participation).toEqual(solutionParticipation);
+        expect(comp.submissions).toEqual(solutionParticipation.submissions);
 
         // Create correct url for commit hash
         const submission = solutionParticipation.submissions[0] as ProgrammingSubmission;
@@ -280,9 +275,9 @@ describe('ParticipationSubmissionComponent', () => {
         });
 
         afterEach(() => {
-            expect(comp.submissions?.length).to.be.equal(1);
-            expect(comp.submissions![0].results?.length).to.be.equal(1);
-            expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         });
 
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
@@ -307,8 +302,8 @@ describe('ParticipationSubmissionComponent', () => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: textExercise })));
             fixture.detectChanges();
             tick();
-            expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
-            expect(comp.submissions![0].results![0].submission).to.be.deep.equal(submissionWithTwoResults);
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
+            expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults);
             comp.deleteResult(submissionWithTwoResults, result2);
             tick();
             fixture.destroy();
@@ -328,9 +323,9 @@ describe('ParticipationSubmissionComponent', () => {
         });
 
         afterEach(() => {
-            expect(comp.submissions?.length).to.be.equal(1);
-            expect(comp.submissions![0].results?.length).to.be.equal(2);
-            expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         });
 
         it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
@@ -363,8 +358,8 @@ describe('ParticipationSubmissionComponent', () => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: textExercise })));
             fixture.detectChanges();
             tick();
-            expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
-            expect(comp.submissions![0].results![0].submission).to.be.deep.equal(submissionWithTwoResults2);
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
+            expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults2);
             comp.deleteResult(submissionWithTwoResults, result2);
             tick();
             fixture.destroy();
@@ -379,7 +374,7 @@ describe('ParticipationSubmissionComponent', () => {
             .replace('{projectKey}', projectKey)
             .replace('{repoSlug}', projectKey + repoSlug)
             .replace('{commitHash}', submission.commitHash!);
-        expect(receivedCommitHashUrl).to.equal(commitHashUrl);
+        expect(receivedCommitHashUrl).toEqual(commitHashUrl);
     }
 
     function deleteResult(submission: Submission, resultToDelete: Result) {
