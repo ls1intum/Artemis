@@ -9,7 +9,7 @@ import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+// import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
@@ -32,7 +32,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisSharedComponentModule,
         ClipboardModule,
         ArtemisSharedPipesModule,
-        ArtemisResultModule,
+        // ArtemisResultModule,
         ArtemisSidePanelModule,
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
