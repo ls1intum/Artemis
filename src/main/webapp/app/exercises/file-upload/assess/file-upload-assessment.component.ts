@@ -30,6 +30,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -473,7 +474,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
     }
 
     private onError(error: string) {

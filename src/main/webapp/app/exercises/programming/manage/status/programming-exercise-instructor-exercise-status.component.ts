@@ -4,7 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/overview/participation-utils';
+import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/overview/participation.utils';
 import { findLatestResult } from 'app/shared/util/utils';
 
 /**

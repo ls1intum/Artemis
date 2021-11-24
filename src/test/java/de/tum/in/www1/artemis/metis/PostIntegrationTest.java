@@ -157,7 +157,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateAnnouncement_forbidden() throws Exception {
+    public void testCreateAnnouncement_asStudent_forbidden() throws Exception {
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
@@ -229,6 +229,17 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditAnnouncement_asTutor_forbidden() throws Exception {
+        Post postToUpdate = editExistingPost(existingCourseWidePosts.get(0));
+        // simulate as if it was an announcement
+        postToUpdate.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testEditPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
@@ -291,7 +302,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditPost_asStudent() throws Exception {
+    public void testEditPost_forbidden() throws Exception {
         // update own post (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
@@ -490,6 +501,18 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testDeletePosts_asStudent_forbidden() throws Exception {
         // delete post from another student (index 1) --> forbidden
         Post postToNotDelete = existingPosts.get(1);
+
+        request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
+        assertThat(postRepository.count()).isEqualTo(existingPosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteAnnouncement_asTutor_forbidden() throws Exception {
+        Post postToNotDelete = existingCourseWidePosts.get(1);
+        // simulate as if it was an announcement
+        postToNotDelete.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+        postRepository.save(postToNotDelete);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
         assertThat(postRepository.count()).isEqualTo(existingPosts.size());
