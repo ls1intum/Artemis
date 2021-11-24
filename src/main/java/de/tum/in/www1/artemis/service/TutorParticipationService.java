@@ -144,8 +144,9 @@ public class TutorParticipationService {
             }
         }
 
-        // In case negative feedback is provided, but detail text is missing, return empty negative feedback.
-        if (tutorFeedback.getCredits() < 0 && (tutorFeedback.getDetailText() == null || tutorFeedback.getDetailText().isBlank())) {
+        // In case negative feedback is provided, but content is missing, return empty negative feedback.
+        var feedbackContent = Optional.ofNullable(tutorFeedback.getText() != null ? tutorFeedback.getText() : tutorFeedback.getDetailText()).orElse("");
+        if (tutorFeedback.getCredits() < 0 && feedbackContent.isBlank()) {
             return Optional.of(FeedbackCorrectionErrorType.EMPTY_NEGATIVE_FEEDBACK);
         }
 
