@@ -171,7 +171,7 @@ public class InternalAuthenticationProviderIntegrationTest extends AbstractSprin
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
-        managedUserVM.setPassword("asbdasd");
+        managedUserVM.setPassword("12345678");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
