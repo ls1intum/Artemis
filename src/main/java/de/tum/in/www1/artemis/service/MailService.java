@@ -154,6 +154,48 @@ public class MailService {
     // notification related
 
     /**
+     * Sets the correct context for the case that the notificationSubject is an Exercise
+     * @param notificationSubject which is an Exercise
+     * @param context that is modified based on the exercise type
+     */
+    private void setExerciseContext(Object notificationSubject, Context context) {
+        if (notificationSubject instanceof QuizExercise) {
+            context.setVariable(EXERCISE_TYPE, "quiz");
+        }
+        else if (notificationSubject instanceof ModelingExercise) {
+            context.setVariable(EXERCISE_TYPE, "modeling");
+        }
+        else if (notificationSubject instanceof TextExercise) {
+            context.setVariable(EXERCISE_TYPE, "text");
+        }
+        else if (notificationSubject instanceof ProgrammingExercise) {
+            context.setVariable(EXERCISE_TYPE, "programming");
+        }
+        else if (notificationSubject instanceof FileUploadExercise) {
+            context.setVariable(EXERCISE_TYPE, "upload");
+        }
+    }
+
+    /**
+     * Sets the context and subject for the case that the notificationSubject is a Post
+     * @param context that is modified
+     * @param notificationSubject which has to be a Post
+     * @param locale used for translations
+     * @return the modified subject of the email
+     */
+    private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
+        // posts use a different mechanism for the url
+        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+
+        if (locale.toString().equals("en")) {
+            return "New announcement \"" + ((Post) notificationSubject).getTitle() + "\" in course \"" + ((Post) notificationSubject).getCourse().getTitle() + "\"";
+        }
+        else {
+            return "Neue Ankündigung \"" + ((Post) notificationSubject).getTitle() + "\" im Kurs \"" + ((Post) notificationSubject).getCourse().getTitle() + "\"";
+        }
+    }
+
+    /**
      * Sends a notification based email to one user
      * @param notification which properties are used to create the email
      * @param user who should be contacted
@@ -172,28 +214,17 @@ public class MailService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
+        String subject = notification.getTitle();
 
         if (notificationSubject instanceof Exercise) {
-            if (notificationSubject instanceof QuizExercise) {
-                context.setVariable(EXERCISE_TYPE, "quiz");
-            }
-            else if (notificationSubject instanceof ModelingExercise) {
-                context.setVariable(EXERCISE_TYPE, "modeling");
-            }
-            else if (notificationSubject instanceof TextExercise) {
-                context.setVariable(EXERCISE_TYPE, "text");
-            }
-            else if (notificationSubject instanceof ProgrammingExercise) {
-                context.setVariable(EXERCISE_TYPE, "programming");
-            }
-            else if (notificationSubject instanceof FileUploadExercise) {
-                context.setVariable(EXERCISE_TYPE, "upload");
-            }
+            setExerciseContext(notificationSubject, context);
         }
 
         if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+            subject = setPostContextAndSubject(context, notificationSubject, locale);
+
         }
         else {
             context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
@@ -201,7 +232,6 @@ public class MailService {
         context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = createContentForNotificationEmailByType(notificationType, context);
-        String subject = notification.getTitle();
 
         sendEmail(user, subject, content, false, true);
     }

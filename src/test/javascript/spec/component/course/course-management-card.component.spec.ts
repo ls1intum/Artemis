@@ -8,7 +8,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import dayjs from 'dayjs';
