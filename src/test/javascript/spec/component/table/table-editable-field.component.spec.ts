@@ -37,7 +37,6 @@ describe('TableEditableFieldComponent', () => {
         const tableInput = debugElement.query(By.css(tableInputValue));
 
         expect(tableInput).to.exist;
-        console.log(tableInput.nativeElement.value);
         expect(tableInput.nativeElement.value).to.equal(value);
     });
 
