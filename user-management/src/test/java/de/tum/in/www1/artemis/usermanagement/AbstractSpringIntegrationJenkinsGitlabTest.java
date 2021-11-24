@@ -4,7 +4,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Set;
 
-//import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.usermanagement.util.AbstractArtemisIntegrationTest;
@@ -33,9 +32,6 @@ import de.tum.in.www1.artemis.domain.User;
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
-
-//    @SpyBean
-//    protected GitLabUserManagementService gitLabUserManagementService;
 
     @SpyBean
     protected JenkinsServer jenkinsServer;

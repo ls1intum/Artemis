@@ -404,9 +404,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         String resetKeyBefore = userBefore.get().getResetKey();
 
         // init password reset
-        // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
-        // previous, faulty call:
-        // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
         var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");

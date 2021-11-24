@@ -28,7 +28,7 @@ import static de.tum.in.www1.artemis.domain.Authority.*;
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+public class InternalAuthenticationProviderIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private PasswordService passwordService;
