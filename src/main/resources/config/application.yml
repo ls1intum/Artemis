@@ -20,6 +20,7 @@ logging:
         de.tum.in.www1.artemis: INFO
         tech.jhipster: INFO
         org.springframework.web.socket.config: INFO
+        liquibase: INFO
 
 artemis:
     version: #project.version#
