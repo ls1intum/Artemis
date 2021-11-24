@@ -12,7 +12,6 @@ import { MockComponent } from 'ng-mocks/cjs/lib/mock-component/mock-component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Directive, Input } from '@angular/core';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -21,12 +20,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLink]' })
-export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
-}
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
