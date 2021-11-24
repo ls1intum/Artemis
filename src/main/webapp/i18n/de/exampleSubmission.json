@@ -24,14 +24,10 @@
                 "missing": "Zu wenig Feedback gegeben. In der Musterbewertung wurde an mehr Stellen Feedback gegeben.",
                 "wrong": "Falsche Beurteilung. Es gibt {{mistakeCount}} Fehler.\nBitte überprüfe die Bewertungskriterien und reiche deine verbesserte Bewertung ein."
             },
-            "assessScore": {
-                "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
-                "tooLow": "Die Punktzahl deiner Bewertung dieser Abgabe ist zu niedrig. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein.",
-                "tooHigh": "Die Punktzahl deiner Bewertung dieser Abgabe ist zu hoch. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein."
-            },
+            "correctTutorAssessment": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
             "submitSuccessful": "Deine Beispiel Abgabe wurde eingereicht.",
             "saveSuccessful": "Deine Beispiel Abgabe wurde gespeichert.",
-            "readSuccessfully": "Du hast die Bewertungsanweisungen gelesen, du kannst nun mit der Überprüfung der Beispiel Abgabe beginnen.",
+            "readSuccessfully": "Du hast die Beispielabgabe erfolgreich gelesen und verstanden.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
             "usedForTutorial": "Tutor:innen sollen diese Beispielabgabe bewerten",
