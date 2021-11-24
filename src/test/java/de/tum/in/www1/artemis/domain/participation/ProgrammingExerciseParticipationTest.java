@@ -40,6 +40,13 @@ class ProgrammingExerciseParticipationTest {
         assertThat(participation.isLocked()).isTrue();
     }
 
+    @Test
+    public void shouldNotBeLockedIfNoExerciseDueDate() {
+        final var participation = setupParticipation(null);
+        participation.getExercise().setDueDate(null);
+        assertThat(participation.isLocked()).isFalse();
+    }
+
     private ProgrammingExerciseStudentParticipation setupParticipation(final ZonedDateTime exerciseDueDate) {
         final ZonedDateTime now = ZonedDateTime.now();
         final var user = ModelFactory.generateActivatedUser("student1");

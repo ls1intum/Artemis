@@ -539,16 +539,11 @@ public class SubmissionService {
     /**
      * Checks if the submission was created before the due date of the exercise.
      * @param submission a student’s submission
-     * @return true, if the submission date was before the due date.
+     * @return true, if the submission date was before the due date or the exercise has no due date.
      */
     private boolean isBeforeDueDate(Submission submission) {
-        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(submission.getParticipation());
-        if (dueDate.isEmpty()) {
-            return true;
-        }
-        else {
-            return submission.getSubmissionDate() != null && dueDate.get().isAfter(submission.getSubmissionDate());
-        }
+        return exerciseDateService.getDueDate(submission.getParticipation())
+                .map(dueDate -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
     }
 
     /**

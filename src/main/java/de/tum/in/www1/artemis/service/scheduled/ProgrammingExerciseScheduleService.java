@@ -134,12 +134,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @Override
     public void updateScheduling(ProgrammingExercise exercise) {
-        if (!needsToBeScheduled(exercise)) {
+        if (needsToBeScheduled(exercise)) {
+            scheduleExercise(exercise);
+        }
+        else {
             // If a programming exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
             cancelAllScheduledTasks(exercise);
-            return;
         }
-        scheduleExercise(exercise);
     }
 
     private boolean needsToBeScheduled(ProgrammingExercise exercise) {

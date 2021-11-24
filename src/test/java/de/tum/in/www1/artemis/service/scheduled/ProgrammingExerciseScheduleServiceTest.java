@@ -587,6 +587,48 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() throws Exception {
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        setupProgrammingExerciseDates(now, -1 * delayMS / 2, null);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void shouldCancelAllTasksIfSchedulingNoLongerNeeded() throws Exception {
+        mockStudentRepoLocks();
+        final long delayMS = 200;
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        setupProgrammingExerciseDates(now, -1 * delayMS / 2, null);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAllowComplaintsForAutomaticAssessments(false);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.RELEASE);
+        verify(scheduleService, times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.DUE);
+        verify(scheduleService, times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        verify(scheduleService, times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
+    }
+
     /**
      * Sets the due date and build and test after due date for the {@code programmingExercise} to NOW + the delay.
      *

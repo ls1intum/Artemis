@@ -83,7 +83,7 @@ public class ParticipationLifecycleService {
             final ZonedDateTime exerciseBuildAndTestAfterDueDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
             final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
 
-            if (dueDate.isPresent() && dueDate.get().isAfter(exerciseBuildAndTestAfterDueDate)) {
+            if (dueDate.map(date -> date.isAfter(exerciseBuildAndTestAfterDueDate)).orElse(false)) {
                 return dueDate;
             }
             else {
