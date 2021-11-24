@@ -6,7 +6,8 @@
             "averageScoreLabel": "Durchschnittliches Ergebnis",
             "maximumScoreLabel": "Bestes Ergebnis",
             "yAxis": "Ergebnis (%)",
-            "xAxis": "Aufgaben"
+            "xAxis": "Aufgaben",
+            "exerciseType": "Aufgabentyp: {{ type }}"
         }
     }
 }

@@ -1,38 +1,28 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DebugElement } from '@angular/core';
-import { SinonSpy, spy } from 'sinon';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockDirective } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ButtonComponent', () => {
     let comp: ButtonComponent;
     let fixture: ComponentFixture<ButtonComponent>;
     let debugElement: DebugElement;
 
-    let clickSpy: SinonSpy;
+    let clickSpy: jest.SpyInstance;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedComponentModule],
-            providers: [
-                JhiLanguageHelper,
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-            ],
+            imports: [ArtemisTestModule],
+            declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(TranslateDirective)],
+            providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })
             .compileComponents()
             .then(() => {
@@ -40,7 +30,7 @@ describe('ButtonComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                clickSpy = spy(comp.onClick, 'emit');
+                clickSpy = jest.spyOn(comp.onClick, 'emit');
             });
     });
 
@@ -71,13 +61,13 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const title = getTitle();
-        expect(title).to.exist;
+        expect(title).not.toBe(null);
 
         const icon = getIcon();
-        expect(icon).to.exist;
+        expect(icon).not.toBe(null);
 
         const loadingIcon = getLoading();
-        expect(loadingIcon).not.to.exist;
+        expect(loadingIcon).toBe(null);
     });
 
     it('should render button without icon and with title', () => {
@@ -86,13 +76,13 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const title = getTitle();
-        expect(title).to.exist;
+        expect(title).not.toBe(null);
 
         const icon = getIcon();
-        expect(icon).not.to.exist;
+        expect(icon).toBe(null);
 
         const loadingIcon = getLoading();
-        expect(loadingIcon).not.to.exist;
+        expect(loadingIcon).toBe(null);
     });
 
     it('should render button with icon and without title', () => {
@@ -101,16 +91,16 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const title = getTitle();
-        expect(title).not.to.exist;
+        expect(title).toBe(null);
 
         const icon = getIcon();
-        expect(icon).to.exist;
+        expect(icon).not.toBe(null);
 
         const loadingIcon = getLoading();
-        expect(loadingIcon).not.to.exist;
+        expect(loadingIcon).toBe(null);
     });
 
-    it('should disable complete button if disabled is set', async () => {
+    it('should disable complete button if disabled is set', fakeAsync(() => {
         comp.title = 'artemisApp.title.test';
         comp.icon = 'redo';
         comp.disabled = true;
@@ -118,15 +108,15 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const button = getButton();
-        expect(button).to.exist;
-        expect(button.disabled).to.be.true;
+        expect(button).not.toBe(null);
+        expect(button.disabled).toBe(true);
         button.click();
-        await fixture.whenStable();
+        tick();
 
-        expect(clickSpy).to.not.have.been.called;
-    });
+        expect(clickSpy).not.toHaveBeenCalled();
+    }));
 
-    it('should enable complete button if disabled is set to false', async () => {
+    it('should enable complete button if disabled is set to false', fakeAsync(() => {
         comp.title = 'artemisApp.title.test';
         comp.icon = 'redo';
         comp.disabled = false;
@@ -134,15 +124,15 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const button = getButton();
-        expect(button).to.exist;
-        expect(button.disabled).to.be.false;
+        expect(button).not.toBe(null);
+        expect(button.disabled).toBe(false);
         button.click();
-        await fixture.whenStable();
+        tick();
 
-        expect(clickSpy).to.have.been.called;
-    });
+        expect(clickSpy).toHaveBeenCalledTimes(1);
+    }));
 
-    it('should show loading indicator when loading is set', async () => {
+    it('should show loading indicator when loading is set', fakeAsync(() => {
         comp.title = 'artemisApp.title.test';
         comp.icon = 'redo';
         comp.isLoading = true;
@@ -150,14 +140,14 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const button = getButton();
-        expect(button).to.exist;
-        expect(button.disabled).to.be.true;
+        expect(button).not.toBe(null);
+        expect(button.disabled).toBe(true);
         const loadingIcon = getLoading();
-        expect(loadingIcon).to.exist;
+        expect(loadingIcon).not.toBe(null);
 
         button.click();
-        await fixture.whenStable();
+        tick();
 
-        expect(clickSpy).to.not.have.been.called;
-    });
+        expect(clickSpy).not.toHaveBeenCalled();
+    }));
 });
