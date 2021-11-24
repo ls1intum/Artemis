@@ -212,7 +212,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     color: FILE_UPLOAD_EXERCISE_COLOR,
                 },
             };
-            this.groupExercisesByType();
+            this.groupExercisesByType(this.courseExercises);
         });
 
         this.calculateCourseGrade();
@@ -237,21 +237,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         if (this.course?.exercises) {
             this.courseExercises = this.course.exercises;
+            this.courseExercisesNotScoreRelevant = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
             this.calculateMaxPoints();
             this.calculateReachablePoints();
             this.calculateAbsoluteScores();
             this.calculateRelativeScores();
             this.calculatePresentationScores();
             this.calculateCurrentRelativeScores();
-            this.groupExercisesByType();
+            this.groupExercisesByType(this.courseExercises);
         }
     }
 
-    groupExercisesByType() {
-        if (!this.course?.exercises) {
-            return;
-        }
-        let exercises = this.course.exercises;
+    groupExercisesByType(exercises: Exercise[]) {
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
@@ -266,6 +263,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 if (!groupedExercises[index]) {
                     groupedExercises[index] = {
                         type: exercise.type,
+                        includedInOverallScore: exercise.includedInOverallScore,
                         relativeScore: 0,
                         overallMaxPoints: 0,
                         absoluteScore: 0,
@@ -328,6 +326,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
         });
         this.groupedExercises = groupedExercises;
+    }
+
+    private courseExercisesNotScoreRelevant: Exercise[];
+    currentlyHidingExcludedExercises = false;
+    filteredExerciseIDs: number[];
+
+    toggleNotScoreRelevantExercises() {
+        if (this.currentlyHidingExcludedExercises) {
+            this.courseExercises = this.courseExercises.concat(this.courseExercisesNotScoreRelevant);
+            this.filteredExerciseIDs = [];
+        } else {
+            this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotScoreRelevant.includes(exercise));
+            this.filteredExerciseIDs = this.courseExercisesNotScoreRelevant.map((exercise) => exercise.id!);
+        }
+        this.currentlyHidingExcludedExercises = !this.currentlyHidingExcludedExercises;
+
+        this.groupExercisesByType(this.courseExercises);
     }
 
     getScoreColor(includedInOverallScore: IncludedInOverallScore): string {

@@ -89,6 +89,7 @@
                 "totalScore": "Gesamtpunktzahl",
                 "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
                 "presentationScoreBonus": "Benötigtes Präsentationsergebnis für den Bonus: {{ number }}",
+                "hideNotIncludedExercises": "Keine Ungewerteten",
                 "exerciseCount": "{{ number }} {{ type }}",
                 "yourPoints": "Deine Punktzahl: {{ number }}",
                 "reachablePoints": "Erreichbare Punktzahl: {{ number }} ({{ relative }}%)",
