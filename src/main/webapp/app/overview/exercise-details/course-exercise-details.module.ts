@@ -35,7 +35,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
+                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
             },
         ],
     },

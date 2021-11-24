@@ -1,22 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement, Directive, Input } from '@angular/core';
-import { getElement, getElements } from '../../../../helpers/utils/general.utils';
+import { DebugElement } from '@angular/core';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { PostingContentMarkdownLinebreakPipe } from 'app/shared/pipes/posting-content-markdown-linebreak.pipe';
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[routerLink]' })
-export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
-}
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[queryParams]' })
-export class MockQueryParamsDirective {
-    @Input('queryParams') data: any;
-}
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
+import { getElement, getElements } from '../../../../helpers/utils/general.utils';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -27,8 +15,7 @@ describe('PostingContentPartComponent', () => {
         return TestBed.configureTestingModule({
             declarations: [
                 PostingContentPartComponent,
-                HtmlForMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-                PostingContentMarkdownLinebreakPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
+                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
@@ -54,17 +41,17 @@ describe('PostingContentPartComponent', () => {
             fixture.detectChanges();
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
             expect(markdownRenderedTexts).toHaveLength(1);
-            expect(markdownRenderedTexts![0].innerHTML).toEqual('<p>' + postingContent + '</p>');
+            expect(markdownRenderedTexts![0].innerHTML).toBe('<p class="inline-paragraph">' + postingContent + '</p>');
 
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).toBeDefined();
+            expect(referenceLink).toBe(null);
         });
     });
 
     describe('For posting with reference', () => {
         it('should contain a reference and markdown content before and after', () => {
-            const contentBeforeReference = 'I want to reference the following Post ';
-            const contentAfterReference = 'in my content, with\nlinebreak.';
+            const contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
+            const contentAfterReference = 'in my content,\n\n does it *actually* work?';
             const referenceStr = '#7';
             component.postingContentPart = {
                 contentBeforeReference,
@@ -76,10 +63,14 @@ describe('PostingContentPartComponent', () => {
             fixture.detectChanges();
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
             expect(markdownRenderedTexts).toHaveLength(2);
-            expect(markdownRenderedTexts![0].innerHTML).toEqual('<p>' + contentBeforeReference + '</p>');
-            expect(markdownRenderedTexts![1].innerHTML).toEqual('<p>' + contentAfterReference.replace(/\n/gm, '<br>') + '</p>');
+            // check that the paragraph right before the reference and the paragraph right after have the class `inline-paragraph`
+            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p><strong>Be aware</strong></p>');
+            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post </p>'); // last paragraph before reference
+            expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
+            expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).toBeDefined();
+            expect(referenceLink).not.toBe(null);
+            expect(referenceLink.innerHTML).toInclude(referenceStr);
         });
     });
 });
