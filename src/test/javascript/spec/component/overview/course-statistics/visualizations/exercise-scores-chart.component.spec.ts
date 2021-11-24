@@ -104,7 +104,7 @@ describe('ExerciseScoresChartComponent', () => {
     });
 
     it('should filter exercises correctly', () => {
-        let exercises = [];
+        const exercises = [];
         for (let i = 0; i < 10; i++) {
             exercises.push(generateExerciseScoresDTO(ExerciseType.QUIZ, i, i * 5, 100 - i * 4, 100 - i * 4, dayjs().add(i, 'days'), i + 'th Exercise'));
         }
