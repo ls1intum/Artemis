@@ -58,6 +58,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     @Override
     public void createUserInExternalUserManagement(User user) {
         // This should not be invoked. As we only use internal management, nothing needs to be done in case it is invoked.
+        throw new UnsupportedOperationException("Cannot create user in external user management when internal authentication provider is configured.");
     }
 
     @Override

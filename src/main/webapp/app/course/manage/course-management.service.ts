@@ -12,18 +12,19 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -279,14 +280,6 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the stats of the course with the provided unique identifier for the instructor dashboard
-     * @param courseId - the id of the course
-     */
-    getStatsForInstructors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-instructor-dashboard`, { observe: 'response' });
-    }
-
-    /**
      * returns the exercise details of the courses for the courses management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */
@@ -379,6 +372,16 @@ export class CourseManagementService {
      */
     addUserToCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Add users to the registered users for an course.
+     * @param courseId The course id.
+     * @param studentDtos Student DTOs of users to add to the course.
+     * @return studentDtos of users that were not found in the system.
+     */
+    addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, studentDtos, { observe: 'response' });
     }
 
     /**

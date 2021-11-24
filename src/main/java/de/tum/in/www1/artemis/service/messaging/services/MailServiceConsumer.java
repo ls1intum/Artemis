@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.messaging.services;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.EnableJms;
@@ -13,6 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.MailService;
 
+/**
+ * Consumer which consumes all messages that are sent from other serices realted to sending emails to the user.
+ */
 @Component
 @EnableJms
 public class MailServiceConsumer {
@@ -29,28 +34,48 @@ public class MailServiceConsumer {
         this.mailService = mailService;
     }
 
+    /**
+     * Consumes messages related to sending account activation emails and sends the actual email.
+     *
+     * @param message the message coming from the message broker
+     */
     @JmsListener(destination = USER_MANAGEMENT_QUEUE_SEND_ACTIVATION_MAIL)
-    public void addUserToGroup(Message message) {
-        User user = readUserValue(message.getPayload().toString());
-        mailService.sendActivationEmail(user);
+    public void sendActivationEmail(Message message) {
+        Optional<User> user = readUserValue(message.getPayload().toString());
+        if (user.isPresent()) {
+            mailService.sendActivationEmail(user.get());
+        }
+        else {
+            LOGGER.error("Email is not sent because the user was not present");
+        }
     }
 
+    /**
+     * Consumes messages related to sending password reset emails and sends the actual email.
+     *
+     * @param message the message coming from the message broker
+     */
     @JmsListener(destination = USER_MANAGEMENT_QUEUE_SEND_PASSWORD_RESET_MAIL)
-    public void createUserGroup(Message message) {
-        User user = readUserValue(message.getPayload().toString());
-        mailService.sendPasswordResetMail(user);
+    public void sendPasswordResetEmail(Message message) {
+        Optional<User> user = readUserValue(message.getPayload().toString());
+        if (user.isPresent()) {
+            mailService.sendPasswordResetMail(user.get());
+        }
+        else {
+            LOGGER.error("Email is not sent because the user was not present");
+        }
     }
 
-    private User readUserValue(String value) {
+    private Optional<User> readUserValue(String value) {
         ObjectMapper objectMapper = new ObjectMapper();
-        User user = null;
+        User user;
         try {
             user = objectMapper.readValue(value, User.class);
         }
         catch (JsonProcessingException e) {
             LOGGER.error("User data could not be extracted.");
+            return Optional.empty();
         }
-        return user;
+        return Optional.of(user);
     }
-
 }

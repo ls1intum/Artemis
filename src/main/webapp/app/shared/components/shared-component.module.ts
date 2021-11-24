@@ -8,12 +8,11 @@ import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-butto
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ClipboardModule } from 'ngx-clipboard';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/components/help-icon-without-translation.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
     entryComponents: [ConfirmAutofocusModalComponent],
     declarations: [
         ButtonComponent,

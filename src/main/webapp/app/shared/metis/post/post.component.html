@@ -1,4 +1,4 @@
-<jhi-post-header [previewMode]="previewMode" [posting]="posting" (toggleAnswersChange)="toggleAnswersChange.emit()"></jhi-post-header>
+<jhi-post-header [previewMode]="previewMode" [posting]="posting"></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
@@ -14,10 +14,21 @@
                 *ngIf="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
                 [icon]="'bullhorn'"
                 iconSize="xs"
-                class="col-auto pe-0"
+                class="col-auto pe-0 announcement-icon"
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
-                [styles]="{ color: '#0f6ab4' }"
             ></fa-icon>
+            <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
+            <span *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto">
+                <a
+                    class="linked-context-information"
+                    *ngIf="contextInformation.routerLinkComponents"
+                    [routerLink]="contextInformation.routerLinkComponents"
+                    (click)="onNavigateToContext($event)"
+                    routerLinkActive="active"
+                    >{{ contextInformation.displayName }}:</a
+                >
+                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
+            </span>
             <span class="col-auto">
                 <a
                     class="post-title"
@@ -25,13 +36,16 @@
                     [queryParams]="metisService.getQueryParamsForPost(posting)"
                     (click)="onNavigateToPostById($event)"
                     routerLinkActive="active"
+                    >{{ posting.title }}</a
                 >
-                    {{ posting.title }}
-                </a>
                 <span class="reference-hash">#{{ posting.id }}</span>
             </span>
         </div>
-        <jhi-posting-content [previewMode]="previewMode" [content]="posting.content"></jhi-posting-content>
+        <jhi-posting-content
+            [previewMode]="previewMode"
+            [content]="posting.content"
+            [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
+        ></jhi-posting-content>
     </div>
 </div>
 <jhi-post-footer [modalRef]="modalRef" [previewMode]="previewMode" [posting]="posting"></jhi-post-footer>

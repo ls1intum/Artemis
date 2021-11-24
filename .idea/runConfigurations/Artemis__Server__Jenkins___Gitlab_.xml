@@ -5,9 +5,9 @@
     <option name="ACTIVE_PROFILES" value="dev,jenkins,gitlab,artemis,scheduling,local" />
     <option name="VM_PARAMETERS" value="--illegal-access=warn" />
     <option name="ALTERNATIVE_JRE_PATH" />
-    <option name="SHORTEN_COMMAND_LINE" value="NONE" />
+    <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
     <method v="2">
-      <option name="Make" enabled="true" />
+      <option name="Gradle.BeforeRunTask" enabled="true" tasks="build" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="-x webapp -x test -x jacocoTestCoverageVerification" />
     </method>
   </configuration>
 </component>

@@ -90,6 +90,31 @@
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Dateiupload-Aufgabe",
+            "exercise": {
+                "search": {
+                    "searchButton": "Suchen",
+                    "resetButton": "Zurücksetzen",
+                    "toggleButton": {
+                        "true": "Zeige erweiterte Suche",
+                        "false": "Verstecke erweiterte Suche"
+                    },
+                    "cardTitle": "Aufgaben durchsuchen",
+                    "labelExerciseName": "Aufgaben nach Namen durchsuchen",
+                    "fieldExerciseName": "Aufgaben Name",
+                    "labelExerciseCategory": "Kategorie",
+                    "fieldExerciseCategory": "Kategorie",
+                    "labelExerciseType": "Aufgabentyp",
+                    "noResults": "Keine Aufgaben wurden für die Suchparameter gefunden",
+                    "type": {
+                        "all": "Alle Aufgaben",
+                        "programming": "Programmieraufgaben",
+                        "quiz": "Quizaufgaben",
+                        "modeling": "Modellierungsaufgaben",
+                        "text": "Textaufgaben",
+                        "file-upload": "Dateiupload-Aufgaben"
+                    }
+                }
+            },
             "students": "Studierende",
             "participations": "Teilnahmen",
             "tutors": "Tutor:innen",
@@ -145,7 +170,8 @@
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
-            }
+            },
+            "activeStudents": "Aktive Studierende: {{ students }}"
         },
         "courseStatistics": {
             "statistics": "Statistiken",

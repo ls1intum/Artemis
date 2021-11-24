@@ -6,7 +6,6 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -24,7 +23,7 @@ class JWTFilterTest {
 
     private static final long ONE_MINUTE_MS = 60000;
 
-    private MockTokenProvider mockTokenProvider;
+    private TestTokenGenerator testTokenGenerator;
 
     private JWTFilter jwtFilter;
 
@@ -36,7 +35,7 @@ class JWTFilterTest {
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         TokenProvider tokenProvider = new TokenProvider(jHipsterProperties);
         ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
-        mockTokenProvider = new MockTokenProvider(jHipsterProperties);
+        testTokenGenerator = new TestTokenGenerator(jHipsterProperties);
         jwtFilter = new JWTFilter(tokenProvider);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
@@ -45,14 +44,13 @@ class JWTFilterTest {
     void testJWTFilter() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
-        String jwt = mockTokenProvider.createToken(authentication, false);
+        String jwt = testTokenGenerator.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
         assertThat(SecurityContextHolder.getContext().getAuthentication().getCredentials()).hasToString(jwt);
     }
@@ -66,7 +64,6 @@ class JWTFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
@@ -77,7 +74,6 @@ class JWTFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
@@ -89,7 +85,6 @@ class JWTFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
@@ -97,14 +92,13 @@ class JWTFilterTest {
     void testJWTFilterWrongScheme() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
-        String jwt = mockTokenProvider.createToken(authentication, false);
+        String jwt = testTokenGenerator.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Basic " + jwt);
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 }

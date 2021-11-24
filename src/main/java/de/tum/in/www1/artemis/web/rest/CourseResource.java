@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -188,6 +189,7 @@ public class CourseResource {
         validateRegistrationConfirmationMessage(course);
         validateComplaintsAndRequestMoreFeedbackConfig(course);
         validateOnlineCourseAndRegistrationEnabled(course);
+        validateAccuracyOfScores(course);
 
         createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -318,6 +320,7 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(updatedCourse);
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
+        validateAccuracyOfScores(updatedCourse);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -385,6 +388,16 @@ public class CourseResource {
         if (course.isOnlineCourse() && course.isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    private void validateAccuracyOfScores(Course course) {
+        if (course.getAccuracyOfScores() == null) {
+            throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
+        }
+        if (course.getAccuracyOfScores() < 0 || course.getAccuracyOfScores() > 5) {
+            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
+                    "accuracyOfScoresInvalid", true);
         }
     }
 
@@ -702,9 +715,7 @@ public class CourseResource {
         final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(courseId);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         end = System.currentTimeMillis();
-        log.info("Finished > complaintResponseRepository\n"
-                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull< call for course {} in {}ms",
-                course.getId(), end - start);
+        log.info("Finished > complaintService.countMoreFeedbackRequestResponsesByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 0.12s - a bit slow
@@ -713,6 +724,12 @@ public class CourseResource {
         log.info("Finished >  complaintService.countComplaintsByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         stats.setNumberOfComplaints(numberOfComplaints);
+
+        start = System.currentTimeMillis();
+        final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(courseId);
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        end = System.currentTimeMillis();
+        log.info("Finished > complaintService.countComplaintResponsesByCourseId < call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 10ms - fast
@@ -865,106 +882,6 @@ public class CourseResource {
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
         return ResponseEntity.ok(submissions);
-    }
-
-    /**
-     * GET /courses/:courseId/stats-for-instructor-dashboard
-     * <p>
-     * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
-     * assessments - number of complaints - number of open complaints - tutor leaderboard data
-     *
-     * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
-     */
-    @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) {
-        log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
-        final long start = System.currentTimeMillis();
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-
-        long start2 = System.currentTimeMillis();
-        final Set<Long> exerciseIdsOfCourse = exerciseRepository.findAllIdsByCourseId(courseId);
-        long end2 = System.currentTimeMillis();
-        log.info("Finished > exerciseRepository.findAllIdsByCourseId < call for course {} in {}ms", course.getId(), end2 - start2);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-        StatsForDashboardDTO stats = new StatsForDashboardDTO();
-        start2 = System.currentTimeMillis();
-        // this one is very slow TODO make faster
-        final DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > resultRepository.countNumberOfAssessments < call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        // no examMode here, so its the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
-        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
-        stats.setNumberOfComplaints(numberOfComplaints);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
-        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintResponseRepository\n"
-                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull < call for course {} in {}ms",
-                course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
-        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > complaintResponseRepository\n"
-                + "                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull< call for course {} in {}ms",
-                course.getId(), end2 - start2);
-
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-
-        stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
-
-        start2 = System.currentTimeMillis();
-        final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > submissionRepository.countByCourseIdSubmittedBeforeDueDate < call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > submissionRepository.countByCourseIdSubmittedAfterDueDate< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
-
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
-        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > submissionRepository.countLockedSubmissionsByUserIdAndCourseId< call for course {} in {}ms", course.getId(), end2 - start2);
-        start2 = System.currentTimeMillis();
-
-        final long startT = System.currentTimeMillis();
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
-        stats.setTutorLeaderboardEntries(leaderboardEntries);
-        end2 = System.currentTimeMillis();
-        log.info("Finished > tutorLeaderboardService.getCourseLeaderboard< call for course {} in {}ms", course.getId(), end2 - start2);
-
-        log.info("Finished TutorLeaderboard in {}ms", System.currentTimeMillis() - startT);
-        log.info("Finished /courses/{}/stats-for-instructor-dashboard call in {}ms", courseId, System.currentTimeMillis() - start);
-
-        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -1535,10 +1452,33 @@ public class CourseResource {
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
-    @GetMapping(value = "/courses/{courseId}/statistics")
+    @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));
+    }
+
+    /**
+     * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
+     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
+     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     *
+     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     *
+     * @param courseId      the id of the course
+     * @param studentDtos   the list of students (with at least registration number) who should get access to the course
+     * @param courseGroup   the group, the user has to be added to
+     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    @PostMapping("courses/{courseId}/{courseGroup}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
+        log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
+        List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
+        return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 }

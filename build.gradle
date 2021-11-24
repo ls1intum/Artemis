@@ -21,13 +21,13 @@ plugins {
     id "com.diffplug.spotless" version "5.15.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
-    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.1"
+    id "com.github.andygoossens.modernizer" version "1.6.1"
 }
 
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.2.7"
+    version = "5.3.4"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -81,7 +81,7 @@ bootRun {
 }
 
 modernizer {
-    failOnViolations = true
+    failOnViolations = false
     includeTestClasses = true
 }
 
@@ -175,12 +175,16 @@ dependencies {
     implementation "org.apache.maven:maven-model:${apache_model_version}"
     implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
     implementation "com.google.protobuf:protobuf-java:${google_protobuf_java_version}"
+    implementation "org.commonmark:commonmark:${commonmark_version}"
+
+    implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
     }
     testImplementation "com.h2database:h2:${h2_database_version}"
+    testImplementation "com.opencsv:opencsv:${opencsv_version}"
 }
 
 task executeTests (type: Exec) {
@@ -247,11 +251,7 @@ tasks.named("dependencyUpdates").configure {
 gradle.taskGraph.whenReady { graph ->
     def tasks = gradle.startParameter.taskNames.toString()
 
-    def hasRootUserManagementTask = tasks.contains(":user-management:bootWar") || tasks.contains(":user-management:executeTests") || tasks.contains(":user-management:jacocoTestReport")
-        || tasks.contains(":user-management:spotlessCheck")  || tasks.contains(":user-management:spotlessApply")  || tasks.contains(":user-management:dependencyUpdates")
-        || tasks.contains(":user-management:checkstyleMain")  || tasks.contains(":user-management:jacocoTestCoverageVerification")  || tasks.contains(":user-management:test")
-        || tasks.contains(":user-management:bootRun") || tasks.contains(":user-management:buildJarForDocker") || tasks.contains(":user-management:cleanResources")
-        || tasks.contains(":user-management:bootJar")
+    def hasRootUserManagementTask = tasks.contains(":user-management:")
 
     if (!hasRootUserManagementTask) {
         graph.getAllTasks().each { task ->
@@ -263,10 +263,7 @@ gradle.taskGraph.whenReady { graph ->
         }
     }
 
-    def hasRootGatewayTask = tasks.contains(":gateway:bootWar") || tasks.contains(":gateway:executeTests") || tasks.contains(":gateway:jacocoTestReport")
-        || tasks.contains(":gateway:spotlessCheck")  || tasks.contains(":gateway:spotlessApply")  || tasks.contains(":gateway:dependencyUpdates")
-        || tasks.contains(":gateway:checkstyleMain")  || tasks.contains(":gateway:jacocoTestCoverageVerification")  || tasks.contains(":gateway:test")
-        || tasks.contains(":gateway:bootRun") || tasks.contains(":gateway:buildJarForDocker") || tasks.contains(":gateway:cleanResources")
+    def hasRootGatewayTask = tasks.contains(":gateway:")
 
     if (!hasRootGatewayTask) {
         graph.getAllTasks().each { task ->

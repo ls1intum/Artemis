@@ -73,6 +73,15 @@
                     >
                         <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
                     </a>
+                    <button
+                        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        (click)="checkConsistencies(programmingExercise)"
+                        class="btn btn-outline-primary btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="'check-double'"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                    </button>
                 </div>
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
@@ -224,6 +233,28 @@
                     <dt><span jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title">Max Static Code Analysis Penalty</span></dt>
                     <dd>
                         <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
+                    </dd>
+                </ng-container>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
+                <dd>
+                    <span
+                        jhiTranslate="{{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
+                                (!programmingExercise.submissionPolicy ? 'none' : programmingExercise.submissionPolicy.type!) +
+                                '.title'
+                        }}"
+                    ></span>
+                </dd>
+                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission Limit</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined && programmingExercise.submissionPolicy.exceedingPenalty">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>

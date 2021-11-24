@@ -283,6 +283,14 @@
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <jhi-submission-policy-update #submissionPolicyForm [editable]="!isEdit" [programmingExercise]="programmingExercise"></jhi-submission-policy-update>
+            <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                <ngb-alert [dismissible]="false" [type]="'info'">
+                    <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
+                </ngb-alert>
+            </ng-container>
+        </div>
         <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed && ProjectType.XCODE !== selectedProjectType">
             <div class="form-check custom-control custom-checkbox">
                 <input
@@ -539,11 +547,11 @@
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid"
+            [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid || submissionPolicyForm.invalid"
             [isLoading]="isSaving"
             [icon]="'save'"
             [title]="submitButtonTitle"
-            (click)="save()"
+            (onClick)="save()"
         >
         </jhi-button>
     </div>

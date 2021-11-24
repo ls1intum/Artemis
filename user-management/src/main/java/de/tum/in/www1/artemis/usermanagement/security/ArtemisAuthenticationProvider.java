@@ -32,7 +32,7 @@ public interface ArtemisAuthenticationProvider {
     void addUserToGroup(User user, String group);
 
     /**
-     * creates the given user in the external user management (in case it is used)
+     * Creates the given user in the external user management (in case it is used)
      *
      * @param user the user that should be created
      */
@@ -74,14 +74,14 @@ public interface ArtemisAuthenticationProvider {
     ConnectorHealth health();
 
     /**
-     * create a group with the given name
+     * Create a group with the given name
      *
      * @param groupName the name of the group which should be created
      */
     void createGroup(String groupName);
 
     /**
-     * delete the group with the given name
+     * Delete the group with the given name
      *
      * @param groupName the name of the group which should be deleted
      */

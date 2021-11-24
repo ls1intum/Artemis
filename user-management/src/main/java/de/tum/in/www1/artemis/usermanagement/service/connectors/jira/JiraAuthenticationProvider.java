@@ -119,7 +119,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             }
         }
         catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+            if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode()) || HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
                 // If JIRA requires a CAPTCHA. Communicate this to the client
                 if (e.getResponseHeaders() != null && e.getResponseHeaders().containsKey("X-Authentication-Denied-Reason")) {
                     String authenticationDeniedReason = e.getResponseHeaders().get("X-Authentication-Denied-Reason").get(0);
@@ -187,7 +187,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             restTemplate.exchange(jiraUrl + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user is already a member of")) {
+            if (HttpStatus.BAD_REQUEST.equals(e.getStatusCode()) && e.getResponseBodyAsString().contains("user is already a member of")) {
                 // ignore the error if the user is already in the group
                 return;
             }
@@ -207,7 +207,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
         catch (HttpClientErrorException e) {
             // ignore the error if the user cannot be created, this can e.g. happen if the user already exists in the external user management system
-            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user with that username already exists")) {
+            if (HttpStatus.BAD_REQUEST.equals(e.getStatusCode()) && e.getResponseBodyAsString().contains("user with that username already exists")) {
                 log.info("User {} already exists in JIRA", user.getLogin());
             }
             else {
@@ -220,7 +220,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     // The reason is that JIRA is using the readonly LDAP user directory to the TUM on the production server as first choice
     // and the internal directory as second choice. However, users can only be created in the first user directory and there is no option
     // to create them in the second user directory
-
     @Override
     public void createGroup(String groupName) {
         log.info("Create group {} in JIRA", groupName);
@@ -248,7 +247,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             restTemplate.exchange(jiraUrl + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Void.class);
         }
         catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
                 // ignore the error if the group does not exist
             }
             else {
@@ -276,15 +275,12 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     public boolean isGroupAvailable(String group) {
         try {
             ResponseEntity<Void> response = restTemplate.exchange(jiraUrl + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, null, Void.class);
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
+            if (HttpStatus.OK.equals(response.getStatusCode())) {
                 return true;
             }
         }
         catch (HttpClientErrorException e) {
             log.warn("JIRA group {} does not exit", group);
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                return false;
-            }
         }
         return false;
     }

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.in.www1.artemis.web.rest.TeamResource;
+import de.tum.in.www1.artemis.config.Constants;
 
 /**
  * Exception that will be thrown if the user tries to imports teams that contains students whose login or registration number cannot be found. The error response will
@@ -19,7 +19,7 @@ public class StudentsNotFoundException extends BadRequestAlertException {
     private static final String ERROR_KEY = "studentsNotFound";
 
     public StudentsNotFoundException(List<String> registrationNumbers, List<String> logins) {
-        super(ErrorConstants.REGISTRATION_NUMBER_NOT_FOUND_TYPE, "Users with logins or registration numbers could not be found.", TeamResource.ENTITY_NAME, ERROR_KEY,
+        super(ErrorConstants.REGISTRATION_NUMBER_NOT_FOUND_TYPE, "Users with logins or registration numbers could not be found.", Constants.TEAM_ENTITY_NAME, ERROR_KEY,
                 getParameters(registrationNumbers, logins));
     }
 
