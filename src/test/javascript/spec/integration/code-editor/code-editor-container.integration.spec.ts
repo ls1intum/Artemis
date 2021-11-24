@@ -175,15 +175,6 @@ describe('CodeEditorContainerIntegration', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-        //checkIfRepositoryIsCleanStub.mockRestore();
-        //getRepositoryContentStub.mockRestore();
-        //subscribeForLatestResultOfParticipationStub.mockRestore();
-        //getFeedbackDetailsForResultStub.mockRestore();
-        //getBuildLogsStub.mockRestore();
-        //getFileStub.mockRestore();
-        // saveFilesStub.mockRestore();
-        //commitStub.mockRestore();
-        //getStudentParticipationWithLatestResultStub.mockRestore();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
