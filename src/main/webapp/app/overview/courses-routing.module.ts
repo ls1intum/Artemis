@@ -2,7 +2,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { NgModule } from '@angular/core';
@@ -30,12 +29,7 @@ const routes: Routes = [
         children: [
             {
                 path: 'exercises',
-                component: CourseExercisesComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.course',
-                },
-                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('./course-exercises/course-exercises.module').then((m) => m.CourseExercisesModule),
             },
             {
                 path: 'lectures',

@@ -22,6 +22,7 @@ import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tuto
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
@@ -45,6 +46,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,
         OrionModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [ExerciseAssessmentDashboardComponent, OrionExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
     providers: [],

@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
     imports: [
@@ -19,6 +20,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
         RouterModule.forChild([]),
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [ProgrammingAssessmentDashboardComponent],
 })
