@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';

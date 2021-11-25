@@ -31,13 +31,13 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Observable } from 'rxjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
