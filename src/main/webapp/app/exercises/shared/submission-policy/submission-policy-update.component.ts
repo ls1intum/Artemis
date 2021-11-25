@@ -108,7 +108,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 Validators.required,
             ]),
             exceedingPenalty: new FormControl({ value: this.programmingExercise.submissionPolicy?.exceedingPenalty, disabled: !this.editable }, [
-                Validators.min(0),
+                Validators.min(0.000000000000000000000001),
                 Validators.required,
             ]),
         });

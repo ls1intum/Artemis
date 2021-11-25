@@ -331,9 +331,9 @@
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
-                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than or equal 0.",
+                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "The penalty must be greater than or equal 0!",
+                        "min": "The penalty must be greater than 0!",
                         "required": "The penalty must be set!"
                     },
                     "penaltyInfoLabel": "Exceeding Penalty",

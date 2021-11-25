@@ -703,6 +703,38 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         }
 
+        // verifying submission limit value
+        if (this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
+            const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
+            if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+                    translateValues: {},
+                });
+            } else if (submissionLimit < 1 || submissionLimit > 500 || submissionLimit % 1 !== 0) {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+                    translateValues: {},
+                });
+            }
+        }
+
+        // verifying exceeding submission limit penalty
+        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+            const exceedingPenalty = this.programmingExercise.submissionPolicy?.exceedingPenalty;
+            if (exceedingPenalty === undefined || typeof exceedingPenalty !== 'number') {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+                    translateValues: {},
+                });
+            } else if (exceedingPenalty <= 0) {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.min',
+                    translateValues: {},
+                });
+            }
+        }
+
         if (!this.auxiliaryRepositoriesValid) {
             result.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
