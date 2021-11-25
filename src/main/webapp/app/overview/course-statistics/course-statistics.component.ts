@@ -51,7 +51,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     course?: Course;
 
     private courseExercisesNotScoreRelevant: Exercise[];
-    currentlyHidingExcludedExercises = false;
+    currentlyHidingNotScoreRelevantExercises = false;
     filteredExerciseIDs: number[];
 
     // TODO: improve the types here and use maps instead of java script objects, also avoid the use of 'any'
@@ -332,14 +332,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     toggleNotScoreRelevantExercises() {
-        if (this.currentlyHidingExcludedExercises) {
+        if (this.currentlyHidingNotScoreRelevantExercises) {
             this.courseExercises = this.courseExercises.concat(this.courseExercisesNotScoreRelevant);
             this.filteredExerciseIDs = [];
         } else {
             this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotScoreRelevant.includes(exercise));
             this.filteredExerciseIDs = this.courseExercisesNotScoreRelevant.map((exercise) => exercise.id!);
         }
-        this.currentlyHidingExcludedExercises = !this.currentlyHidingExcludedExercises;
+        this.currentlyHidingNotScoreRelevantExercises = !this.currentlyHidingNotScoreRelevantExercises;
 
         this.groupExercisesByType(this.courseExercises);
     }
