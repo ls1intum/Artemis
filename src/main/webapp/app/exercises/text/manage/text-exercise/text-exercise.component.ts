@@ -79,6 +79,7 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.textExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 
     /**
