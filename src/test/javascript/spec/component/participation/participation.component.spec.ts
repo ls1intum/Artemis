@@ -18,8 +18,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -31,12 +29,8 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/ex
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { MockEventManager } from '../../helpers/mocks/service/mock-event-manager.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -51,12 +45,11 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ParticipationComponent,
                 MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
                 MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
                 MockComponent(TeamStudentsListComponent),
@@ -68,10 +61,7 @@ describe('ParticipationComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: AlertService, useValue: MockAlertService },
-                { provide: EventManager, useClass: MockEventManager },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 MockProvider(ExerciseService),
@@ -219,7 +209,7 @@ describe('ParticipationComponent', () => {
         let updateStub: jest.SpyInstance;
 
         beforeEach(() => {
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(of());
+            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: new StudentParticipation() })));
         });
 
         afterEach(() => {
@@ -260,35 +250,47 @@ describe('ParticipationComponent', () => {
             exercise: exercise1,
         } as StudentParticipation;
 
-        it('should add a presentation score if the feature is enabled', () => {
+        it('should add a presentation score if the feature is enabled', fakeAsync(() => {
             component.exercise = exercise1;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+
             component.addPresentation(participation);
+            tick();
+
             expect(updateStub).toHaveBeenCalledTimes(1);
             expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
-        });
+        }));
 
-        it('should not add a presentation score if the feature is disabled', () => {
+        it('should not add a presentation score if the feature is disabled', fakeAsync(() => {
             component.exercise = exercise2;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
-            component.addPresentation(participation);
-            expect(updateStub).not.toHaveBeenCalled();
-        });
 
-        it('should remove a presentation score if the feature is enabled', () => {
+            component.addPresentation(participation);
+            tick();
+
+            expect(updateStub).not.toHaveBeenCalled();
+        }));
+
+        it('should remove a presentation score if the feature is enabled', fakeAsync(() => {
             component.exercise = exercise1;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+
             component.removePresentation(participation);
+            tick();
+
             expect(updateStub).toHaveBeenCalledTimes(1);
             expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
-        });
+        }));
 
-        it('should do nothing on removal of a presentation score if the feature is disabled', () => {
+        it('should do nothing on removal of a presentation score if the feature is disabled', fakeAsync(() => {
             component.exercise = exercise2;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+
             component.removePresentation(participation);
+            tick();
+
             expect(updateStub).not.toHaveBeenCalled();
-        });
+        }));
 
         it('should check if the presentation score actions should be displayed', () => {
             component.exercise = exercise1;
