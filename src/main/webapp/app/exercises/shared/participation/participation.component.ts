@@ -211,10 +211,24 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Save that the due date of the given participation has changed.
+     *
+     * Does not issue an immediate update of the due date to the server.
+     * The actual update is performed with {@link saveChangedDueDates}.
+     * @param participation of which the individual due date has changed.
+     */
     changedIndividualDueDate(participation: StudentParticipation) {
         this.participationsChangedDueDate.set(participation.id!, participation);
     }
 
+    /**
+     * Removes the individual due date from the given participation.
+     *
+     * Does not issue an immediate update of the due date to the server.
+     * The actual update is performed with {@link saveChangedDueDates}.
+     * @param participation of which the individual due date should be removed.
+     */
     removeIndividualDueDate(participation: StudentParticipation) {
         participation.individualDueDate = undefined;
         this.participationsChangedDueDate.set(participation.id!, participation);
@@ -232,15 +246,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.isSaving = true;
 
         const changedParticipations = Array.from(this.participationsChangedDueDate.values());
-        this.participationService.updateIndividualDueDates(this.exercise.id!, changedParticipations).subscribe(
-            (response) => {
-                if (!response.body) {
-                    this.participationsChangedDueDate.clear();
-                    this.isSaving = false;
-                    return;
-                }
-
-                response.body.forEach((updatedParticipation) => {
+        this.participationService.updateIndividualDueDates(this.exercise.id!, changedParticipations).subscribe({
+            next: (response) => {
+                response.body!.forEach((updatedParticipation) => {
                     const changedIndex = this.participations.findIndex((participation) => participation.id! === updatedParticipation.id!);
                     this.participations[changedIndex] = updatedParticipation;
                 });
@@ -248,11 +256,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 this.participationsChangedDueDate.clear();
                 this.isSaving = false;
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.participation.updateDueDates.error');
                 this.isSaving = false;
             },
-        );
+        });
     }
 
     /**
