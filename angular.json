@@ -24,7 +24,6 @@
               "path": "./webpack/webpack.custom.js"
             },
             "allowedCommonJsDependencies": [
-              "lodash/fp",
               "sockjs-client",
               "chart.js",
               "showdown-highlight",
