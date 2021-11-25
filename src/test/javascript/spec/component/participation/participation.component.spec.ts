@@ -216,10 +216,10 @@ describe('ParticipationComponent', () => {
     });
 
     describe('Presentation Score', () => {
-        let updateSpy: jest.SpyInstance;
+        let updateStub: jest.SpyInstance;
 
         beforeEach(() => {
-            updateSpy = jest.spyOn(participationService, 'update').mockReturnValue(of());
+            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(of());
         });
 
         afterEach(() => {
@@ -264,30 +264,30 @@ describe('ParticipationComponent', () => {
             component.exercise = exercise1;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.addPresentation(participation);
-            expect(updateSpy).toHaveBeenCalledTimes(1);
-            expect(updateSpy).toHaveBeenCalledWith(exercise.id, participation);
+            expect(updateStub).toHaveBeenCalledTimes(1);
+            expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
         });
 
         it('should not add a presentation score if the feature is disabled', () => {
             component.exercise = exercise2;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.addPresentation(participation);
-            expect(updateSpy).not.toHaveBeenCalled();
+            expect(updateStub).not.toHaveBeenCalled();
         });
 
         it('should remove a presentation score if the feature is enabled', () => {
             component.exercise = exercise1;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.removePresentation(participation);
-            expect(updateSpy).toHaveBeenCalledTimes(1);
-            expect(updateSpy).toHaveBeenCalledWith(exercise.id, participation);
+            expect(updateStub).toHaveBeenCalledTimes(1);
+            expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
         });
 
         it('should do nothing on removal of a presentation score if the feature is disabled', () => {
             component.exercise = exercise2;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.removePresentation(participation);
-            expect(updateSpy).not.toHaveBeenCalled();
+            expect(updateStub).not.toHaveBeenCalled();
         });
 
         it('should check if the presentation score actions should be displayed', () => {
