@@ -1,4 +1,3 @@
-import { courseExerciseOverviewTour } from './../../../../../main/webapp/app/guided-tour/tours/course-exercise-overview-tour';
 import { artemis } from '../../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';

@@ -4,7 +4,6 @@ import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
 const buildingAndTesting = 'Building and testing...';
-const exerciseRow = '.course-exercise-row';
 
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
