@@ -1,11 +1,22 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.lecture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,15 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-@Deprecated // Moved to Lecture microservice. To be removed
-public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class ExerciseUnitIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private CourseRepository courseRepository;
@@ -132,7 +141,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -143,7 +152,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -153,7 +162,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -162,34 +171,8 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                 HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteExercise_exerciseConnectedWithExerciseUnit_shouldDeleteExerciseUnit() throws Exception {
-        Set<Exercise> exercisesOfCourse = course1.getExercises();
-        Set<ExerciseUnit> persistedExerciseUnits = new HashSet<>();
-
-        for (Exercise exerciseOfCourse : exercisesOfCourse) {
-            ExerciseUnit exerciseUnit = new ExerciseUnit();
-            exerciseUnit.setExercise(exerciseOfCourse);
-            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
-                    HttpStatus.CREATED);
-            persistedExerciseUnits.add(persistedExerciseUnit);
-        }
-        assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
-
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
-
-        List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
-        assertThat(exerciseUnitsOfLecture).isEmpty();
-
     }
 
     @Test
@@ -207,14 +190,10 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         }
         assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
 
-        for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
-            request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
-        }
-
-        for (Exercise exercise : exercisesOfCourse) {
-            request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
-        }
-
+        // TODO uncomment when lecture units are moved
+        // for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
+        //     request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
+        // }
     }
 
 }
