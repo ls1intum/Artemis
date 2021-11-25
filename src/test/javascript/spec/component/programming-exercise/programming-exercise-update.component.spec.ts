@@ -22,7 +22,7 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -40,7 +40,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgForm, NumberValueAccessor, NgModel, CheckboxControlValueAccessor, DefaultValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { CheckboxControlValueAccessor, DefaultValueAccessor, NgForm, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
@@ -58,6 +58,7 @@ import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-ch
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import '@angular/localize/init';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -73,7 +74,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbModule, OwlDateTimeModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbModule],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 MockComponent(AlertComponent),
@@ -122,15 +123,17 @@ describe('ProgrammingExercise Management Update Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        courseService = debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                courseService = debugElement.injector.get(CourseManagementService);
+                exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
+                programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+            });
     });
 
     describe('save', () => {

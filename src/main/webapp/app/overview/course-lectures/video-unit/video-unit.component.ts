@@ -13,7 +13,7 @@ export class VideoUnitComponent implements OnInit {
     @Input()
     videoUnit: VideoUnit;
 
-    videoUrl: SafeResourceUrl;
+    videoUrl: string;
 
     isCollapsed = true;
 
@@ -29,7 +29,7 @@ export class VideoUnitComponent implements OnInit {
         if (this.videoUnit?.source) {
             // Validate the URL before displaying it
             if (this.videoUrlAllowList.some((r) => r.test(this.videoUnit.source!)) || !urlParser || urlParser.parse(this.videoUnit.source)) {
-                this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
+                this.videoUrl = this.videoUnit.source;
             }
         }
     }

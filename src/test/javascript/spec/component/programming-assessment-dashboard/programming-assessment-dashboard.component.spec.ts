@@ -63,7 +63,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
             declarations: [ProgrammingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
-                { provide: Router, useClass: route },
+                { provide: Router, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -91,7 +91,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
                 programmingAssessmentService = fixture.debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
-            });
+            })
+            .catch((e) => console.error(e));
     });
 
     it('should set parameters and call functions on init', fakeAsync(() => {
