@@ -8,6 +8,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
@@ -44,6 +45,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         CourseOverviewComponent,
         CourseRegistrationSelectorComponent,
         CourseCardComponent,
+        CourseExercisesComponent,
         CourseLecturesComponent,
         CourseLectureRowComponent,
         CourseExamsComponent,

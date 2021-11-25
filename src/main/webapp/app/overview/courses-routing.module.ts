@@ -7,6 +7,7 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 
 const routes: Routes = [
     {
@@ -29,7 +30,12 @@ const routes: Routes = [
         children: [
             {
                 path: 'exercises',
-                loadChildren: () => import('./course-exercises/course-exercises.module').then((m) => m.CourseExercisesModule),
+                component: CourseExercisesComponent,
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.course',
+                },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'lectures',
