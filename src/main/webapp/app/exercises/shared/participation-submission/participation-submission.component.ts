@@ -185,7 +185,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         return createCommitUrl(this.commitHashURLTemplate, (this.exercise as ProgrammingExercise)?.projectKey, this.participation, submission);
     }
 
-    updateStatusBadgeColor() {
+    private updateStatusBadgeColor() {
         let afterDueDate = false;
 
         if (this.exercise && this.participation) {
