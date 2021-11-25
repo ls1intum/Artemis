@@ -1,10 +1,57 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="67.619mm" height="67.619mm" version="1.1" viewBox="0 0 67.619 67.619" xmlns="http://www.w3.org/2000/svg">
- <g transform="translate(13.468 -109.37)">
-  <g transform="matrix(1.0938 0 0 1.0938 -952.11 -3020.1)">
-   <path d="m889.1 2865.3-10.262 17.753 7e-3 0.01zm10.255 17.76c-0.44648-0.7733-10.255 8.924-10.255 8.924l30.962 26.946z" fill="#fffffc"/>
-   <path d="m858.13 2919 30.964-53.63 10.262 17.754z" fill="#3070b3"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="67.619mm"
+   height="67.619mm"
+   version="1.1"
+   viewBox="0 0 67.619 67.619"
+   id="svg12"
+   sodipodi:docname="favicon.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs16" />
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="3.016811"
+     inkscape:cx="166.56662"
+     inkscape:cy="147.67249"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g6" />
+  <g
+     transform="translate(13.468 -109.37)"
+     id="g8">
+    <g
+       transform="matrix(1.0938 0 0 1.0938 -952.11 -3020.1)"
+       id="g6">
+      <g
+         id="g11439">
+        <path
+           d="m889.1 2865.3-10.262 17.753 7e-3 0.01zm10.255 17.76c-0.44648-0.7733-10.255 8.924-10.255 8.924l30.962 26.946z"
+           fill="#fffffc"
+           id="path2"
+           style="fill:#003c69;fill-opacity:1" />
+        <path
+           d="m858.13 2919 30.964-53.63 10.262 17.754z"
+           fill="#3070b3"
+           id="path4" />
+      </g>
+    </g>
   </g>
- </g>
- <style>@media (prefers-color-scheme: light) { :root { filter: none; } }</style>
+  <style
+     id="style10">@media (prefers-color-scheme: light) { :root { filter: none; } }</style>
 </svg>
