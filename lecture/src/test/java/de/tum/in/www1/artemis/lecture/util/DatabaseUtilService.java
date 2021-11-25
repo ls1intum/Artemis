@@ -21,7 +21,12 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.util.DatabaseCleanupService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.springframework.stereotype.Service;
 
+/**
+ * Service responsible for initializing the database with specific testdata for a testscenario
+ */
+@Service
 public class DatabaseUtilService {
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
