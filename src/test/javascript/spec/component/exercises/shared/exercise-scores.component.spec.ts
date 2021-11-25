@@ -100,9 +100,6 @@ describe('Exercise Scores Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
-                MockComponent(ExerciseScoresExportButtonComponent),
-                MockComponent(SubmissionExportButtonComponent),
-                MockComponent(ResultComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
