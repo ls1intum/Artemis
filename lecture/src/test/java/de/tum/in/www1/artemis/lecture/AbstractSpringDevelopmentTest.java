@@ -15,9 +15,8 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "dev", "scheduling" })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.version-control.ssh-private-key-folder-path=./src/test/resources/sshtestkey",
-        "artemis.version-control.ssh-private-key-password=test1234" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "scheduling" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringDevelopmentTest {
 
     @Autowired

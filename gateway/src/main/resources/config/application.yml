@@ -130,6 +130,10 @@ spring:
                     uri: lb://GATEWAY
                     predicates:
                         - Path=/api/gateway/**
+                -   id: lecture
+                    uri: lb://LECTURE
+                    predicates:
+                        - Path=/api/lectures/{segment}/attachment-units/**
                 -   id: artemis
                     uri: lb://ARTEMIS
                     predicates:

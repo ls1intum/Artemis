@@ -30,7 +30,7 @@ spring:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
         name:
         username:
         password:
@@ -46,10 +46,11 @@ spring:
     jmx:
         enabled: false
     jpa:
+        database-platform: tech.jhipster.domain.util.FixedH2Dialect
         open-in-view: false
         show-sql: false
         hibernate:
-            # ddl-auto: none # out commented because it would lead to test execution errors
+#            ddl-auto: none # out commented because it would lead to test execution errors
             naming:
                 physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
@@ -73,8 +74,6 @@ spring:
     liquibase:
         contexts: tests
         enabled: false
-    mail:
-        host: localhost
     main:
         allow-bean-definition-overriding: true
     messages:
@@ -82,13 +81,13 @@ spring:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     task:
         execution:
-            thread-name-prefix: artemis-task-
+            thread-name-prefix: lecture-task-
             pool:
                 core-size: 1
                 max-size: 50
                 queue-capacity: 10000
         scheduling:
-            thread-name-prefix: artemis-scheduling-
+            thread-name-prefix: lecture-scheduling-
             pool:
                 size: 1
     thymeleaf:
@@ -112,9 +111,15 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+    artemis: # ActiveMQ Artemis configuration
+        mode: native
+        host: localhost
+        port: 61616
+        user: guest
+        password: guest
 
 server:
-    port: 8080
+    port: 8086
     url: https://artemislocal.ase.in.tum.de
     forward-headers-strategy: native
 
@@ -140,17 +145,6 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
-    guided-tour:
-        courseShortName: 'artemistutorial'
-        tours:
-            -   cancel_tour: ''
-            -   code_editor_tour: 'test'
-            -   course_overview_tour: ''
-            -   course_exercise_overview_tour: 'test'
-            -   modeling_tour: 'UML Class Diagram'
-            -   programming_exercise_fail_tour: 'test'
-            -   programming_exercise_success_tour: 'test'
-            -   tutor_assessment_tour: 'Patterns in Software Engineering'
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
@@ -159,7 +153,7 @@ info:
 
 jhipster:
     clientApp:
-        name: 'lectureApp'
+        name: lecture
     # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
     cors:
         allowed-origin-patterns: "*"
@@ -176,9 +170,6 @@ jhipster:
             host: localhost
             port: 5000
             queue-size: 512
-    mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: Artemis@localhost
-        base-url: http://127.0.0.1:8080
     security:
         authentication:
             jwt:
