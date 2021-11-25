@@ -34,7 +34,8 @@
               "dayjs/locale/de",
               "brace/mode/java",
               "crypto",
-              "crypto-js"
+              "crypto-js",
+              "clone-deep"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -87,8 +88,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "3mb",
-                  "maximumError": "4.5mb"
+                  "maximumWarning": "2.7mb",
+                  "maximumError": "3.2mb"
                 },
                 {
                   "type": "anyComponentStyle",
