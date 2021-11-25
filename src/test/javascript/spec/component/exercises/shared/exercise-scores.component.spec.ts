@@ -1,18 +1,14 @@
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { of, Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -34,6 +30,11 @@ import { HttpResponse } from '@angular/common/http';
 import { Team } from 'app/entities/team.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -79,13 +80,11 @@ describe('Exercise Scores Component', () => {
     result.participation = participation;
     result.assessmentType = AssessmentType.MANUAL;
 
-    const router = new MockRouter();
-
     const route = { data: of({ courseId: 1 }), children: [] } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), FormsModule, MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(FormsModule), MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
                 MockComponent(AlertComponent),
@@ -99,14 +98,14 @@ describe('Exercise Scores Component', () => {
                 MockHasAnyAuthorityDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: Router, useValue: router },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ResultService, useClass: MockResultService },
             ],
         })
             .compileComponents()
