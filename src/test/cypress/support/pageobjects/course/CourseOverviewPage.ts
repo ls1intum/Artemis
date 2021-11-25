@@ -1,5 +1,5 @@
 import { BASE_API, GET, POST } from '../../constants';
-import { CypressExerciseType } from '../../requests/CourseManagementRequests';
+import { COURSE_BASE, CypressExerciseType } from '../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the course overview page (/courses/*).
@@ -15,13 +15,11 @@ export class CourseOverviewPage {
         switch (exerciseType) {
             case CypressExerciseType.MODELING:
             case CypressExerciseType.TEXT:
-                cy.intercept(POST, BASE_API + 'courses/*/exercises/*/participations').as(this.participationRequestId);
+            case CypressExerciseType.PROGRAMMING:
+                cy.intercept(POST, COURSE_BASE + '*/exercises/*/participations').as(this.participationRequestId);
                 break;
             case CypressExerciseType.QUIZ:
                 cy.intercept(GET, BASE_API + 'exercises/*/participation').as(this.participationRequestId);
-                break;
-            case CypressExerciseType.PROGRAMMING:
-                cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as(this.participationRequestId);
                 break;
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
@@ -37,7 +35,7 @@ export class CourseOverviewPage {
     openRunningProgrammingExercise(exerciseTitle: string) {
         cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
         this.openRunningExercise(exerciseTitle);
-        cy.wait('@initialQuery').wait(2000);
+        cy.wait('@initialQuery');
     }
 
     openExamsTab() {
