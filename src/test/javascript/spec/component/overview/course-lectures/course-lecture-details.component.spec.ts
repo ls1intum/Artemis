@@ -86,6 +86,10 @@ describe('CourseLectureDetails', () => {
 
         lecture.lectureUnits = [lectureUnit1, lectureUnit2, lectureUnit3];
 
+        let headers = new HttpHeaders();
+        headers = headers.set('Content-Type', 'application/json; charset=utf-8');
+        const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
+
         TestBed.configureTestingModule({
             imports: [NgbDropdownModule, RouterTestingModule],
             declarations: [
@@ -117,9 +121,10 @@ describe('CourseLectureDetails', () => {
             providers: [
                 MockProvider(LectureService, {
                     find: () => {
-                        let headers = new HttpHeaders();
-                        headers = headers.set('Content-Type', 'application/json; charset=utf-8');
-                        return of(new HttpResponse({ body: lecture, headers, status: 200 }));
+                        return response;
+                    },
+                    findWithDetails: () => {
+                        return response;
                     },
                 }),
                 MockProvider(AlertService),

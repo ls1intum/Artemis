@@ -39,6 +39,7 @@
                         [withExplanation]="true"
                         [(explanation)]="explanation"
                         [resizeOptions]="resizeOptions"
+                        [savedStatus]="{ isChanged, isSaving }"
                     ></jhi-modeling-editor>
                     <fa-icon [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                     <jhi-team-submission-sync
@@ -90,12 +91,11 @@
                                         <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId!]['type'] }} </span>
                                         <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId!]['name'] }}</code
                                         ><br *ngIf="feedback.reference" />
-                                        <span *ngIf="feedback.text" [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
-                                            ><strong>Feedback:</strong> {{ feedback.text }}</span
-                                        >
-                                        <span *ngIf="feedback.detailText" [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
-                                            ><strong>Feedback:</strong> {{ feedback.detailText }}</span
-                                        >
+                                        <span
+                                            *ngIf="feedback.text || feedback.detailText || feedback.gradingInstruction"
+                                            [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
+                                            ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
+                                        ></span>
                                     </td>
                                     <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
                                 </tr>

@@ -402,7 +402,7 @@ public class TextExerciseResource {
                     result.setFeedbacks(assessments);
                 }
 
-                if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     result.setAssessor(null);
                 }
             }

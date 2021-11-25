@@ -17,20 +17,17 @@
                 "INCORRECT_SCORE": "Incorrect score",
                 "UNNECESSARY_FEEDBACK": "Unneccessary feedback",
                 "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction",
-                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction"
+                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction",
+                "EMPTY_NEGATIVE_FEEDBACK": "Feedback is required for negative score"
             },
             "submissionValidation": {
                 "missing": "Not enough feedback provided. The instructor provided more feedback.",
                 "wrong": "Incorrect assessment. There are {{mistakeCount}} mistake(s).\nPlease carefully review the grading criteria and submit your improved assessment."
             },
-            "assessScore": {
-                "success": "Congratulations! This is a good assessment!",
-                "tooLow": "The number of points in your assessment of this submission is too low. Please carefully review the grading criteria and the submission again, and submit your improved assessment.",
-                "tooHigh": "The number of points in your assessment of this submission is too high. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
-            },
+            "correctTutorAssessment": "Congratulations! This is a good assessment!",
             "submitSuccessful": "Your example submission has been successfully submitted",
             "saveSuccessful": "Your example submission has been saved",
-            "readSuccessfully": "You have read the grading instructions, you may now start reviewing the example submission",
+            "readSuccessfully": "You have successfully read and understood this example submission",
             "createNew": "Create new",
             "pageHeader": "Example Text Submission for Exercise",
             "usedForTutorial": "Tutors need to assess this submission",
