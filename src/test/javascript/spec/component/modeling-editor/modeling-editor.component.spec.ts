@@ -16,6 +16,7 @@ import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
+import { ApollonEditor } from '@ls1intum/apollon';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -56,18 +57,22 @@ describe('ModelingEditorComponent', () => {
 
         // test
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
+        const editor: ApollonEditor = fixture.componentInstance['apollonEditor'] as ApollonEditor;
+        // Check that editor exists
+        expect(editor).not.toBe(undefined);
+
+        // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
+        expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
     });
 
     it('ngOnDestroy', () => {
         fixture.componentInstance.umlModel = classDiagram;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
-        // test
         fixture.componentInstance.ngOnDestroy();
-        expect(fixture.componentInstance['apollonEditor']).toBeFalsy();
+        // verify teardown
+        expect(fixture.componentInstance['apollonEditor']).toBe(undefined);
     });
 
     it('ngOnChanges', () => {
@@ -76,7 +81,6 @@ describe('ModelingEditorComponent', () => {
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
         const changedModel = cloneDeep(model) as any;
         changedModel.elements = [];
@@ -100,14 +104,13 @@ describe('ModelingEditorComponent', () => {
     it('isFullScreen false', () => {
         // test
         const fullScreen = fixture.componentInstance.isFullScreen;
-        expect(fullScreen).toBeFalsy();
+        expect(fullScreen).toBe(false);
     });
 
     it('getCurrentModel', () => {
         fixture.componentInstance.umlModel = classDiagram;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
         // test
         // const model = fixture.componentInstance.getCurrentModel();
@@ -120,7 +123,6 @@ describe('ModelingEditorComponent', () => {
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
         // test
         const umlElement = fixture.componentInstance.elementWithClass('Sibling 2', model);
@@ -132,11 +134,10 @@ describe('ModelingEditorComponent', () => {
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
         // test
         const umlElement = fixture.componentInstance.elementWithAttribute('attribute', model);
-        expect(umlElement).toBeTruthy();
+        expect(umlElement?.id).toBe('6f572312-066b-4678-9c03-5032f3ba9be9');
     });
 
     it('elementWithMethod', () => {
@@ -144,11 +145,10 @@ describe('ModelingEditorComponent', () => {
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
         // test
         const umlElement = fixture.componentInstance.elementWithMethod('method', model);
-        expect(umlElement).toBeTruthy();
+        expect(umlElement?.id).toBe('11aae531-3244-4d07-8d60-b6210789ffa3');
     });
 
     it('should not show save indicator without savedStatus set', () => {
@@ -226,6 +226,6 @@ describe('ModelingEditorComponent', () => {
         expect(icon.attributes['ng-reflect-icon']).toBe('fas,circle-notch');
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('Saving ...');
+        expect(spanText).toBe('Saving...');
     });
 });
