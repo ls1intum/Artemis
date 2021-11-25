@@ -3,7 +3,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -12,8 +11,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { of, Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -86,7 +85,7 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule, FormsModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), FormsModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
                 MockComponent(AlertComponent),
@@ -100,9 +99,12 @@ describe('Exercise Scores Component', () => {
                 MockHasAnyAuthorityDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+                MockComponent(ExerciseScoresExportButtonComponent),
+                MockComponent(SubmissionExportButtonComponent),
+                MockComponent(ResultComponent),
             ],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useValue: router },
