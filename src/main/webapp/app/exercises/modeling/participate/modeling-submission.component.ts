@@ -67,6 +67,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
     isSaving: boolean;
+    isChanged: boolean;
     retryStarted = false;
     autoSaveInterval: number;
     autoSaveTimer: number;
@@ -254,7 +255,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && !this.canDeactivate()) {
+            this.isChanged = !this.canDeactivate();
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && this.isChanged) {
                 this.saveDiagram();
             }
         }, AUTOSAVE_CHECK_INTERVAL);
@@ -265,7 +267,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     private setupSubmissionStreamForTeam(): void {
         this.teamSyncInterval = window.setInterval(() => {
-            if (!this.canDeactivate()) {
+            this.isChanged = !this.canDeactivate();
+            if (this.isChanged) {
                 // make sure this.submission includes the newest content of the apollon editor
                 this.updateSubmissionWithCurrentValues();
                 // notify the team sync component to send this.submission to the server (and all online team members)
@@ -291,7 +294,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                     this.result = getLatestSubmissionResult(this.submission);
-                    this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.onSaveSuccess();
                 },
                 (error: HttpErrorResponse) => this.onSaveError(error),
@@ -301,7 +303,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 (submission) => {
                     this.submission = submission.body!;
                     this.result = getLatestSubmissionResult(this.submission);
-                    this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
@@ -380,6 +381,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     private onSaveSuccess() {
         this.isSaving = false;
+        this.isChanged = !this.canDeactivate();
     }
 
     private onSaveError(error?: HttpErrorResponse) {
@@ -402,7 +404,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     ngOnDestroy(): void {
-        this.subscription.unsubscribe();
+        this.subscription?.unsubscribe();
         clearInterval(this.autoSaveInterval);
         clearInterval(this.teamSyncInterval);
         if (this.automaticSubmissionWebsocketChannel) {
