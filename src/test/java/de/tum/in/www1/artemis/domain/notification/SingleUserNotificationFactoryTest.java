@@ -48,7 +48,7 @@ public class SingleUserNotificationFactoryTest {
 
     private String expectedTitle;
 
-    private String expectedText = POST_NOTIFICATION_TEXT;
+    private String expectedText;
 
     private String expectedTarget;
 
@@ -88,16 +88,41 @@ public class SingleUserNotificationFactoryTest {
     /// Test for Notifications based on Posts
 
     /**
-     * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct.
+     * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Post notifications.
      */
-    private void createAndCheckNotification() {
+    private void createAndCheckPostNotification() {
         createdNotification = singleUserNotificationFactory.createNotification(post, notificationType, course);
+        checkNotification();
+    }
 
+    /**
+     * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Exercise notifications.
+     */
+    private void createAndCheckExerciseNotification() {
+        createdNotification = singleUserNotificationFactory.createNotification(exercise, notificationType, user);
+        checkNotification();
+    }
+
+    /**
+     * Tests if the resulting notification is correct.
+     */
+    private void checkNotification() {
         assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).isEqualTo(expectedText);
         assertThat(createdNotification.getTarget()).isEqualTo(expectedTarget);
         assertThat(createdNotification.getPriority()).isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).isEqualTo(user);
+    }
+
+    /**
+     * Auxiliary method to create the most common expected target with specific properties.
+     * @param message is the message that should be included in the notification's target.
+     * @param entity is the entity that should be pointed at in the notification's target.
+     * @param relevantIdForCurrentTestCase is the id of a relevant object that should be part of the notification's target.
+     * @return is the final notification target as a String.
+     */
+    private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
+        return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
     }
 
     /**
@@ -130,9 +155,10 @@ public class SingleUserNotificationFactoryTest {
     public void createNotification_withNotificationType_NewReplyForExercisePost() {
         notificationType = NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
+        expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
-        createAndCheckNotification();
+        createAndCheckPostNotification();
     }
 
     /**
@@ -143,9 +169,10 @@ public class SingleUserNotificationFactoryTest {
     public void createNotification_withNotificationType_NewReplyForLecturePost() {
         notificationType = NotificationType.NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
+        expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
-        createAndCheckNotification();
+        createAndCheckPostNotification();
     }
 
     /**
@@ -156,8 +183,25 @@ public class SingleUserNotificationFactoryTest {
     public void createNotification_withNotificationType_NewReplyForCoursePost() {
         notificationType = NotificationType.NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
+        expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = NotificationPriority.MEDIUM;
         expectedTarget = createExpectedTargetForCourseWidePosts(post.getId(), courseId);
-        createAndCheckNotification();
+        createAndCheckPostNotification();
+    }
+
+    /// Test for Notifications based on Exercises
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of FILE_SUBMIT_SUCCESSFUL.
+     * I.e. notifications that originate when a user successfully submitted a file upload exercise.
+     */
+    @Test
+    public void createNotification_withNotificationType_FileSubmitSuccessful() {
+        notificationType = NotificationType.FILE_SUBMISSION_SUCCESSFUL;
+        expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
+        expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
+        expectedPriority = NotificationPriority.MEDIUM;
+        expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, "exercises", exerciseId);
+        createAndCheckExerciseNotification();
     }
 }
