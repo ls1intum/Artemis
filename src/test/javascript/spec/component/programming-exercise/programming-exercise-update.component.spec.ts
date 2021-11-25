@@ -58,6 +58,7 @@ import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-ch
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -561,6 +562,40 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
 
             expect(comp.getInvalidReasons()).toBeEmpty();
+        });
+
+        it('should find validation errors for invalid submission limit value', () => {
+            comp.programmingExercise.submissionPolicy = new LockRepositoryPolicy();
+            comp.programmingExercise.submissionPolicy.submissionLimit = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+                translateValues: {},
+            });
+
+            const patternViolatingValues = [0, 501, 30.3];
+            for (const value of patternViolatingValues) {
+                comp.programmingExercise.submissionPolicy.submissionLimit = value;
+                expect(comp.getInvalidReasons()).toContainEqual({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+                    translateValues: {},
+                });
+            }
+        });
+
+        it('should find validation errors invalid submission exceeding penalty', () => {
+            comp.programmingExercise.submissionPolicy = new SubmissionPenaltyPolicy();
+
+            comp.programmingExercise.submissionPolicy.exceedingPenalty = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.submissionPolicy.exceedingPenalty = 0;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.min',
+                translateValues: {},
+            });
         });
     });
 });
