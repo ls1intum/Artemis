@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
@@ -9,16 +9,17 @@ import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-an
 import { MetisService } from 'app/shared/metis/metis.service';
 import dayjs from 'dayjs';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent } from 'ng-mocks';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
-describe('PostingsThreadComponent', () => {
-    let component: PostingsThreadComponent;
-    let fixture: ComponentFixture<PostingsThreadComponent>;
+describe('PostingThreadComponent', () => {
+    let component: PostingThreadComponent;
+    let fixture: ComponentFixture<PostingThreadComponent>;
     let metisService: MetisService;
     let metisServiceUserAuthorityStub: jest.SpyInstance;
 
@@ -60,8 +61,8 @@ describe('PostingsThreadComponent', () => {
                 { provide: MetisService, useClass: MockMetisService },
             ],
             declarations: [
-                PostingsThreadComponent,
-                MockPipe(ArtemisTranslatePipe),
+                PostingThreadComponent,
+                TranslatePipeMock,
                 MockComponent(PostComponent),
                 MockComponent(AnswerPostComponent),
                 MockComponent(FaIconComponent),
@@ -70,7 +71,7 @@ describe('PostingsThreadComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(PostingsThreadComponent);
+                fixture = TestBed.createComponent(PostingThreadComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
@@ -120,28 +121,48 @@ describe('PostingsThreadComponent', () => {
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('should toggle answers', () => {
+    it('should display button to show multiple answers', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = false;
-        component.toggleAnswers();
-        expect(component.showAnswers).toEqual(true);
-    });
-
-    it('answer now button should not be visible if post does not yet have any answers', () => {
-        component.post = post;
-        component.post.answers = unsortedAnswerArray;
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).toBeNull();
+        expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
     });
 
-    it('answer now button should be visible if post does not yet have any answers', () => {
+    it('should display button to show single answer', () => {
+        component.post = post;
+        component.post.answers = [metisPostExerciseUser1];
+        component.showAnswers = false;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
+        expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
+    });
+
+    it('start discussion button should be visible if post does not yet have any answers', () => {
         component.post = post;
         component.post.answers = [];
         fixture.detectChanges();
+        const startDiscussion = fixture.debugElement.nativeElement.querySelector('button');
+        expect(startDiscussion.innerHTML).toContain('startDiscussion');
+    });
+
+    it('answer now button should not be visible if answer posts are not shown', () => {
+        component.post = post;
+        component.post.answers = unsortedAnswerArray;
+        component.showAnswers = false;
+        fixture.detectChanges();
         const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).toBeTruthy();
+        expect(answerNowButton.innerHTML).not.toContain('answerNow');
+    });
+
+    it('answer now button should be visible if answer posts are shown', () => {
+        component.post = post;
+        component.post.answers = unsortedAnswerArray;
+        component.showAnswers = true;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
+        expect(answerNowButton.innerHTML).toContain('answerNow');
     });
 
     it('should contain a post', () => {
@@ -149,7 +170,7 @@ describe('PostingsThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         component.ngOnInit();
         const postComponent = fixture.debugElement.nativeElement.querySelector('jhi-post');
-        expect(postComponent).toBeTruthy();
+        expect(postComponent).not.toBe(null);
     });
 
     it('should contain an answer post', () => {
@@ -158,7 +179,7 @@ describe('PostingsThreadComponent', () => {
         component.showAnswers = true;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).toBeTruthy();
+        expect(answerPostComponent).not.toBe(null);
     });
 
     it('should not contain an answer post', () => {
@@ -167,6 +188,6 @@ describe('PostingsThreadComponent', () => {
         component.showAnswers = false;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).toBeNull();
+        expect(answerPostComponent).toBe(null);
     });
 });

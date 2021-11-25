@@ -24,6 +24,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 
 @Component({
@@ -307,6 +308,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.onError(err);
             },
         );
+    }
+
+    /**
+     * Opens modal and executes a consistency check for the given programming exercise
+     * @param exerciseId id of the programming exercise to check
+     */
+    checkConsistencies(exercise: ProgrammingExercise) {
+        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
     }
 
     private onError(error: HttpErrorResponse) {

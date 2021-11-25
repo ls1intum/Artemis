@@ -9,7 +9,7 @@ import { StudentWithTeam } from 'app/entities/team.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { downloadFile } from 'app/shared/util/download.util';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import dayjs from 'dayjs';
 import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';

@@ -93,6 +93,11 @@ public class GroupNotificationFactory {
                     text = "Exercise \"" + exercise.getTitle() + "\" updated.";
                 }
             }
+            case PROGRAMMING_TEST_CASES_CHANGED -> {
+                title = NotificationTitleTypeConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
+                text = "The test cases of the programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
+                        + "\" were updated." + " The students' submissions should be rebuilt and tested in order to create new results.";
+            }
             case DUPLICATE_TEST_CASE -> {
                 title = NotificationTitleTypeConstants.DUPLICATE_TEST_CASE_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";

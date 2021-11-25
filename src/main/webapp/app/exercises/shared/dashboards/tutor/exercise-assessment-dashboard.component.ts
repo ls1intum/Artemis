@@ -14,14 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import {
-    calculateSubmissionStatusIsDraft,
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-    Submission,
-    SubmissionExerciseType,
-} from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -49,6 +42,7 @@ import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/u
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
+import { Result } from 'app/entities/result.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -64,7 +58,6 @@ export interface ExampleSubmissionQueryParams {
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
-    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -98,7 +91,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
-    moreFeedbackRequests: Complaint[] = [];
+    submissionsWithMoreFeedbackRequests: SubmissionWithComplaintDTO[] = [];
     submissionsWithComplaints: SubmissionWithComplaintDTO[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
@@ -159,8 +152,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     // extension points, see shared/extension-point
     @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
-    @ContentChild('overrideOpenButton') overrideOpenButton: TemplateRef<any>;
-    @ContentChild('overrideNewButton') overrideNewButton: TemplateRef<any>;
+    @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -330,8 +322,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
-            this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                    this.submissionsWithMoreFeedbackRequests = res.body || [];
+                },
                 (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
@@ -609,6 +603,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     private onError(error: string) {
         this.alertService.error(error);
+    }
+
+    /**
+     * Calculates the status of a submission by inspecting the result. Returns true if the submission is a draft, or false if it is done
+     * @param submission which to check
+     * @param correctionRound for which to get status
+     */
+    calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
+        const tmpResult = submission.results?.[correctionRound];
+        return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
     }
 
     calculateComplaintStatus(complaint: Complaint) {

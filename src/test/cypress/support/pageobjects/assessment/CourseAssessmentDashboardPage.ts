@@ -14,20 +14,7 @@ export class CourseAssessmentDashboardPage {
 
     clickExerciseDashboardButton() {
         // Sometimes the page does not load properly, so we reload it if the button is not found
-        cy.waitUntil(
-            () => {
-                const found = Cypress.$(this.exerciseDashboardButtonSelector).length > 0;
-                if (!found) {
-                    cy.reload();
-                }
-                return found;
-            },
-            {
-                interval: 2000,
-                timeout: 20000,
-                errorMsg: 'Timed out finding the exercise dashboard button',
-            },
-        );
+        cy.reloadUntilFound(this.exerciseDashboardButtonSelector);
         cy.get(this.exerciseDashboardButtonSelector).click();
     }
 

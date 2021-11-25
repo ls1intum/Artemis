@@ -63,6 +63,7 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private Double addedDistance;
 
+    // There is a foreign key on delete set null
     @OneToOne
     @JsonIgnore
     private Feedback feedback;
@@ -170,11 +171,11 @@ public class TextBlock implements Serializable {
         return this;
     }
 
-    public Feedback getFeedbackId() {
+    public Feedback getFeedback() {
         return feedback;
     }
 
-    public void setFeedbackId(Feedback feedback) {
+    public void setFeedback(Feedback feedback) {
         this.feedback = feedback;
     }
 

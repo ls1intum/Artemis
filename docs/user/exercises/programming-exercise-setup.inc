@@ -189,6 +189,22 @@ Exercise Creation
 
     |
 
+    .. figure:: programming/submission-policy-none-form.png
+              :align: center
+
+    - **Submission Policy:** Configure an initial submission policy for the exercise.
+      The submission policy defines the effect that a submission has on the participation of one participant in a programming exercise.
+      You can choose between 3 different types of submission policies: *None*, *Lock Repository*, *Submission Penalty*. Those policies can be used
+      to limit how many times student can submit their code and receive feedback from automated tests. The feature and configuration
+      is independent from programming language settings and works in combination with static code analysis penalties.
+      Detailed information about the different types of policies and their respective setup can be found in the section
+      :ref:`configuring submission policies <configure_submission_policies>`.
+
+      .. note::
+        Submission policies can only be edited on the Grading Page of the programming exercise after the initial exercise generation.
+
+    |
+
     .. figure:: programming/programming-options-sca.png
               :align: center
 

@@ -94,6 +94,6 @@ export class TeamComponent implements OnInit {
      * Navigates back to the overviews of teams for the exercise.
      */
     onTeamDelete() {
-        this.router.navigate(['/course-management', this.exercise.course?.id, this.exercise.type + '-exercises', this.exercise.id, 'teams']);
+        this.router.navigate(['/course-management', this.exercise.course?.id, 'exercises', this.exercise.id, 'teams']);
     }
 }
