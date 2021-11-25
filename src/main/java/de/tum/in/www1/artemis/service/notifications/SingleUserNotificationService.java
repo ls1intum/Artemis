@@ -43,7 +43,7 @@ public class SingleUserNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
-    private void notifyGroupsWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation) {
+    private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation) {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types
@@ -96,7 +96,7 @@ public class SingleUserNotificationService {
      * @param recipient that should be notified
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
-        notifyGroupsWithNotificationType(exercise, NotificationType.FILE_SUBMISSION_SUCCESSFUL, recipient);
+        notifyRecipientWithNotificationType(exercise, NotificationType.FILE_SUBMISSION_SUCCESSFUL, recipient);
     }
 
     /**
