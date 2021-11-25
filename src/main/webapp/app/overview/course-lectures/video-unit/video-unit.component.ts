@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { SafeResourceUrl } from '@angular/platform-browser';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import urlParser from 'js-video-url-parser';

@@ -22,7 +22,7 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -56,7 +56,6 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-chips';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import '@angular/localize/init';
 
@@ -74,7 +73,10 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbModule],
+            // OwlDateTimeModule can be readded if we ever find an Angular 13 + Ivy 100% compatible version
+            // For example: https://github.com/danielmoncada/date-time-picker/issues/133 which is a "maintained" fork
+            // For now, this will log NG0304 / NG0303 errors but pass
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbModule /*, OwlDateTimeModule */],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 MockComponent(AlertComponent),

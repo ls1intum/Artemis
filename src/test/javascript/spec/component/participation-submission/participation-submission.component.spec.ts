@@ -280,12 +280,8 @@ describe('ParticipationSubmissionComponent', () => {
         });
 
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
-            console.log(comp.submissions);
-            console.log(fileUploadExercise);
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
-            console.log(comp.submissions);
             deleteResult(submissionWithTwoResults, result2);
-            console.log(comp.submissions);
             flush();
         }));
 
