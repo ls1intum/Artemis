@@ -704,7 +704,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         // verifying submission limit value
-        if (this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
+        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
             if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
                 result.push({
