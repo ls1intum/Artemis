@@ -161,19 +161,6 @@ sourceSets {
     }
 }
 
-test {
-    useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
-    testLogging {
-        events 'FAILED', 'SKIPPED'
-    }
-    jvmArgs += '-Djava.security.egd=file:/dev/./urandom -Xmx256m'
-    // uncomment if the tests reports are not generated
-    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
-    // ignoreFailures true
-    reports.html.enabled = false
-}
-
 idea {
     module {
         excludeDirs += files("node_modules")
@@ -181,7 +168,7 @@ idea {
 }
 
 spotless {
-    // allows to execute the code formatting commands ./gradlew :gateway:spotlessApply and ./gradlew :gateway:spotlessCheck
+    // allows to execute the code formatting commands ./gradlew :lecture:spotlessApply and ./gradlew :lecture:spotlessCheck
     java {
         target project.fileTree(project.rootDir) {
             include "lecture/**/*.java"
@@ -305,7 +292,7 @@ task executeCheckstyle(type: Exec) {
 }
 
 task buildJarForDocker(type: Exec) {
-    commandLine "./gradlew", ":user-management:build", "-x", "test", "-x", "jacocoTestCoverageVerification"
+    commandLine "./gradlew", ":lecture:build", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 
 compileJava.dependsOn processResources
