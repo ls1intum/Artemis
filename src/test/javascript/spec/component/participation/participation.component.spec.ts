@@ -15,12 +15,11 @@ import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -31,6 +30,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -53,12 +53,12 @@ describe('ParticipationComponent', () => {
                 MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
                 MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
                 MockComponent(TeamStudentsListComponent),
-                MockComponent(DeleteButtonDirective),
+                MockDirective(DeleteButtonDirective),
                 MockDirective(FeatureToggleDirective),
-                MockDirective(TranslateDirective),
                 MockDirective(NgModel),
+                MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
-                MockPipe(ArtemisTranslatePipe),
+                TranslatePipeMock,
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
