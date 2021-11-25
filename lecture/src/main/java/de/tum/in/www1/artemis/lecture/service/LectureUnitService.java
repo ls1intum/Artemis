@@ -1,17 +1,15 @@
-package de.tum.in.www1.artemis.service;
-
-import java.util.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+package de.tum.in.www1.artemis.lecture.service;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+import java.util.*;
+
 @Service
 public class LectureUnitService {
 
@@ -29,7 +27,7 @@ public class LectureUnitService {
      *
      * @param lectureUnit lecture unit to delete
      */
-    @Transactional // ok because of delete
+    @Transactional
     public void removeLectureUnit(LectureUnit lectureUnit) {
         if (Objects.isNull(lectureUnit)) {
             return;

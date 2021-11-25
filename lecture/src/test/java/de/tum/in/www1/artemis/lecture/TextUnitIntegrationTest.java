@@ -122,9 +122,8 @@ public class TextUnitIntegrationTest extends AbstractSpringDevelopmentTest {
     public void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();
-        // TODO uncomment when lcture units are moved
-        // request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
-        // request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
+        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
+        request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
     }
 
     private void persistTextUnitWithLecture() {

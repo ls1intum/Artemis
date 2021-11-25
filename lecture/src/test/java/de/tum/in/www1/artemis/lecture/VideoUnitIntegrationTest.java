@@ -141,9 +141,8 @@ public class VideoUnitIntegrationTest extends AbstractSpringDevelopmentTest {
         lecture1 = lectureRepository.save(lecture1);
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         assertThat(this.videoUnit.getId()).isNotNull();
-        // TODO uncomment when lecture units are moved
-        // request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
-        // request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
+        request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
     }
 
 }
