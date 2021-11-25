@@ -1,6 +1,8 @@
+import { courseExerciseOverviewTour } from './../../../../../main/webapp/app/guided-tour/tours/course-exercise-overview-tour';
 import { artemis } from '../../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
+import { CypressExerciseType } from 'src/test/cypress/support/requests/CourseManagementRequests';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -14,6 +16,7 @@ const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
 const shortAnswerQuiz = artemis.pageobjects.quizExercise.shortAnswer;
 const quizCreation = artemis.pageobjects.quizExercise.creation;
 const dragAndDropQuiz = artemis.pageobjects.quizExercise.dragAndDrop;
+const courseOverview = artemis.pageobjects.courseOverview;
 
 // Common primitives
 let course: any;
@@ -54,8 +57,7 @@ describe('Quiz Exercise Management', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible');
-            cy.get('.course-exercise-row').first().find('.btn-primary').click();
+            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
@@ -63,8 +65,7 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible');
-            cy.get('.course-exercise-row').first().find('.btn-primary').click();
+            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();

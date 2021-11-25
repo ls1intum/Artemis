@@ -5,22 +5,28 @@ import { CypressExerciseType } from '../../requests/CourseManagementRequests';
  * A class which encapsulates UI selectors and actions for the course overview page (/courses/*).
  */
 export class CourseOverviewPage {
+    readonly participationRequestId = 'participateInExerciseQuery';
+
     private getExerciseCardRootElement(exerciseName: string) {
         return cy.get('.course-body-container').contains(exerciseName).parents('.course-exercise-row');
     }
 
     startExercise(exerciseName: string, exerciseType: CypressExerciseType) {
-        cy.intercept(POST, BASE_API + 'courses/*/exercises/*/participations').as('participateInExerciseQuery');
         switch (exerciseType) {
             case CypressExerciseType.MODELING:
-                this.getExerciseCardRootElement(exerciseName).find('.btn-sm').should('contain.text', 'Start exercise').click();
-                break;
             case CypressExerciseType.TEXT:
-                this.getExerciseCardRootElement(exerciseName).find('.start-exercise').click();
+                cy.intercept(POST, BASE_API + 'courses/*/exercises/*/participations').as(this.participationRequestId);
+                break;
+            case CypressExerciseType.QUIZ:
+                cy.intercept(GET, BASE_API + 'exercises/*/participation').as(this.participationRequestId);
+                break;
+            case CypressExerciseType.PROGRAMMING:
+                cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as(this.participationRequestId);
                 break;
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
         }
+        this.getExerciseCardRootElement(exerciseName).find('button').click();
         cy.wait('@participateInExerciseQuery');
     }
 
