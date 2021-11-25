@@ -118,7 +118,11 @@ export const hasExerciseDueDatePassed = (exercise: Exercise, participation?: Par
  * @param participation for which the due date should be found.
  */
 export const getExerciseDueDate = (exercise: Exercise, participation?: Participation): dayjs.Dayjs | undefined => {
-    return participation?.individualDueDate ?? exercise.dueDate;
+    if (exercise.dueDate === undefined) {
+        return undefined;
+    } else {
+        return participation?.individualDueDate ?? exercise.dueDate;
+    }
 };
 
 /**
