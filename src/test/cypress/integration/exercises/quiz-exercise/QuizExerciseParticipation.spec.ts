@@ -69,7 +69,6 @@ describe('Quiz Exercise Management', () => {
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();
-            cy.get('[jhitranslate="artemisApp.quizExercise.successfullySubmittedText"]').should('be.visible');
         });
     });
 
@@ -85,8 +84,7 @@ describe('Quiz Exercise Management', () => {
 
         it('Student can participate in SA quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title);
-            cy.get('[jhi-exercise-action-button]').eq(0).click();
+            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
             shortAnswerQuiz.typeAnswer(0, 'give');
             shortAnswerQuiz.typeAnswer(1, 'let');
             shortAnswerQuiz.typeAnswer(2, 'run');
@@ -113,8 +111,7 @@ describe('Quiz Exercise Management', () => {
 
         it('Student can participate in DnD Quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title);
-            cy.get('[jhi-exercise-action-button]').eq(0).click();
+            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
             dragAndDropQuiz.dragItemIntoDragArea();
             dragAndDropQuiz.submit();
         });
