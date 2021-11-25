@@ -123,7 +123,6 @@ describe('ModelingEditorComponent', () => {
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
-        console.log(classDiagram);
 
         // test
         const umlElement = fixture.componentInstance.elementWithClass('Sibling 2', model);
