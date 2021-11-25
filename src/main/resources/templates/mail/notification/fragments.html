@@ -179,7 +179,7 @@
 
 <!-- Fragment displaying the translated exerciseType (e.g. -> "Quiz") -->
 <th:block th:fragment="exerciseTypeTranslation">
-    <th:block th:switch="${exerciseType}">
+    <th:block th:switch="${exerciseType.toString()}">
         <th:block th:case="'QUIZ'">
             <span th:utext="#{email.notification.aux.exercise.type.quiz}"/>
         </th:block>
