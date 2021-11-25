@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { NgModel } from '@angular/forms';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
@@ -32,6 +31,12 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/ex
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockEventManager } from '../../helpers/mocks/service/mock-event-manager.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -46,27 +51,31 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            imports: [MockModule(NgxDatatableModule)],
             declarations: [
                 ParticipationComponent,
                 MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
+                MockComponent(FaIconComponent),
                 MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
                 MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
                 MockComponent(TeamStudentsListComponent),
                 MockComponent(DeleteButtonDirective),
                 MockDirective(FeatureToggleDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(NgModel),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: route },
-                MockProvider(ParticipationService),
-                MockProvider(ExerciseService),
-                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AlertService, useValue: MockAlertService },
+                { provide: EventManager, useClass: MockEventManager },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                MockProvider(ExerciseService),
+                MockProvider(ParticipationService),
             ],
         })
             .compileComponents()
