@@ -1,15 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.lecture;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+package de.tum.in.www1.artemis.lecture.web.rest.lecture;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
@@ -21,10 +10,19 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextUnitResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -70,13 +68,13 @@ public class TextUnitResource {
     }
 
     /**
-     * PUT /lectures/:lectureId/text-units : Updates an existing text unit
+     * PUT lectures/:lectureId/text-units : Updates an existing text unit
      *
      * @param lectureId      the id of the lecture to which the text unit belongs to update
      * @param textUnit the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
-    @PutMapping("/lectures/{lectureId}/text-units")
+    @PutMapping("lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
         log.debug("REST request to update an text unit : {}", textUnit);
@@ -93,14 +91,14 @@ public class TextUnitResource {
     }
 
     /**
-     * POST /lectures/:lectureId/text-units : creates a new text unit.
+     * POST lectures/:lectureId/text-units : creates a new text unit.
      *
      * @param lectureId      the id of the lecture to which the text unit should be added
      * @param textUnit the text unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/text-units")
+    @PostMapping("lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
