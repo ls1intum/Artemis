@@ -68,7 +68,7 @@ describe('DeleteDialogDirective', () => {
         // Check that delete text span was added to the DOM.
         const deleteTextSpan = debugElement.query(By.css('.d-none.d-md-inline'));
         expect(deleteTextSpan).to.exist;
-        expect(deleteTextSpan.nativeElement.textContent).to.not.be.null;
+        expect(deleteTextSpan.nativeElement.textContent).to.exist;
 
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         expect(directiveEl).to.be.not.null;
