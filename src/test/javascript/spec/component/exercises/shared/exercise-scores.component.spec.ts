@@ -14,6 +14,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import * as sinon from 'sinon';
+import sinonChai from 'sinon-chai';
+import * as chai from 'chai';
 import { of, Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -35,6 +38,9 @@ import { HttpResponse } from '@angular/common/http';
 import { Team } from 'app/entities/team.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -117,13 +123,13 @@ describe('Exercise Scores Component', () => {
                 resultService = TestBed.inject(ResultService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 component.exercise = exercise;
-                jest.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
+                sinon.stub(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
                 component.paramSub = new Subscription();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        sinon.restore();
     });
 
     it('should get exercise participation link for exercise without an exercise group', () => {
@@ -133,7 +139,7 @@ describe('Exercise Scores Component', () => {
 
         const returnedLink = component.getExerciseParticipationsLink(1);
 
-        expect(returnedLink).toEqual(expectedLink);
+        expect(returnedLink).to.have.same.members(expectedLink);
     });
 
     it('should get exercise participation link for exercise with an exercise group', () => {
@@ -149,100 +155,99 @@ describe('Exercise Scores Component', () => {
 
         const returnedLink = component.getExerciseParticipationsLink(2);
 
-        expect(returnedLink).toEqual(expectedLink);
+        expect(returnedLink).to.have.same.members(expectedLink);
     });
 
     it('should update result', fakeAsync(() => {
         component.updateResultFilter(component.FilterProp.SUCCESSFUL);
 
-        expect(component.isLoading).toBe(true);
+        expect(component.isLoading).to.equal(true);
         tick();
-        expect(component.resultCriteria.filterProp).toBe(component.FilterProp.SUCCESSFUL);
-        expect(component.isLoading).toBe(false);
+        expect(component.resultCriteria.filterProp).to.equal(component.FilterProp.SUCCESSFUL);
+        expect(component.isLoading).to.equal(false);
     }));
 
     it('should filter result prop "successful"', () => {
         component.resultCriteria.filterProp = component.FilterProp.SUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).toBe(true);
+        expect(component.filterResultByProp(result)).to.be.true;
     });
 
     it('should filter result prop "unsuccessful"', () => {
         component.resultCriteria.filterProp = component.FilterProp.UNSUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).to.be.false;
     });
 
     it('should filter result prop "build failed"', () => {
         component.resultCriteria.filterProp = component.FilterProp.BUILD_FAILED;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).to.be.false;
     });
 
     it('should filter result prop "manual"', () => {
         component.resultCriteria.filterProp = component.FilterProp.MANUAL;
 
-        expect(component.filterResultByProp(result)).toBe(true);
+        expect(component.filterResultByProp(result)).to.be.true;
     });
 
     it('should filter result prop "automatic"', () => {
         component.resultCriteria.filterProp = component.FilterProp.AUTOMATIC;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).to.be.false;
     });
 
     it('should filter result prop default value', () => {
-        expect(component.filterResultByProp(result)).toBe(true);
+        expect(component.filterResultByProp(result)).to.be.true;
     });
 
     it('should handle result size change', () => {
         component.handleResultsSizeChange(10);
 
-        expect(component.filteredResultsSize).toBe(10);
+        expect(component.filteredResultsSize).to.equal(10);
     });
 
     it('should return build plan id', () => {
-        expect(component.buildPlanId(result)).toBe('1');
+        expect(component.buildPlanId(result)).to.equal('1');
     });
 
     it('should return project key', () => {
-        component.exercise = {
+        const programmingExercise: ProgrammingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
             projectKey: 'key',
-        } as ProgrammingExercise;
+        };
+        component.exercise = programmingExercise;
 
-        expect(component.projectKey()).toBe('key');
+        expect(component.projectKey()).to.equal('key');
     });
 
     it('should return repository link', () => {
-        expect(component.getRepositoryLink(result)).toBe('url');
+        expect(component.getRepositoryLink(result)).to.equal('url');
     });
 
     it('should export names correctly for student participation', () => {
         component.results = [result];
         const rows = ['data:text/csv;charset=utf-8,participantName'];
-        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const resultServiceStub = sinon.stub(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
 
-        expect(resultServiceStub).toHaveBeenCalledTimes(1);
-        expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
+        expect(resultServiceStub).to.have.been.calledOnceWith(rows, 'results-names.csv');
     });
 
     it('should export names correctly for team participation', () => {
         participation.team = team;
         component.results = [result];
         const rows = ['data:text/csv;charset=utf-8,Team Name,Team Short Name,Students', 'name,shortName,"name1, name2"'];
-        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const resultServiceStub = sinon.stub(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
 
-        expect(resultServiceStub).toHaveBeenCalledTimes(1);
-        expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
+        expect(resultServiceStub).to.have.been.calledOnceWith(rows, 'results-names.csv');
         participation.team = undefined;
     });
 
@@ -253,7 +258,7 @@ describe('Exercise Scores Component', () => {
             guidedTourSettings: [],
         };
 
-        expect(component.searchResultFormatter(result)).toBe('login (name)');
+        expect(component.searchResultFormatter(result)).to.equal('login (name)');
 
         participation.student = undefined;
     });
@@ -262,35 +267,34 @@ describe('Exercise Scores Component', () => {
         participation.team = team;
         const expectedResult = 'name (shortName) ⟹ name1 (login1), name2 (login2)';
 
-        expect(component.searchResultFormatter(result)).toBe(expectedResult);
+        expect(component.searchResultFormatter(result)).to.equal(expectedResult);
 
         participation.team = undefined;
     });
 
     it('should search result and return empty string', () => {
-        expect(component.searchResultFormatter(result)).toBe('');
+        expect(component.searchResultFormatter(result)).to.equal('');
     });
 
     it('should search text from result', () => {
-        expect(component.searchTextFromResult(result)).toBe('participationId');
+        expect(component.searchTextFromResult(result)).to.equal('participationId');
     });
 
     it('should refresh properly', () => {
-        const resultServiceStub = jest.spyOn(resultService, 'getResults').mockReturnValue(of(new HttpResponse<Result[]>({ body: [result] })));
+        const resultServiceStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse<Result[]>({ body: [result] })));
 
         component.refresh();
 
-        expect(resultServiceStub).toHaveBeenCalledTimes(1);
-        expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
-        expect(component.results).toContainValues([result]);
-        expect(component.isLoading).toBe(false);
+        expect(resultServiceStub).to.have.been.calledOnceWith(component.exercise);
+        expect(component.results).to.have.same.members([result]);
+        expect(component.isLoading).to.be.false;
     });
 
     it('should format date correctly', () => {
         const date = new Date(2021, 4, 8, 21, 47, 17);
 
-        expect(component.formatDate(date)).toBe('2021-05-08 21:47:17');
+        expect(component.formatDate(date)).to.equal('2021-05-08 21:47:17');
 
-        expect(component.formatDate(undefined)).toBe('');
+        expect(component.formatDate(undefined)).to.equal('');
     });
 });
