@@ -16,8 +16,8 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -33,6 +33,7 @@ import dayjs from 'dayjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -458,7 +459,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     private initializeAssessmentInfo(): void {
         if (this.assessmentResult && this.assessmentResult.feedbacks && this.umlModel) {
-            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
+            this.assessmentsNames = getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
                 totalScore += feedback.credits!;

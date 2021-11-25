@@ -31,17 +31,20 @@ public class AssessmentDashboardService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final RatingService ratingService;
+
     private final ResultRepository resultRepository;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository) {
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, RatingService ratingService) {
         this.complaintService = complaintService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.ratingService = ratingService;
     }
 
     /**
@@ -121,6 +124,10 @@ public class AssessmentDashboardService {
                         return emptyTutorParticipation;
                     });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+
+            var exerciseRating = ratingService.averageRatingByExerciseId(exercise.getId());
+            exercise.setAverageRating(exerciseRating.averageRating());
+            exercise.setNumberOfRatings(exerciseRating.numberOfRatings());
 
             log.debug("Finished >> assessmentDashboardLoopIteration << call for exercise {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start2));
         }

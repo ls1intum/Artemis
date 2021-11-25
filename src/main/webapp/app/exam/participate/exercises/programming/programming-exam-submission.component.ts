@@ -28,7 +28,6 @@ import {
         CodeEditorBuildLogService,
         CodeEditorRepositoryFileService,
         CodeEditorRepositoryService,
-        DomainService,
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
