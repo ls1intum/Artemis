@@ -1,7 +1,5 @@
-import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
-import { BaseChartDirective, Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -14,35 +12,18 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 
-const BAR_HEIGHT = 15;
+type NameToValueMap = { [name: string]: any };
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
 })
-export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewInit {
+export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
 
-    height = BAR_HEIGHT;
     courseId: number;
     course?: Course;
     examId: number;
-    exerciseIds: number[] = [];
-    exerciseTypes: ExerciseType[] = [];
-
-    // Histogram related properties
-    @ViewChild(BaseChartDirective)
-    chartDirective: BaseChartDirective;
-    chartInstance: Chart;
-    barChartOptions: ChartOptions = {};
-    barChartType: ChartType = 'horizontalBar';
-    averagePointsTooltip: string;
-    chartLegend = false;
-
-    // Data
-    barChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
-    absolutePoints: (number | undefined)[] = [];
 
     // ngx
     ngxData: any[] = [];
@@ -52,8 +33,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLUE],
     } as Color;
-
-    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+    lookup: NameToValueMap = {};
 
     constructor(
         private router: Router,
@@ -65,144 +45,33 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
     ) {}
 
     ngOnInit(): void {
-        this.averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
         this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
         this.initializeChart();
-        this.createCharts();
-    }
-
-    ngAfterViewInit() {
-        this.chartInstance = this.chartDirective.chart;
     }
 
     private initializeChart(): void {
-        const colors = [GraphColors.BLUE];
-        const labels = [this.averageScores.title];
-        const absoluteData = [this.averageScores.averagePoints!];
-        const relativeData: number[] = [this.averageScores.averagePercentage!];
-        this.ngxData.push({ name: this.averageScores.title, value: this.averageScores.averagePercentage! });
+        this.lookup[this.averageScores.title] = { absoluteValue: this.averageScores.averagePoints! };
+        this.ngxData.push({ name: this.averageScores.title, value: this.averageScores.averagePercentage });
         this.averageScores.exerciseResults.forEach((exercise) => {
-            labels.push(exercise.exerciseId + ' ' + exercise.title);
-            colors.push(GraphColors.DARK_BLUE);
-            absoluteData.push(exercise.averagePoints!);
-            relativeData.push(exercise.averagePercentage!);
             this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exercise.averagePercentage });
+            this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
+                absoluteValue: exercise.averagePoints!,
+                exerciseId: exercise.exerciseId,
+                exerciseType: exercise.exerciseType,
+            };
             this.ngxColor.domain.push(GraphColors.DARK_BLUE);
-
-            this.height += BAR_HEIGHT;
-            this.exerciseIds.push(exercise.exerciseId);
-            this.exerciseTypes.push(exercise.exerciseType);
         });
-        this.barChartLabels = labels;
-        this.absolutePoints = absoluteData;
 
-        this.chartData = [
-            {
-                data: relativeData,
-                backgroundColor: colors,
-                borderColor: colors,
-                hoverBackgroundColor: colors,
-                barPercentage: 0.9,
-            },
-        ];
         this.ngxData = [...this.ngxData];
+        console.log(JSON.parse(JSON.stringify(this.ngxData)));
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
         return this.localeConversionService.toLocaleString(roundScoreSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
-    }
-
-    private createCharts() {
-        const self = this;
-        this.barChartOptions = {
-            layout: {
-                padding: {
-                    left: 130,
-                },
-            },
-            title: {
-                display: true,
-                text: `Average scores of exercise group "${self.averageScores.title}" in comparison`,
-            },
-            responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
-            animation: {
-                duration: 1,
-            },
-            scales: {
-                xAxes: [
-                    {
-                        gridLines: {
-                            display: true,
-                        },
-                        ticks: {
-                            display: true,
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            stepSize: 10,
-                            callback(value: number) {
-                                return value + '%';
-                            },
-                        },
-                    },
-                ],
-                yAxes: [
-                    {
-                        gridLines: {
-                            display: true,
-                        },
-                        ticks: {
-                            callback(title: string) {
-                                return title.length > 20 ? title.substr(0, 20) + '...' : title;
-                            },
-                            mirror: true,
-                            padding: 130,
-                        },
-                    },
-                ],
-            },
-            tooltips: {
-                mode: 'index',
-                enabled: true,
-                callbacks: {
-                    label(tooltipItem: any) {
-                        if (!self.absolutePoints && !self.chartData[0].data) {
-                            return ' -';
-                        }
-                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index])} (${roundScoreSpecifiedByCourseSettings(
-                            self.chartData[0].data![tooltipItem.index],
-                            self.course,
-                        )}%)`;
-                    },
-                },
-            },
-            // we show the pointer to indicate to the user that a data point is clickable (navigation to exercise)
-            onHover: (event: any, chartElement) => {
-                const element = chartElement[0];
-                if (element) {
-                    event.target.style.cursor = element['_index'] !== 0 ? 'pointer' : 'default';
-                }
-            },
-            // when the user clicks on a data point, we navigate to the scores page of the corresponding exercise
-            onClick: (evt) => {
-                const point: any = this.chartInstance.getElementAtEvent(evt)[0];
-
-                if (point) {
-                    const exerciseId = this.exerciseIds[point._index - 1];
-                    const exerciseType = this.exerciseTypes[point._index - 1];
-                    if (exerciseId && exerciseType) {
-                        this.navigateToExercise(exerciseId, exerciseType);
-                    }
-                }
-            },
-        };
     }
 
     /**
@@ -213,10 +82,30 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
     }
 
     /**
-     * Appends to every xAxis tick a pertencage sign
+     * Appends to every xAxis tick a percentage sign
      * @param value the initial xiAxis tick
      */
     formatTicks(value: any): string {
         return value + '%';
+    }
+
+    /**
+     * Returns the absolute average points reached for an exercise/ exercise type
+     * @param name name of the exercise or exercise type
+     */
+    lookupAbsoluteValue(name: string) {
+        return this.roundAndPerformLocalConversion(this.lookup[name].absoluteValue);
+    }
+
+    /**
+     * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
+     * @param event the event that is fired by ngx-charts
+     */
+    onSelect(event: any) {
+        const id = this.lookup[event.name].exerciseId;
+        const type = this.lookup[event.name].exerciseType;
+        if (id && type) {
+            this.navigateToExercise(id, type);
+        }
     }
 }

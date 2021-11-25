@@ -122,7 +122,8 @@
             "registered": "Angemeldete Studierende",
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
-            "totalColumn": "Total"
+            "totalColumn": "Total",
+            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe {{ groupTitle }} im Vergleich"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
