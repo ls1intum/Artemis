@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -346,11 +346,10 @@ export class ShortAnswerQuestionUtil {
      * 1. We iterate through every line of the question text.
      * 2. We iterate through every element of each line of the question text and set each element with the new HTML.
      * @param textParts
-     * @param artemisMarkdown
      * @returns {string[][]}
      */
-    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdownService): string[][] {
-        const formattedTextParts = textParts.map((textPart) => textPart.map((element) => artemisMarkdown.htmlForMarkdown(element.trim())));
+    transformTextPartsIntoHTML(textParts: string[][]): string[][] {
+        const formattedTextParts = textParts.map((textPart) => textPart.map((element) => htmlForMarkdown(element.trim())));
         return this.addIndentationToTextParts(textParts, formattedTextParts);
     }
 

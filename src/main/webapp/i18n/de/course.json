@@ -170,7 +170,8 @@
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
-            }
+            },
+            "activeStudents": "Aktive Studierende: {{ students }}"
         },
         "courseStatistics": {
             "statistics": "Statistiken",

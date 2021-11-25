@@ -5,15 +5,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
+import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
-import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostHeaderComponent', () => {
@@ -34,8 +34,8 @@ describe('PostHeaderComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
-                MockComponent(PostingsMarkdownEditorComponent),
-                MockComponent(PostingsButtonComponent),
+                MockComponent(PostingMarkdownEditorComponent),
+                MockComponent(PostingButtonComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(ConfirmIconComponent),
             ],

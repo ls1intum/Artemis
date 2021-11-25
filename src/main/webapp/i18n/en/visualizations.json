@@ -6,7 +6,8 @@
             "averageScoreLabel": "Average score",
             "maximumScoreLabel": "Best score",
             "yAxis": "Score (%)",
-            "xAxis": "Exercises"
+            "xAxis": "Exercises",
+            "exerciseType": "Exercise Type: {{ type }}"
         }
     }
 }
