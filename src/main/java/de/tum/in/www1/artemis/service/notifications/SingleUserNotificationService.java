@@ -38,7 +38,7 @@ public class SingleUserNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param course that the post belongs to
      */
-    private void notifyGroupsWithNotificationType(Post post, NotificationType notificationType, Course course) {
+    private void notifyRecipientWithNotificationType(Post post, NotificationType notificationType, Course course) {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types
@@ -57,7 +57,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
-        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
+        notifyRecipientWithNotificationType(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
     }
 
     /**
@@ -67,7 +67,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
-        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
+        notifyRecipientWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
     }
 
     /**
@@ -78,7 +78,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
-        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
+        notifyRecipientWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
     }
 
     /**
