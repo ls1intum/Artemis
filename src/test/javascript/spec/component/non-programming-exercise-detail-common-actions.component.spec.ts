@@ -24,7 +24,7 @@ import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { MockRouterLinkDirective } from './shared/metis/post/post.component.spec';
+import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;

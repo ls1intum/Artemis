@@ -36,6 +36,9 @@ public class SingleUserNotificationServiceTest {
     private static Exercise exercise;
 
     @Mock
+    private static FileUploadExercise fileUploadExercise;
+
+    @Mock
     private static SingleUserNotificationRepository singleUserNotificationRepository;
 
     @Mock
@@ -72,15 +75,18 @@ public class SingleUserNotificationServiceTest {
 
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
-        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
-
         messagingTemplate = mock(SimpMessageSendingOperations.class);
 
         notificationSettingsService = mock(NotificationSettingsService.class);
 
+        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
+
         singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
 
         exercise = mock(Exercise.class);
+
+        fileUploadExercise = mock(FileUploadExercise.class);
+        when(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
 
         user = mock(User.class);
 
@@ -125,6 +131,18 @@ public class SingleUserNotificationServiceTest {
     /// General notify Tests
 
     /**
+     * Tests if no notification (or email) is send if the settings are deactivated
+     * However, the notification has to be saved to the DB
+     */
+    @Test
+    public void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(false);
+        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
+        verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
+        verify(messagingTemplate, times(0)).convertAndSend(any());
+    }
+
+    /**
      * Test for notifyStudentGroupAboutAttachmentChange method
      */
     @Test
@@ -151,6 +169,15 @@ public class SingleUserNotificationServiceTest {
         verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
+    /**
+     * Test for notifyUserAboutSuccessfulFileUploadSubmission method
+     */
+    @Test
+    public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
+        singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
+        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE);
+    }
+
     /// Save & Send related Tests
 
     /**
@@ -160,7 +187,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testSaveAndSend_CourseRelatedNotifications() {
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any())).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
 
         singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
 
@@ -170,7 +197,7 @@ public class SingleUserNotificationServiceTest {
 
         // inside private prepareSingleUserNotificationEmail method
         verify(notificationSettingsService, times(1)).checkNotificationTypeForEmailSupport(any());
-        verify(notificationSettingsService, times(1)).checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any());
+        verify(notificationSettingsService, times(2)).checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any()); // 2 because we check once for webapp & email
         verify(mailService, times(1)).sendNotificationEmail(any(), any(), any());
     }
 }

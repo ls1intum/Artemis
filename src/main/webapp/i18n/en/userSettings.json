@@ -36,6 +36,7 @@
                 "newReplyForCoursePost": "New Reply for Course Post",
                 "newAnnouncementPost": "New Announcement",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started",
+                "fileSubmissionSuccessful": "File Submission Successful",
                 "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises"
             },
             "settingDescriptions": {
@@ -50,6 +51,7 @@
                 "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
                 "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
                 "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started",
+                "fileSubmissionSuccessfulDescription": "Receive a notification after you successfully submitted a file upload exercise",
                 "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed"
             }
         }
