@@ -4,9 +4,8 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
@@ -16,12 +15,13 @@ import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 
 const generateCsv = jest.fn();
 
@@ -74,7 +74,7 @@ describe('Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(FormsModule), RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, MockModule(FormsModule)],
             declarations: [
                 GradingSystemComponent,
                 MockComponent(AlertComponent),
@@ -85,26 +85,26 @@ describe('Grading System Component', () => {
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: route },
-                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ExamManagementService),
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
             ],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(GradingSystemComponent);
+                comp = fixture.componentInstance;
 
-        fixture = TestBed.createComponent(GradingSystemComponent);
-        comp = fixture.componentInstance;
+                gradingSystemService = TestBed.inject(GradingSystemService);
+                examService = TestBed.inject(ExamManagementService);
+                translateService = TestBed.inject(TranslateService);
 
-        gradingSystemService = TestBed.inject(GradingSystemService);
-        examService = TestBed.inject(ExamManagementService);
-        translateService = TestBed.inject(TranslateService);
-    });
-
-    beforeEach(() => {
-        comp.gradingScale = new GradingScale();
-        comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
-        comp.courseId = 123;
-        comp.examId = 456;
-        comp.firstPassingGrade = 'Pass';
-        translateStub = jest.spyOn(translateService, 'instant');
+                comp.gradingScale = new GradingScale();
+                comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
+                comp.courseId = 123;
+                comp.examId = 456;
+                comp.firstPassingGrade = 'Pass';
+                translateStub = jest.spyOn(translateService, 'instant');
+            });
     });
 
     afterEach(() => {
@@ -119,7 +119,6 @@ describe('Grading System Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp).not.toBe(undefined);
         expect(comp.isExam).toBe(true);
         expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
