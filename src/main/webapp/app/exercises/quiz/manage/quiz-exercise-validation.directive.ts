@@ -34,7 +34,7 @@ export abstract class QuizExerciseValidationDirective {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-    readonly titleLengthThreshold = 250;
+    readonly maxLengthThreshold = 250;
     readonly explanationLengthThreshold = 500;
     readonly hintLengthThreshold = 255;
 
@@ -73,7 +73,7 @@ export abstract class QuizExerciseValidationDirective {
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
-            this.quizExercise.title.length < this.titleLengthThreshold &&
+            this.quizExercise.title.length < this.maxLengthThreshold &&
             this.quizExercise.duration !== 0 &&
             this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
@@ -95,7 +95,7 @@ export abstract class QuizExerciseValidationDirective {
                         return (
                             question.title &&
                             question.title !== '' &&
-                            question.title.length < this.titleLengthThreshold &&
+                            question.title.length < this.maxLengthThreshold &&
                             mcQuestion.answerOptions!.every(
                                 (answerOption) =>
                                     (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
@@ -110,7 +110,7 @@ export abstract class QuizExerciseValidationDirective {
                     return (
                         question.title &&
                         question.title !== '' &&
-                        question.title.length < this.titleLengthThreshold &&
+                        question.title.length < this.maxLengthThreshold &&
                         dndQuestion.correctMappings &&
                         dndQuestion.correctMappings.length > 0 &&
                         this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -128,6 +128,7 @@ export abstract class QuizExerciseValidationDirective {
                         this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                         this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
+                        shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
                         !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
                         this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                     );
@@ -188,10 +189,10 @@ export abstract class QuizExerciseValidationDirective {
                 translateValues: {},
             });
         }
-        if (this.quizExercise.title!.length >= this.titleLengthThreshold) {
+        if (this.quizExercise.title!.length >= this.maxLengthThreshold) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
-                translateValues: { threshold: this.titleLengthThreshold },
+                translateValues: { threshold: this.maxLengthThreshold },
             });
         }
         if (!this.quizExercise.duration) {
@@ -262,10 +263,10 @@ export abstract class QuizExerciseValidationDirective {
                     });
                 }
             }
-            if (question.title && question.title.length >= this.titleLengthThreshold) {
+            if (question.title && question.title.length >= this.maxLengthThreshold) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
-                    translateValues: { index: index + 1, threshold: this.titleLengthThreshold },
+                    translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
                 });
             }
             if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
@@ -331,6 +332,12 @@ export abstract class QuizExerciseValidationDirective {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
                         translateValues: { index: index + 1 },
+                    });
+                }
+                if (shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length !== 0) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength',
+                        translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
                     });
                 }
                 if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {

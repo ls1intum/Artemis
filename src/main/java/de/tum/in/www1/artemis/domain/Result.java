@@ -561,4 +561,66 @@ public class Result extends DomainObject {
         return "Result{" + "id=" + getId() + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
                 + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
     }
+
+    /**
+     * Calculates the total score for programming exercises. Do not use it for other exercise types
+     * @return calculated totalScore
+     */
+    public Double calculateTotalPointsForProgrammingExercises() {
+        double totalPoints = 0.0;
+        double scoreAutomaticTests = 0.0;
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) getParticipation().getExercise();
+        List<Feedback> feedbacks = getFeedbacks();
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+
+        for (Feedback feedback : feedbacks) {
+            if (feedback.getGradingInstruction() != null) {
+                totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
+            }
+            else {
+                /*
+                 * In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
+                 * automatic SCA feedback (automatic test feedback has to be capped)
+                 */
+                if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
+                    scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
+                }
+                else {
+                    totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
+                }
+            }
+        }
+        /*
+         * Calculated score from automatic test feedbacks, is capped to max points + bonus points, see also see {@link ProgrammingExerciseGradingService#updateScore}
+         */
+        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        if (scoreAutomaticTests > maxPoints) {
+            scoreAutomaticTests = maxPoints;
+        }
+        totalPoints += scoreAutomaticTests;
+        // Make sure to not give negative points
+        if (totalPoints < 0) {
+            totalPoints = 0;
+        }
+        // Make sure to not give more than maxPoints
+        if (totalPoints > maxPoints) {
+            totalPoints = maxPoints;
+        }
+        return totalPoints;
+    }
+
+    /**
+     * calculates the score and the result string for programming exercises
+     * @param maxPoints the max points of the exercise
+     */
+    public void calculateScoreForProgrammingExercise(Double maxPoints) {
+        double totalPoints = calculateTotalPointsForProgrammingExercises();
+        setScore(totalPoints, maxPoints);
+
+        // Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
+        // The last part of the result string has to be updated, as the points the student has achieved have changed
+        String[] resultStringParts = getResultString().split(", ");
+        resultStringParts[resultStringParts.length - 1] = createResultString(totalPoints, maxPoints);
+        setResultString(String.join(", ", resultStringParts));
+    }
 }
