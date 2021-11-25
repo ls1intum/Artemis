@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -159,7 +160,7 @@ public class GroupNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
-     * @param author is the user who initiated the process of this notifications. Can be null if not specified
+     * @param author is the user who initiated the process of the notifications. Can be null if not specified
      */
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
@@ -205,6 +206,7 @@ public class GroupNotificationService {
                 // Additional Types
                 case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PROGRAMMING_TEST_CASES_CHANGED,
                         (String) typeSpecificInformation);
+                default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
         }
@@ -491,7 +493,7 @@ public class GroupNotificationService {
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
         // find the users that have this notification type & email communication channel activated
         List<User> usersThatShouldReceiveAnEmail = users.stream()
-                .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
+                .filter(user -> notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, user, EMAIL)).collect(Collectors.toList());
 
         if (!usersThatShouldReceiveAnEmail.isEmpty()) {
             mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);
