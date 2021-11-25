@@ -1,13 +1,15 @@
-package de.tum.in.www1.artemis.web.rest.lecture;
+package de.tum.in.www1.artemis.lecture.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Optional;
-
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.VideoUnitRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,16 +17,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.VideoUnitRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Optional;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class VideoUnitResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -59,39 +61,40 @@ public class VideoUnitResource {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
         Optional<VideoUnit> optionalVideoUnit = videoUnitRepository.findById(videoUnitId);
         if (optionalVideoUnit.isEmpty()) {
-            return notFound();
+            throw new EntityNotFoundException("There isn't such video unit");
+
         }
         VideoUnit videoUnit = optionalVideoUnit.get();
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            return conflict();
+            throw new ConflictException();
         }
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException();
         }
         if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
         return ResponseEntity.ok().body(videoUnit);
     }
 
     /**
-     * PUT /lectures/:lectureId/video-units : Updates an existing video unit .
+     * PUT lectures/:lectureId/video-units : Updates an existing video unit .
      *
      * @param lectureId      the id of the lecture to which the video unit belongs to update
      * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/lectures/{lectureId}/video-units")
+    @PutMapping("lectures/{lectureId}/video-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to update an video unit : {}", videoUnit);
         if (videoUnit.getId() == null) {
-            return badRequest();
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
 
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            return conflict();
+            throw new ConflictException();
         }
 
         // Validate the URL
@@ -99,15 +102,15 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            badRequest();
+            throw new BadRequestAlertException("The URL is not valid", ENTITY_NAME, "invalidurl");
         }
 
         if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException();
         }
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
@@ -122,12 +125,12 @@ public class VideoUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/video-units")
+    @PostMapping("lectures/{lectureId}/video-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> createVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to create VideoUnit : {}", videoUnit);
         if (videoUnit.getId() != null) {
-            return badRequest();
+            throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idexists");
         }
 
         // Validate the URL
@@ -135,19 +138,19 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            badRequest();
+            throw new BadRequestAlertException("The URL is not valid", ENTITY_NAME, "invalidurl");
         }
 
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
-            return badRequest();
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException();
         }
         if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            return forbidden();
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
