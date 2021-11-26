@@ -23,7 +23,17 @@
                 <span class="result-score-chart-title">
                     <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%
                 </span>
-                <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"> </jhi-chart></div>
+                <div #containerRef style="height: 100px">
+                    <!--<jhi-chart [preset]="scoreChartPreset"> </jhi-chart>-->
+                    <ngx-charts-bar-horizontal-normalized
+                        [view]="[containerRef.offsetWidth, 100]"
+                        [results]="ngxData"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [xAxisTickFormatting]="xAxisFormatting"
+                    >
+                    </ngx-charts-bar-horizontal-normalized>
+                </div>
                 <div *ngIf="showScoreChartTooltip" class="d-flex justify-content-center position-relative" style="margin-top: -10px">
                     <div
                         style="width: 250px; height: 20px; top: -15px; position: absolute"

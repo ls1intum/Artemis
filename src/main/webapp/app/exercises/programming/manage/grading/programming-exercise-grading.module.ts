@@ -17,6 +17,7 @@ import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 import { Ng2ChartsModule } from 'app/shared/chart/ng2-charts.module';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
     imports: [
@@ -31,6 +32,7 @@ import { Ng2ChartsModule } from 'app/shared/chart/ng2-charts.module';
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,
         Ng2ChartsModule,
+        NgxChartsModule,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,

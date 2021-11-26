@@ -22,7 +22,7 @@ import {
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -83,6 +83,9 @@ export class ResultDetailComponent implements OnInit {
     commitHash?: string;
     commitUrl?: string;
 
+    ngxData: any[] = [];
+    labels: string[];
+
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
             return getExercise(this.result.participation);
@@ -99,6 +102,7 @@ export class ResultDetailComponent implements OnInit {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
+        this.labels = [pointsLabel, deductionsLabel];
     }
 
     /**
@@ -448,5 +452,53 @@ export class ResultDetailComponent implements OnInit {
         const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
         const programmingSubmission = this.result.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
+    }
+
+    /**
+     * Updates the datasets of the charts with the correct values and colors.
+     * @param receivedPositive Sum of positive credits of the score
+     * @param appliedNegative Sum of applied negative credits
+     * @param receivedNegative Sum of received negative credits
+     * @param maxScore The relevant maximal points of the exercise
+     * @param maxScoreWithBonus The actual received points + optional bonus points
+     */
+    setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number) {
+        this.ngxData = [
+            {
+                name: 'Score',
+                series: [
+                    { name: this.labels[0], value: 0 },
+                    { name: this.labels[1], value: 0 },
+                ],
+            },
+        ];
+        let appliedPositive = receivedPositive;
+
+        // cap to min and max values while maintaining correct negative points
+        if (appliedPositive - appliedNegative > maxScoreWithBonus) {
+            appliedPositive = maxScoreWithBonus;
+            appliedNegative = 0;
+        } else if (appliedPositive > maxScoreWithBonus) {
+            appliedNegative -= appliedPositive - maxScoreWithBonus;
+            appliedPositive = maxScoreWithBonus;
+        } else if (appliedPositive - appliedNegative < 0) {
+            appliedNegative = appliedPositive;
+        }
+        this.ngxData[0].series[0].value = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
+        this.ngxData[0].series[1].value = this.roundToDecimals((appliedNegative / maxScore) * 100, 2);
+        this.ngxData = [...this.ngxData];
+    }
+
+    private roundToDecimals(i: number, n: number) {
+        const f = 10 ** n;
+        return round(i, f);
+    }
+
+    stringify(value: any) {
+        return JSON.stringify(value);
+    }
+
+    xAxisFormatting(value: any): string {
+        return value + '%';
     }
 }
