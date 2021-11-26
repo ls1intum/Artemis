@@ -29,16 +29,39 @@ following dependencies/tools on your machine:
    Download and install the MySQL Community Server (8.0.x) and configure
    the ‘root’ user with an empty password.
    (In case you want to use a different password, make sure to change the value in
-   ``application-dev.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*).
+   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*).
    The required Artemis scheme will be created / updated automatically at startup time of the
    server application.
    Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=14.17.0 < 15) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=6.14.0) to
-   manage client side Node dependencies. Npm is typically bundled with Node.js,
-   but can also be installed separately__.
+4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
+   manage client side dependencies. Npm is typically bundled with Node.js,
+   but can also be installed separately.
+
+
+MySQL Setup
+------------
+
+If you run your own MySQL server, make sure to specify the default ``character-set``
+as ``utf8mb4`` and the default ``collation`` as ``utf8mb4_unicode_ci``.
+You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
+
+.. code::
+
+    [client]
+    default-character-set = utf8mb4
+    [mysql]
+    default-character-set = utf8mb4
+    [mysqld]
+    character-set-client-handshake = TRUE
+    init-connect='SET NAMES utf8mb4'
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_unicode_ci
+
+Make sure the configuration file is used by MySQL when you start the server.
+You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
 
 Server Setup
 ------------
@@ -47,8 +70,12 @@ To start the Artemis application server from the development
 environment, first import the project into IntelliJ and then make sure
 to install the Spring Boot plugins to run the main class
 ``de.tum.in.www1.artemis.ArtemisApp``. Before the application runs, you
-have to configure the file ``application-artemis.yml`` in the folder
-``src/main/resources/config``.
+have to change some configuration options.
+You can change the options directly in the file ``application-artemis.yml`` in the folder
+``src/main/resources/config``. However, you have to be careful that you do not
+accidentally commit your password. Therefore, we strongly recommend, to create a new file
+``application-local.yml`` in the folder ``src/main/resources/config`` which is ignored by default.
+You can override the following configuration options in this file.
 
 .. code:: yaml
 
@@ -141,7 +168,7 @@ information about the setup for programming exercises provided:
 
 
 .. note::
-   Be careful that you don’t commit changes to ``application-artemis.yml``.
+   Be careful that you do not commit changes to ``application-artemis.yml``.
    To avoid this, follow the best practice when configuring your local development environment:
 
    1) Create a file named ``application-local.yml`` under ``src/main/resources/config``.
@@ -149,7 +176,10 @@ information about the setup for programming exercises provided:
    3) Update configuration values in ``application-local.yml``.
 
    By default, changes to ``application-local.yml`` will be ignored by git so you don't accidentally
-   share your credentials or other local configuration options.
+   share your credentials or other local configuration options. The run configurations contain a profile
+   ``local`` at the end to make sure the ``application-local.yml`` is considered. You can create your own
+   configuration files ``application-<name>.yml`` and then activate the profile ``<name>`` in the run
+   configuration if you need additional customizations.
 
 If you use a password, you need to adapt it in
 ``gradle/liquibase.gradle``.

@@ -57,7 +57,7 @@ public class ExamService {
 
     private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -93,12 +93,13 @@ public class ExamService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
+    public ExamService(ExerciseDeletionService exerciseDeletionService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
             GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository) {
+        this.exerciseDeletionService = exerciseDeletionService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -106,7 +107,6 @@ public class ExamService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -155,7 +155,7 @@ public class ExamService {
      *     <li>The Exam</li>
      *     <li>All ExerciseGroups</li>
      *     <li>All Exercises including:
-     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseService#delete}</li>
+     *     Submissions, Participations, Results, Repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
      *     <li>All StudentExams</li>
      *     <li>The exam Grading Scale if such exists</li>
      * </ul>
@@ -173,7 +173,7 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseService.delete(exercise.getId(), true, true);
+                    exerciseDeletionService.delete(exercise.getId(), true, true);
                 }
             }
         }
@@ -194,7 +194,7 @@ public class ExamService {
      * <ul>
      *     <li>All StudentExams</li>
      *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
-           but not the exercises themself. See {@link ExerciseService#reset}</li>
+           but not the exercises themself. See {@link ExerciseDeletionService#reset}</li>
      * </ul>
      * @param examId the ID of the exam to be reset
      */
@@ -207,7 +207,7 @@ public class ExamService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseService.reset(exercise);
+                    exerciseDeletionService.reset(exercise);
                 }
             }
         }
@@ -675,7 +675,7 @@ public class ExamService {
             exerciseGroup.getExercises().forEach(exercise -> {
                 // Set transient property for quiz exam exercise if test runs exist
                 if (exercise instanceof QuizExercise) {
-                    exerciseService.checkTestRunsExist(exercise);
+                    studentParticipationRepository.checkTestRunsExist(exercise);
                 }
             });
             // set transient number of participations for each exercise
