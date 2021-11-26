@@ -135,7 +135,7 @@ describe('ExerciseScoresChartComponent', () => {
     });
 });
 
-function validateStructureOfDataPoint(dataPoint: any, exerciseScoresDTO: any, score: number) {
+function validateStructureOfDataPoint(dataPoint: any, exerciseScoresDTO: ExerciseScoresDTO, score: number) {
     const expectedStructure = { name: exerciseScoresDTO.exerciseTitle, value: score + 1, exerciseId: exerciseScoresDTO.exerciseId, exerciseType: exerciseScoresDTO.exerciseType };
     expect(dataPoint).toEqual(expectedStructure);
 }
