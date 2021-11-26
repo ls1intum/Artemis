@@ -10,7 +10,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, /*Ng2ChartsModule,*/ SubmissionResultStatusModule],
+    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, /*Ng2ChartsModule,*/ SubmissionResultStatusModule, NgxChartsModule],
     declarations: [ResultDetailComponent, ResultHistoryComponent, FeedbackCollapseComponent],
     exports: [ResultDetailComponent, ResultHistoryComponent],
 })

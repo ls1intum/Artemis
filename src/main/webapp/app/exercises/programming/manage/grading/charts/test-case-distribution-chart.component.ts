@@ -14,14 +14,14 @@ import { ChartDataSets } from 'chart.js';
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
             </div>
             <div class="row bg-light">
-                <jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets" [ngxData]="ngxWeightData"></jhi-chart>
+                <jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets"></jhi-chart>
             </div>
             <div class=" row mt-4">
                 <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate }}</h4>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
             </div>
             <div class="bg-light" style="height: 100px">
-                <jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets" [ngxData]="ngxPointsData"></jhi-chart>
+                <jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>
             </div>
         </div>
     `,

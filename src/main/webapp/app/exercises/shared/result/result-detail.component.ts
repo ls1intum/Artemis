@@ -76,7 +76,7 @@ export class ResultDetailComponent implements OnInit {
     filteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
-    scoreChartPreset: ScoreChartPreset;
+    // scoreChartPreset: ScoreChartPreset;
     showScoreChartTooltip = false;
 
     commitHashURLTemplate?: string;
@@ -101,7 +101,7 @@ export class ResultDetailComponent implements OnInit {
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
-        this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
+        // this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
         this.labels = [pointsLabel, deductionsLabel];
     }
 
@@ -428,9 +428,10 @@ export class ResultDetailComponent implements OnInit {
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
         }
+        this.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
 
         // the chart preset handles the capping to the maximum score of the exercise
-        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
+        // this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
     }
 
     /**
