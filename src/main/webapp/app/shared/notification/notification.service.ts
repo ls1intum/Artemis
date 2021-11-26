@@ -25,6 +25,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
+import { Setting } from 'app/shared/user-settings/user-settings.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -63,6 +64,14 @@ export class NotificationService {
      */
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    }
+
+    /**
+     * Updates the
+     * @param hideNotificationsUntil
+     */
+    public updateHiddenNotifications(hideNotificationsUntil: dayjs.Dayjs | null): Observable<HttpResponse<dayjs.Dayjs | null>> {
+        return this.http.put<dayjs.Dayjs | null>(this.resourceUrl, hideNotificationsUntil, { observe: 'response' });
     }
 
     /**
