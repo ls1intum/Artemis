@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
+import de.tum.in.www1.artemis.repository.UserRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -29,12 +30,15 @@ public class SingleUserNotificationService {
 
     private NotificationSettingsService notificationSettingsService;
 
+    private final UserRepository userRepository;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate, MailService mailService,
-            NotificationSettingsService notificationSettingsService) {
+            NotificationSettingsService notificationSettingsService, UserRepository userRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -52,6 +56,9 @@ public class SingleUserNotificationService {
             case NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_COURSE_POST, (Course) typeSpecificInformation);
             // Exercise related
             case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, NotificationType.FILE_SUBMISSION_SUCCESSFUL, (User) typeSpecificInformation);
+            // Plagiarism related
+            case POSSIBLE_PLAGIARISM_CASE -> createNotification(notificationType, );
+            case PLAGIARISM_CASE_UPDATE -> createNotification(notificationType, );
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
@@ -100,14 +107,19 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * notifyUserAboutPlagiarismCase creates a plagiarismNotification saves it to the database and returns it.
-     * @param plagiarismNotification A singleUserNotification
-     * @return converted plagiarism notification
+     * Notify student about possible plagiarism case.
+     *
      */
-    public SingleUserNotification notifyUserAboutPlagiarismCase(SingleUserNotification plagiarismNotification) {
-        var res = singleUserNotificationRepository.save(plagiarismNotification);
-        messagingTemplate.convertAndSend(plagiarismNotification.getTopic(), plagiarismNotification);
-        return res;
+    public void notifyUserAboutPossiblePlagiarismCase(todo) {
+        notifyGroupsWithNotificationType(todo, POSSIBLE_PLAGIARISM_CASE, );
+    }
+
+    /**
+     * Notify student about plagiarism case update.
+     *
+     */
+    public void notifyUserAboutPlagiarismUpdate(todo) {
+        notifyGroupsWithNotificationType(todo, PLAGIARISM_CASE_UPDATE, );
     }
 
     /**
