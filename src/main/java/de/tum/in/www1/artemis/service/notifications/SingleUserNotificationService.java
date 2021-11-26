@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -63,7 +63,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
+        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course);
     }
 
     /**
@@ -73,7 +73,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
+        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course);
     }
 
     /**
@@ -84,7 +84,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
+        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course);
     }
 
     /**
@@ -95,7 +95,7 @@ public class SingleUserNotificationService {
      * @param recipient that should be notified
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
-        notifyRecipientWithNotificationType(exercise, NotificationType.FILE_SUBMISSION_SUCCESSFUL, recipient);
+        notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient);
     }
 
     /**
