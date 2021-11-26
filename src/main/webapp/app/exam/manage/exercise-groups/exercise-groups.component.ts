@@ -16,7 +16,6 @@ import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/ma
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -47,7 +46,6 @@ export class ExerciseGroupsComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         public exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
-        private courseManagementService: CourseManagementService,
         private eventManager: EventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
