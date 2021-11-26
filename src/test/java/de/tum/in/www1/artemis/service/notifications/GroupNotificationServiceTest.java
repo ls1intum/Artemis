@@ -19,6 +19,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
@@ -80,6 +81,9 @@ public class GroupNotificationServiceTest {
 
     @Mock
     private static Post post;
+
+    @Mock
+    static AnswerPost answerPost;
 
     @Mock
     private static Course course;
@@ -189,6 +193,9 @@ public class GroupNotificationServiceTest {
         post = mock(Post.class);
         when(post.getExercise()).thenReturn(exercise);
         when(post.getLecture()).thenReturn(lecture);
+
+        answerPost = mock(AnswerPost.class);
+        when(answerPost.getPost()).thenReturn(post);
 
         instanceMessageSendService = mock(InstanceMessageSendService.class);
         doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(EXERCISE_ID);
@@ -488,7 +495,7 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, course);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
@@ -497,7 +504,7 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, course);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
@@ -515,7 +522,7 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
@@ -634,7 +641,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testSaveAndSend_CourseRelatedNotifications() {
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any())).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
 
         setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
