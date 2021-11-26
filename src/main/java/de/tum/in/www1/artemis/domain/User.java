@@ -95,11 +95,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
 
-    // hides all notifications with a notification date which is after the given date in the notification sidebar.
+    // hides all notifications with a notification date until (before) the given date in the notification sidebar.
     // if the value is null all notifications are displayed
     @Nullable
-    @Column(name = "hide_notifications_after")
-    private ZonedDateTime hideNotificationsAfter = null;
+    @Column(name = "hide_notifications_until")
+    private ZonedDateTime hideNotificationsUntil = null;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -232,12 +232,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.lastNotificationRead = lastNotificationRead;
     }
 
-    public ZonedDateTime getHideNotificationsAfter() {
-        return hideNotificationsAfter;
+    public ZonedDateTime getHideNotificationsUntil() {
+        return hideNotificationsUntil;
     }
 
-    public void setHideNotificationsAfter(ZonedDateTime hideNotificationsAfter) {
-        this.hideNotificationsAfter = hideNotificationsAfter;
+    public void setHideNotificationsUntil(ZonedDateTime hideNotificationsUntil) {
+        this.hideNotificationsUntil = hideNotificationsUntil;
     }
 
     public String getLangKey() {

@@ -114,6 +114,7 @@ export class NotificationSidebarComponent implements OnInit {
             // hide all currently displayed notifications
             this.hideNotificationsUntil = dayjs();
         }
+        this.notificationService.updateDispl;
         this.resetNotificationsInSidebar();
         this.showAllNotificationsInSideBar = !this.showAllNotificationsInSideBar;
     }
