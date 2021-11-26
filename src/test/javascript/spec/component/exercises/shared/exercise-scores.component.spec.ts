@@ -10,7 +10,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { of, Subscription } from 'rxjs';
-import { FormsModule } from '@angular/forms';
+import { NgModel, NgSelectOption } from '@angular/forms';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
@@ -32,8 +32,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
 
 describe('Exercise Scores Component', () => {
@@ -84,7 +82,7 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(FormsModule), MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
                 MockComponent(AlertComponent),
@@ -98,13 +96,14 @@ describe('Exercise Scores Component', () => {
                 MockHasAnyAuthorityDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
+                MockDirective(NgModel),
+                MockDirective(NgSelectOption),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ExerciseService, useClass: MockExerciseService },
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ResultService, useClass: MockResultService },
             ],
         })
@@ -280,7 +279,7 @@ describe('Exercise Scores Component', () => {
 
         expect(resultServiceStub).toHaveBeenCalledTimes(1);
         expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
-        expect(component.results).toContainValues([result]);
+        expect(component.results).toEqual([result]);
         expect(component.isLoading).toBe(false);
     });
 
