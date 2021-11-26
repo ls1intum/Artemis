@@ -4,12 +4,12 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
-import { FormsModule } from '@angular/forms';
+import { NgModel, NgSelectOption } from '@angular/forms';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
@@ -74,8 +74,10 @@ describe('Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule)],
+            imports: [ArtemisTestModule],
             declarations: [
+                MockDirective(NgModel),
+                MockDirective(NgSelectOption),
                 GradingSystemComponent,
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
