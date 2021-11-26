@@ -168,15 +168,26 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "student42", roles = "USER")
     public void getLecture_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.get("/api/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN, Lecture.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.FORBIDDEN, Lecture.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getLecture_ExerciseAndAttachmentReleased_shouldGetLectureWithAllLectureUnits() throws Exception {
-        Lecture receivedLecture = request.get("/api/lectures/" + lecture1.getId(), HttpStatus.OK, Lecture.class);
-        assertThat(receivedLecture.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLecture.getLectureUnits().size()).isEqualTo(4);
-        assertThat(receivedLecture.getAttachments().size()).isEqualTo(2);
+        Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(4);
+        assertThat(receivedLectureWithDetails.getAttachments().size()).isEqualTo(2);
+
+        testGetLecture(lecture1.getId());
+    }
+
+    private void testGetLecture(Long lectureId) throws Exception {
+        Lecture receivedLecture = request.get("/api/lectures/" + lectureId, HttpStatus.OK, Lecture.class);
+        assertThat(receivedLecture.getId()).isEqualTo(lectureId);
+        // should not fetch lecture units or posts
+        assertThat(receivedLecture.getLectureUnits()).isNullOrEmpty();
+        assertThat(receivedLecture.getPosts()).isNullOrEmpty();
     }
 
     @Test
@@ -186,17 +197,19 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(10));
         textExerciseRepository.saveAndFlush(exercise);
 
-        Lecture receivedLecture = request.get("/api/lectures/" + lecture1.getId(), HttpStatus.OK, Lecture.class);
-        assertThat(receivedLecture.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLecture.getLectureUnits().size()).isEqualTo(3);
-        assertThat(receivedLecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList())).isEmpty();
+        Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(3);
+        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList())).isEmpty();
 
         // now we test that it is included when the user is at least a teaching assistant
         database.changeUser("tutor1");
-        receivedLecture = request.get("/api/lectures/" + lecture1.getId(), HttpStatus.OK, Lecture.class);
-        assertThat(receivedLecture.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLecture.getLectureUnits().size()).isEqualTo(4);
-        assertThat(receivedLecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList())).isNotEmpty();
+        receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(4);
+        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList())).isNotEmpty();
+
+        testGetLecture(lecture1.getId());
     }
 
     @Test
@@ -208,19 +221,21 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         lectureAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
         attachmentRepository.saveAll(Set.of(unitAttachment, lectureAttachment));
 
-        Lecture receivedLecture = request.get("/api/lectures/" + lecture1.getId(), HttpStatus.OK, Lecture.class);
-        assertThat(receivedLecture.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLecture.getAttachments().stream().filter(attachment -> attachment.getId().equals(lectureAttachment.getId())).findFirst().isEmpty()).isTrue();
-        assertThat(receivedLecture.getLectureUnits().size()).isEqualTo(3);
-        assertThat(receivedLecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList())).isEmpty();
+        Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.getAttachments().stream().filter(attachment -> attachment.getId().equals(lectureAttachment.getId())).findFirst().isEmpty()).isTrue();
+        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(3);
+        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList())).isEmpty();
 
         // now we test that it is included when the user is at least a teaching assistant
         database.changeUser("tutor1");
-        receivedLecture = request.get("/api/lectures/" + lecture1.getId(), HttpStatus.OK, Lecture.class);
-        assertThat(receivedLecture.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLecture.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()))).isTrue();
-        assertThat(receivedLecture.getLectureUnits().size()).isEqualTo(4);
-        assertThat(receivedLecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList())).isNotEmpty();
+        receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()))).isTrue();
+        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(4);
+        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList())).isNotEmpty();
+
+        testGetLecture(lecture1.getId());
     }
 
     @Test

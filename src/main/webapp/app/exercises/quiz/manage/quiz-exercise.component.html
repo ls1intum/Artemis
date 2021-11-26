@@ -1,7 +1,9 @@
 <div>
     <h4 class="d-flex mb-3 flex-wrap justify-content-end">
         <span class="mb-1 me-auto">
-            <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
+            <span *ngIf="course && !showHeading">{{ course.title }} - </span>
+            <span *ngIf="quizExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredQuizExercises) }} / </span>
+            <span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
             <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
         </span>
         <a
@@ -29,7 +31,7 @@
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="quizExercises && quizExercises.length > 0">
+    <div class="table-responsive" *ngIf="quizExercises && filteredQuizExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -38,7 +40,7 @@
                     <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -47,7 +49,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
+                <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId">
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>

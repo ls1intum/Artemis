@@ -90,6 +90,31 @@
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
+            "exercise": {
+                "search": {
+                    "searchButton": "Search",
+                    "resetButton": "Reset",
+                    "toggleButton": {
+                        "true": "Hide Advanced Search",
+                        "false": "Show Advanced Search"
+                    },
+                    "cardTitle": "Search Exercises",
+                    "labelExerciseName": "Search by exercise name",
+                    "fieldExerciseName": "Exercise name",
+                    "labelExerciseCategory": "Category",
+                    "fieldExerciseCategory": "Category",
+                    "labelExerciseType": "Exercise Type",
+                    "noResults": "No exercises matching this search query were found",
+                    "type": {
+                        "all": "All Exercises",
+                        "programming": "Programming Exercises",
+                        "quiz": "Quiz Exercises",
+                        "modeling": "Modelling Exercises",
+                        "text": "Text Exercises",
+                        "file-upload": "File Upload Exercises"
+                    }
+                }
+            },
             "students": "Students",
             "participations": "Participation",
             "tutors": "Tutors",
@@ -145,7 +170,8 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score"
-            }
+            },
+            "activeStudents": "Active students: {{ students }}"
         },
         "courseStatistics": {
             "statistics": "Statistics",

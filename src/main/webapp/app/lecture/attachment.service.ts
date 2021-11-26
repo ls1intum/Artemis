@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Attachment } from 'app/entities/attachment.model';
 
 type EntityResponseType = HttpResponse<Attachment>;
@@ -18,6 +18,16 @@ export class AttachmentService {
 
     create(attachment: Attachment): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(attachment);
+        // avoid potential issues when sending the attachment to the server
+        if (copy.attachmentUnit) {
+            copy.attachmentUnit.lecture = undefined;
+            copy.attachmentUnit.learningGoals = undefined;
+        }
+        if (copy.lecture) {
+            copy.lecture.lectureUnits = undefined;
+            copy.lecture.course = undefined;
+            copy.lecture.posts = undefined;
+        }
         return this.http.post<Attachment>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

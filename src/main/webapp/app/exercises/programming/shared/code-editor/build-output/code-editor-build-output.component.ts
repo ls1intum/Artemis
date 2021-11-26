@@ -8,7 +8,7 @@ import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/co
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
+import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';

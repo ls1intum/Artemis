@@ -14,7 +14,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';

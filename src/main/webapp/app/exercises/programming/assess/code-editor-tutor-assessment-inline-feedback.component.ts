@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
+import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -20,7 +21,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
-        this.disableEditScore = !!(this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0);
     }
     private _feedback: Feedback;
     @Input()
@@ -48,7 +48,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     viewOnly: boolean;
     oldFeedback: Feedback;
-    disableEditScore = false;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
@@ -101,8 +100,29 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     updateFeedbackOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
+    }
+
+    /**
+     * Builds the feedback text. When the feedback has a link with grading instruction it merges the feedback of
+     * the grading instruction with the feedback text provided by the assessor. Otherwise, it returns detail_text.
+     *
+     * @param feedback that contains feedback detail_text and grading instruction
+     * @returns {string} formatted string representing the feedback text ready to display
+     */
+    public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
+        let feedbackText = '';
+        if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+            feedbackText = feedback.gradingInstruction.feedback;
+            if (feedback.detailText) {
+                feedbackText = feedbackText + '\n' + feedback.detailText;
+            }
+            return convertToHtmlLinebreaks(feedbackText);
+        }
+        if (feedback.detailText) {
+            return feedback.detailText;
+        }
+        return feedbackText;
     }
 }
