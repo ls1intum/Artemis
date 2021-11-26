@@ -19,10 +19,11 @@ import { ChartComponent } from 'app/shared/chart/chart.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/result/feedback-collapse.component';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -152,7 +153,7 @@ describe('ResultDetailComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [
                 ResultDetailComponent,
                 TranslatePipeMock,
@@ -371,16 +372,16 @@ describe('ResultDetailComponent', () => {
         comp.showTestDetails = true;
         comp.result.feedbacks = feedbacks;
 
-        comp.scoreChartPreset.applyTo(new ChartComponent());
-        const chartSetValuesSpy = jest.spyOn(comp.scoreChartPreset, 'setValues');
+        /*comp.scoreChartPreset.applyTo(new ChartComponent());
+        const chartSetValuesSpy = jest.spyOn(comp.scoreChartPreset, 'setValues');*/
 
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
         expect(comp.showScoreChartTooltip).toBe(true);
 
-        expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
-        expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 5, 6, 100, 100);
+        /*expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
+        expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 5, 6, 100, 100);*/
         checkChartPreset(5, 5, '10', '5 of 6');
         expect(comp.isLoading).toBe(false);
 
@@ -390,12 +391,12 @@ describe('ResultDetailComponent', () => {
         feedbacks.push(feedbackPair1.fb);
         expectedItems.push(feedbackPair1.item);
 
-        chartSetValuesSpy.mockClear();
+        // chartSetValuesSpy.mockClear();
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
-        expect(chartSetValuesSpy).toHaveBeenCalledWith(104, 5, 6, 100, 100);
+        // expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
+        // expect(chartSetValuesSpy).toHaveBeenCalledWith(104, 5, 6, 100, 100);
         checkChartPreset(99, 1, '100 of 104', '1 of 6');
 
         // test negative > positive, limit at 0
@@ -406,17 +407,17 @@ describe('ResultDetailComponent', () => {
         feedbacks.push(feedbackPair2.fb);
         expectedItems.push(feedbackPair2.item);
 
-        chartSetValuesSpy.mockClear();
+        // chartSetValuesSpy.mockClear();
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
-        expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 22, 206, 100, 100);
+        // expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
+        // expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 22, 206, 100, 100);
         checkChartPreset(0, 10, '10', '10 of 206');
     });
 
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
-        // @ts-ignore
+        /*// @ts-ignore
         expect(comp.scoreChartPreset.datasets).toHaveLength(2);
         // @ts-ignore
         expect(comp.scoreChartPreset.datasets[0].data[0]).toBe(d1);
@@ -425,6 +426,9 @@ describe('ResultDetailComponent', () => {
         // @ts-ignore
         expect(comp.scoreChartPreset.datasets[1].data[0]).toBe(d2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[1]).toBe(l2);
+        expect(comp.scoreChartPreset.valueLabels[1]).toBe(l2);*/
+        expect(comp.ngxData[0].series).toHaveLength(2);
+        expect(comp.ngxData[0].series[0].value).toBe(d1);
+        expect(comp.ngxData[0].series[1].value).toBe(d2);
     };
 });

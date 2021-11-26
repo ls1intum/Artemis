@@ -25,6 +25,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 export enum FeedbackItemType {
     Issue,
@@ -85,6 +86,12 @@ export class ResultDetailComponent implements OnInit {
 
     ngxData: any[] = [];
     labels: string[];
+    ngxColors = {
+        name: 'Feedback Detail',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#28a745', '#dc3545'], // colors: green, red
+    } as Color;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
