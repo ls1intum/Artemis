@@ -12,7 +12,7 @@
             "register": {
                 "signUp": "Für einen Kurs anmelden",
                 "registerSuccessful": "Anmeldung erfolgreich",
-                "signUpForCourse": "Für den ausgewählten Kurs anmelden",
+                "signUpForCourse": "Anmelden",
                 "cancel": "Abbrechen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
                 "courseLoading": "Kurse werden geladen...",

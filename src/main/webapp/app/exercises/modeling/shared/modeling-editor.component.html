@@ -80,10 +80,24 @@
         </div>
     </ng-template>
 
-    <button *ngIf="!readOnly && showHelpButton && !isFullScreen" class="btn btn-warning mb-2 align-self-start" (click)="open(help)">
-        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
-        <span jhiTranslate="artemisApp.modelingEditor.helpModal.help">Help</span>
-    </button>
+    <div class="help-and-status" *ngIf="!readOnly && !isFullScreen">
+        <button *ngIf="!readOnly && showHelpButton" class="btn btn-warning" (click)="open(help)">
+            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
+            <span jhiTranslate="artemisApp.modelingEditor.helpModal.help">Help</span>
+        </button>
+        <div class="status-hint text-success" *ngIf="savedStatus && !savedStatus.isChanged && !savedStatus.isSaving">
+            <fa-icon [icon]="['fas', 'check']"></fa-icon>
+            <span jhiTranslate="artemisApp.modelingEditor.allSaved">All changes saved</span>
+        </div>
+        <div class="status-hint text-warning" *ngIf="savedStatus && savedStatus.isChanged && !savedStatus.isSaving">
+            <fa-icon [icon]="['fas', 'times']"></fa-icon>
+            <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges">Unsaved changes</span>
+        </div>
+        <div class="status-hint text-info" *ngIf="savedStatus && savedStatus.isSaving">
+            <fa-icon class="spin" [icon]="['fas', 'circle-notch']"></fa-icon>
+            <span jhiTranslate="artemisApp.modelingEditor.saving">Saving...</span>
+        </div>
+    </div>
 
     <div #resizeContainer class="modeling-editor" [class.resizable]="resizeOptions" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
         <div #editorContainer class="apollon-container"></div>

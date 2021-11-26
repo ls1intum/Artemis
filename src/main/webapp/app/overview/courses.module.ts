@@ -12,8 +12,6 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
@@ -28,7 +26,6 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
-        ArtemisSharedComponentModule,
         ClipboardModule,
         ArtemisSharedPipesModule,
         ArtemisSidePanelModule,
@@ -43,7 +40,6 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
     declarations: [
         CoursesComponent,
         CourseOverviewComponent,
-        CourseRegistrationSelectorComponent,
         CourseCardComponent,
         CourseExercisesComponent,
         CourseLecturesComponent,
