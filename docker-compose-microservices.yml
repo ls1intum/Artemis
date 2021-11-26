@@ -84,9 +84,20 @@ services:
         networks:
             - artemis
     artemis-mysql:
-        extends:
-            file: src/main/docker/mysql.yml
-            service: artemis-mysql
+        image: mysql:8.0.27
+        platform: linux/x86_64
+        # volumes:
+        #     - ~/volumes/jhipster/Artemis/mysql/:/var/lib/mysql/
+        container_name: artemis_mysql
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_ROOT_PASSWORD=
+            - MYSQL_DATABASE=Artemis
+        ports:
+            - 3306:3306
+        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
+        networks:
+            - artemis
     activemq-broker:
         image: vromero/activemq-artemis:latest
         environment:
