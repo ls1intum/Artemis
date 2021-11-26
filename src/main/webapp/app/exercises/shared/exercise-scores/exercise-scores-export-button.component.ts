@@ -52,7 +52,7 @@ export class ExerciseScoresExportButtonComponent {
      * @private
      */
     private constructCSV(exercise: Exercise) {
-        this.resultService.getResultsWithScoresPerGradingCriterion(exercise).subscribe((data) => {
+        this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
             const rows: string[] = [];
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {

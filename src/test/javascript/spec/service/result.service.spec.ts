@@ -91,7 +91,7 @@ describe('ResultService', () => {
 
         const httpStub = jest.spyOn(http, 'get').mockReturnValue(of({ body: results }));
 
-        resultService.getResultsWithScoresPerGradingCriterion(exercise).subscribe((res) => {
+        resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((res) => {
             const resultsWithScores: ResultWithPointsPerGradingCriterion[] = res.body!;
             expect(resultsWithScores).toHaveLength(2);
 
