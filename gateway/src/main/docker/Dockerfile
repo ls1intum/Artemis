@@ -7,6 +7,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 # Add a jhipster user to run our application so that it doesn't need to run as root
 RUN adduser -D -s /bin/sh artemis
 WORKDIR /home/artemis/gateway
+RUN touch application-dev.yml application-prod.yml
 USER artemis
 
 ARG WAR_PATH=gateway/build/libs
