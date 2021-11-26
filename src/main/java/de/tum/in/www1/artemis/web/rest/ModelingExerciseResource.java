@@ -57,6 +57,8 @@ public class ModelingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final ModelingExerciseImportService modelingExerciseImportService;
@@ -78,13 +80,15 @@ public class ModelingExerciseResource {
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, ExerciseService exerciseService, ModelClusterRepository modelClusterRepository,
-            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
-            PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, InstanceMessageSendService instanceMessageSendService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService,
+            PlagiarismResultRepository plagiarismResultRepository, ModelingExerciseImportService modelingExerciseImportService,
+            SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
+            GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            ExampleSubmissionRepository exampleSubmissionRepository, InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository,
             ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
@@ -268,7 +272,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.delete(exerciseId, false, false);
+        exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 

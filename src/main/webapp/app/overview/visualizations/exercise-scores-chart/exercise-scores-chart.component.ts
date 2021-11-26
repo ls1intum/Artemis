@@ -41,7 +41,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     ) {}
 
     ngAfterViewInit() {
-        this.activatedRoute.parent!.params.subscribe((params) => {
+        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
                 this.loadDataAndInitializeChart();

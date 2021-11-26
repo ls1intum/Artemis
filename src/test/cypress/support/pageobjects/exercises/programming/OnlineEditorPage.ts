@@ -1,9 +1,9 @@
-import { COURSE_BASE } from '../../../requests/CourseManagementRequests';
+import { artemis } from './../../../ArtemisTesting';
+import { CypressExerciseType } from '../../../requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
 const buildingAndTesting = 'Building and testing...';
-const exerciseRow = '.course-exercise-row';
 
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
@@ -162,18 +162,14 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
  * Starts the participation in the test programming exercise.
  */
 export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
+    const courseOverview = artemis.pageobjects.courseOverview;
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
     cy.contains(courseName).parents('.card-header').click();
     cy.url().should('include', '/exercises');
-    cy.intercept(POST, COURSE_BASE + '*/exercises/*/participations').as('participateInExerciseQuery');
-    cy.get(exerciseRow).contains(programmingExerciseName).should('be.visible');
-    cy.get(exerciseRow).find('.start-exercise').click();
-    cy.wait('@participateInExerciseQuery');
-    cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-    cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
-    cy.wait('@initialQuery');
+    courseOverview.startExercise(programmingExerciseName, CypressExerciseType.PROGRAMMING);
+    courseOverview.openRunningProgrammingExercise(programmingExerciseName);
 }
 
 /**
