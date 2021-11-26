@@ -256,7 +256,7 @@ jobs:
             echo TAG=${{ steps.compute-tag.outputs.result }} > .env && 
             docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml down && 
             docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml pull && 
-            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml up"
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml up -d"
 
           sleep 20
         done
