@@ -3,6 +3,7 @@
         "modelingEditor": {
             "title": "Modelling Editor",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
+            "saveSuccessful": "Your diagram was saved successfully!",
             "allSaved": "All changes saved",
             "unsavedChanges": "Unsaved changes",
             "saving": "Saving...",
