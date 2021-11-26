@@ -11,7 +11,7 @@ export class MockResultService implements IResultService {
     getFeedbackDetailsForResult = (participationId: number, resultId: number) => empty();
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => empty();
     getResultsForExerciseWithPointsPerGradingCriterion = (exerciseId: number, req: any) => empty();
-    getResultsWithScoresPerGradingCriterion = (exercise: Exercise): Observable<ResultsWithPointsArrayResponseType> => empty();
+    getResultsWithPointsPerGradingCriterion = (exercise: Exercise): Observable<ResultsWithPointsArrayResponseType> => empty();
     update = (result: Result) => of();
     getLatestResultWithFeedbacks = (particpationId: number): Observable<HttpResponse<Result>> => of();
     triggerDownloadCSV = (rows: string[], csvFileName: string) => empty();
