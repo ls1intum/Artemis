@@ -10,7 +10,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { of, Subscription } from 'rxjs';
-import { NgModel, NgSelectOption } from '@angular/forms';
+import { NgModel } from '@angular/forms';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
@@ -97,7 +97,6 @@ describe('Exercise Scores Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgModel),
-                MockDirective(NgSelectOption),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
