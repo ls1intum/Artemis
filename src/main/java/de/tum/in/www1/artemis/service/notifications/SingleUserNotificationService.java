@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class SingleUserNotificationService {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types
-            case NEW_REPLY_FOR_EXERCISE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, (Course) typeSpecificInformation);
+            case NEW_REPLY_FOR_EXERCISE_POST -> createNotification((Post) notificationSubject, NEW_REPLY_FOR_EXERCISE_POST, (Course) typeSpecificInformation);
             case NEW_REPLY_FOR_LECTURE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_LECTURE_POST, (Course) typeSpecificInformation);
             case NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_COURSE_POST, (Course) typeSpecificInformation);
             // Exercise related
@@ -64,7 +64,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
-        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, course);
+        notifyGroupsWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course);
     }
 
     /**
@@ -74,7 +74,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
-        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_LECTURE_POST, course);
+        notifyGroupsWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course);
     }
 
     /**
@@ -85,7 +85,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
-        notifyGroupsWithNotificationType(post, NotificationType.NEW_REPLY_FOR_COURSE_POST, course);
+        notifyGroupsWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course);
     }
 
     /**
@@ -96,7 +96,7 @@ public class SingleUserNotificationService {
      * @param recipient that should be notified
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
-        notifyGroupsWithNotificationType(exercise, NotificationType.FILE_SUBMISSION_SUCCESSFUL, recipient);
+        notifyGroupsWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient);
     }
 
     /**

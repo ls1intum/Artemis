@@ -225,7 +225,7 @@ public class PlagiarismResource {
         }
         var plagiarismComparison = plagiarismComparisonOptional.get();
         User affectedUser = userRepository.getUserByLoginElseThrow(plagiarismNotificationDTO.getStudentLogin());
-        SingleUserNotification plagiarismNotification = SingleUserNotificationFactory.createPlagiarismNotification(plagiarismNotificationDTO.getPlagiarismComparisonId(), 1L,// todo
+        SingleUserNotification plagiarismNotification = SingleUserNotificationFactory.createNotification(plagiarismNotificationDTO.getPlagiarismComparisonId(), 1L,// todo
                 affectedUser, userRepository.getUser(), plagiarismNotificationDTO.getInstructorMessage());
         var sentNotification = singleUserNotificationService.notifyUserAboutPlagiarismCase(plagiarismNotification);
         if (plagiarismNotificationDTO.getStudentLogin().equals(plagiarismComparison.getSubmissionA().getStudentLogin())) {
