@@ -218,13 +218,12 @@ public class NotificationTargetService {
     }
 
     /**
-     * Adds the appropriate target to the plagiarismReview page to the notification
-     *
+     * Get the needed target for plagiarism related notifications
      * @param plagiarismComparisonId the id of the plagiarismComparison
      * @param courseID               the id of the course
-     * @return JSON string with all properties for the notification target field
+     * @return the final target property
      */
-    public String targetForPlagiarismCase(Long plagiarismComparisonId, Long courseID) {
+    public String getTargetForPlagiarismCase(Long plagiarismComparisonId, Long courseID) {
         JsonObject target = new JsonObject();
         target.addProperty(MESSAGE_TEXT, PLAGIARISM_DETECTED_TEXT);
         target.addProperty(ID_TEXT, plagiarismComparisonId);
