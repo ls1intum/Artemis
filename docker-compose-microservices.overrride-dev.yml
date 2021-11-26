@@ -5,6 +5,9 @@ services:
         build:
             context: .
             dockerfile: ./src/main/docker/Dockerfile
+        volumes:
+            - ./src/main/resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
+            - ./src/main/resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=dev,artemis,openapi
@@ -26,6 +29,9 @@ services:
         build:
             context: .
             dockerfile: ./user-management/src/main/docker/Dockerfile
+        volumes:
+            - ./user-management/src/main/resources/config/application-dev.yml:/home/artemis/user-management/application-dev.yml:ro
+            - ./src/main/resources/config/application-artemis.yml:/home/artemis/user-management/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=dev,artemis
@@ -47,6 +53,8 @@ services:
         build:
             context: .
             dockerfile: ./gateway/src/main/docker/Dockerfile
+        volumes:
+            - ./gateway/src/main/resources/config/application-dev.yml:/home/artemis/gateway/application-dev.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=dev,api-docs
@@ -62,6 +70,8 @@ services:
             - jhipster-registry
     jhipster-registry:
         image: jhipster/jhipster-registry:v6.8.0
+        volumes:
+            - ./src/main/docker/central-server-config:/central-config
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=dev,api-docs
@@ -76,6 +86,8 @@ services:
     artemis-mysql:
         image: mysql:8.0.27
         platform: linux/x86_64
+        # volumes:
+        #     - ~/volumes/jhipster/Artemis/mysql/:/var/lib/mysql/
         container_name: artemis_mysql
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
