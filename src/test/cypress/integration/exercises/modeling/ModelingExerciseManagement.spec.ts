@@ -1,6 +1,6 @@
 import { dayjsToString } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
-import { MODELING_SPACE } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
+import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
@@ -64,7 +64,7 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingEditor.addComponentToModel(1);
                     createModelingExercise.save();
                     cy.get('jhi-exercise-submission-export').should('be.visible');
-                    cy.get(`${MODELING_SPACE} > :nth-child(1)`).should('exist');
+                    cy.get(`${MODELING_EDITOR_CANVAS} > :nth-child(1)`).should('exist');
 
                     cy.log('Create Example Submission');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
@@ -77,9 +77,9 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingEditor.showExampleAssessment();
                     modelingExerciseExampleSubmission.openAssessmentForComponent(1);
                     modelingExerciseExampleSubmission.assessComponent(-1, 'False');
-                    modelingExerciseExampleSubmission.openAssessmentForComponent(2);
+                    modelingExerciseExampleSubmission.clickNextAssessment();
                     modelingExerciseExampleSubmission.assessComponent(2, 'Good');
-                    modelingExerciseExampleSubmission.openAssessmentForComponent(3);
+                    modelingExerciseExampleSubmission.clickNextAssessment();
                     modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
                     modelingExerciseExampleSubmission.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);

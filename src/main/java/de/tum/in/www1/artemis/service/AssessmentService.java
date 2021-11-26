@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,8 +44,6 @@ public class AssessmentService {
     private final SubmissionService submissionService;
 
     private final LtiService ltiService;
-
-    private final Logger log = LoggerFactory.getLogger(AssessmentService.class);
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
@@ -92,15 +88,7 @@ public class AssessmentService {
         resultRepository.save(newResult);
 
         if (exercise instanceof ProgrammingExercise) {
-            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(newResult);
-            newResult.setScore(points, exercise.getMaxPoints());
-            /*
-             * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
-             * student has achieved have changed
-             */
-            String[] resultStringParts = newResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = newResult.createResultString(points, exercise.getMaxPoints());
-            newResult.setResultString(String.join(", ", resultStringParts));
+            newResult.calculateScoreForProgrammingExercise(exercise.getMaxPoints());
             newResult.setCompletionDate(ZonedDateTime.now());
             newResult.setHasFeedback(true);
             newResult.setRated(true);
@@ -183,17 +171,6 @@ public class AssessmentService {
             feedbackRepository.deleteByResult_Id(result.getId());
             resultRepository.deleteById(result.getId());
         }
-    }
-
-    /**
-     * Finds the example result for the given submission ID. The submission has to be an example submission
-     *
-     * @param submissionId The ID of the submission for which the result should be fetched
-     * @return The example result, which is linked to the submission
-     */
-    public Submission findExampleSubmissionWithResult(long submissionId) {
-        return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id '" + submissionId + "' with 'exampleSubmission = true' does not exist"));
     }
 
     /**
