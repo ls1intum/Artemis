@@ -157,14 +157,15 @@ export class ResultService implements IResultService {
      * Fetches all results together with the total points and points per grading criterion for each of the given exercise.
      * @param exercise of which the results with points should be fetched.
      */
-    getResultsWithScoresPerGradingCriterion(exercise: Exercise) {
+    getResultsWithScoresPerGradingCriterion(exercise: Exercise): Observable<ResultsWithPointsArrayResponseType> {
         return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!, {
             withSubmissions: exercise.type === ExerciseType.MODELING,
         }).pipe(
             tap((res: HttpResponse<ResultWithPointsPerGradingCriterion[]>) => {
                 return res.body!.map((resultWithScores) => {
                     const result = resultWithScores.result;
-                    return this.processReceivedResult(exercise, result);
+                    resultWithScores.result = this.processReceivedResult(exercise, result);
+                    return resultWithScores;
                 });
             }),
         );

@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
-import { ArtemisTestModule } from '../../test.module';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -18,6 +19,10 @@ import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
@@ -89,9 +94,13 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ExerciseScoresExportButtonComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            imports: [],
+            declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            providers: [
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: ResultService, useClass: MockResultService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseScoresExportButtonComponent);

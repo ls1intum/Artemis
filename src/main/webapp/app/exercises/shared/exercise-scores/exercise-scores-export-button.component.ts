@@ -54,7 +54,7 @@ export class ExerciseScoresExportButtonComponent {
     private constructCSV(exercise: Exercise) {
         this.resultService.getResultsWithScoresPerGradingCriterion(exercise).subscribe((data) => {
             const rows: string[] = [];
-            const results = data.body || [];
+            const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
                 this.alertService.warning(`artemisApp.exercise.exportResultsEmptyError`, { exercise: exercise.title });
                 window.scroll(0, 0);
