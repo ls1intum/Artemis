@@ -41,12 +41,12 @@ public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
-    private static final String ENTITY_NAME = "exercise";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -62,24 +62,21 @@ public class ExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ComplaintRepository complaintRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
-            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
+    public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
+            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository) {
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.complaintRepository = complaintRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
@@ -237,7 +234,7 @@ public class ExerciseResource {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        exerciseService.reset(exercise);
+        exerciseDeletionService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }
 
@@ -257,7 +254,7 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-        exerciseService.cleanup(exerciseId, deleteRepositories);
+        exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         return ResponseEntity.ok().build();
     }

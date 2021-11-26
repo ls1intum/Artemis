@@ -756,4 +756,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         // 3rd: merge both into one list for further processing
         return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
     }
+
+    /**
+     * Checks if the exercise has any test runs and sets the transient property if it does
+     * @param exercise - the exercise for which we check if test runs exist
+     */
+    default void checkTestRunsExist(Exercise exercise) {
+        Long containsTestRunParticipations = countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
+            exercise.setTestRunParticipationsExist(Boolean.TRUE);
+        }
+    }
 }

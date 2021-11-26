@@ -25,7 +25,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
