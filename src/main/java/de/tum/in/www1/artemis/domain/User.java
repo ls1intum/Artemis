@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
@@ -93,6 +94,12 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
+
+    // hides all notifications with a notification date which is after the given date in the notification sidebar.
+    // if the value is null all notifications are displayed
+    @Nullable
+    @Column(name = "hide_notifications_after")
+    private ZonedDateTime hideNotificationsAfter = null;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -223,6 +230,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
         this.lastNotificationRead = lastNotificationRead;
+    }
+
+    public ZonedDateTime getHideNotificationsAfter() {
+        return hideNotificationsAfter;
+    }
+
+    public void setHideNotificationsAfter(ZonedDateTime hideNotificationsAfter) {
+        this.hideNotificationsAfter = hideNotificationsAfter;
     }
 
     public String getLangKey() {
