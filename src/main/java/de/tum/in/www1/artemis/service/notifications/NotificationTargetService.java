@@ -52,6 +52,10 @@ public class NotificationTargetService {
 
     private static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
 
+    private static final String PLAGIARISM_TEXT = "plagiarism";
+
+    private static final String PLAGIARISM_DETECTED_TEXT = "plagiarismDetected";
+
     // EXERCISE related targets
 
     /**
@@ -210,6 +214,23 @@ public class NotificationTargetService {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
         target.addProperty(COURSE_TEXT, course.getId());
+        return target.toString();
+    }
+
+    /**
+     * Adds the appropriate target to the plagiarismReview page to the notification
+     *
+     * @param plagiarismComparisonId the id of the plagiarismComparison
+     * @param courseID               the id of the course
+     * @return JSON string with all properties for the notification target field
+     */
+    public String targetForPlagiarismCase(Long plagiarismComparisonId, Long courseID) {
+        JsonObject target = new JsonObject();
+        target.addProperty(MESSAGE_TEXT, PLAGIARISM_DETECTED_TEXT);
+        target.addProperty(ID_TEXT, plagiarismComparisonId);
+        target.addProperty(ENTITY_TEXT, PLAGIARISM_TEXT);
+        target.addProperty(COURSE_TEXT, courseID);
+        target.addProperty(MAIN_PAGE_TEXT, COURSES_TEXT);
         return target.toString();
     }
 }

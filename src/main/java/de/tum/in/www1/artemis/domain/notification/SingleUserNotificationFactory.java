@@ -95,7 +95,7 @@ public class SingleUserNotificationFactory {
         notification.setPriority(NotificationPriority.HIGH);
         notification.setRecipient(recipient);
         notification.setAuthor(author);
-        notification.setTarget(notification.targetForPlagiarismCase(plagiarismComparisonId, courseId));
+        notification.setTarget(targetService.targetForPlagiarismCase(plagiarismComparisonId, courseId));
         notification.setNotificationDate(ZonedDateTime.now());
         notification.setText(message);
         notification.setTitle(title);
