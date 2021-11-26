@@ -259,12 +259,12 @@ describe('CourseStatisticsComponent', () => {
         let exercise = comp.groupedExercises[0];
         expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 17.06. 2', 'test 18.06. 1']);
 
-        comp.toggleNotScoreRelevantExercises();
+        comp.toggleNotIncludedInScoreExercises();
 
         exercise = comp.groupedExercises[0];
         expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 18.06. 1']);
 
-        comp.toggleNotScoreRelevantExercises();
+        comp.toggleNotIncludedInScoreExercises();
 
         exercise = comp.groupedExercises[0];
         expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 17.06. 2', 'test 18.06. 1']);
