@@ -163,7 +163,7 @@
         "webpack-notifier": "1.14.1"
     },
     "engines": {
-        "node": ">=14.16.0 <=17"
+        "node": ">=16.13.0 <=17"
     },
     "lint-staged": {
         "src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}": "prettier --write",
