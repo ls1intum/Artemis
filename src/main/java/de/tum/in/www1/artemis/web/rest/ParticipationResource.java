@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -298,9 +297,11 @@ public class ParticipationResource {
             programmingExerciseScheduleService.updateScheduling(programmingExercise);
 
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            final ZonedDateTime now = ZonedDateTime.now();
-            updatedParticipations.stream().filter(participation -> Optional.ofNullable(participation.getIndividualDueDate()).map(now::isBefore).orElse(false)).forEach(
+            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
                     participation -> programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            // the new due date may be in the past, students should no longer be able to make any changes
+            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(
+                    participation -> programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);

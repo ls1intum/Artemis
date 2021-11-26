@@ -567,39 +567,54 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateIndividualDueDateUnlockOnlyWithDueDateInFuture() throws Exception {
+    public void updateProgrammingExerciseIndividualDueDateInFuture() throws Exception {
         final var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         exercise.setDueDate(ZonedDateTime.now().minusHours(4));
         exercise = exerciseRepo.save(exercise);
 
-        var participation1 = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
-        participation1.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
-        participation1 = participationRepo.save(participation1);
-        var participation2 = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
-        participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(6));
-        participation2 = participationRepo.save(participation2);
-        var participation3 = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
-        participation3.setIndividualDueDate(ZonedDateTime.now().plusHours(8));
-        participation3 = participationRepo.save(participation3);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(6));
+        participation = participationRepo.save(participation);
 
-        participation1.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
-        participation2.setIndividualDueDate(null);
-        participation3.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
-        Mockito.doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation3);
+        Mockito.doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
 
-        final var participationsToUpdate = new StudentParticipationList(participation1, participation2, participation3);
+        final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
 
-        assertThat(response).hasSize(3);
+        assertThat(response).hasSize(1);
         verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        // make sure the student repo is unlocked as the due date is in the future
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(exercise, participation);
+    }
 
-        // unlock should only happen for the participation with an individual due date in the future
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation1);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation2);
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(exercise, participation3);
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExerciseIndividualDueDateInPast() throws Exception {
+        final var course = database.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().minusHours(4));
+        exercise = exerciseRepo.save(exercise);
+
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
+        participation = participationRepo.save(participation);
+
+        participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
+
+        Mockito.doNothing().when(programmingExerciseParticipationService).lockStudentRepository(exercise, participation);
+
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).hasSize(1);
+        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        // student repo should be locked as due date is in the past
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(exercise, participation);
     }
 
     /**
