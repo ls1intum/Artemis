@@ -4,7 +4,7 @@
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
 @import 'node_modules/bootstrap/scss/bootstrap';
-@import '~ng-pick-datetime/assets/style/picker.min.css';
+@import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
 @import '~katex/dist/katex.css';
 // Needed for highlighting code in the markdown editor
@@ -815,11 +815,9 @@ Course Info Bar
     }
 
     // this class is required for rendering post references in between of post content without having linebreaks
-    &.manipulate-p {
-        p {
-            margin-bottom: 0 !important;
-            display: inline;
-        }
+    .inline-paragraph {
+        margin-bottom: 0 !important;
+        display: inline;
     }
 }
 

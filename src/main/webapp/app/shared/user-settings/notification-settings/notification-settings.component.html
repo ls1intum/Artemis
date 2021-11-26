@@ -20,7 +20,7 @@
 </div>
 <div class="list-group d-block" *ngIf="userSettings">
     <div *ngFor="let settingGroup of userSettings.groups">
-        <div *jhiHasAnyAuthority="[settingGroup.restrictionLevel]" class="list-group-item">
+        <div *jhiHasAnyAuthority="settingGroup.restrictionLevels" class="list-group-item">
             <h3>
                 <!--GroupName-->
                 <!-- please look at the README.md file to understand how the translation works -->

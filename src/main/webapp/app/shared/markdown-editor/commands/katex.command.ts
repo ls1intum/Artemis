@@ -1,6 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
-import { addTextAtCursor } from 'app/shared/util/markdown-util';
+import { addTextAtCursor } from 'app/shared/util/markdown.util';
 
 /**
  * Insert a katex compatible formula.

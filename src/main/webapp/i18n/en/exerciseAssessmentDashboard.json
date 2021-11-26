@@ -13,7 +13,7 @@
             "tutorParticipationStatus": {
                 "title": {
                     "NOT_PARTICIPATED": "Not participated",
-                    "REVIEWED_INSTRUCTIONS": "Read the instructions",
+                    "REVIEWED_INSTRUCTIONS": "Have read the instructions",
                     "TRAINED": "Trained on example submissions",
                     "COMPLETED": "Completed assessing students submissions"
                 },
@@ -39,13 +39,13 @@
             "readAndUnderstood": "I have read and understood the instructions",
             "toRead": "to read",
             "toReview": "to review",
-            "totalExampleSubmissions": "There are {{total}} example submissions: {{toReview}} to review and {{toAssess}} to assess.",
-            "reviewSubmissions": "Review submissions",
+            "totalExampleSubmissions": "There are {{total}} example submissions: {{toRead}} to read and {{toAssess}} to assess.",
+            "readSubmissions": "Read submissions",
             "start": "Start",
             "continue": "Continue",
-            "reviewingExampleSubmissions": "reviewing example submissions",
-            "reviewExampleSubmission": "Review example submissions",
-            "tutorialSubmissions": "Tutorial submissions",
+            "readingExampleSubmissions": "reading example submissions",
+            "readExampleSubmission": "Read example submissions",
+            "assessedSubmissions": "Assessed submissions",
             "assessingExampleSubmission": "assessing example submissions",
             "assessExampleSubmission": "Assess example submission",
             "studentsSubmissions": "Students' submissions",

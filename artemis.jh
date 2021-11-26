@@ -375,18 +375,6 @@ enum TutorParticipationStatus {
     COMPLETED
 }
 
-entity StudentQuestion {
-    questionText String,               // VarChar(1000)
-    creationDate ZonedDateTime,
-    visibleForStudents Boolean
-}
-
-entity StudentQuestionAnswer {
-    answerText String,                 // LONGTEXT --> lob
-    answerDate ZonedDateTime,
-    verified Boolean
-}
-
 entity TutorGroup {
     name String,
     capacity Integer,
@@ -506,11 +494,8 @@ relationship OneToMany {
     ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{quizQuestion}
     ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
-    StudentQuestion{answers} to StudentQuestionAnswer{quizQuestion},
     Lecture{attachments} to Attachment{lecture},
     Exercise{attachments} to Attachment{exercise},
-    Exercise{studentQuestions} to StudentQuestion{exercise},
-    Lecture{studentQuestions} to StudentQuestion{lecture},
     ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
     TextSubmission{blocks} to TextBlock{submission},
     TextCluster{blocks} to TextBlock{cluster},
@@ -550,8 +535,6 @@ relationship ManyToOne {
     ShortAnswerMapping{solution} to ShortAnswerSolution,
     ShortAnswerMapping{spot} to ShortAnswerSpot,
     TutorParticipation{tutor} to User,
-    StudentQuestion{author} to User,
-    StudentQuestionAnswer{author} to User,
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
     GroupNotification{course} to Course,
