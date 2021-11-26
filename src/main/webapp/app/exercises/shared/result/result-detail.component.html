@@ -25,14 +25,14 @@
                 </span>
                 <div #containerRef style="height: 100px">
                     <!--<jhi-chart [preset]="scoreChartPreset"> </jhi-chart>-->
-                    <ngx-charts-bar-horizontal-normalized
+                    <ngx-charts-bar-horizontal-stacked
                         [view]="[containerRef.offsetWidth, 100]"
                         [results]="ngxData"
                         [xAxis]="true"
                         [xAxisTickFormatting]="xAxisFormatting"
                         [scheme]="ngxColors"
                     >
-                    </ngx-charts-bar-horizontal-normalized>
+                    </ngx-charts-bar-horizontal-stacked>
                 </div>
                 <div *ngIf="showScoreChartTooltip" class="d-flex justify-content-center position-relative" style="margin-top: -10px">
                     <div
