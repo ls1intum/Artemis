@@ -47,11 +47,10 @@ public class SingleUserNotificationService {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types
-            case NEW_REPLY_FOR_EXERCISE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, (Course) typeSpecificInformation);
-            case NEW_REPLY_FOR_LECTURE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_LECTURE_POST, (Course) typeSpecificInformation);
-            case NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, NotificationType.NEW_REPLY_FOR_COURSE_POST, (Course) typeSpecificInformation);
+            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, notificationType,
+                    (Course) typeSpecificInformation);
             // Exercise related
-            case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, NotificationType.FILE_SUBMISSION_SUCCESSFUL, (User) typeSpecificInformation);
+            case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
