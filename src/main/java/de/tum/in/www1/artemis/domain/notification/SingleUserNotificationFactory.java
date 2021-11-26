@@ -87,17 +87,14 @@ public class SingleUserNotificationFactory {
         String title;
         SingleUserNotification notification;
         switch (notificationType) {
-            case POSSIBLE_PLAGIARISM_CASE -> {
-                title = POSSIBLE_PLAGIARISM_CASE_TITLE;
-            }
-            case PLAGIARISM_CASE_UPDATE -> {
-                title = PLAGIARISM_CASE_UPDATE_TITLE;
-            }
+            case POSSIBLE_PLAGIARISM_CASE -> title = POSSIBLE_PLAGIARISM_CASE_TITLE;
+            case PLAGIARISM_CASE_UPDATE -> title = PLAGIARISM_CASE_UPDATE_TITLE;
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         notification = new SingleUserNotification(recipient, title, message);
         notification.setPriority(NotificationPriority.HIGH);
-        notification.setAuthor(author); // TODO maybe via userRepository
+        notification.setAuthor(author);
+
         notification.setTarget(targetService.getTargetForPlagiarismCase(plagiarismComparisonId, courseId));
         return notification;
     }
