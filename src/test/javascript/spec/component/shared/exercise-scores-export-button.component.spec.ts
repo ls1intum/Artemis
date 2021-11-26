@@ -115,7 +115,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
     it('should not start the export if the exercise has no results', () => {
         // GIVEN
         const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
-        const getResultsStub = jest.spyOn(resultService, 'getResultsWithScoresPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const getResultsStub = jest.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: [] })));
         component.exercise = exercise1;
 
         // WHEN
@@ -167,7 +167,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // GIVEN
         const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
         const getResultsStub = jest
-            .spyOn(resultService, 'getResultsWithScoresPerGradingCriterion')
+            .spyOn(resultService, 'getResultsWithPointsPerGradingCriterion')
             .mockReturnValue(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
         component.exercises = [exercise1, exercise2];
 
@@ -185,7 +185,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
     function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvRows: string[], expectedCsvFilename: string) {
         // GIVEN
         const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
-        const getResultsStub = jest.spyOn(resultService, 'getResultsWithScoresPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
+        const getResultsStub = jest.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
         component.exercise = exercise;
 
         // WHEN
