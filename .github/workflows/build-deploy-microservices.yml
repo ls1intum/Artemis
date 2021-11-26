@@ -240,7 +240,7 @@ jobs:
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< $SSH_PRIVATE_KEY
 
-    - name: Deploy Artemis WAR artifact
+    - name: Deploy Docker Compose Files 
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
@@ -251,7 +251,12 @@ jobs:
           scp docker-compose-microservices* $DEPLOYMENT_USER@$host:/opt/artemis/
 
           # Pull and Start images
-          ssh -t $DEPLOYMENT_USER@$host "cd /opt/artemis && echo TAG=${{ steps.compute-tag.outputs.result }} > .env && docker-compose -f docker-compose-microservices.yml pull && docker-compose -f docker-compose-microservices.yml up"
+          ssh -t $DEPLOYMENT_USER@$host "
+            cd /opt/artemis && 
+            echo TAG=${{ steps.compute-tag.outputs.result }} > .env && 
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml down && 
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml pull && 
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml up"
 
           sleep 20
         done
