@@ -1,18 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -21,14 +15,12 @@ import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs';
 import { By } from '@angular/platform-browser';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 
@@ -38,11 +30,8 @@ describe('ExamAssessmentButtons', () => {
     let studentExams: StudentExam[] = [];
     let course: Course;
     let studentOne: User;
-    let studentTwo: User;
     let studentExamOne: StudentExam | undefined;
-    let studentExamTwo: StudentExam | undefined;
     let exam: Exam;
-    let modalService: NgbModal;
     let examManagementService: ExamManagementService;
 
     const providers = [
@@ -59,46 +48,6 @@ describe('ExamAssessmentButtons', () => {
                 return of(
                     new HttpResponse({
                         body: 1,
-                        status: 200,
-                    }),
-                );
-            },
-            generateStudentExams: () => {
-                return of(
-                    new HttpResponse({
-                        body: [studentExamOne!, studentExamTwo!],
-                        status: 200,
-                    }),
-                );
-            },
-            generateMissingStudentExams: () => {
-                return of(
-                    new HttpResponse({
-                        body: studentExamTwo ? [studentExamTwo] : [],
-                        status: 200,
-                    }),
-                );
-            },
-            startExercises: () => {
-                return of(
-                    new HttpResponse({
-                        body: 2,
-                        status: 200,
-                    }),
-                );
-            },
-            unlockAllRepositories: () => {
-                return of(
-                    new HttpResponse({
-                        body: 2,
-                        status: 200,
-                    }),
-                );
-            },
-            lockAllRepositories: () => {
-                return of(
-                    new HttpResponse({
-                        body: 2,
                         status: 200,
                     }),
                 );
@@ -136,10 +85,6 @@ describe('ExamAssessmentButtons', () => {
         MockProvider(ArtemisTranslatePipe),
         MockDirective(TranslateDirective),
         {
-            provide: LocalStorageService,
-            useClass: MockLocalStorageService,
-        },
-        {
             provide: ActivatedRoute,
             useValue: {
                 params: {
@@ -157,7 +102,6 @@ describe('ExamAssessmentButtons', () => {
             },
         },
         { provide: AccountService, useClass: MockAccountService },
-        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
@@ -167,13 +111,10 @@ describe('ExamAssessmentButtons', () => {
         studentOne = new User();
         studentOne.id = 1;
 
-        studentTwo = new User();
-        studentTwo.id = 2;
-
         exam = new Exam();
         exam.course = course;
         exam.id = 1;
-        exam.registeredUsers = [studentOne, studentTwo];
+        exam.registeredUsers = [studentOne];
         exam.endDate = dayjs();
         exam.startDate = exam.endDate.subtract(60, 'seconds');
 
@@ -183,24 +124,16 @@ describe('ExamAssessmentButtons', () => {
         studentExamOne.workingTime = 70;
         studentExamOne.user = studentOne;
 
-        studentExamTwo = new StudentExam();
-        studentExamTwo.exam = exam;
-        studentExamTwo.id = 1;
-        studentExamTwo.workingTime = 70;
-        studentExamTwo.user = studentOne;
-
-        studentExams = [studentExamOne, studentExamTwo];
+        studentExams = [studentExamOne];
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
+            imports: [],
             declarations: [
                 ExamAssessmentButtonsComponent,
                 MockComponent(StudentExamStatusComponent),
-                MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTranslatePipe),
                 MockComponent(DataTableComponent),
             ],
             providers,
@@ -209,7 +142,6 @@ describe('ExamAssessmentButtons', () => {
             .then(() => {
                 examAssessmentButtonsFixture = TestBed.createComponent(ExamAssessmentButtonsComponent);
                 examAssessmentButtonsComponent = examAssessmentButtonsFixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
                 examManagementService = TestBed.inject(ExamManagementService);
             });
     });
