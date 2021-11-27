@@ -232,6 +232,8 @@ describe('CourseStatisticsComponent', () => {
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
+        // Include all exercises
+        comp.toggleNotIncludedInScoreExercises();
         fixture.detectChanges();
         expect(comp.groupedExercises.length).toEqual(1);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
@@ -257,17 +259,17 @@ describe('CourseStatisticsComponent', () => {
         comp.ngOnInit();
 
         let exercise = comp.groupedExercises[0];
-        expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 17.06. 2', 'test 18.06. 1']);
-
-        comp.toggleNotIncludedInScoreExercises();
-
-        exercise = comp.groupedExercises[0];
         expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 18.06. 1']);
 
         comp.toggleNotIncludedInScoreExercises();
 
         exercise = comp.groupedExercises[0];
         expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 17.06. 2', 'test 18.06. 1']);
+
+        comp.toggleNotIncludedInScoreExercises();
+
+        exercise = comp.groupedExercises[0];
+        expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 18.06. 1']);
     });
 
     it('should calculate scores correctly', () => {
