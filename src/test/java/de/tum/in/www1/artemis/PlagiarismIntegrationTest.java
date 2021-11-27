@@ -42,6 +42,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.resetDatabase();
     }
 
+    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
+    private static final String INSTRUCTOR_STATEMENT_B = "instructor Statement B";
+
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updatePlagiarismComparisonStatusToFinalWithoutStudentLogin_student() throws Exception {
@@ -63,9 +66,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
         submissionA.setStudentLogin("student1");
-        var notification = new SingleUserNotification();
-        notification.setRecipient(database.getUserByLogin("student1"));
-        plagiarismComparison.setNotificationA(notification);
+        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison.setStatusA(PlagiarismStatus.NONE);
         plagiarismComparison.setSubmissionA(submissionA);
@@ -89,9 +90,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         submissionA.setStudentLogin("student1");
         PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
         submissionB.setStudentLogin("student2");
-        var notification = new SingleUserNotification();
-        notification.setRecipient(database.getUserByLogin("student2"));
-        plagiarismComparison.setNotificationB(notification);
+        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison.setStatusB(PlagiarismStatus.NONE);
         plagiarismComparison.setSubmissionA(submissionA);
@@ -116,9 +115,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         submissionA.setStudentLogin("student1");
         PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
         submissionB.setStudentLogin("student2");
-        var notification = new SingleUserNotification();
-        notification.setRecipient(database.getUserByLogin("student2"));
-        plagiarismComparison.setNotificationB(notification);
+        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison.setStatusB(PlagiarismStatus.NONE);
         plagiarismComparison.setSubmissionA(submissionA);
@@ -167,14 +164,14 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         var notification = new SingleUserNotification();
         notification.setRecipient(database.getUserByLogin("student1"));
-        plagiarismComparison.setNotificationA(notification);
+        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
         plagiarismComparisonRepository.save(plagiarismComparison);
         var statement = new PlagiarismResource.PlagiarismStatementDTO();
         statement.statement = "test statement";
 
         request.put("/api/plagiarism-cases/" + plagiarismComparison.getId() + "/statement", statement, HttpStatus.OK);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
-        assertThat(comparison.getStatementA()).as("should update statement").isEqualTo("test statement");
+        assertThat(comparison.getStudentStatementA()).as("should update statement").isEqualTo("test statement");
     }
 
     @Test
@@ -183,14 +180,14 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         var notification = new SingleUserNotification();
         notification.setRecipient(database.getUserByLogin("student2"));
-        plagiarismComparison.setNotificationB(notification);
+        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
         plagiarismComparisonRepository.save(plagiarismComparison);
         var statement = new PlagiarismResource.PlagiarismStatementDTO();
         statement.statement = "test statement";
 
         request.put("/api/plagiarism-cases/" + plagiarismComparison.getId() + "/statement", statement, HttpStatus.OK);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
-        assertThat(comparison.getStatementB()).as("should update statement").isEqualTo("test statement");
+        assertThat(comparison.getStudentStatementB()).as("should update statement").isEqualTo("test statement");
     }
 
     @Test
@@ -199,10 +196,10 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         var notificationA = new SingleUserNotification();
         notificationA.setRecipient(database.getUserByLogin("student1"));
-        plagiarismComparison.setNotificationA(notificationA);
+        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
         var notificationB = new SingleUserNotification();
         notificationB.setRecipient(database.getUserByLogin("student2"));
-        plagiarismComparison.setNotificationB(notificationA);
+        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
         plagiarismComparisonRepository.save(plagiarismComparison);
         var statement = new PlagiarismResource.PlagiarismStatementDTO();
         statement.statement = "test statement";
