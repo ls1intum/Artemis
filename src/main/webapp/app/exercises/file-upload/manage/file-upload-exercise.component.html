@@ -60,7 +60,7 @@
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a
-                                *ngIf="fileUploadExercise.isAtLeastTutor"
+                                *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'scores']"
                                 class="btn btn-info btn-sm me-1"
                             >

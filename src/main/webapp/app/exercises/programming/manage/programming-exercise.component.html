@@ -199,7 +199,7 @@
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                                 </a>
                                 <a
-                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"

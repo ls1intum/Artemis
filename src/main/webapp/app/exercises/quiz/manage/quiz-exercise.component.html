@@ -132,13 +132,15 @@
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
-                                    class="btn btn-info btn-sm me-1 mb-1"
+                                    class="btn btn-info btn-sm me-1 mb-1 d-flex align-items-center"
                                 >
-                                    <fa-icon [icon]="'signal'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
+                                    <span>
+                                        <fa-icon [icon]="'signal'"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
+                                    </span>
                                 </a>
                                 <a
-                                    *ngIf="quizExercise.isAtLeastTutor"
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm me-1 mb-1"
                                 >
