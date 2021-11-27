@@ -1,22 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 
-describe('PostingsButtonComponent', () => {
-    let component: PostingsButtonComponent;
-    let fixture: ComponentFixture<PostingsButtonComponent>;
+describe('PostingButtonComponent', () => {
+    let component: PostingButtonComponent;
+    let fixture: ComponentFixture<PostingButtonComponent>;
     let debugElement: DebugElement;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [PostingsButtonComponent, MockComponent(FaIconComponent)],
+            declarations: [PostingButtonComponent, MockComponent(FaIconComponent)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(PostingsButtonComponent);
+                fixture = TestBed.createComponent(PostingButtonComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
             });

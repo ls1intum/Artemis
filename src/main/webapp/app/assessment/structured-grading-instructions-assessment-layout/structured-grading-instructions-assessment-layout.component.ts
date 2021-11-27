@@ -51,7 +51,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * the corresponding drop method is in AssessmentDetailComponent
      */
     drag(event: any, instruction: GradingInstruction) {
-        event.dataTransfer.setData('artemis/sgi', JSON.stringify(instruction));
+        // The mimetype has to be text/plain to enable dragging into an external application, e.g. Orion, Apollon
+        event.dataTransfer.setData('text/plain', JSON.stringify(instruction));
     }
     /**
      * disables drag if on readOnly mode
