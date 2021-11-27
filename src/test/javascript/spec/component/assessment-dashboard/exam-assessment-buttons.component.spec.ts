@@ -1,12 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -18,10 +15,7 @@ import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 
 describe('ExamAssessmentButtons', () => {
@@ -83,7 +77,6 @@ describe('ExamAssessmentButtons', () => {
         }),
         MockProvider(AlertService),
         MockProvider(ArtemisTranslatePipe),
-        MockDirective(TranslateDirective),
         {
             provide: ActivatedRoute,
             useValue: {
@@ -128,14 +121,7 @@ describe('ExamAssessmentButtons', () => {
 
         return TestBed.configureTestingModule({
             imports: [],
-            declarations: [
-                ExamAssessmentButtonsComponent,
-                MockComponent(StudentExamStatusComponent),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisDurationFromSecondsPipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(DataTableComponent),
-            ],
+            declarations: [ExamAssessmentButtonsComponent],
             providers,
         })
             .compileComponents()
