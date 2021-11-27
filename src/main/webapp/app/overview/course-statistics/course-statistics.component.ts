@@ -138,7 +138,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         name: 'Score per exercise group',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'], // colors: green, grey, yellow, lightblue, red
+        domain: ['#e5e5e5', '#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'], // colors: green, grey, yellow, lightblue, red
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
@@ -255,10 +255,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 const series = CourseStatisticsComponent.generateDefaultSeries();
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
-                    series[4].value = 100;
-                    series[4].afterDueDate = false;
-                    series[4].notParticipated = true;
-                    series[4].exerciseTitle = exercise.title;
+                    series[5].value = 100;
+                    series[5].afterDueDate = false;
+                    series[5].notParticipated = true;
+                    series[5].exerciseTitle = exercise.title;
                     this.pushToData(exercise, series);
                 } else {
                     exercise.studentParticipations.forEach((participation) => {
@@ -271,25 +271,26 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 const replaced = participationResult.resultString!.replace(',', '.');
                                 const split = replaced.split(' ');
                                 const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
-                                series[4].value = missedScore;
-                                series[4].absoluteValue = missedPoints;
-                                series[4].afterDueDate = false;
-                                series[4].notParticipated = false;
+                                series[5].value = missedScore;
+                                series[5].absoluteValue = missedPoints;
+                                series[5].afterDueDate = false;
+                                series[5].notParticipated = false;
 
-                                switch (exercise.includedInOverallScore) {
+                                /*switch (exercise.includedInOverallScore) {
                                     case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                                        series[0].value = roundedParticipationScore;
-                                        series[0].absoluteValue = parseFloat(split[0]);
-                                        break;
-                                    case IncludedInOverallScore.NOT_INCLUDED:
                                         series[1].value = roundedParticipationScore;
                                         series[1].absoluteValue = parseFloat(split[0]);
                                         break;
-                                    case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                                    case IncludedInOverallScore.NOT_INCLUDED:
                                         series[2].value = roundedParticipationScore;
                                         series[2].absoluteValue = parseFloat(split[0]);
                                         break;
-                                }
+                                    case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                                        series[3].value = roundedParticipationScore;
+                                        series[3].absoluteValue = parseFloat(split[0]);
+                                        break;
+                                }*/
+                                this.identifyBar(exercise, series, roundedParticipationScore, parseFloat(split[0]));
                                 this.pushToData(exercise, series);
                             }
                         } else {
@@ -297,13 +298,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 participation.initializationState === InitializationState.FINISHED &&
                                 (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
                             ) {
-                                series[3].value = 100;
-                                series[3].exerciseTitle = exercise.title;
+                                series[4].value = 100;
+                                series[4].exerciseTitle = exercise.title;
                                 this.pushToData(exercise, series);
                             } else {
-                                series[4].value = 100;
-                                series[4].afterDueDate = true;
-                                series[4].exerciseTitle = exercise.title;
+                                series[5].value = 100;
+                                series[5].afterDueDate = true;
+                                series[5].exerciseTitle = exercise.title;
                                 this.pushToData(exercise, series);
                             }
                         }
@@ -322,6 +323,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      */
     private static generateDefaultSeries(): any[] {
         return [
+            { name: 'No due date', value: 0, absoluteValue: 0 },
             { name: 'Achieved (included)', value: 0, absoluteValue: 0 },
             { name: 'Achieved (not included)', value: 0, absoluteValue: 0 },
             { name: 'Achieved bonus', value: 0, absoluteValue: 0 },
@@ -602,5 +604,27 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      */
     setBarPadding(groupSize: number): number {
         return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
+    }
+
+    private identifyBar(exercise: Exercise, series: any[], roundedParticipationScore: number, split: number) {
+        if (!exercise.dueDate) {
+            series[0].value = roundedParticipationScore;
+            series[0].absoluteValue = split;
+        } else {
+            switch (exercise.includedInOverallScore) {
+                case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                    series[1].value = roundedParticipationScore;
+                    series[1].absoluteValue = split;
+                    break;
+                case IncludedInOverallScore.NOT_INCLUDED:
+                    series[2].value = roundedParticipationScore;
+                    series[2].absoluteValue = split;
+                    break;
+                case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                    series[3].value = roundedParticipationScore;
+                    series[3].absoluteValue = split;
+                    break;
+            }
+        }
     }
 }

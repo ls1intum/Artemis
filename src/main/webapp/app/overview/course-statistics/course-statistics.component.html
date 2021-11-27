@@ -84,7 +84,7 @@
                     >
                         <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
                         <ng-template #tooltipTemplate let-model="model">
-                            <div *ngIf="['Achieved (included)', 'Achieved bonus', 'Achieved (not included)'].includes(model.name)">
+                            <div *ngIf="['Achieved (included)', 'Achieved bonus', 'Achieved (not included)', 'No due date'].includes(model.name)">
                                 <span *ngIf="!model.isProgrammingExercise">
                                     {{
                                         'artemisApp.courseOverview.statistics.exerciseAchievedScore'
