@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import jplag.JPlagComparison;
 
@@ -67,14 +67,14 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     /**
      * Statement made by student A on the case
      */
-    @Column(name = "statement_a")
-    private String statementA;
+    @Column(name = "student_statement_a")
+    private String studentStatementA;
 
     /**
      * Statement made by student B on the case
      */
-    @Column(name = "statement_b")
-    private String statementB;
+    @Column(name = "student_statement_b")
+    private String studentStatementB;
 
     /**
      * Status on the Statement student A made
@@ -89,19 +89,18 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     private PlagiarismStatus statusB;
 
     /**
-     * Notification sent to student A, null if not sent
+     * Instructor statement/message sent to student A, null if not sent
      */
-    @ManyToOne(targetEntity = Notification.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "notification_a_id")
-    private Notification notificationA;
+    @Nullable
+    @Column(name = "instructor_statement_a")
+    private String instructorStatementA;
 
     /**
-     * Notification sent to student B, null if not sent
+     * Instructor statement/message sent to student B, null if not sent
      */
-
-    @ManyToOne(targetEntity = Notification.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "notification_b_id")
-    private Notification notificationB;
+    @Nullable
+    @Column(name = "instructor_statement_b")
+    private String instructorStatementB;
 
     /**
      * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
@@ -169,20 +168,20 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.status = status;
     }
 
-    public String getStatementA() {
-        return statementA;
+    public String getStudentStatementA() {
+        return studentStatementA;
     }
 
-    public void setStatementA(String statementA) {
-        this.statementA = statementA;
+    public void setStudentStatementA(String studentStatementA) {
+        this.studentStatementA = studentStatementA;
     }
 
-    public String getStatementB() {
-        return statementB;
+    public String getStudentStatementB() {
+        return studentStatementB;
     }
 
-    public void setStatementB(String statementB) {
-        this.statementB = statementB;
+    public void setStudentStatementB(String studentStatementB) {
+        this.studentStatementB = studentStatementB;
     }
 
     public PlagiarismStatus getStatusA() {
@@ -201,20 +200,20 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.statusB = statusB;
     }
 
-    public Notification getNotificationA() {
-        return notificationA;
+    public String getInstructorStatementA() {
+        return instructorStatementA;
     }
 
-    public void setNotificationA(Notification notificationA) {
-        this.notificationA = notificationA;
+    public void setInstructorStatementA(String instructorStatementA) {
+        this.instructorStatementA = instructorStatementA;
     }
 
-    public Notification getNotificationB() {
-        return notificationB;
+    public String getInstructorStatementB () {
+        return instructorStatementB;
     }
 
-    public void setNotificationB(Notification notificationB) {
-        this.notificationB = notificationB;
+    public void setInstructorStatementB(String instructorStatementB) {
+        this.instructorStatementB = instructorStatementB;
     }
 
     @Override
@@ -224,8 +223,16 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     @Override
     public String toString() {
-        return "PlagiarismComparison{" + "submissionA=" + submissionA + ", submissionB=" + submissionB + ", similarity=" + similarity + ", status=" + status + ",statementA="
-                + statementA + ", statementB=" + statementB + '}';
+        return "PlagiarismComparison{" +
+            "similarity=" + similarity +
+            ", status=" + status +
+            ", studentStatementA='" + studentStatementA + '\'' +
+            ", studentStatementB='" + studentStatementB + '\'' +
+            ", statusA=" + statusA +
+            ", statusB=" + statusB +
+            ", instructorStatementA='" + instructorStatementA + '\'' +
+            ", instructorStatementB='" + instructorStatementB + '\'' +
+            '}';
     }
 
     @Override
@@ -241,8 +248,9 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         }
         PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
         return Double.compare(that.similarity, similarity) == 0 && Objects.equals(plagiarismResult, that.plagiarismResult) && Objects.equals(submissionA, that.submissionA)
-                && Objects.equals(submissionB, that.submissionB) && Objects.equals(matches, that.matches) && status == that.status && Objects.equals(statementA, that.statementA)
-                && Objects.equals(statementB, that.statementB) && statusA == that.statusA && statusB == that.statusB;
+                && Objects.equals(submissionB, that.submissionB) && Objects.equals(matches, that.matches) && status == that.status && Objects.equals(studentStatementA, that.studentStatementB)
+                && Objects.equals(instructorStatementA, that.instructorStatementA) && Objects.equals(instructorStatementB, that.instructorStatementB)
+                && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA && statusB == that.statusB;
     }
 
     @Override
