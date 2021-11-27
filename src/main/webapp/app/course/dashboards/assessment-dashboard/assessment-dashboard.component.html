@@ -61,7 +61,28 @@
             </jhi-assessment-dashboard-information>
         </div>
     </div>
-
+    <div *ngIf="isExamMode" class="exam-action-buttons">
+        <button
+            id="evaluateQuizExercisesButton"
+            class="btn btn-primary mt-1"
+            (click)="evaluateQuizExercises()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading || !isExamOver"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
+        </button>
+        <button
+            class="btn btn-primary mt-1"
+            id="assessUnsubmittedExamModelingAndTextParticipationsButton"
+            (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading || !isExamOver"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
+        </button>
+    </div>
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
@@ -69,28 +90,6 @@
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
             </label>
-        </div>
-        <div *ngIf="isExamMode" class="exam-action-buttons">
-            <button
-                id="evaluateQuizExercisesButton"
-                class="btn btn-primary mt-1"
-                (click)="evaluateQuizExercises()"
-                *ngIf="course?.isAtLeastInstructor"
-                [disabled]="isLoading || !isExamOver"
-            >
-                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
-            </button>
-            <button
-                class="btn btn-primary mt-1"
-                id="assessUnsubmittedExamModelingAndTextParticipationsButton"
-                (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-                *ngIf="course?.isAtLeastInstructor"
-                [disabled]="isLoading || !isExamOver"
-            >
-                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
-            </button>
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
             <thead>
