@@ -175,37 +175,6 @@ export class StudentExamsComponent implements OnInit {
     }
 
     /**
-     * Evaluates all the quiz exercises that belong to the exam
-     */
-    evaluateQuizExercises() {
-        this.isLoading = true;
-        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe(
-            (res) => {
-                this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
-                this.isLoading = false;
-            },
-        );
-    }
-
-    assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isLoading = true;
-        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe(
-            (res) => {
-                this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
-                this.isLoading = false;
-            },
-        );
-    }
-
-    /**
      * Unlock all repositories immediately. Asks for confirmation.
      */
     handleUnlockAllRepositories() {
