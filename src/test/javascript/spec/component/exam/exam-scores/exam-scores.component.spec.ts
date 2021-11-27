@@ -345,7 +345,7 @@ describe('ExamScoresComponent', () => {
         expectCorrectHistogram(comp, examScoreDTO);
         // expect three distinct scores
         expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(3);
-        expect(comp.noOfExamsFiltered).toEqual(noOfSubmittedExercises);
+        expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
         const groupResult1 = comp.aggregatedExerciseGroupResults.find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
@@ -390,9 +390,9 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1).toEqual(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints! + exResult3ForGroup1.achievedPoints!;
-        expect(groupResult1!.totalPoints).toEqual(totalPoints);
+        expect(groupResult1!.totalPoints).toBe(totalPoints);
         const averagePoints = totalPoints / noOfSubmittedExercises;
-        expect(groupResult1!.averagePoints).toEqual(averagePoints);
+        expect(groupResult1!.averagePoints).toBe(averagePoints);
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
