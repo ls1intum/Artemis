@@ -14,8 +14,8 @@
             </h2>
         </div>
     </div>
-    <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between" style="overflow: hidden">
-        <div class="col-8" style="float: left">
+    <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">
+        <div class="col-8">
             <h4>
                 <span class="me-2"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
             </h4>
@@ -23,7 +23,7 @@
                 <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
             </h4>
         </div>
-        <jhi-exam-assessment-buttons style="float: right"></jhi-exam-assessment-buttons>
+        <jhi-exam-assessment-buttons style="float: right; width: 20%"></jhi-exam-assessment-buttons>
     </div>
 </div>
 
