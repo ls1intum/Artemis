@@ -27,12 +27,9 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     studentExams: StudentExam[];
     course: Course;
     exam: Exam;
-    hasStudentsWithoutExam: boolean;
 
-    eventSubscriber: Subscription;
     paramSub: Subscription;
     isLoading: boolean;
-    isExamStarted = false;
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
@@ -43,7 +40,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
         private alertService: AlertService,
-        private modalService: NgbModal,
         private accountService: AccountService,
         private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
@@ -78,7 +74,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
                     this.exam = examResponse.body!;
-                    this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(dayjs()) : false;
                     this.calculateIsExamOver();
                 }),
             );
@@ -86,9 +81,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             // Calculate hasStudentsWithoutExam only when both observables emitted
             forkJoin(studentExamObservable, examObservable).subscribe(() => {
                 this.isLoading = false;
-                if (this.exam.registeredUsers) {
-                    this.hasStudentsWithoutExam = this.studentExams.length < this.exam.registeredUsers.length;
-                }
             });
         });
     }
