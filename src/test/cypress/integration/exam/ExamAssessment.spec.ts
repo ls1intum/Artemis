@@ -88,9 +88,9 @@ describe('Exam assessment', () => {
                 modelingAssessment.addNewFeedback(2, 'Noice');
                 modelingAssessment.openAssessmentForComponent(1);
                 modelingAssessment.assessComponent(1, 'Good');
-                modelingAssessment.openAssessmentForComponent(2);
+                modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
-                modelingAssessment.openAssessmentForComponent(3);
+                modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(-1, 'Wrong');
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);

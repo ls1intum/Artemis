@@ -1454,7 +1454,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
+    public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));

@@ -20,6 +20,10 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'courses/register',
+        loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
+    },
+    {
         path: 'courses/:courseId',
         component: CourseOverviewComponent,
         data: {

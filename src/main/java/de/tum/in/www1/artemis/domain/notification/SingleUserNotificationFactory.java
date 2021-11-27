@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.time.ZonedDateTime;
-import java.util.Locale;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -17,7 +17,7 @@ public class SingleUserNotificationFactory {
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
     /**
-     * Creates an instance of SingleUserNotification.
+     * Creates an instance of SingleUserNotification based on posts.
      *
      * @param post which is answered
      * @param notificationType type of the notification that should be created
@@ -30,17 +30,17 @@ public class SingleUserNotificationFactory {
         SingleUserNotification notification;
         switch (notificationType) {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
-                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
+                title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
                 notification.setTarget(targetService.getExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
-                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
+                title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
                 notification.setTarget(targetService.getLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
-                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
+                title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
                 notification.setTarget(targetService.getCoursePostTarget(post, course));
             }
@@ -50,7 +50,31 @@ public class SingleUserNotificationFactory {
     }
 
     /**
-     * Creates an instance of PlagiarismNotification
+     * Creates an instance of SingleUserNotification based on exercises.
+     *
+     * @param exercise for which a notification should be created
+     * @param notificationType type of the notification that should be created
+     * @param recipient who should be notified
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(Exercise exercise, NotificationType notificationType, User recipient) {
+        String title;
+        String notificationText;
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case FILE_SUBMISSION_SUCCESSFUL -> {
+                title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
+                notificationText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
+                notification = new SingleUserNotification(recipient, title, notificationText);
+                notification.setTarget(targetService.getExerciseTarget(exercise, title));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification based on plagiarisms.
      *
      * @param plagiarismComparisonId ID of the plagiarism comparison associated with this case.
      * @param recipient              affected student
@@ -58,30 +82,28 @@ public class SingleUserNotificationFactory {
      * @param message                instructors message
      * @return the PlagiarismNotification
      */
-    private static SingleUserNotification createPlagiarismNotification(Long plagiarismComparisonId, Long courseId, User recipient, User author, String message, boolean isUpdate) {
-        String title = isUpdate ? "Update on your plagiarism case" : "Possible case of Plagiarism";
-        if (recipient.getLangKey() != null) {
-            Locale locale = Locale.forLanguageTag(recipient.getLangKey());
-            if (locale.equals(Locale.GERMAN) || locale.equals(Locale.GERMANY)) {
-                title = isUpdate ? "Update zu deinem Plagiatsfall" : "Möglicher plagiatsfall";
-            }
+    private static SingleUserNotification createNotification(NotificationType notificationType, Long plagiarismComparisonId, Long courseId, User recipient, User author,
+            String message) {
+        String title;
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case POSSIBLE_PLAGIARISM_CASE -> title = POSSIBLE_PLAGIARISM_CASE_TITLE;
+            case PLAGIARISM_CASE_UPDATE -> title = PLAGIARISM_CASE_UPDATE_TITLE;
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-        SingleUserNotification notification = new SingleUserNotification();
+        notification = new SingleUserNotification(recipient, title, message);
         notification.setPriority(NotificationPriority.HIGH);
-        notification.setRecipient(recipient);
         notification.setAuthor(author);
-        notification.setTarget(notification.targetForPlagiarismCase(plagiarismComparisonId, courseId));
-        notification.setNotificationDate(ZonedDateTime.now());
-        notification.setText(message);
-        notification.setTitle(title);
+
+        notification.setTarget(targetService.getTargetForPlagiarismCase(plagiarismComparisonId, courseId));
         return notification;
     }
 
-    public static SingleUserNotification createPlagiarismNotification(Long plagiarismComparisonId, Long courseId, User recipient, User author, String message) {
-        return createPlagiarismNotification(plagiarismComparisonId, courseId, recipient, author, message, false);
+    public static SingleUserNotification createNotification(Long plagiarismComparisonId, Long courseId, User recipient, User author, String message) {
+        return createNotification(plagiarismComparisonId, courseId, recipient, author, message, false);
     }
 
     public static SingleUserNotification createPlagiarismUpdateNotification(Long plagiarismComparisonId, Long courseId, User recipient, User author) {
-        return createPlagiarismNotification(plagiarismComparisonId, courseId, recipient, author, "", true);
+        return createNotification(plagiarismComparisonId, courseId, recipient, author, "", true);
     }
 }
