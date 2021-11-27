@@ -92,6 +92,7 @@ export class ResultDetailComponent implements OnInit {
         group: ScaleType.Ordinal,
         domain: ['#28a745', '#dc3545'], // colors: green, red
     } as Color;
+    xScaleMax = 100;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -492,7 +493,9 @@ export class ResultDetailComponent implements OnInit {
         } else if (appliedPositive - appliedNegative < 0) {
             appliedNegative = appliedPositive;
         }
-        this.ngxData[0].series[0].value = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
+        const score = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
+        this.xScaleMax = this.xScaleMax > score ? this.xScaleMax : score;
+        this.ngxData[0].series[0].value = score;
         this.ngxData[0].series[1].value = this.roundToDecimals((appliedNegative / maxScore) * 100, 2);
         this.ngxData = [...this.ngxData];
     }
