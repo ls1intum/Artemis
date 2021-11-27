@@ -61,9 +61,7 @@
             </jhi-assessment-dashboard-information>
         </div>
     </div>
-    <div *ngif="isExamMode">
-        <jhi-exam-assessment-buttons></jhi-exam-assessment-buttons>
-    </div>
+    <jhi-exam-assessment-buttons id="exam-assessment-buttons"></jhi-exam-assessment-buttons>
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
