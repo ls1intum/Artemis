@@ -304,10 +304,11 @@
             </tbody>
         </table>
 
-        <div style="display: block">
+        <div #containerRef style="display: block">
             <!-- Histogram -->
             <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
             </canvas>
+            <ngx-charts-bar-vertical [view]="[containerRef.offsetWidth, 400]" [results]="ngxData" [yAxis]="true" [xAxis]="true"> </ngx-charts-bar-vertical>
         </div>
 
         <!-- Exercise Statistics -->

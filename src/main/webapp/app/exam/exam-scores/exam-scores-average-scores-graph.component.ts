@@ -67,7 +67,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         });
 
         this.ngxData = [...this.ngxData];
-        console.log(JSON.parse(JSON.stringify(this.ngxData)));
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {

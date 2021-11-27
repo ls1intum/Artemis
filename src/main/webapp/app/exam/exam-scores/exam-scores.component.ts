@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { forkJoin, Subscription, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +13,7 @@ import {
     ExerciseGroup,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -50,6 +50,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public binWidth = 5;
     public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
+
+    // ngx
+    ngxData: any[] = Array(100 / this.binWidth).fill({ name: '', value: 0 });
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -192,11 +195,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 labels[i] += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
                 labels[i] += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
                 labels[i] += ` {${gradeStep.gradeName}}`;
+                this.ngxData[i].name =
+                    gradeStep.lowerBoundInclusive || i === 0
+                        ? '['
+                        : '(' + `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}` + gradeStep.upperBoundInclusive || i === 100
+                        ? ']'
+                        : ')' + ` {${gradeStep.gradeName}}`;
             });
         } else {
+            console.log(JSON.parse(JSON.stringify(this.histogramData)));
             for (let i = 0; i < this.histogramData.length; i++) {
                 labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
                 labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
+
+                let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
+                label += i === this.histogramData.length - 1 ? ']' : ')';
+
+                this.ngxData[i].name = label;
             }
         }
         this.barChartLabels = labels;
@@ -260,6 +275,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             },
         };
 
+        this.ngxData = [...this.ngxData];
+
         this.barChartData = [
             {
                 label: '# of students',
@@ -291,7 +308,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private calculateFilterDependentStatistics() {
         if (this.gradingScaleExists) {
             this.histogramData = Array(this.gradingScale!.gradeSteps.length);
+            this.ngxData = Array(this.gradingScale!.gradeSteps.length).fill({ name: ' ', value: 0 });
         }
+        this.ngxData.forEach((gradingStep: any) => (gradingStep.value = 0));
         this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
@@ -324,6 +343,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     histogramIndex = 100 / this.binWidth - 1;
                 }
             }
+            console.log(histogramIndex);
+            console.log(JSON.parse(JSON.stringify(this.ngxData)));
+            const box = this.ngxData[histogramIndex];
+            box.value++;
+            console.log(JSON.stringify(this.ngxData[histogramIndex]));
+            console.log(JSON.parse(JSON.stringify(this.ngxData)));
             this.histogramData[histogramIndex]++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
@@ -365,6 +390,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.barChartData[0].data = this.histogramData;
             this.chart.update(0);
         }
+        this.ngxData = [...this.ngxData];
     }
 
     /**
