@@ -138,6 +138,12 @@ public class JenkinsJobService {
                 throw new JenkinsException("Cannot create job " + jobName + " because the folder " + folderName + " does not exist.");
             }
 
+            var existingJob = jenkinsServer.getJob(folder, jobName);
+            if (existingJob != null) {
+                log.info("Build Plan {} already exists. Skipping creation of job.", jobName);
+                return;
+            }
+
             String configString = XmlFileUtils.writeToString(jobConfig);
             jenkinsServer.createJob(folder, jobName, configString, useCrumb);
         }
