@@ -576,7 +576,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -588,7 +588,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -600,7 +600,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
