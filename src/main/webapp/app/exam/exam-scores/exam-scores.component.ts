@@ -52,6 +52,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // ngx
     ngxData: any[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
+    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
     yScaleMax: number;
     ngxColor = {
         name: 'Exam statistics',

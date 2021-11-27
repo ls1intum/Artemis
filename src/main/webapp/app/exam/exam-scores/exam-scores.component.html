@@ -314,10 +314,17 @@
                 [xAxis]="true"
                 [yAxisLabel]="yAxisLabel"
                 [showYAxisLabel]="true"
+                [xAxisLabel]="xAxisLabel"
+                [showXAxisLabel]="true"
                 [yScaleMax]="yScaleMax"
                 [dataLabelFormatting]="dataLabelFormatting"
                 [showDataLabel]="true"
             >
+                <ng-template #tooltipTemplate let-model="model">
+                    <b>{{ model.name }}</b
+                    ><br />
+                    <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
+                </ng-template>
             </ngx-charts-bar-vertical>
         </div>
 
