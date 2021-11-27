@@ -25,7 +25,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 
 export enum FeedbackItemType {
     Issue,
@@ -93,6 +93,7 @@ export class ResultDetailComponent implements OnInit {
         domain: ['#28a745', '#dc3545'], // colors: green, red
     } as Color;
     xScaleMax = 100;
+    legendPosition = LegendPosition.Below;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -496,7 +497,11 @@ export class ResultDetailComponent implements OnInit {
         const score = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
         this.xScaleMax = this.xScaleMax > score ? this.xScaleMax : score;
         this.ngxData[0].series[0].value = score;
+        this.ngxData[0].series[0].name +=
+            ': ' + this.roundToDecimals(appliedPositive, 1) + (appliedPositive !== receivedPositive ? ` of ${this.roundToDecimals(receivedPositive, 1)}` : '');
         this.ngxData[0].series[1].value = this.roundToDecimals((appliedNegative / maxScore) * 100, 2);
+        this.ngxData[0].series[1].name +=
+            ': ' + this.roundToDecimals(appliedNegative, 1) + (appliedNegative !== receivedNegative ? ` of ${this.roundToDecimals(receivedNegative, 1)}` : '');
         this.ngxData = [...this.ngxData];
     }
 
