@@ -72,6 +72,8 @@
 
 <jhi-alert></jhi-alert>
 
+<h5 style="font-weight: 300">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
+
 <jhi-resizeable-container class="col-12 mt-3">
     <!--region Left Panel-->
     <span left-header *ngIf="state.ui === UIStates.SUBMISSION" jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
@@ -118,7 +120,7 @@
         jhiTranslate="artemisApp.textAssessment.assessmentInstruction"
         *ngIf="state.ui === UIStates.ASSESSMENT"
     ></div>
-    <jhi-assessment-instructions right-body *ngIf="exercise" [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
+    <jhi-assessment-instructions right-body *ngIf="exercise" [exercise]="exercise" [isAssessmentTraining]="toComplete" class="markdown-preview"></jhi-assessment-instructions>
     <!--endregion-->
 </jhi-resizeable-container>
 

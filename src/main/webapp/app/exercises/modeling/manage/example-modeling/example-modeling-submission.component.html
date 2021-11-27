@@ -4,6 +4,7 @@
         <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
             Example Modeling Submission for Exercise {{ exercise?.title }}
         </h2>
+        <h5 style="font-weight: 300">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
     </div>
 
@@ -142,7 +143,14 @@
                 ></textarea>
             </div>
 
-            <jhi-collapsable-assessment-instructions class="col-auto pe-2" *ngIf="exercise" [readOnly]="readOnly" [exercise]="exercise" [collapsed]="!readOnly && !toComplete">
+            <jhi-collapsable-assessment-instructions
+                class="col-auto pe-2"
+                *ngIf="exercise"
+                [readOnly]="readOnly"
+                [exercise]="exercise"
+                [collapsed]="!readOnly && !toComplete"
+                [isAssessmentTraining]="toComplete"
+            >
             </jhi-collapsable-assessment-instructions>
         </div>
     </div>

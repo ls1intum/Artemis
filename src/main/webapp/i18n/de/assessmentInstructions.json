@@ -14,6 +14,10 @@
         "problemStatement": "Aufgabenstellung",
         "sampleSolution": "Beispiellösung",
         "assessmentInstructions": "Bewertungsanweisungen",
-        "usageCount": "Anzahl Anwendungen"
+        "usageCount": "Anzahl Anwendungen",
+        "trainingEvaluationCriteria": {
+            "title": "Bewertungskriterien für das Assessment-Training",
+            "description": "Um das Assessment-Training erfolgreich abzuschließen, sollte Ihre Bewertung alle folgenden Kriterien erfüllen:<br>&nbsp;1. Die Anzahl der Feedbacks, die Sie geben, sollte der der Dozenten entsprechen.<br>&nbsp;2. Jedes Feedback sollte dieselbe Bewertungsanweisung und dieselbe Punktzahl aufweisen.<br>&nbsp;3. Für Feedback mit negativer Punktzahl sollte der Grund angegeben werden."
+        }
     }
 }
