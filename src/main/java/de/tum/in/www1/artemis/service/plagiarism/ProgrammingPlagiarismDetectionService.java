@@ -121,7 +121,7 @@ public class ProgrammingPlagiarismDetectionService {
         textPlagiarismResult.setExercise(programmingExercise);
 
         log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
-        plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
         limitAndSavePlagiarismResult(textPlagiarismResult);
         return textPlagiarismResult;
     }
@@ -188,7 +188,7 @@ public class ProgrammingPlagiarismDetectionService {
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
-        plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
@@ -338,7 +338,7 @@ public class ProgrammingPlagiarismDetectionService {
         participations.forEach(participation -> {
             try {
                 var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + participations.size();
-                plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+                plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state

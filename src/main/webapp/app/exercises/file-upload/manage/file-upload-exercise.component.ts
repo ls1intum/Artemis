@@ -93,5 +93,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.fileUploadExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 }
