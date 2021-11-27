@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('DoughnutChartComponent', () => {

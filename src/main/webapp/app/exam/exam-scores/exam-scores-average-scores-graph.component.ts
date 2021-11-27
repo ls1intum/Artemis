@@ -33,6 +33,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLUE],
     } as Color;
+    xScaleMax = 100;
     lookup: NameToValueMap = {};
 
     constructor(
@@ -55,11 +56,15 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     private initializeChart(): void {
         this.lookup[this.averageScores.title] = { absoluteValue: this.averageScores.averagePoints! };
-        this.ngxData.push({ name: this.averageScores.title, value: this.averageScores.averagePercentage });
+        const exerciseGroupAverage = this.averageScores.averagePercentage ? this.averageScores.averagePercentage : 0;
+        this.ngxData.push({ name: this.averageScores.title, value: exerciseGroupAverage });
+        this.xScaleMax = this.xScaleMax > exerciseGroupAverage ? this.xScaleMax : exerciseGroupAverage;
         this.averageScores.exerciseResults.forEach((exercise) => {
-            this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exercise.averagePercentage });
+            const exerciseAverage = exercise.averagePercentage ? exercise.averagePercentage : 0;
+            this.xScaleMax = this.xScaleMax > exerciseAverage ? this.xScaleMax : exerciseAverage;
+            this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
             this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
-                absoluteValue: exercise.averagePoints!,
+                absoluteValue: exercise.averagePoints ? exercise.averagePoints : 0,
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -19,9 +19,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ChartDataSets, ChartOptions, ChartType, defaults, helpers, LinearTickOptions } from 'chart.js';
-import { BaseChartDirective, Label } from 'ng2-charts';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/browser';
@@ -55,7 +52,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // ngx
     ngxData: any[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-    yScaleMax = 30;
+    yScaleMax: number;
     ngxColor = {
         name: 'Exam statistics',
         selectable: true,
@@ -73,13 +70,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public filterForSubmittedExams = false;
     public filterForNonEmptySubmissions = false;
 
-    // Histogram related properties
-    public barChartOptions: ChartOptions = {};
-    public barChartLabels: Label[] = [];
-    public barChartType: ChartType = 'bar';
-    public barChartLegend = false;
-    public barChartData: ChartDataSets[] = [];
-
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
@@ -87,8 +77,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     hasNumericGrades: boolean;
 
     course?: Course;
-
-    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription?: Subscription;
     constructor(
@@ -128,7 +116,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                        this.yScaleMax = this.studentResults.length > this.yScaleMax ? this.studentResults.length : this.yScaleMax;
+                        // this.yScaleMax = this.studentResults.length > this.yScaleMax ? this.studentResults.length : this.yScaleMax;
 
                         const titleMap = new Map<string, number>();
                         if (this.exerciseGroups) {
@@ -202,102 +190,50 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private createChart() {
-        const labels: string[] = [];
         if (this.gradingScaleExists) {
             this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                labels[i] = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
-                labels[i] += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
-                labels[i] += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
-                labels[i] += ` {${gradeStep.gradeName}}`;
-                this.ngxData[i].name =
-                    gradeStep.lowerBoundInclusive || i === 0
-                        ? '['
-                        : '(' + `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}` + gradeStep.upperBoundInclusive || i === 100
-                        ? ']'
-                        : ')' + ` {${gradeStep.gradeName}}`;
+                let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
+                label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
+                label += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
+                label += ` {${gradeStep.gradeName}}`;
+                this.ngxData[i].name = label;
             });
         } else {
-            console.log(JSON.parse(JSON.stringify(this.histogramData)));
             for (let i = 0; i < this.histogramData.length; i++) {
-                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-                labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
-
                 let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
                 label += i === this.histogramData.length - 1 ? ']' : ')';
 
                 this.ngxData[i].name = label;
             }
         }
-        this.barChartLabels = labels;
-
-        const component = this;
-
-        this.barChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            legend: {
-                align: 'start',
-                position: 'bottom',
-            },
-            scales: {
-                yAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
-                        },
-                        ticks: {
-                            maxTicksLimit: 11,
-                            beginAtZero: true,
-                            precision: 0,
-                            min: 0,
-                            max: this.calculateTickMax(),
-                        } as LinearTickOptions,
-                    },
-                ],
-                xAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
-                        },
-                    },
-                ],
-            },
-            hover: {
-                animationDuration: 0,
-            },
-            animation: {
-                duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-
-                    ctx.font = helpers.fontString(defaults.global.defaultFontSize, defaults.global.defaultFontStyle, defaults.global.defaultFontFamily);
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
-                            ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered)}%)`, bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
-            },
-        };
 
         this.ngxData = [...this.ngxData];
+    }
 
-        this.barChartData = [
-            {
-                label: '# of students',
-                data: this.histogramData,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-            },
-        ];
+    /**
+     * Calculate statistics on exercise group and exercise granularity. These statistics are filter dependent.
+     * @param exerciseGroupResults Data structure holding the aggregated points and number of participants
+     */
+    private calculateExerciseGroupStatistics(exerciseGroupResults: AggregatedExerciseGroupResult[]) {
+        for (const groupResult of exerciseGroupResults) {
+            // For average points for exercise groups
+            if (groupResult.noOfParticipantsWithFilter) {
+                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
+                groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
+                if (this.gradingScaleExists) {
+                    const gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
+                    groupResult.averageGrade = gradeStep!.gradeName;
+                }
+            }
+            // Calculate average points for exercises
+            groupResult.exerciseResults.forEach((exResult) => {
+                if (exResult.noOfParticipantsWithFilter) {
+                    exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
+                    exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
+                }
+            });
+        }
+        this.aggregatedExerciseGroupResults = exerciseGroupResults;
     }
 
     /**
@@ -360,12 +296,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     histogramIndex = 100 / this.binWidth - 1;
                 }
             }
-            console.log(histogramIndex);
-            console.log(JSON.parse(JSON.stringify(this.ngxData)));
-            const box = this.ngxData[histogramIndex];
-            box.value++;
-            console.log(JSON.stringify(this.ngxData[histogramIndex]));
-            console.log(JSON.parse(JSON.stringify(this.ngxData)));
+            this.ngxData[histogramIndex].value++;
             this.histogramData[histogramIndex]++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
@@ -401,13 +332,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
-
-        if (this.chart) {
-            this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
-            this.barChartData[0].data = this.histogramData;
-            this.chart.update(0);
-        }
         this.ngxData = [...this.ngxData];
+        this.yScaleMax = this.calculateTickMax();
     }
 
     /**
@@ -634,32 +560,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return examStatistics;
     }
 
-    /**
-     * Calculate statistics on exercise group and exercise granularity. These statistics are filter dependent.
-     * @param exerciseGroupResults Data structure holding the aggregated points and number of participants
-     */
-    private calculateExerciseGroupStatistics(exerciseGroupResults: AggregatedExerciseGroupResult[]) {
-        for (const groupResult of exerciseGroupResults) {
-            // For average points for exercise groups
-            if (groupResult.noOfParticipantsWithFilter) {
-                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
-                groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
-                if (this.gradingScaleExists) {
-                    const gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
-                    groupResult.averageGrade = gradeStep!.gradeName;
-                }
-            }
-            // Calculate average points for exercises
-            groupResult.exerciseResults.forEach((exResult) => {
-                if (exResult.noOfParticipantsWithFilter) {
-                    exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
-                    exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
-                }
-            });
-        }
-        this.aggregatedExerciseGroupResults = exerciseGroupResults;
-    }
-
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.studentResults, this.predicate, this.reverse);
         this.changeDetector.detectChanges();
@@ -817,6 +717,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         captureException(new Error(errorMessage));
     }
 
+    /**
+     * Formats the datalabel for every bar in order to satisfy the following pattern:
+     * number of submissions (percentage of submissions)
+     * @param value the number of submissions that fall in the grading step
+     */
     formatDataLabel(value: any) {
         const percentage = this.roundAndPerformLocalConversion((value * 100) / this.noOfExamsFiltered);
         return value + ' (' + percentage + '%)';
