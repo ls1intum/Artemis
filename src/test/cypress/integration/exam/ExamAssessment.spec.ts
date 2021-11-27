@@ -1,16 +1,16 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { COURSE_BASE, CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
-import { POST } from '../../support/constants';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
+const assessmentDashboard = artemis.pageobjects.assessment.course;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
@@ -158,9 +158,8 @@ describe('Exam assessment', () => {
             if (dayjs().isBefore(examEnd)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
-            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
-            cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
-            cy.contains('Evaluate quizzes').click();
+            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
+            assessmentDashboard.clickEvaluateQuizzes();
             if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
