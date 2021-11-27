@@ -124,7 +124,7 @@
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
             "totalColumn": "Total",
-            "exerciseGroupTitle": "Average scores of exercise group {{ groupTitle }} in comparison"
+            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison"
         },
         "examParticipation": {
             "timer": "Time left: ",

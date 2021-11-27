@@ -124,7 +124,7 @@
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
             "totalColumn": "Total",
-            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe {{ groupTitle }} im Vergleich"
+            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
