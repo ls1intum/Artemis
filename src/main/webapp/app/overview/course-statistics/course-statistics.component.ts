@@ -201,6 +201,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
 
         this.calculateCourseGrade();
+        console.log(JSON.stringify(this.course!.exercises));
+        console.log(this.course!.exercises!.length);
+        console.log(this.ngxExerciseGroups.length);
     }
 
     ngOnDestroy() {
@@ -573,6 +576,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     presentationScore: this.presentationScoresPerExercise[types[index]],
                     presentationScoreEnabled: false,
                     barPadding: this.setBarPadding(exerciseGroup.length),
+                    xScaleMax: this.setXScaleMax(exerciseGroup),
                 };
                 switch (types[index]) {
                     case ExerciseType.MODELING:
@@ -626,5 +630,19 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     break;
             }
         }
+    }
+
+    /**
+     * Sets the maximum scale on the x axis if there are exercises with > 100%
+     * @param exerciseGroup the exercise group
+     * @private
+     */
+    private setXScaleMax(exerciseGroup: any[]) {
+        let xScaleMax = 100;
+        exerciseGroup.forEach((exercise: any) => {
+            const maxScore = Math.max(exercise.series[0].value, exercise.series[1].value, exercise.series[2].value, exercise.series[3].value);
+            xScaleMax = xScaleMax > maxScore ? xScaleMax : Math.ceil(maxScore);
+        });
+        return xScaleMax;
     }
 }

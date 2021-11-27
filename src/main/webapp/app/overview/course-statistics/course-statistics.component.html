@@ -73,13 +73,13 @@
                     </h2>
                 </div>
                 <div #containerRef class="col-12 col-md-8">
-                    <ngx-charts-bar-horizontal-normalized
+                    <ngx-charts-bar-horizontal-stacked
                         [view]="[containerRef.offsetWidth, 250]"
                         [scheme]="ngxBarColor"
                         [results]="exerciseGroup"
                         [xAxis]="true"
                         [yAxis]="true"
-                        [xAxisTicks]="[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]"
+                        [xScaleMax]="exerciseGroup[0].xScaleMax"
                         [barPadding]="exerciseGroup[0].barPadding"
                     >
                         <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
@@ -94,7 +94,7 @@
                                 <span *ngIf="model.isProgrammingExercise">
                                     {{
                                         'artemisApp.courseOverview.statistics.programmingExercisePassedTests'
-                                            | artemisTranslate: { points: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
+                                            | artemisTranslate: { tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
                                     }}
                                 </span>
                                 <span *ngIf="model.name === 'Achieved bonus'">
@@ -130,7 +130,7 @@
                                 </div>
                             </div>
                         </ng-template>
-                    </ngx-charts-bar-horizontal-normalized>
+                    </ngx-charts-bar-horizontal-stacked>
                 </div>
                 <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
                     <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup[0].absoluteScore } }}</h4>
