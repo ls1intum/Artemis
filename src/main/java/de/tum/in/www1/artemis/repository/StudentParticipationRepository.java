@@ -112,6 +112,26 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.assessor
+            LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :#{#exerciseId}
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.assessor
+            LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :#{#exerciseId} AND p.testRun = false
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacksIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
     // TODO SE improve
     /**
      * Get all participations for an exercise with each latest result (determined by id).

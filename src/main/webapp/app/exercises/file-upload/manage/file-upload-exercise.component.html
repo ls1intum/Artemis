@@ -29,7 +29,7 @@
                     <th jhiSortBy="assessmentDueDate">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
@@ -60,7 +60,7 @@
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a
-                                *ngIf="fileUploadExercise.isAtLeastTutor"
+                                *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'scores']"
                                 class="btn btn-info btn-sm me-1"
                             >
