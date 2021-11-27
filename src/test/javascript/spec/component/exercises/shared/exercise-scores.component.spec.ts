@@ -19,8 +19,6 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -33,6 +31,11 @@ import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/m
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -99,11 +102,12 @@ describe('Exercise Scores Component', () => {
                 MockDirective(NgModel),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: ResultService, useClass: MockResultService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
             .compileComponents()
