@@ -31,6 +31,7 @@ import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { ScaleType, Color } from '@swimlane/ngx-charts';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -52,7 +53,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     // ngx
-    ngxData: any[] = Array(100 / this.binWidth).fill({ name: '', value: 0 });
+    ngxData: any[] = [];
+    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
+    yScaleMax = 30;
+    ngxColor = {
+        name: 'Exam statistics',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['rgba(127,127,127,255)'],
+    } as Color;
+    dataLabelFormatting = this.formatDataLabel.bind(this);
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -96,6 +106,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        for (let i = 0; i < 100 / this.binWidth; i++) {
+            this.ngxData.push({ name: i.toString(), value: 0 });
+        }
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
@@ -115,6 +128,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+                        this.yScaleMax = this.studentResults.length > this.yScaleMax ? this.studentResults.length : this.yScaleMax;
 
                         const titleMap = new Map<string, number>();
                         if (this.exerciseGroups) {
@@ -308,7 +322,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private calculateFilterDependentStatistics() {
         if (this.gradingScaleExists) {
             this.histogramData = Array(this.gradingScale!.gradeSteps.length);
-            this.ngxData = Array(this.gradingScale!.gradeSteps.length).fill({ name: ' ', value: 0 });
+            this.ngxData = [];
+            for (let i = 0; i < this.gradingScale!.gradeSteps.length; i++) {
+                this.ngxData.push({ name: i.toString(), value: 0 });
+            }
         }
         this.ngxData.forEach((gradingStep: any) => (gradingStep.value = 0));
         this.histogramData.fill(0);
@@ -798,5 +815,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     logErrorOnSentry(errorMessage: string) {
         captureException(new Error(errorMessage));
+    }
+
+    formatDataLabel(value: any) {
+        const percentage = this.roundAndPerformLocalConversion((value * 100) / this.noOfExamsFiltered);
+        return value + ' (' + percentage + '%)';
     }
 }

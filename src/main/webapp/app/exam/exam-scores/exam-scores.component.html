@@ -308,7 +308,19 @@
             <!-- Histogram -->
             <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
             </canvas>
-            <ngx-charts-bar-vertical [view]="[containerRef.offsetWidth, 400]" [results]="ngxData" [yAxis]="true" [xAxis]="true"> </ngx-charts-bar-vertical>
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 400]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [yAxis]="true"
+                [xAxis]="true"
+                [yAxisLabel]="yAxisLabel"
+                [showYAxisLabel]="true"
+                [yScaleMax]="yScaleMax"
+                [dataLabelFormatting]="dataLabelFormatting"
+                [showDataLabel]="true"
+            >
+            </ngx-charts-bar-vertical>
         </div>
 
         <!-- Exercise Statistics -->
