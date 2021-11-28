@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -59,9 +57,11 @@ public class PlagiarismResource {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
+    private final PlagiarismService plagiarismService;
+
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismResultRepository plagiarismResultRepository,
             ExerciseRepository exerciseRepository, CourseRepository courseRepository, SingleUserNotificationService singleUserNotificationService,
-            AuthorizationCheckService authenticationCheckService, UserRepository userRepository) {
+            AuthorizationCheckService authenticationCheckService, UserRepository userRepository, PlagiarismService plagiarismService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.exerciseRepository = exerciseRepository;
@@ -69,6 +69,7 @@ public class PlagiarismResource {
         this.singleUserNotificationService = singleUserNotificationService;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
+        this.plagiarismService = plagiarismService;
     }
 
     /**
@@ -79,11 +80,16 @@ public class PlagiarismResource {
      * @param statusDTO new status for the given comparison
      * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
-    @PutMapping("plagiarism-comparisons/{comparisonId}/status")
+    @PutMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/status")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable long comparisonId, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        // TODO: check that the editor has access to the corresponding course (add the exerciseId to the URL)
+    public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") long comparisonId,
+            @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
         log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User currentUser = userRepository.getUser();
+        if (!authenticationCheckService.isAtLeastEditorInCourse(course, currentUser)) {
+            throw new AccessForbiddenException("Only editors or instructors of this course can update plagiarism cases.");
+        }
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), statusDTO.getStatus());
         return ResponseEntity.ok().body(null);
@@ -99,26 +105,12 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
-        var res = new ArrayList<PlagiarismCaseDTO>();
         var course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
-            throw new AccessForbiddenException("Only instructors can get all plagiarism cases.");
+            throw new AccessForbiddenException("Only instructors of this course can get all plagiarism cases.");
         }
-        var exerciseIDs = exerciseRepository.findAllIdsByCourseId(courseId);
-        exerciseIDs.forEach(id -> {
-            var exerciseOptional = exerciseRepository.findById(id);
-            if (exerciseOptional.isPresent()) {
-                PlagiarismResult<?> result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(exerciseOptional.get().getId());
-                if (result != null) {
-                    Set<PlagiarismComparison<?>> filteredComparisons = result.getComparisons().stream().filter(c -> c.getStatus() == PlagiarismStatus.CONFIRMED)
-                            .collect(Collectors.toSet());
-                    if (filteredComparisons.size() > 0) {
-                        res.add(new PlagiarismCaseDTO(exerciseOptional.get(), filteredComparisons));
-                    }
-                }
-            }
-        });
-        return ResponseEntity.ok(res);
+        ArrayList<PlagiarismCaseDTO> foundPlagiarismCasesForCourse = this.plagiarismService.collectAllPlagiarismCasesForCourse(courseId);
+        return ResponseEntity.ok(foundPlagiarismCasesForCourse);
     }
 
     /**
