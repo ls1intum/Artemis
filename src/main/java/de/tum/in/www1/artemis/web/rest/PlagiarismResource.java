@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -36,15 +37,6 @@ public class PlagiarismResource {
         public String statement;
     }
 
-    // correspond to the translation files (suffix) used in the client
-    private static final String YOUR_SUBMISSION = "yourSubmission";
-
-    private static final String OTHER_SUBMISSION = "otherSubmission";
-
-    private final PlagiarismResultRepository plagiarismResultRepository;
-
-    private final ExerciseRepository exerciseRepository;
-
     private final CourseRepository courseRepository;
 
     private final SingleUserNotificationService singleUserNotificationService;
@@ -59,12 +51,10 @@ public class PlagiarismResource {
 
     private final PlagiarismService plagiarismService;
 
-    public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ExerciseRepository exerciseRepository, CourseRepository courseRepository, SingleUserNotificationService singleUserNotificationService,
-            AuthorizationCheckService authenticationCheckService, UserRepository userRepository, PlagiarismService plagiarismService) {
+    public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository,
+            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
+            PlagiarismService plagiarismService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
-        this.plagiarismResultRepository = plagiarismResultRepository;
-        this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authenticationCheckService = authenticationCheckService;
@@ -157,22 +147,8 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("comparisonId") Long comparisonId) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         var user = userRepository.getUser();
-
-        // anonymize:
-        if (comparison.getSubmissionA().getStudentLogin().equals(user.getLogin())) {
-            comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
-            comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
-            comparison.setInstructorStatementB(null);
-        }
-        else if (comparison.getSubmissionB().getStudentLogin().equals(user.getLogin())) {
-            comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
-            comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
-            comparison.setInstructorStatementA(null);
-        }
-        else {
-            throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
-        }
-        return ResponseEntity.ok(new PlagiarismCaseDTO(comparison.getPlagiarismResult().getExercise(), Set.of(comparison)));
+        PlagiarismComparison anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
+        return ResponseEntity.ok(new PlagiarismCaseDTO(anonymizedComparisonForStudentView.getPlagiarismResult().getExercise(), Set.of(anonymizedComparisonForStudentView)));
     }
 
     /**

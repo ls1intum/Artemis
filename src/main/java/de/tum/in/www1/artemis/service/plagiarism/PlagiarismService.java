@@ -12,9 +12,15 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
 public class PlagiarismService {
+
+    // correspond to the translation files (suffix) used in the client
+    private static final String YOUR_SUBMISSION = "yourSubmission";
+
+    private static final String OTHER_SUBMISSION = "otherSubmission";
 
     private final ExerciseRepository exerciseRepository;
 
@@ -48,5 +54,30 @@ public class PlagiarismService {
             }
         });
         return collectedPlagiarismCases;
+    }
+
+    /**
+     * Anonymizes the comparison for the student view.
+     * A student should not have sensitive information (e.g. the userLogin of the other student)
+     *
+     * @param comparison that has to be anonymized.
+     * @param userLogin of the student asking to see his plagiarism comparison.
+     * @return the anoymized plagiarism comparison for the given student
+     */
+    public PlagiarismComparison anonymizeComparisonForStudentView(PlagiarismComparison comparison, String userLogin) {
+        if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
+            comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
+            comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
+            comparison.setInstructorStatementB(null);
+        }
+        else if (comparison.getSubmissionB().getStudentLogin().equals(userLogin)) {
+            comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
+            comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
+            comparison.setInstructorStatementA(null);
+        }
+        else {
+            throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
+        }
+        return comparison;
     }
 }
