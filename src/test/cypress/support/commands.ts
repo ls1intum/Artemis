@@ -36,7 +36,7 @@ declare global {
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
             getSettled(selector: string, options?: {}): Chainable<Cypress>;
-            reloadUntilFound(selector: string): Chainable<Cypress>;
+            reloadUntilFound(selector: string): Chainable<undefined>;
         }
     }
 }
