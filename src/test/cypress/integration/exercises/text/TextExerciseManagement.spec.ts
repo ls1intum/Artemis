@@ -11,12 +11,12 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const textCreation = artemis.pageobjects.textExercise.creation;
-const exampleSubmissions = artemis.pageobjects.textExercise.exampleSubmissions;
-const exampleSubmissionCreation = artemis.pageobjects.textExercise.exampleSubmissionCreation;
+const textCreation = artemis.pageobjects.exercise.text.creation;
+const exampleSubmissions = artemis.pageobjects.exercise.text.exampleSubmissions;
+const exampleSubmissionCreation = artemis.pageobjects.exercise.text.exampleSubmissionCreation;
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagementPage = artemis.pageobjects.courseManagement;
-const courseManagementExercises = artemis.pageobjects.courseManagementExercises;
+const courseManagementPage = artemis.pageobjects.course.management;
+const courseManagementExercises = artemis.pageobjects.course.managementExercises;
 
 describe('Text exercise management', () => {
     let course: any;

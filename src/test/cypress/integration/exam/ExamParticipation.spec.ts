@@ -13,13 +13,13 @@ const users = artemis.users;
 const student = users.getStudentOne();
 
 // Pageobjects
-const courses = artemis.pageobjects.courses;
-const courseOverview = artemis.pageobjects.courseOverview;
-const examStartEnd = artemis.pageobjects.examStartEnd;
-const examNavigation = artemis.pageobjects.examNavigationBar;
-const onlineEditor = artemis.pageobjects.programmingExercise.editor;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
-const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
+const courses = artemis.pageobjects.course.list;
+const courseOverview = artemis.pageobjects.course.overview;
+const examStartEnd = artemis.pageobjects.exam.startEnd;
+const examNavigation = artemis.pageobjects.exam.navigationBar;
+const onlineEditor = artemis.pageobjects.exercise.programming.editor;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
+const multipleChoiceQuiz = artemis.pageobjects.exercise.quiz.multipleChoice;
 
 // Common primitives
 const textExerciseTitle = 'Cypress text exercise';
@@ -97,7 +97,7 @@ describe('Exam participation', () => {
     }
 
     function makeTextExerciseSubmission() {
-        const textEditor = artemis.pageobjects.textExercise.editor;
+        const textEditor = artemis.pageobjects.exercise.text.editor;
         cy.fixture('loremIpsum.txt').then((submissionText) => {
             textEditor.typeSubmission(submissionText);
             // Loading the content of the existing files might take some time so we wait for the return of the request here

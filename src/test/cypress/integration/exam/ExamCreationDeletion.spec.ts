@@ -8,8 +8,8 @@ const courseManagementRequests = artemis.requests.courseManagement;
 
 // Pageobjects
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.courseManagement;
-const examManagement = artemis.pageobjects.examManagement;
+const courseManagement = artemis.pageobjects.course.management;
+const examManagement = artemis.pageobjects.exam.management;
 
 describe('Exam creation/deletion', () => {
     let course: any;
@@ -28,7 +28,7 @@ describe('Exam creation/deletion', () => {
     });
 
     it('Creates an exam', function () {
-        const creationPage = artemis.pageobjects.examCreation;
+        const creationPage = artemis.pageobjects.exam.creation;
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.title, course.shortName);
 

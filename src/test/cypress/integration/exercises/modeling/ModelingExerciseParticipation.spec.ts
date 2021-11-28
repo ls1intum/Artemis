@@ -2,9 +2,9 @@ import { artemis } from '../../../support/ArtemisTesting';
 import { CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 
 // pageobjects
-const courseManagement = artemis.pageobjects.courseManagement;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
-const courseOverview = artemis.pageobjects.courseOverview;
+const courseManagement = artemis.pageobjects.course.management;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
+const courseOverview = artemis.pageobjects.course.overview;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users

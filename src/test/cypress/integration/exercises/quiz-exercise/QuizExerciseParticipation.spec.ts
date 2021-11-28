@@ -11,11 +11,11 @@ const student = artemis.users.getStudentOne();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page objects
-const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
-const shortAnswerQuiz = artemis.pageobjects.quizExercise.shortAnswer;
-const quizCreation = artemis.pageobjects.quizExercise.creation;
-const dragAndDropQuiz = artemis.pageobjects.quizExercise.dragAndDrop;
-const courseOverview = artemis.pageobjects.courseOverview;
+const multipleChoiceQuiz = artemis.pageobjects.exercise.quiz.multipleChoice;
+const shortAnswerQuiz = artemis.pageobjects.exercise.quiz.shortAnswer;
+const quizCreation = artemis.pageobjects.exercise.quiz.creation;
+const dragAndDropQuiz = artemis.pageobjects.exercise.quiz.dragAndDrop;
+const courseOverview = artemis.pageobjects.course.overview;
 
 // Common primitives
 let course: any;

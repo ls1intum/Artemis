@@ -9,8 +9,8 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const textEditor = artemis.pageobjects.textExercise.editor;
-const courseOverview = artemis.pageobjects.courseOverview;
+const textEditor = artemis.pageobjects.exercise.text.editor;
+const courseOverview = artemis.pageobjects.course.overview;
 
 describe('Text exercise participation', () => {
     let course: any;

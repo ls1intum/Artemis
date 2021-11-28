@@ -6,9 +6,9 @@ import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/m
 import dayjs from 'dayjs';
 
 // pageobjects
-const createModelingExercise = artemis.pageobjects.modelingExercise.creation;
-const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExercise.assessmentEditor;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
+const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;
+const modelingExerciseExampleSubmission = artemis.pageobjects.assessment.modeling;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
