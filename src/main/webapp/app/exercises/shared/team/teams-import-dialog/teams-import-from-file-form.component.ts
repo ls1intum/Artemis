@@ -59,9 +59,9 @@ export class TeamsImportFromFileFormComponent {
     async onFileLoadImport(fileReader: FileReader) {
         try {
             // Read the file and get list of teams from the file
-            if (this.importFile?.type === 'json') {
+            if (this.importFile?.type === 'application/json') {
                 this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
-            } else if (this.importFile?.type === 'csv') {
+            } else if (this.importFile?.type === 'text/csv') {
                 const csvEntries = await this.parseCSVFile(this.importFile);
                 this.importedTeams = this.convertCsvEntries(csvEntries);
             } else {
@@ -129,7 +129,7 @@ export class TeamsImportFromFileFormComponent {
             (entry) =>
                 ({
                     registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || '',
-                    login: entry[csvColumns.login] || entry[csvColumns.username] || entry[csvColumns.user] || entry[csvColumns.benutzer] || entry[csvColumns.benutzerName] || '',
+                    username: entry[csvColumns.login] || entry[csvColumns.username] || entry[csvColumns.user] || entry[csvColumns.benutzer] || entry[csvColumns.benutzerName] || '',
                     firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || '',
                     lastName: entry[csvColumns.lastName] || entry[csvColumns.familyName] || entry[csvColumns.surname] || entry[csvColumns.name] || entry[csvColumns.nachname] || '',
                     teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || '',
