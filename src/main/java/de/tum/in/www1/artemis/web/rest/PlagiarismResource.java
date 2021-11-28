@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.repository.*;
@@ -97,7 +98,7 @@ public class PlagiarismResource {
         log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
-            throw new AccessForbiddenException("Only instructors of this course can get all plagiarism cases.");
+            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
         ArrayList<PlagiarismCaseDTO> foundPlagiarismCasesForCourse = this.plagiarismService.collectAllPlagiarismCasesForCourse(courseId);
         return ResponseEntity.ok(foundPlagiarismCasesForCourse);
@@ -118,11 +119,13 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("comparisonId") long comparisonId,
             @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
 
-        // TODO think about the different ways the security can be outplayed: e.g. currently there is no link between a comparison and the plagiarized exercise/course !! add
-        // link?-> authenticationCheckService...
-
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin); // TODO maybe remove if not used by notifications
+        Exercise affectedExercise = comparison.getPlagiarismResult().getExercise();
+
+        if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
+            throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
+        }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementA(comparison.getId(), statement.statement);
@@ -151,6 +154,12 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("comparisonId") Long comparisonId) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         var user = userRepository.getUser();
+
+        // check if current user is part of the comparison or not
+        if (!comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) || !comparison.getSubmissionA().getStudentLogin().equals(user.getLogin())) {
+            throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
+        }
+
         PlagiarismComparison anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
         return ResponseEntity.ok(new PlagiarismCaseDTO(anonymizedComparisonForStudentView.getPlagiarismResult().getExercise(), Set.of(anonymizedComparisonForStudentView)));
     }
@@ -198,11 +207,13 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("comparisonId") long comparisonId,
             @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
 
-        // TODO think about the different ways the security can be outplayed: e.g. currently there is no link between a comparison and the plagiarized exercise/course !! add
-        // link?-> authenticationCheckService...
-
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        var exercise = comparison.getPlagiarismResult().getExercise(); // TODO check if needed for notification / check if user is instructor of this exercise/course
+        var affectedExercise = comparison.getPlagiarismResult().getExercise(); // TODO check if needed for notification / check if user is instructor of this exercise/course
+
+        if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
+            throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
+        }
+
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusA(comparisonId, statusDTO.getStatus());
             // TODO singleUserNotificationService.notifyUserAboutPlagiarismCase(notification);

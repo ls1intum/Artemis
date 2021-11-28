@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -16,14 +18,21 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 
 public class SingleUserNotificationFactoryTest {
 
     @Autowired
     private static SingleUserNotificationFactory singleUserNotificationFactory;
 
-    @Mock
     private User user;
+
+    @Mock
+    private static User cheatingUser;
+
+    private final static String USER_LOGIN = "de27sms";
 
     @Mock
     private static Lecture lecture;
@@ -46,7 +55,18 @@ public class SingleUserNotificationFactoryTest {
     @Mock
     private static AnswerPost answerPost;
 
+    @Mock
+    private static PlagiarismComparison plagiarismComparison;
+
+    @Mock
+    private static PlagiarismResult plagiarismResult;
+
+    @Mock
+    private static PlagiarismSubmission plagiarismSubmission;
+
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
+
+    private static final String PLAGIARISM_INSTRUCTOR_STATEMENT = "You definitely plagiarised! Your answers are identical!";
 
     private String expectedTitle;
 
@@ -77,6 +97,7 @@ public class SingleUserNotificationFactoryTest {
         when(exercise.getTitle()).thenReturn("exercise title");
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
         when(exercise.getProblemStatement()).thenReturn("problem statement");
+        when(exercise.getExerciseType()).thenReturn(TEXT);
 
         post = mock(Post.class);
         when(post.getExercise()).thenReturn(exercise);
@@ -85,6 +106,19 @@ public class SingleUserNotificationFactoryTest {
         answerPost = mock(AnswerPost.class);
         when(answerPost.getPost()).thenReturn(post);
 
+        cheatingUser = mock(User.class);
+        when(cheatingUser.getLogin()).thenReturn(USER_LOGIN);
+
+        plagiarismResult = mock(PlagiarismResult.class);
+        when(plagiarismResult.getExercise()).thenReturn(exercise);
+
+        plagiarismSubmission = mock(PlagiarismSubmission.class);
+        when(plagiarismSubmission.getStudentLogin()).thenReturn(USER_LOGIN);
+
+        plagiarismComparison = mock(PlagiarismComparison.class);
+        when(plagiarismComparison.getInstructorStatementA()).thenReturn(PLAGIARISM_INSTRUCTOR_STATEMENT);
+        when(plagiarismComparison.getPlagiarismResult()).thenReturn(plagiarismResult);
+        when(plagiarismComparison.getSubmissionA()).thenReturn(plagiarismSubmission);
     }
 
     /// Test for Notifications based on Posts
@@ -102,6 +136,11 @@ public class SingleUserNotificationFactoryTest {
      */
     private void createAndCheckExerciseNotification() {
         createdNotification = singleUserNotificationFactory.createNotification(exercise, notificationType, user);
+        checkNotification();
+    }
+
+    private void createAndCheckPlagiarismNotification() {
+        createdNotification = singleUserNotificationFactory.createNotification(plagiarismComparison, notificationType, cheatingUser, user);
         checkNotification();
     }
 
@@ -124,7 +163,8 @@ public class SingleUserNotificationFactoryTest {
      * @return is the final notification target as a String.
      */
     private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
-        return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+        return "{\"" + MESSAGE_TEXT + "\":\"" + message + "\",\"" + ID_TEXT + "\":" + relevantIdForCurrentTestCase + ",\"" + ENTITY_TEXT + "\":\"" + entity + "\",\"" + COURSE_TEXT
+                + "\":" + courseId + ",\"" + MAIN_PAGE_TEXT + "\":\"" + COURSES_TEXT + "\"}";
     }
 
     /**
@@ -136,7 +176,7 @@ public class SingleUserNotificationFactoryTest {
      * @return is the final notification target as a String.
      */
     private String createExpectedTargetForPosts(Long postId, String relevantType, Long idForRelevantType, Long courseId) {
-        return "{\"id\":" + postId + ",\"" + relevantType + "\":" + idForRelevantType + ",\"course\":" + courseId + "}";
+        return "{\"" + ID_TEXT + "\":" + postId + ",\"" + relevantType + "\":" + idForRelevantType + ",\"" + COURSE_TEXT + "\":" + courseId + "}";
     }
 
     /**
@@ -146,7 +186,7 @@ public class SingleUserNotificationFactoryTest {
      * @return is the final notification target as a String.
      */
     private String createExpectedTargetForCourseWidePosts(Long postId, Long courseId) {
-        return "{\"id\":" + postId + ",\"course\":" + courseId + "}";
+        return "{\"" + ID_TEXT + "\":" + postId + ",\"" + COURSE_TEXT + "\":" + courseId + "}";
     }
 
     /**
@@ -159,7 +199,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
+        expectedTarget = createExpectedTargetForPosts(post.getId(), EXERCISE_ID_TEXT, post.getExercise().getId(), courseId);
         createAndCheckPostNotification();
     }
 
@@ -173,7 +213,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
+        expectedTarget = createExpectedTargetForPosts(post.getId(), LECTURE_ID_TEXT, post.getLecture().getId(), courseId);
         createAndCheckPostNotification();
     }
 
@@ -203,7 +243,38 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, "exercises", exerciseId);
+        expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, EXERCISES_TEXT, exerciseId);
         createAndCheckExerciseNotification();
+    }
+
+    /// Test for Notifications based on Plagiarism
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT.
+     * I.e. notifications that originate when an instructor sets his statement concerning the plagiarism comparison for one of both student sides.
+     */
+    @Test
+    public void createNotification_withNotificationType_NewPossiblePlagiarismCaseStudent() {
+        notificationType = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT;
+        expectedTitle = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE;
+        expectedText = PLAGIARISM_INSTRUCTOR_STATEMENT;
+        expectedPriority = HIGH;
+        expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());
+        createAndCheckPlagiarismNotification();
+    }
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of PLAGIARISM_CASE_FINAL_STATE_STUDENT.
+     * I.e. notifications that originate when an instructor sets the final state of a plagiarism comparison.
+     */
+    @Test
+    public void createNotification_withNotificationType_PlagiarismCaseFinalStateStudent() {
+        notificationType = PLAGIARISM_CASE_FINAL_STATE_STUDENT;
+        expectedTitle = PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE;
+        expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString() + " exercise \""
+                + plagiarismResult.getExercise().getTitle() + "\"" + " has a final verdict.";
+        expectedPriority = HIGH;
+        expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());
+        createAndCheckPlagiarismNotification();
     }
 }

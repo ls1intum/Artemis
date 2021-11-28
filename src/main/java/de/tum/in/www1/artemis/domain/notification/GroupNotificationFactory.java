@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetService.COURSE_ARCHIVE_UPDATED_TEXT;
 
 import java.util.List;
 
@@ -246,7 +247,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-        notification.setTarget(targetService.getCourseTarget(course, "courseArchiveUpdated"));
+        notification.setTarget(targetService.getCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT));
         return notification;
     }
 
