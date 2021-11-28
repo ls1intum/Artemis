@@ -117,6 +117,10 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("comparisonId") long comparisonId,
             @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
+
+        // TODO think about the different ways the security can be outplayed: e.g. currently there is no link between a comparison and the plagiarized exercise/course !! add
+        // link?-> authenticationCheckService...
+
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin); // TODO maybe remove if not used by notifications
 
@@ -193,6 +197,10 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("comparisonId") long comparisonId,
             @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
+
+        // TODO think about the different ways the security can be outplayed: e.g. currently there is no link between a comparison and the plagiarized exercise/course !! add
+        // link?-> authenticationCheckService...
+
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         var exercise = comparison.getPlagiarismResult().getExercise(); // TODO check if needed for notification / check if user is instructor of this exercise/course
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {

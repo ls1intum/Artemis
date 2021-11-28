@@ -38,6 +38,10 @@ public class PlagiarismService {
      * @return the collected plagiarism cases
      */
     public ArrayList<PlagiarismCaseDTO> collectAllPlagiarismCasesForCourse(Long courseId) {
+
+        // TODO why do we do this so strangely? We know that the instructor is allowed to view/access all plagiarism cases of the given course -> there should be a dedicated and
+        // simple repository method to retrieve all plagiarismcases of a course #getAll
+
         var collectedPlagiarismCases = new ArrayList<PlagiarismCaseDTO>();
         var exerciseIDs = exerciseRepository.findAllIdsByCourseId(courseId);
         exerciseIDs.forEach(id -> {
