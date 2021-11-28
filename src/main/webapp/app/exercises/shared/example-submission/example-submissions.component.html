@@ -63,7 +63,13 @@
                         </a>
                     </td>
                     <td>
-                        <jhi-result [result]="exampleSubmission.submission!.results![0]"></jhi-result>
+                        <jhi-result
+                            *ngIf="exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0; else showEmptyResult"
+                            [result]="exampleSubmission.submission!.results![0]"
+                        ></jhi-result>
+                        <ng-template #showEmptyResult>
+                            <jhi-result></jhi-result>
+                        </ng-template>
                     </td>
                     <td>
                         {{ exampleSubmission.submission!.submissionSize }}
