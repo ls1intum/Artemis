@@ -46,6 +46,7 @@
                         ></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
+                    <th><span jhiTranslate="artemisApp.exampleSubmission.exampleAssessmentCreated"></span></th>
                     <th *ngIf="exercise.course.isAtLeastEditor"></th>
                 </tr>
             </thead>
@@ -68,6 +69,9 @@
                         {{ exampleSubmission.submission!.submissionSize }}
                     </td>
                     <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
+                    <td>
+                        {{ 'global.generic.' + (createdExampleAssessment[i] ? 'yes' : 'no') | artemisTranslate }}
+                    </td>
                     <td *ngIf="exercise.course.isAtLeastEditor">
                         <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
                             <fa-icon [icon]="'times'"></fa-icon>

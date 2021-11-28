@@ -58,7 +58,8 @@
             "searchSubmission": "Suche nach Einreichung",
             "submissionSize": "Einreichungsgröße",
             "textSubmissionSizeHint": "Diese Zahl gibt die Anzahl der Wörter im Text an.",
-            "modelingSubmissionSizeHint": "Diese Zahl gibt die Anzahl der im Modell verwendeten Elemente an."
+            "modelingSubmissionSizeHint": "Diese Zahl gibt die Anzahl der im Modell verwendeten Elemente an.",
+            "exampleAssessmentCreated": "Beispilabgabe erstellt"
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"

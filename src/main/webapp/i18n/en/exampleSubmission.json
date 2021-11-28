@@ -58,7 +58,8 @@
             "searchSubmission": "Search for Submission",
             "submissionSize": "Submission Size",
             "textSubmissionSizeHint": "This number shows the number of words in the text.",
-            "modelingSubmissionSizeHint": "This number shows the number of elements used in the model."
+            "modelingSubmissionSizeHint": "This number shows the number of elements used in the model.",
+            "exampleAssessmentCreated": "Example assessment created"
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"

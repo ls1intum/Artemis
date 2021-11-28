@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
     readonly exerciseType = ExerciseType;
+    createdExampleAssessment: boolean[];
 
     constructor(
         private alertService: AlertService,
@@ -36,6 +37,10 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             exercise.course = getCourseFromExercise(exercise);
             this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
+
+            this.createdExampleAssessment = this.exercise.exampleSubmissions!.map(
+                (exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false,
+            );
         });
         this.exercise?.exampleSubmissions?.forEach((exampleSubmission) => {
             if (exampleSubmission.submission) {
@@ -62,6 +67,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         this.exampleSubmissionService.delete(submissionId).subscribe(
             () => {
                 this.exercise.exampleSubmissions!.splice(index, 1);
+                this.createdExampleAssessment.splice(index, 1);
             },
             (error: HttpErrorResponse) => {
                 this.alertService.error(error.message);
