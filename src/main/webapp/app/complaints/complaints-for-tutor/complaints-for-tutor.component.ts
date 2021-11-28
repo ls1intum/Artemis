@@ -22,9 +22,8 @@ export class ComplaintsForTutorComponent implements OnInit {
     @Input() isTestRun = false;
     @Input() isAssessor = false;
     @Input() zeroIndent = true;
-    @Input() exercise: Exercise | undefined;
-    @Input() submission: Submission | undefined;
-    @Input() isAtLeastInstructor: boolean;
+    @Input() exercise?: Exercise;
+    @Input() submission?: Submission;
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
@@ -210,6 +209,6 @@ export class ComplaintsForTutorComponent implements OnInit {
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
-        return isAllowedToRespondToComplaintAction(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
+        return isAllowedToRespondToComplaintAction(!!this.exercise!.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
     }
 }

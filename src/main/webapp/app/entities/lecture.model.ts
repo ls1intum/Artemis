@@ -15,10 +15,4 @@ export class Lecture implements BaseEntity {
     posts?: Post[];
     lectureUnits?: LectureUnit[];
     course?: Course;
-
-    // helper attribute
-    isAtLeastEditor?: boolean;
-    isAtLeastInstructor?: boolean;
-
-    constructor() {}
 }

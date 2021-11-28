@@ -44,7 +44,7 @@
                 [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled!"
                 [complaintsEnabled]="course.complaintsEnabled!"
                 [numberOfTutorAssessments]="numberOfTutorAssessments"
-                [courseId]="courseId"
+                [course]="course"
                 [tutorId]="tutor.id!"
                 [examId]="examId"
                 [totalNumberOfAssessments]="totalNumberOfAssessments"
@@ -52,7 +52,6 @@
                 [numberOfCorrectionRounds]="numberOfCorrectionRounds"
                 [totalAssessmentPercentage]="totalAssessmentPercentage"
                 [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                [isAtLeastInstructor]="course?.isAtLeastInstructor || false"
                 [complaints]="complaints"
                 [moreFeedbackRequests]="moreFeedbackRequests"
                 [assessmentLocks]="assessmentLocks"
@@ -183,7 +182,7 @@
         </table>
     </div>
 
-    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
+    <div *ngIf="course?.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
         <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
         <ul *ngFor="let issue of tutorIssues">
             <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">

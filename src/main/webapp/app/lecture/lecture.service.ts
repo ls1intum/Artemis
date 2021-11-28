@@ -133,8 +133,7 @@ export class LectureService {
     }
 
     /**
-     * Besides the within the lecture included variables for access rights the access rights of the
-     * respective course are set aswell.
+     * Sets the access rights in the course of the lecture
      *
      * @param lecture for which the access rights shall be set
      * @return lecture that with set access rights if the course was set
@@ -143,8 +142,6 @@ export class LectureService {
         if (lecture) {
             if (lecture.course) {
                 this.accountService.setAccessRightsForCourse(lecture.course);
-                lecture.isAtLeastEditor = lecture.course.isAtLeastEditor;
-                lecture.isAtLeastInstructor = lecture.course.isAtLeastInstructor;
             }
         }
         return lecture;

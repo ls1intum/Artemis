@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
 
 export class AssessmentDashboardInformationEntry {
     constructor(public total: number, public tutor: number, public done?: number) {}
@@ -29,10 +30,9 @@ export class AssessmentDashboardInformationEntry {
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges {
     @Input() isExamMode: boolean;
-    @Input() courseId: number;
     @Input() examId?: number;
     @Input() tutorId: number;
-    @Input() isAtLeastInstructor: boolean;
+    @Input() course?: Course;
 
     @Input() complaintsEnabled: boolean;
     @Input() feedbackRequestEnabled: boolean;
@@ -85,10 +85,10 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     setupLinks() {
         const examRouteIfNeeded = this.isExamMode ? ['exams', this.examId!] : [];
 
-        this.complaintsLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['complaints']);
-        this.moreFeedbackRequestsLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
-        this.assessmentLocksLink = ['/course-management', this.courseId].concat(examRouteIfNeeded).concat(['assessment-locks']);
-        this.ratingsLink = ['/course-management', this.courseId, 'ratings'];
+        this.complaintsLink = ['/course-management', this.course!.id!].concat(examRouteIfNeeded).concat(['complaints']);
+        this.moreFeedbackRequestsLink = ['/course-management', this.course!.id!].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
+        this.assessmentLocksLink = ['/course-management', this.course!.id!].concat(examRouteIfNeeded).concat(['assessment-locks']);
+        this.ratingsLink = ['/course-management', this.course!.id!, 'ratings'];
     }
 
     setupGraph() {
