@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
@@ -61,8 +61,8 @@ describe('Exercise Groups Component', () => {
             imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
                 ExerciseGroupsComponent,
-                ExamExerciseRowButtonsComponent,
-                ProgrammingExerciseInstructorStatusComponent,
+                MockComponent(ExamExerciseRowButtonsComponent),
+                MockComponent(ProgrammingExerciseInstructorStatusComponent),
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
                 MockDirective(DeleteButtonDirective),
@@ -80,35 +80,33 @@ describe('Exercise Groups Component', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseGroupsComponent);
+                comp = fixture.componentInstance;
 
-        fixture = TestBed.createComponent(ExerciseGroupsComponent);
-        comp = fixture.componentInstance;
+                exerciseGroupService = TestBed.inject(ExerciseGroupService);
+                examManagementService = TestBed.inject(ExamManagementService);
+                eventManager = TestBed.inject(EventManager);
+                modalService = TestBed.inject(NgbModal);
+                router = TestBed.inject(Router);
 
-        exerciseGroupService = TestBed.inject(ExerciseGroupService);
-        examManagementService = TestBed.inject(ExamManagementService);
-        eventManager = TestBed.inject(EventManager);
-        modalService = TestBed.inject(NgbModal);
-        router = TestBed.inject(Router);
-
-        groups = [
-            {
-                id: 0,
-                exercises: [
-                    { id: 3, type: ExerciseType.TEXT },
-                    { id: 4, type: ExerciseType.PROGRAMMING },
-                ],
-            } as ExerciseGroup,
-            { id: 1 } as ExerciseGroup,
-            { id: 2 } as ExerciseGroup,
-        ];
+                groups = [
+                    {
+                        id: 0,
+                        exercises: [
+                            { id: 3, type: ExerciseType.TEXT },
+                            { id: 4, type: ExerciseType.PROGRAMMING },
+                        ],
+                    } as ExerciseGroup,
+                    { id: 1 } as ExerciseGroup,
+                    { id: 2 } as ExerciseGroup,
+                ];
+                // Always initialized and bind before tests
+                fixture.detectChanges();
+            });
     });
-
-    // Always initialized and bind before tests
-    beforeEach(fakeAsync(() => {
-        fixture.detectChanges();
-        tick();
-    }));
 
     it('loads the exercise groups', fakeAsync(() => {
         const mockResponse = new HttpResponse<Exam>({ body: exam });
@@ -117,7 +115,7 @@ describe('Exercise Groups Component', () => {
 
         comp.loadExerciseGroups().subscribe((response) => {
             expect(response.body).not.toBeNull();
-            expect(response.body!.id).toEqual(exam.id);
+            expect(response.body!.id).toBe(exam.id);
         });
 
         tick();
@@ -132,19 +130,19 @@ describe('Exercise Groups Component', () => {
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
             expect(response!.body).not.toBeNull();
-            expect(response!.body!.latestIndividualEndDate).toEqual(latestIndividualEndDate);
+            expect(response!.body!.latestIndividualEndDate).toBe(latestIndividualEndDate);
         });
 
         tick();
     }));
 
-    it('removes an exercise from group', fakeAsync(() => {
+    it('removes an exercise from group', () => {
         comp.exerciseGroups = groups;
 
         comp.removeExercise(3, 0);
 
         expect(comp.exerciseGroups[0].exercises).toHaveLength(1);
-    }));
+    });
 
     it('deletes an exercise group', fakeAsync(() => {
         comp.exerciseGroups = groups;
@@ -163,35 +161,35 @@ describe('Exercise Groups Component', () => {
         const icon = 'check-double';
         const exercise = { type: ExerciseType.QUIZ } as Exercise;
 
-        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+        expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type file upload', () => {
         const icon = 'file-upload';
         const exercise = { type: ExerciseType.FILE_UPLOAD } as Exercise;
 
-        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+        expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type modeling', () => {
         const icon = 'project-diagram';
         const exercise = { type: ExerciseType.MODELING } as Exercise;
 
-        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+        expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type programming', () => {
         const icon = 'keyboard';
         const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
-        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+        expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type text', () => {
         const icon = 'font';
         const exercise = { type: ExerciseType.TEXT } as Exercise;
 
-        expect(comp.exerciseIcon(exercise)).toEqual(icon);
+        expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('opens the import modal for programming exercises', fakeAsync(() => {
@@ -240,8 +238,8 @@ describe('Exercise Groups Component', () => {
 
         comp.moveUp(from);
 
-        expect(comp.exerciseGroups[to].id).toEqual(fromId);
-        expect(comp.exerciseGroups[from].id).toEqual(toId);
+        expect(comp.exerciseGroups[to].id).toBe(fromId);
+        expect(comp.exerciseGroups[from].id).toBe(toId);
     });
 
     it('moves down an exercise group', () => {
@@ -254,8 +252,8 @@ describe('Exercise Groups Component', () => {
 
         comp.moveDown(from);
 
-        expect(comp.exerciseGroups[to].id).toEqual(fromId);
-        expect(comp.exerciseGroups[from].id).toEqual(toId);
+        expect(comp.exerciseGroups[to].id).toBe(fromId);
+        expect(comp.exerciseGroups[from].id).toBe(toId);
     });
 
     it('maps exercise types to exercise groups', () => {
@@ -267,7 +265,7 @@ describe('Exercise Groups Component', () => {
         const map = comp.exerciseGroupToExerciseTypesDict;
 
         expect(map).toBeDefined();
-        expect(map.size).toEqual(groups.length);
+        expect(map.size).toBe(groups.length);
         expect(map.get(firstGroupId)).toEqual(expectedResult);
     });
 });

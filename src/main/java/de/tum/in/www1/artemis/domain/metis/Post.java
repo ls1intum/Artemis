@@ -34,15 +34,6 @@ public class Post extends Posting {
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
-    /**
-     * Track the votes for a "Post"
-     *
-     * @deprecated This will be removed with the introduction of Metis, where every Post will have an emoji reaction bar.
-     */
-    @Deprecated
-    @Column(name = "votes", columnDefinition = "integer default 0")
-    private Integer votes = 0;
-
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
@@ -88,14 +79,6 @@ public class Post extends Posting {
 
     public void setVisibleForStudents(Boolean visibleForStudents) {
         this.visibleForStudents = visibleForStudents;
-    }
-
-    public Integer getVotes() {
-        return votes;
-    }
-
-    public void setVotes(Integer votes) {
-        this.votes = votes;
     }
 
     @Override

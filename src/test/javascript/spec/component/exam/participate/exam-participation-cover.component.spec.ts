@@ -28,7 +28,7 @@ import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import sinonChai from 'sinon-chai';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
