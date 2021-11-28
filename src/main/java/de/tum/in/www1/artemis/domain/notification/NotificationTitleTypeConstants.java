@@ -57,7 +57,7 @@ public class NotificationTitleTypeConstants {
 
     public static final String NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = "New possible plagiarism case";
 
-    public static final String PLAGIARISM_CASE_FINAL_VERDICT_STUDENT_TITLE = "Final verdict for plagiarism case";
+    public static final String PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = "Final state for plagiarism case";
 
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
@@ -70,7 +70,7 @@ public class NotificationTitleTypeConstants {
             .put(NEW_ANNOUNCEMENT_POST, NEW_ANNOUNCEMENT_POST_TITLE).put(COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE)
             .put(COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE).put(EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE).put(EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE)
             .put(PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE).put(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE)
-            .put(PLAGIARISM_CASE_FINAL_VERDICT_STUDENT, PLAGIARISM_CASE_FINAL_VERDICT_STUDENT_TITLE).build();
+            .put(PLAGIARISM_CASE_FINAL_STATE_STUDENT, PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

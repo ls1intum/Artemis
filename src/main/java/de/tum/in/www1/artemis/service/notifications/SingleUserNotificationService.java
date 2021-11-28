@@ -51,6 +51,9 @@ public class SingleUserNotificationService {
                     (Course) typeSpecificInformation);
             // Exercise related
             case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
+            // Plagiarism related
+            // TODO case NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT -> createNotification(notificationType, );
+            // TODO case PLAGIARISM_CASE_FINAL_STATE_STUDENT -> createNotification(notificationType, );
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
@@ -97,6 +100,20 @@ public class SingleUserNotificationService {
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
         notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient);
     }
+
+    /**
+     * Notify student about possible plagiarism case.
+     */
+    /*
+     * public void notifyUserAboutNewPossiblePlagiarismCase(Plagiarism) { notifyRecipientWithNotificationType(todo, NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, ); }
+     */
+
+    /**
+     * Notify student about plagiarism case update.
+     */
+    /*
+     * public void notifyUserAboutFinalPlagiarismState(todo) { notifyRecipientWithNotificationType(todo, PLAGIARISM_CASE_FINAL_STATE_STUDENT, ); }
+     */
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
