@@ -1091,4 +1091,5 @@ public abstract class Exercise extends DomainObject {
         return previousDate.isBefore(laterDate);
     }
 
+    public abstract ExerciseType getExerciseType();
 }
