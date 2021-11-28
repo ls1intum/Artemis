@@ -24,7 +24,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
-import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';

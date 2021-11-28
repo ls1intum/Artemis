@@ -3,16 +3,16 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
@@ -216,11 +218,34 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExerciseForExam_datesSet() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
+        String title = "New Exam Text Exercise";
+        DifficultyLevel difficulty = DifficultyLevel.HARD;
+        textExercise.setTitle(title);
+        textExercise.setDifficulty(difficulty);
+        textExercise.setDueDate(someMoment);
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(exerciseGroup.getExercises()).doesNotContain(textExercise);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        request.postWithResponseBody("/api/text-exercises/", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         textExercise.setCourse(exerciseGroup.getExam().getCourse());
-
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -317,11 +342,10 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         Course newCourse = databaseUtilService.createCourse(newCourseId);
 
         // Assign new course to the text exercise.
-        TextExercise updatedTextExercise = existingTextExercise;
-        updatedTextExercise.setCourse(newCourse);
+        existingTextExercise.setCourse(newCourse);
 
         // Text exercise update with the new course should fail.
-        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", updatedTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", existingTextExercise, TextExercise.class, HttpStatus.CONFLICT);
         assertThat(returnedTextExercise).isNull();
     }
 
@@ -356,6 +380,17 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(!updatedTextExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        request.putWithResponseBody("/api/text-exercises/", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -448,6 +483,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(null);
+        textExercise.setDueDate(null);
+        textExercise.setAssessmentDueDate(null);
+        textExercise.setReleaseDate(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);

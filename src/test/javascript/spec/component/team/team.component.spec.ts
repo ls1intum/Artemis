@@ -153,7 +153,7 @@ describe('TeamComponent', () => {
             jest.spyOn(router, 'navigate');
             comp.onTeamDelete();
             expect(router['navigate']).toHaveBeenCalledTimes(1);
-            expect(router['navigate']).toHaveBeenCalledWith(['/course-management', mockExercise.course?.id, mockExercise.type + '-exercises', mockExercise.id, 'teams']);
+            expect(router['navigate']).toHaveBeenCalledWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
         });
     });
 });

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -17,11 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -80,6 +81,9 @@ public class GroupNotificationServiceTest {
 
     @Mock
     private static Post post;
+
+    @Mock
+    static AnswerPost answerPost;
 
     @Mock
     private static Course course;
@@ -189,6 +193,9 @@ public class GroupNotificationServiceTest {
         post = mock(Post.class);
         when(post.getExercise()).thenReturn(exercise);
         when(post.getLecture()).thenReturn(lecture);
+
+        answerPost = mock(AnswerPost.class);
+        when(answerPost.getPost()).thenReturn(post);
 
         instanceMessageSendService = mock(InstanceMessageSendService.class);
         doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(EXERCISE_ID);
@@ -390,7 +397,7 @@ public class GroupNotificationServiceTest {
     public void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
         when(attachment.getReleaseDate()).thenReturn(ZonedDateTime.now());
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.ATTACHMENT_CHANGE_TITLE);
+        verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
     }
 
     /**
@@ -399,7 +406,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyStudentGroupAboutExercisePractice() {
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.EXERCISE_PRACTICE_TITLE);
+        verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
     }
 
     /**
@@ -408,7 +415,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyStudentGroupAboutQuizExerciseStart() {
         groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.QUIZ_EXERCISE_STARTED_TITLE);
+        verifyRepositoryCallWithCorrectNotification(1, QUIZ_EXERCISE_STARTED_TITLE);
     }
 
     /**
@@ -417,7 +424,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.EXERCISE_UPDATED_TITLE);
+        verifyRepositoryCallWithCorrectNotification(3, EXERCISE_UPDATED_TITLE);
     }
 
     /**
@@ -426,7 +433,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAllGroupsAboutReleasedExercise() {
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NotificationTitleTypeConstants.EXERCISE_RELEASED_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
     }
 
     /**
@@ -435,7 +442,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(2, NotificationTitleTypeConstants.EXERCISE_UPDATED_TITLE);
+        verifyRepositoryCallWithCorrectNotification(2, EXERCISE_UPDATED_TITLE);
     }
 
     /**
@@ -444,7 +451,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAllGroupsAboutNewPostForExercise() {
         groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NotificationTitleTypeConstants.NEW_EXERCISE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
     }
 
     /**
@@ -453,7 +460,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(2, NotificationTitleTypeConstants.DUPLICATE_TEST_CASE_TITLE);
+        verifyRepositoryCallWithCorrectNotification(2, DUPLICATE_TEST_CASE_TITLE);
     }
 
     /**
@@ -462,7 +469,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.ILLEGAL_SUBMISSION_TITLE);
+        verifyRepositoryCallWithCorrectNotification(1, ILLEGAL_SUBMISSION_TITLE);
     }
 
     /**
@@ -471,7 +478,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAllGroupsAboutNewPostForLecture() {
         groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NotificationTitleTypeConstants.NEW_LECTURE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
     }
 
     /**
@@ -480,7 +487,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAllGroupsAboutNewCoursePost() {
         groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NotificationTitleTypeConstants.NEW_COURSE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
     }
 
     /**
@@ -488,8 +495,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, answerPost, course);
+        verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
     /**
@@ -497,8 +504,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, answerPost, course);
+        verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
     /**
@@ -507,7 +514,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAllGroupsAboutNewAnnouncement() {
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NotificationTitleTypeConstants.NEW_ANNOUNCEMENT_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
     }
 
     /**
@@ -515,8 +522,17 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotification(3, NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
+        verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_LECTURE_POST_TITLE);
+    }
+
+    /**
+     * Test for notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise method
+     */
+    @Test
+    public void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
+        verifyRepositoryCallWithCorrectNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
     }
 
     // Course Archiving
@@ -526,8 +542,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveStarted() {
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.COURSE_ARCHIVE_STARTED_TITLE);
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_STARTED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_STARTED_TITLE);
     }
 
     /**
@@ -535,8 +551,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFailed() {
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.COURSE_ARCHIVE_FAILED_TITLE);
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FAILED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_FAILED_TITLE);
     }
 
     /**
@@ -544,8 +560,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFinished() {
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.COURSE_ARCHIVE_FINISHED_TITLE);
+        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FINISHED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_FINISHED_TITLE);
     }
 
     // Exam Archiving
@@ -555,8 +571,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveStarted() {
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.EXAM_ARCHIVE_STARTED_TITLE);
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_STARTED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_STARTED_TITLE);
     }
 
     /**
@@ -564,8 +580,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFailed() {
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.EXAM_ARCHIVE_FAILED_TITLE);
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FAILED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FAILED_TITLE);
     }
 
     /**
@@ -573,8 +589,8 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, NotificationTitleTypeConstants.EXAM_ARCHIVE_FINISHED_TITLE);
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FINISHED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
     }
 
     /// Save & Send related Tests
@@ -593,7 +609,7 @@ public class GroupNotificationServiceTest {
         verify(groupNotificationRepository, times(3)).save(any());
         verify(messagingTemplate, times(3)).convertAndSend(any(), notificationCaptor.capture());
         capturedNotification = notificationCaptor.getValue();
-        assertThat(capturedNotification.getTitle()).isEqualTo(NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
+        assertThat(capturedNotification.getTitle()).isEqualTo(LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
 
         // there should be no interaction with settings or email services
         verify(notificationSettingsService, times(0)).checkNotificationTypeForEmailSupport(any());
@@ -625,7 +641,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testSaveAndSend_CourseRelatedNotifications() {
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any())).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
 
         setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);

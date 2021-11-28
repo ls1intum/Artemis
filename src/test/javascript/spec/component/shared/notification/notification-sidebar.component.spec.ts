@@ -22,7 +22,7 @@ import { MockUserService } from '../../../helpers/mocks/service/mock-user.servic
 import { UserService } from 'app/core/user/user.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';

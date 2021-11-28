@@ -13,7 +13,7 @@ import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/ma
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
@@ -148,6 +148,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     sortRows() {
         this.sortService.sortByProperty(this.programmingExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 
     openImportModal() {
