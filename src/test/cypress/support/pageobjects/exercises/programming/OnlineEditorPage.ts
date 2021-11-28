@@ -162,7 +162,7 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
  * Starts the participation in the test programming exercise.
  */
 export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
-    const courseOverview = artemis.pageobjects.courseOverview;
+    const courseOverview = artemis.pageobjects.course.overview;
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
