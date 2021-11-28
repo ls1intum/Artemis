@@ -44,7 +44,14 @@ describe('Programming exercise assessment', () => {
         }
     });
 
-    it('Assesses the programming exercise submission', () => {
+    it('Assesses the programming exercise submission and verify it', () => {
+        assessSubmission();
+        updateExerciseAssessmentDueDate();
+        verifyAssessmentAsStudent();
+        acceptComplaintAsInstructor();
+    });
+
+    function assessSubmission() {
         cy.login(tutor, '/course-management');
         coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
         courseAssessment.checkShowFinishedExercises();
@@ -59,34 +66,28 @@ describe('Programming exercise assessment', () => {
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
         programmingAssessment.submit().its('response.statusCode').should('eq', 200);
-    });
+    }
 
-    describe('Feedback', () => {
-        before(() => {
-            updateExerciseAssessmentDueDate();
-            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
-        });
+    function verifyAssessmentAsStudent() {
+        cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
+        const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
+        const percentage = totalPoints * 10;
+        exerciseResult.shouldShowExerciseTitle(exercise.title);
+        exerciseResult.clickOpenCodeEditor();
+        programmingFeedback.shouldShowRepositoryLockedWarning();
+        programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
+        programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
+        programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
+        // The complaint feature is located on the result screen for programming exercises...
+        cy.go('back');
+        programmingFeedback.complain(complaint);
+    }
 
-        it('Student sees feedback after assessment due date and complains', () => {
-            const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
-            const percentage = totalPoints * 10;
-            exerciseResult.shouldShowExerciseTitle(exercise.title);
-            exerciseResult.clickOpenCodeEditor();
-            programmingFeedback.shouldShowRepositoryLockedWarning();
-            programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-            programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
-            programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
-            // The complaint feature is located on the result screen for programming exercises...
-            cy.go('back');
-            programmingFeedback.complain(complaint);
-        });
-
-        it('Instructor can see complaint and reject it', () => {
-            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessment.openComplaints(course.id);
-            programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
-        });
-    });
+    function acceptComplaintAsInstructor() {
+        cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
+        courseAssessment.openComplaints(course.id);
+        programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+    }
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
