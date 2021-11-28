@@ -20,6 +20,7 @@ const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
+const studentExamManagement = artemis.pageobjects.studentExamManagement;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -136,7 +137,7 @@ describe('Exam assessment', () => {
 
         beforeEach('Generate new exam name', () => {
             examEnd = dayjs().add(15, 'seconds');
-            resultDate = examEnd.add(10, 'seconds');
+            resultDate = examEnd.add(17, 'seconds');
             prepareExam(examEnd, resultDate);
         });
 
@@ -164,7 +165,10 @@ describe('Exam assessment', () => {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
+            const score = '5 of 10 points';
+            // Sometimes the feedback fails to load properly on the first load...
+            cy.reloadUntilFound(`jhi-result:contains(${score})`);
+            cy.get('jhi-result').contains(score).should('be.visible');
         });
     });
 
