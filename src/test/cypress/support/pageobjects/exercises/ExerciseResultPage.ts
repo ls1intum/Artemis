@@ -1,3 +1,4 @@
+import { GET, BASE_API } from './../../constants';
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
  */
@@ -15,7 +16,9 @@ export class ExerciseResultPage {
     }
 
     clickViewSubmission() {
+        cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
         cy.contains('View submission').click();
+        return cy.wait('@getResults');
     }
 
     clickOpenCodeEditor() {
