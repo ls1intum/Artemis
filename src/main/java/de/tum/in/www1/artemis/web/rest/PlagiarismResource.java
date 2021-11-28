@@ -38,6 +38,7 @@ public class PlagiarismResource {
         public String statement;
     }
 
+    // correspond to the translation files (suffix) used in the client
     private static final String YOUR_SUBMISSION = "yourSubmission";
 
     private static final String OTHER_SUBMISSION = "otherSubmission";
@@ -72,7 +73,7 @@ public class PlagiarismResource {
 
     /**
      * Update the status of the plagiarism comparison with the given ID.
-     * I.e. An editor or instructor sees a possible plagiarism case for the first time and decides if it should be further examined, or it is not a plagiarism.
+     * I.e. An editor or instructor sees a possible plagiarism case for the first time and decides if it should be further examined, or if it is not a plagiarism.
      *
      * @param comparisonId of the plagiarism comparison to update the status of
      * @param statusDTO new status for the given comparison
@@ -120,7 +121,16 @@ public class PlagiarismResource {
         return ResponseEntity.ok(res);
     }
 
-    /// An instructor sends his statement/message about his verdict to student A or B
+    /**
+     * Updates an instructor statement on a plagiarismComparison (for one side).
+     * This process will send a notification to the respective student.
+     * I.e. the instructor sets a personal message to one of the accused students.
+     *
+     * @param comparisonId the id of the PlagiarismComparison
+     * @param studentLogin of one of accused students
+     * @param statement of the instructor directed to one of the accused students
+     * @return the instructor statement (convention)
+     */
     @PutMapping("plagiarism-comparisons/{comparisonId}/{studentLogin}/instructor-statement")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("comparisonId") long comparisonId,
@@ -202,13 +212,14 @@ public class PlagiarismResource {
     }
 
     /**
-     * Updates the final status of a plagiarism comparison.
+     * Updates the final status of a plagiarism comparison concerning one of both students.
+     * This process will send a notification to the respective student.
      * I.e. an instructor sends his final verdict/decision
      *
      * @param comparisonId of the comparison
      * @param studentLogin of the student
-     * @param statusDTO is the final status of this plagiarism comparison
-     * @return the final (updated) status of this plagiarism comparison
+     * @param statusDTO is the final status of this plagiarism comparison concerning one of both students
+     * @return the final (updated) status of this plagiarism comparison concerning one of both students
      */
     @PutMapping("plagiarism-comparisons/{comparisonId}/{studentLogin}/final-status")
     @PreAuthorize("hasRole('INSTRUCTOR')")
