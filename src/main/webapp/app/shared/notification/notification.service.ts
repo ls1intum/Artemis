@@ -67,8 +67,12 @@ export class NotificationService {
     }
 
     /**
-     * Updates the
-     * @param hideNotificationsUntil
+     * Updates the property that decides what notifications should be displayed or hidden in the notification sidebar based on notification date.
+     * If the value is set to null -> show all notifications
+     * (Not to be confused with the notification settings. This filter is only based on the date a notification was created)
+     *
+     * @param hideNotificationsUntil if not null, indicates what notifications have to be hidden based on their creation date, else show all notifications
+     * @return Observable<HttpResponse<dayjs.Dayjs | null>> is the input if the REST process was successful (by convention)
      */
     public updateHiddenNotifications(hideNotificationsUntil: dayjs.Dayjs | null): Observable<HttpResponse<dayjs.Dayjs | null>> {
         return this.http.put<dayjs.Dayjs | null>(this.resourceUrl, hideNotificationsUntil, { observe: 'response' });
