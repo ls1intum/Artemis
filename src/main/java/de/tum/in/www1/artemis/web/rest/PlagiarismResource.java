@@ -38,6 +38,10 @@ public class PlagiarismResource {
         public String statement;
     }
 
+    private static final String YOUR_SUBMISSION = "yourSubmission";
+
+    private static final String OTHER_SUBMISSION = "otherSubmission";
+
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -139,7 +143,39 @@ public class PlagiarismResource {
     }
 
     /**
-     * Creates a student statement on the plagiarismComparison.
+     * Retrieves the plagiarismComparison specified by its Id. The submissions are anonymized for the student.
+     * StudentIds are replaced with "Your Submission" and "Other Submission" based on the requesting user.
+     *
+     * @param comparisonId the id of the PlagiarismComparison
+     * @return the PlagiarismComparison
+     * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
+     */
+    @GetMapping("plagiarism-comparisons/{comparisonId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("comparisonId") Long comparisonId) {
+        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        var user = userRepository.getUser();
+
+        // anonymize:
+        if (comparison.getSubmissionA().getStudentLogin().equals(user.getLogin())) {
+            comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
+            comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
+            comparison.setInstructorStatementB(null);
+        }
+        else if (comparison.getSubmissionB().getStudentLogin().equals(user.getLogin())) {
+            comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
+            comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
+            comparison.setInstructorStatementA(null);
+        }
+        else {
+            throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
+        }
+        return ResponseEntity.ok(new PlagiarismCaseDTO(comparison.getPlagiarismResult().getExercise(), Set.of(comparison)));
+    }
+
+    /**
+     * Updates a student statement on a plagiarismComparison.
+     * I.e. one of the students that is accused of plagiarising updates/sets the respective/individual response/defence
      *
      * @param comparisonId of the comparison
      * @param statement the students statement
@@ -165,7 +201,15 @@ public class PlagiarismResource {
         return ResponseEntity.ok(statement);
     }
 
-    /// TODO An instructor send his final verdict/status/decision
+    /**
+     * Updates the final status of a plagiarism comparison.
+     * I.e. an instructor sends his final verdict/decision
+     *
+     * @param comparisonId of the comparison
+     * @param studentLogin of the student
+     * @param statusDTO is the final status of this plagiarism comparison
+     * @return the final (updated) status of this plagiarism comparison
+     */
     @PutMapping("plagiarism-comparisons/{comparisonId}/{studentLogin}/final-status")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("comparisonId") long comparisonId,
