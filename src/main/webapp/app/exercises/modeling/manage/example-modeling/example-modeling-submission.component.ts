@@ -24,6 +24,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -96,6 +97,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit(): void {
@@ -198,8 +200,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-                this.location.go(newUrl);
+                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
             },
             (error: HttpErrorResponse) => {
                 onError(this.alertService, error);

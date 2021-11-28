@@ -91,6 +91,10 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.id = SUBMISSION_ID;
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
         // GIVEN
         // @ts-ignore
@@ -109,7 +113,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.state.constructor.name).toEqual('EditState');
     });
 
-    it('should fetch only fetch exercise for new example submission and stay in new state', async () => {
+    it('should only fetch exercise for new example submission and stay in new state', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
@@ -136,13 +140,11 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.exercise!.isAtLeastInstructor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
-        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
         await comp.startAssessment();
 
         // THEN
-        expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toEqual('NewAssessmentState');
     });
 
@@ -208,7 +210,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.state = State.forExistingAssessmentWithContext(comp);
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
-        jest.spyOn(assessmentsService, 'deleteExampleFeedback').mockReturnValue(of());
+        jest.spyOn(assessmentsService, 'deleteExampleAssessment').mockReturnValue(of({}));
 
         // WHEN
         fixture.detectChanges();
@@ -218,9 +220,11 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(comp.state.constructor.name).toEqual('EditState');
-        expect(assessmentsService.deleteExampleFeedback).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
+        expect(assessmentsService.deleteExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
         expect(comp.submission?.blocks).toBeUndefined();
-        expect(comp.result?.feedbacks).toBeUndefined();
+        expect(comp.submission?.results).toBeUndefined();
+        expect(comp.submission?.latestResult).toBeUndefined();
+        expect(comp.result).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
