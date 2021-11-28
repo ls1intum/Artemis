@@ -91,9 +91,6 @@ public class ProgrammingExerciseIntegrationServiceTest {
     private CourseRepository courseRepository;
 
     @Autowired
-    private GradingCriterionRepository gradingCriterionRepository;
-
-    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -217,7 +214,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         }
     }
 
-    public void textProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
+    public void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
@@ -230,7 +227,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
     }
 
-    public void textProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
+    public void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
@@ -255,7 +252,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
     }
 
-    public void textProgrammingExerciseIsReleased_forbidden() throws Exception {
+    public void testProgrammingExerciseIsReleased_forbidden() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
@@ -302,7 +299,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         Files.deleteIfExists(pomPath);
     }
 
-    public void textExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
+    public void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
 
@@ -346,7 +343,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         Files.deleteIfExists(pomPath);
     }
 
-    public void textExportSubmissionsByParticipationIds() throws Exception {
+    public void testExportSubmissionsByParticipationIds() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
@@ -411,12 +408,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
         }
     }
 
-    public void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
+    public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", "10");
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
     }
 
-    public void textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
+    public void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
@@ -1343,18 +1340,29 @@ public class ProgrammingExerciseIntegrationServiceTest {
                 .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));
     }
 
-    public void updateTestCases_testCaseBonusPointsNull_badRequest() throws Exception {
+    /**
+     * Setting the bonus points to {@code null} is okay, as {@link ProgrammingExerciseTestCase#getBonusPoints()} will replace that with 0.
+     */
+    public void updateTestCases_testCaseBonusPointsNull() throws Exception {
+        {
+            final var originalTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+            originalTestCases.forEach(testCase -> testCase.setBonusPoints(1d));
+            programmingExerciseTestCaseRepository.saveAll(originalTestCases);
+        }
+
         final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
+
         final var updates = transformTestCasesToDto(testCases);
         updates.get(0).setBonusPoints(null);
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
-        request.getMvc()
-                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
-                        .content(request.getObjectMapper().writeValueAsString(updates)))
-                .andExpect(status().isBadRequest()) //
-                .andExpect(jsonPath("$.errorKey").value("settingNull")) //
-                .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).getId())).findFirst().get();
+        assertThat(updatedTestCase.getBonusPoints()).isEqualTo(0d);
+        assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
     }
 
     private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {

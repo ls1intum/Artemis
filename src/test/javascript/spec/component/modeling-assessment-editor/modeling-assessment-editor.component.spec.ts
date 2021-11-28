@@ -238,17 +238,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         }));
     });
 
-    it('should return if user is allowed to only read', fakeAsync(() => {
-        component.ngOnInit();
-        tick(500);
-        component.isAtLeastInstructor = false;
-        component.complaint = new Complaint();
-        component.complaint.id = 0;
-        component.complaint.complaintText = 'complaint';
-        component.isAssessor = true;
-        expect(component.readOnly).to.be.true;
-    }));
-
     it('should save assessment', fakeAsync(() => {
         const feedback = new Feedback();
         feedback.id = 2;

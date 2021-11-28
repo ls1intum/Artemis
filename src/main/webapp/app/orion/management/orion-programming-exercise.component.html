@@ -1,4 +1,10 @@
-<jhi-programming-exercise [embedded]="embedded" [course]="course" (exerciseCount)="exerciseCount.emit($event)">
+<jhi-programming-exercise
+    [embedded]="embedded"
+    [course]="course"
+    (exerciseCount)="exerciseCount.emit($event)"
+    [exerciseFilter]="exerciseFilter"
+    (filteredExerciseCount)="filteredExerciseCount.emit($event)"
+>
     <ng-template #overrideGenerateAndImportButton>
         <!-- No replacement, just not visible in Orion -->
     </ng-template>
