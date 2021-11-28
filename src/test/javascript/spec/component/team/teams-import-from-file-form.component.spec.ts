@@ -6,14 +6,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import * as chai from 'chai';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { unparse } from 'papaparse';
 
 describe('TeamsImportFromFileFormComponent', () => {
     let comp: TeamsImportFromFileFormComponent;
@@ -55,7 +51,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             const setImportStub: SinonSpy = spy(comp, 'setImportFile');
             const inputElement = debugElement.query(By.css('input')).nativeElement;
             inputElement.dispatchEvent(new Event('change'));
-            expect(setImportStub).to.have.been.called;
+            expect(setImportStub).toHaveBeenCalledTimes(1);
         });
     });
     describe('generateFileReader', () => {
@@ -63,7 +59,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             resetComponent();
         });
         it('should return file reader when called', () => {
-            expect(comp.generateFileReader()).to.deep.equal(new FileReader());
+            expect(comp.generateFileReader()).toStrictEqual(new FileReader());
         });
     });
 
@@ -73,31 +69,53 @@ describe('TeamsImportFromFileFormComponent', () => {
         let reader: FileReader;
         let getElementStub: SinonStub;
         const element = document.createElement('input');
-        const control = { ...element, value: 'test' };
+        let control: any;
         beforeEach(() => {
             resetComponent();
             convertTeamsStub = stub(comp, 'convertTeams').returns(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
-            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
-            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
-            comp.importFileName = 'file.json';
+            control = { ...element, value: 'test' };
             getElementStub = stub(document, 'getElementById').returns(control);
         });
         afterEach(() => {
             restore();
         });
-        it('should parse file and send converted teams', () => {
-            expect(control.value).to.equal('test');
+        it('should parse json file and send converted teams', () => {
+            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
+            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
+            comp.importFileName = 'file.json';
+            expect(control.value).toEqual('test');
             comp.onFileLoadImport(reader);
-            expect(convertTeamsStub).to.have.been.called;
-            expect(comp.importedTeams).to.deep.equal(mockFileStudents);
-            expect(comp.sourceTeams).to.deep.equal(mockFileTeamsConverted);
-            expect(teams).to.deep.equal(mockFileTeamsConverted);
-            expect(comp.loading).to.equal(false);
-            expect(comp.importFile).to.equal(undefined);
-            expect(comp.importFileName).to.equal('');
-            expect(getElementStub).to.have.been.called;
-            expect(control.value).to.equal('');
+            expect(convertTeamsStub).toHaveBeenCalledTimes(1);
+            expect(comp.importedTeams).toStrictEqual(mockFileStudents);
+            expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
+            expect(teams).toStrictEqual(mockFileTeamsConverted);
+            expect(comp.loading).toEqual(false);
+            expect(comp.importFile).toEqual(undefined);
+            expect(comp.importFileName).toEqual('');
+            expect(getElementStub).toHaveBeenCalledTimes(1);
+            expect(control.value).toEqual('');
+        });
+        it('should parse csv file and send converted teams', async () => {
+            reader = {
+                ...reader,
+                result: unparse(mockFileStudents, {
+                    columns: ['registrationNumber', 'username', 'firstName', 'lastName', 'teamName'],
+                }),
+            };
+            comp.importFile = new File([''], 'file.csv', { type: 'text/csv' });
+            comp.importFileName = 'file.csv';
+            expect(control.value).toEqual('test');
+            await comp.onFileLoadImport(reader);
+            expect(convertTeamsStub).toHaveBeenCalledTimes(1);
+            expect(comp.importedTeams).toEqual(mockFileStudents);
+            expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
+            expect(teams).toStrictEqual(mockFileTeamsConverted);
+            expect(comp.loading).toEqual(false);
+            expect(comp.importFile).toEqual(undefined);
+            expect(comp.importFileName).toEqual('');
+            expect(getElementStub).toHaveBeenCalledTimes(1);
+            expect(control.value).toEqual('');
         });
     });
 
@@ -114,16 +132,16 @@ describe('TeamsImportFromFileFormComponent', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).to.deep.equal(file);
-            expect(comp.importFileName).to.equal('testFileName');
-            expect(changeDetectorDetectChangesStub).to.have.been.called;
+            expect(comp.importFile).toStrictEqual(file);
+            expect(comp.importFileName).toEqual('testFileName');
+            expect(changeDetectorDetectChangesStub).toHaveBeenCalledTimes(1);
         });
         it('should set import file correctly', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).to.equal(undefined);
-            expect(comp.importFileName).to.equal('');
-            expect(changeDetectorDetectChangesStub).to.not.have.been.called;
+            expect(comp.importFile).toEqual(undefined);
+            expect(comp.importFileName).toEqual('');
+            expect(changeDetectorDetectChangesStub).not.toHaveBeenCalled();
         });
     });
 
@@ -132,7 +150,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             resetComponent();
         });
         it('should convert file teams correctly', () => {
-            expect(comp.convertTeams(mockFileStudents)).to.deep.equal(mockFileTeamsConverted);
+            expect(comp.convertTeams(mockFileStudents)).toEqual(mockFileTeamsConverted);
         });
     });
 
@@ -146,7 +164,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             try {
                 comp.convertTeams(invalidFileStudents);
             } catch (e) {
-                expect(e.stack).to.not.be.null;
+                expect(e.stack).not.toBe(null);
             }
         });
     });

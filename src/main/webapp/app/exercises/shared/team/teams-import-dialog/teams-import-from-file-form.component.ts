@@ -62,7 +62,7 @@ export class TeamsImportFromFileFormComponent {
             if (this.importFile?.type === 'application/json') {
                 this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
             } else if (this.importFile?.type === 'text/csv') {
-                const csvEntries = await this.parseCSVFile(this.importFile);
+                const csvEntries = await this.parseCSVFile(fileReader.result as string);
                 this.importedTeams = this.convertCsvEntries(csvEntries);
             } else {
                 throw new Error(this.translate.instant('artemisApp.team.invalidFileType', { fileType: this.importFile?.type }));
@@ -106,16 +106,17 @@ export class TeamsImportFromFileFormComponent {
 
     /**
      * Parses a csv file and returns a promise with a list of rows
-     * @param csvFile File that should be parsed
+     * @param csv File content that should be parsed
      */
-    private parseCSVFile(csvFile: File): Promise<CsvEntry[]> {
+    private parseCSVFile(csv: string): Promise<CsvEntry[]> {
         return new Promise((resolve, reject) => {
-            parse(csvFile, {
+            parse(csv, {
+                download: false,
                 header: true,
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvEntry[]),
-                error: (error) => reject(error),
+                error: (error: any) => reject(error),
             });
         });
     }
@@ -128,11 +129,23 @@ export class TeamsImportFromFileFormComponent {
         return entries.map(
             (entry) =>
                 ({
-                    registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || '',
-                    username: entry[csvColumns.login] || entry[csvColumns.username] || entry[csvColumns.user] || entry[csvColumns.benutzer] || entry[csvColumns.benutzerName] || '',
-                    firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || '',
-                    lastName: entry[csvColumns.lastName] || entry[csvColumns.familyName] || entry[csvColumns.surname] || entry[csvColumns.name] || entry[csvColumns.nachname] || '',
-                    teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || '',
+                    registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
+                    username:
+                        entry[csvColumns.login] ||
+                        entry[csvColumns.username] ||
+                        entry[csvColumns.user] ||
+                        entry[csvColumns.benutzer] ||
+                        entry[csvColumns.benutzerName] ||
+                        undefined,
+                    firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
+                    lastName:
+                        entry[csvColumns.lastName] ||
+                        entry[csvColumns.familyName] ||
+                        entry[csvColumns.surname] ||
+                        entry[csvColumns.name] ||
+                        entry[csvColumns.nachname] ||
+                        undefined,
+                    teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || undefined,
                 } as StudentWithTeam),
         );
     }
