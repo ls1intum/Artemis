@@ -8,7 +8,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./code-editor-resolve-conflict-modal.scss'],
 })
 export class CodeEditorResolveConflictModalComponent {
-    //Icons
+    // Icons
     faBan = faBan;
     faTimes = faTimes;
     faExclamationTriangle = faExclamationTriangle;
