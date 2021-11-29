@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
 
 public class GroupNotificationFactory {
 
-    private static NotificationTargetService targetService = new NotificationTargetService();
+    private static final NotificationTargetService targetService = new NotificationTargetService();
 
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
