@@ -1,15 +1,15 @@
 <div class="card code-editor-ace">
     <div class="card-header bg-primary text-white">
         <h3 class="card-title">
-            <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
+            <fa-icon [icon]="farFileAlt"></fa-icon>
             <span> &nbsp;{{ selectedFile }}</span>
-            <fa-icon *ngIf="isLoading" [icon]="'circle-notch'" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
+            <fa-icon *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
         </h3>
     </div>
 
     <div class="card-body code-editor-ace__content">
         <div class="btn-inline-comment">
-            <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
+            <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
         <div *ngFor="let line of lineCounter; let i = index" id="test-{{ i }}" class="inline-feedback-d-none">
             <jhi-code-editor-tutor-assessment-inline-feedback

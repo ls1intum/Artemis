@@ -6,7 +6,7 @@ import { get, isNumber, flatten } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
-import { faSort, faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.
@@ -133,6 +133,9 @@ export class DataTableComponent implements OnInit, OnChanges {
      */
     searchQueryTooShort: boolean;
     readonly minSearchQueryLength = 3;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(private sortService: SortService, private localStorage: LocalStorageService) {
         this.entities = [];
