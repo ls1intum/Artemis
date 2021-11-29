@@ -7,7 +7,7 @@
         <div class="doughnut-chart-text">
             <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>
             <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
-            <h1 *ngIf="!receivedStats" class="text-center" style="z-index: 1">
+            <h1 *ngIf="!receivedStats" class="text-center spinner">
                 <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             </h1>
         </div>

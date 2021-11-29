@@ -2,7 +2,7 @@
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && ngxExerciseGroups.length > 0; else noStatistics">
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
-            <div class="chart-container" style="margin-bottom: 20px">
+            <div class="chart-container">
                 <div class="chart-text">
                     <h2 class="text-center">{{ currentRelativeScore }} %</h2>
                     <h4 class="text-center">{{ overallPoints }} / {{ reachablePoints }} Pts</h4>

@@ -59,6 +59,17 @@
             float: right;
         }
     }
+
+    .chart-tooltip-space {
+        margin-top: -10px;
+
+        .chart-tooltip-space-content {
+            width: 250px;
+            height: 20px;
+            top: -15px;
+            position: absolute;
+        }
+    }
 }
 
 .fa-angle {
@@ -68,4 +79,8 @@
 ::ng-deep .legend-labels {
     background-color: transparent !important;
     text-align: center !important;
+}
+
+.chart-space {
+    height: 100px;
 }
