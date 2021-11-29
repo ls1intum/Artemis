@@ -6,6 +6,7 @@ import { get, isNumber, flatten } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
+import { faSort, faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.
@@ -22,11 +23,11 @@ enum SortOrder {
  * @readonly
  * @enum {string}
  */
-enum SortIcon {
-    NONE = 'sort',
-    ASC = 'sort-up',
-    DESC = 'sort-down',
-}
+const SortIcon = Object.freeze({
+    NONE: faSort,
+    ASC: faSortUp,
+    DESC: faSortDown,
+});
 
 const SortOrderIcon = {
     [SortOrder.ASC]: SortIcon.ASC,
