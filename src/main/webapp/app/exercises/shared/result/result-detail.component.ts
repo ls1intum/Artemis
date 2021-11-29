@@ -523,7 +523,6 @@ export class ResultDetailComponent implements OnInit {
             this.ngxData[0].series.forEach((points: any, index: number) => {
                 if (points.name === name) {
                     const color = this.ngxColors.domain[index];
-                    console.log(index);
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
                     this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
 
