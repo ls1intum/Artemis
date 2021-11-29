@@ -94,4 +94,13 @@ export class AssessmentHeaderComponent {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
         }
     }
+
+    /**
+     * Opens dialog to verify that instructor wants to import as example submission
+     */
+    onImportExampleSolutionClicked() {
+        if (confirm('Are you sure to import this submission as an example submission')) {
+            this.importExampleSubmission.emit();
+        }
+    }
 }
