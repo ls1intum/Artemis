@@ -9,7 +9,7 @@
         </div>
         <div *ngFor="let assessment of unreferencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
             <jhi-assessment-detail
-                *ngIf="assessment.reference == null"
+                *ngIf="assessment.type === FeedbackType.MANUAL_UNREFERENCED"
                 [(assessment)]="unreferencedFeedback[i]"
                 (assessmentChange)="updateAssessment(assessment)"
                 (deleteAssessment)="deleteAssessment($event)"

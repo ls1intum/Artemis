@@ -122,6 +122,14 @@
     <!--endregion-->
 </jhi-resizeable-container>
 
+<jhi-unreferenced-feedback
+    *ngIf="state.ui === UIStates.ASSESSMENT"
+    [(feedbacks)]="unreferencedFeedback"
+    [readOnly]="readOnly"
+    [addReferenceIdForExampleSubmission]="true"
+    (feedbacksChange)="validateFeedback()"
+></jhi-unreferenced-feedback>
+
 <div class="col-12 text-end pt-2" *ngIf="toComplete">
     <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
         {{ 'artemisApp.exampleSubmission.submitAssessment' | artemisTranslate }}

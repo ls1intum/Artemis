@@ -7,17 +7,26 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
     styleUrls: [],
 })
 export class UnreferencedFeedbackComponent {
+    FeedbackType = FeedbackType;
+
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
+
     @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
 
-    @Output() feedbacksChange = new EventEmitter<Feedback[]>();
+    /**
+     * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback
+     */
+    @Input() addReferenceIdForExampleSubmission = false;
 
     @Input() set feedbacks(feedbacks: Feedback[]) {
         this.unreferencedFeedback = [...feedbacks];
     }
+
+    @Output() feedbacksChange = new EventEmitter<Feedback[]>();
+
     public deleteAssessment(assessmentToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
         this.unreferencedFeedback.splice(indexToDelete, 1);
@@ -54,6 +63,11 @@ export class UnreferencedFeedbackComponent {
         const feedback = new Feedback();
         feedback.credits = 0;
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+
+        if (this.addReferenceIdForExampleSubmission) {
+            feedback.reference = (this.unreferencedFeedback.length + 1).toString();
+        }
+
         this.unreferencedFeedback.push(feedback);
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
