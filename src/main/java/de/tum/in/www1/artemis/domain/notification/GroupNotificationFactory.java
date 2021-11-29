@@ -103,7 +103,7 @@ public class GroupNotificationFactory {
             }
             case DUPLICATE_TEST_CASE -> {
                 title = DUPLICATE_TEST_CASE_TITLE;
-                text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
+                text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name! This issue needs to be resolved as quickly as possible!";
             }
             case ILLEGAL_SUBMISSION -> {
                 title = ILLEGAL_SUBMISSION_TITLE;

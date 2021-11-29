@@ -106,6 +106,12 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     descriptionKey: 'programmingTestCasesChangedDescription',
                     settingId: SettingId.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED,
                 },
+                {
+                    key: 'duplicateTestCases',
+                    descriptionKey: 'duplicateTestCasesDescription',
+                    settingId: SettingId.NOTIFICATION__EDITOR_NOTIFICATION__DUPLICATE_TEST_CASES,
+                    emailSupport: true,
+                },
             ],
         },
         {
