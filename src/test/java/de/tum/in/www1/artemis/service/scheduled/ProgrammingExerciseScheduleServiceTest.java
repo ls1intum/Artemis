@@ -93,6 +93,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         database.resetDatabase();
         Mockito.reset(scheduleService);
         bambooRequestMockProvider.reset();
+        bitbucketRequestMockProvider.reset();
     }
 
     private void verifyLockStudentRepositoryOperation(boolean wasCalled) {
