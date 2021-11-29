@@ -12,7 +12,6 @@ import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
-import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -510,11 +509,30 @@ export class ResultDetailComponent implements OnInit {
         return round(i, f);
     }
 
-    stringify(value: any) {
-        return JSON.stringify(value);
-    }
-
+    /**
+     * Adds a percentage sign to every x axis tick
+     * @param value the default x axis tick
+     */
     xAxisFormatting(value: any): string {
         return value + '%';
+    }
+
+    /**
+     * Handles the event if the user clicks on a legend entry. Then, the corresponding bar should disappear
+     * @param event the information that is delegated by the chart framework. It is dependent on the spot
+     * the user clicks
+     */
+    onSelect(event: any): void {
+        if (!event.series) {
+            const name = event as string;
+            this.ngxData[0].series.forEach((points: any, index: number) => {
+                if (points.name === name) {
+                    const color = this.ngxColors.domain[index];
+                    console.log(index);
+                    // if the bar is not transparent yet, make it transparent. Else, reset the normal color
+                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
+                }
+            });
+        }
     }
 }

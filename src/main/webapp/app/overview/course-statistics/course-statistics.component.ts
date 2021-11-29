@@ -610,7 +610,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
     }
 
-    private identifyBar(exercise: Exercise, series: any[], roundedParticipationScore: number, split: number) {
+    /**
+     * Depending on if the exercise has a due date and how its score is included,
+     * adds the student score to the corresponding bar.
+     * @param exercise the exercise of interest which has to be displayed by the chart
+     * @param series the series the students score gets pushed to
+     * @param roundedParticipationScore the students relative score
+     * @param split the students absolute score
+     * @private
+     */
+    private identifyBar(exercise: Exercise, series: any[], roundedParticipationScore: number, split: number): void {
         if (!exercise.dueDate) {
             series[0].value = roundedParticipationScore;
             series[0].absoluteValue = split;
@@ -637,7 +646,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @param exerciseGroup the exercise group
      * @private
      */
-    private setXScaleMax(exerciseGroup: any[]) {
+    private setXScaleMax(exerciseGroup: any[]): number {
         let xScaleMax = 100;
         exerciseGroup.forEach((exercise: any) => {
             const maxScore = Math.max(exercise.series[0].value, exercise.series[1].value, exercise.series[2].value, exercise.series[3].value);

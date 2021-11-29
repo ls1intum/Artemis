@@ -24,9 +24,8 @@
                     <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%
                 </span>
                 <div #containerRef style="height: 100px">
-                    <!--<jhi-chart [preset]="scoreChartPreset"> </jhi-chart>-->
                     <ngx-charts-bar-horizontal-stacked
-                        [view]="[containerRef.offsetWidth, 60]"
+                        [view]="[containerRef.offsetWidth, 75]"
                         [results]="ngxData"
                         [xAxis]="true"
                         [xAxisTickFormatting]="xAxisFormatting"
@@ -36,6 +35,7 @@
                         [legendPosition]="legendPosition"
                         [tooltipDisabled]="true"
                         [scheme]="ngxColors"
+                        (select)="onSelect($event)"
                     >
                     </ngx-charts-bar-horizontal-stacked>
                 </div>
