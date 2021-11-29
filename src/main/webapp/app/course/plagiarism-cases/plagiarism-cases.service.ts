@@ -39,7 +39,7 @@ export class PlagiarismCasesService {
      * @param { string } statement
      */
     public saveInstructorStatement(plagiarismComparisonId: number, studentLogin: string, statement: string): Observable<StatementEntityResponseType> {
-        return this.http.put<string>(`${this.resourceUrl}/notification`, { statement }, { observe: 'response' });
+        return this.http.put<string>(`${this.resourceUrlStudent}/${plagiarismComparisonId}/${studentLogin}/instructor-statement`, { statement }, { observe: 'response' });
     }
 
     /**
@@ -48,7 +48,7 @@ export class PlagiarismCasesService {
      * @param { string } statement
      */
     public saveStudentStatement(plagiarismComparisonId: number, statement: string): Observable<StatementEntityResponseType> {
-        return this.http.put<string>(`${this.resourceUrl}/${plagiarismComparisonId}/statement`, { statement }, { observe: 'response' });
+        return this.http.put<string>(`${this.resourceUrlStudent}/${plagiarismComparisonId}/student-statement`, { statement }, { observe: 'response' });
     }
 
     /**
@@ -56,8 +56,8 @@ export class PlagiarismCasesService {
      * @param { number } plagiarismComparisonId
      * @param { PlagiarismStatus } status
      */
-    public updatePlagiarismComparisonStatus(plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrlStudent}/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
+    public updatePlagiarismComparisonStatus(courseId: number, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
     }
 
     /**
@@ -68,7 +68,7 @@ export class PlagiarismCasesService {
      */
     public updatePlagiarismComparisonFinalStatus(plagiarismComparisonId: number, confirm: boolean, studentLogin: string): Observable<HttpResponse<void>> {
         return this.http.put<void>(
-            `${this.resourceUrlStudent}/${plagiarismComparisonId}/status?finalDecision=true&studentLogin=${studentLogin}`,
+            `${this.resourceUrlStudent}/${plagiarismComparisonId}/${studentLogin}/final-status`,
             {
                 status: confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED,
             },

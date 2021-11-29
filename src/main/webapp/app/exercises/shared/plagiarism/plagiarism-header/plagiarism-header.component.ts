@@ -10,6 +10,7 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -18,6 +19,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-c
 })
 export class PlagiarismHeaderComponent {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() course: Course;
     @Input() splitControlSubject: Subject<string>;
 
     private resourceUrl = SERVER_API_URL + 'api/plagiarism-comparisons';
@@ -45,7 +47,7 @@ export class PlagiarismHeaderComponent {
     updatePlagiarismStatus(status: PlagiarismStatus) {
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(comparison.id, status).subscribe(() => {
+        this.plagiarismCasesService.updatePlagiarismComparisonStatus(this.course.id!, comparison.id, status).subscribe(() => {
             comparison.status = status;
         });
     }
