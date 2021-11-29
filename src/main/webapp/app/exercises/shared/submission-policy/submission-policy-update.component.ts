@@ -146,6 +146,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 newPolicy.id = this.programmingExercise.submissionPolicy.id;
                 newPolicy.active = this.programmingExercise.submissionPolicy.active;
                 newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
+                this.exceedingPenaltyControl.setValue(undefined);
             }
             this.programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
