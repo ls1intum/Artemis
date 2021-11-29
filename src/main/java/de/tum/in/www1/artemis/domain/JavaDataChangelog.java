@@ -19,8 +19,8 @@ public class JavaDataChangelog extends DomainObject {
     private ZonedDateTime dateExecuted;
 
     // document what was executed, hashed in some way if possible
-    @Column(name = "checksum")
-    private String checksum;
+    @Column(name = "date_string")
+    private String dateString;
 
     // document with what system version it was executed
     @Column(name = "system_version")
@@ -46,12 +46,12 @@ public class JavaDataChangelog extends DomainObject {
         this.dateExecuted = dateExecuted;
     }
 
-    public String getChecksum() {
-        return checksum;
+    public String getDateString() {
+        return dateString;
     }
 
-    public void setChecksum(String checksum) {
-        this.checksum = checksum;
+    public void setDateString(String dateString) {
+        this.dateString = dateString;
     }
 
     public String getSystemVersion() {

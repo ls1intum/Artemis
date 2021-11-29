@@ -22,6 +22,16 @@ public class ChangeEntry1 extends JavaDataChangeEntry {
         return "julian-christl";
     }
 
+    /**
+     * Format YYYYMMDD-HHmmss
+     *
+     * @return Current time in given format
+     */
+    @Override
+    public String date() {
+        return "20211128-120000";
+    }
+
     @Override
     public void execute() {
         List<Course> courses = courseRepository.findAll();
