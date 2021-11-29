@@ -10,7 +10,6 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
-    styleUrls: ['./complaints-form.component.scss'],
 })
 export class ComplaintsFormComponent implements OnInit {
     @Input() exercise: Exercise;
