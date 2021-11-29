@@ -142,6 +142,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("Update User user set user.lastNotificationRead = :#{#lastNotificationRead} where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
+    /**
+     * Update user notification hide until property for current user
+     * I.e. updates the filter that hides all notifications with a creation/notification date prior to the set value.
+     * If the value is null then all notifications should be shown.
+     * (Not to be confused with notification settings. This filter is based on the notification date alone)
+     */
+    @Modifying
+    @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")
+    ZonedDateTime updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
     List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);

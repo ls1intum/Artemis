@@ -62,7 +62,7 @@ export class NotificationSidebarComponent implements OnInit {
                 }
                 this.loadNotificationSettings();
                 this.listenForNotificationSettingsChanges();
-                this.loadNotifications();
+                this.applyNotificationVisibilityAndLoadNotifications();
                 this.subscribeToNotificationUpdates();
             }
         });
@@ -114,9 +114,11 @@ export class NotificationSidebarComponent implements OnInit {
             // hide all currently displayed notifications
             this.hideNotificationsUntil = dayjs();
         }
-        this.notificationService.updateHiddenNotifications(this.hideNotificationsUntil);
-        this.resetNotificationsInSidebar();
-        this.showAllNotificationsInSideBar = !this.showAllNotificationsInSideBar;
+        this.userService.updateNotificationVisibility(this.hideNotificationsUntil).subscribe((res: HttpResponse<dayjs.Dayjs | null>) => {
+            this.hideNotificationsUntil = res.body;
+            this.resetNotificationsInSidebar();
+            this.showAllNotificationsInSideBar = !this.showAllNotificationsInSideBar;
+        });
     }
 
     /**
@@ -159,10 +161,12 @@ export class NotificationSidebarComponent implements OnInit {
 
     // filter out every exam related notification
     private filterLoadedNotifications(notifications: Notification[]): Notification[] {
+        /* TODO check if necessary (because filter should already work on server side)
         if (this.hideNotificationsUntil !== null) {
             // if the user wants to hide certain notifications only display those that arrived after the user pressed that (hide)button
             notifications = notifications.filter((notification) => notification.notificationDate?.isAfter(this.hideNotificationsUntil));
         }
+         */
         return notifications.filter((notification) => notification.title !== LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
     }
 
@@ -226,6 +230,19 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
+     * Loads the notifications and updates their visibility based on their creation/notification date
+     */
+    private applyNotificationVisibilityAndLoadNotifications(): void {
+        this.userService.getNotificationVisibility().subscribe(
+            (res: HttpResponse<dayjs.Dayjs | null>) => {
+                this.hideNotificationsUntil = res.body;
+                this.loadNotifications();
+            },
+            () => this.loadNotifications(),
+        );
+    }
+
+    /**
      * Clears all currently loaded notifications, afterwards fetches updated once
      * E.g. is used to update the view after the user toggles the button to show/hide all notifications
      */
@@ -235,7 +252,7 @@ export class NotificationSidebarComponent implements OnInit {
         this.recentNotificationCount = 0;
         this.totalNotifications = 0;
         this.page = 0;
-        this.loadNotifications();
+        this.applyNotificationVisibilityAndLoadNotifications();
     }
 
     // notification settings related methods

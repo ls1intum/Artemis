@@ -106,10 +106,12 @@ public class NotificationResource {
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
-            page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
+            page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getHideNotificationsUntil(),
+                    pageable);
         }
         else {
-            page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), deactivatedTitles, pageable);
+            page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
+                    currentUser.getHideNotificationsUntil(), deactivatedTitles, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);

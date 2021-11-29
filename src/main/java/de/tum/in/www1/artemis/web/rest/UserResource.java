@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -276,5 +277,23 @@ public class UserResource {
         User user = userRepository.getUser();
         userRepository.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/users/notification-visibility")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ZonedDateTime> updateUserNotificationVisibility(@RequestBody ZonedDateTime hideUntil) {
+        log.debug("REST request to update notification visibility for logged in user");
+        User user = userRepository.getUser();
+        ZonedDateTime updatedHideUntil = userRepository.updateUserNotificationVisibility(user.getId(), hideUntil);
+        return ResponseEntity.ok(updatedHideUntil);
+    }
+
+    @GetMapping("/users/notification-visibility")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ZonedDateTime> getUserNotificationVisibility() {
+        log.debug("REST request to get notification visibility for logged in user");
+        User user = userRepository.getUser();
+        ZonedDateTime hideUntil = user.getHideNotificationsUntil();
+        return ResponseEntity.ok(hideUntil);
     }
 }
