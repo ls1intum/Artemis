@@ -33,11 +33,14 @@
                 "discussion": "Diskussion"
             },
             "exerciseList": {
+                "filter": "Filter",
+                "activeFilter": "Filter ({{ num }})",
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
                 "unreleased": "Keine Unveröffentlichten",
                 "fullScore": "Keine mit voller Punktzahl",
                 "overdue": "Keine Überfälligen",
+                "optional": "Keine Optionalen",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",

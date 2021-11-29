@@ -33,11 +33,14 @@
                 "discussion": "Discussion"
             },
             "exerciseList": {
+                "filter": "Filter",
+                "activeFilter": "Filter ({{ num }})",
                 "releaseDate": "Release Date",
                 "dueDate": "Due Date",
                 "unreleased": "Hide unreleased",
                 "fullScore": "Hide full points",
                 "overdue": "Hide overdue",
+                "optional": "Hide optional",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
                 "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
