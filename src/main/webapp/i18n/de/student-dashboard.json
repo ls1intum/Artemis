@@ -33,8 +33,7 @@
                 "discussion": "Diskussion"
             },
             "exerciseList": {
-                "filter": "Filter",
-                "activeFilter": "Filter ({{ num }})",
+                "filter": "Filter ({{ num }})",
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
                 "unreleased": "Keine Unveröffentlichten",

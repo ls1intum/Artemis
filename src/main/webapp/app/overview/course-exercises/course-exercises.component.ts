@@ -43,7 +43,7 @@ export enum SortingAttribute {
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview.scss', './course-exercises.component.scss'],
+    styleUrls: ['../course-overview.scss'],
 })
 export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     private courseId: number;

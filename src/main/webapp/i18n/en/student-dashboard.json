@@ -33,8 +33,7 @@
                 "discussion": "Discussion"
             },
             "exerciseList": {
-                "filter": "Filter",
-                "activeFilter": "Filter ({{ num }})",
+                "filter": "Filter ({{ num }})",
                 "releaseDate": "Release Date",
                 "dueDate": "Due Date",
                 "unreleased": "Hide unreleased",

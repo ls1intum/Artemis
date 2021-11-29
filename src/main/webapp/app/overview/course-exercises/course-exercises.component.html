@@ -4,12 +4,14 @@
             <div class="exercise-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
                 <div class="d-flex align-items-center me-2">
                     <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
-                        <button class="btn btn-secondary" ngbDropdownToggle id="filter-dropdown-button">
+                        <button
+                            class="btn"
+                            [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-danger': activeFilters.size > 0 }"
+                            ngbDropdownToggle
+                            id="filter-dropdown-button"
+                        >
                             <fa-icon icon="filter"></fa-icon>
-                            {{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate }}
-                            <span [ngClass]="{ hidden: activeFilters.size === 0 }" id="active-filter-badge" class="badge bg-danger">
-                                {{ activeFilters.size }}
-                            </span>
+                            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
                         </button>
                         <ul ngbDropdownMenu class="checkbox-menu" aria-labelledby="filter-dropdown-button">
                             <li *ngIf="course.isAtLeastTutor">
