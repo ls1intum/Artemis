@@ -109,6 +109,9 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about possible plagiarism case.
+     *
+     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * @param student who should be notified
      */
     public void notifyUserAboutNewPossiblePlagiarismCase(PlagiarismComparison plagiarismComparison, User student) {
         notifyRecipientWithNotificationType(plagiarismComparison, NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
@@ -116,6 +119,9 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about plagiarism case update.
+     *
+     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * @param student who should be notified
      */
     public void notifyUserAboutFinalPlagiarismState(PlagiarismComparison plagiarismComparison, User student) {
         notifyRecipientWithNotificationType(plagiarismComparison, PLAGIARISM_CASE_FINAL_STATE_STUDENT, student, userRepository.getUser());

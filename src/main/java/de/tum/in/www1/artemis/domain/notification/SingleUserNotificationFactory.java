@@ -77,7 +77,11 @@ public class SingleUserNotificationFactory {
     /**
      * Creates an instance of SingleUserNotification based on plagiarisms.
      *
-     * @return the PlagiarismNotification
+     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * @param notificationType type of the notification that should be created
+     * @param student who should be notified or is the author (depends if the student or instructor should be notified)
+     * @param instructor who should be notified or is the author
+     * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(PlagiarismComparison plagiarismComparison, NotificationType notificationType, User student, User instructor) {
         String title;

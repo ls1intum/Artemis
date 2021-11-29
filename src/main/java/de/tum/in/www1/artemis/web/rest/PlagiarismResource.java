@@ -68,6 +68,7 @@ public class PlagiarismResource {
      * I.e. An editor or instructor sees a possible plagiarism case for the first time and decides if it should be further examined, or if it is not a plagiarism.
      *
      * @param comparisonId of the plagiarism comparison to update the status of
+     * @param courseId the id of the course
      * @param statusDTO new status for the given comparison
      * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
