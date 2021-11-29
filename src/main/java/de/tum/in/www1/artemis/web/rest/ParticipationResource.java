@@ -37,8 +37,8 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
@@ -92,7 +92,7 @@ public class ParticipationResource {
 
     private final ExerciseDateService exerciseDateService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
@@ -100,7 +100,7 @@ public class ParticipationResource {
             Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
-            ExerciseDateService exerciseDateService, ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
+            ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -118,7 +118,7 @@ public class ParticipationResource {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseDateService = exerciseDateService;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -294,7 +294,7 @@ public class ParticipationResource {
 
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
-            programmingExerciseScheduleService.updateScheduling(programmingExercise);
+            instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
 
             // when changing the individual due date after the regular due date, the repository might already have been locked
             updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
