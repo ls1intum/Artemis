@@ -183,7 +183,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .findByExerciseId(exercise.id!)
             .pipe(map(({ body }) => body || []))
             .subscribe((exerciseHints: ExerciseHint[]) => {
-                console.log(exerciseHints);
                 exercise.exerciseHints = exerciseHints;
             });
     }
