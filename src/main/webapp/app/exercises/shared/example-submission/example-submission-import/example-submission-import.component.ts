@@ -8,6 +8,7 @@ import { Subject } from 'rxjs';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 export enum TableColumn {
     ID = 'ID',
@@ -37,6 +38,9 @@ export class ExampleSubmissionImportComponent implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
     };
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private sortService: SortService,

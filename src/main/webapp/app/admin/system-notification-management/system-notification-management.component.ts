@@ -13,6 +13,7 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-system-notification-management',
@@ -36,6 +37,9 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private systemNotificationService: SystemNotificationService,

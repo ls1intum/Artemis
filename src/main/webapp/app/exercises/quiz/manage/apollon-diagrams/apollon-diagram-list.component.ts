@@ -11,6 +11,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -23,6 +24,9 @@ export class ApollonDiagramListComponent implements OnInit {
     reverse: boolean;
     courseId: number;
     isAtLeastInstructor = false;
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,

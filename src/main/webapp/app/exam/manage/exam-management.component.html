@@ -17,42 +17,42 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                     <th class="d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="title">
                         <span>{{ 'artemisApp.exam.title' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-md-table-cell" jhiSortBy="visibleDate">
                         <span>{{ 'artemisApp.exam.visible' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="startDate">
                         <span>{{ 'artemisApp.exam.startDate' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="endDate">
                         <span>{{ 'artemisApp.exam.endDate' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="publishResultsDate">
                         <span>{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="examStudentReviewStart">
                         <span>{{ 'artemisApp.exam.examStudentReviewStart' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="examStudentReviewEnd">
                         <span>{{ 'artemisApp.exam.examStudentReviewEnd' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th>
                         <span>{{ 'artemisApp.exam.duration' | artemisTranslate }}</span>
                     </th>
                     <th jhiSortBy="numberOfRegisteredUsers">
                         <span>{{ 'artemisApp.exam.nrOfStudents' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th></th>
                 </tr>

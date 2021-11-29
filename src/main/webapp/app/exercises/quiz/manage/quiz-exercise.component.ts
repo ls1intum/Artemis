@@ -13,6 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -24,6 +25,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     @Input() quizExercises: QuizExercise[] = [];
     filteredQuizExercises: QuizExercise[] = [];
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
