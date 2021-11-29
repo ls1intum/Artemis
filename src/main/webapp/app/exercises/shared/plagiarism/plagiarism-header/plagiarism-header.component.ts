@@ -9,6 +9,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -21,7 +22,7 @@ export class PlagiarismHeaderComponent {
 
     private resourceUrl = SERVER_API_URL + 'api/plagiarism-comparisons';
 
-    constructor(public http: HttpClient) {}
+    constructor(public http: HttpClient, private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
@@ -44,7 +45,7 @@ export class PlagiarismHeaderComponent {
     updatePlagiarismStatus(status: PlagiarismStatus) {
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
-        return this.http.put<void>(`${this.resourceUrl}/${comparison.id}/status`, { status }, { observe: 'response' }).subscribe(() => {
+        this.plagiarismCasesService.updatePlagiarismComparisonStatus(comparison.id, status).subscribe(() => {
             comparison.status = status;
         });
     }

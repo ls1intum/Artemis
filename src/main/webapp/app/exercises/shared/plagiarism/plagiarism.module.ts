@@ -28,6 +28,6 @@ import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiari
         SplitPaneHeaderComponent,
         PlagiarismRunDetailsComponent,
     ],
-    exports: [PlagiarismInspectorComponent],
+    exports: [PlagiarismInspectorComponent, PlagiarismSplitViewComponent],
 })
 export class ArtemisPlagiarismModule {}
