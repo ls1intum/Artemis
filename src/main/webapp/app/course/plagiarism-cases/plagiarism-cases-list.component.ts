@@ -80,7 +80,7 @@ export class PlagiarismCasesListComponent {
                 if (student === 'A') {
                     this.plagiarismCase.comparisons[i].instructorStatementA = resp.body!;
                 } else if (student === 'B') {
-                    this.plagiarismCase.comparisons[i].instructorStatementA = resp.body!;
+                    this.plagiarismCase.comparisons[i].instructorStatementB = resp.body!;
                 }
             });
     }
