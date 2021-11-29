@@ -40,7 +40,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 step="1"
                                 name="submissionLimit"
                                 id="field_submissionLimit"
-                                (change)="updateSubmissionLimit()"
+                                (input)="updateSubmissionLimit()"
                             />
                         </div>
                         <ng-container *ngFor="let e of submissionLimitControl.errors! | keyvalue">
@@ -67,7 +67,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 formControlName="exceedingPenalty"
                                 name="submissionLimitExceededPenalty"
                                 id="field_submissionLimitExceededPenalty"
-                                (change)="updateExceedingPenalty()"
+                                (input)="updateExceedingPenalty()"
                             />
                         </div>
                         <ng-container *ngFor="let e of exceedingPenaltyControl.errors! | keyvalue">
