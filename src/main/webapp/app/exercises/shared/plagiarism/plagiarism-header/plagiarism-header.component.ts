@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -22,9 +21,7 @@ export class PlagiarismHeaderComponent {
     @Input() course: Course;
     @Input() splitControlSubject: Subject<string>;
 
-    private resourceUrl = SERVER_API_URL + 'api/plagiarism-comparisons';
-
-    constructor(public http: HttpClient, private plagiarismCasesService: PlagiarismCasesService) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
