@@ -125,7 +125,8 @@
             "email.placeholder": "Your email",
             "email.pattern": "Please use an email with the following pattern:",
             "cancel": "Cancel",
-            "confirm": "Confirm"
+            "confirm": "Confirm",
+            "refresh": "Refresh"
         },
         "messages": {
             "info": {

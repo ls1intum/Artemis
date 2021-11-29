@@ -415,4 +415,20 @@ describe('ModelingSubmission Management Component', () => {
         expect(currentModelStub).toHaveBeenCalledTimes(1);
         expect(canDeactivate).toBe(false);
     });
+
+    it('should set isChanged property to false after saving', () => {
+        comp.submission = <ModelingSubmission>(<unknown>{
+            id: 1,
+            model: '{"elements": [{"id": 1}]}',
+            submitted: true,
+            participation,
+        });
+        comp.isChanged = true;
+        jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
+        comp.modelingExercise.id = 1;
+        fixture.detectChanges();
+        comp.saveDiagram();
+        expect(comp.isChanged).toBe(false);
+    });
 });

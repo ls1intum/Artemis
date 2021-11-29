@@ -4,7 +4,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import dayjs from 'dayjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -33,7 +32,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
@@ -79,45 +78,39 @@ describe('ProgrammingExercise Management Update Component', () => {
             imports: [ArtemisTestModule, NgxDatatableModule, NgbModule /*, OwlDateTimeModule */],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
-                MockComponent(HelpIconComponent),
+                // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
+                // Mocking that interaction defeats the purpose of interacting with the UI in the first place.
+                NgForm,
                 NgModel,
                 CheckboxControlValueAccessor,
                 DefaultValueAccessor,
                 SelectControlValueAccessor,
                 NumberValueAccessor,
-                RemoveKeysPipe,
-                MockDirective(TranslateDirective),
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(HelpIconComponent),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(TableEditableFieldComponent),
                 MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
-                CategorySelectorComponent,
-                ColorSelectorComponent,
-                MockComponent(TagInputComponent),
-                MockComponent(TagInputDropdown),
-                MockComponent(DeleteIconComponent),
-                AddAuxiliaryRepositoryButtonComponent,
-                DifficultyPickerComponent,
-                TeamConfigFormGroupComponent,
-                ModePickerComponent,
-                ProgrammingExerciseLifecycleComponent,
-                ProgrammingExerciseTestScheduleDatePickerComponent,
-                ArtemisDatePipe,
-                IncludedInOverallScorePickerComponent,
-                MockPipe(ArtemisTranslatePipe),
-                NgForm,
+                MockComponent(CategorySelectorComponent),
+                MockComponent(AddAuxiliaryRepositoryButtonComponent),
+                MockComponent(DifficultyPickerComponent),
+                MockComponent(TeamConfigFormGroupComponent),
+                MockComponent(ProgrammingExerciseLifecycleComponent),
+                MockComponent(IncludedInOverallScorePickerComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(PresentationScoreComponent),
-                ProgrammingExerciseInstructionComponent,
-                ProgrammingExerciseEditableInstructionComponent,
-                MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
-                GradingInstructionsDetailsComponent,
-                MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(ProgrammingExerciseInstructionComponent),
+                MockComponent(ProgrammingExerciseEditableInstructionComponent),
+                MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
-                CustomMinDirective,
-                CustomMaxDirective,
+                MockComponent(NgbAlert),
+                MockPipe(RemoveKeysPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(CustomMinDirective),
+                MockDirective(CustomMaxDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -153,7 +146,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -169,7 +162,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should trim the exercise title before saving', fakeAsync(() => {
@@ -187,7 +180,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
+            expect(entity.title).toBe('My Exercise');
         }));
     });
 
@@ -217,9 +210,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isSaving).toEqual(false);
-            expect(comp.programmingExercise).toEqual(expectedExamProgrammingExercise);
-            expect(comp.isExamMode).toBeTruthy();
+            expect(comp.isSaving).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
+            expect(comp.isExamMode).toBe(true);
         }));
     });
 
@@ -245,9 +238,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.isSaving).toEqual(false);
-            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
-            expect(comp.isExamMode).toBeFalsy();
+            expect(comp.isSaving).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
+            expect(comp.isExamMode).toBe(false);
         }));
     });
 
@@ -283,8 +276,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
 
-            expect(scaCheckbox.checked).toBeTruthy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTruthy();
+            expect(scaCheckbox.checked).toBe(true);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
 
             // Switch to another programming language not supporting sca
@@ -295,9 +288,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
             scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
-            expect(scaCheckbox).toBeFalsy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalsy();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            expect(scaCheckbox).toBe(null);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
 
@@ -309,9 +302,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.appNamePatternForSwift);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
         }));
 
         it('Should activate SCA for C', fakeAsync(() => {
@@ -322,8 +315,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -333,9 +326,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
 
             // THEN
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
         }));
     });
 
@@ -372,15 +365,15 @@ describe('ProgrammingExercise Management Update Component', () => {
                 const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
                 const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
 
-                expect(comp.isImport).toBeTruthy();
+                expect(comp.isImport).toBe(true);
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
-                expect(recreateBuildPlanCheckbox.checked).toBeFalsy();
-                expect(updateTemplateCheckbox.checked).toBeFalsy();
-                expect(comp.programmingExercise).toEqual(programmingExercise);
+                expect(recreateBuildPlanCheckbox.checked).toBe(false);
+                expect(updateTemplateCheckbox.checked).toBe(false);
+                expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
                 // Activate SCA and set a max penalty
@@ -393,7 +386,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // SCA penalty field disappears or appears after the sca checkbox click
                 maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
                 if (scaActivatedOriginal) {
-                    expect(maxPenaltyInput).toBeFalsy();
+                    expect(maxPenaltyInput).toBe(null);
                 } else {
                     maxPenaltyInput.value = newMaxPenalty;
                     maxPenaltyInput.dispatchEvent(new Event('input'));
@@ -404,9 +397,9 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // Recreate build plan and template update should be automatically selected
                 expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(scaActivatedOriginal ? undefined : newMaxPenalty);
-                expect(comp.recreateBuildPlans).toBeTruthy();
-                expect(comp.updateTemplate).toBeTruthy();
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
+                expect(comp.recreateBuildPlans).toBe(true);
+                expect(comp.updateTemplate).toBe(true);
 
                 // Deactivate recreation of build plans
                 recreateBuildPlanCheckbox.click();
@@ -415,8 +408,8 @@ describe('ProgrammingExercise Management Update Component', () => {
                 tick();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
-                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(comp.originalStaticCodeAnalysisEnabled);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             }),
         );
     });

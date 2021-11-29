@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.3.4",
+    "version": "5.3.5",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -50,7 +50,6 @@
         "js-video-url-parser": "0.5.1",
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "2.3.0-rc.2",
-        "ng-pick-datetime": "7.0.0",
         "ng-starrating": "1.0.20",
         "ng2-ace-editor": "0.3.9",
         "ng2-charts": "2.4.3",
@@ -163,7 +162,7 @@
         "webpack-notifier": "1.14.1"
     },
     "engines": {
-        "node": ">=14.16.0 <=17"
+        "node": ">=16.13.0 <=17"
     },
     "lint-staged": {
         "src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}": "prettier --write",
