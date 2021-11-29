@@ -6,6 +6,7 @@ import { ChartType } from 'chart.js';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-doughnut-chart',
@@ -25,6 +26,9 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     doughnutChartTitle: string;
     stats: number[];
     titleLink: string[] | undefined;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private router: Router) {}
 
