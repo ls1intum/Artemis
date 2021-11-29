@@ -114,10 +114,10 @@ public class TutorParticipationService {
     }
 
     /**
-     * Validates tutor feedback.
+     * Validates if tutor feedback matches instructor feedback.
      * Validation rules:
-     * - There should exist a corresponding instructor feedback that references the same object
      * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
+     * - Tutor feedback is not allowed to have negative score without feedback content
      * - The feedback should have the same creditCount(score)
      *
      * @return error type if feedback is invalid, `Optional.empty()` otherwise.
@@ -152,30 +152,40 @@ public class TutorParticipationService {
 
     private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
         List<Feedback> matchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> {
+            // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
             if (tutorFeedback.getType() == FeedbackType.MANUAL_UNREFERENCED) {
                 return Objects.equals(tutorFeedback.getType(), feedback.getType());
             }
+
+            // For other feedback, both feedback have to reference the same element
             return Objects.equals(tutorFeedback.getReference(), feedback.getReference());
         }).toList();
-        switch (matchingInstructorFeedback.size()) {
-            case 0:
-                return Optional.of(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK);
-            case 1:
-                return tutorFeedbackMatchesInstructorFeedback(tutorFeedback, matchingInstructorFeedback.get(0));
-            default:
-                if (tutorFeedback.getType() == FeedbackType.MANUAL_UNREFERENCED) {
-                    var hasMatchingInstructorFeedback = matchingInstructorFeedback.stream().anyMatch(feedback -> {
-                        var isMatch = Objects.equals(tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback), Optional.empty());
-                        if (isMatch) {
-                            instructorFeedback.remove(feedback);
-                        }
-                        return isMatch;
-                    });
 
-                    return hasMatchingInstructorFeedback ? Optional.empty() : Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        // If there are no potential matches, then the feedback is unnecessary
+        if (matchingInstructorFeedback.isEmpty()) {
+            return Optional.of(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK);
+        }
+
+        // If tutor feedack is unreferenced, then look for the first match and remove it from the next subsequent matches
+        if (tutorFeedback.getType() == FeedbackType.MANUAL_UNREFERENCED) {
+            var hasMatchingInstructorFeedback = matchingInstructorFeedback.stream().anyMatch(feedback -> {
+                var isMatch = Objects.equals(tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback), Optional.empty());
+
+                // This instructor feedback can not be used to match other tutor unreferenced feedback
+                if (isMatch) {
+                    instructorFeedback.remove(feedback);
                 }
+                return isMatch;
+            });
 
-                throw new IllegalArgumentException("Multiple instructor feedback exist with the same reference");
+            return hasMatchingInstructorFeedback ? Optional.empty() : Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        }
+        else {
+            if (matchingInstructorFeedback.size() > 1) {
+                throw new IllegalStateException("Multiple instructor feedback exist with the same reference");
+            }
+
+            return tutorFeedbackMatchesInstructorFeedback(tutorFeedback, matchingInstructorFeedback.get(0));
         }
     }
 
@@ -188,7 +198,6 @@ public class TutorParticipationService {
         boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
 
         // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
-        // Pack this information into bad request exception.
         var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
             var validationError = checkTutorFeedbackForErrors(feedback, instructorFeedback);
             if (validationError.isEmpty()) {
@@ -209,6 +218,7 @@ public class TutorParticipationService {
             return;
         }
 
+        // Pack this information into bad request exception.
         throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment");
     }
 
