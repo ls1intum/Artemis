@@ -48,14 +48,6 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { DeleteIconComponent, TagInputComponent, TagInputDropdown } from 'ngx-chips';
-import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import '@angular/localize/init';
 
 describe('ProgrammingExercise Management Update Component', () => {
@@ -75,7 +67,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // OwlDateTimeModule can be readded if we ever find an Angular 13 + Ivy 100% compatible version
             // For example: https://github.com/danielmoncada/date-time-picker/issues/133 which is a "maintained" fork
             // For now, this will log NG0304 / NG0303 errors but pass
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbModule /*, OwlDateTimeModule */],
+            imports: [ArtemisTestModule, NgxDatatableModule /*, OwlDateTimeModule */],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
