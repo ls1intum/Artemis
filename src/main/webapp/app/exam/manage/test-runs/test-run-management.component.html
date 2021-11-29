@@ -47,27 +47,27 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span jhiTranslate="artemisApp.examManagement.testRun.author"> Author </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="workingTime">
                         <span jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="started">
                         <span jhiTranslate="artemisApp.studentExams.started"> Started </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="submitted">
                         <span jhiTranslate="artemisApp.studentExams.submitted"> Submitted </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="submissionDate">
                         <span jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th></th>
                 </tr>
