@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -153,10 +155,10 @@ public class SingleUserNotificationFactoryTest {
      */
     @Test
     public void createNotification_withNotificationType_NewReplyForExercisePost() {
-        notificationType = NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
+        notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
         createAndCheckPostNotification();
     }
@@ -167,10 +169,10 @@ public class SingleUserNotificationFactoryTest {
      */
     @Test
     public void createNotification_withNotificationType_NewReplyForLecturePost() {
-        notificationType = NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+        notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
         createAndCheckPostNotification();
     }
@@ -181,10 +183,10 @@ public class SingleUserNotificationFactoryTest {
      */
     @Test
     public void createNotification_withNotificationType_NewReplyForCoursePost() {
-        notificationType = NotificationType.NEW_REPLY_FOR_COURSE_POST;
+        notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForCourseWidePosts(post.getId(), courseId);
         createAndCheckPostNotification();
     }
@@ -197,10 +199,10 @@ public class SingleUserNotificationFactoryTest {
      */
     @Test
     public void createNotification_withNotificationType_FileSubmitSuccessful() {
-        notificationType = NotificationType.FILE_SUBMISSION_SUCCESSFUL;
+        notificationType = FILE_SUBMISSION_SUCCESSFUL;
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, "exercises", exerciseId);
         createAndCheckExerciseNotification();
     }
