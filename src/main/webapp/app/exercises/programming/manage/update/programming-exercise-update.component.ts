@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
@@ -377,11 +377,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
             this.isExamMode = false;
         }
-        this.programmingExercise.dueDate = undefined;
+        resetDates(this.programmingExercise);
+
         this.programmingExercise.projectKey = undefined;
         this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
-        this.programmingExercise.assessmentDueDate = undefined;
-        this.programmingExercise.releaseDate = undefined;
         this.programmingExercise.shortName = undefined;
         this.programmingExercise.title = undefined;
         if (this.programmingExercise.submissionPolicy) {

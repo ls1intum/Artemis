@@ -92,8 +92,8 @@ export const tutorAssessmentTour: GuidedTour = {
         // step 9
         new UserInterActionTourStep({
             highlightSelector: '.review-example-submission.guided-tour',
-            headlineTranslateKey: 'tour.exerciseAssessmentDashboard.reviewExampleSubmission.headline',
-            contentTranslateKey: 'tour.exerciseAssessmentDashboard.reviewExampleSubmission.content',
+            headlineTranslateKey: 'tour.exerciseAssessmentDashboard.readExampleSubmission.headline',
+            contentTranslateKey: 'tour.exerciseAssessmentDashboard.readExampleSubmission.content',
             highlightPadding: 10,
             orientation: Orientation.TOPLEFT,
             userInteractionEvent: UserInteractionEvent.CLICK,
@@ -103,8 +103,8 @@ export const tutorAssessmentTour: GuidedTour = {
         // new page
         new TextTourStep({
             highlightSelector: '.guided-tour-assessment-editor',
-            headlineTranslateKey: 'tour.exampleReview.reviewSubmission.headline',
-            contentTranslateKey: 'tour.exampleReview.reviewSubmission.content',
+            headlineTranslateKey: 'tour.exampleRead.readSubmission.headline',
+            contentTranslateKey: 'tour.exampleRead.readSubmission.content',
             orientation: Orientation.TOP,
             permission: [Authority.TA],
             pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?readOnly=true',
@@ -112,16 +112,16 @@ export const tutorAssessmentTour: GuidedTour = {
         // step 11
         new TextTourStep({
             highlightSelector: '.guided-tour-text-assessment',
-            headlineTranslateKey: 'tour.exampleReview.reviewAssessment.headline',
-            contentTranslateKey: 'tour.exampleReview.reviewAssessment.content',
+            headlineTranslateKey: 'tour.exampleRead.readAssessment.headline',
+            contentTranslateKey: 'tour.exampleRead.readAssessment.content',
             orientation: Orientation.TOP,
             permission: [Authority.TA],
         }),
         // step 12
         new UserInterActionTourStep({
             highlightSelector: 'jhi-example-text-submission .guided-tour-read',
-            headlineTranslateKey: 'tour.exampleReview.confirm.headline',
-            contentTranslateKey: 'tour.exampleReview.confirm.content',
+            headlineTranslateKey: 'tour.exampleRead.confirm.headline',
+            contentTranslateKey: 'tour.exampleRead.confirm.content',
             userInteractionEvent: UserInteractionEvent.CLICK,
             orientation: Orientation.TOPRIGHT,
             highlightPadding: 10,

@@ -50,6 +50,8 @@ public class CourseService {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final LectureService lectureService;
@@ -78,12 +80,14 @@ public class CourseService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
-            AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository) {
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
+            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
+            GroupNotificationService groupNotificationService, ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService,
+            GradingScaleRepository gradingScaleRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
@@ -168,7 +172,7 @@ public class CourseService {
      * <ul>
      *     <li>The Course</li>
      *     <li>All Exercises including:
-     *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
+     *      submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
@@ -223,9 +227,7 @@ public class CourseService {
 
     private void deleteNotificationsOfCourse(Course course) {
         List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
-        for (GroupNotification notification : notifications) {
-            groupNotificationRepository.delete(notification);
-        }
+        groupNotificationRepository.deleteAll(notifications);
     }
 
     private void deleteLecturesOfCourse(Course course) {
@@ -236,7 +238,7 @@ public class CourseService {
 
     private void deleteExercisesOfCourse(Course course) {
         for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), true, true);
+            exerciseDeletionService.delete(exercise.getId(), true, true);
         }
     }
 
@@ -244,17 +246,6 @@ public class CourseService {
         for (LearningGoal learningGoal : course.getLearningGoals()) {
             learningGoalRepository.deleteById(learningGoal.getId());
         }
-    }
-
-    /**
-     * Given a Course object, it returns the number of users enrolled in the course
-     *
-     * @param course - the course object we are interested in
-     * @return the number of students for that course
-     */
-    public long countNumberOfStudentsForCourse(Course course) {
-        String groupName = course.getStudentGroupName();
-        return userRepository.countByGroupsIsContaining(groupName);
     }
 
     /**
@@ -371,7 +362,7 @@ public class CourseService {
      * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex, int length) {
+    public Integer[] getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
@@ -559,7 +550,7 @@ public class CourseService {
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {
             if (exercise instanceof ProgrammingExercise) {
-                exerciseService.cleanup(exercise.getId(), true);
+                exerciseDeletionService.cleanup(exercise.getId(), true);
             }
 
             // TODO: extend exerciseService.cleanup to clean up all exercise types
