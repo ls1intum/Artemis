@@ -278,6 +278,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     content: 'Deleted an participation',
                 });
                 this.dialogErrorSource.next('');
+                this.participationsChangedDueDate.delete(participationId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

@@ -274,6 +274,23 @@ describe('ParticipationComponent', () => {
         expect(component.isSaving).toBe(false);
     }));
 
+    it('should remove a participation from the change map when it has been deleted', fakeAsync(() => {
+        const participation1 = participationWithIndividualDueDate(1, dayjs());
+        component.changedIndividualDueDate(participation1);
+
+        const expectedMap = new Map();
+        expectedMap.set(1, participation1);
+        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+
+        const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse()));
+
+        component.deleteParticipation(1, {});
+        tick();
+
+        expect(deleteStub).toHaveBeenCalledTimes(1);
+        expect(component.participationsChangedDueDate).toEqual(new Map());
+    }));
+
     const participationWithIndividualDueDate = (id: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
         const participation = new StudentParticipation();
         participation.id = id;
