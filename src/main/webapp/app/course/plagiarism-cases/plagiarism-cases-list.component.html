@@ -35,7 +35,11 @@
                 >
                     {{ 'artemisApp.plagiarism.cases.assess' | artemisTranslate }}
                 </button>
-                <button *ngIf="activeSplitViewComparison === comparison.id" (click)="showComparison(-1); hideInstructorStatementForm()" class="tab-item btn btn-primary btn-sm me-1">
+                <button
+                    *ngIf="activeSplitViewComparison === comparison.id"
+                    (click)="showComparison(-1); hideInstructorStatementForm()"
+                    class="tab-item btn btn-primary btn-sm me-1"
+                >
                     {{ 'artemisApp.plagiarism.cases.close' | artemisTranslate }}
                 </button>
                 <button
