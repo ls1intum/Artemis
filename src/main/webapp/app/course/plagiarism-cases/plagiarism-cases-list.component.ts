@@ -24,16 +24,24 @@ export class PlagiarismCasesListComponent {
 
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
+    /**
+     * checks if there is an instructorStatement for student A
+     * @param comparisonIndex
+     */
     hasInstructorStatementA(comparisonIndex: number): boolean {
         return !!this.plagiarismCase.comparisons[comparisonIndex].instructorStatementA;
     }
 
+    /**
+     * checks if there is an instructorStatement for student B
+     * @param comparisonIndex
+     */
     hasInstructorStatementB(comparisonIndex: number): boolean {
         return !!this.plagiarismCase.comparisons[comparisonIndex].instructorStatementB;
     }
 
     /**
-     *
+     * hide the form to create a new instructorStatement
      */
     hideInstructorStatementForm(): void {
         this.activeStudentLogin = undefined;
@@ -41,7 +49,7 @@ export class PlagiarismCasesListComponent {
     }
 
     /**
-     *
+     * show the form to create a new instructorStatement for a comparison for a specific student
      * @param studentLogin
      * @param comparisonId
      */
@@ -51,7 +59,7 @@ export class PlagiarismCasesListComponent {
     }
 
     /**
-     *
+     * show the details of the given comparison
      * @param comparisonId
      */
     showComparison(comparisonId: number): void {
@@ -59,7 +67,7 @@ export class PlagiarismCasesListComponent {
     }
 
     /**
-     *
+     * save the instructorStatement for a student
      * @param student
      * @param i
      */
@@ -85,6 +93,12 @@ export class PlagiarismCasesListComponent {
             });
     }
 
+    /**
+     * update the final status of a comparison for a student
+     * @param confirm
+     * @param comparisonIndex
+     * @param studentLogin
+     */
     updateStatus(confirm: boolean, comparisonIndex: number, studentLogin: string) {
         this.plagiarismCasesService.updatePlagiarismComparisonFinalStatus(this.plagiarismCase.comparisons[comparisonIndex].id, confirm, studentLogin).subscribe(() => {
             if (this.plagiarismCase.comparisons[comparisonIndex].submissionA.studentLogin === studentLogin) {
