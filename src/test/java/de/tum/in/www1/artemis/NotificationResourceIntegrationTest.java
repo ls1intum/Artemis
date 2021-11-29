@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -45,7 +45,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
-    private NotificationTargetService targetService;
+    private NotificationTargetProvider targetService;
 
     private Exercise exercise;
 

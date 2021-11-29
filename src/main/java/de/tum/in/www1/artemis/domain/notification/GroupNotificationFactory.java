@@ -11,11 +11,11 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class GroupNotificationFactory {
 
-    private static final NotificationTargetService targetService = new NotificationTargetService();
+    private static final NotificationTargetProvider targetService = new NotificationTargetProvider();
 
     /**
      * Creates an instance of GroupNotification based on the passed parameters.

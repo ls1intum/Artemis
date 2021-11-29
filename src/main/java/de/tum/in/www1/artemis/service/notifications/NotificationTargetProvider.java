@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
-public class NotificationTargetService {
+public class NotificationTargetProvider {
 
     // shared constants
     private static final String MESSAGE_TEXT = "message";

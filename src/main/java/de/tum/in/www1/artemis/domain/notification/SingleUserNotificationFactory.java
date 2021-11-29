@@ -7,11 +7,11 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class SingleUserNotificationFactory {
 
-    private static NotificationTargetService targetService = new NotificationTargetService();
+    private static NotificationTargetProvider targetService = new NotificationTargetProvider();
 
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
