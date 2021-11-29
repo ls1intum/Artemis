@@ -183,7 +183,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
         const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
-        console.log(this.course?.exercises);
         const filtered = this.course?.exercises?.filter(
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
