@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -104,14 +105,27 @@ public class NotificationResource {
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
                 notificationSettings);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
+        final ZonedDateTime hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
+        final boolean showAllNotificationsRegardlessOfDate = hideNotificationsUntilDate == null;
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
-            page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getHideNotificationsUntil(),
-                    pageable);
+            if (showAllNotificationsRegardlessOfDate) {
+                page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
+            }
+            else {
+                page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getHideNotificationsUntil(),
+                        pageable);
+            }
         }
         else {
-            page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
-                    currentUser.getHideNotificationsUntil(), deactivatedTitles, pageable);
+            if (showAllNotificationsRegardlessOfDate) {
+                page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), deactivatedTitles,
+                        pageable);
+            }
+            else {
+                page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
+                        currentUser.getHideNotificationsUntil(), deactivatedTitles, pageable);
+            }
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);

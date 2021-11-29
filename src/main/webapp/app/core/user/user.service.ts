@@ -79,17 +79,8 @@ export class UserService {
      * If the value is set to null -> show all notifications
      * (Not to be confused with the notification settings. This filter is only based on the date a notification was created)
      */
-    updateNotificationVisibility(hideNotificationsUntil: dayjs.Dayjs | null): Observable<HttpResponse<dayjs.Dayjs | null>> {
-        return this.http.put<dayjs.Dayjs | null>(`${this.resourceUrl}/notification-visibility`, hideNotificationsUntil, { observe: 'response' });
-    }
-
-    /**
-     * Get the property that decides what notifications should be displayed or hidden in the notification sidebar based on notification date.
-     * If the value is set to null -> show all notifications
-     * (Not to be confused with the notification settings. This filter is only based on the date a notification was created)
-     */
-    getNotificationVisibility(): Observable<HttpResponse<dayjs.Dayjs | null>> {
-        return this.http.get<dayjs.Dayjs | null>(`${this.resourceUrl}/notification-visibility`, { observe: 'response' });
+    updateNotificationVisibility(showAllNotifications: boolean): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/notification-visibility`, showAllNotifications, { observe: 'response' });
     }
 
     /**

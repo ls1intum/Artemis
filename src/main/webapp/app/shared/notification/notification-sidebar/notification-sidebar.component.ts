@@ -33,7 +33,6 @@ export class NotificationSidebarComponent implements OnInit {
     recentNotificationCount = 0;
     totalNotifications = 0;
     lastNotificationRead?: dayjs.Dayjs;
-    hideNotificationsUntil: dayjs.Dayjs | null;
     page = 0;
     notificationsPerPage = 25;
     error?: string;
@@ -62,7 +61,7 @@ export class NotificationSidebarComponent implements OnInit {
                 }
                 this.loadNotificationSettings();
                 this.listenForNotificationSettingsChanges();
-                this.applyNotificationVisibilityAndLoadNotifications();
+                this.loadNotifications();
                 this.subscribeToNotificationUpdates();
             }
         });
@@ -107,17 +106,9 @@ export class NotificationSidebarComponent implements OnInit {
      * Starts the process to show or hide all notifications in the sidebar
      */
     toggleNotificationDisplay(): void {
-        if (this.showAllNotificationsInSideBar) {
-            // all notifications (even the hidden ones) should be displayed
-            this.hideNotificationsUntil = null;
-        } else {
-            // hide all currently displayed notifications
-            this.hideNotificationsUntil = dayjs();
-        }
-        this.userService.updateNotificationVisibility(this.hideNotificationsUntil).subscribe((res: HttpResponse<dayjs.Dayjs | null>) => {
-            this.hideNotificationsUntil = res.body;
+        this.showAllNotificationsInSideBar = !this.showAllNotificationsInSideBar;
+        this.userService.updateNotificationVisibility(this.showAllNotificationsInSideBar).subscribe(() => {
             this.resetNotificationsInSidebar();
-            this.showAllNotificationsInSideBar = !this.showAllNotificationsInSideBar;
         });
     }
 
@@ -230,19 +221,6 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
-     * Loads the notifications and updates their visibility based on their creation/notification date
-     */
-    private applyNotificationVisibilityAndLoadNotifications(): void {
-        this.userService.getNotificationVisibility().subscribe(
-            (res: HttpResponse<dayjs.Dayjs | null>) => {
-                this.hideNotificationsUntil = res.body;
-                this.loadNotifications();
-            },
-            () => this.loadNotifications(),
-        );
-    }
-
-    /**
      * Clears all currently loaded notifications, afterwards fetches updated once
      * E.g. is used to update the view after the user toggles the button to show/hide all notifications
      */
@@ -252,7 +230,7 @@ export class NotificationSidebarComponent implements OnInit {
         this.recentNotificationCount = 0;
         this.totalNotifications = 0;
         this.page = 0;
-        this.applyNotificationVisibilityAndLoadNotifications();
+        this.loadNotifications();
     }
 
     // notification settings related methods

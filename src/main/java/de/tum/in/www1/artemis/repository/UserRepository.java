@@ -150,7 +150,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Modifying
     @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")
-    ZonedDateTime updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
+    void updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
