@@ -146,7 +146,6 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 newPolicy.id = this.programmingExercise.submissionPolicy.id;
                 newPolicy.active = this.programmingExercise.submissionPolicy.active;
                 newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
-                this.exceedingPenaltyControl.setValue(undefined);
             }
             this.programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
@@ -155,9 +154,8 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 newPolicy.id = this.programmingExercise.submissionPolicy.id;
                 newPolicy.active = this.programmingExercise.submissionPolicy.active;
                 newPolicy.submissionLimit = this.programmingExercise.submissionPolicy!.submissionLimit;
-                if (this.programmingExercise.submissionPolicy.exceedingPenalty) {
-                    newPolicy.exceedingPenalty = this.programmingExercise.submissionPolicy.exceedingPenalty;
-                }
+                // restore value when penalty has been set previously
+                newPolicy.exceedingPenalty = this.exceedingPenaltyControl.value;
             }
             this.programmingExercise.submissionPolicy = newPolicy;
         }
