@@ -12,6 +12,8 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
+    private unreferencedFeedbackId = 1;
+
     @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -64,8 +66,10 @@ export class UnreferencedFeedbackComponent {
         feedback.credits = 0;
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
 
+        // Assign the next id to the unreferenced feedback
         if (this.addReferenceIdForExampleSubmission) {
-            feedback.reference = (this.unreferencedFeedback.length + 1).toString();
+            feedback.reference = this.unreferencedFeedbackId.toString();
+            this.unreferencedFeedbackId++;
         }
 
         this.unreferencedFeedback.push(feedback);
