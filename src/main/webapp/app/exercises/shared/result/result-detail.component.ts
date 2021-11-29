@@ -531,6 +531,9 @@ export class ResultDetailComponent implements OnInit {
                     console.log(index);
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
                     this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
+
+                    // update is necessary for the colors to change
+                    this.ngxData = [...this.ngxData];
                 }
             });
         }

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
-import { stub } from 'sinon';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -202,7 +201,7 @@ describe('ResultDetailComponent', () => {
                 // Set profile info
                 const profileInfo = new ProfileInfo();
                 profileInfo.commitHashURLTemplate = commitHashURLTemplate;
-                stub(profileService, 'getProfileInfo').returns(new BehaviorSubject(profileInfo));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
             });
     });
 
@@ -372,16 +371,11 @@ describe('ResultDetailComponent', () => {
         comp.showTestDetails = true;
         comp.result.feedbacks = feedbacks;
 
-        /*comp.scoreChartPreset.applyTo(new ChartComponent());
-        const chartSetValuesSpy = jest.spyOn(comp.scoreChartPreset, 'setValues');*/
-
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
         expect(comp.showScoreChartTooltip).toBe(true);
 
-        /*expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
-        expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 5, 6, 100, 100);*/
         checkChartPreset(5, 5, '10', '5 of 6');
         expect(comp.isLoading).toBe(false);
 
@@ -391,12 +385,9 @@ describe('ResultDetailComponent', () => {
         feedbacks.push(feedbackPair1.fb);
         expectedItems.push(feedbackPair1.item);
 
-        // chartSetValuesSpy.mockClear();
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        // expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
-        // expect(chartSetValuesSpy).toHaveBeenCalledWith(104, 5, 6, 100, 100);
         checkChartPreset(99, 1, '100 of 104', '1 of 6');
 
         // test negative > positive, limit at 0
@@ -407,28 +398,18 @@ describe('ResultDetailComponent', () => {
         feedbacks.push(feedbackPair2.fb);
         expectedItems.push(feedbackPair2.item);
 
-        // chartSetValuesSpy.mockClear();
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        // expect(chartSetValuesSpy).toHaveBeenCalledTimes(1);
-        // expect(chartSetValuesSpy).toHaveBeenCalledWith(10, 22, 206, 100, 100);
+
         checkChartPreset(0, 10, '10', '10 of 206');
     });
 
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
-        /*// @ts-ignore
-        expect(comp.scoreChartPreset.datasets).toHaveLength(2);
-        // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[0].data[0]).toBe(d1);
-        // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[0]).toBe(l1);
-        // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[1].data[0]).toBe(d2);
-        // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[1]).toBe(l2);*/
         expect(comp.ngxData[0].series).toHaveLength(2);
+        expect(comp.ngxData[0].series[0].name).toBe('artemisApp.result.chart.points: ' + l1);
         expect(comp.ngxData[0].series[0].value).toBe(d1);
+        expect(comp.ngxData[0].series[1].name).toBe('artemisApp.result.chart.deductions: ' + l2);
         expect(comp.ngxData[0].series[1].value).toBe(d2);
     };
 });

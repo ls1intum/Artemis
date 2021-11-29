@@ -279,20 +279,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 series[5].afterDueDate = false;
                                 series[5].notParticipated = false;
 
-                                /*switch (exercise.includedInOverallScore) {
-                                    case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                                        series[1].value = roundedParticipationScore;
-                                        series[1].absoluteValue = parseFloat(split[0]);
-                                        break;
-                                    case IncludedInOverallScore.NOT_INCLUDED:
-                                        series[2].value = roundedParticipationScore;
-                                        series[2].absoluteValue = parseFloat(split[0]);
-                                        break;
-                                    case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                                        series[3].value = roundedParticipationScore;
-                                        series[3].absoluteValue = parseFloat(split[0]);
-                                        break;
-                                }*/
                                 this.identifyBar(exercise, series, roundedParticipationScore, parseFloat(split[0]));
                                 this.pushToData(exercise, series);
                             }
