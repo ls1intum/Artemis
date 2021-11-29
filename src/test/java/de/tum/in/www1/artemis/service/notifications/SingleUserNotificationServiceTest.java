@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -15,8 +17,11 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 
 public class SingleUserNotificationServiceTest {
@@ -32,6 +37,8 @@ public class SingleUserNotificationServiceTest {
     @Mock
     private static User user;
 
+    private final static String USER_LOGIN = "de27sms";
+
     @Mock
     private static Exercise exercise;
 
@@ -40,6 +47,9 @@ public class SingleUserNotificationServiceTest {
 
     @Mock
     private static SingleUserNotificationRepository singleUserNotificationRepository;
+
+    @Mock
+    private static UserRepository userRepository;
 
     @Mock
     private static SimpMessageSendingOperations messagingTemplate;
@@ -61,6 +71,15 @@ public class SingleUserNotificationServiceTest {
 
     private final static Long COURSE_ID = 27L;
 
+    @Mock
+    private static PlagiarismComparison plagiarismComparison;
+
+    @Mock
+    private static PlagiarismSubmission plagiarismSubmission;
+
+    @Mock
+    private static PlagiarismResult plagiarismResult;
+
     /**
      * Sets up all needed mocks and their wanted behavior once for all test cases.
      * These are the common mocks and structures which behavior is fixed and will not change
@@ -81,7 +100,10 @@ public class SingleUserNotificationServiceTest {
 
         singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
 
-        singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
+        userRepository = mock(UserRepository.class);
+
+        singleUserNotificationService = spy(
+                new SingleUserNotificationService(singleUserNotificationRepository, userRepository, messagingTemplate, mailService, notificationSettingsService));
 
         exercise = mock(Exercise.class);
 
@@ -89,6 +111,7 @@ public class SingleUserNotificationServiceTest {
         when(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
 
         user = mock(User.class);
+        when(user.getLogin()).thenReturn(USER_LOGIN);
 
         lecture = mock(Lecture.class);
         when(lecture.getCourse()).thenReturn(course);
@@ -98,6 +121,16 @@ public class SingleUserNotificationServiceTest {
         when(post.getLecture()).thenReturn(lecture);
         when(post.getAuthor()).thenReturn(user);
         when(post.getCourse()).thenReturn(course);
+
+        plagiarismSubmission = mock(PlagiarismSubmission.class);
+        when(plagiarismSubmission.getStudentLogin()).thenReturn(USER_LOGIN);
+
+        plagiarismResult = mock(PlagiarismResult.class);
+        when(plagiarismResult.getExercise()).thenReturn(exercise);
+
+        plagiarismComparison = mock(PlagiarismComparison.class);
+        when(plagiarismComparison.getSubmissionA()).thenReturn(plagiarismSubmission);
+        when(plagiarismComparison.getPlagiarismResult()).thenReturn(plagiarismResult);
     }
 
     /**
@@ -130,6 +163,8 @@ public class SingleUserNotificationServiceTest {
 
     /// General notify Tests
 
+    // Post related
+
     /**
      * Tests if no notification (or email) is send if the settings are deactivated
      * However, the notification has to be saved to the DB
@@ -148,7 +183,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForExercise() {
         singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
     /**
@@ -157,7 +192,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForLecture() {
         singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
     /**
@@ -166,8 +201,10 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForCoursePost() {
         singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
+
+    // Exercise related
 
     /**
      * Test for notifyUserAboutSuccessfulFileUploadSubmission method
@@ -175,7 +212,28 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE);
+        verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
+    }
+
+    // Plagiarism related
+
+    /**
+     * Test for notifyUserAboutNewPossiblePlagiarismCase method
+     */
+    @Test
+    public void testNotifyUserAboutNewPossiblePlagiarismCase() {
+        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutFinalPlagiarismState method
+     */
+    @Test
+    public void testNotifyUserAboutFinalPlagiarismState() {
+        when(exercise.getExerciseType()).thenReturn(TEXT);
+        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
     }
 
     /// Save & Send related Tests
