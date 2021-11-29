@@ -120,7 +120,7 @@ public class PlagiarismResource {
             @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
 
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin); // TODO maybe remove if not used by notifications
+        User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
         Exercise affectedExercise = comparison.getPlagiarismResult().getExercise();
 
         if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
@@ -129,15 +129,14 @@ public class PlagiarismResource {
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementA(comparison.getId(), statement.statement);
-            // TODO send notification to student
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementB(comparison.getId(), statement.statement);
-            // TODO send notification to student
         }
         else {
             throw new EntityNotFoundException("Student with id not found in plagiarism comparison");
         }
+        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(comparison, affectedUser);
         return ResponseEntity.ok(statement);
     }
 
@@ -208,7 +207,8 @@ public class PlagiarismResource {
             @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
 
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        var affectedExercise = comparison.getPlagiarismResult().getExercise(); // TODO check if needed for notification / check if user is instructor of this exercise/course
+        User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
+        var affectedExercise = comparison.getPlagiarismResult().getExercise();
 
         if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
             throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
@@ -216,15 +216,14 @@ public class PlagiarismResource {
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusA(comparisonId, statusDTO.getStatus());
-            // TODO singleUserNotificationService.notifyUserAboutPlagiarismCase(notification);
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusB(comparisonId, statusDTO.getStatus());
-            // TODO singleUserNotificationService.notifyUserAboutPlagiarismCase(notification);
         }
         else {
             return ResponseEntity.notFound().build();
         }
+        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(comparison, affectedUser);
         return ResponseEntity.ok(statusDTO);
     }
 }
