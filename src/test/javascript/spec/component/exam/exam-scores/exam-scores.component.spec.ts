@@ -563,8 +563,6 @@ describe('ExamScoresComponent', () => {
         fixture.detectChanges();
 
         comp.exportToCsv();
-
-        // expect(comp).to.be.ok;
     });
 
     it('should find grade step index correctly', () => {
