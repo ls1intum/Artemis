@@ -31,6 +31,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     yourScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel');
     averageScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel');
     maximumScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel');
+    maxScale = 101;
 
     constructor(
         private router: Router,
@@ -90,6 +91,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
+            // adapt the y axis max
+            this.maxScale = Math.max(
+                round(exerciseScoreDTO.scoreOfStudent!),
+                round(exerciseScoreDTO.averageScoreAchieved!),
+                round(exerciseScoreDTO.maxScoreAchieved!),
+                this.maxScale,
+            );
             scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.scoreOfStudent!) + 1, ...extraInformation });
             averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.averageScoreAchieved!) + 1, ...extraInformation });
             bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.maxScoreAchieved!) + 1, ...extraInformation });
