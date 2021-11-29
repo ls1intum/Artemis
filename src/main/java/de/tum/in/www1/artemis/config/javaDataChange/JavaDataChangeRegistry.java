@@ -18,8 +18,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.javaDataChange.entries.ChangeEntry0;
-import de.tum.in.www1.artemis.config.javaDataChange.entries.ChangeEntry1;
+import de.tum.in.www1.artemis.config.javaDataChange.entries.ChangeEntry20211127_120000;
+import de.tum.in.www1.artemis.config.javaDataChange.entries.ChangeEntry20211128_120000;
 import de.tum.in.www1.artemis.domain.JavaDataChangelog;
 import de.tum.in.www1.artemis.repository.JavaDataChangeRepository;
 
@@ -41,8 +41,8 @@ public class JavaDataChangeRegistry {
 
     public JavaDataChangeRegistry(AutowireCapableBeanFactory beanFactory) throws NoSuchAlgorithmException {
         // Here we define the order of the ChangeEntries
-        entryMap.put(0, ChangeEntry0.class);
-        entryMap.put(1, ChangeEntry1.class);
+        entryMap.put(0, ChangeEntry20211127_120000.class);
+        entryMap.put(1, ChangeEntry20211128_120000.class);
         this.beanFactory = beanFactory;
     }
 

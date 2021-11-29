@@ -9,11 +9,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 
 @Component
-public class ChangeEntry0 extends JavaDataChangeEntry {
+public class ChangeEntry20211128_120000 extends JavaDataChangeEntry {
 
     private final CourseRepository courseRepository;
 
-    public ChangeEntry0(CourseRepository courseRepository) {
+    public ChangeEntry20211128_120000(CourseRepository courseRepository) {
         this.courseRepository = courseRepository;
     }
 
@@ -29,7 +29,7 @@ public class ChangeEntry0 extends JavaDataChangeEntry {
      */
     @Override
     public String date() {
-        return "20211127-120000";
+        return "20211128-120000";
     }
 
     @Override
