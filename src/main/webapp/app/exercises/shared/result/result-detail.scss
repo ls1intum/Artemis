@@ -64,3 +64,8 @@
 .fa-angle {
     cursor: pointer;
 }
+
+::ng-deep .legend-labels {
+    background-color: transparent !important;
+    text-align: center !important;
+}
