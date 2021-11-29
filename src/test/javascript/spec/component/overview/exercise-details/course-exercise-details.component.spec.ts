@@ -165,10 +165,9 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
-        expect(comp).not.toBe(null);
         expect(comp.showWelcomeAlert).toBe(true);
         expect(comp.inProductionEnvironment).toBe(false);
-        expect(comp.courseId).toEqual(1);
+        expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.hasMoreResults).toBe(false);
     }));
@@ -202,17 +201,16 @@ describe('CourseExerciseDetailsComponent', () => {
 
         fixture.detectChanges();
         tick(500);
-        expect(comp).not.toBe(null);
 
         // override mock to return exercise with participation
         getExerciseDetailsMock.mockReturnValue(exerciseDetailResponse);
         comp.loadExercise();
         fixture.detectChanges();
-        expect(comp.courseId).toEqual(1);
-        expect(comp.studentParticipation?.exercise?.id).toEqual(exerciseDetail.id);
+        expect(comp.courseId).toBe(1);
+        expect(comp.studentParticipation?.exercise?.id).toBe(exerciseDetail.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
         expect(comp.hasMoreResults).toBe(false);
-        expect(comp.exerciseRatedBadge(result)).toEqual('bg-info');
+        expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     }));
 
     it('should not allow to publish a build plan for text exercises', () => {
@@ -252,6 +250,6 @@ describe('CourseExerciseDetailsComponent', () => {
         flush();
 
         expect(comp.wasSubmissionSimulated).toBe(false);
-        expect(comp.exercise?.participationStatus).toEqual(ParticipationStatus.EXERCISE_SUBMITTED);
+        expect(comp.exercise?.participationStatus).toBe(ParticipationStatus.EXERCISE_SUBMITTED);
     }));
 });
