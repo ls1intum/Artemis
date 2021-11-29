@@ -6,6 +6,8 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { ActivatedRoute } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { TranslateService } from '@ngx-translate/core';
+
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
@@ -60,7 +62,7 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute, private translateService: TranslateService) {
         textAssessmentAnalytics.setComponentRoute(route);
     }
 
@@ -99,7 +101,8 @@ export class AssessmentHeaderComponent {
      * Opens dialog to verify that instructor wants to import as example submission
      */
     onImportExampleSolutionClicked() {
-        if (confirm('Are you sure to import this submission as an example submission')) {
+        const verificationMessage = this.translateService.instant('artemisApp.assessment.importVerificationQuestion');
+        if (confirm(verificationMessage)) {
             this.importExampleSubmission.emit();
         }
     }
