@@ -344,7 +344,13 @@ public class ProgrammingExerciseTestService {
         if (language == ProgrammingLanguage.SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+        // Exclude ProjectType FACT as SCA is not supported
+        if (language == ProgrammingLanguage.C) {
+            exercise.setProjectType(ProjectType.ARTEMIS_C);
+        }
+        else {
+            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+        }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
 
