@@ -70,7 +70,11 @@ export class PlagiarismCasesComponent implements OnInit {
      * calculate the total number of plagiarism cases
      */
     numberOfCases(): number {
-        return [...this.confirmedPlagiarismCases?.map((plagiarismCase) => plagiarismCase.comparisons)!].reduce((prev) => prev + 2, 0);
+        let size = 0;
+        this.confirmedPlagiarismCases!.forEach((c) => {
+            c.comparisons.forEach(() => (size += 2));
+        });
+        return size;
     }
 
     /**
