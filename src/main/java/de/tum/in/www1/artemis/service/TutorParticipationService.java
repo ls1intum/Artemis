@@ -116,13 +116,19 @@ public class TutorParticipationService {
     /**
      * Validates if tutor feedback matches instructor feedback.
      * Validation rules:
+     * - The feedback should have the same creditCount(score)
      * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
      * - Tutor feedback is not allowed to have negative score without feedback content
-     * - The feedback should have the same creditCount(score)
      *
      * @return error type if feedback is invalid, `Optional.empty()` otherwise.
      */
     private Optional<FeedbackCorrectionErrorType> tutorFeedbackMatchesInstructorFeedback(Feedback tutorFeedback, Feedback instructorFeedback) {
+        // If instructor feedback score is different from tutor one, return incorrect score.
+        boolean equalCredits = Double.compare(instructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
+        if (!equalCredits) {
+            return Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        }
+
         if (instructorFeedback.getGradingInstruction() != null) {
             // If instructor used grading instruction while creating the feedback but the tutor didn't use it, return missing grading instruction.
             if (tutorFeedback.getGradingInstruction() == null) {
@@ -139,12 +145,6 @@ public class TutorParticipationService {
         var feedbackContent = Optional.ofNullable(tutorFeedback.getText() != null ? tutorFeedback.getText() : tutorFeedback.getDetailText()).orElse("");
         if (tutorFeedback.getCredits() < 0 && feedbackContent.isBlank()) {
             return Optional.of(FeedbackCorrectionErrorType.EMPTY_NEGATIVE_FEEDBACK);
-        }
-
-        // If instructor feedback score is different from tutor one, return incorrect score.
-        boolean equalCredits = Double.compare(instructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
-        if (!equalCredits) {
-            return Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
         }
 
         return Optional.empty();
@@ -178,7 +178,9 @@ public class TutorParticipationService {
                 return isMatch;
             });
 
-            return hasMatchingInstructorFeedback ? Optional.empty() : Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+            var highestPriorityError = matchingInstructorFeedback.stream().map(feedback -> tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).get())
+                    .sorted(Comparator.reverseOrder()).findFirst();
+            return hasMatchingInstructorFeedback ? Optional.empty() : highestPriorityError;
         }
         else {
             if (matchingInstructorFeedback.size() > 1) {
@@ -197,9 +199,15 @@ public class TutorParticipationService {
         var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
         boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
 
+        var unreferencedInstructorFeedbackCount = instructorFeedback.stream().filter(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED).toList().size();
+        var unreferencedTutorFeedback = tutorFeedback.stream().filter(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED).toList();
+
         // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
-            var validationError = checkTutorFeedbackForErrors(feedback, instructorFeedback);
+            // If current tutor feedback is unreferenced and there are already more than enough unreferenced feedback provided, mark this feedback as unnecessary.
+            var unreferencedTutorFeedbackCount = unreferencedTutorFeedback.indexOf(feedback) + 1;
+            var validationError = unreferencedTutorFeedbackCount > unreferencedInstructorFeedbackCount ? Optional.of(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK)
+                    : checkTutorFeedbackForErrors(feedback, instructorFeedback);
             if (validationError.isEmpty()) {
                 return Stream.empty();
             }

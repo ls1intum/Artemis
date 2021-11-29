@@ -305,7 +305,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        this.assessmentsAreValid = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        this.assessmentsAreValid = this.assessments.length > 0;
         this.totalScore = this.computeTotalScore(this.assessments);
 
         if (this.guidedTourService.currentTour && this.toComplete) {
