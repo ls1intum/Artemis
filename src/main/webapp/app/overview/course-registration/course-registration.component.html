@@ -1,0 +1,49 @@
+<div>
+    <div class="col-12 col-sm-auto alert alert-success" *ngIf="addedSuccessful && userIsAllowedToRegister">
+        <fa-icon [icon]="'check-circle'"></fa-icon>
+        {{ 'artemisApp.studentDashboard.register.registerSuccessful' | artemisTranslate }}
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="coursesToSelect.length > 0 && userIsAllowedToRegister">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let course of coursesToSelect; trackBy: trackCourseById">
+                    <td>
+                        <span>{{ course.title }}</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <jhi-confirm-button
+                                *ngIf="course.registrationConfirmationMessage!"
+                                (onConfirm)="registerForCourse(course.id!)"
+                                title="artemisApp.studentDashboard.register.signUpForCourse"
+                                confirmationText="{{ course.registrationConfirmationMessage! }}"
+                                confirmationTitle="artemisApp.studentDashboard.register.courseSignupConfirmationTitle"
+                                [disabled]="loading"
+                                [translateText]="false"
+                                [textIsMarkdown]="true"
+                            >
+                            </jhi-confirm-button>
+                            <button *ngIf="!course.registrationConfirmationMessage!" class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading">
+                                {{ 'artemisApp.studentDashboard.register.signUpForCourse' | artemisTranslate }}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-12 col-sm-auto text-warning" *ngIf="!loading && coursesToSelect.length === 0 && userIsAllowedToRegister">
+        {{ 'artemisApp.studentDashboard.register.noCourse' | artemisTranslate }}
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="loading && coursesToSelect.length === 0 && userIsAllowedToRegister">
+        {{ 'artemisApp.studentDashboard.register.courseLoading' | artemisTranslate }}
+    </div>
+    <div class="col-12 col-sm-auto text-warning" *ngIf="!userIsAllowedToRegister">
+        {{ 'artemisApp.studentDashboard.register.noCourse' | artemisTranslate }}
+    </div>
+</div>

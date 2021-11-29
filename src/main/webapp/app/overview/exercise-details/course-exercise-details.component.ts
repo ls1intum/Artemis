@@ -20,20 +20,20 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
@@ -81,7 +81,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
-    private discussionComponent?: PageDiscussionSectionComponent;
+    private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
@@ -470,7 +470,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * used only for the DiscussionComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: PageDiscussionSectionComponent) {
+    onChildActivate(instance: DiscussionSectionComponent) {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;

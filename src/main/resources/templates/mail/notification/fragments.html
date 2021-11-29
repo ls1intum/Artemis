@@ -179,20 +179,20 @@
 
 <!-- Fragment displaying the translated exerciseType (e.g. -> "Quiz") -->
 <th:block th:fragment="exerciseTypeTranslation">
-    <th:block th:switch="${exerciseType}">
-        <th:block th:case="'quiz'">
+    <th:block th:switch="${exerciseType.toString()}">
+        <th:block th:case="'QUIZ'">
             <span th:utext="#{email.notification.aux.exercise.type.quiz}"/>
         </th:block>
-        <th:block th:case="'text'">
+        <th:block th:case="'TEXT'">
             <span th:utext="#{email.notification.aux.exercise.type.text}"/>
         </th:block>
-        <th:block th:case="'modelling'">
-            <span th:utext="#{email.notification.aux.exercise.type.modelling}"/>
+        <th:block th:case="'MODELING'">
+            <span th:utext="#{email.notification.aux.exercise.type.modeling}"/>
         </th:block>
-        <th:block th:case="'upload'">
+        <th:block th:case="'FILE_UPLOAD'">
             <span th:utext="#{email.notification.aux.exercise.type.upload}"/>
         </th:block>
-        <th:block th:case="'programming'">
+        <th:block th:case="'PROGRAMMING'">
             <span th:utext="#{email.notification.aux.exercise.type.programming}"/>
         </th:block>
     </th:block>

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.PROGRAMMING;
+
 import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -368,6 +370,11 @@ public class ProgrammingExercise extends Exercise {
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
         }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+    }
+
+    @Override
+    public ExerciseType getExerciseType() {
+        return PROGRAMMING;
     }
 
     public ProgrammingLanguage getProgrammingLanguage() {

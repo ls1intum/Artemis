@@ -1,5 +1,4 @@
 import { HttpResponse } from '@angular/common/http';
-import { Directive, HostListener, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,7 +50,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -61,26 +60,10 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
-
-@Directive({
-    // tslint:disable-next-line:directive-selector
-    selector: '[routerLink]',
-})
-// tslint:disable-next-line:directive-class-suffix
-class RouterLinkSpy {
-    @Input()
-    routerLink = '';
-
-    constructor(private router: Router) {}
-
-    @HostListener('click')
-    onClick() {
-        this.router.navigateByUrl(this.routerLink);
-    }
-}
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -116,7 +99,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(RatingComponent),
-                RouterLinkSpy,
+                MockRouterLinkDirective,
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),

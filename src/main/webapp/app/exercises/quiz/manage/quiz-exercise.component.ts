@@ -233,5 +233,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     public sortRows() {
         this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 }

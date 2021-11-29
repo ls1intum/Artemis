@@ -11,6 +11,8 @@ import java.util.Objects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -23,6 +25,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -74,24 +78,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    public void getCompassStatistic_asStudent_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
-    }
-
-    @Test
-    @WithMockUser(roles = "TA")
-    public void getCompassStatistic_asTutor_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
-    public void getCompassStatistic_asInstructor_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
@@ -203,8 +189,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         Course newCourse = databaseUtilService.createCourse(newCourseId);
 
         // Assign new course to the modeling exercise.
-        ModelingExercise updatedModelingExercise = createdModelingExercise;
-        updatedModelingExercise.setCourse(newCourse);
+        createdModelingExercise.setCourse(newCourse);
 
         // Modeling exercise update with the new course should fail.
         ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.CONFLICT);
@@ -255,6 +240,17 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().size()).isGreaterThan(0);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).isNullOrEmpty();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        modelingExerciseRepository.save(modelingExercise);
+
+        request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -332,6 +328,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         Course course1 = database.addEmptyCourse();
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExercise.setReleaseDate(null);
+        modelingExercise.setDueDate(null);
+        modelingExercise.setAssessmentDueDate(null);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
@@ -421,6 +420,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(!newModelingExercise.isCourseExercise()).as("course was not set for exam exercise");
         assertThat(newModelingExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newModelingExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+
+        request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

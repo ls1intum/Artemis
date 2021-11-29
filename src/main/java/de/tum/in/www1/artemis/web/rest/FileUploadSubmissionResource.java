@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -55,16 +56,20 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -143,6 +148,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
+        singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(exercise, user);
         log.info("submitFileUploadExercise took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(submission);
     }

@@ -1,4 +1,4 @@
-import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
+import { NotificationSettingsCommunicationChannel, NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockProvider } from 'ng-mocks/cjs/lib/mock-provider/mock-provider';
@@ -58,7 +58,7 @@ describe('NotificationSettingsComponent', () => {
         expect(comp.settingsChanged).toBe(false);
         expect(notificationSettingA.changed).toBe(false);
 
-        comp.toggleSetting(event, true);
+        comp.toggleSetting(event, NotificationSettingsCommunicationChannel.WEBAPP);
 
         expect(notificationSettingA.webapp).not.toEqual(webappStatus);
         expect(notificationSettingA.changed).toBe(true);
