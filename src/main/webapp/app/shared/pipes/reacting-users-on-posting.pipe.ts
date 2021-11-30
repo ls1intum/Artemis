@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-const USER_COUNT_LIMIT = 10;
+export const USER_COUNT_LIMIT = 10;
+export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
 
 @Pipe({
     name: 'reactingUsersOnPosting',
@@ -15,9 +16,9 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      */
     transform(reactingUsers: string[]): string {
         let reactingUsersString: string;
-        if (reactingUsers.includes('REPLACE_WITH_TRANSLATED_YOU')) {
+        if (reactingUsers.includes(PLACEHOLDER_USER_REACTED)) {
             // remove placeholder
-            reactingUsers = reactingUsers.filter((user) => user !== 'REPLACE_WITH_TRANSLATED_YOU');
+            reactingUsers = reactingUsers.filter((user) => user !== PLACEHOLDER_USER_REACTED);
             reactingUsers = [this.artemisTranslate.transform('artemisApp.metis.you')].concat(reactingUsers);
         }
         if (reactingUsers.length > USER_COUNT_LIMIT) {

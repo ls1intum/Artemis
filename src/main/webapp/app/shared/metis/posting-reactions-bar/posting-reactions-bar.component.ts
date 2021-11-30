@@ -3,6 +3,7 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 const PIN_EMOJI_ID = 'pushpin';
 const PIN_EMOJI_UNICODE = '1F4CC';
@@ -155,7 +156,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     buildEmojiIdMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
         return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
-            const reactingUser = hasReacted ? 'REPLACE_WITH_TRANSLATED_YOU' : reaction.user?.name!;
+            const reactingUser = hasReacted ? PLACEHOLDER_USER_REACTED : reaction.user?.name!;
             const reactionMetaData: ReactionMetaData = {
                 count: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].count + 1 : 1,
                 hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,

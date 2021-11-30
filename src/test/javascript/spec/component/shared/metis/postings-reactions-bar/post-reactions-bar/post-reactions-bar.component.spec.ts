@@ -24,7 +24,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostReactionsBarComponent', () => {
@@ -116,7 +116,7 @@ describe('PostReactionsBarComponent', () => {
             smile: {
                 count: 1,
                 hasReacted: true,
-                reactingUsers: ['REPLACE_WITH_TRANSLATED_YOU'],
+                reactingUsers: [PLACEHOLDER_USER_REACTED],
             },
         });
         // set correct tooltips for tutor and post that is not pinned and not archived
