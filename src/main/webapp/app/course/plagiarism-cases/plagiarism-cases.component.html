@@ -11,7 +11,7 @@
             <jhi-progress-bar
                 [denominator]="numberOfCases()"
                 [numerator]="numberOfInstructorStatements()"
-                [percentage]="100 * (numberOfInstructorStatements() / numberOfCases())"
+                [percentage]="(numberOfInstructorStatements() / numberOfCases()) * 100 || 0"
                 [tooltip]="'artemisApp.plagiarism.cases.notificationsSent' | artemisTranslate"
             >
             </jhi-progress-bar>
@@ -20,7 +20,7 @@
             <jhi-progress-bar
                 [denominator]="numberOfStudentStatements()"
                 [numerator]="numberOfFinalStatuses()"
-                [percentage]="100 * (numberOfFinalStatuses() / numberOfStudentStatements())"
+                [percentage]="(numberOfFinalStatuses() / numberOfStudentStatements()) * 100 || 0"
                 [tooltip]="'artemisApp.plagiarism.cases.responsesAssessed' | artemisTranslate"
             >
             </jhi-progress-bar>
