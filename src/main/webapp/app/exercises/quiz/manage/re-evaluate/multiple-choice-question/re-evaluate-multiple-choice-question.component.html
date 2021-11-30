@@ -5,7 +5,7 @@
                 <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px" />
                 <span class="input-group-btn">
                     <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                        <fa-icon [icon]="'undo'"></fa-icon>
+                        <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
                 </span>
             </div>
@@ -19,7 +19,7 @@
                     <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" id="reset-button" (click)="resetQuestion()">
-                    <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" id="delete-button" (click)="delete()">
                     <fa-icon [icon]="faTrash" size="2x"></fa-icon>
@@ -81,7 +81,7 @@
                 ></jhi-markdown-editor>
                 <span class="col-auto input-group-btn d-flex align-items-center">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
-                        <fa-icon [icon]="'undo'"></fa-icon>
+                        <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
                 </span>
             </div>
@@ -122,7 +122,7 @@
                     ></button
                     >&nbsp;
                     <span class="re-evaluate-button" (click)="resetAnswer(answer)">
-                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                     </span>
                     <span class="re-evaluate-button" (click)="deleteAnswer(answer)">
                         <fa-icon [icon]="faTrash" size="2x"></fa-icon>

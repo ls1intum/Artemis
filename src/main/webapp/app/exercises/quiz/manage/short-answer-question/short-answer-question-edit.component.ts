@@ -27,7 +27,7 @@ import { cloneDeep } from 'lodash-es';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
-import { faBan, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -88,6 +88,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     // Icons
     faBan = faBan;
     faTrash = faTrash;
+    faUndo = faUndo;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

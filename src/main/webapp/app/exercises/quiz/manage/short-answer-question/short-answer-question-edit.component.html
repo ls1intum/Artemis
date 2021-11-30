@@ -40,7 +40,7 @@
                     />
                     <span class="input-group-btn">
                         <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                            <fa-icon [icon]="'undo'"></fa-icon>
+                            <fa-icon [icon]="faUndo"></fa-icon>
                         </button>
                     </span>
                 </div>
@@ -54,7 +54,7 @@
                         <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="resetQuestion()">
-                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="deleteQuestion()">
                         <fa-icon [icon]="faTrash" size="2x"></fa-icon>
@@ -208,7 +208,7 @@
                                         title="Reset"
                                         (click)="resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))"
                                     >
-                                        <fa-icon [icon]="'undo'" size="lg"></fa-icon>
+                                        <fa-icon [icon]="faUndo" size="lg"></fa-icon>
                                     </div>
                                     <div
                                         [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'"
@@ -229,7 +229,7 @@
                 </div>
                 <span *ngIf="reEvaluationInProgress" class="input-group-btn" style="vertical-align: top">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
-                        <fa-icon [icon]="'undo'"></fa-icon>
+                        <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
                 </span>
             </div>

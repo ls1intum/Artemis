@@ -188,7 +188,7 @@
                                 id="reset-criteria-button"
                                 (click)="resetCriterionTitle(criteria)"
                             >
-                                <fa-icon [icon]="'undo'" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}"></fa-icon>
+                                <fa-icon [icon]="faUndo" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}"></fa-icon>
                             </span>
                             <div class="col-md-auto input-group-btn d-flex align-items-center">
                                 <span class="btn btn-block btn-danger" id="delete-criteria-button" (click)="deleteGradingCriterion(criteria)">
@@ -220,7 +220,7 @@
                             ></jhi-markdown-editor>
                             <div class="form-group text-center col-md-4" style="display: block">
                                 <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">
-                                    <fa-icon [icon]="'undo'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                    <fa-icon [icon]="faUndo" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
