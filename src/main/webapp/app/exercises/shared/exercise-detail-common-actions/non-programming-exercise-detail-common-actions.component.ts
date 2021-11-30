@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -36,6 +36,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     // Icons
     faTimes = faTimes;
+    faBook = faBook;
 
     constructor(
         private textExerciseService: TextExerciseService,

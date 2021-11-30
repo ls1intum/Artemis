@@ -43,6 +43,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { faBook } from '@fortawesome/free-solid-svg-icons';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -94,6 +95,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public inProductionEnvironment: boolean;
     public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
+
+    // Icons
+    faBook = faBook;
 
     constructor(
         private exerciseService: ExerciseService,

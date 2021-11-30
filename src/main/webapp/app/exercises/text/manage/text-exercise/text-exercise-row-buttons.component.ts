@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',
@@ -18,6 +18,7 @@ export class TextExerciseRowButtonsComponent {
 
     // Icons
     faTimes = faTimes;
+    faBook = faBook;
 
     constructor(private textExerciseService: TextExerciseService, private eventManager: EventManager) {}
 

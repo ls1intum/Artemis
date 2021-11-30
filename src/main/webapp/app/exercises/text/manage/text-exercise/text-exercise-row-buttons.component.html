@@ -19,7 +19,7 @@
         [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'book'"></fa-icon>
+        <fa-icon [icon]="faBook"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
     </a>
     <!-- Example Submission -->
@@ -28,7 +28,7 @@
         [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'book'"></fa-icon>
+        <fa-icon [icon]="faBook"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
     </a>
     <!-- Teams -->

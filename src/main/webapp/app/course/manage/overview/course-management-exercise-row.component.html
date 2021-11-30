@@ -150,7 +150,7 @@
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'submissions']"
                     class="btn btn-success me-1 mb-1"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | artemisTranslate"
-                    ><fa-icon [icon]="'book'"></fa-icon
+                    ><fa-icon [icon]="faBook"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastEditor && details.type === exerciseType.PROGRAMMING"
