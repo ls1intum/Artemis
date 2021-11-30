@@ -41,7 +41,8 @@ public class ExerciseDateService {
     /**
      * Checks if submissions are no longer possible.
      *
-     * Checks for exam or course exercise, and if an individual due date is set for the given participation or only a course-wide due date applies.
+     * Checks for exam or course exercise, and if an individual due date is set for the given
+     * participation or only a course-wide due date applies.
      * @param participation in a course or exam exercise.
      * @return true, if the due date is in the past and submissions are no longer possible.
      */
@@ -50,9 +51,10 @@ public class ExerciseDateService {
         if (exercise.isExamExercise()) {
             return examDateService.isExerciseWorkingPeriodOver(exercise);
         }
-
-        final ZonedDateTime now = ZonedDateTime.now();
-        return getDueDate(participation).map(now::isAfter).orElse(false);
+        else {
+            final ZonedDateTime now = ZonedDateTime.now();
+            return getDueDate(participation).map(now::isAfter).orElse(false);
+        }
     }
 
     /**
