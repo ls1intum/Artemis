@@ -28,7 +28,7 @@
                         </button>
 
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faSync"></fa-icon>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
                             <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
                         </button>
