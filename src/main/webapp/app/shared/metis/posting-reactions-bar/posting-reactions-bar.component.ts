@@ -150,10 +150,23 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     }
 
     /**
+     * updates the posting's reactions by calling the build function for the reactionMetaDataMap if there are any reaction on the posting
+     */
+    updatePostingWithReactions(): void {
+        if (this.posting.reactions && this.posting.reactions.length > 0) {
+            // filter out emoji for pin and archive as they should not be listed in the reactionMetaDataMap
+            const filteredReactions = this.posting.reactions.filter((reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId);
+            this.reactionMetaDataMap = this.buildReactionMetaDataMap(filteredReactions);
+        } else {
+            this.reactionMetaDataMap = {};
+        }
+    }
+
+    /**
      * builds the ReactionMetaDataMap data structure out of a given array of reactions
      * @param reactions array of reactions associated to the current posting
      */
-    buildEmojiIdMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
+    buildReactionMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
         return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
             const reactingUser = hasReacted ? PLACEHOLDER_USER_REACTED : reaction.user?.name!;
@@ -164,18 +177,5 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             };
             return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
         }, {});
-    }
-
-    /**
-     * updates the posting's reactions by calling the build function for the reactionMetaDataMap if there are any reaction on the posting
-     */
-    updatePostingWithReactions(): void {
-        if (this.posting.reactions && this.posting.reactions.length > 0) {
-            // filter out emoji for pin and archive as they should not be listed in the reactionMetaDataMap
-            const filteredReactions = this.posting.reactions.filter((reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId);
-            this.reactionMetaDataMap = this.buildEmojiIdMetaDataMap(filteredReactions);
-        } else {
-            this.reactionMetaDataMap = {};
-        }
     }
 }
