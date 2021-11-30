@@ -45,7 +45,7 @@
             <div *ngFor="let legendElement of legend.slice(0, 3)" class="pe-5" style="display: inline-block">
                 <span>{{ legendElement.text | artemisTranslate }}</span>
                 <fa-layers>
-                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
                     <fa-icon [icon]="legendElement.icon" [styles]="{ width: '29px', color: legendElement.color, 'font-size': legendElement.size }" transform="shrink-6"></fa-icon>
                 </fa-layers>
             </div>
@@ -54,7 +54,7 @@
             <div *ngIf="toComplete" class="pe-5" style="display: inline-block">
                 <span>{{ legend[3].text | artemisTranslate }}</span>
                 <fa-layers>
-                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
                     <fa-icon
                         [icon]="legend[3].icon"
                         [styles]="{ color: '#ffc800', width: '29px', 'margin-top': '-9px', 'font-size': legend[3].size }"
