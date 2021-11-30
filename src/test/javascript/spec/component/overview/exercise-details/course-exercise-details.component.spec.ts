@@ -57,7 +57,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('CourseExerciseDetailsComponent', () => {
@@ -124,7 +123,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ComplaintService),
                 MockProvider(ArtemisNavigationUtilService),
-                MockProvider(ExerciseHintService),
             ],
         })
             .compileComponents()
