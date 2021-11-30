@@ -8,7 +8,7 @@
             </label>
             <fa-icon class="me-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}"></fa-icon>
             <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram" [disabled]="!hasSelection">
-                <fa-icon [icon]="'download'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.download">Download</span>
+                <fa-icon [icon]="faDownload"></fa-icon>&nbsp;<span jhiTranslate="entity.action.download">Download</span>
             </button>
             <span class="border-right border-secondary me-2"></span>
             <button class="btn btn-info me-1" (click)="generateExercise()" [hidden]="!apollonDiagram" [disabled]="!hasInteractive">

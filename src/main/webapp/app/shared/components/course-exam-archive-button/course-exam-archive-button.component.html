@@ -83,7 +83,7 @@
         <span>{{ archiveButtonText }}</span>
     </button>
     <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary me-1 mb-1" (click)="downloadArchive()">
-        <fa-icon [icon]="'download'"></fa-icon>&nbsp;
+        <fa-icon [icon]="faDownload"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>
     <button

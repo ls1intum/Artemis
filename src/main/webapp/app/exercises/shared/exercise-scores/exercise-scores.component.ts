@@ -23,6 +23,7 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Filter properties for a result
@@ -64,6 +65,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     isLoading: boolean;
 
     isAdmin = false;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(
         private route: ActivatedRoute,

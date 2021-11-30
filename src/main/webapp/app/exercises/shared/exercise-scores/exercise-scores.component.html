@@ -64,7 +64,7 @@
                 </a>
 
                 <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
-                    <fa-icon [icon]="'download'"></fa-icon>
+                    <fa-icon [icon]="faDownload"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
                 </button>
                 <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>

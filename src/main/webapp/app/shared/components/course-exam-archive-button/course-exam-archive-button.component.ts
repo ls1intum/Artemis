@@ -14,6 +14,7 @@ import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';
@@ -51,6 +52,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(
         private courseService: CourseManagementService,
