@@ -12,7 +12,7 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -32,6 +32,7 @@ export class ExamExerciseRowButtonsComponent {
     // Icons
     faTimes = faTimes;
     faBook = faBook;
+    faEye = faEye;
 
     constructor(
         private textExerciseService: TextExerciseService,

@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-organization-management',
@@ -18,6 +18,7 @@ export class OrganizationManagementComponent implements OnInit {
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
+    faEye = faEye;
 
     constructor(private organizationService: OrganizationManagementService) {}
 

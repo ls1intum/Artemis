@@ -14,7 +14,7 @@ import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
-import { faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-user-management',
@@ -41,6 +41,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faPlus = faPlus;
     faTimes = faTimes;
+    faEye = faEye;
 
     constructor(
         private userService: UserService,

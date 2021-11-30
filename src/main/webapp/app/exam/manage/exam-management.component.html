@@ -136,7 +136,7 @@
                                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']"
                                     class="btn btn-info btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
                                 </a>
                             </div>
@@ -159,7 +159,7 @@
                             </div>
                             <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'student-exams']" class="btn btn-primary btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                                 </a>
                             </div>

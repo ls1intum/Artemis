@@ -22,7 +22,7 @@
                 </a>
 
                 <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'eye'"></fa-icon>
+                    <fa-icon [icon]="faEye"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                 </a>
 
@@ -32,7 +32,7 @@
                 </a>
 
                 <a id="scores-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'eye'"></fa-icon>
+                    <fa-icon [icon]="faEye"></fa-icon>
                     <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
 
