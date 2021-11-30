@@ -16,6 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -49,6 +50,9 @@ export class TeamParticipationTableComponent implements OnInit {
 
     exercises: ExerciseForTeam[];
     isLoading: boolean;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private teamService: TeamService,

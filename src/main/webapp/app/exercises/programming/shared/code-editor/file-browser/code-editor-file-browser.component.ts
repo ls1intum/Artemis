@@ -22,7 +22,7 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -114,6 +114,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     // Icons
     faPlus = faPlus;
+    faFolderOpen = faFolderOpen;
 
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;

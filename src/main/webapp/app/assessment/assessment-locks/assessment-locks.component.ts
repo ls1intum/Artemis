@@ -13,7 +13,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { faBan } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -40,6 +40,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     // Icons
     faBan = faBan;
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private route: ActivatedRoute,

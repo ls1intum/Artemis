@@ -401,7 +401,7 @@
                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                     class="btn btn-warning btn-sm"
                                                 >
-                                                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{
+                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
                                                         'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
                                                     }}
                                                 </a>
@@ -412,7 +412,7 @@
                                                         [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                         class="btn btn-primary btn-sm"
                                                     >
-                                                        <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                                         &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
                                                     </a>
                                                 </ng-template>
@@ -454,7 +454,7 @@
                                                 [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
                                             >
                                                 <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="faSpinner" [spin]="true"></fa-icon>
-                                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
                                             </a>
                                         </td>
@@ -560,7 +560,7 @@
                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                             class="btn btn-success btn-sm"
                                         >
-                                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                         </a>
                                         <ng-template #continueButton>
@@ -569,7 +569,7 @@
                                                 [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                                 class="btn btn-primary btn-sm"
                                             >
-                                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                             </a>
                                         </ng-template>
@@ -646,7 +646,7 @@
                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                         >
-                                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
                                         </a>
                                         <ng-template #continueButton>
@@ -655,7 +655,7 @@
                                                 [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                 [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                             >
-                                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
                                             </button>
                                         </ng-template>

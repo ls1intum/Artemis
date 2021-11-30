@@ -2,13 +2,13 @@
     <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title justify-content-center">
             <span *ngIf="!collapsed">
-                <fa-icon [icon]="'folder-open'"></fa-icon>
+                <fa-icon [icon]="faFolderOpen"></fa-icon>
                 <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
             </span>
             <span class="collapsed-file-browser" *ngIf="collapsed">
                 <fa-icon class="top-icon" [icon]="'chevron-right'"></fa-icon>
                 <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
-                <fa-icon [icon]="'folder-open'" class="fa-rotate-270" id="panel-symbol"></fa-icon>
+                <fa-icon [icon]="faFolderOpen" class="fa-rotate-270" id="panel-symbol"></fa-icon>
                 <fa-icon class="bottom-icon" [icon]="'chevron-right'"></fa-icon>
             </span>
         </h3>

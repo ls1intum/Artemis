@@ -43,7 +43,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
-import { faCheckCircle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -159,6 +159,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faSpinner = faSpinner;
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private exerciseService: ExerciseService,
