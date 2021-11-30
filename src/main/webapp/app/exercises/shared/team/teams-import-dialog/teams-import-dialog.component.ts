@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
 import { User } from 'app/core/user/user.model';
-import { faBan } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-teams-import-dialog',
@@ -58,6 +58,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     // Icons
     faBan = faBan;
+    faSpinner = faSpinner;
 
     constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private alertService: AlertService) {}
 

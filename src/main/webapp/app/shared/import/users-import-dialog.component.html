@@ -18,7 +18,7 @@
                     <label class="label-narrow font-weight-bold" jhiTranslate="importUsers.csvFile.label">Select .csv file</label>
                     <jhi-help-icon placement="top" text="importUsers.csvFile.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner ms-1" [icon]="'spinner'" [spin]="true" *ngIf="isParsing"></fa-icon>
+                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
             </div>
             <div class="mt-2">
                 <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />

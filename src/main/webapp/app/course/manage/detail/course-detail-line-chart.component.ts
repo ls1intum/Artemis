@@ -5,6 +5,7 @@ import { CourseManagementService } from '../course-management.service';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -58,6 +59,9 @@ export class CourseDetailLineChartComponent implements OnChanges {
     ];
     // Used for storing absolute values to display in tooltip
     absoluteSeries = [{}];
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 

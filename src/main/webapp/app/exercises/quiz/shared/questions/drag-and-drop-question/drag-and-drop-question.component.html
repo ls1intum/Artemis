@@ -5,7 +5,7 @@
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">
             <span style="color: grey"
-                ><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
+                ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
             >
         </h2>
         <div *ngIf="loadingState === 'error'">

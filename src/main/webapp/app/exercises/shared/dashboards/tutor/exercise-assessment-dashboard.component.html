@@ -453,7 +453,7 @@
                                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                                                 [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
                                             >
-                                                <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
+                                                <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="faSpinner" [spin]="true"></fa-icon>
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
                                             </a>

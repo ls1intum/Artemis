@@ -38,7 +38,7 @@
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
                     <jhi-help-icon placement="auto" text="artemisApp.team.sourceExercise.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="searchingExercises"></fa-icon>
+                <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" *ngIf="searchingExercises"></fa-icon>
                 <span *ngIf="searchingExercisesNoResultsForQuery === ''" class="error-message text-danger">
                     <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">There are no other team-based exercises in this course.</span>
                 </span>
@@ -67,7 +67,7 @@
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
                     <jhi-help-icon placement="auto" text="artemisApp.team.sourceTeams.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="loadingSourceTeams"></fa-icon>
+                <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" *ngIf="loadingSourceTeams"></fa-icon>
                 <span *ngIf="loadingSourceTeamsFailed" class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed">
                     Loading teams failed. Please try again.
                 </span>

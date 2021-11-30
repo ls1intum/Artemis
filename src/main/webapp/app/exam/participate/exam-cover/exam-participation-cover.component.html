@@ -101,7 +101,7 @@
                     <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                 </div>
                 <button [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
-                    <fa-icon *ngIf="submitInProgress" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                    <fa-icon *ngIf="submitInProgress" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
                 </button>
             </ng-template>
