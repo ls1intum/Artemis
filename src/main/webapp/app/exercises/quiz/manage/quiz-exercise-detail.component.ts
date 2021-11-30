@@ -15,7 +15,7 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -41,11 +41,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
-
-export interface Reason {
-    translateKey: string;
-    translateValues: any;
-}
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -920,8 +915,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    computeInvalidReasons(): Reason[] {
-        const invalidReasons = new Array<Reason>();
+    computeInvalidReasons(): ValidationReason[] {
+        const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise) {
             return [];
         }

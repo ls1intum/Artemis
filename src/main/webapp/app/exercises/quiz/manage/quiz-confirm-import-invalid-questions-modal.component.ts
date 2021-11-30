@@ -1,6 +1,6 @@
 import { Component, EventEmitter } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Reason } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { ValidationReason } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-confirm-import-invalid-questions-modal',
@@ -10,7 +10,7 @@ import { Reason } from 'app/exercises/quiz/manage/quiz-exercise-detail.component
 export class QuizConfirmImportInvalidQuestionsModalComponent {
     constructor(public activeModal: NgbActiveModal) {}
 
-    invalidFlaggedQuestions: Reason[];
+    invalidFlaggedQuestions: ValidationReason[];
     shouldImport: EventEmitter<void> = new EventEmitter<void>();
 
     /**

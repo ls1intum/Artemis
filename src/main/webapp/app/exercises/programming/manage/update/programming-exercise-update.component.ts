@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, resetDates, ValidationReason } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
@@ -27,11 +27,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-
-export interface Reason {
-    translateKey: string;
-    translateValues: any;
-}
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -599,8 +594,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     /**
      * Get a list of all reasons that describe why the current input to update is invalid
      */
-    getInvalidReasons(): Reason[] {
-        const result: Reason[] = [];
+    getInvalidReasons(): ValidationReason[] {
+        const result: ValidationReason[] = [];
         if (this.programmingExercise.title === undefined || this.programmingExercise.title === '') {
             result.push({
                 translateKey: 'artemisApp.exercise.form.title.undefined',
