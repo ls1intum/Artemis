@@ -38,6 +38,11 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+export interface ValidationReason {
+    translateKey: string;
+    translateValues: any;
+}
+
 export const exerciseTypes: string[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
