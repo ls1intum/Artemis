@@ -165,11 +165,16 @@
                     "preview": "Preview",
                     "testCaseWeights": {
                         "title": "Weight Distribution",
-                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details."
+                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details.",
+                        "weight": "Weight",
+                        "weightTooltip": "{{ percentage }}% of all weights.",
+                        "weightAndBonus": "Weight & Bonus",
+                        "weightAndBonusTooltip": "{{ percentage }}% of all weights and bonuses."
                     },
                     "testCasePoints": {
                         "title": "Total Points",
-                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details."
+                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details.",
+                        "points": "Points"
                     },
                     "categoryDistribution": {
                         "title": "Category Distribution",

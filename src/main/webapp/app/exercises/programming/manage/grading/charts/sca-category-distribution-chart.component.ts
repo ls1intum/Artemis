@@ -5,6 +5,7 @@ import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizo
 import { ChartDataSets } from 'chart.js';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
@@ -25,17 +26,50 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                     [xAxisTickFormatting]="xAxisFormatting"
                 >
                     <ng-template #tooltipTemplate let-model="model">
-                        <h6>{{ model.name }}</h6>
+                        <b>{{ model.name }}</b>
+                        <br />
                         <div [ngSwitch]="model.series">
-                            <span *ngSwitchCase="'Penalty'">
-                                {{ model.series }}: {{ 'artemisApp.programmingAssessment.penalitesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                            </span>
-                            <span *ngSwitchCase="'Issues'">
-                                {{ model.series }}: {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                            </span>
-                            <span *ngSwitchCase="'Deductions'">
-                                {{ model.series }}: {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                            </span>
+                            <div *ngSwitchCase="'Penalty'">
+                                <span>{{ model.series }}: {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}</span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.issues' | artemisTranslate }}:
+                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.deductions' | artemisTranslate }}:
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
+                                </span>
+                            </div>
+                            <div *ngSwitchCase="'Issues'">
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.penalty' | artemisTranslate }}:
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>{{ model.series }}: {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}</span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.deductions' | artemisTranslate }}:
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
+                                </span>
+                            </div>
+                            <div *ngSwitchCase="'Deductions'">
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.penalty' | artemisTranslate }}:
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.deductions' | artemisTranslate }}:
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ model.series }}: {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                                </span>
+                            </div>
                         </div>
                     </ng-template>
                 </ngx-charts-bar-horizontal-normalized>
@@ -59,6 +93,8 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
+
+    constructor(private translateService: TranslateService) {}
 
     ngOnChanges(): void {
         this.ngxData = [];
@@ -108,17 +144,17 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             hoverBackgroundColor: this.getColor(i / this.categories.length, 60),
         }));
 
-        const penalty = { name: 'Penalty', series: [] as any[] };
-        const issue = { name: 'Issues', series: [] as any[] };
-        const deductions = { name: 'Deductions', series: [] as any[] };
+        const penalty = { name: this.translateService.instant('artemisApp.programmingAssessment.penalty'), series: [] as any[] };
+        const issue = { name: this.translateService.instant('artemisApp.programmingAssessment.issues'), series: [] as any[] };
+        const deductions = { name: this.translateService.instant('artemisApp.programmingAssessment.deductions'), series: [] as any[] };
 
         categoryPenalties.forEach((element, index) => {
             const penaltyScore = totalPenalty > 0 ? (Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100 : 0;
             const issuesScore = totalIssues > 0 ? (element.issues / totalIssues) * 100 : 0;
             const penaltyPoints = totalPenaltyPoints > 0 ? (element.penaltyPoints / totalPenaltyPoints) * 100 : 0;
-            penalty.series.push({ name: element.category.name, value: penaltyScore });
-            issue.series.push({ name: element.category.name, value: issuesScore });
-            deductions.series.push({ name: element.category.name, value: penaltyPoints });
+            penalty.series.push({ name: element.category.name, value: penaltyScore, issues: issuesScore, points: penaltyPoints });
+            issue.series.push({ name: element.category.name, value: issuesScore, penalty: penaltyScore, points: penaltyPoints });
+            deductions.series.push({ name: element.category.name, value: penaltyPoints, penalty: penaltyScore, issues: issuesScore });
             this.ngxColors.domain.push(this.hslToHex((index / this.categories.length) * 360 * 3, 55, 50));
         });
         this.ngxData.push(penalty);
