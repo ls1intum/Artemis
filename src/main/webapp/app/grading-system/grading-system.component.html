@@ -125,7 +125,7 @@
                     </td>
                     <td>
                         <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger" style="float: right">
-                            <fa-icon [icon]="'times'"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
+                            <fa-icon [icon]="faTimes"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
                         </button>
                     </td>
                 </tr>
@@ -152,7 +152,7 @@
             [dialogError]="dialogError$"
             [disabled]="isLoading"
         >
-            <fa-icon [icon]="'times'"> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+            <fa-icon [icon]="faTimes"> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
         </button>
         <div *ngIf="invalidGradeStepsMessage" class="alert alert-warning mt-3">
             <fa-icon [icon]="'exclamation-triangle'"></fa-icon>

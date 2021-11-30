@@ -21,7 +21,7 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-update',
@@ -52,6 +52,7 @@ export class CourseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faTimes = faTimes;
 
     constructor(
         private courseService: CourseManagementService,

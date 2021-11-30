@@ -36,7 +36,7 @@
                 (delete)="deleteLearningGoal(learningGoal.id!)"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="'times'"></fa-icon>
+                <fa-icon [icon]="faTimes"></fa-icon>
             </button>
             <a
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"

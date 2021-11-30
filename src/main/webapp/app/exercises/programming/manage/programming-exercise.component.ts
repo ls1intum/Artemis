@@ -23,7 +23,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { faDownload, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -49,6 +49,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faSort = faSort;
     faPlus = faPlus;
     faDownload = faDownload;
+    faTimes = faTimes;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,

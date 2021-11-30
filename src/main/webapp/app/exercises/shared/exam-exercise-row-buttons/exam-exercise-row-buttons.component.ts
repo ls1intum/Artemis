@@ -12,6 +12,7 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -27,6 +28,9 @@ export class ExamExerciseRowButtonsComponent {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
+
+    // Icons
+    faTimes = faTimes;
 
     constructor(
         private textExerciseService: TextExerciseService,

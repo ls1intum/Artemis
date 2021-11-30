@@ -9,6 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -32,6 +33,9 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
+
+    // Icons
+    faTimes = faTimes;
 
     constructor(
         private textExerciseService: TextExerciseService,

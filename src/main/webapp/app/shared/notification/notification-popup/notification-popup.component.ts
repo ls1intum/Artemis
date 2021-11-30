@@ -8,6 +8,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -20,6 +21,9 @@ export class NotificationPopupComponent implements OnInit {
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
     private studentExamExerciseIds: number[];
+
+    // Icons
+    faTimes = faTimes;
 
     constructor(
         private accountService: AccountService,

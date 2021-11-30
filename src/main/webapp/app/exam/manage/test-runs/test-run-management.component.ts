@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -33,6 +33,7 @@ export class TestRunManagementComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faTimes = faTimes;
 
     constructor(
         private route: ActivatedRoute,

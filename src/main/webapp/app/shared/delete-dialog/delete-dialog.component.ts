@@ -4,7 +4,7 @@ import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faBan, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -31,6 +31,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     // Icons
     faBan = faBan;
     faSpinner = faSpinner;
+    faTimes = faTimes;
 
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 

@@ -10,7 +10,7 @@
                     (keyup.enter)="onSearch()"
                     placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
                 />
-                <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="'times'" (onClick)="searchText = ''; onSearch()"></jhi-button>
+                <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
                 <jhi-button class="ms-1" [icon]="'search'" (onClick)="onSearch()"></jhi-button>
             </div>
             <!-- new post button -->

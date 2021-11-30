@@ -4,6 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -44,6 +45,9 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
 
     private detailsLoaded = false;
     private statisticsLoaded = false;
+
+    // Icons
+    faTimes = faTimes;
 
     constructor() {}
 

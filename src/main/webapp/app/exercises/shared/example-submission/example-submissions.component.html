@@ -46,7 +46,7 @@
                     <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
                     <td *ngIf="exercise.course.isAtLeastEditor">
                         <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
-                            <fa-icon [icon]="'times'"></fa-icon>
+                            <fa-icon [icon]="faTimes"></fa-icon>
                             {{ 'entity.action.delete' | artemisTranslate }}
                         </button>
                     </td>
