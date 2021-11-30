@@ -4,7 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { faBook, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
 
 export enum ExerciseRowType {
@@ -53,6 +53,7 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     faBook = faBook;
     faWrench = faWrench;
     faUsers = faUsers;
+    faTable = faTable;
 
     constructor() {}
 

@@ -143,7 +143,7 @@
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'scores']"
                     class="btn btn-info me-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"
-                    ><fa-icon [icon]="'table'"></fa-icon
+                    ><fa-icon [icon]="faTable"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastInstructor && details.type !== exerciseType.PROGRAMMING && details.type !== exerciseType.QUIZ"

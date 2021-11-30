@@ -7,6 +7,7 @@ import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { faTable } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -43,6 +44,9 @@ export class CourseManagementCardComponent implements OnChanges {
 
     private statisticsSorted = false;
     private exercisesSorted = false;
+
+    // Icons
+    faTable = faTable;
 
     ngOnChanges() {
         // Only sort one time once loaded
