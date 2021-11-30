@@ -2,24 +2,20 @@ import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-ma
 import { TestBed } from '@angular/core/testing';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { metisTutor, metisUser1, metisUser2 } from '../helpers/sample/metis-sample-data';
 import { TranslateService } from '@ngx-translate/core';
-import { ChangeDetectorRef } from '@angular/core';
-import { MockProvider } from 'ng-mocks/cjs/lib/mock-provider/mock-provider';
+import { metisTutor, metisUser1, metisUser2 } from '../helpers/sample/metis-sample-data';
 
 describe('ReactingUsersOnPostingsPipe', () => {
     let reactingUsersPipe: ReactingUsersOnPostingPipe;
     let translateService: TranslateService;
-    let changeDetectorRef: ChangeDetectorRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [HtmlForPostingMarkdownPipe],
-            providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         translateService = TestBed.inject(TranslateService);
-        changeDetectorRef = TestBed.inject(ChangeDetectorRef);
-        reactingUsersPipe = new ReactingUsersOnPostingPipe(translateService, changeDetectorRef);
+        reactingUsersPipe = new ReactingUsersOnPostingPipe(translateService);
     });
 
     it('Should return string for one user that is not "you"', () => {
