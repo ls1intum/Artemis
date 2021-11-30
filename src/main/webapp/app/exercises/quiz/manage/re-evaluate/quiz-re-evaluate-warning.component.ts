@@ -8,7 +8,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -37,6 +37,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     faBan = faBan;
     faSpinner = faSpinner;
     faTimes = faTimes;
+    faCheck = faCheck;
 
     constructor(
         public activeModal: NgbActiveModal,

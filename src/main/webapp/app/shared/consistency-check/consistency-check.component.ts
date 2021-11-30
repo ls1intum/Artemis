@@ -5,7 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-consistency-check',
@@ -19,6 +19,7 @@ export class ConsistencyCheckComponent implements OnInit {
 
     // Icons
     faTimes = faTimes;
+    faCheck = faCheck;
 
     constructor(private activeModal: NgbActiveModal, private consistencyCheckService: ConsistencyCheckService, private alertService: AlertService) {}
 

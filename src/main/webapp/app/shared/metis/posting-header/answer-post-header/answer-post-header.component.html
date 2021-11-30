@@ -29,7 +29,7 @@
     </div>
     <ng-template #notResolved>
         <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
-            <fa-icon class="icon notResolved" [icon]="'check'" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
         </div>
     </ng-template>
     <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
@@ -37,7 +37,7 @@
             <div *ngIf="posting.resolvesPost; else notResolved">
                 <fa-icon
                     class="resolved"
-                    [icon]="'check'"
+                    [icon]="faCheck"
                     [ngbTooltip]="
                         isAtLeastTutorInCourse || isAuthorOfOriginalPost
                             ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)

@@ -70,7 +70,7 @@
         <h4>
             <span *ngIf="!successful && !failed && !busy" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
             <span *ngIf="successful && !busy" style="color: green"
-                ><fa-icon [icon]="'check'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span
+                ><fa-icon [icon]="faCheck"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span
             ></span>
             <span *ngIf="failed && !busy" style="color: red"><fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
             <span *ngIf="busy" style="color: grey"><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait, conducting changes!</span></span>

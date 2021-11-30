@@ -3,6 +3,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseWideContext } from '../../metis.util';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-answer-post-header',
@@ -13,6 +14,9 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
     readonly CourseWideContext = CourseWideContext;
+
+    // Icons
+    faCheck = faCheck;
 
     constructor(protected metisService: MetisService) {
         super(metisService);

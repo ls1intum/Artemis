@@ -45,7 +45,7 @@
                 </div>
                 <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
                     <div class="step-hint__icon">
-                        <fa-icon [icon]="'check'"></fa-icon>
+                        <fa-icon [icon]="faCheck"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | artemisTranslate"></div>
@@ -57,7 +57,7 @@
                     [class.alert-success]="userInteractionFinished"
                 >
                     <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
-                        <fa-icon [icon]="'check'"></fa-icon>
+                        <fa-icon [icon]="faCheck"></fa-icon>
                     </div>
                     <ng-template #userInteractionIcons>
                         <div class="step-hint__icon">
@@ -90,7 +90,7 @@
                         <fa-icon [icon]="'clipboard-list'"></fa-icon>
                     </div>
                     <div class="step-hint__icon" *ngIf="userInteractionFinished">
-                        <fa-icon [icon]="'check'"></fa-icon>
+                        <fa-icon [icon]="faCheck"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | artemisTranslate"></div>
