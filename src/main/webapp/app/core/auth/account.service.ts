@@ -64,6 +64,7 @@ export class AccountService implements IAccountService {
     }
 
     private fetch(): Observable<HttpResponse<User>> {
+        console.log('fetch api/account');
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
