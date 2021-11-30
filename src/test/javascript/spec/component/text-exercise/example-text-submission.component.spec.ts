@@ -210,7 +210,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.state = State.forExistingAssessmentWithContext(comp);
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
-        jest.spyOn(assessmentsService, 'deleteExampleAssessment').mockReturnValue(of({}));
+        jest.spyOn(assessmentsService, 'deleteExampleAssessment').mockReturnValue(of(undefined));
 
         // WHEN
         fixture.detectChanges();
