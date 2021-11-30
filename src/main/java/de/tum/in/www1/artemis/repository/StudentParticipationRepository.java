@@ -186,20 +186,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
      *
      * @param exerciseId Exercise id.
-     * @return participations for exercise.
+     * @return participations for the exercise.
      */
-    @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.exercise.id = :#{#exerciseId}
-                and p.individualDueDate is null
-                and (r.id = (select max(pr.id) from p.results pr
-                    left join pr.submission prs
-                    where pr.assessmentType = 'AUTOMATIC' and (prs.type <> 'ILLEGAL' or prs.type is null)))
-            """)
-    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(@Param("exerciseId") Long exerciseId);
+    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(Long exerciseId) {
+        return findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    }
 
     @Query("""
             select distinct p from StudentParticipation p
@@ -225,17 +216,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
-    @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.exercise.id = :#{#exerciseId}
-                 and p.individualDueDate is null
-                 and (s.type <> 'ILLEGAL' or s.type is null)
-                 and (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
-            """)
-    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(@Param("exerciseId") Long exerciseId);
+    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(Long exerciseId) {
+        return findByExerciseIdWithManualResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    }
 
     @Query("""
             select distinct p from StudentParticipation p
