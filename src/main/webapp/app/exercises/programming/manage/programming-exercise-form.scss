@@ -17,6 +17,9 @@
     z-index: 10;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
     background: white;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 17%;
     align-items: center;
 
     .container {
