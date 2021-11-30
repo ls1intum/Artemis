@@ -116,7 +116,7 @@
                 </td>
                 <td>
                     <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
-                        <fa-icon [icon]="'user'"></fa-icon>
+                        <fa-icon [icon]="faUser"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                     </a>
                 </td>
@@ -144,7 +144,7 @@
                 </td>
                 <td>
                     <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
-                        <fa-icon [icon]="'user'"></fa-icon>
+                        <fa-icon [icon]="faUser"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                     </a>
                 </td>

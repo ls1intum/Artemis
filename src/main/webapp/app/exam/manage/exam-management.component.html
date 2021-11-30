@@ -153,7 +153,7 @@
                             </div>
                             <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                                    <fa-icon [icon]="'user'"></fa-icon>
+                                    <fa-icon [icon]="faUser"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                                 </a>
                             </div>
@@ -165,7 +165,7 @@
                             </div>
                             <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'students']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                                    <fa-icon [icon]="'user'"></fa-icon>
+                                    <fa-icon [icon]="faUser"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                                 </a>
                             </div>
