@@ -151,6 +151,12 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
    It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist by default.
 
 2. Wait a couple of minutes since Gitlab can take some time to set up. Open the instance in your browser and set a first admin password of your choosing.
+   If your are not prompted to specify a first admin password in the browser, you can do so by executing (maybe as root):
+   .. code:: bash
+
+        docker exec -it <your-gitlab-container, e. g. artemis_gitlab_1>  gitlab-rake "gitlab:password:reset[root]"
+
+
    You can then login using the username ``root`` and your password.
 
 3. Open the Artemis configuration ``application-local.yml`` file and insert the Gitlab admin account:
