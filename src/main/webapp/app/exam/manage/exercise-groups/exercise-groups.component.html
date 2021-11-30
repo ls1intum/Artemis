@@ -60,12 +60,12 @@
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
                         <a *ngIf="course?.isAtLeastEditor" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
                             <fa-icon [icon]="faPlus"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'font'"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
                             <fa-icon [icon]="faPlus"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'font'"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
