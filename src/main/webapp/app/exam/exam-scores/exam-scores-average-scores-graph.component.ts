@@ -60,11 +60,11 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         this.ngxData.push({ name: this.averageScores.title, value: exerciseGroupAverage });
         this.xScaleMax = this.xScaleMax > exerciseGroupAverage ? this.xScaleMax : exerciseGroupAverage;
         this.averageScores.exerciseResults.forEach((exercise) => {
-            const exerciseAverage = exercise.averagePercentage ? exercise.averagePercentage : 0;
+            const exerciseAverage = exercise.averagePercentage ?? 0;
             this.xScaleMax = this.xScaleMax > exerciseAverage ? this.xScaleMax : exerciseAverage;
             this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
             this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
-                absoluteValue: exercise.averagePoints ? exercise.averagePoints : 0,
+                absoluteValue: exercise.averagePoints ?? 0,
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };

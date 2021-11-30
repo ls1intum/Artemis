@@ -117,7 +117,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                        // this.yScaleMax = this.studentResults.length > this.yScaleMax ? this.studentResults.length : this.yScaleMax;
 
                         const titleMap = new Map<string, number>();
                         if (this.exerciseGroups) {
