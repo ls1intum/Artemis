@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 export const USER_COUNT_LIMIT = 10;
 export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
@@ -8,6 +9,8 @@ export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
     name: 'reactingUsersOnPosting',
 })
 export class ReactingUsersOnPostingPipe implements PipeTransform {
+    private onLangChange?: Subscription;
+
     constructor(private translateService: TranslateService) {}
 
     /**
@@ -16,6 +19,13 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      * @returns {string} concatenated (and shortened if required) list of reacting users
      */
     transform(reactingUsers: string[]): string {
+        // Subscribe to onLangChange event, in case the language changes.
+        if (!this.onLangChange) {
+            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+                this.translateService.use(event.lang);
+            });
+        }
+
         let reactingUsersString: string;
         if (reactingUsers.includes(PLACEHOLDER_USER_REACTED)) {
             // remove placeholder
@@ -38,5 +48,19 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
             }
         }
         return reactingUsersString;
+    }
+
+    private cleanUpSubscription(): void {
+        if (this.onLangChange != undefined) {
+            this.onLangChange.unsubscribe();
+            this.onLangChange = undefined;
+        }
+    }
+
+    /**
+     * Unsubscribe from onLangChange event of translation service on pipe destruction.
+     */
+    ngOnDestroy(): void {
+        this.cleanUpSubscription();
     }
 }
