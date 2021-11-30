@@ -28,7 +28,7 @@
                 <fa-icon
                     id="reachable-help"
                     class="me-1"
-                    [icon]="'question-circle'"
+                    [icon]="faQuestionCircle"
                     ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | artemisTranslate }}"
                 ></fa-icon>
             </h4>
@@ -36,7 +36,7 @@
                 <span>
                     {{ 'artemisApp.courseOverview.statistics.totalPoints' | artemisTranslate: { number: overallMaxPoints, relative: totalRelativeScore } }}
                 </span>
-                <fa-icon id="total-help" class="me-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"></fa-icon>
+                <fa-icon id="total-help" class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"></fa-icon>
             </h4>
             <div *ngIf="gradingScaleExists" class="mb-5">
                 <h4 *ngIf="!isBonus" class="text-center">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h4>
@@ -46,7 +46,7 @@
                     <fa-icon
                         id="reachable-help"
                         class="me-1"
-                        [icon]="'question-circle'"
+                        [icon]="faQuestionCircle"
                         ngbTooltip="{{
                             isBonus ? ('artemisApp.courseOverview.statistics.bonusHelp' | artemisTranslate) : ('artemisApp.courseOverview.statistics.gradeHelp' | artemisTranslate)
                         }}"
@@ -102,7 +102,7 @@
                         <fa-icon
                             id="reachable-help"
                             class="me-1"
-                            [icon]="'question-circle'"
+                            [icon]="faQuestionCircle"
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h4>
@@ -116,7 +116,7 @@
                         <fa-icon
                             id="total-help"
                             class="me-1"
-                            [icon]="'question-circle'"
+                            [icon]="faQuestionCircle"
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h4>

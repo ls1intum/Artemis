@@ -6,6 +6,7 @@ import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercis
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -35,6 +36,9 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     failedTests: string[];
 
     hasMessage: boolean;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,

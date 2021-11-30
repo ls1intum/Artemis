@@ -515,7 +515,7 @@
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
                 </h4>
-                <fa-icon class="text-secondary" [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
+                <fa-icon class="text-secondary" [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
@@ -597,7 +597,7 @@
                 </h4>
                 <fa-icon
                     class="text-secondary"
-                    [icon]="'question-circle'"
+                    [icon]="faQuestionCircle"
                     [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                 ></fa-icon>
                 <div class="table-responsive">

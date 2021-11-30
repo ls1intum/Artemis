@@ -27,7 +27,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -118,6 +118,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,

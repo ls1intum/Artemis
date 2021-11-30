@@ -10,7 +10,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -43,6 +43,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     // Icons
     faDownload = faDownload;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,

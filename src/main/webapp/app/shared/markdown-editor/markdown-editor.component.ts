@@ -31,6 +31,7 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -155,6 +156,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     @Input()
     shouldDisplayAlert = true;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
 
