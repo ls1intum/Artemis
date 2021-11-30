@@ -23,6 +23,7 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -40,6 +41,9 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseType = ExerciseType;
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(
         private route: ActivatedRoute,

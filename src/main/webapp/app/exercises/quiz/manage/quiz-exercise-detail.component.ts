@@ -41,6 +41,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 export interface Reason {
     translateKey: string;
@@ -111,6 +112,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /** Route params **/
     examId?: number;
     courseId?: number;
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(
         private route: ActivatedRoute,

@@ -122,13 +122,13 @@
                     </table>
                 </div>
                 <span class="re-evaluate-button mb-3" id="add-instruction-button" (click)="addNewInstruction(criterion)">
-                    <fa-icon [icon]="'plus'" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                    <fa-icon [icon]="faPlus" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                 </span>
             </div>
             <div class="row mt-4">
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()">
-                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <fa-icon [icon]="faPlus"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                     </button>
                 </div>
@@ -226,7 +226,7 @@
                                     <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
                                 <span class="re-evaluate-button" id="add-button" (click)="addInstruction(criteria)">
-                                    <fa-icon [icon]="'plus'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                    <fa-icon [icon]="faPlus" size="2x" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
                             </div>
                         </div>
@@ -237,7 +237,7 @@
         <div class="row mt-2">
             <div class="col-12 col-sm-6 col-xl-3 mb-1">
                 <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()">
-                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <fa-icon [icon]="faPlus"></fa-icon>
                     <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                 </button>
             </div>

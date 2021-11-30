@@ -12,11 +12,11 @@
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </a>
         <a *ngIf="course && course.isAtLeastEditor" class="btn me-2 btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
         <a
@@ -24,7 +24,7 @@
             class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
         </a>
     </h4>

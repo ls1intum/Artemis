@@ -15,7 +15,7 @@
                 [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
             >
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
             </a>
             <button
@@ -25,7 +25,7 @@
                 [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                 (click)="openImportModal()"
             >
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
             </button>
         </ng-container>

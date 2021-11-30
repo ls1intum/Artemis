@@ -10,12 +10,16 @@ import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-s
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(
         private alertService: AlertService,

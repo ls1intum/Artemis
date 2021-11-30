@@ -7,12 +7,12 @@
         </div>
         <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
             <a *ngIf="exercise.course.isAtLeastEditor" class="btn btn-primary me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <fa-icon class="d-xl-none" [icon]="'font'"></fa-icon>
                 <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"></span>
             </a>
             <a *ngIf="exercise.course.isAtLeastEditor" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <fa-icon class="d-xl-none" [icon]="'font'"></fa-icon>
                 <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.importExampleSubmission"></span>
             </a>

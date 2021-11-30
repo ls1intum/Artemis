@@ -15,6 +15,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -51,6 +52,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     rowClass: string | undefined = undefined;
 
     isAdmin = false;
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(
         private router: Router,

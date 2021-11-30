@@ -14,7 +14,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
 import { parse } from 'papaparse';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -58,6 +58,7 @@ export class GradingSystemComponent implements OnInit {
 
     // Icons
     faSave = faSave;
+    faPlus = faPlus;
 
     constructor(
         private gradingSystemService: GradingSystemService,

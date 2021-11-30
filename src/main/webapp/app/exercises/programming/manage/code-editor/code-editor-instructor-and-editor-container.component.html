@@ -91,7 +91,7 @@
                 [disabled]="loadingState !== LOADING_STATE.CLEAR"
                 class="btn btn-primary me-2"
             >
-                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'plus'" class="text-white me-2"></fa-icon>
+                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="faPlus" class="text-white me-2"></fa-icon>
                 <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'circle-notch'" [spin]="true" class="text-white me-2"></fa-icon>
                 <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>

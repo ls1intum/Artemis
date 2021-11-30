@@ -16,7 +16,7 @@
             <!-- new post button -->
             <div class="col-2" *ngIf="createdPost">
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <fa-icon [icon]="faPlus"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                 </button>
                 <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
