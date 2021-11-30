@@ -78,7 +78,7 @@ public class PlagiarismResource {
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
         log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User currentUser = userRepository.getUser();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!authenticationCheckService.isAtLeastEditorInCourse(course, currentUser)) {
             throw new AccessForbiddenException("Only editors or instructors of this course can update plagiarism cases.");
         }
