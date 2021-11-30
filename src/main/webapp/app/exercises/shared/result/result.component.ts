@@ -164,7 +164,8 @@ export class ResultComponent implements OnInit, OnChanges {
             return;
         }
 
-        this.submission = this.result!.submission;
+        // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
+        this.submission = this.result?.submission;
         this.evaluate();
     }
 
