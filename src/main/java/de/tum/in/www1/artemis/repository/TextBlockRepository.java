@@ -21,10 +21,17 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 @Repository
 public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
 
-    Optional<Set<TextBlock>> findAllByCluster(TextCluster textCluster);
+    Optional<Set<TextBlock>> findAllByCluster(Map<Long, TextCluster> cluster);
 
-    @EntityGraph(type = LOAD, attributePaths = { "cluster" })
-    Set<TextBlock> findAllWithEagerClusterBySubmissionId(Long id);
+    @Query("""
+            SELECT DISTINCT tb
+            FROM TextSubmission s
+            LEFT JOIN FETCH TextBlock tb ON s.id = tb.submission.id
+            LEFT JOIN FETCH tb.cluster tc
+            LEFT JOIN FETCH tc.blocks tball
+            WHERE s.id = :#{#submissionId} AND tball.id <> tb.id AND tc.exercise.id = :#{#exerciseId}
+            """)
+    Set<TextBlock> findAllWithEagerClusterBySubmissionAndExerciseIds(@Param("submissionId") Long submissionId, @Param("exerciseId") Long exerciseId);
 
     Set<TextBlock> findAllBySubmissionId(Long id);
 

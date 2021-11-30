@@ -45,7 +45,7 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.MySQL8Dialect
         database: MYSQL
-        show-sql: false
+        show-sql: true
     liquibase:
         contexts: dev
     mail:

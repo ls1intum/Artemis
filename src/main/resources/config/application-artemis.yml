@@ -88,7 +88,7 @@ artemis:
         name: Artemis
         email: artemis.in@tum.de
     athene:
-        url: http://localhost
+        url: http://localhost:80
         base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
         token-validity-in-seconds: 10800
     apollon:

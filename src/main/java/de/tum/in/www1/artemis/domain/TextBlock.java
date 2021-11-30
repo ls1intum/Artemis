@@ -4,9 +4,7 @@ import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -80,8 +78,7 @@ public class TextBlock implements Serializable {
 
     @ManyToMany(mappedBy = "blocks")
     @JsonIgnore
-    @MapKey(name = "exercise")
-    private Map<Long, TextCluster> cluster = new HashMap<Long, TextCluster>();
+    private Set<TextCluster> cluster = new HashSet<>();
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getId() {
@@ -187,16 +184,16 @@ public class TextBlock implements Serializable {
     }
 
     public TextCluster getCluster(Long exerciseId) {
-        return cluster.get(exerciseId);
+        return cluster.stream().filter(cl -> cl.getExercise().getId() == exerciseId).findFirst().get();
     }
 
     public TextBlock cluster(Long exerciseId, TextCluster textCluster) {
-        this.cluster.put(exerciseId, textCluster);
+        this.cluster.add(textCluster);
         return this;
     }
 
     public void setCluster(Long exerciseId, TextCluster textCluster) {
-        this.cluster.put(exerciseId, textCluster);
+        this.cluster.add(textCluster);
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

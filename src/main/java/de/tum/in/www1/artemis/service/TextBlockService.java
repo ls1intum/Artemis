@@ -115,7 +115,7 @@ public class TextBlockService {
     public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result, Long exerciseId) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final long sumbissionId = textSubmission.getId();
-        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(sumbissionId);
+        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionAndExerciseIds(sumbissionId, exerciseId);
         textSubmission.setBlocks(blocks);
         final var otherBlocksInCluster = textBlockRepository.countOtherBlocksInClusterBySubmissionId(sumbissionId, exerciseId);
 
