@@ -13,7 +13,7 @@
 
         <!-- Teams -->
         <a *ngIf="exercise.teamMode && exercise.isAtLeastTutor" [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'users'"></fa-icon>
+            <fa-icon [icon]="faUsers"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
         </a>
 

@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faPlus, faSort, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -29,6 +29,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     faTimes = faTimes;
     faBook = faBook;
     faWrench = faWrench;
+    faUsers = faUsers;
 
     constructor(
         public exerciseService: ExerciseService,
