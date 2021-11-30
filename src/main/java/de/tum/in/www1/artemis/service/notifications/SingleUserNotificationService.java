@@ -29,9 +29,9 @@ public class SingleUserNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private MailService mailService;
+    private final MailService mailService;
 
-    private NotificationSettingsService notificationSettingsService;
+    private final NotificationSettingsService notificationSettingsService;
 
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService) {
