@@ -14,7 +14,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -37,6 +37,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
 
     // Icons
     faSync = faSync;
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private courseService: CourseManagementService,

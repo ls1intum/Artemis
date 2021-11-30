@@ -51,7 +51,7 @@
                 </div>
             </div>
             <div class="loading-spinner text-center mx-3 my-2" style="font-size: large" *ngIf="loading">
-                <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
             <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
                 {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}

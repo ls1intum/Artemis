@@ -2,7 +2,7 @@
 <nav *ngIf="loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED" class="card">
     <div class="card-body">
         <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
         </span>
         <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">

@@ -11,7 +11,7 @@
         title="{{ 'artemisApp.editor.conflict.resetRepository' | artemisTranslate }}"
     >
         <span *ngIf="isResolvingConflict; else notResolvingConflict">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
         </span>
         <ng-template #notResolvingConflict>
@@ -33,7 +33,7 @@
         title="{{ 'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate }}"
     >
         <span *ngIf="editorState === EditorState.REFRESHING; else notRefreshing">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
         </span>
         <ng-template #notRefreshing>

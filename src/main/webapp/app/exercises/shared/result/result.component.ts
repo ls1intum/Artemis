@@ -20,6 +20,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enumeration object representing the possible options that
@@ -111,6 +112,9 @@ export class ResultComponent implements OnInit, OnChanges {
     onlyShowSuccessfulCompileStatus: boolean;
 
     resultTooltip: string;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,

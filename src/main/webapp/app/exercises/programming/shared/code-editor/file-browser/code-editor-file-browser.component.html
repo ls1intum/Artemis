@@ -62,7 +62,7 @@
         <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
         <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>

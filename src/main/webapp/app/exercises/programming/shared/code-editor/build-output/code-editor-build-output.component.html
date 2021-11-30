@@ -10,7 +10,7 @@
         <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
     </div>
     <div class="card-body" *ngIf="isBuilding">
-        <p class="text-center is-building"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
+        <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
     </div>
     <div class="card-body build-output__content" *ngIf="!isBuilding && rawBuildLogs.length">
         <div class="buildoutput d-flex flex-column">

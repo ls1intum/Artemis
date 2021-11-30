@@ -63,7 +63,7 @@
                         <div class="step-hint__icon">
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="'hand-point-up'"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="'i-cursor'"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="faCircleNotch"></fa-icon>
                             <fa-icon
                                 *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
                                 [icon]="'arrows-alt'"
@@ -128,7 +128,7 @@
                     (click)="guidedTourService.restartTour()"
                 >
                     <fa-icon *ngIf="!guidedTourService.restartIsLoading" [icon]="'play-circle'"></fa-icon>
-                    <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" [icon]="'circle-notch'" [spin]="true" size="sm"></fa-icon>
+                    <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
                     <span jhiTranslate="global.menu.restartTutorial"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">

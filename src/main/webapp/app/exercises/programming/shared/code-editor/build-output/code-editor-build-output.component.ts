@@ -17,7 +17,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { findLatestResult } from 'app/shared/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -48,6 +48,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     // Icons
     faChevronDown = faChevronDown;
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private buildLogService: CodeEditorBuildLogService,

@@ -11,7 +11,7 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, Connectio
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -63,6 +63,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
     // Icons
     faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;

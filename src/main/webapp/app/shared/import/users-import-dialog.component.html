@@ -94,7 +94,7 @@
             >
                 <fa-icon [icon]="'upload'" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
-                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
             <ng-template #buttonAfterImport>
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
