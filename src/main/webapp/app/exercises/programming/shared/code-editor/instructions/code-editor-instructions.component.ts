@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 
@@ -23,6 +23,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
 
     // Icons
     faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
 
     constructor() {}
 

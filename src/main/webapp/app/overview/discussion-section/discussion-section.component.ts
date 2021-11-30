@@ -12,7 +12,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -39,6 +39,7 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
     // Icons
     faPlus = faPlus;
     faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
 
     constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService, private router: Router) {}
 

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, HostBinding, Input, HostListener } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import interact from 'interactjs';
 
 /**
@@ -25,6 +25,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
 
     // Icons
     faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
 
     /**
      * Performed after full initialization of the view.
