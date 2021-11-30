@@ -12,7 +12,7 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
     /**
      * Converts markdown used in posting content into html, sanitizes it and then declares it as safe to bypass further security.
      * @param {string[]} reactingUsers users that are reacting with a certain emoji on a posting
-     * @returns {string} concatenated, shortened if required
+     * @returns {string} concatenated (and shortened if required) list of reacting users
      */
     transform(reactingUsers: string[]): string {
         let reactingUsersString: string;
@@ -28,13 +28,13 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
                 reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltipTrimmed', { number: numberOfReactingUsers - USER_COUNT_LIMIT });
         } else {
             reactingUsersString = reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltip');
-        }
-        // replace last comma by "and"
-        const lastCommaIndex = reactingUsersString.lastIndexOf(',');
-        if (lastCommaIndex > -1) {
-            const beforeLastComma = reactingUsersString.substring(0, lastCommaIndex);
-            const afterLastComma = reactingUsersString.substring(lastCommaIndex + 2, reactingUsersString.length);
-            return beforeLastComma + this.artemisTranslate.transform('artemisApp.metis.and') + afterLastComma;
+            // replace last comma by "and"
+            const lastCommaIndex = reactingUsersString.lastIndexOf(',');
+            if (lastCommaIndex > -1) {
+                const beforeLastComma = reactingUsersString.substring(0, lastCommaIndex);
+                const afterLastComma = reactingUsersString.substring(lastCommaIndex + 2, reactingUsersString.length);
+                return beforeLastComma + this.artemisTranslate.transform('artemisApp.metis.and') + afterLastComma;
+            }
         }
         return reactingUsersString;
     }
