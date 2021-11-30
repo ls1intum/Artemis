@@ -16,7 +16,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: './programming-assessment-dashboard.component.html',
@@ -40,6 +40,7 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faBan = faBan;
 
     constructor(
         private route: ActivatedRoute,

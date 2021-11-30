@@ -76,7 +76,7 @@
                         </span>
                         <span>
                             <button *ngIf="!submission.latestResult!.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
-                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
+                                <fa-icon [icon]="faBan" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
                             </button>
                         </span>
                     </td>

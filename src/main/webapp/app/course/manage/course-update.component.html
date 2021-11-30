@@ -360,14 +360,14 @@
             </div>
             <div class="mt-3 d-flex">
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <span *ngIf="courseForm.invalid; else saveButtonTpl" data-toggle="tooltip" title="Please fill in all required fields." placement="top">
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
                     <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving" class="btn btn-primary ms-2">
-                        <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </ng-template>
             </div>

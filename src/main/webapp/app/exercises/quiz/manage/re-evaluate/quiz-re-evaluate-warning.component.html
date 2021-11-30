@@ -78,7 +78,7 @@
         &nbsp;
         <div class="form-group">
             <button [disabled]="busy" *ngIf="!successful" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button [disabled]="busy" *ngIf="!successful && !failed" type="submit" (click)="confirmChange()" class="btn btn-primary">
                 <fa-icon [icon]="'check-circle'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>

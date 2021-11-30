@@ -24,6 +24,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -85,6 +86,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     ];
 
     private exampleSubmissionId: number;
+
+    // Icons
+    faSave = faSave;
 
     constructor(
         private exerciseService: ExerciseService,

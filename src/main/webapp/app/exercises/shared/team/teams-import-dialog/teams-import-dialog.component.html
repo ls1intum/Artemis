@@ -234,7 +234,7 @@
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button *ngIf="importStrategy !== ImportStrategy.PURGE_EXISTING" type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
                 <fa-icon [icon]="'upload'" class="me-2"></fa-icon>

@@ -15,14 +15,14 @@
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
-                <fa-icon [icon]="'save'"></fa-icon>
+                <fa-icon [icon]="faSave"></fa-icon>
                 <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
                 <span *ngIf="!isNewSubmission" jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission">Save modeling submission</span>
             </button>
         </div>
 
         <button *ngIf="assessmentMode" (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
-            <fa-icon [icon]="'save'"></fa-icon>
+            <fa-icon [icon]="faSave"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
         </button>
 
@@ -67,7 +67,7 @@
 
         <div class="col-3 text-end mb-2" *ngIf="readOnly">
             <button (click)="readAndUnderstood()" class="btn btn-success">
-                <fa-icon [icon]="'save'"></fa-icon>
+                <fa-icon [icon]="faSave"></fa-icon>
                 <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
             </button>
         </div>

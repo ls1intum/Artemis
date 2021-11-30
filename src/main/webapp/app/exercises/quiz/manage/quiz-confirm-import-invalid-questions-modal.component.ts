@@ -1,4 +1,5 @@
 import { Component, EventEmitter } from '@angular/core';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Reason } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 
@@ -8,6 +9,9 @@ import { Reason } from 'app/exercises/quiz/manage/quiz-exercise-detail.component
     styleUrls: ['./quiz-confirm-import-invalid-questions-modal.scss'],
 })
 export class QuizConfirmImportInvalidQuestionsModalComponent {
+    // Icons
+    faBan = faBan;
+
     constructor(public activeModal: NgbActiveModal) {}
 
     invalidFlaggedQuestions: Reason[];

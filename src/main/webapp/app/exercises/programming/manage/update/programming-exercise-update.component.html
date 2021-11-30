@@ -542,14 +542,14 @@
     </div>
     <div>
         <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="previousState()">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <jhi-button
             id="save-entity"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid || submissionPolicyForm.invalid"
             [isLoading]="isSaving"
-            [icon]="'save'"
+            [icon]="faSave"
             [title]="submitButtonTitle"
             (onClick)="save()"
         >

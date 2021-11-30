@@ -25,7 +25,7 @@
         &nbsp;
         <div class="form-group">
             <button type="button" class="btn btn-secondary" id="cancel-button" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>
+                <fa-icon [icon]="faBan"></fa-icon>
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-warning">

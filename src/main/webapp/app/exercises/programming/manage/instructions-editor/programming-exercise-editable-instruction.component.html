@@ -27,7 +27,7 @@
         (click)="saveInstructions($event)"
         class="btn btn-light editable-instruction-container__save"
     >
-        <fa-icon *ngIf="!savingInstructions" [icon]="'save'" class="me-2"></fa-icon>
+        <fa-icon *ngIf="!savingInstructions" [icon]="faSave" class="me-2"></fa-icon>
         <fa-icon *ngIf="savingInstructions" [icon]="'circle-notch'" [spin]="true" class="me-2"></fa-icon>
         <span jhiTranslate="entity.action.save"></span>
     </button>

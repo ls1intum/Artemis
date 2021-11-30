@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -19,6 +20,9 @@ export class ExerciseUpdateWarningComponent {
     reEvaluated = new EventEmitter<object>();
 
     canceled = new EventEmitter<void>();
+
+    // Icons
+    faBan = faBan;
 
     constructor(public activeModal: NgbActiveModal) {}
 

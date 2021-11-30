@@ -16,7 +16,7 @@
     </div>
     <div class="conflict-modal__footer">
         <button class="conflict-modal__footer__cancel" type="button" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="conflict-modal__footer__submit" [disabled]="!confirmForm.valid">
             <fa-icon [icon]="'times'"></fa-icon><span jhiTranslate="artemisApp.quizExercise.confirmImport">Continue</span>

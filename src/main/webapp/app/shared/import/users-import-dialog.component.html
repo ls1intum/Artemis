@@ -81,7 +81,7 @@
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button
                 *ngIf="!hasImported; else buttonAfterImport"

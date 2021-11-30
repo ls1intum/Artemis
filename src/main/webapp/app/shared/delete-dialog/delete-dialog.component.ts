@@ -4,6 +4,7 @@ import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -26,6 +27,9 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
 
     // used by *ngFor in the template
     objectKeys = Object.keys;
+
+    // Icons
+    faBan = faBan;
 
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 

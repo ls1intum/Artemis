@@ -26,6 +26,7 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 import { filter } from 'rxjs/operators';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -49,6 +50,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     SubmissionButtonStates = SubmissionButtonStates;
     AssessButtonStates = AssessButtonStates;
     UIStates = UIStates;
+
+    // Icons
+    faSave = faSave;
 
     constructor(
         alertService: AlertService,

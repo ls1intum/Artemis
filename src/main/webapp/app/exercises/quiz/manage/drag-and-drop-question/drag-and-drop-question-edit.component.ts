@@ -34,6 +34,7 @@ import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exerci
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
 import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -111,6 +112,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
+
+    // Icons
+    faBan = faBan;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

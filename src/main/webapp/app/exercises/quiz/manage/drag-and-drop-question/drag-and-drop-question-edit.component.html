@@ -191,7 +191,7 @@
                     >
                         <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
                         <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
-                            <fa-icon [icon]="'ban'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faBan" size="lg"></fa-icon>
                         </div>
                         <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)" *ngIf="reEvaluationInProgress">
                             <fa-icon [icon]="'undo'" size="lg"></fa-icon>
@@ -254,7 +254,7 @@
                         <fa-icon [icon]="['far', 'file-image']" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Set invalid" *ngIf="!dragItem.invalid" (click)="dragItem.invalid = true">
-                        <fa-icon [icon]="'ban'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faBan" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Reset" (click)="resetDragItem(dragItem)">
                         <fa-icon [icon]="'undo'" size="lg"></fa-icon>

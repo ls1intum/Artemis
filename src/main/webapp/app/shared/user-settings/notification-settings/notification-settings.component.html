@@ -14,7 +14,7 @@
         </div>
     </div>
     <button type="button" class="btn btn-primary" *ngIf="settingsChanged" id="apply-changes-button" (click)="this.saveSettings()">
-        <fa-icon class="ng" [icon]="'save'"></fa-icon>
+        <fa-icon class="ng" [icon]="faSave"></fa-icon>
         {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
     </button>
 </div>

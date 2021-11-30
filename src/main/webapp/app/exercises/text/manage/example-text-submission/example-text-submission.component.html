@@ -25,11 +25,11 @@
             <div class="row">
                 <ng-container [ngSwitch]="state.submissionEditButton">
                     <button *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.UPDATE" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
@@ -47,7 +47,7 @@
                         id="createNewAssessment"
                         [disabled]="unsavedChanges"
                     >
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
                     </button>
                     <button
@@ -57,11 +57,11 @@
                         class="btn btn-primary col-auto ms-auto me-3"
                         id="saveNewAssessment"
                     >
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                     </button>
                 </ng-container>
@@ -130,7 +130,7 @@
 
 <div class="col-12 text-end pt-2" *ngIf="readOnly">
     <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
-        <fa-icon [icon]="'save'"></fa-icon>
+        <fa-icon [icon]="faSave"></fa-icon>
         {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
     </button>
 </div>
