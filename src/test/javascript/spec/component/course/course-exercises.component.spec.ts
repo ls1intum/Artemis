@@ -101,9 +101,9 @@ describe('CourseExercisesComponent', () => {
 
     it('should initialize', () => {
         expect(component.course).toEqual(course);
-        expect(courseCalculationSpy.mock.calls.length).toEqual(2);
-        expect(courseCalculationSpy.mock.calls[0][0]).toEqual(course.id);
-        expect(courseCalculationSpy.mock.calls[1][0]).toEqual(course.id);
+        expect(courseCalculationSpy.mock.calls).toHaveLength(2);
+        expect(courseCalculationSpy.mock.calls[0][0]).toBe(course.id);
+        expect(courseCalculationSpy.mock.calls[1][0]).toBe(course.id);
     });
 
     it('should invoke setSortingAttribute', () => {
@@ -111,7 +111,7 @@ describe('CourseExercisesComponent', () => {
         expect(sortingButton).not.toBe(null);
 
         sortingButton.nativeElement.click();
-        expect(component.sortingAttribute).toEqual(SortingAttribute.DUE_DATE);
+        expect(component.sortingAttribute).toBe(SortingAttribute.DUE_DATE);
     });
 
     it('should react to changes', () => {
@@ -144,12 +144,12 @@ describe('CourseExercisesComponent', () => {
         expect(sortingButton).not.toBe(null);
         sortingButton.nativeElement.click();
 
-        expect(component.sortingOrder).toEqual(ExerciseSortingOrder.ASC);
+        expect(component.sortingOrder).toBe(ExerciseSortingOrder.ASC);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-03', '2021-01-10']);
 
         sortingButton.nativeElement.click();
 
-        expect(component.sortingOrder).toEqual(ExerciseSortingOrder.DESC);
+        expect(component.sortingOrder).toBe(ExerciseSortingOrder.DESC);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-10', '2021-01-03']);
     });
 
@@ -189,20 +189,20 @@ describe('CourseExercisesComponent', () => {
         ];
 
         // Number of exercises in the course must be 4, since we have added 4 exercises
-        expect(component.course!.exercises!.length).toEqual(4);
+        expect(component.course!.exercises).toHaveLength(4);
         component.toggleFilters([ExerciseFilter.UNRELEASED]);
 
         // Number of active modeling and text exercises must be 1 respectively, since we have filtered
         // the exercises with release date in the future
-        expect(component.exerciseCountMap.get('modeling')).toEqual(1);
-        expect(component.exerciseCountMap.get('text')).toEqual(1);
+        expect(component.exerciseCountMap.get('modeling')).toBe(1);
+        expect(component.exerciseCountMap.get('text')).toBe(1);
 
         component.toggleFilters([ExerciseFilter.UNRELEASED]);
 
         // Number of active modeling and text exercises must be 2 respectively, since we do not filter
         // the exercises with release date in the future anymore
-        expect(component.exerciseCountMap.get('modeling')).toEqual(2);
-        expect(component.exerciseCountMap.get('text')).toEqual(2);
+        expect(component.exerciseCountMap.get('modeling')).toBe(2);
+        expect(component.exerciseCountMap.get('text')).toBe(2);
     });
 
     it('should filter all exercises in different situations', () => {
@@ -212,7 +212,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(localStorageSpy).toHaveBeenCalledOnce();
+        expect(localStorageSpy).toHaveBeenCalledTimes(1);
         expect(component.activeFilters).toEqual(new Set());
 
         for (let i = 1; i < 8; i++) {
@@ -231,7 +231,7 @@ describe('CourseExercisesComponent', () => {
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.NEEDS_WORK));
         expect(Object.keys(component.weeklyExercisesGrouped)).toEqual(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-17', '2021-01-10', 'noDate']);
-        expect(component.exerciseCountMap.get('modeling')).toEqual(9);
+        expect(component.exerciseCountMap.get('modeling')).toBe(9);
 
         // trigger updateUpcomingExercises dynamically with dayjs()
         component.course!.exercises = [];
@@ -244,7 +244,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(component.upcomingExercises.length).toEqual(5);
+        expect(component.upcomingExercises.length).toBe(5);
     });
 
     it('should show the current amount of filters in the filter button and change background color', () => {
@@ -259,14 +259,14 @@ describe('CourseExercisesComponent', () => {
         fixture.detectChanges();
 
         expect(filterDropdown.nativeElement.classList).toContain('btn-secondary');
-        expect(filterDropdownLabel.nativeElement.textContent).toEqual('artemisApp.courseOverview.exerciseList.filter: [{"num":0}]');
+        expect(filterDropdownLabel.nativeElement.textContent).toBe('artemisApp.courseOverview.exerciseList.filter: [{"num":0}]');
 
         // Set a few filters
         component.toggleFilters([ExerciseFilter.OVERDUE, ExerciseFilter.NEEDS_WORK, ExerciseFilter.OPTIONAL]);
         fixture.detectChanges();
 
         expect(filterDropdown.nativeElement.classList).toContain('btn-success');
-        expect(filterDropdownLabel.nativeElement.textContent).toEqual('artemisApp.courseOverview.exerciseList.filter: [{"num":3}]');
+        expect(filterDropdownLabel.nativeElement.textContent).toBe('artemisApp.courseOverview.exerciseList.filter: [{"num":3}]');
     });
 
     it('should filter optional exercises', () => {
