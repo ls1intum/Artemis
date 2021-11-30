@@ -28,7 +28,7 @@
                     <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
                     <ng-container *ngTemplateOutlet="Highlighter"></ng-container>
                 </h3>
-                <fa-icon id="right-header-icon" [icon]="'chevron-right'" (click)="collapsed = !collapsed"></fa-icon>
+                <fa-icon id="right-header-icon" [icon]="faChevronRight" (click)="collapsed = !collapsed"></fa-icon>
             </div>
             <div class="card-body">
                 <ng-content select="[right-body]"></ng-content>

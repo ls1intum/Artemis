@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
-import { faCheck, faEdit, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronRight, faEdit, faVideo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -59,6 +59,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     faEdit = faEdit;
     faCheck = faCheck;
     faVideo = faVideo;
+    faChevronRight = faChevronRight;
 
     constructor(public guidedTourService: GuidedTourService, private accountService: AccountService, private renderer: Renderer2) {}
 
