@@ -33,7 +33,7 @@
                         {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
-                        <fa-icon [icon]="'edit'"></fa-icon>
+                        <fa-icon [icon]="faEdit"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
                     </button>
                 </ng-container>

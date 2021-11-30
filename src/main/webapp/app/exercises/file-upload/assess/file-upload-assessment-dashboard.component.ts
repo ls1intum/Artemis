@@ -13,7 +13,7 @@ import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/fi
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { faBan, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faEdit, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
@@ -36,6 +36,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     // Icons
     faSort = faSort;
     faBan = faBan;
+    faEdit = faEdit;
 
     constructor(
         private route: ActivatedRoute,

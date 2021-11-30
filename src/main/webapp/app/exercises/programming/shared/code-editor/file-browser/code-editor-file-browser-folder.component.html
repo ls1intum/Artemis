@@ -23,7 +23,7 @@
         </button>
         <button [disabled]="disableActions || (isCompressed && item.children && item.children.length)" (click)="setRenamingNode($event)" class="btn btn-small">
             <fa-icon
-                [icon]="'edit'"
+                [icon]="faEdit"
                 title="{{
                     (!disableActions && isCompressed && item.children && item.children.length
                         ? 'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip'

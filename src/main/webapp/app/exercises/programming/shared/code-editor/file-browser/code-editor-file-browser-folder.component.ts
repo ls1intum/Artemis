@@ -3,7 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-folder',
@@ -20,6 +20,7 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
 
     // Icons
     faTrash = faTrash;
+    faEdit = faEdit;
 
     setCreatingNodeInFolder(event: any, fileType: FileType) {
         event.stopPropagation();

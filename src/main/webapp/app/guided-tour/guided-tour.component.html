@@ -68,7 +68,7 @@
                                 *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
                                 [icon]="'arrows-alt'"
                             ></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="'edit'"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="faEdit"></fa-icon>
                         </div>
                     </ng-template>
                     <div class="step-hint__label">
