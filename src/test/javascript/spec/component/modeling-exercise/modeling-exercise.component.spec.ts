@@ -162,6 +162,7 @@ describe('ModelingExercise Management Component', () => {
         comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
         comp.predicate = 'testPredicate';
         comp.reverse = true;
+        comp.exerciseFilter = new ExerciseFilter();
         comp.sortRows();
         expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
         expect(sortSpy).toHaveBeenCalledTimes(1);

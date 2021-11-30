@@ -16,6 +16,8 @@ export class MultipleChoiceQuiz {
     submit() {
         cy.intercept(POST, BASE_API + 'exercises/*/submissions/live').as('createQuizExercise');
         cy.get('.jhi-btn').should('contain.text', 'Submit').click();
-        return cy.wait('@createQuizExercise');
+        const request = cy.wait('@createQuizExercise');
+        cy.get('[jhitranslate="artemisApp.quizExercise.successfullySubmittedText"]').should('be.visible');
+        return request;
     }
 }
