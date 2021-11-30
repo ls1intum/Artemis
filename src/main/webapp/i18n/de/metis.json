@@ -33,7 +33,7 @@
             "you": "Du",
             "and": " und ",
             "reactedTooltip": " reagierte(n).",
-            "reactedTooltipTrimmed": " und {{ number }} weitere haben reagiert.",
+            "reactedTooltipTrimmed": " und {{ number }} weitere Person(en) haben reagiert.",
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
             "discussion": {
