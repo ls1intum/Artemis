@@ -56,7 +56,7 @@
                         <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="deleteQuestion()">
-                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                     </div>
                 </div>
             </div>
@@ -84,7 +84,7 @@
             </div>
             <div class="form-group">
                 <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                 </div>
             </div>
             <ng-container *ngIf="reEvaluationInProgress">
@@ -200,7 +200,7 @@
                             <fa-icon [icon]="'copy'" size="lg"></fa-icon>
                         </div>
                         <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
-                            <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                         </div>
                         <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
                         <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
@@ -239,7 +239,7 @@
                     <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                 </div>
                 <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)" *ngIf="!reEvaluationInProgress">
-                    <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                 </div>
                 <div class="delete-button" *ngIf="reEvaluationInProgress">
                     <div class="re-evaluate-button" title="Change to Text Drag Item" *ngIf="dragItem.pictureFilePath" (click)="changeToTextDragItem(dragItem)">
@@ -260,7 +260,7 @@
                         <fa-icon [icon]="'undo'" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Delete" (click)="deleteDragItem(dragItem)">
-                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                     </div>
                 </div>
                 <div class="drag-handle drag-handle-wrapper" title="Move">

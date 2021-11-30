@@ -11,6 +11,7 @@ import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -50,6 +51,9 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     /** DomainCommands for the multiple choice question **/
     commandMultipleChoiceQuestions: DomainCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
+
+    // Icons
+    faTrash = faTrash;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 

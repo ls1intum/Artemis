@@ -57,7 +57,7 @@
                         <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="deleteQuestion()">
-                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                     </div>
                 </div>
             </div>
@@ -120,7 +120,7 @@
             </div>
             <div class="form-group" *ngIf="!reEvaluationInProgress">
                 <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                 </div>
             </div>
             <ng-container *ngIf="reEvaluationInProgress">
@@ -215,7 +215,7 @@
                                         title="Delete"
                                         (click)="deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))"
                                     >
-                                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                                        <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                                     </div>
                                 </div>
                                 <div [ngClass]="'mapping-number mapping-color-' + (shortAnswerQuestionUtil.getSpotNr(element || '') % 8)">
@@ -246,7 +246,7 @@
                         <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                     </div>
                     <div class="delete-button" title="Delete" (click)="deleteSolution(solution)">
-                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                     </div>
                     <div class="drag-handle drag-handle-wrapper" title="Move">
                         <fa-icon [icon]="'bars'" class="drag-handle" size="lg"></fa-icon>

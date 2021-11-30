@@ -12,7 +12,7 @@ import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domain
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 export enum GradingInstructionTableColumn {
     CREDITS = 'CREDITS',
@@ -72,6 +72,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     // Icons
     faPlus = faPlus;
+    faTrash = faTrash;
 
     constructor(private changeDetector: ChangeDetectorRef) {}
 

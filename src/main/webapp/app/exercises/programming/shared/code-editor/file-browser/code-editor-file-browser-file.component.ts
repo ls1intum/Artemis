@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
 
@@ -12,4 +13,7 @@ export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNod
 
     @Input() disableActions: boolean;
     @Input() hasChanges = false;
+
+    // Icons
+    faTrash = faTrash;
 }
