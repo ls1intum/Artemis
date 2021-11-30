@@ -27,8 +27,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     it('Should return string for one user that is not "you"', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!];
-        reactingUsersPipe.transform(reactingUsers).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe(metisUser1.name + 'artemisApp.metis.reactedTooltip');
@@ -36,8 +36,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
     }));
 
     it('Should return string for one user that is "you"', fakeAsync(() => {
-        reactingUsersPipe.transform([PLACEHOLDER_USER_REACTED]).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform([PLACEHOLDER_USER_REACTED]).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe('artemisApp.metis.you');
@@ -46,8 +46,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     it('Should return string for two users that do not include "you"', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, metisUser2.name!];
-        reactingUsersPipe.transform(reactingUsers).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe(metisUser1.name! + 'artemisApp.metis.and' + metisUser2.name! + 'artemisApp.metis.reactedTooltip');
@@ -56,8 +56,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     it('Should return string for two users that do include "you"', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED];
-        reactingUsersPipe.transform(reactingUsers).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe('artemisApp.metis.you' + 'artemisApp.metis.and' + metisUser1.name! + 'artemisApp.metis.reactedTooltip');
@@ -66,8 +66,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     it('Should return string for three users that do include "you" and separate the first two users with comma', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED, metisTutor.name!];
-        reactingUsersPipe.transform(reactingUsers).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe(
@@ -91,8 +91,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
             'userH',
             PLACEHOLDER_USER_REACTED,
         ];
-        reactingUsersPipe.transform(reactingUsers).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe(
@@ -122,8 +122,8 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     it('Should trigger update of reacting users on language change', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED, metisTutor.name!];
-        reactingUsersPipe.transform(reactingUsers).subscribe((reactingUsers: string) => {
-            transformedStringWithReactingUsers = reactingUsers;
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
         });
         tick();
         translateService.use('de');
