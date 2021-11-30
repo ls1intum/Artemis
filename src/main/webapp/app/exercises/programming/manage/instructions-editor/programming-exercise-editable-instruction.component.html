@@ -34,7 +34,7 @@
     <div *ngIf="showStatus" class="card-footer text-nowrap editable-instruction-container__status">
         <div class="instructions-status">
             <div *ngIf="!unsavedChangesValue && !savingInstructions">
-                <fa-icon [icon]="'check-circle'" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}"></fa-icon>
+                <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}"></fa-icon>
                 <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved">Saved.</span>
             </div>
             <div *ngIf="unsavedChangesValue && !savingInstructions">

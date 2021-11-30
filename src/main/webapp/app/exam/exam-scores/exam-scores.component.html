@@ -475,7 +475,7 @@
                             {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed" style="text-align: center">
-                            <fa-icon [icon]="'check-circle'" style="color: #28a745; font-size: 1.5em"></fa-icon>
+                            <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em"></fa-icon>
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && !studentResult.hasPassed" style="text-align: center">
                             <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>

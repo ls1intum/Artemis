@@ -81,10 +81,10 @@
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button [disabled]="busy" *ngIf="!successful && !failed" type="submit" (click)="confirmChange()" class="btn btn-primary">
-                <fa-icon [icon]="'check-circle'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
+                <fa-icon [icon]="faCheckCircle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
             </button>
             <button *ngIf="successful && !failed" type="submit" (click)="close()" class="btn btn-primary">
-                <fa-icon [icon]="'check-circle'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.close"></span>
+                <fa-icon [icon]="faCheckCircle"></fa-icon>&nbsp;<span jhiTranslate="entity.action.close"></span>
             </button>
         </div>
     </div>

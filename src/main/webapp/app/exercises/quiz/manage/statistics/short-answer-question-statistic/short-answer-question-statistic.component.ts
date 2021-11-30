@@ -12,7 +12,7 @@ import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-que
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
@@ -30,6 +30,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
     // Icons
     faSync = faSync;
+    faCheckCircle = faCheckCircle;
 
     constructor(
         route: ActivatedRoute,

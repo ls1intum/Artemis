@@ -12,7 +12,7 @@ import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-qu
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -26,6 +26,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
 
     // Icons
     faSync = faSync;
+    faCheckCircle = faCheckCircle;
 
     constructor(
         route: ActivatedRoute,

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-checklist-check',
@@ -10,4 +10,5 @@ export class ExamChecklistCheckComponent {
 
     // Icons
     faTimes = faTimes;
+    faCheckCircle = faCheckCircle;
 }

@@ -11,7 +11,7 @@ import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choi
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { blueColor, greenColor, QuestionStatisticComponent, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
@@ -25,6 +25,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
 
     // Icons
     faSync = faSync;
+    faCheckCircle = faCheckCircle;
 
     constructor(
         route: ActivatedRoute,

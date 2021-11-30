@@ -31,7 +31,7 @@ import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -82,6 +82,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faDownload = faDownload;
     faTimes = faTimes;
+    faCheckCircle = faCheckCircle;
 
     private languageChangeSubscription?: Subscription;
     constructor(
