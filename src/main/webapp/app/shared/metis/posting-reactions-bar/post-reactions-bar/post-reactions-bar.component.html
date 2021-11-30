@@ -1,7 +1,13 @@
 <div class="me-0 row">
     <div class="col-auto p-0" *ngFor="let reactionMetaData of reactionMetaDataMap | keyvalue">
         <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionMetaData.value.hasReacted" (click)="updateReaction(reactionMetaData.key)">
-            <ngx-emoji class="emoji" [emoji]="reactionMetaData.key" [size]="16" [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting" [placement]="'auto'">
+            <ngx-emoji
+                class="emoji"
+                [emoji]="reactionMetaData.key"
+                [size]="16"
+                [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
+                [placement]="'auto'"
+            >
             </ngx-emoji>
             <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
