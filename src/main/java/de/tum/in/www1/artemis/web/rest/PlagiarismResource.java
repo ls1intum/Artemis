@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -97,7 +98,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
@@ -123,16 +124,19 @@ public class PlagiarismResource {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
         Exercise affectedExercise = comparison.getPlagiarismResult().getExercise();
+        String instructorStatement = statement.statement;
 
         if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
             throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
-            plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementA(comparison.getId(), statement.statement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementA(comparison.getId(), instructorStatement);
+            comparison.setInstructorStatementA(instructorStatement); // needed for notifications
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
-            plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementB(comparison.getId(), statement.statement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementB(comparison.getId(), instructorStatement);
+            comparison.setInstructorStatementB(instructorStatement); // needed for notifications
         }
         else {
             throw new EntityNotFoundException("Student with id not found in plagiarism comparison");
@@ -153,7 +157,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("comparisonId") Long comparisonId) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        var user = userRepository.getUser();
+        User user = userRepository.getUser();
 
         // check if current user is part of the comparison or not
         if (!comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) || !comparison.getSubmissionA().getStudentLogin().equals(user.getLogin())) {
@@ -177,14 +181,15 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonStudentStatement(@PathVariable("comparisonId") long comparisonId,
             @RequestBody PlagiarismStatementDTO statement) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        var user = userRepository.getUser();
-        var studentLogin = user.getLogin();
+        User user = userRepository.getUser();
+        String studentLogin = user.getLogin();
+        String studentStatement = statement.statement;
 
         if (comparison.getInstructorStatementA() != null && comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
-            plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementA(comparison.getId(), statement.statement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementA(comparison.getId(), studentStatement);
         }
         else if (comparison.getInstructorStatementB() != null && comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
-            plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementB(comparison.getId(), statement.statement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementB(comparison.getId(), studentStatement);
         }
         else {
             throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
@@ -209,17 +214,20 @@ public class PlagiarismResource {
 
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
-        var affectedExercise = comparison.getPlagiarismResult().getExercise();
+        Exercise affectedExercise = comparison.getPlagiarismResult().getExercise();
+        PlagiarismStatus finalStatus = statusDTO.getStatus();
 
         if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
             throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
-            plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusA(comparisonId, statusDTO.getStatus());
+            plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusA(comparisonId, finalStatus);
+            comparison.setStatusA(finalStatus); // needed for notifications
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
-            plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusB(comparisonId, statusDTO.getStatus());
+            plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusB(comparisonId, finalStatus);
+            comparison.setStatusB(finalStatus); // needed for notifications
         }
         else {
             return ResponseEntity.notFound().build();

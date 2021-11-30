@@ -271,7 +271,7 @@ public class SingleUserNotificationFactoryTest {
     public void createNotification_withNotificationType_PlagiarismCaseFinalStateStudent() {
         notificationType = PLAGIARISM_CASE_FINAL_STATE_STUDENT;
         expectedTitle = PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE;
-        expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString() + " exercise \""
+        expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
                 + plagiarismResult.getExercise().getTitle() + "\"" + " has a final verdict.";
         expectedPriority = HIGH;
         expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());

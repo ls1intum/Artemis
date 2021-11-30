@@ -99,8 +99,8 @@ public class SingleUserNotificationFactory {
             }
             case PLAGIARISM_CASE_FINAL_STATE_STUDENT -> {
                 title = PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE;
-                notificationText = "Your plagiarism case concerning the " + affectedExercise.getExerciseType().toString() + " exercise \"" + affectedExercise.getTitle() + "\""
-                        + " has a final verdict.";
+                notificationText = "Your plagiarism case concerning the " + affectedExercise.getExerciseType().toString().toLowerCase() + " exercise \""
+                        + affectedExercise.getTitle() + "\"" + " has a final verdict.";
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
