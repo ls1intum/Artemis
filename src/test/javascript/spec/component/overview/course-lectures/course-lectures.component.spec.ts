@@ -30,7 +30,6 @@ const expect = chai.expect;
 class CourseLectureRowStubComponent {
     @Input() lecture: Lecture;
     @Input() course: Course;
-    @Input() extendedLink = false;
 }
 
 class MockActivatedRoute {

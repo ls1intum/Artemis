@@ -21,8 +21,6 @@ class CourseExerciseRowStubComponent {
     @Input()
     course: Course;
     @Input()
-    extendedLink: boolean;
-    @Input()
     hasGuidedTour: boolean;
     @Input()
     isPresentationMode: boolean;

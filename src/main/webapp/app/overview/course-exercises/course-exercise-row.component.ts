@@ -30,7 +30,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
-    @Input() extendedLink = false;
     @Input() hasGuidedTour: boolean;
     /**
      * PresentationMode deactivates the interactivity of the component
@@ -49,8 +48,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
         private httpClient: HttpClient,
-        private router: Router,
-        private route: ActivatedRoute,
         private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
@@ -110,17 +107,5 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise as QuizExercise;
-    }
-
-    showDetails(event: any) {
-        const isClickOnAction = event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn');
-        const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
-        if (!isClickOnAction && !isClickResult) {
-            if (this.extendedLink) {
-                this.router.navigate(['courses', this.course.id, 'exercises', this.exercise.id]);
-            } else {
-                this.router.navigate([this.exercise.id], { relativeTo: this.route });
-            }
-        }
     }
 }

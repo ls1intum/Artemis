@@ -1,9 +1,9 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -34,9 +34,15 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
+
+@Component({
+    template: '',
+})
+class DummyComponent {}
 
 describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
@@ -47,7 +53,15 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeAll(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule],
+            imports: [
+                ArtemisTestModule,
+                TranslateModule.forRoot(),
+                NgbModule,
+                RouterTestingModule.withRoutes([
+                    { path: 'courses/:courseId/exercises', component: DummyComponent },
+                    { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
+                ]),
+            ],
             declarations: [
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
@@ -58,6 +72,7 @@ describe('CourseExerciseRowComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(OrionFilterDirective),
                 CourseExerciseRowComponent,
+                DummyComponent,
             ],
             providers: [
                 DeviceDetectorService,
