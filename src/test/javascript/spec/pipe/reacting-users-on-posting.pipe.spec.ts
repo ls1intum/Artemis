@@ -87,8 +87,10 @@ describe('ReactingUsersOnPostingsPipe', () => {
                 'userC' +
                 ', ' +
                 'userD' +
-                'artemisApp.metis.and' +
+                ', ' +
                 'userE' +
+                'artemisApp.metis.and' +
+                'userF' +
                 'artemisApp.metis.reactedTooltipTrimmed',
         );
     });

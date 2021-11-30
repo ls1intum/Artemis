@@ -21,10 +21,11 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
             reactingUsers = reactingUsers.filter((user) => user !== PLACEHOLDER_USER_REACTED);
             reactingUsers = [this.artemisTranslate.transform('artemisApp.metis.you')].concat(reactingUsers);
         }
-        if (reactingUsers.length > USER_COUNT_LIMIT) {
-            reactingUsers = reactingUsers.slice(0, USER_COUNT_LIMIT - 1);
+        const numberOfReactingUsers = reactingUsers.length;
+        if (numberOfReactingUsers > USER_COUNT_LIMIT) {
+            reactingUsers = reactingUsers.slice(0, USER_COUNT_LIMIT);
             reactingUsersString =
-                reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltipTrimmed', { number: reactingUsers.length - USER_COUNT_LIMIT });
+                reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltipTrimmed', { number: numberOfReactingUsers - USER_COUNT_LIMIT });
         } else {
             reactingUsersString = reactingUsers.join(', ') + this.artemisTranslate.transform('artemisApp.metis.reactedTooltip');
         }
