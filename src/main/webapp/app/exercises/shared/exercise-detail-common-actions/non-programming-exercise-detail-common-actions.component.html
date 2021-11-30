@@ -31,7 +31,7 @@
 
         <!--Statistics -->
         <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+            <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
         </a>
 
         <!--Submissions -->
@@ -57,7 +57,7 @@
             [routerLink]="baseResource + 'tutor-effort-statistics'"
             class="btn btn-success btn-sm me-1 mb-2"
         >
-            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
         </a>
 
@@ -67,7 +67,7 @@
             [routerLink]="baseResource + 'text-cluster-statistics'"
             class="btn btn-success btn-sm me-1 mb-2"
         >
-            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.clusterStatistics.title">Cluster Statistics</span>
         </a>
 

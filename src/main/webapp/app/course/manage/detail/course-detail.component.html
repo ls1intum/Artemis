@@ -58,7 +58,7 @@
                 <span jhiTranslate="artemisApp.participantScores.pageTitle">Participant Score</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'chart-bar'"></fa-icon>
+                <fa-icon [icon]="faChartBar"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
             </a>
             <div class="ms-auto">

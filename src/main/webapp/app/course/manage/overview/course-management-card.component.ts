@@ -7,7 +7,7 @@ import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { faFlag, faListAlt, faTable, faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faFlag, faListAlt, faTable, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -50,6 +50,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faUserCheck = faUserCheck;
     faFlag = faFlag;
     faListAlt = faListAlt;
+    faChartBar = faChartBar;
 
     ngOnChanges() {
         // Only sort one time once loaded
