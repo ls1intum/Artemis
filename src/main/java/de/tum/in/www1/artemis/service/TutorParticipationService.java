@@ -177,10 +177,13 @@ public class TutorParticipationService {
                 }
                 return isMatch;
             });
+            if (hasMatchingInstructorFeedback) {
+                return Optional.empty();
+            }
 
-            var highestPriorityError = matchingInstructorFeedback.stream().map(feedback -> tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).get())
-                    .sorted(Comparator.reverseOrder()).findFirst();
-            return hasMatchingInstructorFeedback ? Optional.empty() : highestPriorityError;
+            // Return the highest priority error (the closest instructor feedback match)
+            return matchingInstructorFeedback.stream().map(feedback -> tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).get()).sorted(Comparator.reverseOrder())
+                    .findFirst();
         }
         else {
             if (matchingInstructorFeedback.size() > 1) {

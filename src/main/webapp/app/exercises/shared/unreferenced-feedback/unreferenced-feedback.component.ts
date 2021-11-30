@@ -12,8 +12,6 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
-    private unreferencedFeedbackId = 1;
-
     @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -68,12 +66,29 @@ export class UnreferencedFeedbackComponent {
 
         // Assign the next id to the unreferenced feedback
         if (this.addReferenceIdForExampleSubmission) {
-            feedback.reference = this.unreferencedFeedbackId.toString();
-            this.unreferencedFeedbackId++;
+            feedback.reference = this.generateNewUnreferencedFeedbackReference().toString();
         }
 
         this.unreferencedFeedback.push(feedback);
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
+    }
+
+    /**
+     * Generate the new reference, by computing what is currently the maximum reference within all feedback and add 1
+     */
+    private generateNewUnreferencedFeedbackReference(): number {
+        if (this.unreferencedFeedback.length === 0) {
+            return 1;
+        }
+
+        const references = this.unreferencedFeedback.map((feedback) => {
+            const id = +(feedback.reference ?? '0');
+            if (isNaN(id)) {
+                return 0;
+            }
+            return id;
+        });
+        return Math.max(...references.concat([0])) + 1;
     }
 }
