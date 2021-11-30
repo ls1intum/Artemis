@@ -49,8 +49,6 @@ public class NotificationSettingsService {
     // editor notification setting group
     public final static String NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED = "notification.editor-notification.programming-test-cases-changed";
 
-    public final static String NOTIFICATION__EDITOR_NOTIFICATION__DUPLICATE_TEST_CASES = "notification.editor-notification.duplicate-test-cases";
-
     // instructor notification setting group
     public final static String NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-notification.course-and-exam-archiving-started";
 
@@ -73,7 +71,6 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
             // editor notification setting group
             new NotificationSetting(true, false, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
-            new NotificationSetting(true, true, NOTIFICATION__EDITOR_NOTIFICATION__DUPLICATE_TEST_CASES),
             // instructor notification setting group
             new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
@@ -94,7 +91,6 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
             Map.entry(NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED, new NotificationType[] { PROGRAMMING_TEST_CASES_CHANGED }),
-            Map.entry(NOTIFICATION__EDITOR_NOTIFICATION__DUPLICATE_TEST_CASES, new NotificationType[] { DUPLICATE_TEST_CASE }),
             Map.entry(NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
