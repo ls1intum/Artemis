@@ -154,8 +154,10 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 newPolicy.id = this.programmingExercise.submissionPolicy.id;
                 newPolicy.active = this.programmingExercise.submissionPolicy.active;
                 newPolicy.submissionLimit = this.programmingExercise.submissionPolicy!.submissionLimit;
-                // restore value when penalty has been set previously
-                newPolicy.exceedingPenalty = this.exceedingPenaltyControl.value;
+                // restore value when penalty has been set previously and was valid
+                if (!this.exceedingPenaltyControl.invalid) {
+                    newPolicy.exceedingPenalty = this.exceedingPenaltyControl.value as number;
+                }
             }
             this.programmingExercise.submissionPolicy = newPolicy;
         }
