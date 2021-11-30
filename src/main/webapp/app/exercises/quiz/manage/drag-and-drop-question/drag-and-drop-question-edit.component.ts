@@ -34,7 +34,7 @@ import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exerci
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
 import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
-import { faBan, faChevronUp, faEye, faFont, faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faChevronDown, faChevronUp, faEye, faFont, faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -121,6 +121,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faFont = faFont;
     faEye = faEye;
     faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

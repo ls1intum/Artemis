@@ -7,7 +7,7 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
-import { faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -39,6 +39,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     faTrash = faTrash;
     faUndo = faUndo;
     faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
 
     /**
      * generate the question using the markdown service
