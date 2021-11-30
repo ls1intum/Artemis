@@ -116,7 +116,7 @@
                         </div>
                     </ng-template>
                     <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
-                        <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                         <span>({{ invalidReasons.length }})</span>
                     </span>

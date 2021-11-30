@@ -41,7 +41,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 export interface Reason {
     translateKey: string;
@@ -115,7 +115,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     // Icons
     faPlus = faPlus;
-
+    faExclamationCircle = faExclamationCircle;
+å
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,

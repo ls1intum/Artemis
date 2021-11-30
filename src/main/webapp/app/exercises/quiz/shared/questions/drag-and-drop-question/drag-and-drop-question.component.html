@@ -11,7 +11,7 @@
         <div *ngIf="loadingState === 'error'">
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="'exclamation-circle'"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
+                    ><fa-icon [icon]="faExclamationCircle"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
                 >
             </h2>
             <p>
@@ -37,7 +37,7 @@
             </ng-template>
             <br />
             <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-                <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                <fa-icon [icon]="faExclamationCircle"></fa-icon>
                 <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
             </span>
             <ng-template #renderedExplanation>

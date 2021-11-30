@@ -8,7 +8,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 // options are optional ;)
 polyfill({
@@ -95,6 +95,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     faSpinner = faSpinner;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
+    faExclamationCircle = faExclamationCircle;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
