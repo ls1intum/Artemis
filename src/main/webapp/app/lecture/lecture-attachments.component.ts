@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -47,6 +47,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     // Icons
     faSpinner = faSpinner;
     faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
 
     constructor(
         protected activatedRoute: ActivatedRoute,

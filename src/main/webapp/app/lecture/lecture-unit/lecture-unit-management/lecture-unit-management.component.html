@@ -65,7 +65,7 @@
                 <fa-icon [icon]="faTimes"></fa-icon>
             </button>
             <a *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" [routerLink]="editButtonRouterLink(lectureUnit)">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <fa-icon [icon]="faPencilAlt"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
             </a>
         </div>

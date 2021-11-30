@@ -12,7 +12,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -35,6 +35,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     // Icons
     faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
 
     constructor(
         private activatedRoute: ActivatedRoute,
