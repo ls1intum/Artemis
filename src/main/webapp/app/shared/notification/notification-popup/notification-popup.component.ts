@@ -8,7 +8,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -24,6 +24,7 @@ export class NotificationPopupComponent implements OnInit {
 
     // Icons
     faTimes = faTimes;
+    faCheckDouble = faCheckDouble;
 
     constructor(
         private accountService: AccountService,
