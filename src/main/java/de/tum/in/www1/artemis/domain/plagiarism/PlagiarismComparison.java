@@ -79,13 +79,13 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     /**
      * Status on the Statement student A made
      */
-    @Column(name = "status_a", columnDefinition = "varchar(15) default 'NONE'")
+    @Column(name = "status_a")
     private PlagiarismStatus statusA;
 
     /**
      * Status on the Statement student B made
      */
-    @Column(name = "status_b", columnDefinition = "varchar(15) default 'NONE'")
+    @Column(name = "status_b")
     private PlagiarismStatus statusB;
 
     /**
