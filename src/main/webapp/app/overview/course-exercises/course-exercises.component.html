@@ -13,7 +13,7 @@
                             <fa-icon icon="filter"></fa-icon>
                             <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
                         </button>
-                        <ul ngbDropdownMenu class="checkbox-menu" aria-labelledby="filter-dropdown-button">
+                        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                             <li *ngIf="course.isAtLeastTutor">
                                 <label>
                                     <input class="ms-2" (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
