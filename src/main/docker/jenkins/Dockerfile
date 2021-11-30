@@ -1,4 +1,4 @@
-FROM jenkins/jenkins:lts
+FROM jenkins/jenkins:2.277.4-lts
 
 LABEL description="Jenkins with maven, python3.6 and gcc libraries pre-installed for Artemis"
 
