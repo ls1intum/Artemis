@@ -13,7 +13,7 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
-import { faEye, faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-system-notification-management',
@@ -43,6 +43,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     faPlus = faPlus;
     faTimes = faTimes;
     faEye = faEye;
+    faWrench = faWrench;
 
     constructor(
         private systemNotificationService: SystemNotificationService,

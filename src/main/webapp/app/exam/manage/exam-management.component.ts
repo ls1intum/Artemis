@@ -14,7 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import dayjs from 'dayjs';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -34,6 +34,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
     faTimes = faTimes;
     faEye = faEye;
+    faWrench = faWrench;
 
     constructor(
         private route: ActivatedRoute,

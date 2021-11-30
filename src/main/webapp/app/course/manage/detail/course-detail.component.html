@@ -63,7 +63,7 @@
             </a>
             <div class="ms-auto">
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
-                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+                    <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
                 <jhi-course-exam-archive-button
                     *ngIf="course.isAtLeastInstructor"

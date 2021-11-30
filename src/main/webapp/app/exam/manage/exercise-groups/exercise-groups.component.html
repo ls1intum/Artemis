@@ -96,7 +96,7 @@
                     <div class="btn-group-vertical me-1 mb-1">
                         <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
                             <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
-                                <fa-icon [icon]="'wrench'"></fa-icon>
+                                <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                             </a>
                             <button

@@ -271,7 +271,7 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <fa-icon [icon]="faWrench"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </div>
                                 </a>
@@ -316,7 +316,7 @@
         </table>
         <div *ngIf="selectedProgrammingExercises.length > 0">
             <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm me-1">
-                <fa-icon [icon]="'wrench'"></fa-icon>
+                <fa-icon [icon]="faWrench"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
             </button>
             <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm me-1">
