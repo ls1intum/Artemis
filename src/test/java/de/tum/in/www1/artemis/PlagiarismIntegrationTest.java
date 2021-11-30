@@ -43,6 +43,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
+
     private static final String INSTRUCTOR_STATEMENT_B = "instructor Statement B";
 
     @Test
@@ -123,7 +124,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         plagiarismComparisonRepository.save(plagiarismComparison);
 
         request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/status?finalDecision=true&studentLogin=student23", PlagiarismComparisonStatusDTO.class,
-            HttpStatus.BAD_REQUEST);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
