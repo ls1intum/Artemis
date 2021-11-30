@@ -134,7 +134,7 @@
                         </button>
                     </div>
                     <div class="list-group-item-error hidden-md-down" *ngIf="hasConflictingTeam(student)">
-                        <fa-icon class="me-1" [icon]="'exclamation-triangle'"></fa-icon>
+                        <fa-icon class="me-1" [icon]="faExclamationTriangle"></fa-icon>
                         Already assigned to team with id {{ getConflictingTeam(student) }}.
                     </div>
                 </li>
@@ -163,7 +163,7 @@
                         />
                         <label class="form-check-label" for="ignoreTeamSizeRecommendation">
                             <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation">Proceed against recommendation</span>
-                            <fa-icon class="ms-1" [icon]="'exclamation-triangle'"></fa-icon>
+                            <fa-icon class="ms-1" [icon]="faExclamationTriangle"></fa-icon>
                         </label>
                     </div>
                 </div>

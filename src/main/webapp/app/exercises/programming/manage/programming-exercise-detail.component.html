@@ -160,7 +160,7 @@
                         [disabled]="lockingOrUnlockingRepositories"
                     >
                         <span *ngIf="lockingOrUnlockingRepositories" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories">Unlock all repositories</span>
                     </button>
                     <button
@@ -171,7 +171,7 @@
                         [disabled]="lockingOrUnlockingRepositories"
                     >
                         <span *ngIf="lockingOrUnlockingRepositories" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                     </button>
 
@@ -358,7 +358,7 @@
                                         >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
                                     </span>
                                     <ng-template #noCheckoutDirectorySet>
-                                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                        <fa-icon [icon]="faExclamationTriangle" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
                                         <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
                                     </ng-template>
                                     <ng-template #noCheckoutDirectorySetTooltip>

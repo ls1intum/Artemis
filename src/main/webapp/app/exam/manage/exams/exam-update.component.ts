@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
@@ -23,6 +23,7 @@ export class ExamUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private route: ActivatedRoute,

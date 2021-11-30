@@ -29,7 +29,7 @@
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-warning">
-                <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
+                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
                 &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
             </button>
             <button type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="btn btn-success">

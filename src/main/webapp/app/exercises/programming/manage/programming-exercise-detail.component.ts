@@ -26,7 +26,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { faBook, faCheckDouble, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCheckDouble, faExclamationTriangle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -62,6 +62,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faTable = faTable;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private activatedRoute: ActivatedRoute,

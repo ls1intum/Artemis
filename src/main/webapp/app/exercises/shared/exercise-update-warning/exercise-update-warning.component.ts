@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { faBan, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -24,6 +24,7 @@ export class ExerciseUpdateWarningComponent {
     // Icons
     faBan = faBan;
     faCheck = faCheck;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(public activeModal: NgbActiveModal) {}
 

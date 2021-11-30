@@ -12,7 +12,7 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
-import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 
@@ -52,6 +52,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
     faSpinner = faSpinner;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal) {}
 

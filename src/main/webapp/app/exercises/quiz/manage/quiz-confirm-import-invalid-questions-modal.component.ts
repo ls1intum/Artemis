@@ -1,5 +1,5 @@
 import { Component, EventEmitter } from '@angular/core';
-import { faBan, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Reason } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 
@@ -12,6 +12,7 @@ export class QuizConfirmImportInvalidQuestionsModalComponent {
     // Icons
     faBan = faBan;
     faTimes = faTimes;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(public activeModal: NgbActiveModal) {}
 

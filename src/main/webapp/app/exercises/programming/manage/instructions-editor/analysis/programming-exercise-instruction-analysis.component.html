@@ -1,7 +1,7 @@
 <div class="editable-instruction-container__status__container">
     <ng-container *ngIf="invalidTestCases.length + missingTestCases.length > 0; else testCasesOk">
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
         </div>
     </ng-container>
@@ -14,7 +14,7 @@
 
     <ng-container *ngIf="invalidHints.length > 0; else hintsOk">
         <div id="instruction_analysis_hint-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning me-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.issues">Hints issues.</span>
         </div>
     </ng-container>

@@ -5,7 +5,7 @@
                 <a class="stretched-link" [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"></a>
                 <div class="row-flex exercise-details-container">
                     <div class="ms-2 me-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
-                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <div class="ms-2 exercise-details-item" *ngIf="details.teamMode">
                         <fa-icon [icon]="faUsers" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
