@@ -43,7 +43,7 @@
                 <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</span>
             </a>
             <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'user-check'"></fa-icon>
+                <fa-icon [icon]="faUserCheck"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md ms-1">
