@@ -116,7 +116,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     // Icons
     faPlus = faPlus;
     faExclamationCircle = faExclamationCircle;
-å
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
