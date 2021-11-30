@@ -54,9 +54,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
             if (this.isExamMode) {
-                this.exerciseStatusBadge = dayjs(this.exam?.endDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exam?.endDate!)) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = dayjs(this.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs().isAfter(this.dueDate!) ? 'bg-danger' : 'bg-success';
             }
         }
     }

@@ -95,7 +95,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
 
@@ -192,7 +192,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             this.dueDate = getExerciseDueDate(this.exercise, this.participation);
             afterDueDate = hasExerciseDueDatePassed(this.exercise, this.participation);
         } else if (this.exercise) {
-            afterDueDate = dayjs(this.exercise.dueDate!).isBefore(dayjs());
+            afterDueDate = dayjs().isAfter(dayjs(this.exercise.dueDate!));
         }
 
         this.exerciseStatusBadge = afterDueDate ? 'bg-danger' : 'bg-success';
