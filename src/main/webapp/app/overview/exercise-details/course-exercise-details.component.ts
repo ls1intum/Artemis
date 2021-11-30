@@ -43,8 +43,6 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -120,7 +118,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnInit() {
@@ -178,15 +175,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    loadExerciseHints(exercise: Exercise) {
-        this.exerciseHintService
-            .findByExerciseId(exercise.id!)
-            .pipe(map(({ body }) => body || []))
-            .subscribe((exerciseHints: ExerciseHint[]) => {
-                exercise.exerciseHints = exerciseHints;
-            });
-    }
-
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
         this.exercise.studentParticipations = this.filterParticipations(newExercise.studentParticipations);
@@ -214,7 +202,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.submissionPolicy = submissionPolicy;
                 this.hasSubmissionPolicy = true;
             });
-            this.loadExerciseHints(newExercise);
         }
 
         // This is only needed in the local environment
