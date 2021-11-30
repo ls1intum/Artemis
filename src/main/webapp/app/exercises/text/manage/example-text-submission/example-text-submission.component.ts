@@ -182,7 +182,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Updates the example submission.
      */
     updateExampleTextSubmission(): void {
-        this.saveSubmissionIfNeeded().subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+        this.saveSubmissionIfNeeded().subscribe(() => {
             this.state.edit();
             this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
         }, this.alertService.error);
