@@ -5,6 +5,7 @@ import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage
 import { Course } from 'app/entities/course.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -48,6 +49,7 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
 
     // Icons
     faTimes = faTimes;
+    faCalendarAlt = faCalendarAlt;
 
     constructor() {}
 

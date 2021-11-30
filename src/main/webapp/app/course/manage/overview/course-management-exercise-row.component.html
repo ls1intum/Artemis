@@ -38,7 +38,7 @@
                         <div *ngIf="details.releaseDate" [ngbTooltip]="details.releaseDate | artemisDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faCalendarAlt"></fa-icon>
                                 </div>
                             </div>
                             <span>{{ details.releaseDate! | artemisTimeAgo }}</span>
@@ -59,7 +59,7 @@
                         <div *ngIf="details.dueDate" [ngbTooltip]="details.dueDate | artemisDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faCalendarAlt"></fa-icon>
                                 </div>
                             </div>
                             <span>{{ details.dueDate! | artemisTimeAgo }}</span>
@@ -80,7 +80,7 @@
                         <div *ngIf="details.assessmentDueDate" [ngbTooltip]="details.assessmentDueDate | artemisDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faCalendarAlt"></fa-icon>
                                 </div>
                             </div>
                             <span>{{ details.assessmentDueDate! | artemisTimeAgo }}</span>
