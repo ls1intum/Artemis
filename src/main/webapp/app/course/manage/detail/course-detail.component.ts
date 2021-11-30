@@ -13,7 +13,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFlag, faTable, faTimes, faUserCheck, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFlag, faListAlt, faTable, faTimes, faUserCheck, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -54,6 +54,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faUserCheck = faUserCheck;
     faFlag = faFlag;
+    faListAlt = faListAlt;
 
     constructor(
         private eventManager: EventManager,

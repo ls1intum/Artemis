@@ -43,7 +43,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { faBook, faEye, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faEye, faListAlt, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -101,6 +101,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faEye = faEye;
     faWrench = faWrench;
     faTable = faTable;
+    faListAlt = faListAlt;
 
     constructor(
         private exerciseService: ExerciseService,

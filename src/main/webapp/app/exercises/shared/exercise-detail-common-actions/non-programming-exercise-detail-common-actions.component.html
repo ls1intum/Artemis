@@ -7,7 +7,7 @@
 
         <!-- Participations  -->
         <a *ngIf="course" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
         </a>
 
@@ -19,7 +19,7 @@
 
         <!-- Exercise Dashboard -->
         <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
         </a>
 
