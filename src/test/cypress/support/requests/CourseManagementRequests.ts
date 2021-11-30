@@ -403,7 +403,7 @@ export class CourseManagementRequests {
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions[0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
             },
         ];
         const multipleChoiceSubmission = {
@@ -426,7 +426,7 @@ export class CourseManagementRequests {
         const submittedTexts = textAnswers.map((answer, index) => {
             return {
                 text: answer,
-                spot: quizExercise.quizQuestions[0].spots[index],
+                spot: quizExercise.quizQuestions[0].spots[index].body,
             };
         });
         const submittedAnswers = [
