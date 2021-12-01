@@ -58,9 +58,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
@@ -177,7 +177,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: jest.SpyInstance;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)];
+    const imports = [ArtemisTestModule, MockModule(NgxChartsModule)];
 
     const declarations = [
         ExerciseAssessmentDashboardComponent,
@@ -202,6 +202,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockTranslateValuesDirective,
         MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
+        MockRouterLinkDirective,
+        MockQueryParamsDirective,
     ];
 
     const providers = [
@@ -277,7 +279,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -299,7 +301,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toEqual(false);
+        expect(comp.submissionLockLimitReached).toBe(false);
         expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
     });
 
@@ -313,8 +315,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toEqual(true);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBe(undefined);
+        expect(comp.submissionLockLimitReached).toBe(true);
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
@@ -326,10 +328,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).toEqual(1);
-        expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toEqual(8);
-        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toEqual(2);
-        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toEqual(7);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).toBe(1);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toBe(8);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
@@ -343,11 +345,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should set exam and stats properties', () => {
-        expect(comp.exam).toBeUndefined();
+        expect(comp.exam).toBe(undefined);
 
         comp.loadAll();
 
-        expect(comp.exercise).toBeDefined();
+        expect(comp.exercise).not.toBe(null);
         expect(comp.exam).toEqual(exam);
         expect(comp.exam?.numberOfCorrectionRoundsInExam).toEqual(numberOfAssessmentsOfCorrectionRounds.length);
         expect(comp.numberOfAssessmentsOfCorrectionRounds).toEqual(numberOfAssessmentsOfCorrectionRounds);
@@ -355,12 +357,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).toBeUndefined();
-        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toEqual(true);
+        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBe(true);
     });
 
     it('should call hasBeenCompletedByTutor', () => {
         comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
-        expect(comp.hasBeenCompletedByTutor(1)).toEqual(true);
+        expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
     it('should call readInstruction', () => {
@@ -368,7 +370,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.mockReturnValue(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
 
-        expect(comp.tutorParticipation).toEqual(undefined);
+        expect(comp.tutorParticipation).toBe(undefined);
         comp.readInstruction();
 
         expect(comp.tutorParticipation).toEqual(tutorParticipation);
@@ -486,7 +488,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             };
             const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
 
-            expect(complaintQuery).toBeUndefined();
+            expect(complaintQuery).toBe(undefined);
         });
 
         it('Expect present complaint to delegate the correct query', () => {
@@ -518,7 +520,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.submissionsWithComplaints = fakeDTOList;
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
-            expect(submissionToView).toBeUndefined();
+            expect(submissionToView).toBe(undefined);
         });
 
         it('Expect submission without results to gain an empty list', () => {
