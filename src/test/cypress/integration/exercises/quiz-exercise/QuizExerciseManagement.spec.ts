@@ -10,7 +10,6 @@ const admin = artemis.users.getAdmin();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
-const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const quizCreation = artemis.pageobjects.quizExercise.creation;
 
@@ -34,8 +33,7 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz Exercise Creation', () => {
         beforeEach(() => {
-            cy.login(admin, '/');
-            navigationBar.openCourseManagement();
+            cy.login(admin, '/course-management/');
             courseManagement.openExercisesOfCourse(course.title, course.shortName);
             cy.get('#create-quiz-button').click();
             quizCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
@@ -68,8 +66,7 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Deletes a Quiz Exercise', () => {
-            cy.login(admin, '/');
-            navigationBar.openCourseManagement();
+            cy.login(admin, '/course-management/');
             courseManagement.openExercisesOfCourse(course.title, course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
