@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
