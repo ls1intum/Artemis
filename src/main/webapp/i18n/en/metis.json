@@ -30,6 +30,10 @@
             "removePinPostTutorTooltip": "Click to unpin this post",
             "removeArchivePostTutorTooltip": "Click to de-archive this post",
             "chooseReaction": "Choose a reaction...",
+            "you": "You",
+            "and": " and ",
+            "reactedTooltip": " reacted.",
+            "reactedTooltipTrimmed": " and {{ number }} more reacted.",
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
             "discussion": {
