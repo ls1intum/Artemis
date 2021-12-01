@@ -305,7 +305,7 @@ describe('CourseDiscussionComponent', () => {
         const expectedPosts = metisCoursePosts.filter(
             (post: Post) =>
                 ((post.answers && post.answers.some((answer: AnswerPost) => answer.author === currentUser)) ||
-                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user === currentUser))) &&
+                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user?.id! === currentUser.id))) &&
                 !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
         );
         expect(component.posts).toHaveLength(expectedPosts.length);
