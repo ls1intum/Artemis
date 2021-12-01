@@ -286,7 +286,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // Let the instructor know that a build run was triggered.
         notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseStudentParticipationRepository.findByExerciseId(exerciseId));
+        List<ProgrammingExerciseStudentParticipation> participations = new LinkedList<>(programmingExerciseStudentParticipationRepository.findByExerciseId(exerciseId));
 
         triggerBuildForParticipations(participations);
 
@@ -298,9 +298,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
      * trigger the build using the batch size approach for all participations
-     * @param participations the participations for which the method triggerBuildAndNotifyUser should be executed.
+     * @param participations the participations for which the method triggerBuild should be executed.
      */
-    public void triggerBuildForParticipations(List<ProgrammingExerciseParticipation> participations) {
+    public void triggerBuildForParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
         var index = 0;
         for (var participation : participations) {
             // Execute requests in batches instead all at once.
@@ -313,7 +313,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
                 }
             }
-            triggerBuildAndNotifyUser(participation);
+            triggerBuild(participation);
             index++;
         }
     }
@@ -425,9 +425,23 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param participation the participation for which we create a new submission and new result
      */
-    public void triggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation) {
-        var submission = getOrCreateSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.INSTRUCTOR);
-        triggerBuildAndNotifyUser(submission);
+    public void triggerBuild(ProgrammingExerciseStudentParticipation participation) {
+        try {
+            if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+                // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
+                participationService.resumeProgrammingExercise(participation);
+                // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
+            }
+            continuousIntegrationService.get().triggerBuild(participation);
+            // TODO: notify the participations page that a build was triggered for the participation, there is no need to notify the student, because he would not assume an
+            // animation
+        }
+        catch (Exception e) {
+            log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
+            // TODO: notify the participations page that a build could not be triggered for the participation, there is no need to notify the student, because he would not assume
+            // an animation
+        }
     }
 
     /**

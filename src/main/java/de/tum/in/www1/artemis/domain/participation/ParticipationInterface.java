@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -31,4 +32,6 @@ public interface ParticipationInterface {
     Exercise getExercise();
 
     void setExercise(Exercise exercise);
+
+    <T extends Submission> Optional<T> findLatestSubmission();
 }
