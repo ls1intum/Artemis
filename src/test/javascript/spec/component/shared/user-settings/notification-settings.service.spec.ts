@@ -12,7 +12,7 @@ export const notificationSettingA: NotificationSetting = {
     email: false,
 };
 export const notificationSettingB: NotificationSetting = {
-    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
+    settingId: SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED,
     webapp: true,
     email: false,
 };

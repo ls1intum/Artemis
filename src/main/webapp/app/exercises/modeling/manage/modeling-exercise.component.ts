@@ -94,6 +94,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 
     /**
