@@ -47,13 +47,13 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      * Initialize the courseId and examId
      */
     ngOnInit(): void {
-        this.isLoading = true;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.loadAll();
     }
 
     private loadAll() {
+        this.isLoading = true;
         this.paramSub = this.route.params.subscribe(() => {
             this.isAdmin = this.accountService.isAdmin();
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
