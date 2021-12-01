@@ -31,8 +31,8 @@
             "listOfComplaints": {
                 "exercise": "Übung",
                 "submissionId": "Einreichungs-ID",
-                "reviewerLogin": "Login Gutachter:in",
-                "reviewerName": "Name Gutachterin:in",
+                "reviewerLogin": "Login Reviewer:in",
+                "reviewerName": "Name Reviewer:in",
                 "studentLogin": "Login",
                 "studentName": "Name",
                 "actions": "Aktionen",
