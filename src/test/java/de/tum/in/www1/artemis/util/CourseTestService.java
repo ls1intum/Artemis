@@ -723,7 +723,7 @@ public class CourseTestService {
         var responseCourse = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
         var responseExercise = responseCourse.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
 
-        // There is no average rating for exercises with no assessments and therefore no ratings
+        // Ensure that average rating and number of ratings is computed correctly
         var averageRating = Arrays.stream(ratings).mapToDouble(Double::valueOf).sum() / ratings.length;
         assertThat(responseExercise.getAverageRating()).isEqualTo(averageRating);
         assertThat(responseExercise.getNumberOfRatings()).isEqualTo(ratings.length);
