@@ -1,6 +1,6 @@
 <div>
     <span class="badge bg-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
-        <fa-icon [icon]="'robot'"></fa-icon>
+        <fa-icon [icon]="faRobot"></fa-icon>
         <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
     </span>
 
@@ -141,7 +141,7 @@
 
                     <div class="{{ (block.type === FeedbackType.AUTOMATIC ? 'alert-primary' : 'alert-secondary') + ' alert white-space' }}" *ngIf="block.credits">
                         <div *ngIf="block.type === FeedbackType.AUTOMATIC">
-                            <fa-icon [icon]="'robot'"></fa-icon>
+                            <fa-icon [icon]="faRobot"></fa-icon>
                             <span
                                 style="font-weight: bold"
                                 jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.reused"

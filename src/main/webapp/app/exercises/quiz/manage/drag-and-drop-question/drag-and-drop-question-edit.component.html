@@ -197,7 +197,7 @@
                             <fa-icon [icon]="faUndo" size="lg"></fa-icon>
                         </div>
                         <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)" *ngIf="!reEvaluationInProgress">
-                            <fa-icon [icon]="'copy'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faCopy" size="lg"></fa-icon>
                         </div>
                         <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
                             <fa-icon [icon]="faTrash" size="lg"></fa-icon>
