@@ -220,6 +220,8 @@ public class ParticipationService {
             // fetch again to get additional objects
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
+            programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
             programmingParticipation = copyRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
