@@ -45,6 +45,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     // Icons
     faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     constructor(private service: StatisticsService, private translateService: TranslateService) {}
 

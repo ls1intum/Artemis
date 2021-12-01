@@ -5,7 +5,7 @@ import { CourseManagementService } from '../course-management.service';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
-import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -63,6 +63,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
