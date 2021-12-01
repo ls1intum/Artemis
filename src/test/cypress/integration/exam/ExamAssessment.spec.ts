@@ -20,7 +20,6 @@ const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
-const studentExamManagement = artemis.pageobjects.studentExamManagement;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -160,7 +159,7 @@ describe('Exam assessment', () => {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
-            assessmentDashboard.clickEvaluateQuizzes();
+            assessmentDashboard.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
             if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
