@@ -94,6 +94,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private TextBlockService textBlockService;
 
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
     private TextExercise textExercise;
 
     private Course course;
@@ -233,7 +236,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         database.addExampleSubmission(exampleSubmission);
         request.delete("/api/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
                 HttpStatus.NO_CONTENT);
-        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
+        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNull();
         assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
     }
 
@@ -627,10 +630,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
         database.addExampleSubmission(exampleSubmission);
 
-        Result result = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus, Result.class);
+        Result result = request.getNullable("/api/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus, Result.class);
 
-        if (expectedStatus == HttpStatus.OK) {
-            assertThat(result).as("result found").isNotNull();
+        if (expectedStatus == HttpStatus.OK && result != null) {
             assertThat(result.getSubmission().getId()).as("result for correct submission").isEqualTo(textSubmission.getId());
         }
 
@@ -668,9 +670,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
         final var result = getExampleResultForTutor(HttpStatus.OK, false);
-        assertThat(result.getFeedbacks()).isEmpty();
-        assertThat(result.getScore()).isNull();
-        assertThat(result.getResultString()).isNull();
+        assertThat(result).isNull();
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
@@ -952,8 +952,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test1").getId()));
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test2").getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is over 100% -> 105
@@ -962,7 +964,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(response.getScore()).isEqualTo(105);
 
-        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test3").getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
@@ -1479,7 +1482,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     public void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
-        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj")
+                .reference(ModelFactory.generateTextBlock(0, 5, "test" + feedbacks.size()).getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
@@ -1504,5 +1508,35 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(1);
         assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testFeedbackIdIsSetCorrectly() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setTextBlocks(Set.of(ModelFactory.generateTextBlock(0, 15, "This is Part 1,"), ModelFactory.generateTextBlock(16, 35, " and this is Part 2."),
+                ModelFactory.generateTextBlock(36, 57, " There is also Part 3.")));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        textAssessmentDTO.getTextBlocks()
+                .forEach(textBlock -> feedbacks.add(new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1").reference(textBlock.getId())));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+
+        Result result = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
+                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+
+        textBlockRepository.findAll().forEach(textBlock -> {
+            assertThat(textBlock.getFeedback().getId()).isNotNull();
+        });
     }
 }

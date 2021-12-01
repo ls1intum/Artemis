@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +26,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
+import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
@@ -42,11 +45,11 @@ public class PostService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final PostContentCompareStrategy postContentCompareStrategy;
+    private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostContentCompareStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
@@ -71,19 +74,19 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
+        mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
-        // announcements can only be created by instructors
+
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
             // display priority of announcement is set to pinned per default
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
-            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(savedPost, course);
+            sendNotification(savedPost, course);
             broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
             return savedPost;
         }
@@ -107,12 +110,13 @@ public class PostService extends PostingService {
      */
     public Post updatePost(Long courseId, Long postId, Post post) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-
         // check
         if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
+        mayInteractWithPostElseThrow(post, user, course);
+
         Post existingPost = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
@@ -327,6 +331,7 @@ public class PostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
+        mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
         mayUpdateOrDeletePostingElseThrow(post, user, course);
 
@@ -388,21 +393,49 @@ public class PostService extends PostingService {
      * @param post post that triggered the notification
      */
     void sendNotification(Post post, Course course) {
+        // create post for notification
+        Post postForNotification = new Post();
+        postForNotification.setId(post.getId());
+        postForNotification.setAuthor(post.getAuthor());
+        postForNotification.setCourse(course);
+        postForNotification.setCourseWideContext(post.getCourseWideContext());
+        postForNotification.setLecture(post.getLecture());
+        postForNotification.setExercise(post.getExercise());
+        postForNotification.setCreationDate(post.getCreationDate());
+        postForNotification.setTitle(post.getTitle());
+
+        // create html content
+        Parser parser = Parser.builder().build();
+        String htmlPostContent;
+        try {
+            Node document = parser.parse(post.getContent());
+            HtmlRenderer renderer = HtmlRenderer.builder().build();
+            htmlPostContent = renderer.render(document);
+        }
+        catch (Exception e) {
+            htmlPostContent = "";
+        }
+        postForNotification.setContent(htmlPostContent);
+
         // notify via course
         if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
+            if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
+                return;
+            }
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(postForNotification, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(postForNotification, course);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
             return;
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
         }
     }
 
@@ -437,5 +470,19 @@ public class PostService extends PostingService {
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
+    }
+
+    /**
+     * Checks if the requesting user is authorized in the course context,
+     * i.e., if the user is allowed to interact with a certain post
+     *
+     * @param post      post to interact with, i.e., create, update or delete
+     * @param user      requesting user
+     * @param course    course the posting belongs to
+     */
+    private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        }
     }
 }

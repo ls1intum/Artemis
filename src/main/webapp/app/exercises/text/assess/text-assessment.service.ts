@@ -167,7 +167,13 @@ export class TextAssessmentService {
         return this.http.get<Result>(`${this.resourceUrl}/exercises/${exerciseId}/submissions/${submissionId}/example-result`);
     }
 
-    public deleteExampleFeedback(exerciseId: number, exampleSubmissionId: number): Observable<void> {
+    /**
+     * Deletes the example assessment associated with given example submission.
+     *
+     * @param exerciseId   id of the exercise for which the example assessment should be deleted
+     * @param submissionId id of the submission for which the example assessment should be deleted
+     */
+    public deleteExampleAssessment(exerciseId: number, exampleSubmissionId: number): Observable<void> {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
     }
 

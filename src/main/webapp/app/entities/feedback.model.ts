@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -34,6 +35,7 @@ export enum FeedbackCorrectionErrorType {
     UNNECESSARY_FEEDBACK = 'UNNECESSARY_FEEDBACK',
     MISSING_GRADING_INSTRUCTION = 'MISSING_GRADING_INSTRUCTION',
     INCORRECT_GRADING_INSTRUCTION = 'INCORRECT_GRADING_INSTRUCTION',
+    EMPTY_NEGATIVE_FEEDBACK = 'EMPTY_NEGATIVE_FEEDBACK',
 }
 
 /**
@@ -113,6 +115,10 @@ export class Feedback implements BaseEntity {
     }
 
     public static hasCreditsAndComment(that: Feedback): boolean {
+        // if the feedback is associated with the grading instruction, detail-text would be additional, do not need to validate the detail-text
+        if (that.gradingInstruction && that.gradingInstruction.feedback) {
+            return that.credits != undefined;
+        }
         return that.credits != undefined && Feedback.hasDetailText(that);
     }
 
@@ -168,3 +174,32 @@ export class Feedback implements BaseEntity {
         }
     }
 }
+
+/**
+ * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction
+ * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
+ * it return detail_text or text property of the feedback depending on the submission element.
+ *
+ * @param feedback that contains feedback text and grading instruction
+ * @returns {string} formatted string representing the feedback text ready to display
+ */
+export const buildFeedbackTextForReview = (feedback: Feedback): string => {
+    let feedbackText = '';
+    if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+        feedbackText = feedback.gradingInstruction.feedback;
+        if (feedback.detailText) {
+            feedbackText = feedbackText + '\n' + feedback.detailText;
+        }
+        if (feedback.text) {
+            feedbackText = feedbackText + '\n' + feedback.text;
+        }
+        return convertToHtmlLinebreaks(feedbackText);
+    }
+    if (feedback.detailText) {
+        return feedback.detailText;
+    }
+    if (feedback.text) {
+        return feedback.text;
+    }
+    return feedbackText;
+};

@@ -1,12 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import { stub } from 'sinon';
 import dayjs from 'dayjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -24,16 +21,37 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CheckboxControlValueAccessor, DefaultValueAccessor, NgForm, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
-    const lockRepositoryPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 } as LockRepositoryPolicy;
-    const submissionPenaltyPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 50.4 } as SubmissionPenaltyPolicy;
-    const brokenPenaltyPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY } as SubmissionPenaltyPolicy;
 
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
@@ -45,7 +63,43 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, ArtemisProgrammingExerciseUpdateModule, FormDateTimePickerModule],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            declarations: [
+                ProgrammingExerciseUpdateComponent,
+                // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
+                // Mocking that interaction defeats the purpose of interacting with the UI in the first place.
+                NgForm,
+                NgModel,
+                CheckboxControlValueAccessor,
+                DefaultValueAccessor,
+                SelectControlValueAccessor,
+                NumberValueAccessor,
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(TableEditableFieldComponent),
+                MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
+                MockComponent(CategorySelectorComponent),
+                MockComponent(AddAuxiliaryRepositoryButtonComponent),
+                MockComponent(DifficultyPickerComponent),
+                MockComponent(TeamConfigFormGroupComponent),
+                MockComponent(ProgrammingExerciseLifecycleComponent),
+                MockComponent(IncludedInOverallScorePickerComponent),
+                MockComponent(SubmissionPolicyUpdateComponent),
+                MockComponent(PresentationScoreComponent),
+                MockComponent(ProgrammingExerciseInstructionComponent),
+                MockComponent(ProgrammingExerciseEditableInstructionComponent),
+                MockComponent(GradingInstructionsDetailsComponent),
+                MockComponent(ButtonComponent),
+                MockComponent(NgbAlert),
+                MockPipe(RemoveKeysPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(CustomMinDirective),
+                MockDirective(CustomMaxDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -78,7 +132,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -94,7 +148,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should trim the exercise title before saving', fakeAsync(() => {
@@ -112,7 +166,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
+            expect(entity.title).toBe('My Exercise');
         }));
     });
 
@@ -142,9 +196,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isSaving).toEqual(false);
-            expect(comp.programmingExercise).toEqual(expectedExamProgrammingExercise);
-            expect(comp.isExamMode).toBeTruthy();
+            expect(comp.isSaving).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
+            expect(comp.isExamMode).toBe(true);
         }));
     });
 
@@ -170,130 +224,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.isSaving).toEqual(false);
-            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
-            expect(comp.isExamMode).toBeFalsy();
-        }));
-    });
-
-    describe('submission policy change', () => {
-        let expectedProgrammingExercise: ProgrammingExercise;
-
-        beforeEach(() => {
-            expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
-            expectedProgrammingExercise.course = course;
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-            route.url = of([{ path: 'new' } as UrlSegment]);
-            route.data = of({ programmingExercise: expectedProgrammingExercise });
-            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
-        });
-
-        it('Should set policy object on exercise', fakeAsync(() => {
-            comp.ngOnInit();
-            fixture.detectChanges();
-            tick();
-
-            expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
-            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-
-            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
-                submissionPolicyTypeField.value = type;
-                submissionPolicyTypeField.dispatchEvent(new Event('change'));
-                fixture.detectChanges();
-                tick();
-
-                expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(type);
-                expect(expectedProgrammingExercise.submissionPolicy?.id).toBeUndefined();
-            }
-
-            submissionPolicyTypeField.value = SubmissionPolicyType.NONE;
-            submissionPolicyTypeField.dispatchEvent(new Event('change'));
-            fixture.detectChanges();
-            tick();
-
-            expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(SubmissionPolicyType.NONE);
-        }));
-
-        it('Should set submission limit correctly for all policy types', fakeAsync(() => {
-            comp.ngOnInit();
-            fixture.detectChanges();
-            tick();
-
-            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-            for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
-                submissionPolicyTypeField.value = type;
-                submissionPolicyTypeField.dispatchEvent(new Event('change'));
-                fixture.detectChanges();
-                tick();
-
-                const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-                submissionLimitInputField.value = 5;
-                submissionLimitInputField.dispatchEvent(new Event('input'));
-                tick();
-
-                expect(expectedProgrammingExercise.submissionPolicy?.submissionLimit).toBe(5);
-            }
-        }));
-
-        it('Should set exceeding penalty correctly for submission penalty type', fakeAsync(() => {
-            comp.ngOnInit();
-            fixture.detectChanges();
-            tick();
-
-            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-            submissionPolicyTypeField.value = SubmissionPolicyType.SUBMISSION_PENALTY;
-            submissionPolicyTypeField.dispatchEvent(new Event('change'));
-            fixture.detectChanges();
-            tick();
-
-            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
-            submissionLimitExceededPenaltyInputField.value = 73.73;
-            submissionLimitExceededPenaltyInputField.dispatchEvent(new Event('input'));
-            tick();
-
-            expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
-        }));
-
-        it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
-            expectedProgrammingExercise.submissionPolicy = lockRepositoryPolicy;
-            comp.ngOnInit();
-            fixture.detectChanges();
-            tick();
-
-            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-
-            expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
-            expect(submissionLimitInputField.value).toBe('5');
-        }));
-
-        it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
-            expectedProgrammingExercise.submissionPolicy = submissionPenaltyPolicy;
-            comp.ngOnInit();
-            fixture.detectChanges();
-            tick();
-
-            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
-
-            expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
-            expect(submissionLimitInputField.value).toBe('5');
-            expect(submissionLimitExceededPenaltyInputField.value).toBe('50.4');
-        }));
-
-        it('Should display correct input fields when set policy is broken', fakeAsync(() => {
-            expectedProgrammingExercise.submissionPolicy = brokenPenaltyPolicy;
-            comp.ngOnInit();
-            fixture.detectChanges();
-            tick();
-
-            const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-            const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
-
-            expect(submissionLimitInputField.value).toBe('');
-            expect(submissionLimitExceededPenaltyInputField.value).toBe('');
+            expect(comp.isSaving).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
+            expect(comp.isExamMode).toBe(false);
         }));
     });
 
@@ -305,11 +238,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
             jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             jest.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
-            const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
-            getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
-            getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
-            getFeaturesStub.withArgs(ProgrammingLanguage.C).returns(getProgrammingLanguageFeature(ProgrammingLanguage.C));
+
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
         });
 
         it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
@@ -331,8 +262,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
 
-            expect(scaCheckbox.checked).toBeTruthy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTruthy();
+            expect(scaCheckbox.checked).toBe(true);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
 
             // Switch to another programming language not supporting sca
@@ -343,9 +274,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
             scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
-            expect(scaCheckbox).toBeFalsy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalsy();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            expect(scaCheckbox).toBe(null);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
 
@@ -357,9 +288,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.appNamePatternForSwift);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
         }));
 
         it('Should activate SCA for C', fakeAsync(() => {
@@ -370,8 +301,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -381,9 +312,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
 
             // THEN
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
-            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
         }));
     });
 
@@ -420,15 +351,15 @@ describe('ProgrammingExercise Management Update Component', () => {
                 const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
                 const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
 
-                expect(comp.isImport).toBeTruthy();
+                expect(comp.isImport).toBe(true);
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
-                expect(recreateBuildPlanCheckbox.checked).toBeFalsy();
-                expect(updateTemplateCheckbox.checked).toBeFalsy();
-                expect(comp.programmingExercise).toEqual(programmingExercise);
+                expect(recreateBuildPlanCheckbox.checked).toBe(false);
+                expect(updateTemplateCheckbox.checked).toBe(false);
+                expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
                 // Activate SCA and set a max penalty
@@ -441,7 +372,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // SCA penalty field disappears or appears after the sca checkbox click
                 maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
                 if (scaActivatedOriginal) {
-                    expect(maxPenaltyInput).toBeFalsy();
+                    expect(maxPenaltyInput).toBe(null);
                 } else {
                     maxPenaltyInput.value = newMaxPenalty;
                     maxPenaltyInput.dispatchEvent(new Event('input'));
@@ -452,9 +383,9 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // Recreate build plan and template update should be automatically selected
                 expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(scaActivatedOriginal ? undefined : newMaxPenalty);
-                expect(comp.recreateBuildPlans).toBeTruthy();
-                expect(comp.updateTemplate).toBeTruthy();
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
+                expect(comp.recreateBuildPlans).toBe(true);
+                expect(comp.updateTemplate).toBe(true);
 
                 // Deactivate recreation of build plans
                 recreateBuildPlanCheckbox.click();
@@ -463,8 +394,8 @@ describe('ProgrammingExercise Management Update Component', () => {
                 tick();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
-                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(comp.originalStaticCodeAnalysisEnabled);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             }),
         );
     });

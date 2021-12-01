@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -220,11 +222,11 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnAttachment() {
-        notificationType = NotificationType.ATTACHMENT_CHANGE;
+        notificationType = ATTACHMENT_CHANGE;
         expectedTitle = ATTACHMENT_CHANGE_TITLE;
         expectedText = "Attachment \"" + attachment.getName() + "\" updated.";
         expectedTarget = createDefaultExpectedTarget("attachmentUpdated", "lectures", lectureId);
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         createAndCheckNotification(Base.ATTACHMENT);
     }
 
@@ -236,11 +238,11 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseCreated() {
-        notificationType = NotificationType.EXERCISE_RELEASED;
+        notificationType = EXERCISE_RELEASED;
         expectedTitle = EXERCISE_RELEASED_TITLE;
         expectedText = "A new exercise \"" + exercise.getTitle() + "\" got released.";
         expectedTarget = createDefaultExpectedTarget("exerciseReleased", "exercises", exerciseId);
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
 
@@ -250,11 +252,11 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExercisePractice() {
-        notificationType = NotificationType.EXERCISE_PRACTICE;
+        notificationType = EXERCISE_PRACTICE;
         expectedTitle = EXERCISE_PRACTICE_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
         expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
 
@@ -264,11 +266,26 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_QuizExerciseStarted() {
-        notificationType = NotificationType.QUIZ_EXERCISE_STARTED;
+        notificationType = QUIZ_EXERCISE_STARTED;
         expectedTitle = QUIZ_EXERCISE_STARTED_TITLE;
         expectedText = "Quiz \"" + exercise.getTitle() + "\" just started.";
         expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
+        createAndCheckNotification(Base.EXERCISE);
+    }
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of PROGRAMMING_TEST_CASES_CHANGED.
+     * I.e. notifications that originate from changed test cases for programming exercises (after at least one student already started the exercise).
+     */
+    @Test
+    public void createNotificationBasedOnExercise_withNotificationType_ProgrammingTestCasesChanged() {
+        notificationType = PROGRAMMING_TEST_CASES_CHANGED;
+        expectedTitle = PROGRAMMING_TEST_CASES_CHANGED_TITLE;
+        expectedText = "The test cases of the programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
+                + "\" were updated." + " The students' submissions should be rebuilt and tested in order to create new results.";
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
+        expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
 
@@ -278,12 +295,12 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseUpdated_ExamExercise() {
-        notificationType = NotificationType.EXERCISE_UPDATED;
+        notificationType = EXERCISE_UPDATED;
 
         when(exercise.isExamExercise()).thenReturn(true);
 
         expectedTitle = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
-        expectedPriority = NotificationPriority.HIGH;
+        expectedPriority = HIGH;
         expectedText = "Exam Exercise \"" + exercise.getTitle() + "\" updated.";
         expectedTarget = "{\"problemStatement\":\"" + exercise.getProblemStatement() + "\",\"exercise\":" + exerciseId + ",\"exam\":" + examId + ",\"entity\":\"exams\",\"course\":"
                 + courseId + ",\"mainPage\":\"courses\"}";
@@ -308,10 +325,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseUpdated_CourseExercise() {
-        notificationType = NotificationType.EXERCISE_UPDATED;
+        notificationType = EXERCISE_UPDATED;
         expectedTitle = EXERCISE_UPDATED_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" updated.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
         createAndCheckNotification(Base.EXERCISE);
     }
@@ -324,10 +341,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewExercisePost() {
-        notificationType = NotificationType.NEW_EXERCISE_POST;
+        notificationType = NEW_EXERCISE_POST;
         expectedTitle = NEW_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -338,10 +355,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewLecturePost() {
-        notificationType = NotificationType.NEW_LECTURE_POST;
+        notificationType = NEW_LECTURE_POST;
         expectedTitle = NEW_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -352,10 +369,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewCoursePost() {
-        notificationType = NotificationType.NEW_COURSE_POST;
+        notificationType = NEW_COURSE_POST;
         expectedTitle = NEW_COURSE_POST_TITLE;
         expectedText = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -366,10 +383,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewAnnouncementPost() {
-        notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
+        notificationType = NEW_ANNOUNCEMENT_POST;
         expectedTitle = NEW_ANNOUNCEMENT_POST_TITLE;
         expectedText = "Course \"" + course.getTitle() + "\" got a new announcement.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -382,10 +399,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewReplyForExercisePost() {
-        notificationType = NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
+        notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -396,10 +413,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForLecturePost() {
-        notificationType = NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+        notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -410,10 +427,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForCoursePost() {
-        notificationType = NotificationType.NEW_REPLY_FOR_COURSE_POST;
+        notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = "Course-wide post in course \"" + course.getTitle() + "\" got a new reply.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
         createAndCheckNotification(Base.POST);
     }
@@ -426,10 +443,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnCourse_withNotificationType_CourseArchiveStarted() {
-        notificationType = NotificationType.COURSE_ARCHIVE_STARTED;
+        notificationType = COURSE_ARCHIVE_STARTED;
         expectedTitle = COURSE_ARCHIVE_STARTED_TITLE;
         expectedText = "The course \"" + course.getTitle() + "\" is being archived.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("courseArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.COURSE);
     }
@@ -440,10 +457,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnCourse_withNotificationType_CourseArchiveFinished() {
-        notificationType = NotificationType.COURSE_ARCHIVE_FINISHED;
+        notificationType = COURSE_ARCHIVE_FINISHED;
         expectedTitle = COURSE_ARCHIVE_FINISHED_TITLE;
         expectedText = "The course \"" + course.getTitle() + "\" has been archived.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("courseArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.COURSE);
     }
@@ -454,10 +471,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnCourse_withNotificationType_CourseArchiveFailed() {
-        notificationType = NotificationType.COURSE_ARCHIVE_FAILED;
+        notificationType = COURSE_ARCHIVE_FAILED;
         expectedTitle = COURSE_ARCHIVE_FAILED_TITLE;
         expectedText = "The was a problem archiving course \"" + course.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("courseArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.COURSE);
     }
@@ -470,10 +487,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExam_withNotificationType_ExamArchiveStarted() {
-        notificationType = NotificationType.EXAM_ARCHIVE_STARTED;
+        notificationType = EXAM_ARCHIVE_STARTED;
         expectedTitle = EXAM_ARCHIVE_STARTED_TITLE;
         expectedText = "The exam \"" + exam.getTitle() + "\" is being archived.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.EXAM);
     }
@@ -484,10 +501,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExam_withNotificationType_ExamArchiveFinished() {
-        notificationType = NotificationType.EXAM_ARCHIVE_FINISHED;
+        notificationType = EXAM_ARCHIVE_FINISHED;
         expectedTitle = EXAM_ARCHIVE_FINISHED_TITLE;
         expectedText = "The exam \"" + exam.getTitle() + "\" has been archived.";
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.EXAM);
     }
@@ -498,10 +515,10 @@ public class GroupNotificationFactoryTest {
      */
     @Test
     public void createNotificationBasedOnExam_withNotificationType_ExamArchiveFailed() {
-        notificationType = NotificationType.EXAM_ARCHIVE_FAILED;
+        notificationType = EXAM_ARCHIVE_FAILED;
         expectedTitle = EXAM_ARCHIVE_FAILED_TITLE;
         expectedText = "The was a problem archiving exam \"" + exam.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
-        expectedPriority = NotificationPriority.MEDIUM;
+        expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.EXAM);
     }

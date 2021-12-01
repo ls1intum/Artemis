@@ -36,12 +36,15 @@ export enum FeedbackItemType {
 export class FeedbackItem {
     type: FeedbackItemType;
     category: string;
-    title?: string;
-    text?: string;
+    previewText?: string; // used for long texts with line breaks
+    title?: string; // this is typically feedback.text
+    text?: string; // this is typically feedback.detailText
     positive?: boolean;
     credits?: number;
     appliedCredits?: number;
 }
+
+export const feedbackPreviewCharacterLimit = 300;
 
 // Modal -> Result details view
 @Component({
@@ -160,7 +163,8 @@ export class ResultDetailComponent implements OnInit {
 
     /**
      * Loads the missing feedback details
-     * @param resultId The current result
+     * @param participationId the current participation
+     * @param resultId the current result
      * @private
      */
     private getFeedbackDetailsForResult(participationId: number, resultId: number) {
@@ -184,6 +188,29 @@ export class ResultDetailComponent implements OnInit {
     };
 
     /**
+     * computes the feedback preview for feedback texts with multiple lines or feedback that is longer than <feedbackPreviewCharacterLimit> characters
+     * @param text the feedback.detail Text
+     * @return the preview text (one line of text with at most <feedbackPreviewCharacterLimit> characters)
+     */
+    private static computeFeedbackPreviewText(text: string | undefined): string | undefined {
+        if (text) {
+            if (text.includes('\n')) {
+                // if there are multiple lines, only use the first one
+                const firstLine = text.substr(0, text.indexOf('\n'));
+                if (firstLine.length > feedbackPreviewCharacterLimit) {
+                    return firstLine.substr(0, feedbackPreviewCharacterLimit);
+                } else {
+                    return firstLine;
+                }
+            } else if (text.length > feedbackPreviewCharacterLimit) {
+                return text.substr(0, feedbackPreviewCharacterLimit);
+            }
+        }
+        // for all other cases
+        return undefined; // this means the previewText is not used
+    }
+
+    /**
      * Creates a feedback item with a category, title and text for each feedback object.
      * @param feedbacks The list of feedback objects.
      * @private
@@ -191,6 +218,7 @@ export class ResultDetailComponent implements OnInit {
     private createFeedbackItems(feedbacks: Feedback[]): FeedbackItem[] {
         if (this.exerciseType === ExerciseType.PROGRAMMING) {
             return feedbacks.map((feedback) => {
+                const previewText = ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText);
                 if (Feedback.isSubmissionPolicyFeedback(feedback)) {
                     const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
                     return {
@@ -198,6 +226,7 @@ export class ResultDetailComponent implements OnInit {
                         category: 'Submission Policy',
                         title: submissionPolicyTitle,
                         text: feedback.detailText,
+                        previewText,
                         positive: false,
                         credits: feedback.credits,
                         appliedCredits: feedback.credits,
@@ -210,6 +239,7 @@ export class ResultDetailComponent implements OnInit {
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
                         text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
+                        previewText,
                         positive: false,
                         credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
                         appliedCredits: feedback.credits,
@@ -224,6 +254,17 @@ export class ResultDetailComponent implements OnInit {
                             ? `No result information for ${feedback.text}`
                             : `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`,
                         text: feedback.detailText,
+                        previewText,
+                        positive: feedback.positive,
+                        credits: feedback.credits,
+                    };
+                } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
+                    return {
+                        type: FeedbackItemType.Feedback,
+                        category: this.showTestDetails ? 'Tutor' : 'Feedback',
+                        title: feedback.text,
+                        text: feedback.detailText ? feedback.gradingInstruction.feedback + '\n' + feedback.detailText : feedback.gradingInstruction.feedback,
+                        previewText,
                         positive: feedback.positive,
                         credits: feedback.credits,
                     };
@@ -233,6 +274,7 @@ export class ResultDetailComponent implements OnInit {
                         category: this.showTestDetails ? 'Tutor' : 'Feedback',
                         title: feedback.text,
                         text: feedback.detailText,
+                        previewText,
                         positive: feedback.positive,
                         credits: feedback.credits,
                     };
@@ -244,6 +286,7 @@ export class ResultDetailComponent implements OnInit {
                 category: 'Feedback',
                 title: feedback.text,
                 text: feedback.detailText,
+                previewText: ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText),
                 positive: feedback.positive,
                 credits: feedback.credits,
             }));

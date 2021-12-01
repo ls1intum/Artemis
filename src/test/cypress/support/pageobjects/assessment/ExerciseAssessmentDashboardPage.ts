@@ -7,6 +7,7 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     clickStartNewAssessment() {
+        cy.reloadUntilFound('.guided-tour-new-assessment-btn');
         cy.get('.guided-tour-new-assessment-btn').click();
     }
 }

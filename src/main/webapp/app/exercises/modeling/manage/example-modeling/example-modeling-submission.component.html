@@ -50,8 +50,8 @@
                 </fa-layers>
             </div>
 
-            <!-- extra logic for the display warning icon -->
-            <div class="pe-5" style="display: inline-block">
+            <!-- Extra logic for displaying warning icon. It should only be shown for tutors that are assessing example submissions -->
+            <div *ngIf="toComplete" class="pe-5" style="display: inline-block">
                 <span>{{ legend[3].text | artemisTranslate }}</span>
                 <fa-layers>
                     <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
@@ -76,7 +76,7 @@
             <button
                 class="btn btn-primary px-5"
                 (click)="checkAssessment()"
-                [disabled]="!feedbacks || !assessmentsAreValid"
+                [disabled]="!assessments || !assessmentsAreValid"
                 jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
             >
                 Submit Assessment
@@ -111,7 +111,7 @@
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
                         [course]="course"
-                        (feedbackChanged)="onFeedbackChanged($event)"
+                        (feedbackChanged)="onReferencedFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>
                 </div>
@@ -140,6 +140,14 @@
                     [(ngModel)]="assessmentExplanation"
                     [disabled]="readOnly"
                 ></textarea>
+
+                <jhi-unreferenced-feedback
+                    *ngIf="assessmentMode"
+                    [(feedbacks)]="unreferencedFeedback"
+                    [readOnly]="readOnly"
+                    [addReferenceIdForExampleSubmission]="true"
+                    (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
+                ></jhi-unreferenced-feedback>
             </div>
 
             <jhi-collapsable-assessment-instructions class="col-auto pe-2" *ngIf="exercise" [readOnly]="readOnly" [exercise]="exercise" [collapsed]="!readOnly && !toComplete">

@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
@@ -56,14 +57,14 @@ public class NotificationSettingsServiceTest {
         student1 = new User();
         student1.setId(555L);
 
-        unsavedNotificationSettingA = new NotificationSetting(false, true, "notification.exercise-notification.exercise-open-for-practice");
-        unsavedNotificationSettingB = new NotificationSetting(true, true, "notification.lecture-notification.attachment-changes");
-        unsavedNotificationSettingC = new NotificationSetting(false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
-        completeNotificationSettingA = new NotificationSetting(student1, false, true, "notification.exercise-notification.exercise-open-for-practice");
-        completeNotificationSettingB = new NotificationSetting(student1, true, true, "notification.lecture-notification.attachment-changes");
-        completeNotificationSettingC = new NotificationSetting(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        completeNotificationSettingA = new NotificationSetting(student1, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
         notificationSettingRepository = mock(NotificationSettingRepository.class);
@@ -98,7 +99,8 @@ public class NotificationSettingsServiceTest {
     public void testFindDeactivatedNotificationTypes() {
         NotificationSetting[] tmpNotificationSettingsArray = Arrays.copyOf(savedNotificationSettings, savedNotificationSettings.length);
         Set<NotificationSetting> tmpNotificationSettingsSet = new HashSet<>(Arrays.asList(tmpNotificationSettingsArray));
-        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(true, tmpNotificationSettingsSet);
+        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
+                tmpNotificationSettingsSet);
         // SettingA : exercise-open-for-practice -> [EXERCISE_PRACTICE] : webapp deactivated
         // SettingB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // SettingC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated
@@ -107,7 +109,7 @@ public class NotificationSettingsServiceTest {
         assertThat(resultingTypeSet).contains(EXAM_ARCHIVE_STARTED);
         assertThat(resultingTypeSet).contains(COURSE_ARCHIVE_STARTED);
         assertThat(resultingTypeSet).contains(COURSE_ARCHIVE_STARTED);
-        assertThat(!resultingTypeSet.contains(ATTACHMENT_CHANGE));
+        assertThat(resultingTypeSet).doesNotContain(ATTACHMENT_CHANGE);
     }
 
     /**
@@ -117,12 +119,50 @@ public class NotificationSettingsServiceTest {
     @Test
     public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
 
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isTrue();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
 
         when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
-        assertThat(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, student1)).isFalse();
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isFalse();
+    }
+
+    /**
+     * Tests the method checkLoadedNotificationSettingsForCorrectness with an empty input
+     */
+    @Test
+    public void testCheckLoadedNotificationSettingsForCorrectness_empty() {
+        Set<NotificationSetting> testSet = new HashSet<>();
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        verify(notificationSettingRepository, times(0)).saveAll(any());
+    }
+
+    /**
+     * Tests the method checkLoadedNotificationSettingsForCorrectness with an incomplete input
+     */
+    @Test
+    public void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
+        Set<NotificationSetting> testSet = new HashSet<>();
+        testSet.add(completeNotificationSettingA);
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet).contains(completeNotificationSettingA);
+        verify(notificationSettingRepository, times(1)).deleteAll(any());
+        verify(notificationSettingRepository, times(1)).saveAll(any());
+    }
+
+    /**
+     * Tests the method checkLoadedNotificationSettingsForCorrectness with a correct input
+     */
+    @Test
+    public void testCheckLoadedNotificationSettingsForCorrectness_correct() {
+        Set<NotificationSetting> testSet = new HashSet<>();
+        testSet.addAll(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        verify(notificationSettingRepository, times(0)).deleteAll(any());
+        verify(notificationSettingRepository, times(0)).saveAll(any());
     }
 }

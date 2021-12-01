@@ -108,7 +108,7 @@
             },
             "problemStatement": {
                 "title": "Problem Statement",
-                "taskCommand": "[task] Task",
+                "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
                 "exerciseHintCommand": "Add task specific hint"
             },

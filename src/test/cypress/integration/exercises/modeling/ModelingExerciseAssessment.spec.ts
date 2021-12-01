@@ -1,4 +1,3 @@
-import { BASE_API, PUT } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
 import day from 'dayjs';
 
@@ -17,26 +16,14 @@ const student = userManagement.getStudentOne();
 const tutor = userManagement.getTutor();
 const instructor = userManagement.getInstructor();
 
-let course: any;
-let modelingExercise: any;
-
 describe('Modeling Exercise Assessment Spec', () => {
+    let course: any;
+    let modelingExercise: any;
+
     before('Log in as admin and create a course', () => {
-        cy.login(admin);
-        courseManagementRequests.createCourse().then((courseResp) => {
-            course = courseResp.body;
-            courseManagementRequests.addInstructorToCourse(course.id, instructor);
-            courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addStudentToCourse(course.id, student.username).then(() => {
-                courseManagementRequests.createModelingExercise({ course }, undefined, day(), day().add(5, 'seconds'), day().add(1, 'hour')).then((resp) => {
-                    modelingExercise = resp.body;
-                    cy.login(student).then(() => {
-                        courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participationReponse: any) => {
-                            courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id, participationReponse.body);
-                        });
-                    });
-                });
-            });
+        createCourseWithModelingExercise().then(() => {
+            makeModelingSubmissionAsStudent();
+            updateExerciseDueDate();
         });
     });
 
@@ -57,13 +44,11 @@ describe('Modeling Exercise Assessment Spec', () => {
         assessmentEditor.addNewFeedback(1, 'Thanks, good job.');
         assessmentEditor.openAssessmentForComponent(1);
         assessmentEditor.assessComponent(-1, 'False');
-        assessmentEditor.openAssessmentForComponent(2);
+        assessmentEditor.clickNextAssessment();
         assessmentEditor.assessComponent(2, 'Good');
-        assessmentEditor.openAssessmentForComponent(3);
+        assessmentEditor.clickNextAssessment();
         assessmentEditor.assessComponent(0, 'Unnecessary');
-        cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitModelingAssessment');
-        assessmentEditor.submitWithoutInterception();
-        cy.wait('@submitModelingAssessment').its('response.statusCode').should('eq', 200);
+        assessmentEditor.submit();
     });
 
     describe('Handling complaints', () => {
@@ -97,4 +82,29 @@ describe('Modeling Exercise Assessment Spec', () => {
             cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
         });
     });
+
+    function createCourseWithModelingExercise() {
+        cy.login(admin);
+        return courseManagementRequests.createCourse(true).then((response) => {
+            course = response.body;
+            courseManagementRequests.addStudentToCourse(course.id, student.username);
+            courseManagementRequests.addTutorToCourse(course, tutor);
+            courseManagementRequests.addInstructorToCourse(course.id, instructor);
+            courseManagementRequests.createModelingExercise({ course }).then((modelingResponse) => {
+                modelingExercise = modelingResponse.body;
+            });
+        });
+    }
+
+    function makeModelingSubmissionAsStudent() {
+        cy.login(student);
+        courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participation) => {
+            courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id, participation.body);
+        });
+    }
+
+    function updateExerciseDueDate() {
+        cy.login(admin);
+        courseManagementRequests.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
+    }
 });

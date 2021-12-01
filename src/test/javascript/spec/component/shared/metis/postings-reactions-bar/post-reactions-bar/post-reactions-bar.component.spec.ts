@@ -5,7 +5,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
-import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -24,6 +24,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostReactionsBarComponent', () => {
@@ -40,6 +41,13 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
+            declarations: [
+                PostReactionsBarComponent,
+                MockPipe(ReactingUsersOnPostingPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(FaIconComponent),
+            ],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -49,7 +57,6 @@ describe('PostReactionsBarComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
-            declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -86,10 +93,11 @@ describe('PostReactionsBarComponent', () => {
         fixture.detectChanges();
         const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).toBeDefined();
-        expect(component.reactionCountMap).toEqual({
+        expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
                 hasReacted: false,
+                reactingUsers: ['username1'],
             },
         });
     });
@@ -104,10 +112,11 @@ describe('PostReactionsBarComponent', () => {
         const reactions = getElements(debugElement, 'ngx-emoji');
         // emojis to be displayed it the user reaction, the pin emoji and the archive emoji
         expect(reactions).toHaveLength(3);
-        expect(component.reactionCountMap).toEqual({
+        expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
                 hasReacted: true,
+                reactingUsers: [PLACEHOLDER_USER_REACTED],
             },
         });
         // set correct tooltips for tutor and post that is not pinned and not archived

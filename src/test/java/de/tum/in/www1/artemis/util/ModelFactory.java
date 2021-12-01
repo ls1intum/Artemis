@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
-    public static final String USER_PASSWORD = "0000";
+    public static final String USER_PASSWORD = "00000000";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
@@ -633,8 +633,8 @@ public class ModelFactory {
 
     public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
         var instructions = new ArrayList<GradingInstruction>();
-        var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
+            var exampleInstruction1 = new GradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);
             exampleInstruction1.setCredits(1);
             exampleInstruction1.setGradingScale("good test");
