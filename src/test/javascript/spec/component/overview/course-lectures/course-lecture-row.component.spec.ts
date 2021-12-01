@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -10,18 +9,11 @@ import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-l
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { Location } from '@angular/common';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { Component } from '@angular/core';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { Router } from '@angular/router';
 
 @Component({
     template: '',
@@ -65,12 +57,12 @@ describe('CourseLectureRow', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         courseLectureRowComponentFixture.detectChanges();
-        expect(courseLectureRowComponent).to.be.ok;
+        expect(courseLectureRowComponent).not.toBe(null);
     });
 
     it('should set urgent class to date if remaining days is less than 7 days', () => {
@@ -86,7 +78,7 @@ describe('CourseLectureRow', () => {
         courseLectureRowComponentFixture.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
-        expect(dateContainer).to.be.ok;
+        expect(dateContainer).not.toBe(null);
     });
 
     it('should not urgent class to date if remaining days is more than 7 days', () => {
@@ -102,7 +94,7 @@ describe('CourseLectureRow', () => {
         courseLectureRowComponentFixture.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
-        expect(dateContainer).to.not.exist;
+        expect(dateContainer).toBe(null);
     });
 
     it('navigate to details page if row is clicked', fakeAsync(() => {
@@ -121,6 +113,6 @@ describe('CourseLectureRow', () => {
         link.click();
         tick();
 
-        expect(location.path()).to.deep.equal('/courses/1/lectures/1');
+        expect(location.path()).toBe('/courses/1/lectures/1');
     }));
 });

@@ -1,7 +1,6 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({

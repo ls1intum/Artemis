@@ -4,7 +4,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import dayjs from 'dayjs';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
