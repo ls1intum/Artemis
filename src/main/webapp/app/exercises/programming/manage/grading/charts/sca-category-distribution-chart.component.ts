@@ -49,19 +49,19 @@ import { TranslateService } from '@ngx-translate/core';
                                     {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
                                 </span>
                             </div>
-                            <div *ngSwitchCase="'Deductions'">
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
-                                </span>
-                                <br />
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
-                                </span>
-                                <br />
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                                </span>
-                            </div>
+                        </div>
+                        <div *ngIf="['Deductions', 'Punkte'].includes(model.series)">
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                            </span>
+                            <br />
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
+                            </span>
+                            <br />
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                            </span>
                         </div>
                     </ng-template>
                 </ngx-charts-bar-horizontal-normalized>

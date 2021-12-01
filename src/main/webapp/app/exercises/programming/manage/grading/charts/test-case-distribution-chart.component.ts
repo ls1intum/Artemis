@@ -21,6 +21,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                     [xAxis]="true"
                     [yAxis]="true"
                     [xAxisTickFormatting]="xAxisFormatting"
+                    [scheme]="ngxColors"
                 >
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
@@ -32,6 +33,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                                         | artemisTranslate: { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
+                            <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
@@ -46,6 +48,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                                         | artemisTranslate: { percentage: model.weight.toFixed(2) }
                                 }}
                             </span>
+                            <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
@@ -68,11 +71,15 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                     [xAxis]="true"
                     [yAxis]="true"
                     [xAxisTickFormatting]="xAxisFormatting"
+                    [scheme]="ngxColors"
+                    [xScaleMax]="100"
                 >
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
                         <br />
-                        <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate }}</span>
+                        <span>
+                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                        </span>
                     </ng-template>
                 </ngx-charts-bar-horizontal-stacked>
             </div>
