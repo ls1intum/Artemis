@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
-import { faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCircleNotch, faCog, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
@@ -45,6 +45,8 @@ export class NotificationSidebarComponent implements OnInit {
     // Icons
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
+    faBell = faBell;
+    faCog = faCog;
 
     constructor(
         private notificationService: NotificationService,
