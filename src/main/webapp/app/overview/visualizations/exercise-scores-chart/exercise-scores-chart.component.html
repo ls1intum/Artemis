@@ -13,9 +13,9 @@
             [yAxis]="true"
             [showYAxisLabel]="true"
             [showXAxisLabel]="true"
-            [yScaleMax]="101"
+            [yScaleMax]="maxScale"
             [yScaleMin]="1"
-            [maxXAxisTickLength]="10"
+            [maxXAxisTickLength]="20"
             (select)="onSelect($event)"
         >
             <ng-template #tooltipTemplate let-model="model">

@@ -17,7 +17,8 @@
                 "INCORRECT_SCORE": "Incorrect score",
                 "UNNECESSARY_FEEDBACK": "Unneccessary feedback",
                 "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction",
-                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction"
+                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction",
+                "EMPTY_NEGATIVE_FEEDBACK": "Feedback is required for negative score"
             },
             "submissionValidation": {
                 "missing": "Not enough feedback provided. The instructor provided more feedback.",
