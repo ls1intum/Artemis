@@ -28,17 +28,8 @@ export class UserRouteAccessService implements CanActivate {
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
         // save the jwt token from get parameter for lti launch requests for online course users
         // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
-        console.log('canActivate-> route.routeConfig!.path:' + route.routeConfig!.path);
-        console.log('canActivate-> route.queryParams:' + route.queryParams);
-        console.log('canActivate-> route.queryParams:' + route.queryParams['jwt']);
         const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+\?jwt=\w+/g);
         if (regexPattern.test(state.url) && route.queryParams['jwt']) {
-            console.log('regex hit with url: ' + state.url + ' and query param: ' + route.queryParams['jwt']);
-            const jwt = route.queryParams['jwt'];
-            this.localStorage.store('authenticationToken', jwt);
-            // TODO: remove old code below
-        } else if (route.routeConfig!.path === 'courses/:courseId/exercises/:exerciseId' && route.queryParams['jwt']) {
-            console.log('canActivate with path: ' + route.routeConfig!.path + ' and query param: ' + route.queryParams['jwt']);
             const jwt = route.queryParams['jwt'];
             this.localStorage.store('authenticationToken', jwt);
         }
@@ -86,7 +77,6 @@ export class UserRouteAccessService implements CanActivate {
      * @return {Promise<boolean>} True if authorities are empty or null, False if user not logged in or does not have required authorities.
      */
     checkLogin(authorities: string[], url: string): Promise<boolean> {
-        console.log('checkLogin: ' + authorities + ', url: ' + url);
         const accountService = this.accountService;
         return Promise.resolve(
             accountService.identity().then((account) => {
@@ -106,7 +96,6 @@ export class UserRouteAccessService implements CanActivate {
                     });
                 }
 
-                console.log('storeUrl: ' + url + ' because no account in checkLogin');
                 this.stateStorageService.storeUrl(url);
                 this.router.navigate(['accessdenied']).then(() => {
                     // only show the login dialog, if the user hasn't logged in yet

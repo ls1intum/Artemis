@@ -28,7 +28,6 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                         if (err.status === 401 && this.authServerProvider.getToken() != undefined) {
                             // save the url before the logout navigates to another page in a constant
                             const currentUrl = this.router.routerState.snapshot.url;
-                            console.log('auth expired with currentUrl: ' + currentUrl);
                             this.loginService.logout(false);
 
                             // TODO: logging out the user automatically interferes with the canDeactivate functionality.
