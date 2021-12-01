@@ -103,7 +103,7 @@
                     <td class="text-end">
                         <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id]" class="btn btn-info btn-sm me-1 mb-1" id="checklist-button-{{ exam.id }}">
-                                <fa-icon [icon]="'th-list'"></fa-icon>
+                                <fa-icon [icon]="faThList"></fa-icon>
                                 <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | artemisTranslate }}</span>
                             </a>
                         </div>
@@ -125,7 +125,7 @@
                                 class="btn btn-primary btn-sm me-1 mb-1 exercise-button"
                                 id="exercises-button-{{ exam.id }}"
                             >
-                                <fa-icon [icon]="'th-list'"></fa-icon>
+                                <fa-icon [icon]="faThList"></fa-icon>
                                 <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                             </a>
                         </div>

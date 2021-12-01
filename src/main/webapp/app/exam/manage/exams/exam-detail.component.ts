@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs';
-import { faClipboard, faEye, faListAlt, faTable, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faEye, faListAlt, faTable, faThList, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -38,6 +38,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faListAlt = faListAlt;
     faClipboard = faClipboard;
+    faThList = faThList;
 
     constructor(
         private route: ActivatedRoute,
