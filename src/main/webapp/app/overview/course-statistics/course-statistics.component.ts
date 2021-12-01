@@ -201,9 +201,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
 
         this.calculateCourseGrade();
-        console.log(JSON.stringify(this.course!.exercises));
-        console.log(this.course!.exercises!.length);
-        console.log(this.ngxExerciseGroups.length);
     }
 
     ngOnDestroy() {
