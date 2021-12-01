@@ -44,8 +44,8 @@ jobs:
       
       - name: Copy configuration files
         run: cp src/test/cypress/deployment/* build/libs/
-      #- name: Import sql dump
-      #  run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword < build/libs/*.sql
+      - name: Import sql dump
+        run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword < build/libs/*.sql
       - name: Load Artemis SSH Key
         run: echo "${{ secrets.ARTEMIS_SSH_KEY_VALUE }}" > build/libs/artemis_key
       - name: Start Artemis
@@ -78,4 +78,4 @@ jobs:
           wait-on: 'http://localhost:8080'
           install-command: npm ci
           config: baseUrl=http://localhost:8080
-          env: username=user_USERID,password=password_USERID,adminUsername=artemis_admin,adminPassword=artemis_admin
+          env: username=user_USERID,password=password_USERID,adminUsername=artemis_admin,adminPassword=artemis_admin,allowGroupCustomization=true,studentGroupName=artemis-e2etest-students,tutorGroupName=artemis-e2etest-tutors,editorGroupName=artemis-e2etest-editors,instructorGroupName=artemis-e2etest-instructors
