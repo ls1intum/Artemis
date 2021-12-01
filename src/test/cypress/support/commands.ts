@@ -65,6 +65,9 @@ Cypress.Commands.overwrite('request', (originalFn, options) => {
 Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     const username = credentials.username;
     const password = credentials.password;
+    // IMPORTANT: The "log" and "failOnStatusCode" fields need to be set to false to prevent leakage of the credentials via the Cypress Dashboard!
+    // log = false does not prevent cypress to log the request if it failed, so failOnStatusCode also needs to be set to false, so that the request is never logged.
+    // We still want to the test to fail if the authentication is unsuccessful, so we expect the status code in the then block. This only logs the status code, so it is safe.
     cy.request({
         url: BASE_API + 'authenticate',
         method: POST,
@@ -74,9 +77,10 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
             password,
             rememberMe: true,
         },
-        failOnStatusCode: true,
-        retryOnStatusCodeFailure: true,
+        log: false,
+        failOnStatusCode: false,
     }).then((response) => {
+        expect(response.status).to.equal(200);
         localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
         cy.wait(50);
     });
