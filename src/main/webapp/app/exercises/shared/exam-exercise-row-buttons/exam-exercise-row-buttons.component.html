@@ -94,7 +94,7 @@
     </a>
 
     <button *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ" class="btn btn-warning btn-sm me-1" (click)="exportQuizById(true)">
-        <fa-icon [icon]="'file-export'"></fa-icon>
+        <fa-icon [icon]="faFileExport"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
     </button>
 
