@@ -12,6 +12,7 @@ import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/co
 import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -37,6 +38,9 @@ export class ExamNavigationBarComponent implements OnInit {
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
+
+    // Icons
+    faBars = faBars;
 
     constructor(
         private layoutService: LayoutService,
