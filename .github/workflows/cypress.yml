@@ -68,7 +68,7 @@ jobs:
           # Spring config
           SPRING_DATASOURCE_PASSWORD: rootPassword
           SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,local
-        run: cd build/libs; java -jar *.war &
+        run: cd build/libs; java -jar *.war
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v2
