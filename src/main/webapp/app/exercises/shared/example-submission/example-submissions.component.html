@@ -2,7 +2,7 @@
     <div class="row" *ngIf="exercise && exercise.id && exercise.course && exercise.course.id">
         <div class="col-12 col-sm">
             <h4>
-                <span> {{ exercise.course.title }} - {{ exercise.title }} - {{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }} </span>
+                <span>{{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}</span>
             </h4>
         </div>
         <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
@@ -27,7 +27,26 @@
                 <tr>
                     <th><span jhiTranslate="global.field.id"></span></th>
                     <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
-                    <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
+                    <th><span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span></th>
+                    <th>
+                        <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
+                        <fa-icon
+                            *ngIf="exercise.type === exerciseType.TEXT"
+                            [icon]="'question-circle'"
+                            class="text-secondary ps-1"
+                            [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
+                        <fa-icon
+                            *ngIf="exercise.type === exerciseType.MODELING"
+                            [icon]="'question-circle'"
+                            class="text-secondary ps-1"
+                            [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
+                    </th>
+                    <th><span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span></th>
+                    <th><span jhiTranslate="artemisApp.exampleSubmission.exampleAssessmentCreated"></span></th>
                     <th *ngIf="exercise.course.isAtLeastEditor"></th>
                 </tr>
             </thead>
@@ -43,7 +62,30 @@
                             {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
                         </a>
                     </td>
-                    <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
+                    <td>
+                        <jhi-result
+                            *ngIf="exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0; else showEmptyResult"
+                            [result]="exampleSubmission.submission!.results![0]"
+                        ></jhi-result>
+                        <ng-template #showEmptyResult>
+                            <jhi-result></jhi-result>
+                        </ng-template>
+                    </td>
+                    <td>
+                        {{ exampleSubmission.submission!.submissionSize }}
+                    </td>
+                    <td>{{ 'artemisApp.exampleSubmission.' + (exampleSubmission.usedForTutorial ? 'assessCorrectly' : 'readAndConfirm') | artemisTranslate }}</td>
+                    <td>
+                        <span *ngIf="createdExampleAssessment[i]" jhiTranslate="global.generic.yes"></span>
+                        <span *ngIf="!createdExampleAssessment[i]" class="text-danger" jhiTranslate="global.generic.no"></span>
+                        <fa-icon
+                            *ngIf="!createdExampleAssessment[i]"
+                            [icon]="'exclamation-triangle'"
+                            class="text-warning"
+                            [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
+                    </td>
                     <td *ngIf="exercise.course.isAtLeastEditor">
                         <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
                             <fa-icon [icon]="'times'"></fa-icon>

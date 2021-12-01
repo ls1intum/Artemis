@@ -16,7 +16,7 @@
                         name="usedForTutorial"
                         id="field_usedForTutorial"
                         [(ngModel)]="exampleSubmission.usedForTutorial"
-                        (ngModelChange)="unsavedChanges = true"
+                        (ngModelChange)="unsavedSubmissionChanges = true"
                     />
                     <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
                 </div>
@@ -28,7 +28,12 @@
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                     </button>
-                    <button *ngSwitchCase="SubmissionButtonStates.UPDATE" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
+                    <button
+                        *ngSwitchCase="SubmissionButtonStates.UPDATE"
+                        (click)="updateExampleTextSubmission()"
+                        class="btn btn-primary col-auto"
+                        [disabled]="!unsavedSubmissionChanges"
+                    >
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                     </button>
@@ -45,7 +50,7 @@
                         (click)="startAssessment()"
                         class="btn btn-primary col-auto ms-auto me-3"
                         id="createNewAssessment"
-                        [disabled]="unsavedChanges"
+                        [disabled]="unsavedSubmissionChanges"
                     >
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
@@ -81,7 +86,7 @@
         left-body
         *ngIf="state.ui === UIStates.SUBMISSION"
         [(ngModel)]="submission!.text"
-        (ngModelChange)="unsavedChanges = true"
+        (ngModelChange)="unsavedSubmissionChanges = true"
         style="width: 100%; height: 50vh"
     ></textarea>
     <jhi-score-display
@@ -123,6 +128,14 @@
     <jhi-assessment-instructions right-body *ngIf="exercise" [exercise]="exercise" [isAssessmentTraining]="toComplete" class="markdown-preview"></jhi-assessment-instructions>
     <!--endregion-->
 </jhi-resizeable-container>
+
+<jhi-unreferenced-feedback
+    *ngIf="state.ui === UIStates.ASSESSMENT"
+    [(feedbacks)]="unreferencedFeedback"
+    [readOnly]="readOnly"
+    [addReferenceIdForExampleSubmission]="true"
+    (feedbacksChange)="validateFeedback()"
+></jhi-unreferenced-feedback>
 
 <div class="col-12 text-end pt-2" *ngIf="toComplete">
     <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">

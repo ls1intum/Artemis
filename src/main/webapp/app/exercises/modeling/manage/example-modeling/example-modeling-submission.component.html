@@ -12,7 +12,7 @@
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
-                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.modelingExercise.usedForTutorial">Used for tutorial</label>
+                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></label>
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
@@ -77,7 +77,7 @@
             <button
                 class="btn btn-primary px-5"
                 (click)="checkAssessment()"
-                [disabled]="!feedbacks || !assessmentsAreValid"
+                [disabled]="!assessments || !assessmentsAreValid"
                 jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
             >
                 Submit Assessment
@@ -112,7 +112,7 @@
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
                         [course]="course"
-                        (feedbackChanged)="onFeedbackChanged($event)"
+                        (feedbackChanged)="onReferencedFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>
                 </div>
@@ -141,6 +141,14 @@
                     [(ngModel)]="assessmentExplanation"
                     [disabled]="readOnly"
                 ></textarea>
+
+                <jhi-unreferenced-feedback
+                    *ngIf="assessmentMode"
+                    [(feedbacks)]="unreferencedFeedback"
+                    [readOnly]="readOnly"
+                    [addReferenceIdForExampleSubmission]="true"
+                    (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
+                ></jhi-unreferenced-feedback>
             </div>
 
             <jhi-collapsable-assessment-instructions
