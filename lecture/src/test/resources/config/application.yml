@@ -30,7 +30,7 @@ spring:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
+        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
         name:
         username:
         password:
@@ -46,7 +46,6 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: tech.jhipster.domain.util.FixedH2Dialect
         open-in-view: false
         show-sql: false
         hibernate:

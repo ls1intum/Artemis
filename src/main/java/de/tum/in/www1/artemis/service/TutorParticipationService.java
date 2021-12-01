@@ -28,7 +28,7 @@ public class TutorParticipationService {
      * Possible feedback validation error types.
      */
     enum FeedbackCorrectionErrorType {
-        INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
+        INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION, EMPTY_NEGATIVE_FEEDBACK
     }
 
     private static final String ENTITY_NAME = "TutorParticipation";
@@ -142,6 +142,12 @@ public class TutorParticipationService {
             if (!Objects.equals(matchingInstructorFeedback.getGradingInstruction().getId(), tutorFeedback.getGradingInstruction().getId())) {
                 return Optional.of(FeedbackCorrectionErrorType.INCORRECT_GRADING_INSTRUCTION);
             }
+        }
+
+        // In case negative feedback is provided, but content is missing, return empty negative feedback.
+        var feedbackContent = Optional.ofNullable(tutorFeedback.getText() != null ? tutorFeedback.getText() : tutorFeedback.getDetailText()).orElse("");
+        if (tutorFeedback.getCredits() < 0 && feedbackContent.isBlank()) {
+            return Optional.of(FeedbackCorrectionErrorType.EMPTY_NEGATIVE_FEEDBACK);
         }
 
         // If instructor feedback score is different from tutor one, return incorrect score.
