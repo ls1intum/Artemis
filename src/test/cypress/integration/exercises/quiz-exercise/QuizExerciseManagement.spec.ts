@@ -41,17 +41,17 @@ describe('Quiz Exercise Management', () => {
 
         it('Creates a Quiz with Multiple Choice', () => {
             quizCreation.addMultipleChoiceQuestion(quizQuestionTitle);
-            saveAndVerifyQuizCreation(quizQuestionTitle);
+            saveAndVerifyQuizCreation();
         });
 
         it('Creates a Quiz with Short Answer', () => {
             quizCreation.addShortAnswerQuestion(quizQuestionTitle);
-            saveAndVerifyQuizCreation(quizQuestionTitle);
+            saveAndVerifyQuizCreation();
         });
 
         it('Creates a Quiz with Drag and Drop', () => {
             quizCreation.addDragAndDropQuestion(quizQuestionTitle);
-            saveAndVerifyQuizCreation(quizQuestionTitle);
+            saveAndVerifyQuizCreation();
         });
     });
 
@@ -78,10 +78,10 @@ describe('Quiz Exercise Management', () => {
         });
     });
 
-    function saveAndVerifyQuizCreation(expectedQuizTitle: string) {
+    function saveAndVerifyQuizCreation() {
         quizCreation.saveQuiz().then((quizResponse: any) => {
             cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response.body.id + '/preview');
-            cy.contains(expectedQuizTitle).should('be.visible');
+            cy.contains(quizQuestionTitle).should('be.visible');
         });
     }
 });
