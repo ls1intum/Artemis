@@ -256,7 +256,7 @@
                             <div *ngIf="mapping.spot !== undefined" [ngClass]="'mapping-number mapping-color-' + ((mapping.spot!.spotNr || 0) % 8)">
                                 {{ mapping.spot.spotNr }}
                                 <div class="unlink-mapping" (click)="deleteMapping(mapping)">
-                                    <fa-icon [icon]="'unlink'" size="lg"></fa-icon>
+                                    <fa-icon [icon]="faUnlink" size="lg"></fa-icon>
                                 </div>
                             </div>
                         </div>
