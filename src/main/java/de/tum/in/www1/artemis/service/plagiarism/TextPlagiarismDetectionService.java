@@ -98,7 +98,7 @@ public class TextPlagiarismDetectionService {
         AtomicInteger processedSubmissionCount = new AtomicInteger(1);
         textSubmissions.forEach(submission -> {
             var progressMessage = "Getting submission: " + processedSubmissionCount + "/" + textSubmissions.size();
-            plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
             submission.setResults(new ArrayList<>());
 
             StudentParticipation participation = (StudentParticipation) submission.getParticipation();
@@ -144,7 +144,7 @@ public class TextPlagiarismDetectionService {
         textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
-        plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
         return textPlagiarismResult;
     }
 }

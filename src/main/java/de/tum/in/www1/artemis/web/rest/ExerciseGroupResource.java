@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -50,17 +50,17 @@ public class ExerciseGroupResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final AuditEventRepository auditEventRepository;
 
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository, ExamRepository examRepository) {
+            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.userRepository = userRepository;
-        this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -198,7 +198,7 @@ public class ExerciseGroupResource {
         log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+            exerciseDeletionService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         }
 
         // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
