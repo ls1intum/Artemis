@@ -395,8 +395,8 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetCourseForInstructorDashboardWithStats() throws Exception {
-        courseTestService.testGetCourseForInstructorDashboardWithStats();
+    public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
+        courseTestService.testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly();
     }
 
     @Test

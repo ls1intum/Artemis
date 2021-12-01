@@ -154,7 +154,7 @@ public class TutorParticipationService {
         List<Feedback> matchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> {
             // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
             if (tutorFeedback.getType() == FeedbackType.MANUAL_UNREFERENCED) {
-                return Objects.equals(tutorFeedback.getType(), feedback.getType());
+                return feedback.getType() == FeedbackType.MANUAL_UNREFERENCED;
             }
 
             // For other feedback, both feedback have to reference the same element
@@ -169,7 +169,7 @@ public class TutorParticipationService {
         // If tutor feedack is unreferenced, then look for the first match and remove it from the next subsequent matches
         if (tutorFeedback.getType() == FeedbackType.MANUAL_UNREFERENCED) {
             var hasMatchingInstructorFeedback = matchingInstructorFeedback.stream().anyMatch(feedback -> {
-                var isMatch = Objects.equals(tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback), Optional.empty());
+                var isMatch = tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).isEmpty();
 
                 // This instructor feedback can not be used to match other tutor unreferenced feedback
                 if (isMatch) {

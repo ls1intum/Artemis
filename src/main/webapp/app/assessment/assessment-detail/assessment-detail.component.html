@@ -54,7 +54,7 @@
             </div>
         </div>
         <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
-        <div *ngIf="assessment.correctionStatus != undefined">
+        <div *ngIf="assessment.correctionStatus !== undefined">
             <span *ngIf="assessment.correctionStatus === 'CORRECT'" class="text-success"
                 >{{ 'artemisApp.exampleSubmission.feedback.' + assessment.correctionStatus! | artemisTranslate }}
             </span>
@@ -63,7 +63,7 @@
             </span>
 
             <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
-            <fa-layers *ngIf="assessment.correctionStatus != 'CORRECT'">
+            <fa-layers *ngIf="assessment.correctionStatus !== 'CORRECT'">
                 <fa-icon class="text-warning" [icon]="'exclamation-triangle'"></fa-icon>
                 <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
             </fa-layers>
