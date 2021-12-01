@@ -13,7 +13,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -25,6 +25,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
 
     // Icons
     faCircleNotch = faCircleNotch;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         private orionConnectorService: OrionConnectorService,

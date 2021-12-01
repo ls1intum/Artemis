@@ -13,7 +13,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { faCircleNotch, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -29,6 +29,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faPlus = faPlus;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         router: Router,
