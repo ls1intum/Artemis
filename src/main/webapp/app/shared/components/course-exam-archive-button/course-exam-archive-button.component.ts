@@ -14,7 +14,7 @@ import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { faCircleNotch, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';
@@ -56,6 +56,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     // Icons
     faDownload = faDownload;
     faCircleNotch = faCircleNotch;
+    faEraser = faEraser;
 
     constructor(
         private courseService: CourseManagementService,
