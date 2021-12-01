@@ -51,7 +51,7 @@
                         <fa-icon [icon]="'book'"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                     </a>
-                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
+                    <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="'list-alt'"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                     </a>
