@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -47,7 +47,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     exampleSubmission = new ExampleSubmission();
     assessmentsAreValid = false;
     result?: Result;
-    private unreferencedFeedback: Feedback[] = [];
+    unreferencedFeedback: Feedback[] = [];
     totalScore: number;
     readOnly: boolean;
     toComplete: boolean;
@@ -281,10 +281,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
     }
 
+    /**
+     * Mark all referenced and unreferenced feedback as 'CORRECT'
+     */
     markAllFeedbackToCorrect() {
         this.textBlockRefs
             .map((ref) => ref.feedback)
             .filter((feedback) => feedback != undefined)
+            .concat(this.unreferencedFeedback)
             .forEach((feedback) => {
                 feedback!.correctionStatus = 'CORRECT';
             });
@@ -295,6 +299,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === correctionError.reference);
             if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
                 textBlockRef.feedback.correctionStatus = correctionError.type;
+            } else {
+                const unreferencedFeedbackToBeMarked = this.unreferencedFeedback.find((feedback) => feedback.reference === correctionError.reference);
+                if (unreferencedFeedbackToBeMarked) {
+                    unreferencedFeedbackToBeMarked.correctionStatus = correctionError.type;
+                }
             }
         });
     }
@@ -320,7 +329,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        this.assessmentsAreValid = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        this.assessmentsAreValid = this.assessments.length > 0;
         this.totalScore = this.computeTotalScore(this.assessments);
 
         if (this.guidedTourService.currentTour && this.toComplete) {
@@ -342,6 +351,10 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private prepareTextBlocksAndFeedbacks() {
         const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result?.feedbacks || []);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
+
+        if (!this.toComplete) {
+            this.unreferencedFeedback = this.result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED) ?? [];
+        }
     }
 
     editSubmission(): void {

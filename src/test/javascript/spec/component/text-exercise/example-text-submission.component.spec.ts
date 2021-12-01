@@ -28,6 +28,7 @@ import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -60,6 +61,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockComponent(ScoreDisplayComponent),
                 MockComponent(TextAssessmentAreaComponent),
                 MockComponent(AssessmentInstructionsComponent),
+                MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(AlertComponent),
             ],
