@@ -35,7 +35,7 @@
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
             <a *ngIf="course.postsEnabled && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="'comments'"></fa-icon>
+                <fa-icon [icon]="faComments"></fa-icon>
                 <span jhiTranslate="artemisApp.metis.discussion.label">Discussion</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ms-1">

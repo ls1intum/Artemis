@@ -3,6 +3,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { faComments } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-posting-thread',
@@ -17,6 +18,9 @@ export class PostingThreadComponent implements OnInit, OnChanges, OnDestroy {
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
     @ViewChild('createAnswerPostModal') createAnswerPostModal: TemplateRef<AnswerPostCreateEditModalComponent>;
+
+    // Icons
+    faComments = faComments;
 
     constructor(private metisService: MetisService) {}
 
