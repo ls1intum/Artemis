@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.security;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -151,5 +152,36 @@ public final class SecurityUtils {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication()).filter(authentication -> authentication.getCredentials() instanceof String)
                 .map(authentication -> (String) authentication.getCredentials());
+    }
+
+    /**
+     * Checks if the current user has any of the authorities.
+     *
+     * @param authorities the authorities to check.
+     * @return true if the current user has any of the authorities, false otherwise.
+     */
+    public static boolean hasCurrentUserAnyOfAuthorities(String... authorities) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (authentication != null && getAuthorities(authentication).anyMatch(authority -> Arrays.asList(authorities).contains(authority)));
+    }
+
+    /**
+     * Checks if the current user has none of the authorities.
+     *
+     * @param authorities the authorities to check.
+     * @return true if the current user has none of the authorities, false otherwise.
+     */
+    public static boolean hasCurrentUserNoneOfAuthorities(String... authorities) {
+        return !hasCurrentUserAnyOfAuthorities(authorities);
+    }
+
+    /**
+     * Checks if the current user has a specific authority.
+     *
+     * @param authority the authority to check.
+     * @return true if the current user has the authority, false otherwise.
+     */
+    public static boolean hasCurrentUserThisAuthority(String authority) {
+        return hasCurrentUserAnyOfAuthorities(authority);
     }
 }

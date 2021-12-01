@@ -14,8 +14,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
@@ -29,7 +27,6 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
-        ArtemisSharedComponentModule,
         ChartsModule,
         ClipboardModule,
         ArtemisSharedPipesModule,
@@ -45,7 +42,6 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
     declarations: [
         CoursesComponent,
         CourseOverviewComponent,
-        CourseRegistrationSelectorComponent,
         CourseCardComponent,
         CourseExercisesComponent,
         CourseLecturesComponent,

@@ -55,8 +55,6 @@ public class ProgrammingExerciseGradingService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final ProgrammingAssessmentService programmingAssessmentService;
-
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -77,7 +75,7 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
+            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService,
@@ -89,7 +87,6 @@ public class ProgrammingExerciseGradingService {
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.programmingAssessmentService = programmingAssessmentService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -670,7 +667,7 @@ public class ProgrammingExerciseGradingService {
     private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
         // Calculate different scores for totalScore calculation and add points and maxScore to result string
         double maxScore = exercise.getMaxPoints();
-        double points = programmingAssessmentService.calculateTotalScore(result);
+        double points = result.calculateTotalPointsForProgrammingExercises();
         result.setScore(points, maxScore);
         return resultString + ", " + result.createResultString(points, maxScore);
     }
