@@ -87,6 +87,21 @@ modernizer {
 
 // Execute the test cases: ./gradlew executeTests
 
+sourceSets {
+    test {
+        java {
+            srcDirs = ['src/test/java/unit', 'src/test/java/integration', 'src/test/java']
+        }
+       resources {
+           srcDir 'src/test/resources'
+       }
+    }
+}
+
+processTestResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 test {
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*"
