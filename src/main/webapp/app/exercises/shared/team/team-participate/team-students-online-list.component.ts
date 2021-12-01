@@ -8,7 +8,7 @@ import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-team-students-online-list',
@@ -30,6 +30,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     // Icons
     faCircle = faCircle;
+    faHistory = faHistory;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 

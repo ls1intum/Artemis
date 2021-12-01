@@ -7,7 +7,7 @@
             {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
-            <fa-icon [icon]="'print'"></fa-icon>
+            <fa-icon [icon]="faPrint"></fa-icon>
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
         </button>
     </h2>
