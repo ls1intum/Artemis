@@ -14,13 +14,11 @@ const courseManagement = artemis.pageobjects.courseManagement;
 const quizCreation = artemis.pageobjects.quizExercise.creation;
 
 // Common primitives
-let uid: string;
 let course: any;
 const quizQuestionTitle = 'Cypress Quiz Exercise';
 
 describe('Quiz Exercise Management', () => {
     before('Set up course', () => {
-        uid = generateUUID();
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
