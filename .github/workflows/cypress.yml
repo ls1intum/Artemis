@@ -46,8 +46,26 @@ jobs:
         run: cp src/test/cypress/deployment/* build/libs/
       - name: Import sql dump
         run: mysql --host=localhost --port=3306 --protocol=TCP --user=root --password=rootPassword < build/libs/*.sql
+      - name: Load Artemis SSH Key
+        run: echo "${{ secrets.ARTEMIS_SSH_KEY_VALUE }}" > build/libs/artemis_key
       - name: Start Artemis
         env:
+          # Bamboo config
+          ARTEMIS_CONTINUOUS-INTEGRATION_URL: https://jira-prelive.ase.in.tum.de
+          ARTEMIS_CONTINUOUS-INTEGRATION_USER: ${{ secrets.ARTEMIS_ATLASSIAN_USER }}
+          ARTEMIS_CONTINUOUS-INTEGRATION_PASSWORD: ${{ secrets.ARTEMIS_ATLASSIAN_PASSWORD }}
+          ARTEMIS_CONTINUOUS-INTEGRATION_ARTEMIS-AUTHENTICATION-TOKEN-VALUE: ${{ secrets.BAMBOO_AUTH_TOKEN }}
+          # Bitbucket config
+          ARTEMIS_VERSION-CONTROL_URL: https://bitbucket-prelive.ase.in.tum.de
+          ARTEMIS_VERSION-CONTROL_USER: ${{ secrets.ARTEMIS_ATLASSIAN_USER }}
+          ARTEMIS_VERSION-CONTROL_PASSWORD: ${{ secrets.ARTEMIS_ATLASSIAN_PASSWORD }}
+          ARTEMIS_VERSION-CONTROL_SSH-PRIVATE-KEY-FOLDER-PATH: ./artemis_key
+          ARTEMIS_VERSION-CONTROL_SSH-PRIVATE-KEY-PASSWORD: ${{ secrets.ARTEMIS_SSH_KEY_PASSWORD }}
+          # Jira config
+          ARTEMIS_USER-MANAGEMENT_EXTERNAL_URL: https://jira-prelive.ase.in.tum.de
+          ARTEMIS_USER-MANAGEMENT_EXTERNAL_USER: ${{ secrets.ARTEMIS_ATLASSIAN_USER }}
+          ARTEMIS_USER-MANAGEMENT_EXTERNAL_PASSWORD: ${{ secrets.ARTEMIS_ATLASSIAN_PASSWORD }}
+          # Spring config
           SPRING_DATASOURCE_PASSWORD: rootPassword
           SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,local
         run: cd build/libs; java -jar *.war &
