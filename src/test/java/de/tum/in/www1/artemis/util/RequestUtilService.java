@@ -353,7 +353,7 @@ public class RequestUtilService {
 
     public <T> T getNullable(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
         final var res = get(path, expectedStatus, String.class, new LinkedMultiValueMap<>());
-        if (res != null && res.equals("")) {
+        if (res == null || res.equals("")) {
             return null;
         }
 
