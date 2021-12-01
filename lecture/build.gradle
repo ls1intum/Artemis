@@ -25,7 +25,7 @@ plugins {
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
-group = "de.tum.in.www1.artemis.lecture"
+group = "de.tum.in.www1.artemis"
 
 sourceCompatibility = 16
 targetCompatibility = 16
@@ -195,9 +195,9 @@ configurations {
 apply from: "../gradle/dependencies.gradle"
 
 dependencies {
-    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
-    implementation "org.gitlab4j:gitlab4j-api:4.18.0"
-    implementation files("../libs/jplag-3.0.0.jar")
+    implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
+    implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
+    implementation files("../libs/jplag-${jplag_version}.jar")
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
@@ -262,7 +262,7 @@ dependencies {
 }
 
 task executeTests(type: Exec) {
-    commandLine "./gradlew", "test"
+    commandLine "./gradlew", ":lecture:test"
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
@@ -278,7 +278,7 @@ nohttp {
 }
 
 task executeCheckstyle(type: Exec) {
-    commandLine "./gradlew", "checkstyleMain"
+    commandLine "./gradlew", ":lecture:checkstyleMain"
 }
 
 task buildJarForDocker(type: Exec) {
