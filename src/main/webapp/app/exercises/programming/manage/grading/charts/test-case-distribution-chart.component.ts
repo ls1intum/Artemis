@@ -2,9 +2,8 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
-import { ChartDataSets } from 'chart.js';
 import { TranslateService } from '@ngx-translate/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
@@ -28,14 +27,12 @@ import { TranslateService } from '@ngx-translate/core';
                         <br />
                         <div *ngIf="['Weight', 'Gewichtung'].includes(model.series)">
                             <span>
-                                {{ model.series }}:
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
                                         | artemisTranslate: { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                             <span>
-                                {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus' | artemisTranslate }}:
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
                                         | artemisTranslate: { percentage: model.bonus.toFixed(2) }
@@ -44,14 +41,12 @@ import { TranslateService } from '@ngx-translate/core';
                         </div>
                         <div *ngIf="['Weight & Bonus', 'Gewichtung & Bonus'].includes(model.series)">
                             <span>
-                                {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight' | artemisTranslate }}:
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
                                         | artemisTranslate: { percentage: model.weight.toFixed(2) }
                                 }}
                             </span>
                             <span>
-                                {{ model.series }}:
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
                                         | artemisTranslate: { percentage: model.value.toFixed(2) }
@@ -74,6 +69,11 @@ import { TranslateService } from '@ngx-translate/core';
                     [yAxis]="true"
                     [xAxisTickFormatting]="xAxisFormatting"
                 >
+                    <ng-template #tooltipTemplate let-model="model">
+                        <b>{{ model.name }}</b>
+                        <br />
+                        <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate }}</span>
+                    </ng-template>
                 </ngx-charts-bar-horizontal-stacked>
             </div>
         </div>
@@ -87,16 +87,19 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
     @Output() testCaseColorsChange = new EventEmitter<{}>();
 
-    weightChartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus'], ['all weights', 'all weights and bonuses']);
-    pointsChartPreset = new HorizontalStackedBarChartPreset(['Points'], ['all exercise points']);
-
-    weightChartDatasets: ChartDataSets[] = [];
     ngxWeightData: any[] = [
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'), series: [] as any[] },
     ];
-    pointsChartDatasets: ChartDataSets[] = [];
     ngxPointsData: any[] = [{ name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] }];
+
+    ngxData: any[] = [];
+    ngxColors = {
+        name: 'test case distribution',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [],
+    } as Color;
 
     constructor(private translateService: TranslateService) {}
 
@@ -134,11 +137,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             };
         });
 
-        if (this.weightChartDatasets.length !== testCaseScores.length) {
+        if (this.ngxWeightData[0].length !== testCaseScores.length) {
             const testCaseColors = {};
-
-            this.weightChartDatasets = [];
-            this.pointsChartDatasets = [];
 
             this.ngxWeightData = [];
             this.ngxPointsData = [];
@@ -156,15 +156,17 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
                 const label = element.label;
                 const backgroundColor = this.getColor(+i / this.testCases.length, 50);
-                const hoverBackgroundColor = this.getColor(+i / this.testCases.length, 60);
+                const color = this.hslToHex(backgroundColor);
+                // const hoverBackgroundColor = this.getColor(+i / this.testCases.length, 60);
 
                 weight.series.push({ name: element.label, value: element.relWeight, bonus: element.relScore });
                 weightAndBonus.series.push({ name: element.label, value: element.relScore, weight: element.relWeight });
 
                 points.series.push({ name: element.label, value: element.relPoints });
-                testCaseColors[label] = backgroundColor;
+                testCaseColors[label] = color;
+                this.ngxColors.domain.push(color);
 
-                this.weightChartDatasets.push({
+                /*this.weightChartDatasets.push({
                     label,
                     backgroundColor,
                     hoverBackgroundColor,
@@ -176,7 +178,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                     backgroundColor,
                     hoverBackgroundColor,
                     data: [element.relPoints],
-                });
+                });*/
             }
 
             this.ngxWeightData.push(weight);
@@ -190,9 +192,9 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             // update values in-place
             for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];
-                this.weightChartDatasets[i].data![0] = element.relWeight;
+                /*this.weightChartDatasets[i].data![0] = element.relWeight;
                 this.weightChartDatasets[i].data![1] = element.relScore;
-                this.pointsChartDatasets[i].data![0] = element.relPoints;
+                this.pointsChartDatasets[i].data![0] = element.relPoints;*/
 
                 this.ngxWeightData[0].series[i].value = element.relWeight;
                 this.ngxWeightData[1].series[i].value = element.relScore;
@@ -204,11 +206,28 @@ export class TestCaseDistributionChartComponent implements OnChanges {
         this.ngxPointsData = [...this.ngxPointsData];
     }
 
-    getColor(i: number, l: number): string {
-        return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
+    getColor(i: number, l: number): number[] {
+        return [(i * 360 * 3) % 360, 55, l];
+        // return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
     }
 
     xAxisFormatting(value: any) {
         return value + '%';
+    }
+
+    private hslToHex(hsl: number[]): string {
+        const h = hsl[0];
+        const s = hsl[1];
+        let l = hsl[2];
+        l /= 100;
+        const a = (s * Math.min(l, 1 - l)) / 100;
+        const f = (n: number) => {
+            const k = (n + h / 30) % 12;
+            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+            return Math.round(255 * color)
+                .toString(16)
+                .padStart(2, '0'); // convert to Hex and prefix "0" if needed
+        };
+        return `#${f(0)}${f(8)}${f(4)}`;
     }
 }
