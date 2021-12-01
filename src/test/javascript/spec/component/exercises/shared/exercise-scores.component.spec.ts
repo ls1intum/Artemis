@@ -1,24 +1,16 @@
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
+import { ActivatedRoute } from '@angular/router';
+import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { of, Subscription } from 'rxjs';
-import { FormsModule } from '@angular/forms';
+import { NgModel } from '@angular/forms';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
@@ -27,8 +19,6 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -38,9 +28,14 @@ import { HttpResponse } from '@angular/common/http';
 import { Team } from 'app/entities/team.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -86,13 +81,11 @@ describe('Exercise Scores Component', () => {
     result.participation = participation;
     result.assessmentType = AssessmentType.MANUAL;
 
-    const router = new MockRouter();
-
     const route = { data: of({ courseId: 1 }), children: [] } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule, FormsModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
                 MockComponent(AlertComponent),
@@ -106,14 +99,15 @@ describe('Exercise Scores Component', () => {
                 MockHasAnyAuthorityDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
+                MockDirective(NgModel),
             ],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: Router, useValue: router },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
             .compileComponents()
@@ -123,13 +117,13 @@ describe('Exercise Scores Component', () => {
                 resultService = TestBed.inject(ResultService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 component.exercise = exercise;
-                sinon.stub(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
+                jest.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
                 component.paramSub = new Subscription();
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should get exercise participation link for exercise without an exercise group', () => {
@@ -139,7 +133,7 @@ describe('Exercise Scores Component', () => {
 
         const returnedLink = component.getExerciseParticipationsLink(1);
 
-        expect(returnedLink).to.have.same.members(expectedLink);
+        expect(returnedLink).toEqual(expectedLink);
     });
 
     it('should get exercise participation link for exercise with an exercise group', () => {
@@ -155,99 +149,100 @@ describe('Exercise Scores Component', () => {
 
         const returnedLink = component.getExerciseParticipationsLink(2);
 
-        expect(returnedLink).to.have.same.members(expectedLink);
+        expect(returnedLink).toEqual(expectedLink);
     });
 
     it('should update result', fakeAsync(() => {
         component.updateResultFilter(component.FilterProp.SUCCESSFUL);
 
-        expect(component.isLoading).to.equal(true);
+        expect(component.isLoading).toBe(true);
         tick();
-        expect(component.resultCriteria.filterProp).to.equal(component.FilterProp.SUCCESSFUL);
-        expect(component.isLoading).to.equal(false);
+        expect(component.resultCriteria.filterProp).toBe(component.FilterProp.SUCCESSFUL);
+        expect(component.isLoading).toBe(false);
     }));
 
     it('should filter result prop "successful"', () => {
         component.resultCriteria.filterProp = component.FilterProp.SUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).to.be.true;
+        expect(component.filterResultByProp(result)).toBe(true);
     });
 
     it('should filter result prop "unsuccessful"', () => {
         component.resultCriteria.filterProp = component.FilterProp.UNSUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).to.be.false;
+        expect(component.filterResultByProp(result)).toBe(false);
     });
 
     it('should filter result prop "build failed"', () => {
         component.resultCriteria.filterProp = component.FilterProp.BUILD_FAILED;
 
-        expect(component.filterResultByProp(result)).to.be.false;
+        expect(component.filterResultByProp(result)).toBe(false);
     });
 
     it('should filter result prop "manual"', () => {
         component.resultCriteria.filterProp = component.FilterProp.MANUAL;
 
-        expect(component.filterResultByProp(result)).to.be.true;
+        expect(component.filterResultByProp(result)).toBe(true);
     });
 
     it('should filter result prop "automatic"', () => {
         component.resultCriteria.filterProp = component.FilterProp.AUTOMATIC;
 
-        expect(component.filterResultByProp(result)).to.be.false;
+        expect(component.filterResultByProp(result)).toBe(false);
     });
 
     it('should filter result prop default value', () => {
-        expect(component.filterResultByProp(result)).to.be.true;
+        expect(component.filterResultByProp(result)).toBe(true);
     });
 
     it('should handle result size change', () => {
         component.handleResultsSizeChange(10);
 
-        expect(component.filteredResultsSize).to.equal(10);
+        expect(component.filteredResultsSize).toBe(10);
     });
 
     it('should return build plan id', () => {
-        expect(component.buildPlanId(result)).to.equal('1');
+        expect(component.buildPlanId(result)).toBe('1');
     });
 
     it('should return project key', () => {
-        const programmingExercise: ProgrammingExercise = {
+        component.exercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
             projectKey: 'key',
-        };
-        component.exercise = programmingExercise;
+        } as ProgrammingExercise;
 
-        expect(component.projectKey()).to.equal('key');
+        expect(component.projectKey()).toBe('key');
     });
 
     it('should return repository link', () => {
-        expect(component.getRepositoryLink(result)).to.equal('url');
+        expect(component.getRepositoryLink(result)).toBe('url');
     });
 
     it('should export names correctly for student participation', () => {
         component.results = [result];
         const rows = ['data:text/csv;charset=utf-8,participantName'];
-        const resultServiceStub = sinon.stub(resultService, 'triggerDownloadCSV');
+        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
 
-        expect(resultServiceStub).to.have.been.calledOnceWith(rows, 'results-names.csv');
+        expect(resultServiceStub).toHaveBeenCalledTimes(1);
+        expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
     });
 
     it('should export names correctly for team participation', () => {
         participation.team = team;
         component.results = [result];
         const rows = ['data:text/csv;charset=utf-8,Team Name,Team Short Name,Students', 'name,shortName,"name1, name2"'];
-        const resultServiceStub = sinon.stub(resultService, 'triggerDownloadCSV');
+        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
 
-        expect(resultServiceStub).to.have.been.calledOnceWith(rows, 'results-names.csv');
+        expect(resultServiceStub).toHaveBeenCalledTimes(1);
+        expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
         participation.team = undefined;
     });
 
@@ -258,7 +253,7 @@ describe('Exercise Scores Component', () => {
             guidedTourSettings: [],
         };
 
-        expect(component.searchResultFormatter(result)).to.equal('login (name)');
+        expect(component.searchResultFormatter(result)).toBe('login (name)');
 
         participation.student = undefined;
     });
@@ -267,34 +262,35 @@ describe('Exercise Scores Component', () => {
         participation.team = team;
         const expectedResult = 'name (shortName) ⟹ name1 (login1), name2 (login2)';
 
-        expect(component.searchResultFormatter(result)).to.equal(expectedResult);
+        expect(component.searchResultFormatter(result)).toBe(expectedResult);
 
         participation.team = undefined;
     });
 
     it('should search result and return empty string', () => {
-        expect(component.searchResultFormatter(result)).to.equal('');
+        expect(component.searchResultFormatter(result)).toBe('');
     });
 
     it('should search text from result', () => {
-        expect(component.searchTextFromResult(result)).to.equal('participationId');
+        expect(component.searchTextFromResult(result)).toBe('participationId');
     });
 
     it('should refresh properly', () => {
-        const resultServiceStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse<Result[]>({ body: [result] })));
+        const resultServiceStub = jest.spyOn(resultService, 'getResults').mockReturnValue(of(new HttpResponse<Result[]>({ body: [result] })));
 
         component.refresh();
 
-        expect(resultServiceStub).to.have.been.calledOnceWith(component.exercise);
-        expect(component.results).to.have.same.members([result]);
-        expect(component.isLoading).to.be.false;
+        expect(resultServiceStub).toHaveBeenCalledTimes(1);
+        expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
+        expect(component.results).toEqual([result]);
+        expect(component.isLoading).toBe(false);
     });
 
     it('should format date correctly', () => {
         const date = new Date(2021, 4, 8, 21, 47, 17);
 
-        expect(component.formatDate(date)).to.equal('2021-05-08 21:47:17');
+        expect(component.formatDate(date)).toBe('2021-05-08 21:47:17');
 
-        expect(component.formatDate(undefined)).to.equal('');
+        expect(component.formatDate(undefined)).toBe('');
     });
 });
