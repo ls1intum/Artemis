@@ -34,6 +34,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
+import { faGripLines } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -89,6 +90,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     submissionObservable = this.submissionChange.asObservable();
 
     resizeOptions = { verticalResize: true };
+
+    // Icons
+    faGripLines = faGripLines;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
