@@ -37,7 +37,7 @@
                 <div [innerHTML]="currentTourStep.contentTranslateKey | artemisTranslate"></div>
                 <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
                     <div class="step-hint__icon">
-                        <fa-icon [icon]="'info-circle'"></fa-icon>
+                        <fa-icon [icon]="faInfoCircle"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.hintTranslateKey | artemisTranslate"></div>

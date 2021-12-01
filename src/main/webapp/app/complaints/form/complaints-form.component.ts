@@ -6,6 +6,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -23,6 +24,9 @@ export class ComplaintsFormComponent implements OnInit {
     maxComplaintsPerCourse = 1;
     complaintText?: string;
     ComplaintType = ComplaintType;
+
+    // Icons
+    faInfoCircle = faInfoCircle;
 
     constructor(private complaintService: ComplaintService, private alertService: AlertService) {}
 

@@ -79,7 +79,7 @@
                 (ngModelChange)="didChange()"
             ></textarea>
             <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
-                <fa-icon [icon]="'info-circle'" size="1x" class="text-info" placement="left"></fa-icon>
+                <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left"></fa-icon>
                 <span
                     jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
                     [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
@@ -150,7 +150,7 @@
                             >
                         </div>
                         <div>
-                            <fa-icon [icon]="'info-circle'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faInfoCircle"></fa-icon>&nbsp;
                             <span style="font-weight: bold" jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.points"> Points: </span
                             ><span>: {{ block.credits }}</span>
                         </div>

@@ -22,7 +22,7 @@
     <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam" [courseId]="courseId"></jhi-exam-points-summary>
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
-    <fa-icon [icon]="'info-circle'" class="info-icon"></fa-icon>
+    <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">

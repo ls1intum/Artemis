@@ -7,7 +7,7 @@ import { NotificationSetting } from 'app/shared/user-settings/notification-setti
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -22,6 +22,7 @@ export enum NotificationSettingsCommunicationChannel {
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
     // Icons
     faSave = faSave;
+    faInfoCircle = faInfoCircle;
 
     constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
         super(userSettingsService, alertService, changeDetector);

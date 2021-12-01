@@ -15,11 +15,11 @@
                     [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: remainingNumberOfComplaints }"
                 ></span>
                 <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
-                <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+                <fa-icon *ngIf="!examId" [icon]="faInfoCircle" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
             </p>
             <p *ngIf="complaintType !== ComplaintType.COMPLAINT">
                 {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
-                <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+                <fa-icon [icon]="faInfoCircle" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
             </p>
         </div>
     </div>
