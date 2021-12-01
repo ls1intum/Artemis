@@ -25,9 +25,10 @@ Lecture Posts
 ^^^^^^^^^^^^^
 Posts, that are specifically related to a certain lecture.
 These posts have to be created on the detail page of the lecture they belong to.
-However, they are listed in the course discussion overview (see :ref:`Metis Course-wide Posts & Course Discussion Overview`).
+However, they are listed in the course discussion overview (see :ref:`Metis Course-wide Posts & Course Discussion Overview <course-wide>`).
 
 Exemplary lecture detail page with posts:
+
 |lecture-posts|
 
 Exercise Posts
@@ -37,9 +38,10 @@ Posts, that are specifically related to a certain exercise.
 These posts have to be created on the detail page of the exercise they belong to.
 
 Exemplary exercise detail page with posts:
+
 |exercise-posts|
 
-.. _Metis Course-wide Posts & Course Discussion Overview:
+.. _course-wide:
 Course-wide Posts & Course Discussion Overview
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -69,7 +71,8 @@ React on Posts
 
 To foster interaction we integrate the well-known emoji reaction bar.
 Each user can react on every post by making use of the emoji selection button.
-The ``+`` emoji serves as upvoting reaction, which influences the display order.
+The ``+`` emoji serves as up-voting reaction, which influences the display order.
+
 |react-on-posts|
 
 Reference Posts of Others
@@ -78,7 +81,7 @@ Reference Posts of Others
 If users want to refer to other posts, they can integrate a simple pattern including the hashtag combined with the post identifier.
 A post's identifier appended to the post title (such as seen in the screenshot).
 
-With #ID
+On clicking a reference used in a post's text, the user is navigated to the referenced post.
 
 Find Duplicates of Posts
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -102,7 +105,7 @@ Tag Your Post
 Tagging a post will further narrow down the post purpose or content in precise and descriptive buzzwords, that might follow a course-specific taxonomy.
 
 Features for Moderators
--------------------
+-----------------------
 The following features are only available for moderators, not for students.
 
 Move Posts
