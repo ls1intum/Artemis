@@ -3,7 +3,8 @@
         "exampleSubmission": {
             "home": {
                 "title": "Beispielabgaben",
-                "editor": "Beispielabgabe-Editor"
+                "editor": "Beispielabgabe-Editor",
+                "assessmentTraining": "Das ist ein Beurteilungstraining"
             },
             "legend": {
                 "title": "Legende",

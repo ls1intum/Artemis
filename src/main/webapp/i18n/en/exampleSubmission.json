@@ -3,7 +3,8 @@
         "exampleSubmission": {
             "home": {
                 "title": "Example Submissions",
-                "editor": "Example Submission Editor"
+                "editor": "Example Submission Editor",
+                "assessmentTraining": "This is an Assessment Training"
             },
             "legend": {
                 "title": "Legend",
