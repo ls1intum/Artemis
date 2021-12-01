@@ -23,7 +23,7 @@ import { ChartType } from 'chart.js';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -169,6 +169,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     // Icons
     faQuestionCircle = faQuestionCircle;
+    faClipboard = faClipboard;
 
     constructor(
         private courseService: CourseManagementService,

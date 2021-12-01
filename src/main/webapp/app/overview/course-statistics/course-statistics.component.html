@@ -54,7 +54,7 @@
                 </h6>
                 <div class="text-center mt-3">
                     <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO?.gradeName }">
-                        <fa-icon [icon]="'clipboard'"></fa-icon>
+                        <fa-icon [icon]="faClipboard"></fa-icon>
                         <span
                             >&nbsp;{{
                                 isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
