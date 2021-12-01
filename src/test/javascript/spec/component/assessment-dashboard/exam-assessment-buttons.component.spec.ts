@@ -149,7 +149,7 @@ describe('ExamAssessmentButtons', () => {
         expect(course).toBeTruthy();
         const assessSpy = jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeTruthy();
+        expect(assessButton).not.toBe(null);
         assessButton.nativeElement.click();
         expect(assessSpy).toBeCalled();
     });
@@ -223,7 +223,7 @@ describe('ExamAssessmentButtons', () => {
         // user is not an instructor
         examAssessmentButtonsFixture.detectChanges();
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeNull();
+        expect(assessButton).toBe(null);
     });
 
     it('should disable show assess unsubmitted student exam modeling and text participations', () => {
