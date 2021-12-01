@@ -2,7 +2,7 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Example Submissions Board",
+                "title": "Example Submissions",
                 "editor": "Example Submission Editor"
             },
             "legend": {
@@ -30,7 +30,9 @@
             "readSuccessfully": "You have successfully read and understood this example submission",
             "createNew": "Create new",
             "pageHeader": "Example Text Submission for Exercise",
-            "usedForTutorial": "Tutors need to assess this submission",
+            "usedForTutorial": "Assessment Training",
+            "readAndConfirm": "Read and Confirm",
+            "assessCorrectly": "Assess correctly",
             "createNewSubmission": "Create new example submission",
             "editExampleSubmission": "Edit example submission",
             "updateExampleSubmission": "Update example submission",
@@ -45,7 +47,7 @@
             "submitAssessment": "Submit Assessment",
             "readAndUnderstood": "I have read and understood the example",
             "exampleSubmission": "Example Submission",
-            "exampleSubmissions": "Example Submissions",
+            "exampleSubmissions": "Example Submissions for Assessment Training",
             "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
             "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",
@@ -56,7 +58,8 @@
             "submissionSize": "Submission Size",
             "textSubmissionSizeHint": "This number shows the number of words in the text.",
             "modelingSubmissionSizeHint": "This number shows the number of elements used in the model.",
-            "exampleAssessmentCreated": "Example assessment created"
+            "exampleAssessmentCreated": "Example Assessment Created",
+            "exampleAssessmentWarning": "You need to complete the assessment to use this submission in the assessment training."
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"

@@ -2,7 +2,7 @@
     <div class="row" *ngIf="exercise && exercise.id && exercise.course && exercise.course.id">
         <div class="col-12 col-sm">
             <h4>
-                <span> {{ exercise.course.title }} - {{ exercise.title }} - {{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }} </span>
+                <span>{{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}</span>
             </h4>
         </div>
         <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
@@ -74,9 +74,17 @@
                     <td>
                         {{ exampleSubmission.submission!.submissionSize }}
                     </td>
-                    <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
+                    <td>{{ 'artemisApp.exampleSubmission.' + (exampleSubmission.usedForTutorial ? 'assessCorrectly' : 'readAndConfirm') | artemisTranslate }}</td>
                     <td>
-                        {{ 'global.generic.' + (createdExampleAssessment[i] ? 'yes' : 'no') | artemisTranslate }}
+                        <span *ngIf="createdExampleAssessment[i]" jhiTranslate="global.generic.yes"></span>
+                        <span *ngIf="!createdExampleAssessment[i]" class="text-danger" jhiTranslate="global.generic.no"></span>
+                        <fa-icon
+                            *ngIf="!createdExampleAssessment[i]"
+                            [icon]="'exclamation-triangle'"
+                            class="text-warning"
+                            [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
                     </td>
                     <td *ngIf="exercise.course.isAtLeastEditor">
                         <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
