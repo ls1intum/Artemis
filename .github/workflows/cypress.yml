@@ -78,4 +78,4 @@ jobs:
           wait-on: 'http://localhost:8080'
           install-command: npm ci
           config: baseUrl=http://localhost:8080
-          env: username=user_USERID,password=password_USERID,adminUsername=artemis_admin,adminPassword=artemis_admin,allowGroupCustomization=true,studentGroupName=artemis-e2etest-students,tutorGroupName=artemis-e2etest-tutors,editorGroupName=artemis-e2etest-editors,instructorGroupName=artemis-e2etest-instructors
+          env: username=cypress_user_USERID,cypress_password=password_USERID,adminUsername=artemis_admin,adminPassword=artemis_admin,allowGroupCustomization=true,studentGroupName=artemis-e2etest-students,tutorGroupName=artemis-e2etest-tutors,editorGroupName=artemis-e2etest-editors,instructorGroupName=artemis-e2etest-instructors
