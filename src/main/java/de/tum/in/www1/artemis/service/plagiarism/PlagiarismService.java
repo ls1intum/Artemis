@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 public class PlagiarismService {
 
     // correspond to the translation files (suffix) used in the client
-    private static final String YOUR_SUBMISSION = "yourSubmission";
+    private static final String YOUR_SUBMISSION = "Your submission";
 
-    private static final String OTHER_SUBMISSION = "otherSubmission";
+    private static final String OTHER_SUBMISSION = "Other submission";
 
     private final ExerciseRepository exerciseRepository;
 
