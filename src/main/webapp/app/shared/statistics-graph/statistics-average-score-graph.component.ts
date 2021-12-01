@@ -6,6 +6,7 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',
@@ -41,6 +42,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     currentPeriod = 0;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+
+    // Icons
+    faArrowLeft = faArrowLeft;
 
     constructor(private service: StatisticsService, private translateService: TranslateService) {}
 

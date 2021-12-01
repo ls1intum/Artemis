@@ -5,6 +5,7 @@ import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -26,6 +27,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     public isExamMode = false;
 
     icon: IconProp;
+
+    // Icons
+    faArrowLeft = faArrowLeft;
 
     /**
      * Sets the status badge and categories of the exercise on changes
