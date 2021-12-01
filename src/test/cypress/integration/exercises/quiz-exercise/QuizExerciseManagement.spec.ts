@@ -33,8 +33,6 @@ describe('Quiz Exercise Management', () => {
     });
 
     describe('Quiz Exercise Creation', () => {
-        let quizExercise: any;
-
         beforeEach(() => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
