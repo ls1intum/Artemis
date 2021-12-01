@@ -16,7 +16,7 @@
     <!-- Folder level actions -->
     <span class="file-icons">
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FILE)" class="btn btn-small">
-            <fa-icon [icon]="'file'" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faFile" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
             <fa-icon [icon]="faFolder" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}"></fa-icon>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
@@ -12,6 +12,7 @@ export class LectureDetailComponent implements OnInit {
 
     // Icons
     faPencilAlt = faPencilAlt;
+    faFile = faFile;
 
     constructor(private activatedRoute: ActivatedRoute) {}
 

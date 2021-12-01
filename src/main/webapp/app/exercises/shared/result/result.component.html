@@ -41,7 +41,7 @@
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
-                    &nbsp; <fa-icon [icon]="'file'"></fa-icon>
+                    &nbsp; <fa-icon [icon]="faFile"></fa-icon>
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>

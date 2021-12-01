@@ -6,7 +6,7 @@
     [class.text-danger]="!item.checked && hasError"
     [class.bg-warning]="hasChanges"
 >
-    <fa-icon aria-hidden="true" [icon]="'file'" [fixedWidth]="true"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true"></fa-icon>
     <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>
     <!-- Renaming file tree item -->
     <span class="ms-1" *ngIf="isBeingRenamed"
