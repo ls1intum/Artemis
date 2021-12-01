@@ -15,13 +15,15 @@ public final class NotificationTarget {
 
     private final String entity;
 
+    private final String mainPage;
+
     private final int course;
 
-    // public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
-    public NotificationTarget(int id, String entity, int course) {
+    public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
         this.id = id;
         this.entity = entity;
         this.course = course;
+        this.mainPage = mainPage;
     }
 
     /**
@@ -53,6 +55,6 @@ public final class NotificationTarget {
      * @return the extracted viable URL
      */
     private String turnToUrl(String baseUrl) {
-        return baseUrl + "/courses/" + course + "/" + entity + "/" + id;
+        return baseUrl + "/" + mainPage + "/" + course + "/" + entity + "/" + id;
     }
 }

@@ -14,43 +14,45 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 public class NotificationTargetService {
 
     // shared constants
-    private static final String MESSAGE_TEXT = "message";
+    public static final String MESSAGE_TEXT = "message";
 
-    private static final String ID_TEXT = "id";
+    public static final String ID_TEXT = "id";
 
-    private static final String ENTITY_TEXT = "entity";
+    public static final String ENTITY_TEXT = "entity";
 
-    private static final String COURSE_TEXT = "course";
+    public static final String COURSE_TEXT = "course";
 
-    private static final String COURSES_TEXT = "courses";
+    public static final String COURSES_TEXT = "courses";
 
-    private static final String MAIN_PAGE_TEXT = "mainPage";
+    public static final String MAIN_PAGE_TEXT = "mainPage";
 
-    private static final String PROGRAMMING_EXERCISES_TEXT = "programming-exercises";
+    public static final String PROGRAMMING_EXERCISES_TEXT = "programming-exercises";
 
-    private static final String COURSE_MANAGEMENT_TEXT = "course-management";
+    public static final String COURSE_MANAGEMENT_TEXT = "course-management";
 
-    private static final String PROBLEM_STATEMENT_TEXT = "problemStatement";
+    public static final String PROBLEM_STATEMENT_TEXT = "problemStatement";
 
-    private static final String EXERCISE_TEXT = "exercise";
+    public static final String EXERCISE_TEXT = "exercise";
 
-    private static final String EXERCISES_TEXT = "exercises";
+    public static final String EXERCISES_TEXT = "exercises";
 
-    private static final String EXERCISE_ID_TEXT = "exerciseId";
+    public static final String EXERCISE_ID_TEXT = "exerciseId";
 
-    private static final String EXAM_TEXT = "exam";
+    public static final String EXAM_TEXT = "exam";
 
-    private static final String EXAMS_TEXT = "exams";
+    public static final String EXAMS_TEXT = "exams";
 
-    private static final String LECTURES_TEXT = "lectures";
+    public static final String LECTURES_TEXT = "lectures";
 
-    private static final String LECTURE_ID_TEXT = "lectureId";
+    public static final String LECTURE_ID_TEXT = "lectureId";
 
-    private static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
+    public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
-    private static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
+    public static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
 
-    private static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
+    public static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
+
+    public static final String DUPLICATE_TEST_CASE_TEXT = "duplicateTestCase";
 
     // EXERCISE related targets
 

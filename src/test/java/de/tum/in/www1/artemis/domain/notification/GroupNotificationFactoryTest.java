@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -57,6 +59,9 @@ public class GroupNotificationFactoryTest {
     private static Long exerciseId = 42L;
 
     @Mock
+    private static ProgrammingExercise programmingExercise;
+
+    @Mock
     private static Post post;
 
     @Mock
@@ -100,6 +105,13 @@ public class GroupNotificationFactoryTest {
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
         when(exercise.getExamViaExerciseGroupOrCourseMember()).thenReturn(exam);
         when(exercise.getProblemStatement()).thenReturn("problem statement");
+
+        programmingExercise = mock(ProgrammingExercise.class);
+        when(programmingExercise.getId()).thenReturn(exerciseId);
+        when(programmingExercise.getTitle()).thenReturn("exercise title");
+        when(programmingExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+        when(programmingExercise.getExamViaExerciseGroupOrCourseMember()).thenReturn(exam);
+        when(programmingExercise.getProblemStatement()).thenReturn("problem statement");
 
         attachment = mock(Attachment.class);
         when(attachment.getLecture()).thenReturn(lecture);
@@ -155,6 +167,19 @@ public class GroupNotificationFactoryTest {
     }
 
     /**
+     * Auxiliary method to create the most common expected target with specific properties.
+     * @param message is the message that should be included in the notification's target.
+     * @param entity is the entity that should be pointed at in the notification's target.
+     * @param relevantIdForCurrentTestCase is the id of a relevant object that should be part of the notification's target.
+     * @param mainPage is the mainPage that should be opened in the end
+     * @return is the final notification target as a String.
+     */
+    private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase, String mainPage) {
+        return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"" + mainPage
+                + "\"}";
+    }
+
+    /**
      * Auxiliary method to create the most common expected target for Post Notifications with specific properties.
      * @param postId is the id of the post
      * @param relevantType can be "exerciseId" or "lectureId"
@@ -194,9 +219,16 @@ public class GroupNotificationFactoryTest {
                 break;
             }
             case EXERCISE: {
-                createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
-                checkCreatedNotificationWithNotificationText();
-                createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
+                if (notificationType == DUPLICATE_TEST_CASE) {
+                    createdNotification = groupNotificationFactory.createNotification(programmingExercise, user, groupNotificationType, notificationType, notificationText);
+                    checkCreatedNotificationWithNotificationText();
+                    // duplicate test cases always have a notification text
+                }
+                else {
+                    createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
+                    checkCreatedNotificationWithNotificationText();
+                    createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
+                }
                 break;
             }
             case POST: {
@@ -522,4 +554,23 @@ public class GroupNotificationFactoryTest {
         expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
         createAndCheckNotification(Base.EXAM);
     }
+
+    // Critical Situations (e.g. Duplicate Test Cases)
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of DUPLICATE_TEST_CASE.
+     * I.e. notifications that are created when duplicate test cases (in programming exercises) occur.
+     */
+    @Test
+    public void createNotificationBasedOnExam_withNotificationType_DuplicateTestCase() {
+        notificationType = DUPLICATE_TEST_CASE;
+        expectedTitle = DUPLICATE_TEST_CASE_TITLE;
+        Set<String> duplicateFeedbackNames = Set.of("TestCaseA", "TestCaseB");
+        notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
+        expectedText = notificationText;
+        expectedPriority = HIGH;
+        expectedTarget = createDefaultExpectedTarget("duplicateTestCase", "programming-exercises", exerciseId, "course-management");
+        createAndCheckNotification(Base.EXERCISE);
+    }
+
 }
