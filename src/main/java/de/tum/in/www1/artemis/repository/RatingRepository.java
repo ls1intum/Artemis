@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Rating;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
 
 /**
  * Spring Data JPA repository for the Rating entity.
@@ -29,6 +32,19 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     void deleteByResult_Id(long resultId);
 
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
+
+    @Query("""
+                SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount(
+                    cast(sum(ra.rating) as double) / sum(case when ra.rating is not null then 1 else 0 end),
+                    sum(case when ra.rating is not null then 1 else 0 end))
+                FROM
+                    Result r JOIN r.participation p JOIN p.exercise e
+                    LEFT JOIN FETCH Rating ra ON ra.result = r.id
+                WHERE
+                    r.completionDate is not null AND
+                    e.id = :#{#exerciseId}
+            """)
+    ExerciseRatingCount averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Count all ratings given to submissions for the given course.

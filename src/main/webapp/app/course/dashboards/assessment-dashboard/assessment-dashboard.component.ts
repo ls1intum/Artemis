@@ -7,11 +7,11 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/entities/course.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
@@ -20,6 +20,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
+import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 
 @Component({
     selector: 'jhi-courses',
@@ -65,6 +67,8 @@ export class AssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     toggelingSecondCorrectionButton = false;
+
+    tutorIssues: TutorIssue[] = [];
 
     constructor(
         private courseService: CourseManagementService,
@@ -160,6 +164,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
                     }
+                    this.computeIssuesWithTutorPerformance();
                 },
                 (response: string) => this.onError(response),
             );
@@ -213,8 +218,10 @@ export class AssessmentDashboardComponent implements OnInit {
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
-                    // This is done here to make sure the whole page is already loaded when the guided tour step is started on the page
+
+                    // Ensure that the page is loaded when the guided tour is started
                     this.guidedTourService.componentPageLoaded();
+                    this.computeIssuesWithTutorPerformance();
                 },
                 (response: string) => this.onError(response),
             );
@@ -222,7 +229,74 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * divides exercises into finished and unfinished exercises.
+     * Computes performance issues for every tutor based on its rating, score, and number of complaints when compared to the average tutor stats
+     */
+    computeIssuesWithTutorPerformance(): void {
+        // clear the tutor issues array
+        this.tutorIssues = [];
+
+        const complaintRatio = (entry: TutorLeaderboardElement) => {
+            if (entry.numberOfAssessments === 0) {
+                return 0;
+            }
+            return (100 * entry.numberOfTutorComplaints) / entry.numberOfAssessments;
+        };
+
+        const courseInformation = this.stats.tutorLeaderboardEntries.reduce(
+            (accumulator, entry) => {
+                return {
+                    summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
+                    summedAverageScore: accumulator.summedAverageScore + entry.averageScore,
+                    summedComplaintRatio: accumulator.summedComplaintRatio + complaintRatio(entry),
+                };
+            },
+            { summedAverageRatings: 0, summedAverageScore: 0, summedComplaintRatio: 0 },
+        );
+
+        const numberOfTutorsWithNonZeroRatings = this.stats.tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
+        const numberOfTutorsWithNonZeroAssessments = this.stats.tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
+
+        this.stats.tutorLeaderboardEntries
+            // create the tutor issue checkers for rating, score and complaints
+            .flatMap((entry) => [
+                new TutorIssueRatingChecker(
+                    entry.numberOfTutorRatings,
+                    entry.averageRating,
+                    courseInformation.summedAverageRatings / numberOfTutorsWithNonZeroRatings,
+                    entry.name,
+                    entry.userId,
+                ),
+                new TutorIssueScoreChecker(
+                    entry.numberOfAssessments,
+                    entry.averageScore,
+                    courseInformation.summedAverageScore / numberOfTutorsWithNonZeroAssessments,
+                    entry.name,
+                    entry.userId,
+                ),
+                new TutorIssueComplaintsChecker(
+                    entry.numberOfTutorComplaints,
+                    complaintRatio(entry),
+                    courseInformation.summedComplaintRatio / numberOfTutorsWithNonZeroAssessments,
+                    entry.name,
+                    entry.userId,
+                ),
+            ])
+            // run every checker to see if the tutor value is within the allowed threshold
+            .filter((checker) => checker.isPerformanceIssue)
+            // create tutor issue
+            .map((checker) => checker.toIssue())
+            .forEach((issue) => {
+                // mark tutor with performance issues
+                const tutorEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === issue.tutorId);
+                tutorEntry!.hasIssuesWithPerformance = true;
+
+                // add issue to the issues list
+                this.tutorIssues.push(issue);
+            });
+    }
+
+    /**
+     * devides exercises into finished and unfinished exercises.
      *
      * @param exercises - the exercises that should get filtered
      * @private

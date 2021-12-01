@@ -45,6 +45,8 @@ public class FileUploadExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final UserRepository userRepository;
 
     private final CourseService courseService;
@@ -64,7 +66,7 @@ public class FileUploadExerciseResource {
     private final InstanceMessageSendService instanceMessageSendService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
+            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
             ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, InstanceMessageSendService instanceMessageSendService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
@@ -73,6 +75,7 @@ public class FileUploadExerciseResource {
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
@@ -179,7 +182,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
-        FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
+        final FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
@@ -188,7 +191,8 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(updatedExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
+                instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }
@@ -290,7 +294,7 @@ public class FileUploadExerciseResource {
         }
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(fileUploadExercise, course, user);
-        exerciseService.delete(exerciseId, false, false);
+        exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.getTitle())).build();
     }
 

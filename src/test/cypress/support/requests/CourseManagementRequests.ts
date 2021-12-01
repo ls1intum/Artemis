@@ -12,6 +12,8 @@ import assessment_submission from '../../fixtures/programming_exercise_submissio
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
+import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
+import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -75,13 +77,12 @@ export class CourseManagementRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
+     * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param releaseDate when the programming exercise should be available (default is now)
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
-     * @param body an object containing either the course or exercise group the exercise will be added to
-     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
-     * @param releaseDate when the programming exercise should be available (default is now)
-     * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @param assessmentDate the due date of the assessment
      * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
      * @returns <Chainable> request response
@@ -97,7 +98,6 @@ export class CourseManagementRequests {
         assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
-        const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const template = {
             ...programmingExerciseTemplate,
             title,
@@ -106,6 +106,7 @@ export class CourseManagementRequests {
             assessmentType: CypressAssessmentType[assessmentType],
         };
         const exercise: any = Object.assign({}, template, body);
+        const isExamExercise = body.hasOwnProperty('exerciseGroup');
         if (!isExamExercise) {
             exercise.releaseDate = dayjsToString(releaseDate);
             exercise.dueDate = dayjsToString(dueDate);
@@ -147,6 +148,11 @@ export class CourseManagementRequests {
         return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
     }
 
+    updateModelingExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+    }
+
     private updateExercise(exercise: any, type: CypressExerciseType) {
         let url: string;
         switch (type) {
@@ -157,6 +163,8 @@ export class CourseManagementRequests {
                 url = TEXT_EXERCISE_BASE;
                 break;
             case CypressExerciseType.MODELING:
+                url = MODELING_EXERCISE_BASE;
+                break;
             case CypressExerciseType.QUIZ:
             default:
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
@@ -287,10 +295,27 @@ export class CourseManagementRequests {
         });
     }
 
+    updateModelingExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.MODELING);
+    }
+
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
             url: `${MODELING_EXERCISE_BASE}/${exerciseID}`,
             method: DELETE,
+        });
+    }
+
+    makeModelingExerciseSubmission(exerciseID: number, participation: any) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
+            method: PUT,
+            body: {
+                ...modelingExerciseSubmissionTemplate,
+                id: participation.submissions[0].id,
+                participation,
+            },
         });
     }
 
@@ -320,11 +345,18 @@ export class CourseManagementRequests {
         const quizExercise: any = {
             ...quizTemplate,
             title,
-            releaseDate: dayjsToString(releaseDate),
             quizQuestions,
             duration,
         };
-        const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+        let newQuizExercise;
+        const dates = {
+            releaseDate: dayjsToString(releaseDate),
+        };
+        if (body.hasOwnProperty('course')) {
+            newQuizExercise = Object.assign({}, quizExercise, dates, body);
+        } else {
+            newQuizExercise = Object.assign({}, quizExercise, body);
+        }
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
@@ -343,6 +375,13 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
             method: PUT,
+        });
+    }
+
+    evaluateExamQuizzes(exam: any) {
+        return cy.request({
+            url: `${COURSE_BASE}${exam.course.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            method: POST,
         });
     }
 
@@ -432,14 +471,26 @@ export class CourseManagementRequests {
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
-    /**
-     * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
-     * This function takes an exercise template and adds one of the fields to it
-     * @param exercise the exercise template
-     * @param body the exercise group or course the exercise will be added to
-     */
-    private getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
-        return Object.assign({}, exercise, body);
+    deleteLecture(lectureId: number) {
+        return cy.request({
+            url: `${BASE_API}lectures/${lectureId}`,
+            method: DELETE,
+        });
+    }
+
+    createLecture(course: any, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+        const lecture = {
+            ...lectureTemplate,
+            course,
+            title,
+            startDate,
+            endDate,
+        };
+        return cy.request({
+            url: `${BASE_API}lectures`,
+            method: POST,
+            body: lecture,
+        });
     }
 }
 

@@ -28,6 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -71,6 +72,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     private final UserRepository userRepository;
 
     private final CourseService courseService;
@@ -82,6 +85,8 @@ public class ProgrammingExerciseResource {
     private final Optional<VersionControlService> versionControlService;
 
     private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
@@ -111,6 +116,8 @@ public class ProgrammingExerciseResource {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
+    private final SubmissionPolicyService submissionPolicyService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -127,22 +134,25 @@ public class ProgrammingExerciseResource {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
-    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
+    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, AuxiliaryRepositoryService auxiliaryRepositoryService) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService) {
 
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseService = programmingExerciseService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -157,6 +167,7 @@ public class ProgrammingExerciseResource {
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -175,6 +186,16 @@ public class ProgrammingExerciseResource {
         var solutionRepositoryUrl = exercise.getVcsSolutionRepositoryUrl();
         if (solutionRepositoryUrl != null && !versionControlService.get().repositoryUrlIsValid(solutionRepositoryUrl)) {
             throw new BadRequestAlertException("The Solution Repository URL seems to be invalid.", "Exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
+        }
+
+        // It has already been checked when setting the test case weights that their sum is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
+        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(exercise, testCases)) {
+                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
+                        ErrorKeys.INVALID_TEST_CASE_WEIGHTS);
+            }
         }
     }
 
@@ -349,6 +370,7 @@ public class ProgrammingExerciseResource {
         exerciseService.validateGeneralSettings(programmingExercise);
         validateProgrammingSettings(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -501,6 +523,11 @@ public class ProgrammingExerciseResource {
         if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
+        }
+
+        // If the new exercise has a submission policy, it must be validated.
+        if (newExercise.getSubmissionPolicy() != null) {
+            submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
         }
 
         // Check if the user has the rights to access the original programming exercise
@@ -709,9 +736,9 @@ public class ProgrammingExerciseResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
-        // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
+        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
         else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -780,7 +807,7 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+        exerciseDeletionService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
 
@@ -1360,6 +1387,8 @@ public class ProgrammingExerciseResource {
         public static final String INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY = "invalid.auxiliary.repository.checkout.directory";
 
         public static final String INVALID_AUXILIARY_REPOSITORY_DESCRIPTION = "invalid.auxiliary.repository.description";
+
+        public static final String INVALID_TEST_CASE_WEIGHTS = "invalid.testcases.weights";
 
         private ErrorKeys() {
         }

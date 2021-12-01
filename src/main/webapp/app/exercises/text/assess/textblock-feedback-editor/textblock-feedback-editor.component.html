@@ -44,13 +44,31 @@
         </ng-template>
     </div>
 
+    <div class="row">
+        <div class="form-group col-md-10 m-0">
+            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
+            <div class="d-inline" *ngIf="feedback.gradingInstruction!">
+                <fa-icon [icon]="'question-circle'" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
+                <span>{{ feedback.gradingInstruction!.feedback }}</span>
+            </div>
+        </div>
+        <div class="form-group col-md-1 text-end m-0">
+            <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
+        </div>
+        <div class="form-group col-md-1 m-0" *ngIf="feedback.gradingInstruction!">
+            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
+        </div>
+    </div>
     <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
         <div class="form-group col-md-10">
-            <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
             <textarea
                 class="form-control"
                 rows="1"
-                [placeholder]="'artemisApp.textAssessment.feedbackEditor.feedbackCommentPlaceholder' | artemisTranslate"
+                [placeholder]="
+                    feedback.gradingInstruction!
+                        ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
+                        : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                "
                 id="detailText-{{ textBlock.id }}"
                 [(ngModel)]="feedback.detailText"
                 #detailText
@@ -74,7 +92,6 @@
             </div>
         </div>
         <div class="form-group col-md-1 text-end">
-            <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
             <input
                 class="form-control"
                 type="number"
@@ -85,28 +102,30 @@
                 (click)="onScoreClick($event)"
                 (focus)="inFocus()"
                 (ngModelChange)="didChange()"
-                [readOnly]="disableEditScore || (readOnly && !isConflictingFeedbackEditable)"
+                [readOnly]="feedback.gradingInstruction || (readOnly && !isConflictingFeedbackEditable)"
             />
-        </div>
-        <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
-            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
         </div>
     </div>
 
     <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
     <div *ngIf="feedback.correctionStatus != undefined">
-        <span>{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+        <span *ngIf="feedback.correctionStatus === 'CORRECT'" class="text-success"
+            >{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }}
+        </span>
+        <span *ngIf="feedback.correctionStatus !== 'CORRECT'" class="text-danger"
+            >{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }}
+        </span>
 
         <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
         <fa-layers *ngIf="feedback.correctionStatus != 'CORRECT'">
             <fa-icon class="text-warning" [icon]="'exclamation-triangle'"></fa-icon>
-            <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" transform="shrink-10"></fa-icon>
+            <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
         </fa-layers>
     </div>
 
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
-            <h4 class="modal-title">
+            <h4 class="modal-title fw-medium">
                 <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.heading">Automatic Feedback Information</span>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>

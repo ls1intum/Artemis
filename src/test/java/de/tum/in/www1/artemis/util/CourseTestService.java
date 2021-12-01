@@ -701,19 +701,6 @@ public class CourseTestService {
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
-
-            StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
-                    StatsForDashboardDTO.class);
-
-            if (!isInstructor) {
-                assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
-            }
-            else {
-                assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfSubmissions());
-                assertThat(stats2.getTotalNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison()
-                        .isEqualTo(stats.getTotalNumberOfAssessments());
-            }
         }
     }
 
@@ -731,7 +718,6 @@ public class CourseTestService {
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test
@@ -1774,14 +1760,19 @@ public class CourseTestService {
 
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);
+        feedback1.setReference(ModelFactory.generateTextBlock(0, 5, "test1").getId());
         Feedback feedback2 = new Feedback();
         feedback2.setCredits(-0.5);
+        feedback2.setReference(ModelFactory.generateTextBlock(0, 5, "test2").getId());
         Feedback feedback3 = new Feedback();
         feedback3.setCredits(1.5);
+        feedback3.setReference(ModelFactory.generateTextBlock(0, 5, "test3").getId());
         Feedback feedback4 = new Feedback();
         feedback4.setCredits(-1.5);
+        feedback4.setReference(ModelFactory.generateTextBlock(0, 5, "test4").getId());
         Feedback feedback5 = new Feedback();
         feedback5.setCredits(2.0);
+        feedback5.setReference(ModelFactory.generateTextBlock(0, 5, "test5").getId());
         var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
 
         var assessmentUpdate = new TextAssessmentUpdateDTO();

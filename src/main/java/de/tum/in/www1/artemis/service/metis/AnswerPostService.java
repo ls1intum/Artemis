@@ -79,7 +79,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
         this.preparePostAndBroadcast(savedAnswerPost, course);
-        sendNotification(post, course);
+        sendNotification(post, answerPost, course);
 
         return savedAnswerPost;
     }
@@ -164,17 +164,18 @@ public class AnswerPostService extends PostingService {
      * Sends notification to affected groups
      *
      * @param post which is answered
+     * @param answerPost which is created
      */
-    void sendNotification(Post post, Course course) {
+    void sendNotification(Post post, AnswerPost answerPost, Course course) {
         // notify via course
         if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, course);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, answerPost, course);
             singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, course);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, answerPost, course);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
             // protect Sample Solution, Grading Instructions, etc.
             post.getExercise().filterSensitiveInformation();
@@ -182,7 +183,7 @@ public class AnswerPostService extends PostingService {
         }
         // notify via lecture
         if (post.getLecture() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, course);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
         }
     }

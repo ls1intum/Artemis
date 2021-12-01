@@ -79,8 +79,8 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (resultCompletionDate && !dayjs.isDayjs(resultCompletionDate)) {
         resultCompletionDate = dayjs(resultCompletionDate);
     }
-    // When the result completionDate would be null, we have to return here (edge case, every result should have a completionDate).
-    if (!resultCompletionDate || !resultCompletionDate.isValid()) {
+    // When the result completionDate is invalid, we have to return here (edge case, every result should have a valid completionDate).
+    if (!resultCompletionDate.isValid()) {
         return true;
     }
     // If an exercise's assessment type is not automatic the last result is supposed to be manually assessed

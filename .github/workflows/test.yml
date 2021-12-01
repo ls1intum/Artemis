@@ -33,7 +33,7 @@ on:
 # Keep in sync with codeql-analysis.yml and build-deploy.yml
 env:
   CI: true
-  node: 14.x
+  node: 16.x
   java: 17
 
 jobs:
@@ -44,7 +44,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Java
-      uses: actions/setup-java@v2.3.1
+      uses: actions/setup-java@v2.4.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -71,7 +71,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Java
-      uses: actions/setup-java@v2.3.1
+      uses: actions/setup-java@v2.4.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -84,17 +84,19 @@ jobs:
 
   client-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
         - uses: actions/checkout@v2
         - name: Setup Node.js
-          uses: actions/setup-node@v2.4.1
+          uses: actions/setup-node@v2.5.0
           with:
               node-version: '${{ env.node }}'
               cache: 'npm'
         - name: Install Dependencies
           run: npm install
-        - name: TypeScript Test With Typechecking
+        - name: Compile TypeScript Test Files With Typechecking
+          run: npm run compile:ts:tests
+        - name: TypeScript Test Without Typechecking
           run: npm run test:ci
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
@@ -106,19 +108,21 @@ jobs:
 
   client-tests-selected:
       runs-on: ubuntu-latest
-      timeout-minutes: 45
+      timeout-minutes: 30
       steps:
           - uses: actions/checkout@v2
             with:
                 fetch-depth: 0
           - name: Setup Node.js
-            uses: actions/setup-node@v2.4.1
+            uses: actions/setup-node@v2.5.0
             with:
                 node-version: '${{ env.node }}'
                 cache: 'npm'
           - name: Install Dependencies
             run: npm install
-          - name: TypeScript Test (Selection) With Typechecking
+          - name: Compile TypeScript Test Files With Typechecking
+            run: npm run compile:ts:tests
+          - name: TypeScript Test (Selection) Without Typechecking
             run: npm run test-diff:ci
 
   client-style:
@@ -127,7 +131,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.1
+      uses: actions/setup-node@v2.5.0
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
@@ -138,3 +142,18 @@ jobs:
     - name: TypeScript Code Style
       run: npm run lint
       if: success() || failure()
+
+  client-compilation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Node.js
+      uses: actions/setup-node@v2.5.0
+      with:
+        node-version: '${{ env.node }}'
+        cache: 'npm'
+    - name: Install Dependencies
+      run: npm install
+    - name: Compile TypeScript Files With Typechecking
+      run: npm run compile:ts

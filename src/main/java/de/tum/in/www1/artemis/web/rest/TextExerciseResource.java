@@ -61,6 +61,8 @@ public class TextExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final TextExerciseRepository textExerciseRepository;
@@ -96,13 +98,15 @@ public class TextExerciseResource {
     private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
-            PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
-            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
-            ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
+            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
+            AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
+            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, ExerciseGroupRepository exerciseGroupRepository,
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
+            TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.feedbackRepository = feedbackRepository;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -209,7 +213,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
-        TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
@@ -233,7 +237,8 @@ public class TextExerciseResource {
             updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExercise, notificationText, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
+                instanceMessageSendService);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
     }
@@ -343,7 +348,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, course, user);
-        exerciseService.delete(exerciseId, false, false);
+        exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 
@@ -401,7 +406,7 @@ public class TextExerciseResource {
                     result.setFeedbacks(assessments);
                 }
 
-                if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     result.setAssessor(null);
                 }
             }

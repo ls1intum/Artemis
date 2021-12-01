@@ -14,10 +14,10 @@
             </div>
         </div>
 
-        <div class="container container-padding" [routerLink]="['/course-management', course.id]">
-            <h3 class="card-title text-center">{{ course.title }} ({{ course.shortName }})</h3>
-            <div *ngIf="course.description && course.description !== ''" class="text-center">
-                <span class="card-description">{{ course.description }}</span>
+        <div class="container container-padding title-container" [routerLink]="['/course-management', course.id]">
+            <h3 class="card-title text-center fw-medium course-title">{{ course.title }} ({{ course.shortName }})</h3>
+            <div *ngIf="course.description && course.description !== ''" class="text-center course-description">
+                {{ course.description }}
             </div>
         </div>
 
@@ -169,14 +169,14 @@
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
                     </div>
                     <div *ngIf="(futureExercises?.length || 0) + (currentExercises?.length || 0) + (exercisesInAssessment?.length || 0) + (pastExercises?.length || 0) === 0">
-                        <h4 class="text-center no-exercises mt-3">{{ 'artemisApp.course.noExercises' | artemisTranslate }}</h4>
+                        <h4 class="text-center no-exercises mt-3 fw-medium">{{ 'artemisApp.course.noExercises' | artemisTranslate }}</h4>
                     </div>
                 </div>
             </div>
-            <div class="col-4 section-card statistics-card align-center">
-                <div class="section-content align-center">
+            <div class="col-4 statistics-card align-center">
+                <div class="align-center w-100 h-100">
                     <jhi-course-management-overview-statistics
-                        class="statistics-card"
+                        class="statistics-chart"
                         [initialStats]="courseStatistics?.activeStudents"
                         [amountOfStudentsInCourse]="!!courseWithUsers && courseWithUsers.numberOfStudents ? courseWithUsers.numberOfStudents : 0"
                     >
@@ -227,7 +227,7 @@
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'goal-management']"
-            class="btn btn-primary me-1 mb-1"
+            class="btn btn-primary me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
         >
             <fa-icon [icon]="'flag'"></fa-icon>
@@ -246,15 +246,6 @@
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
-            class="btn btn-info me-1 mb-1"
-            [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
-        >
-            <fa-icon [icon]="'chess-king'"></fa-icon>
-            <span class="d-none d-xl-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
-        </a>
-        <a
-            *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'scores']"
             class="btn btn-info me-1 mb-1"
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"
@@ -265,7 +256,7 @@
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'course-statistics']"
-            class="btn btn-info me-1 mb-1"
+            class="btn btn-info me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
         >
             <fa-icon [icon]="'chart-bar'"></fa-icon>
@@ -274,7 +265,7 @@
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'grading-system']"
-            class="btn btn-info me-1 mb-1"
+            class="btn btn-info me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
         >
             <fa-icon [icon]="'clipboard'"></fa-icon>

@@ -263,11 +263,11 @@ public class ComplaintResponseService {
         }
         // for complaints, a different tutor should review the complaint
         else if (complaint.getComplaintType() == null || complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-            return !user.getLogin().equals(assessor.getLogin());
+            return assessor == null || !user.getLogin().equals(assessor.getLogin());
         }
         // for more feedback requests, the same tutor should review the request
         else if (complaint.getComplaintType() != null && complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-            return user.getLogin().equals(assessor.getLogin());
+            return assessor == null || user.getLogin().equals(assessor.getLogin());
         }
         return false;
     }

@@ -33,6 +33,7 @@ import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
+import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -138,7 +139,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.questionEditorText = generateTextHintExplanation(this.question);
     }
 
     /**
@@ -263,6 +264,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const jQueryBackgroundOffset = jQueryBackgroundElement.offset()!;
         const backgroundWidth = jQueryBackgroundElement.width()!;
         const backgroundHeight = jQueryBackgroundElement.height()!;
+        this.mouseMoveAction(event, jQueryBackgroundOffset, backgroundWidth, backgroundHeight);
+    }
+
+    private mouseMoveAction(event: MouseEvent, jQueryBackgroundOffset: { left: number; top: number }, backgroundWidth: number, backgroundHeight: number) {
         if (event.pageX) {
             // Moz
             this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
@@ -747,7 +752,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.questionEditorText = generateTextHintExplanation(this.question);
     }
 
     /**
@@ -812,13 +817,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * Detect of text changes in the markdown editor
-     * 1. Notify the parent component to check the validity of the text
-     * 2. Parse the text in the editor to get the newest values
+     * 1. Parse the text in the editor to get the newest values
+     * 2. Notify the parent component to check the validity of the text
      */
     changesInMarkdown(): void {
+        this.prepareForSave();
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();
-        this.prepareForSave();
     }
 
     /**

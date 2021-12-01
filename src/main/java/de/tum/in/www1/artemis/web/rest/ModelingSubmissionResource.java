@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -58,20 +57,17 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final CompassService compassService;
-
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
+            ModelingSubmissionRepository modelingSubmissionRepository) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.compassService = compassService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -198,9 +194,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
-            return forbidden();
-        }
+        authCheckService.checkIsAllowedToAssessExerciseElseThrow(modelingExercise, user, resultId);
 
         if (!withoutResults) {
             // load submission with results either by resultId or by correctionRound

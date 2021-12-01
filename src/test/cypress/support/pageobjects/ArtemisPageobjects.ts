@@ -1,3 +1,4 @@
+import { LoginPage } from './LoginPage';
 import { ExamExerciseGroupCreationPage } from './exam/ExamExerciseGroupCreationPage';
 import { ExamExerciseGroupsPage } from './exam/ExamExerciseGroupsPage';
 import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
@@ -32,11 +33,16 @@ import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationP
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
 import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
+import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerciseFeedbackPage';
+import { LectureManagementPage } from './lecture/LectureManagementPage';
+import { LectureCreationPage } from './lecture/LectureCreationPage';
+import { StudentExamManagementPage } from './exam/StudentExamManagementPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
  */
 export class ArtemisPageobjects {
+    login = new LoginPage();
     courseManagement = new CourseManagementPage();
     courses = new CoursesPage();
     courseOverview = new CourseOverviewPage();
@@ -49,6 +55,7 @@ export class ArtemisPageobjects {
     exerciseResult = new ExerciseResultPage();
     examExerciseGroups = new ExamExerciseGroupsPage();
     examExerciseGroupCreation = new ExamExerciseGroupCreationPage();
+    studentExamManagement = new StudentExamManagementPage();
     programmingExercise = {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
@@ -74,11 +81,16 @@ export class ArtemisPageobjects {
         creation: new CreateModelingExercisePage(),
         assessmentEditor: new ModelingExerciseAssessmentEditor(),
         editor: new ModelingEditor(),
+        feedback: new ModelingExerciseFeedbackPage(),
     };
     quizExercise = {
         creation: new QuizExerciseCreationPage(),
         multipleChoice: new MultipleChoiceQuiz(),
         shortAnswer: new ShortAnswerQuiz(),
         dragAndDrop: new DragAndDropQuiz(),
+    };
+    lecture = {
+        management: new LectureManagementPage(),
+        creation: new LectureCreationPage(),
     };
 }

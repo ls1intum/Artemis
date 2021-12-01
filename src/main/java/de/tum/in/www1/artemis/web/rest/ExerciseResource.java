@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -41,12 +41,12 @@ public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
-    private static final String ENTITY_NAME = "exercise";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -62,24 +62,21 @@ public class ExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ComplaintRepository complaintRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
-            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
+    public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
+            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository) {
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.complaintRepository = complaintRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
@@ -226,28 +223,6 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard of the exercise with the given exerciseId
-     *
-     * @param exerciseId the exerciseId of the exercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
-     */
-    @GetMapping("/exercises/{exerciseId}/stats-for-instructor-dashboard")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
-        log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
-        StatsForDashboardDTO stats = exerciseService.populateCommonStatistics(exercise, exercise.isExamExercise());
-        long numberOfOpenComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
-
-        long numberOfOpenMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfOpenMoreFeedbackRequests);
-        return ResponseEntity.ok(stats);
-    }
-
-    /**
      * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param exerciseId exercise to delete
@@ -259,7 +234,7 @@ public class ExerciseResource {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        exerciseService.reset(exercise);
+        exerciseDeletionService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }
 
@@ -279,7 +254,7 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-        exerciseService.cleanup(exerciseId, deleteRepositories);
+        exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -322,8 +297,10 @@ public class ExerciseResource {
             exercise.addParticipation(participation);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).checksAndSetsIfProgrammingExerciseIsLocalSimulation();
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+            programmingExercise.setSubmissionPolicy(policy);
+            programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
         }
         // TODO: we should also check that the submissions do not contain sensitive data
 

@@ -19,14 +19,14 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import dayjs from 'dayjs';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -96,7 +96,7 @@ describe('CourseOverviewComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
-                MockComponent(CourseRegistrationSelectorComponent),
+                MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(AlertComponent),

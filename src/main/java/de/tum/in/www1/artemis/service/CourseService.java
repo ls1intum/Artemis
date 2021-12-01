@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -48,6 +49,8 @@ public class CourseService {
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
     private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -77,12 +80,14 @@ public class CourseService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
-            AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository) {
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
+            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
+            GroupNotificationService groupNotificationService, ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService,
+            GradingScaleRepository gradingScaleRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
@@ -167,7 +172,7 @@ public class CourseService {
      * <ul>
      *     <li>The Course</li>
      *     <li>All Exercises including:
-     *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
+     *      submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
      *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
@@ -222,9 +227,7 @@ public class CourseService {
 
     private void deleteNotificationsOfCourse(Course course) {
         List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
-        for (GroupNotification notification : notifications) {
-            groupNotificationRepository.delete(notification);
-        }
+        groupNotificationRepository.deleteAll(notifications);
     }
 
     private void deleteLecturesOfCourse(Course course) {
@@ -235,7 +238,7 @@ public class CourseService {
 
     private void deleteExercisesOfCourse(Course course) {
         for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), true, true);
+            exerciseDeletionService.delete(exercise.getId(), true, true);
         }
     }
 
@@ -243,17 +246,6 @@ public class CourseService {
         for (LearningGoal learningGoal : course.getLearningGoals()) {
             learningGoalRepository.deleteById(learningGoal.getId());
         }
-    }
-
-    /**
-     * Given a Course object, it returns the number of users enrolled in the course
-     *
-     * @param course - the course object we are interested in
-     * @return the number of students for that course
-     */
-    public long countNumberOfStudentsForCourse(Course course) {
-        String groupName = course.getStudentGroupName();
-        return userRepository.countByGroupsIsContaining(groupName);
     }
 
     /**
@@ -291,6 +283,65 @@ public class CourseService {
     }
 
     /**
+     * Add multiple users to the course so that they can access it
+     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
+     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * <p>
+     * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     *
+     * @param courseId      the id of the course
+     * @param studentDTOs   the list of students (with at least registration number)
+     * @param courseGroup   the group the students should be added to
+     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        String courseGroupName = defineCourseGroupName(course, courseGroup);
+        Role courseGroupRole = defineCourseRole(courseGroup);
+        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
+        for (var studentDto : studentDTOs) {
+            var registrationNumber = studentDto.getRegistrationNumber();
+            var login = studentDto.getLogin();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login);
+            if (optionalStudent.isEmpty()) {
+                notFoundStudentsDTOs.add(studentDto);
+            }
+        }
+
+        return notFoundStudentsDTOs;
+    }
+
+    /**
+     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
+     * use this method to return the customized courseGroup name
+     *
+     * @param course the course we want to add a user to
+     * @param courseGroup the courseGroup we want to add the user to
+     *
+     * @return the customized userGroupName
+     */
+    private String defineCourseGroupName(Course course, String courseGroup) {
+        return switch (courseGroup) {
+            case "students" -> course.getStudentGroupName();
+            case "tutors" -> course.getTeachingAssistantGroupName();
+            case "instructors" -> course.getInstructorGroupName();
+            case "editors" -> course.getEditorGroupName();
+            default -> throw new IllegalArgumentException();
+        };
+    }
+
+    private Role defineCourseRole(String courseGroup) {
+        return switch (courseGroup) {
+            case "students" -> Role.STUDENT;
+            case "tutors" -> Role.TEACHING_ASSISTANT;
+            case "instructors" -> Role.INSTRUCTOR;
+            case "editors" -> Role.EDITOR;
+            default -> Role.ANONYMOUS;
+        };
+    }
+
+    /**
      * Fetches a list of Courses
      *
      * @param onlyActive Whether or not to include courses with a past endDate
@@ -311,7 +362,7 @@ public class CourseService {
      * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex, int length) {
+    public Integer[] getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
@@ -499,7 +550,7 @@ public class CourseService {
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {
             if (exercise instanceof ProgrammingExercise) {
-                exerciseService.cleanup(exercise.getId(), true);
+                exerciseDeletionService.cleanup(exercise.getId(), true);
             }
 
             // TODO: extend exerciseService.cleanup to clean up all exercise types

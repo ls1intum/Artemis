@@ -84,7 +84,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromUrl(testRepoUrl.getURL()));
+        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
     }
 
     @AfterEach

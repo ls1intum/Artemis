@@ -58,6 +58,7 @@ local.properties
 # Intellij
 ######################
 .idea/
+!.idea/runConfigurations/*
 *.iml
 *.iws
 *.ipr
@@ -177,3 +178,4 @@ repos-download/
 /src/main/resources/config/application-local*.yml
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
+/src/test/cypress/build
