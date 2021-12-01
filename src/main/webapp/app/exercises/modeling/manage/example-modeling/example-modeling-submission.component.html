@@ -11,7 +11,7 @@
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
-                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.modelingExercise.usedForTutorial">Used for tutorial</label>
+                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></label>
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
