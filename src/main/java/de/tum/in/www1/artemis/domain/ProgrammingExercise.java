@@ -377,6 +377,11 @@ public class ProgrammingExercise extends Exercise {
         return PROGRAMMING;
     }
 
+    @Override
+    public String getExerciseTypeAsReadableString() {
+        return "programming";
+    }
+
     public ProgrammingLanguage getProgrammingLanguage() {
         return programmingLanguage;
     }

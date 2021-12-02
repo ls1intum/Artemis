@@ -217,7 +217,7 @@ public class SingleUserNotificationFactoryTest {
     public void createNotification_withNotificationType_() {
         notificationType = EXERCISE_SUBMISSION_ASSESSED;
         expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
-        expectedText = "Your submission for the " + exercise.getExerciseType().toString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
+        expectedText = "Your submission for the " + exercise.getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
         expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget(EXERCISE_SUBMISSION_ASSESSED_TITLE, "exercises", exerciseId);
         createAndCheckExerciseNotification();

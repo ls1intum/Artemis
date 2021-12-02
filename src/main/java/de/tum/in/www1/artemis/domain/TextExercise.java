@@ -61,6 +61,11 @@ public class TextExercise extends Exercise {
     }
 
     @Override
+    public String getExerciseTypeAsReadableString() {
+        return "text";
+    }
+
+    @Override
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
     }
