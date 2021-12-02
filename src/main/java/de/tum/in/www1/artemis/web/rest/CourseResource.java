@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static java.time.ZonedDateTime.now;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,7 +57,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -337,10 +337,13 @@ public class CourseResource {
     }
 
     private void checkIfGroupsExists(String group) {
-        if (!Arrays.asList(env.getActiveProfiles()).contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT)) {
+            // only execute this on production server, i.e. when the prod profile is active
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            // normal developers (while testing) might not have the right to call this method on the authentication server
             return;
         }
-        // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
         if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
             throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
         }
