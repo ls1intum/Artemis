@@ -61,14 +61,18 @@ public class SingleUserNotificationFactory {
         String notificationText;
         SingleUserNotification notification;
         switch (notificationType) {
+            case EXERCISE_SUBMISSION_ASSESSED -> {
+                title = EXERCISE_SUBMISSION_ASSESSED_TITLE;
+                notificationText = "Your submission for the " + exercise.getExerciseType().toString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
+            }
             case FILE_SUBMISSION_SUCCESSFUL -> {
                 title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
                 notificationText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
-                notification = new SingleUserNotification(recipient, title, notificationText);
-                notification.setTarget(targetService.getExerciseTarget(exercise, title));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
+        notification = new SingleUserNotification(recipient, title, notificationText);
+        notification.setTarget(targetService.getExerciseTarget(exercise, title));
         return notification;
     }
 }

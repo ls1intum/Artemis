@@ -50,7 +50,7 @@ public class SingleUserNotificationService {
             case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, notificationType,
                     (Course) typeSpecificInformation);
             // Exercise related
-            case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
+            case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
@@ -85,6 +85,17 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
         notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course);
+    }
+
+    /**
+     * Notify student about the finished assessment for an exercise submission.
+     * Also creates and sends an email.
+     *
+     * @param exercise that was assessed
+     * @param recipient who should be notified
+     */
+    public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
+        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
     }
 
     /**
