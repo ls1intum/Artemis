@@ -147,6 +147,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * I.e. updates the filter that hides all notifications with a creation/notification date prior to the set value.
      * If the value is null then all notifications should be shown.
      * (Not to be confused with notification settings. This filter is based on the notification date alone)
+     *
+     * @param userId of the user
+     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it (if null -> show all notifications)
      */
     @Modifying
     @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")

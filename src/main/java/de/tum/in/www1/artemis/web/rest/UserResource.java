@@ -279,6 +279,12 @@ public class UserResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Updates the HideNotificationsUntil property that indicates which notifications to show (based on their creation date)
+     *
+     * @param showAllNotifications is true if all notifications should be displayed in the sidebar else depending on the HideNotificationsUntil property
+     * @return void
+     */
     @PutMapping("/users/notification-visibility")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
