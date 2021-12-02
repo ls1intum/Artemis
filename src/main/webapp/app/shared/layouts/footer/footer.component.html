@@ -1,13 +1,13 @@
-<div class="row footer fixed d-none d-md-flex">
+<div class="row footer fixed d-none d-md-flex" id="footer">
     <div class="guided-tour col-sm-6">
-        <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text"></a>
+        <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
 
     <div class="col-sm-6 text-md-end">
-        <a [href]="requestChangeUrl" jhiTranslate="requestChange" class="footer-text" target="_blank"></a>
-        <a [href]="releaseNotesUrl" jhiTranslate="releaseNotes" class="footer-text ms-3" target="_blank"></a>
-        <a [routerLink]="['/privacy']" jhiTranslate="legal.privacy.title" class="footer-text ms-3"></a>
-        <a [routerLink]="['/imprint']" jhiTranslate="legal.imprint.title" class="footer-text ms-3"></a>
+        <a [href]="requestChangeUrl" id="request-change" jhiTranslate="requestChange" class="footer-text" target="_blank"></a>
+        <a [href]="releaseNotesUrl" id="release-notes" jhiTranslate="releaseNotes" class="footer-text ms-3" target="_blank"></a>
+        <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="legal.privacy.title" class="footer-text ms-3"></a>
+        <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="legal.imprint.title" class="footer-text ms-3"></a>
     </div>
 </div>
 

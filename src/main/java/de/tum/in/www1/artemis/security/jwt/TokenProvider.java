@@ -19,9 +19,11 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import de.tum.in.www1.artemis.management.SecurityMetersService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import tech.jhipster.config.JHipsterProperties;
 
 @Component
@@ -45,8 +47,11 @@ public class TokenProvider {
 
     private final JHipsterProperties jHipsterProperties;
 
-    public TokenProvider(JHipsterProperties jHipsterProperties) {
+    private final SecurityMetersService securityMetersService;
+
+    public TokenProvider(JHipsterProperties jHipsterProperties, SecurityMetersService securityMetersService) {
         this.jHipsterProperties = jHipsterProperties;
+        this.securityMetersService = securityMetersService;
     }
 
     /**
@@ -207,10 +212,26 @@ public class TokenProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
         }
-        catch (JwtException | IllegalArgumentException e) {
-            log.info("Invalid JWT token: " + e.getMessage());
-            log.trace("Invalid JWT token trace.", e);
+        catch (ExpiredJwtException e) {
+            this.securityMetersService.trackTokenExpired();
+            log.trace("Invalid (expired) JWT token.", e);
         }
+        catch (UnsupportedJwtException e) {
+            this.securityMetersService.trackTokenUnsupported();
+            log.trace("Invalid (unsupported) JWT token.", e);
+        }
+        catch (MalformedJwtException e) {
+            this.securityMetersService.trackTokenMalformed();
+            log.trace("Invalid (malformed) JWT token.", e);
+        }
+        catch (SignatureException e) {
+            this.securityMetersService.trackTokenInvalidSignature();
+            log.trace("Invalid (signature) JWT token.", e);
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Token validation error {}", e.getMessage());
+        }
+        log.info("Invalid JWT token: {}", authToken);
         return false;
     }
 }

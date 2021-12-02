@@ -164,7 +164,6 @@ public abstract class Exercise extends DomainObject {
     private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
@@ -203,6 +202,12 @@ public abstract class Exercise extends DomainObject {
 
     @Transient
     private boolean isGradingInstructionFeedbackUsedTransient = false;
+
+    @Transient
+    private Double averageRatingTransient;
+
+    @Transient
+    private Long numberOfRatingsTransient;
 
     public String getTitle() {
         return title;
@@ -879,6 +884,22 @@ public abstract class Exercise extends DomainObject {
         this.isGradingInstructionFeedbackUsedTransient = isGradingInstructionFeedbackUsedTransient;
     }
 
+    public Double getAverageRating() {
+        return averageRatingTransient;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRatingTransient = averageRating;
+    }
+
+    public Long getNumberOfRatings() {
+        return numberOfRatingsTransient;
+    }
+
+    public void setNumberOfRatings(Long numberOfRatings) {
+        this.numberOfRatingsTransient = numberOfRatings;
+    }
+
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
@@ -1032,10 +1053,13 @@ public abstract class Exercise extends DomainObject {
         if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
             return;
         }
+        if (isExamExercise()) {
+            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
+        }
         // at least one is set, so we have to check the two possible errors
-        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
+        boolean areDatesValid = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
 
-        if (!validDates) {
+        if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
     }
@@ -1066,4 +1090,5 @@ public abstract class Exercise extends DomainObject {
         return previousDate.isBefore(laterDate);
     }
 
+    public abstract ExerciseType getExerciseType();
 }

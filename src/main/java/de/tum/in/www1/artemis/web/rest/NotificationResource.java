@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -100,7 +101,8 @@ public class NotificationResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
-        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(true, notificationSettings);
+        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
+                notificationSettings);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {

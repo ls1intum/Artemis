@@ -1,9 +1,9 @@
 <div class="course-item">
     <div class="container">
-        <div class="row">
-            <div class="col row details-container">
+        <div class="exercise-row">
+            <div class="details-container">
                 <a class="stretched-link" [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"></a>
-                <div class="col-6 row-flex exercise-details-container">
+                <div class="row-flex exercise-details-container">
                     <div class="ms-2 me-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
                         <fa-icon [icon]="'exclamation-triangle'" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
@@ -16,7 +16,7 @@
                     <div class="item-title-container">
                         <span class="item-title">{{ details.title }}</span>
                     </div>
-                    <div class="item-category d-flex hide-categories" *ngIf="(details.categories?.length || 0) > 0 && (details.title?.length || 0) < 60">
+                    <div class="item-category d-flex hide-categories" *ngIf="(details.categories?.length || 0) > 0">
                         <!-- We only support two categories -->
                         <h4 class="fw-medium" *ngFor="let category of details.categories">
                             <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
@@ -24,7 +24,7 @@
                     </div>
                 </div>
 
-                <div class="col-3 row-flex exercise-date-container">
+                <div class="row-flex exercise-date-container">
                     <div [ngClass]="!!details.releaseDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
                         <span>{{ 'artemisApp.course.releaseDate' | artemisTranslate }}</span>
@@ -89,7 +89,7 @@
                     </div>
                 </div>
 
-                <div class="col-2 row-flex exercise-score-container">
+                <div class="row-flex exercise-score-container">
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
                         <span>{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
                         <jhi-progress-bar
@@ -139,7 +139,7 @@
                     ><fa-icon [icon]="'wrench'"></fa-icon
                 ></a>
                 <a
-                    *ngIf="course.isAtLeastTutor"
+                    *ngIf="course.isAtLeastInstructor"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'scores']"
                     class="btn btn-info me-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"

@@ -175,6 +175,7 @@
                 "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",
                 "questionTitleLength": "Frage {{index}}: Die Frage ist länger als {{threshold}} Zeichen. Bitte kürzen!",
                 "quizTitleLength": "Quiz: Der Titel ist länger als {{threshold}} Zeichen. Bitte kürzen!",
+                "quizAnswerOptionLength": "Frage {{index}}: Es gibt mindestens eine Antwortmöglichkeit mit mehr als {{threshold}} Zeichen. Bitte kürzen!",
                 "explanationIsMissing": "Frage {{index}}: Nicht jede Antwortmöglichkeit enthält eine Erklärung.",
                 "questionHasInvalidFlaggedElements": "<strong>Frage {{index}} </strong>: Diese Frage wurde zuvor als ungültig markiert oder enthält ungültige Elemente. Diese werden nach dem Speichern zurückgesetzt.",
                 "questionExplanationLength": "Frage {{index}}: Die beigefügte Erklärung ist zu lang. Bitte kürze sie auf {{threshold}} Zeichen!",

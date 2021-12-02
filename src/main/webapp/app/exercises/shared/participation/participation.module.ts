@@ -9,7 +9,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 
 @NgModule({
     imports: [
@@ -21,7 +21,7 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         NgxDatatableModule,
         ArtemisDataTableModule,
         FeatureToggleModule,
-        ArtemisTeamModule,
+        ArtemisTeamParticipeModule,
     ],
     declarations: [ParticipationComponent],
 })

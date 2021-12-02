@@ -18,6 +18,9 @@
             "assessmentLockedCurrentUser": "You have the lock for this assessment",
             "assessmentReadOnlyUnhandledComplaint": "There is a complaint for this assessment. Another tutor must respond.",
             "moreFeedbackRequest": "You must respond to the feedback request.",
+            "teamComplaint": "You must respond to the complaint.",
+            "automaticAssessmentComplaint": "You may respond to the complaint.",
+            "automaticAssessmentFeedbackRequest": "You may respond to the feedback request.",
             "assessmentReadOnlyHandledComplaint": "The complaint about your assessment has been resolved.",
             "assessmentDueDateIsOver": "Assessment Due Date has passed, the assessment will be published immediately after submitting.",
             "diffView": {
@@ -54,7 +57,7 @@
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading...",
                 "columns": {
-                    "submissionDate": "Submission date",
+                    "submissionDate": "Submission Date",
                     "result": "Latest Result",
                     "submissionCount": "Submissions",
                     "score": "Points",

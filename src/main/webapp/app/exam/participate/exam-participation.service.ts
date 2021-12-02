@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
@@ -132,11 +132,11 @@ export class ExamParticipationService {
             }),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
-                    return throwError(new Error('studentExam.submissionNotInTime'));
+                    return throwError(new Error('artemisApp.studentExam.submissionNotInTime'));
                 } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
-                    return throwError(new Error('studentExam.alreadySubmitted'));
+                    return throwError(new Error('artemisApp.studentExam.alreadySubmitted'));
                 } else {
-                    return throwError(new Error('studentExam.handInFailed'));
+                    return throwError(new Error('artemisApp.studentExam.handInFailed'));
                 }
             }),
         );
