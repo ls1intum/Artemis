@@ -205,6 +205,36 @@ public final class Constants {
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
+    public static final String SPRING_PROFILE_SAML2 = "saml2";
+
+    public static final String SPRING_PROFILE_LDAP = "ldap";
+
+    public static final String SPRING_PROFILE_JIRA = "jira";
+
+    public static final String SPRING_PROFILE_BAMBOO = "bamboo";
+
+    public static final String SPRING_PROFILE_BITBUCKET = "bitbucket";
+
+    public static final String SPRING_PROFILE_GITLAB = "gitlab";
+
+    public static final String SPRING_PROFILE_JENKINS = "jenkins";
+
+    public static final String SPRING_PROFILE_ATHENE = "athene";
+
+    public static final String SPRING_PROFILE_APOLLON = "apollon";
+
+    public static final String SPRING_PROFILE_SCHEDULING = "scheduling";
+
+    public static final String SPRING_PROFILE_NOT_SCHEDULING = "!" + SPRING_PROFILE_SCHEDULING;
+
+    // Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
+    // this if any profile is active (OR). We want both (AND)
+    public static final String SPRING_PROFILE_BITBUCKET_AND_BAMBOO = SPRING_PROFILE_BAMBOO + " & " + Constants.SPRING_PROFILE_BITBUCKET;
+
+    // Only activate this service bean, if both Athene and Scheduling are activated (@Profile({"athene","scheduling"}) would activate
+    // this if any profile is active (OR). We want both (AND)
+    public static final String SPRING_PROFILE_ATHENE_AND_SCHEDULING = SPRING_PROFILE_ATHENE + " & " + SPRING_PROFILE_SCHEDULING;
+
     private Constants() {
     }
 }
