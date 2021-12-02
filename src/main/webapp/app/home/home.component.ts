@@ -185,9 +185,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             const redirect = this.stateStorageService.getUrl();
             if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
-                // TODO: this does not work with query parameters in the URL, they somehow get escaped, e.g. https://artemis.ase.in.tum.de/courses/10/exercises/5017%3Fjwt%3Dabc
-                // instead of https://artemis.ase.in.tum.de/courses/10/exercises/5017?jwt=abc
-                this.router.navigate([redirect]);
+                this.router.navigateByUrl(redirect);
             } else {
                 // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
                 const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
