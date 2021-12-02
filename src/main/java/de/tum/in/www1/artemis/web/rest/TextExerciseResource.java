@@ -219,7 +219,7 @@ public class TextExerciseResource {
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
-
+        textExercise.setKnowledge(tak);
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
@@ -598,6 +598,8 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+        log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
+
         // check that the exercise is exist for given id
         textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
 
