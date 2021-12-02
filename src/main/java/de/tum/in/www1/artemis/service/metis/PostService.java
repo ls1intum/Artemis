@@ -401,13 +401,20 @@ public class PostService extends PostingService {
         postForNotification.setCourseWideContext(post.getCourseWideContext());
         postForNotification.setLecture(post.getLecture());
         postForNotification.setExercise(post.getExercise());
+        postForNotification.setCreationDate(post.getCreationDate());
         postForNotification.setTitle(post.getTitle());
 
         // create html content
         Parser parser = Parser.builder().build();
-        Node document = parser.parse(post.getContent());
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
-        String htmlPostContent = renderer.render(document);
+        String htmlPostContent;
+        try {
+            Node document = parser.parse(post.getContent());
+            HtmlRenderer renderer = HtmlRenderer.builder().build();
+            htmlPostContent = renderer.render(document);
+        }
+        catch (Exception e) {
+            htmlPostContent = "";
+        }
         postForNotification.setContent(htmlPostContent);
 
         // notify via course
