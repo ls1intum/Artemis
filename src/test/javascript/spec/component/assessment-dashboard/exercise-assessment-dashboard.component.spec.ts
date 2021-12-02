@@ -351,7 +351,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.exercise.id).toBe(modelingExercise.id);
         expect(comp.exam).toEqual(exam);
         expect(comp.exam?.numberOfCorrectionRoundsInExam).toBe(numberOfAssessmentsOfCorrectionRounds.length);
-        expect(comp.numberOfAssessmentsOfCorrectionRounds).toBe(numberOfAssessmentsOfCorrectionRounds);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds).toEqual(numberOfAssessmentsOfCorrectionRounds);
     });
 
     it('should calculateStatus DRAFT', () => {
