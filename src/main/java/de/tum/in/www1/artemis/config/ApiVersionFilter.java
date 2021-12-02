@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.io.IOException;
 
 import javax.servlet.*;
@@ -12,7 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Profile("prod")
+@Profile({ SPRING_PROFILE_PRODUCTION, SPRING_PROFILE_TEST })
 @Component
 public class ApiVersionFilter implements Filter {
 
