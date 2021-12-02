@@ -284,7 +284,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(comp).toBeDefined();
+        expect(comp).not.toBe(null);
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -348,11 +348,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.exam).toBe(undefined);
 
         comp.loadAll();
-
-        expect(comp.exercise).not.toBe(null);
+        expect(comp.exercise.id).toBe(modelingExercise.id);
         expect(comp.exam).toEqual(exam);
-        expect(comp.exam?.numberOfCorrectionRoundsInExam).toEqual(numberOfAssessmentsOfCorrectionRounds.length);
-        expect(comp.numberOfAssessmentsOfCorrectionRounds).toEqual(numberOfAssessmentsOfCorrectionRounds);
+        expect(comp.exam?.numberOfCorrectionRoundsInExam).toBe(numberOfAssessmentsOfCorrectionRounds.length);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds).toBe(numberOfAssessmentsOfCorrectionRounds);
     });
 
     it('should calculateStatus DRAFT', () => {
