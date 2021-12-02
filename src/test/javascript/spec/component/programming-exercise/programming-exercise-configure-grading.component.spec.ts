@@ -55,7 +55,6 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -798,10 +797,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
-        const sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
-        console.log(sortIcon);
         expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
-        expect(sortIcon).toEqual(dir === 'asc' ? faSortUp : faSortDown);
     };
 
     it('should sort test-case table', () => {
