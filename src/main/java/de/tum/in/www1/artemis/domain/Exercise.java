@@ -1093,7 +1093,8 @@ public abstract class Exercise extends DomainObject {
     public abstract ExerciseType getExerciseType();
 
     /**
-     * Used to get the exercise type as a lower case String without any special characters (e.g. FILE_UPLOAD -> "file upload")
+     * Used for human-readable string manipulations e.g. for notifications texts
+     * @return the exercise type as a lower case String without any special characters (e.g. FILE_UPLOAD -> "file upload")
      */
     public abstract String getExerciseTypeAsReadableString();
 }
