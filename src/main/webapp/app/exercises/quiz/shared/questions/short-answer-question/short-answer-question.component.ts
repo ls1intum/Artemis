@@ -6,6 +6,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -59,6 +60,7 @@ export class ShortAnswerQuestionComponent {
 
     // Icons
     faExclamationCircle = faExclamationCircle;
+    farQuestionCircle = faQuestionCircle;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 

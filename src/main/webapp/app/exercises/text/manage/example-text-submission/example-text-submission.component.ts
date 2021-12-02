@@ -27,6 +27,7 @@ import { filter } from 'rxjs/operators';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -54,6 +55,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     // Icons
     faSave = faSave;
     faEdit = faEdit;
+    farListAlt = faListAlt;
 
     constructor(
         alertService: AlertService,

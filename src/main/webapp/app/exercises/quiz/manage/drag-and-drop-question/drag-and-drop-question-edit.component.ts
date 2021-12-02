@@ -35,6 +35,7 @@ import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
 import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
 import { faBan, faBars, faChevronDown, faChevronUp, faCopy, faEye, faFont, faPencilAlt, faPlus, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
+import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -126,6 +127,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faBars = faBars;
     faUnlink = faUnlink;
     faCopy = faCopy;
+    farFileImage = faFileImage;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

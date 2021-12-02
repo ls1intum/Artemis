@@ -29,7 +29,7 @@
         <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
         <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
             <span class="label label-info" [ngbPopover]="renderedHint" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-                <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle"></fa-icon>
                 <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
             </span>
             <ng-template #renderedHint>

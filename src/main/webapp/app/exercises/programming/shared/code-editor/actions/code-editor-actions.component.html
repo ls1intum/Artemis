@@ -37,7 +37,7 @@
             <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
         </span>
         <ng-template #notRefreshing>
-            <fa-icon [icon]="['fas', 'sync']"></fa-icon>
+            <fa-icon [icon]="faSync"></fa-icon>
             <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span>
         </ng-template>
     </button>
@@ -58,7 +58,7 @@
         title="{{ 'artemisApp.editor.submitDescription' | artemisTranslate }}"
     >
         <span>
-            <fa-icon [icon]="['far', 'play-circle']"></fa-icon>
+            <fa-icon [icon]="farPlayCircle"></fa-icon>
             <span jhiTranslate="artemisApp.editor.submit">Submit</span>
         </span>
     </button>

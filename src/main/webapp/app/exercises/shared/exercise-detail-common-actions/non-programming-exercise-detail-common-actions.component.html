@@ -36,7 +36,7 @@
 
         <!--Submissions -->
         <a *ngIf="exercise.isAtLeastInstructor && course" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
         </a>
 

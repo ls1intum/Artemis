@@ -7,7 +7,8 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import interact from 'interactjs';
-import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleNotch, faGripLines, faGripLinesVertical, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -48,6 +49,10 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     // Icons
     faGripLines = faGripLines;
     faGripLinesVertical = faGripLinesVertical;
+    faCheck = faCheck;
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    farQuestionCircle = faQuestionCircle;
 
     constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 

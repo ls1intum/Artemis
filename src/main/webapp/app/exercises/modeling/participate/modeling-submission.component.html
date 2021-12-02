@@ -128,7 +128,7 @@
     </div>
     <!--endregion-->
     <!--region Right Panel-->
-    <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+    <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
     <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
     <p right-body class="mb-3 markdown-preview" *ngIf="modelingExercise!.problemStatement">
         <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>

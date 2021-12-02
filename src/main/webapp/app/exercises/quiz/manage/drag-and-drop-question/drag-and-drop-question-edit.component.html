@@ -251,7 +251,7 @@
                         [hidden]="dragItemFile == null"
                         (click)="changeToPictureDragItem(dragItem)"
                     >
-                        <fa-icon [icon]="['far', 'file-image']" size="lg"></fa-icon>
+                        <fa-icon [icon]="farFileImage" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Set invalid" *ngIf="!dragItem.invalid" (click)="dragItem.invalid = true">
                         <fa-icon [icon]="faBan" size="lg"></fa-icon>

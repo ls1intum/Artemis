@@ -20,7 +20,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
-import { faCircleNotch, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * Enumeration object representing the possible options that
@@ -116,6 +117,8 @@ export class ResultComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
     faFile = faFile;
+    farCircle = faCircle;
+    faExclamationCircle = faExclamationCircle;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,

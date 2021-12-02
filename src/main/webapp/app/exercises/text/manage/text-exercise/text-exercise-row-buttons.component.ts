@@ -5,6 +5,7 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',
@@ -22,6 +23,7 @@ export class TextExerciseRowButtonsComponent {
     faWrench = faWrench;
     faUsers = faUsers;
     faTable = faTable;
+    farListAlt = faListAlt;
 
     constructor(private textExerciseService: TextExerciseService, private eventManager: EventManager) {}
 

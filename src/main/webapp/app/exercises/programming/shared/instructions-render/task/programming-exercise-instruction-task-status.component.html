@@ -1,9 +1,9 @@
 <div class="guided-tour" [class.success]="testCaseState === TestCaseState.SUCCESS" [class.failed]="testCaseState === TestCaseState.FAIL">
-    <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="['far', 'check-circle']" size="lg" class="test-icon text-success"></fa-icon>
-    <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="['far', 'times-circle']" size="lg" class="test-icon text-danger"></fa-icon>
+    <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="farCheckCircle" size="lg" class="test-icon text-success"></fa-icon>
+    <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="farTimesCircle" size="lg" class="test-icon text-danger"></fa-icon>
     <fa-icon
         *ngIf="testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED"
-        [icon]="['far', 'question-circle']"
+        [icon]="faQuestionCircle"
         size="lg"
         class="test-icon text-secondary"
     ></fa-icon>

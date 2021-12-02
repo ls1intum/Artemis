@@ -71,7 +71,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.MISSING">
         <span class="text-danger">
-            <fa-icon [icon]="['fas', 'exclamation-circle']" size="lg"></fa-icon>&nbsp;
+            <fa-icon [icon]="faExclamationCircle" size="lg"></fa-icon>&nbsp;
             <ng-container [ngSwitch]="missingResultInfo">
                 <ng-container *ngSwitchCase="MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE">
                     <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
@@ -89,7 +89,7 @@
     </ng-container>
     <ng-container *ngSwitchDefault>
         <span class="text-muted">
-            <fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;
+            <fa-icon [icon]="farCircle" size="lg"></fa-icon>&nbsp;
             <span jhiTranslate="artemisApp.result.noResult">No graded result</span>
         </span>
     </ng-container>

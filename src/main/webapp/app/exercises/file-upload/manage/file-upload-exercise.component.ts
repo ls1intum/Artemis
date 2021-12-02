@@ -14,6 +14,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -31,6 +32,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     faWrench = faWrench;
     faUsers = faUsers;
     faTable = faTable;
+    farListAlt = faListAlt;
 
     constructor(
         public exerciseService: ExerciseService,
