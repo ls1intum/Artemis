@@ -17,7 +17,7 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -95,6 +95,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     // Icons
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
+    faChevronRight = faChevronRight;
 
     constructor(
         private route: ActivatedRoute,

@@ -3,7 +3,7 @@
         <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }"> </span>
     </h1>
     <h5 *ngIf="!quizExercise.course">
-        <fa-icon class="text-warning" icon="exclamation-triangle"></fa-icon>
+        <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
         <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
     </h5>
     <hr />

@@ -7,7 +7,20 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
-import { faArrowsAlt, faCheck, faChevronLeft, faChevronRight, faCircleNotch, faClipboardList, faEdit, faHandPointUp, faICursor, faInfoCircle, faPlayCircle, faVideo } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowsAlt,
+    faCheck,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faClipboardList,
+    faEdit,
+    faHandPointUp,
+    faICursor,
+    faInfoCircle,
+    faPlayCircle,
+    faVideo,
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-guided-tour',

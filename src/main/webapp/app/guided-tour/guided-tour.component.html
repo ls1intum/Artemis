@@ -64,10 +64,7 @@
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="faHandPointUp"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="faICursor"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="faCircleNotch"></fa-icon>
-                            <fa-icon
-                                *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
-                                [icon]="faArrowsAlt"
-                            ></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask" [icon]="faArrowsAlt"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="faEdit"></fa-icon>
                         </div>
                     </ng-template>

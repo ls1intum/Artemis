@@ -3,7 +3,7 @@
         <div class="plagiarism-header-top">
             <div class="plagiarism-header-top-left">
                 <h4 class="plagiarism-page-title fw-medium" (click)="showOptions = !showOptions" [class.active]="showOptions">
-                    <fa-icon class="plagiarism-options-toggle" icon="chevron-right"></fa-icon>
+                    <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight"></fa-icon>
                     <span>{{ 'artemisApp.plagiarism.plagiarism-detection' | artemisTranslate }}</span>
                 </h4>
 

@@ -310,7 +310,7 @@
                     Enable Static Code Analysis</label
                 >
                 <fa-icon
-                    icon="question-circle"
+                    [icon]="faQuestionCircle"
                     class="text-secondary"
                     placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
@@ -321,7 +321,7 @@
                     >Max Static Code Analysis Penalty</label
                 >
                 <fa-icon
-                    icon="question-circle"
+                    [icon]="faQuestionCircle"
                     class="text-secondary"
                     placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
@@ -461,7 +461,7 @@
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents">Show Test Names to Students</span>
                     <fa-icon
-                        icon="question-circle"
+                        [icon]="faQuestionCircle"
                         class="text-secondary"
                         placement="auto"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | artemisTranslate }}"
