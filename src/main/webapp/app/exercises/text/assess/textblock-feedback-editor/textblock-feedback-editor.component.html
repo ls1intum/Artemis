@@ -31,12 +31,12 @@
     <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
         <ng-template #closeButton>
-            <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
+            <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
         </ng-template>
         <ng-template #trashButton>
             <jhi-confirm-icon
-                initialIcon="times"
-                confirmIcon="trash"
+                [initialIcon]="faTimes"
+                [confirmIcon]="faTrash"
                 [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
                 (confirmEvent)="dismiss()"
