@@ -466,7 +466,7 @@ export class ResultDetailComponent implements OnInit {
      * @param maxScore The relevant maximal points of the exercise
      * @param maxScoreWithBonus The actual received points + optional bonus points
      */
-    setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number) {
+    setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number): void {
         this.ngxData = [
             {
                 name: 'Score',
@@ -506,10 +506,11 @@ export class ResultDetailComponent implements OnInit {
 
     /**
      * Adds a percentage sign to every x axis tick
-     * @param value the default x axis tick
+     * @param tick the default x axis tick
+     * @returns string representing custom x axis tick
      */
-    xAxisFormatting(value: any): string {
-        return value + '%';
+    xAxisFormatting(tick: string): string {
+        return tick + '%';
     }
 
     /**

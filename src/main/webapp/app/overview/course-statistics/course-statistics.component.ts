@@ -306,6 +306,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     /**
      * Generates array containing default configuration for every possible part in one stacked bar
      * @private
+     * @returns dedicated object that is requested by ngx-charts in order to visualize one bar in the horizontal bar chart
      */
     private static generateDefaultSeries(): any[] {
         return [
@@ -452,6 +453,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     /**
      * Calculates the total score for every exercise in the course satisfying the filter function
      * @param filterFunction the filter the exercises have to satisfy
+     * @returns map containing score for every score type
      * @private
      */
     private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
@@ -466,6 +468,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * Calculates an arbitrary score type for an arbitrary exercise type
      * @param exerciseType the exercise type for which the score should be calculates. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
      * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
+     * @returns requested score value
      * @private
      */
     private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
@@ -481,6 +484,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     /**
      * Calculates a score type for the whole course
      * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
+     * @returns requested score type value
      * @private
      */
     private calculateTotalScoreForTheCourse(scoreType: string): number {
@@ -495,7 +499,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @param series an array of dedicated objects containing the students performance in this exercise that is visualized by the chart
      * @private
      */
-    private pushToData(exercise: Exercise, series: any): void {
+    private pushToData(exercise: Exercise, series: any[]): void {
         switch (exercise.type!) {
             case ExerciseType.MODELING:
                 this.ngxModelingExercises.push({
@@ -588,6 +592,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * ngx-charts only allows setting an absolute value for the bar padding in px, which leads to unpleasant
      * proportions in the bar charts for sufficiently large exercise groups
      * @param groupSize the amount of exercises in a specific group
+     * @returns bar padding in px
      */
     setBarPadding(groupSize: number): number {
         return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
@@ -628,6 +633,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * Sets the maximum scale on the x axis if there are exercises with > 100%
      * @param exerciseGroup the exercise group
      * @private
+     * @returns maximum value visible on xAxis
      */
     private setXScaleMax(exerciseGroup: any[]): number {
         let xScaleMax = 100;
