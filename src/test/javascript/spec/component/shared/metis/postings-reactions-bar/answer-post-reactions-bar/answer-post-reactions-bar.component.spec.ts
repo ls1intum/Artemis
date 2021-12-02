@@ -21,6 +21,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
@@ -35,6 +36,13 @@ describe('AnswerPostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
+            declarations: [
+                AnswerPostReactionsBarComponent,
+                MockPipe(ReactingUsersOnPostingPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockDirective(NgbTooltip),
+            ],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -44,7 +52,6 @@ describe('AnswerPostReactionsBarComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
-            declarations: [AnswerPostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
         })
             .compileComponents()
             .then(() => {
