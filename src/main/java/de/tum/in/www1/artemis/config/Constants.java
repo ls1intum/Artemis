@@ -229,7 +229,7 @@ public final class Constants {
 
     // Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
     // this if any profile is active (OR). We want both (AND)
-    public static final String SPRING_PROFILE_BITBUCKET_AND_BAMBOO = SPRING_PROFILE_BAMBOO + " & " + Constants.SPRING_PROFILE_BITBUCKET;
+    public static final String SPRING_PROFILE_BITBUCKET_AND_BAMBOO = SPRING_PROFILE_BAMBOO + " & " + SPRING_PROFILE_BITBUCKET;
 
     // Only activate this service bean, if both Athene and Scheduling are activated (@Profile({"athene","scheduling"}) would activate
     // this if any profile is active (OR). We want both (AND)
