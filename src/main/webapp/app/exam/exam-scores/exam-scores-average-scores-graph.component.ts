@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course, NgxDataEntry } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 type NameToValueMap = { [name: string]: any };
@@ -26,7 +26,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     examId: number;
 
     // ngx
-    ngxData: any[] = [];
+    ngxData: NgxDataEntry[] = [];
     ngxColor = {
         name: 'exercise groups',
         selectable: true,
@@ -87,10 +87,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     /**
      * Appends to every xAxis tick a percentage sign
-     * @param value the initial xiAxis tick
+     * @param tick the initial xiAxis tick
      */
-    formatTicks(value: any): string {
-        return value + '%';
+    formatTicks(tick: string): string {
+        return tick + '%';
     }
 
     /**

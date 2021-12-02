@@ -100,12 +100,12 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
 
     /**
      * Modifies the tooltip content of the chart.
-     * @param value the default tooltip content that has to be replaced
+     * @param data a dedicated object passed by ngx-charts
      * @returns absolute value represented by doughnut piece or 0 if the currentMax is 0.
      * This is necessary in order to compensate the workaround for
      * displaying a chart even if no values are there to display (i.e. currentMax is 0)
      */
-    valueFormatting(value: any): string {
-        return this.currentMax === 0 ? '0' : value.value;
+    valueFormatting(data: any): string {
+        return this.currentMax === 0 ? '0' : data.value;
     }
 }

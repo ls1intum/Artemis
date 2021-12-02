@@ -97,7 +97,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     ngOnInit() {
         /* fill ngxData with a default configuration. The assignment of the names is only a placeholder,
            they will be set to default labels in createChart.
-           If a grading key exists, the ngx Data gets reset according to it in calculateFilterDependentStatistics.
+           If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
            If no grading key exists, this default configuration is presented to the user.
          */
         for (let i = 0; i < 100 / this.binWidth; i++) {
@@ -268,7 +268,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 this.ngxData.push({ name: i.toString(), value: 0 });
             }
         }
-        this.ngxData.forEach((gradingStep: any) => (gradingStep.value = 0));
+        this.ngxData.forEach((gradingStep: NgxDataEntry) => (gradingStep.value = 0));
         this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
@@ -726,7 +726,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param value the number of submissions that fall in the grading step
      * @returns string containing the number of submissions + (percentage of submissions)
      */
-    formatDataLabel(value: any): string {
+    formatDataLabel(value: number): string {
         const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((value * 100) / this.noOfExamsFiltered) : 0;
         return value + ' (' + percentage + '%)';
     }
