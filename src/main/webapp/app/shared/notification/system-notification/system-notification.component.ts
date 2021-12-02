@@ -7,6 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-system-notification',
@@ -102,9 +103,9 @@ export class SystemNotificationComponent implements OnInit {
     private setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
-                this.alerticon = faexclamation-triangle';
+                this.alertIcon = faExclamationTriangle;
             } else {
-                this.alerticon = fainfo-circle';
+                this.alertIcon = faInfoCircle;
             }
         }
     }
