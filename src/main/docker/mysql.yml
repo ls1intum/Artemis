@@ -1,6 +1,8 @@
 version: '2'
 services:
     artemis-mysql:
+        # Use this for arm64 processors
+        # image: ubuntu/mysql:8.0-21.10_beta
         image: mysql:8.0.25
         # volumes:
         #     - ~/volumes/jhipster/Artemis/mysql/:/var/lib/mysql/
@@ -12,7 +14,8 @@ services:
             - 3306:3306
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
         networks:
-            - artemis
+            artemis:
+                ipv4_address: 172.20.0.5
 
 networks:
     artemis:

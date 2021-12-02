@@ -34,6 +34,9 @@ following dependencies/tools on your machine:
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
    e.g. ``docker-compose -f src/main/docker/mysql.yml up``
+   In case you are using a computer with an arm64 processor you might want to change the used image
+   in the mysql.yml file. Using e.g. ``ubuntu/mysql:8.0-21.10_beta`` will let the MySQL database
+   run natively on arm64 processors.
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=14.17.0 < 15) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
