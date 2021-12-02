@@ -44,7 +44,7 @@
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button *ngIf="feedback.type === MANUAL" type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
-                <fa-icon [icon]="'trash-alt'"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
+                <fa-icon [icon]="faTrashAlt"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
             </button>
             <button type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
                 <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

@@ -83,7 +83,7 @@
                                 class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
-                                <fa-icon [icon]="'play-circle'"></fa-icon>
+                                <fa-icon [icon]="faPlayCircle"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
                             </button>
                             <button
@@ -93,7 +93,7 @@
                                 class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
-                                <fa-icon [icon]="'play-circle'"></fa-icon>
+                                <fa-icon [icon]="faPlayCircle"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
                             </button>
                             <button

@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-lecture-row',
@@ -14,6 +15,9 @@ export class CourseLectureRowComponent {
     @Input() lecture: Lecture;
     @Input() course: Course;
     @Input() extendedLink = false;
+
+    // Icons
+    faChalkboardTeacher = faChalkboardTeacher;
 
     constructor(private router: Router, private route: ActivatedRoute) {}
 

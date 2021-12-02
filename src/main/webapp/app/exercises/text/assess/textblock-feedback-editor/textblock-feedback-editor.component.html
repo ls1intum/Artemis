@@ -19,12 +19,12 @@
         *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
         (click)="onConflictClicked(feedback.id)"
     >
-        <fa-icon [icon]="'balance-scale-right'"></fa-icon>
+        <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
         <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
     </span>
 
     <span class="badge bg-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">
-        <fa-icon [icon]="'balance-scale-right'"></fa-icon>
+        <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
         <span [jhiTranslate]="'artemisApp.textAssessment.conflict.type.' + conflictType"></span>
     </span>
 

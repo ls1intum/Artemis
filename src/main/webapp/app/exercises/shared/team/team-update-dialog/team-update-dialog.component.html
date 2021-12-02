@@ -130,7 +130,7 @@
                     <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
                         <div class="student-name">{{ student.name }} ({{ student.login }})</div>
                         <button class="jest-student-remove-link student-remove-link ms-4" (click)="onRemoveStudent(student)">
-                            <fa-icon [icon]="'trash-alt'"></fa-icon>
+                            <fa-icon [icon]="faTrashAlt"></fa-icon>
                         </button>
                     </div>
                     <div class="list-group-item-error hidden-md-down" *ngIf="hasConflictingTeam(student)">

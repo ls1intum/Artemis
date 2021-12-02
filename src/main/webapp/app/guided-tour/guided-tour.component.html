@@ -127,7 +127,7 @@
                     [disabled]="guidedTourService.isOnResizeMessage || guidedTourService.restartIsLoading"
                     (click)="guidedTourService.restartTour()"
                 >
-                    <fa-icon *ngIf="!guidedTourService.restartIsLoading" [icon]="'play-circle'"></fa-icon>
+                    <fa-icon *ngIf="!guidedTourService.restartIsLoading" [icon]="faPlayCircle"></fa-icon>
                     <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
                     <span jhiTranslate="global.menu.restartTutorial"></span>
                 </button>

@@ -17,10 +17,10 @@
     <div class="d-flex p-3" style="background-color: #e1e1e1">
         <div class="me-3 d-flex justify-content-center" style="align-items: center">
             <a (click)="moveUp(i)" [class.disabled]="i == 0" class="border-0 p-0 me-1 bg-transparent">
-                <fa-icon [icon]="'angle-up'" style="font-size: 1.3rem"></fa-icon>
+                <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>
             </a>
             <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
-                <fa-icon [icon]="'angle-down'" style="font-size: 1.3rem"></fa-icon>
+                <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem"></fa-icon>
             </a>
         </div>
         <div class="d-flex flex-column justify-content-center">

@@ -23,7 +23,7 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -51,6 +51,8 @@ export class ExerciseGroupsComponent implements OnInit {
     faFileUpload = faFileUpload;
     faKeyboard = faKeyboard;
     faProjectDiagram = faProjectDiagram;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(
         private route: ActivatedRoute,

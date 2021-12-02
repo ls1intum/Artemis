@@ -11,7 +11,7 @@ import { ActivatedRoute } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { faEdit, faExclamation, faExclamationTriangle, faInfoCircle, faQuestionCircle, faRobot, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faBalanceScaleRight, faEdit, faExclamation, faExclamationTriangle, faInfoCircle, faQuestionCircle, faRobot, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -69,6 +69,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faRobot = faRobot;
     faExclamation = faExclamation;
     faSearch = faSearch;
+    faBalanceScaleRight = faBalanceScaleRight;
 
     constructor(
         public structuredGradingCriterionService: StructuredGradingCriterionService,

@@ -6,7 +6,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
-import { faBan, faPencilAlt, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -55,6 +55,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faBan = faBan;
     faQuestionCircle = faQuestionCircle;
     faPencilAlt = faPencilAlt;
+    faTrashAlt = faTrashAlt;
 
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
