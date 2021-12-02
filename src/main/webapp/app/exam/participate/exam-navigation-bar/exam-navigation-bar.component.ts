@@ -178,7 +178,7 @@ export class ExamNavigationBarComponent implements OnInit {
         // start with a yellow status (edit icon)
         // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = 'edit';
+        this.icon = faedit';
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -186,7 +186,7 @@ export class ExamNavigationBarComponent implements OnInit {
             return 'synced';
         }
         if (submission.submitted) {
-            this.icon = 'check';
+            this.icon = facheck';
         }
         if (submission.isSynced) {
             // make button blue (except for the current page)
@@ -197,7 +197,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
         } else {
             // make button yellow
-            this.icon = 'edit';
+            this.icon = faedit';
             return 'notSynced';
         }
     }

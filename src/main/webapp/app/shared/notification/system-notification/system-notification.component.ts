@@ -102,9 +102,9 @@ export class SystemNotificationComponent implements OnInit {
     private setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
-                this.alertIcon = 'exclamation-triangle';
+                this.alerticon = faexclamation-triangle';
             } else {
-                this.alertIcon = 'info-circle';
+                this.alerticon = fainfo-circle';
             }
         }
     }

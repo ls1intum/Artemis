@@ -85,28 +85,28 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        let button = compiled.querySelector('.close fa-icon[icon="times"]');
+        let button = compiled.querySelector('.close fa-icon[icon="[object Object]"]');
         let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
 
         component.feedback.credits = 1;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        button = compiled.querySelector('.close fa-icon[icon="[object Object]"]');
         confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = 'Lorem Ipsum';
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        button = compiled.querySelector('.close fa-icon[icon="[object Object]"]');
         confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.credits = 0;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        button = compiled.querySelector('.close fa-icon[icon="[object Object]"]');
         confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
@@ -114,7 +114,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.detailText = '';
         fixture.detectChanges();
 
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        button = compiled.querySelector('.close fa-icon[icon="[object Object]"]');
         confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
