@@ -94,10 +94,11 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     /**
-     * Returns the absolute average points reached for an exercise/ exercise type
+     * Looks up the absolute average points of an exercise group or an exercise
      * @param name name of the exercise or exercise type
+     * @returns locale string representation of the points
      */
-    lookupAbsoluteValue(name: string) {
+    lookupAbsoluteValue(name: string): string {
         return this.roundAndPerformLocalConversion(this.lookup[name].absoluteValue);
     }
 

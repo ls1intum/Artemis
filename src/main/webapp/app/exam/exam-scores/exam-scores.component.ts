@@ -27,7 +27,7 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course, NgxDataEntry } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
 
 @Component({
@@ -50,7 +50,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     // ngx
-    ngxData: any[] = [];
+    ngxData: NgxDataEntry[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
     yScaleMax: number;
@@ -95,6 +95,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        /* fill ngxData with a default configuration. The assignment of the names is only a placeholder,
+           they will be set to default labels in createChart.
+           If a grading key exists, the ngx Data gets reset according to it in calculateFilterDependentStatistics.
+           If no grading key exists, this default configuration is presented to the user.
+         */
         for (let i = 0; i < 100 / this.binWidth; i++) {
             this.ngxData.push({ name: i.toString(), value: 0 });
         }
@@ -226,7 +231,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
             // Calculate average points for exercises
-            groupResult.exerciseResults.forEach((exResult) => {
+            groupResult.exerciseResults.forEach((exResult: AggregatedExerciseResult) => {
                 if (exResult.noOfParticipantsWithFilter) {
                     exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
                     exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
@@ -613,13 +618,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
     }
 
-    /**
-     * Localizes a percent number, e.g. switching the decimal separator
-     */
-    localizePercent(numberToLocalize: number): string {
-        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course!.accuracyOfScores!);
-    }
-
     private convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
@@ -661,7 +659,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return csvRow;
     }
 
-    roundAndPerformLocalConversion(points: number | undefined) {
+    /**
+     * Rounds given points according to the course specific rounding settings
+     * @param points the points that should be rounded
+     * @returns localized string representation of the rounded points
+     */
+    roundAndPerformLocalConversion(points: number | undefined): string {
         return this.localize(roundScoreSpecifiedByCourseSettings(points, this.course));
     }
 
@@ -721,9 +724,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Formats the datalabel for every bar in order to satisfy the following pattern:
      * number of submissions (percentage of submissions)
      * @param value the number of submissions that fall in the grading step
+     * @returns string containing the number of submissions + (percentage of submissions)
      */
-    formatDataLabel(value: any) {
-        const percentage = this.roundAndPerformLocalConversion((value * 100) / this.noOfExamsFiltered);
+    formatDataLabel(value: any): string {
+        const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((value * 100) / this.noOfExamsFiltered) : 0;
         return value + ' (' + percentage + '%)';
     }
 }

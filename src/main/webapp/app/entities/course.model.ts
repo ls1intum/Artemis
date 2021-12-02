@@ -10,6 +10,11 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 
+export interface NgxDataEntry {
+    name: string;
+    value: number;
+}
+
 export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
