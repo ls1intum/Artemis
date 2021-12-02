@@ -10,6 +10,7 @@ import interact from 'interactjs';
     styleUrls: ['./collapsable-assessment-instructions.scss'],
 })
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
+    @Input() isAssessmentTraining = false;
     @Input() exercise: Exercise;
     @Input() collapsed = false;
     @Input() readOnly: boolean;
