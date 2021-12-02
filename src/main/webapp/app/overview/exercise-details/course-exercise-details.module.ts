@@ -21,6 +21,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const routes: Routes = [
     {
@@ -60,6 +61,7 @@ const routes: Routes = [
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
+        ArtemisMarkdownModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],

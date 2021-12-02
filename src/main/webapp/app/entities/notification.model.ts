@@ -54,6 +54,8 @@ export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'New reply for lecture post';
 
 export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'New reply for course-wide post';
 
+export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'File submission successful';
+
 export const COURSE_ARCHIVE_STARTED_TITLE = 'Course archival started';
 
 export const COURSE_ARCHIVE_FINISHED_TITLE = 'Course archival finished';
