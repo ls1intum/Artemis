@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
-import dayjs from 'dayjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {

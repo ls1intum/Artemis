@@ -24,6 +24,7 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
 export class NotificationSidebarComponent implements OnInit {
     // HTML template related
     showSidebar = false;
+    // the filtering based on notification date is done on the DB level, thus this variable is initially set to true to display the correct icon
     showAllNotificationsInSideBar = true;
     loading = false;
 

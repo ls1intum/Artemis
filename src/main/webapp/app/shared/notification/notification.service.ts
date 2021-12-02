@@ -25,7 +25,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
-import { Setting } from 'app/shared/user-settings/user-settings.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {

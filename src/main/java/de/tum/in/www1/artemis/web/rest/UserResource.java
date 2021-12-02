@@ -292,7 +292,6 @@ public class UserResource {
         User user = userRepository.getUser();
         // if all notifications (regardless of their creation date) should be shown hideUntil should be null
         ZonedDateTime hideUntil = showAllNotifications ? null : ZonedDateTime.now();
-        // userRepository.updateUserNotificationVisibility(user.getId(), hideUntil);
         userService.updateUserNotificationVisibility(user.getId(), hideUntil);
         return ResponseEntity.ok().build();
     }
