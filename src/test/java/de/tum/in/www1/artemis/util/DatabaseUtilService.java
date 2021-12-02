@@ -3491,7 +3491,7 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
     }
 
-    public void createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
@@ -3500,6 +3500,7 @@ public class DatabaseUtilService {
 
         studentParticipationRepo.save(studentParticipation);
         textSubmissionRepo.save(textSubmission);
+        return textSubmission;
     }
 
     public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
