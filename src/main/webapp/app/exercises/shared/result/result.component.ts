@@ -20,7 +20,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 /**
  * Enumeration object representing the possible options that
@@ -354,6 +354,14 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.MISSING) {
             componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
+
+        // The information should only be shown in case it is after the due date
+        // and some automatic test case feedbacks are possibly hidden due to
+        // other students still working on the exercise.
+        componentInstance.showMissingAutomaticFeedbackInformation =
+            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
+            this.exercise?.type === ExerciseType.PROGRAMMING &&
+            hasExerciseDueDatePassed(this.exercise, this.participation);
     }
 
     /**
