@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static tech.jhipster.config.JHipsterConstants.*;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -17,8 +19,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.core.env.Environment;
 
 import tech.jhipster.config.DefaultProfileUtil;
-
-import static tech.jhipster.config.JHipsterConstants.*;
 
 @SpringBootApplication
 @EnableConfigurationProperties(LiquibaseProperties.class)

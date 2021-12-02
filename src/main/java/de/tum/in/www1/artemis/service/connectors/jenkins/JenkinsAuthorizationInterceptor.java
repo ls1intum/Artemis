@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 import java.io.IOException;
 import java.net.URL;
 
@@ -19,8 +21,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 
 @Profile(SPRING_PROFILE_JENKINS)
 @Component

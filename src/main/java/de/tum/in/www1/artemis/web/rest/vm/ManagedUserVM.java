@@ -1,14 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
+
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-
-import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
-import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
+
 import java.util.*;
 
 import javax.persistence.*;
@@ -15,8 +17,6 @@ import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-
-import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
 
 /**
  * A DragAndDropQuestion.

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.apollon;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
+
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,8 +16,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
 
 @Component
 @Profile(SPRING_PROFILE_APOLLON)

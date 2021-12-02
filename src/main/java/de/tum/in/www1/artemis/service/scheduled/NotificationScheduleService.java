@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,9 +22,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 @Service
 @Profile(SPRING_PROFILE_SCHEDULING)

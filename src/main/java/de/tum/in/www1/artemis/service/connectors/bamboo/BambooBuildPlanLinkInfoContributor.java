@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
+import static de.tum.in.www1.artemis.config.Constants.INFO_BUILD_PLAN_URL_DETAIL;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
+
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,9 +10,6 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import static de.tum.in.www1.artemis.config.Constants.INFO_BUILD_PLAN_URL_DETAIL;
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
 
 @Component
 @Profile(SPRING_PROFILE_BAMBOO)

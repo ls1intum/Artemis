@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -9,8 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.offbytwo.jenkins.JenkinsServer;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 
 @Configuration
 @Profile(SPRING_PROFILE_JENKINS)

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 import java.io.IOException;
 
 import javax.xml.transform.TransformerException;
@@ -18,8 +20,6 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 
 @Service
 @Profile(SPRING_PROFILE_JENKINS)

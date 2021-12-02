@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
+
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +12,6 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import tech.jhipster.config.JHipsterProperties;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 @Configuration
 @Profile(SPRING_PROFILE_PRODUCTION)

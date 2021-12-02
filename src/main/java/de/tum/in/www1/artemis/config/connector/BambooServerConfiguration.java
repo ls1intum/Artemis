@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
+
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +12,6 @@ import org.springframework.context.annotation.Profile;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.atlassian.bamboo.specs.util.SimpleTokenCredentials;
 import com.atlassian.bamboo.specs.util.TokenCredentials;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
 
 @Configuration
 @Profile(SPRING_PROFILE_BAMBOO)

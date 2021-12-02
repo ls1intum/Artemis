@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -35,8 +37,6 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermission;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 
 @Service
 @Profile(SPRING_PROFILE_JENKINS)

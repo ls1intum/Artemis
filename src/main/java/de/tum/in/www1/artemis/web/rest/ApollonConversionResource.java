@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
+
 import java.io.InputStream;
 
 import org.slf4j.Logger;
@@ -13,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
 
 /**
  * REST controller for managing ApollonDiagram.

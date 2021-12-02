@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
+
 import java.net.URL;
 import java.util.Optional;
 
@@ -8,8 +10,6 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
 
 @Component
 @Profile(SPRING_PROFILE_BITBUCKET)

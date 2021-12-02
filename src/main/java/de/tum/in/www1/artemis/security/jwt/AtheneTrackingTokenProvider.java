@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.security.jwt;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 import java.security.Key;
 import java.util.Date;
 
@@ -17,8 +19,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 
 /**
  * This component is used to create a jwt token for the tutor-assessment tracking.

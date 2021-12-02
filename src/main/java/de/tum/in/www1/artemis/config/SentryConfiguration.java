@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
+
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
@@ -11,8 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import io.sentry.Sentry;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 @Configuration
 @Profile(SPRING_PROFILE_PRODUCTION)

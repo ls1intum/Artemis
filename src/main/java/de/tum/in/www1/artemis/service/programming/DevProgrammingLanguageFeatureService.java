@@ -1,15 +1,15 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 /**
  * This service is only needed for TESTS that neither provide the bamboo nor jenkins profile (but the dev profile).

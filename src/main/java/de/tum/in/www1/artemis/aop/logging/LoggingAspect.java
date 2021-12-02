@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.aop.logging;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.util.Arrays;
 
 import org.aspectj.lang.JoinPoint;
@@ -9,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 /**
  * Aspect for logging execution of service and repository Spring components.

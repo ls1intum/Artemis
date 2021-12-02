@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,8 +15,6 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 
 @Component
 @Profile(SPRING_PROFILE_ATHENE)

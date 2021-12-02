@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
+
 import java.io.IOException;
 import java.util.Collections;
 
@@ -13,8 +15,6 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
 
 @Profile(SPRING_PROFILE_BAMBOO)
 @Component

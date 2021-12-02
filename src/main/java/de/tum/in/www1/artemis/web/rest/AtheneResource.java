@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,9 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.ase.athene.protobuf.AtheneResponse;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
-
-import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 
 /**
  * REST controller for managing Athene results.

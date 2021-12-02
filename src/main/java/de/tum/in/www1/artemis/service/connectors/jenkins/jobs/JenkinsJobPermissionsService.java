@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 import java.io.IOException;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.DOMException;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 
 @Service
 @Profile(SPRING_PROFILE_JENKINS)

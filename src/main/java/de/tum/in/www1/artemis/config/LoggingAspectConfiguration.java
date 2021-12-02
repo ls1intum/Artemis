@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 @Configuration
 @EnableAspectJAutoProxy

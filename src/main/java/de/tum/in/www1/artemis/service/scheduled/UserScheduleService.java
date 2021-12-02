@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -15,8 +17,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
 
 @Service
 @Profile(SPRING_PROFILE_SCHEDULING)

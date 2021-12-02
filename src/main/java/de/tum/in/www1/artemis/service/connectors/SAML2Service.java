@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SAML2;
+
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -26,8 +28,6 @@ import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SAML2;
 
 /**
  * This class describes a service for SAML2 authentication.

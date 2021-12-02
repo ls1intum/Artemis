@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.apollon;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -13,8 +15,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
 
 @Service
 @Profile(SPRING_PROFILE_APOLLON)

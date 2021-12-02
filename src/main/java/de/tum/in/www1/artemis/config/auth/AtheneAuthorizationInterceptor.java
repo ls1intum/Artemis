@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.auth;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 import java.io.IOException;
 
 import javax.validation.constraints.NotNull;
@@ -12,8 +14,6 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 
 @Component
 @Profile(SPRING_PROFILE_ATHENE)

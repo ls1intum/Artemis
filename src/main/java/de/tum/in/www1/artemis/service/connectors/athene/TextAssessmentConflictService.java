@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -13,8 +15,6 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 
 @Service
 @Profile(SPRING_PROFILE_ATHENE)

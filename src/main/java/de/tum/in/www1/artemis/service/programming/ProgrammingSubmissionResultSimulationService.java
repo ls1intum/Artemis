@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -18,8 +20,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 /**
  * Only for local development

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.messaging;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_NOT_SCHEDULING;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -10,8 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_NOT_SCHEDULING;
 
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.

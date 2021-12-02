@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jira;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JIRA;
+
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -9,8 +11,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JIRA;
 
 @Component
 @Profile(SPRING_PROFILE_JIRA)

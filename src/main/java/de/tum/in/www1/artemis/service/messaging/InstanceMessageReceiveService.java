@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.messaging;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -17,8 +19,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.*;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.

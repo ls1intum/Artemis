@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
@@ -35,8 +37,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
 
 @Service
 @Profile(SPRING_PROFILE_BITBUCKET)

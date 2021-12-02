@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE;
+
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -15,8 +17,6 @@ import org.springframework.core.env.Profiles;
 
 import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE;
 
 @Configuration
 public class LiquibaseConfiguration {

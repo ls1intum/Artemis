@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.util;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.security.SecureRandom;
 
 import org.springframework.context.annotation.Profile;
-
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 @Profile(SPRING_PROFILE_DEVELOPMENT)
 public class VCSSimulationUtils {
