@@ -152,12 +152,6 @@ export class NotificationSidebarComponent implements OnInit {
 
     // filter out every exam related notification
     private filterLoadedNotifications(notifications: Notification[]): Notification[] {
-        /* TODO check if necessary (because filter should already work on server side)
-        if (this.hideNotificationsUntil !== null) {
-            // if the user wants to hide certain notifications only display those that arrived after the user pressed that (hide)button
-            notifications = notifications.filter((notification) => notification.notificationDate?.isAfter(this.hideNotificationsUntil));
-        }
-         */
         return notifications.filter((notification) => notification.title !== LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
     }
 

@@ -20,7 +20,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -28,6 +28,7 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -70,7 +71,7 @@ describe('Notification Sidebar Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(FaIconComponent)],
+            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -292,6 +293,17 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponentFixture.detectChanges();
             const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
             expect(errorMessage).to.be.not.null;
+        });
+
+        it('should toggle which notifications are displayed (hide until property) when user clicks on eye button', () => {
+            expect(notificationSidebarComponent.showAllNotificationsInSideBar).to.be.true;
+            sinon.spy(notificationSidebarComponent, 'toggleNotificationDisplay');
+            sinon.spy(userService, 'updateNotificationVisibility');
+            const hideUntilToggle = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('#hide-until-toggle');
+            hideUntilToggle.click();
+            expect(notificationSidebarComponent.showAllNotificationsInSideBar).to.be.false;
+            expect(notificationSidebarComponent.toggleNotificationDisplay).to.have.been.calledOnce;
+            expect(userService.updateNotificationVisibility).to.have.been.calledOnce;
         });
     });
 

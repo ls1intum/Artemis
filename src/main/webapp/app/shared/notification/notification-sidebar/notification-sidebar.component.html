@@ -24,7 +24,7 @@
                 </button>
             </div>
             <div class="text-end">
-                <button class="border-0 bg-transparent pe-2" (click)="toggleNotificationDisplay()">
+                <button id="hide-until-toggle" class="border-0 bg-transparent pe-2" (click)="toggleNotificationDisplay()">
                     <fa-icon
                         *ngIf="showAllNotificationsInSideBar; else hiddenNotifications"
                         class="ng-fa-icon"
