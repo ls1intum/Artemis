@@ -21,18 +21,13 @@ const courseOverview = artemis.pageobjects.courseOverview;
 let course: any;
 let quizExercise: any;
 
-describe('Quiz Exercise Management', () => {
+describe('Quiz Exercise Participation', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
             courseManagementRequest.addStudentToCourse(course.id, student.username);
         });
-    });
-
-    afterEach('Delete Quiz', () => {
-        cy.login(admin);
-        courseManagementRequest.deleteQuizExercise(quizExercise.id);
     });
 
     after('Delete Course', () => {
