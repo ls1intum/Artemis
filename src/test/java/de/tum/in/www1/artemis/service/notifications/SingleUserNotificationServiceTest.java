@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
@@ -107,6 +108,7 @@ public class SingleUserNotificationServiceTest {
     public void cleanMocks() {
         reset(exercise);
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+        when(exercise.getExerciseType()).thenReturn(TEXT);
 
         reset(singleUserNotificationService);
 
@@ -176,6 +178,15 @@ public class SingleUserNotificationServiceTest {
     public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutAssessedExerciseSubmission method
+     */
+    @Test
+    public void testNotifyUserAboutAssessedExerciseSubmission() {
+        singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, user);
+        verifyRepositoryCallWithCorrectNotification(EXERCISE_SUBMISSION_ASSESSED_TITLE);
     }
 
     /// Save & Send related Tests

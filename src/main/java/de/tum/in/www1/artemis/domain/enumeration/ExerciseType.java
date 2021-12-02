@@ -9,7 +9,7 @@ public enum ExerciseType {
     public String toString() {
         return switch (this) {
             case FILE_UPLOAD -> "file upload";
-            default -> this.toString().toLowerCase();
+            default -> this.name().toLowerCase();
         };
     }
 }

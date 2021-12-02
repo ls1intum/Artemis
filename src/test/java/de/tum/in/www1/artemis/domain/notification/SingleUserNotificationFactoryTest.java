@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
@@ -77,6 +78,7 @@ public class SingleUserNotificationFactoryTest {
         when(exercise.getTitle()).thenReturn("exercise title");
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
         when(exercise.getProblemStatement()).thenReturn("problem statement");
+        when(exercise.getExerciseType()).thenReturn(TEXT);
 
         post = mock(Post.class);
         when(post.getExercise()).thenReturn(exercise);
@@ -204,6 +206,20 @@ public class SingleUserNotificationFactoryTest {
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
         expectedPriority = MEDIUM;
         expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, "exercises", exerciseId);
+        createAndCheckExerciseNotification();
+    }
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXERCISE_SUBMISSION_ASSESSED.
+     * I.e. notifications that originate when a user's exercise submission has been assessed.
+     */
+    @Test
+    public void createNotification_withNotificationType_() {
+        notificationType = EXERCISE_SUBMISSION_ASSESSED;
+        expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
+        expectedText = "Your submission for the " + exercise.getExerciseType().toString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
+        expectedPriority = MEDIUM;
+        expectedTarget = createDefaultExpectedTarget(EXERCISE_SUBMISSION_ASSESSED_TITLE, "exercises", exerciseId);
         createAndCheckExerciseNotification();
     }
 }
