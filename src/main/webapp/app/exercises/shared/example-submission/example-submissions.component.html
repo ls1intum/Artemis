@@ -32,14 +32,14 @@
                         <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
                         <fa-icon
                             *ngIf="exercise.type === exerciseType.TEXT"
-                            [icon]="'question-circle'"
+                            [icon]="faQuestionCircle"
                             class="text-secondary ps-1"
                             [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                             container="body"
                         ></fa-icon>
                         <fa-icon
                             *ngIf="exercise.type === exerciseType.MODELING"
-                            [icon]="'question-circle'"
+                            [icon]="faQuestionCircle"
                             class="text-secondary ps-1"
                             [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
                             container="body"
@@ -80,7 +80,7 @@
                         <span *ngIf="!createdExampleAssessment[i]" class="text-danger" jhiTranslate="global.generic.no"></span>
                         <fa-icon
                             *ngIf="!createdExampleAssessment[i]"
-                            [icon]="'exclamation-triangle'"
+                            [icon]="faExclamationTriangle"
                             class="text-warning"
                             [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
                             container="body"

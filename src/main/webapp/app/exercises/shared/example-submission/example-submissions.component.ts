@@ -10,7 +10,7 @@ import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-s
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { faFont, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -24,6 +24,8 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
     faTimes = faTimes;
     faFont = faFont;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private alertService: AlertService,
