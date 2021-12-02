@@ -106,26 +106,13 @@ public class NotificationResource {
                 notificationSettings);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final ZonedDateTime hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
-        final boolean showAllNotificationsRegardlessOfDate = hideNotificationsUntilDate == null;
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
-            if (showAllNotificationsRegardlessOfDate) {
-                page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
-            }
-            else {
-                page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getHideNotificationsUntil(),
-                        pageable);
-            }
+            page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, pageable);
         }
         else {
-            if (showAllNotificationsRegardlessOfDate) {
-                page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), deactivatedTitles,
-                        pageable);
-            }
-            else {
-                page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
-                        currentUser.getHideNotificationsUntil(), deactivatedTitles, pageable);
-            }
+            page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate,
+                    deactivatedTitles, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
