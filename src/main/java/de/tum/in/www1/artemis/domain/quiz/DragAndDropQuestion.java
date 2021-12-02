@@ -171,8 +171,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        if (backgroundFilePath != null && backgroundFilePath.contains(FILEPATH_ID_PLACEHOLDER)) {
+            backgroundFilePath = backgroundFilePath.replace(FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
     }
 

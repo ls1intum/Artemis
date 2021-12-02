@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
-import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
 import java.util.Optional;
@@ -27,19 +27,19 @@ public class BitbucketInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         // Store server url
-        builder.withDetail(Constants.VERSION_CONTROL_URL, bitbucketServerUrl);
+        builder.withDetail(VERSION_CONTROL_URL, bitbucketServerUrl);
 
         // Store commit hash url template
         String commitHashPathTemplate = "/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}";
         String commitHashUrlTemplate = bitbucketServerUrl + commitHashPathTemplate;
-        builder.withDetail(Constants.INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
+        builder.withDetail(INFO_COMMIT_HASH_URL_DETAIL, commitHashUrlTemplate);
 
         // Store ssh url template
         if (bitbucketSshUrlTemplate.isPresent()) {
-            builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, bitbucketSshUrlTemplate);
+            builder.withDetail(INFO_SSH_CLONE_URL_DETAIL, bitbucketSshUrlTemplate);
             if (bitbucketSshKeysUrlPath.isPresent()) {
                 final var sshKeysUrl = bitbucketServerUrl + bitbucketSshKeysUrlPath.get();
-                builder.withDetail(Constants.INFO_SSH_KEYS_URL_DETAIL, sshKeysUrl);
+                builder.withDetail(INFO_SSH_KEYS_URL_DETAIL, sshKeysUrl);
             }
         }
 
