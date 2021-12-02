@@ -18,6 +18,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
+    styleUrls: ['../complaints.scss'],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
     @Input() exercise: Exercise;

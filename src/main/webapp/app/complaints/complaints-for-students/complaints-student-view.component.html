@@ -11,7 +11,7 @@
             [translateValues]="{ maxComplaintNumber: course!.maxComplaints!, allowedComplaints: remainingNumberOfComplaints }"
         ></span>
         <span *ngIf="isExamMode" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
-        <fa-icon *ngIf="!isExamMode" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon" style="color: #ffc107"></fa-icon>
+        <fa-icon *ngIf="!isExamMode" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
     </p>
     <div class="mt-4" *ngIf="isCorrectUserToFileAction && !complaint">
         <button
