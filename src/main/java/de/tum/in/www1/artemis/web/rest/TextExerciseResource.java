@@ -191,6 +191,7 @@ public class TextExerciseResource {
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
+        TextAssessmentKnowledge tak = textAssessmentKnowledgeService.getKnowledge(textExercise.getId());
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
@@ -597,8 +598,6 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
-        log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
-
         // check that the exercise is exist for given id
         textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
 

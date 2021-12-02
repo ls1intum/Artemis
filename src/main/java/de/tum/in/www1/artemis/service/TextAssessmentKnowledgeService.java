@@ -46,4 +46,13 @@ public class TextAssessmentKnowledgeService {
         return knowledge;
     }
 
+    /**
+     * Get Knowledge by ExerciseID
+     * @param exerciseId the id of the exercise we want to get the knowledge
+     * @return TextAssessmentKnowledge
+     */
+    public TextAssessmentKnowledge getKnowledge(Long exerciseId) {
+        return textAssesmentKnowledgeRepository.findFirstByExercises_Id(exerciseId);
+    }
+
 }

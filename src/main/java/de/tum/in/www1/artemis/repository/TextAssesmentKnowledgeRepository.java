@@ -10,4 +10,6 @@ import de.tum.in.www1.artemis.domain.TextAssessmentKnowledge;
  */
 @Repository
 public interface TextAssesmentKnowledgeRepository extends JpaRepository<TextAssessmentKnowledge, Long> {
+
+    TextAssessmentKnowledge findFirstByExercises_Id(Long exerciseId);
 }

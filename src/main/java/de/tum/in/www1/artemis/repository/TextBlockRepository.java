@@ -29,7 +29,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
             LEFT JOIN FETCH TextBlock tb ON s.id = tb.submission.id
             LEFT JOIN FETCH tb.cluster tc
             LEFT JOIN FETCH tc.blocks tball
-            WHERE s.id = :#{#submissionId} AND tball.id <> tb.id AND tc.exercise.id = :#{#exerciseId}
+            WHERE s.id = :#{#submissionId} AND tc.exercise.id = :#{#exerciseId}
             """)
     Set<TextBlock> findAllWithEagerClusterBySubmissionAndExerciseIds(@Param("submissionId") Long submissionId, @Param("exerciseId") Long exerciseId);
 

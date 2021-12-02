@@ -71,8 +71,8 @@ public class TextAssessmentQueueService {
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
         final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
 
-        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(textBlock -> textBlock.getCluster(exercise.getId()))
-                .filter(Objects::nonNull).map(TextCluster::getId).collect(toSet());
+        final Set<Long> clusterIds = submissions.stream().peek(s -> s.getParticipation().setSubmissions(Set.of(s))).flatMap(submission -> submission.getBlocks().stream())
+                .map(textBlock -> textBlock.getCluster(exercise.getId())).filter(Objects::nonNull).map(TextCluster::getId).collect(toSet());
 
         // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
         final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
@@ -81,7 +81,7 @@ public class TextAssessmentQueueService {
         // link up clusters with eager blocks
         submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
             if (textBlock.getCluster(exercise.getId()) != null) {
-                textBlock.setCluster(exercise.getId(), textClusterMap.get(textBlock.getCluster(exercise.getId()).getId()));
+                textBlock.setCluster(textClusterMap.get(textBlock.getCluster(exercise.getId()).getId()));
             }
         });
 

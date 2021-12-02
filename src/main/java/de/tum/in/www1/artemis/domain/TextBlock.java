@@ -76,7 +76,7 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private TextAssessmentKnowledge knowledge;
 
-    @ManyToMany(mappedBy = "blocks")
+    @ManyToMany(mappedBy = "blocks", fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<TextCluster> cluster = new HashSet<>();
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -187,12 +187,12 @@ public class TextBlock implements Serializable {
         return cluster.stream().filter(cl -> cl.getExercise().getId() == exerciseId).findFirst().get();
     }
 
-    public TextBlock cluster(Long exerciseId, TextCluster textCluster) {
+    public TextBlock cluster(TextCluster textCluster) {
         this.cluster.add(textCluster);
         return this;
     }
 
-    public void setCluster(Long exerciseId, TextCluster textCluster) {
+    public void setCluster(TextCluster textCluster) {
         this.cluster.add(textCluster);
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
