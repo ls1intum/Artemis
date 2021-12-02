@@ -251,7 +251,7 @@
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
-                            <fa-icon [icon]="'code-branch'" class="me-1"></fa-icon>
+                            <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
                             Repository
                         </a>
                         <a *ngIf="buildPlanId(value)" target="_blank" rel="noreferrer" href="{{ value.participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">

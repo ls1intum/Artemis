@@ -11,7 +11,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
-import { faBan, faCheck, faCircleNotch, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
@@ -62,6 +62,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     faSpinner = faSpinner;
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
+    faUpload = faUpload;
 
     constructor(
         private activeModal: NgbActiveModal,

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -15,6 +16,9 @@ export class TextUnitComponent implements OnInit {
     isCollapsed = true;
 
     formattedContent?: SafeHtml;
+
+    // Icons
+    faExternalLinkAlt = faExternalLinkAlt;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 

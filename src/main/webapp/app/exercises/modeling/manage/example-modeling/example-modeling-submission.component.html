@@ -33,7 +33,7 @@
             </button>
 
             <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
-                <fa-icon [icon]="'code-branch'"></fa-icon>
+                <fa-icon [icon]="faCodeBranch"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
@@ -60,7 +60,7 @@
                         [styles]="{ color: '#ffc800', width: '29px', 'margin-top': '-9px', 'font-size': legend[3].size }"
                         transform="shrink-6"
                     ></fa-icon>
-                    <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
+                    <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
                 </fa-layers>
             </div>
         </div>

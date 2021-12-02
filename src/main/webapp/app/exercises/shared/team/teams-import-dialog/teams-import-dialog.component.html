@@ -237,7 +237,7 @@
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button *ngIf="importStrategy !== ImportStrategy.PURGE_EXISTING" type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
-                <fa-icon [icon]="'upload'" class="me-2"></fa-icon>
+                <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
                 <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
@@ -254,7 +254,7 @@
                 (delete)="purgeAndImportTeams()"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="'upload'" class="me-1"></fa-icon>
+                <fa-icon [icon]="faUpload" class="me-1"></fa-icon>
                 <span jhiTranslate="entity.action.purge">Purge</span> +
                 <span jhiTranslate="entity.action.to-import">Import</span>
                 <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>

@@ -149,7 +149,7 @@
                 <div class="row">
                     <div class="col-12">
                         <button id="upload-attachment" type="submit" [disabled]="isUploadingAttachment" (click)="uploadLectureAttachmentAndSave()" class="btn btn-primary me-2">
-                            <fa-icon [icon]="'paperclip'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
                             <span *ngIf="isUploadingAttachment" jhiTranslate="artemisApp.lecture.attachments.uploading"></span>
                             <span *ngIf="!isUploadingAttachment" jhiTranslate="entity.action.saveAttachment"></span>
                         </button>
@@ -163,7 +163,7 @@
             <div class="row" *ngIf="!attachmentToBeCreated">
                 <div class="col-12">
                     <button type="submit" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
-                        <fa-icon [icon]="'paperclip'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
+                        <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
                     </button>
                 </div>
             </div>

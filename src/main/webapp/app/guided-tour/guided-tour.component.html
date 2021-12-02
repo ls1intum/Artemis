@@ -61,8 +61,8 @@
                     </div>
                     <ng-template #userInteractionIcons>
                         <div class="step-hint__icon">
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="'hand-point-up'"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="'i-cursor'"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="faHandPointUp"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="faICursor"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="faCircleNotch"></fa-icon>
                             <fa-icon
                                 *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
@@ -87,7 +87,7 @@
                 </div>
                 <div *ngIf="currentTourStep.modelingTask" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                     <div class="step-hint__icon" *ngIf="!userInteractionFinished">
-                        <fa-icon [icon]="'clipboard-list'"></fa-icon>
+                        <fa-icon [icon]="faClipboardList"></fa-icon>
                     </div>
                     <div class="step-hint__icon" *ngIf="userInteractionFinished">
                         <fa-icon [icon]="faCheck"></fa-icon>

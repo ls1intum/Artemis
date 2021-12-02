@@ -79,7 +79,7 @@
     </ng-template>
     <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-warning me-1 mb-1" (click)="openModal(archiveWarningPopup)">
         <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch"></fa-icon>
-        <fa-icon [hidden]="isBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
+        <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
     <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary me-1 mb-1" (click)="downloadArchive()">

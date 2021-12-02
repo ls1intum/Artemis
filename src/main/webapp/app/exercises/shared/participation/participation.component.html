@@ -256,7 +256,7 @@
                                     <fa-icon [icon]="faEraser"></fa-icon>
                                 </button>
                                 <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm me-1">
-                                    <fa-icon [icon]="'file-powerpoint'"></fa-icon>
+                                    <fa-icon [icon]="faFilePowerpoint"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
@@ -264,7 +264,7 @@
                                     (click)="removePresentation(value)"
                                     class="btn btn-danger btn-sm me-1"
                                 >
-                                    <fa-icon [icon]="'file-powerpoint'"></fa-icon>
+                                    <fa-icon [icon]="faFilePowerpoint"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                                 </button>
                             </div>

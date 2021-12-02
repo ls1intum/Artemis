@@ -22,7 +22,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 enum FilterProp {
     ALL = 'all',
@@ -68,6 +68,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
+    faFilePowerpoint = faFilePowerpoint;
 
     constructor(
         private route: ActivatedRoute,

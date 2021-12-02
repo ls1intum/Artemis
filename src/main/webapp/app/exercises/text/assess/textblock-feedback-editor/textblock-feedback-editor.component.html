@@ -11,7 +11,7 @@
         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"
         placement="top"
     >
-        <fa-icon [icon]="'search'"></fa-icon>
+        <fa-icon [icon]="faSearch"></fa-icon>
     </span>
 
     <span
@@ -119,7 +119,7 @@
         <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
         <fa-layers *ngIf="feedback.correctionStatus != 'CORRECT'">
             <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
-            <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
+            <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
         </fa-layers>
     </div>
 
