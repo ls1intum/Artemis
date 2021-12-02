@@ -16,8 +16,8 @@
                 step="0.5"
                 [(ngModel)]="assessment.credits"
                 (ngModelChange)="emitChanges()"
-                [readOnly]="disabled || assessment.gradingInstruction || readOnly"
-                [disabled]="disabled"
+                [readOnly]="assessment.gradingInstruction || readOnly"
+                [disabled]="readOnly"
                 [required]="!assessment.gradingInstruction"
             />
         </div>
@@ -43,13 +43,13 @@
                     [(ngModel)]="assessment.detailText"
                     (ngModelChange)="emitChanges()"
                     [readOnly]="readOnly"
-                    [disabled]="disabled"
+                    [disabled]="readOnly"
                     [placeholder]="
                         assessment.gradingInstruction!
                             ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                             : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                     "
-                    [required]="assessment.gradingInstruction ? false : true"
+                    [required]="!assessment.gradingInstruction"
                 ></textarea>
             </div>
         </div>
