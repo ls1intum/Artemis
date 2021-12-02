@@ -120,7 +120,7 @@ public abstract class SubmissionExportService {
             exportedStudentParticipations = new ArrayList<>(exercise.getStudentParticipations());
         }
         else {
-            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toList());
+            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).toList();
 
             exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
                     .collect(Collectors.toList());
@@ -186,23 +186,7 @@ public abstract class SubmissionExportService {
 
         // Save all Submissions
         List<Path> submissionFilePaths = participations.stream().map(participation -> {
-            Set<Submission> submissions = participation.getSubmissions();
-            Submission latestSubmission = null;
-
-            for (Submission submission : submissions) {
-                if (submission.getSubmissionDate() == null) {
-                    // ignore unsubmitted submissions
-                    continue;
-                }
-                // filter late submissions
-                boolean isSubmittedBeforeDueDate = exerciseDateService.getDueDate(participation).map(dueDate -> submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
-                if ((enableFilterAfterDueDate && isSubmittedBeforeDueDate) || lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
-                    if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
-                        latestSubmission = submission;
-                    }
-                }
-            }
-
+            Submission latestSubmission = latestSubmission(participation, enableFilterAfterDueDate, lateSubmissionFilter);
             if (latestSubmission == null) {
                 skippedEntries.increment();
                 return Optional.<Path>empty();
@@ -244,6 +228,34 @@ public abstract class SubmissionExportService {
         }
 
         return Optional.of(zipFilePath.toFile());
+    }
+
+    /**
+     * Finds the latest submission for the given participation while optionally ignoring all submissions after a given date.
+     *
+     * @param participation for which the latest submission should be returned.
+     * @param enableFilterAfterDueDate true, if all submissions that have been submitted after the due date should not be included in the file.
+     * @param lateSubmissionFilter an optional date filter for submissions.
+     * @return the latest submission of the given participation.
+     */
+    private Submission latestSubmission(final StudentParticipation participation, boolean enableFilterAfterDueDate, @Nullable ZonedDateTime lateSubmissionFilter) {
+        Submission latestSubmission = null;
+
+        for (Submission submission : participation.getSubmissions()) {
+            if (submission.getSubmissionDate() == null) {
+                // ignore unsubmitted submissions
+                continue;
+            }
+            // filter late submissions
+            boolean isSubmittedBeforeDueDate = exerciseDateService.getDueDate(participation).map(dueDate -> submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
+            if ((enableFilterAfterDueDate && isSubmittedBeforeDueDate) || lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
+                if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
+                    latestSubmission = submission;
+                }
+            }
+        }
+
+        return latestSubmission;
     }
 
     protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;

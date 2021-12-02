@@ -66,7 +66,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1500;
+    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1500;
 
     @BeforeEach
     void init() {
@@ -91,7 +91,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
 
         database.resetDatabase();
-        Mockito.reset(scheduleService);
+        reset(scheduleService);
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
     }
@@ -109,7 +109,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         int callCount = wasCalled ? 1 : 0;
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
+            verify(versionControlService, times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
         }
     }
@@ -137,7 +137,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(true);
         // Instructor build should have been triggered.
-        verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingSubmissionService, times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
@@ -272,7 +272,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verifyLockStudentRepositoryOperation(true);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         // has AFTER_DUE_DATE tests and no additional build after due date => update the scores to show those test cases in it
-        verify(programmingExerciseGradingService, Mockito.times(1)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
+        verify(programmingExerciseGradingService, times(1)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
         // make sure to trigger the update only for participants who do not have got an individual due date
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }

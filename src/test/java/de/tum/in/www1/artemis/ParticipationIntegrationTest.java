@@ -513,7 +513,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         final var participation2 = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
-        Mockito.doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
 
         final var participationsToUpdate = new StudentParticipationList(participation, participation2);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
@@ -605,7 +605,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
 
-        Mockito.doNothing().when(programmingExerciseParticipationService).lockStudentRepository(exercise, participation);
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepository(exercise, participation);
 
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,

@@ -65,10 +65,9 @@ public class TextSubmissionService extends SubmissionService {
         final var participation = optionalParticipation.get();
         final var dueDate = exerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (textExercise.isCourseExercise()) {
-            if (dueDate.isPresent() && participation.getInitializationDate().isBefore(dueDate.get()) && dueDate.get().isBefore(ZonedDateTime.now())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            }
+        if (textExercise.isCourseExercise() && dueDate.isPresent() && participation.getInitializationDate().isBefore(dueDate.get())
+                && dueDate.get().isBefore(ZonedDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
