@@ -395,7 +395,7 @@
                     "exerciseStart": "Aufgabengruppe",
                     "exercise": "Aufgabenvariante.",
                     "exercises": "Aufgabenvarianten.",
-                    "leastonestudent": "Anzahl angemeldeter Studierender ist größer als 0",
+                    "leastonestudent": "Es gibt bereits angemeldete Studierende",
                     "studentsregistered": "Aktuelle Anzahl angemeldeter Studierender:",
                     "allexamsgenerated": "Alle Klausuren generiert für alle angemeldeten Studierenden",
                     "pulishingdateset": "Veröffentlichungsdatum der Ergebnisse gesetzt",
