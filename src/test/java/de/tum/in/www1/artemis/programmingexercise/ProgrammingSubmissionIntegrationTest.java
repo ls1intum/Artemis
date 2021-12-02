@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
-import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,7 +24,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -252,7 +250,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
         verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise,
-                Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+                TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }
 
@@ -360,7 +358,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
-        submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        submission.setCommitHash(COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
@@ -372,7 +370,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         // Mock again because we call the trigger request two times
         bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        String url = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         verify(messagingTemplate).convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
@@ -389,7 +387,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     public void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
+        String url = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
     }
 
@@ -399,7 +397,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var participation = createExerciseWithSubmissionAndParticipation();
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationService).triggerBuild(participation);
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        String url = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
@@ -34,7 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 public class User extends AbstractAuditingEntity implements Participant {
 
     @NotNull
-    @Pattern(regexp = Constants.LOGIN_REGEX)
+    @Pattern(regexp = LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
     private String login;

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
  */
 
-@Profile("dev")
+@Profile(SPRING_PROFILE_DEVELOPMENT)
 @RestController
 @RequestMapping(ProgrammingSubmissionResultSimulationResource.Endpoints.ROOT)
 public class ProgrammingSubmissionResultSimulationResource {

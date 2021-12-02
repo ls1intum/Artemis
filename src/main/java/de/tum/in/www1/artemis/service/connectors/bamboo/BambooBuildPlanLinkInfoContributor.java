@@ -8,10 +8,11 @@ import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.config.Constants;
+import static de.tum.in.www1.artemis.config.Constants.INFO_BUILD_PLAN_URL_DETAIL;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
 
 @Component
-@Profile("bamboo")
+@Profile(SPRING_PROFILE_BAMBOO)
 public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")
@@ -20,6 +21,6 @@ public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         final var buildPlanURLTemplate = bambooServerUrl + "/browse/{buildPlanId}";
-        builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
+        builder.withDetail(INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
 }

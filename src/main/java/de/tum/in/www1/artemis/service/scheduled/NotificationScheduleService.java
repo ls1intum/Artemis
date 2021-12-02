@@ -19,10 +19,12 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import tech.jhipster.config.JHipsterConstants;
+
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 @Service
-@Profile("scheduling")
+@Profile(SPRING_PROFILE_SCHEDULING)
 public class NotificationScheduleService implements IExerciseScheduleService<Exercise> {
 
     private final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);
@@ -48,7 +50,7 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
     public void scheduleRunningExercisesOnStartup() {
         try {
             Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT)) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;

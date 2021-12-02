@@ -18,12 +18,14 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.*;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+
 /**
  * This service is only available on a node with the 'scheduling' profile.
  * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
  */
 @Service
-@Profile("scheduling")
+@Profile(SPRING_PROFILE_SCHEDULING)
 public class InstanceMessageReceiveService {
 
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);

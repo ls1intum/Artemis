@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 @Component
 public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 

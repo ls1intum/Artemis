@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -13,7 +14,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -479,8 +479,8 @@ public class Course extends DomainObject {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        if (courseIcon != null && courseIcon.contains(FILEPATH_ID_PLACEHOLDER)) {
+            courseIcon = courseIcon.replace(FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
         prevCourseIcon = courseIcon; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
@@ -494,8 +494,8 @@ public class Course extends DomainObject {
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        if (courseIcon != null && courseIcon.contains(FILEPATH_ID_PLACEHOLDER)) {
+            courseIcon = courseIcon.replace(FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
     }
 

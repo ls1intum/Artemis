@@ -8,8 +8,10 @@ import org.springframework.data.ldap.repository.config.EnableLdapRepositories;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_LDAP;
+
 @Configuration
-@Profile("ldap")
+@Profile(SPRING_PROFILE_LDAP)
 @EnableLdapRepositories
 public class LdapConfig {
 

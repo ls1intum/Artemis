@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
@@ -25,7 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 
 @Component
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AtheneRequestMockProvider {
 
     private final RestTemplate restTemplate;

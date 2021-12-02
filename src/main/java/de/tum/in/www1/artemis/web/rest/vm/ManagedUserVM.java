@@ -4,9 +4,11 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ManagedUserVM extends UserDTO {
 
-    @Size(min = Constants.PASSWORD_MIN_LENGTH, max = Constants.PASSWORD_MAX_LENGTH)
+    @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH)
     private String password;
 
     public ManagedUserVM() {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JIRA;
 import static org.springframework.test.web.client.ExpectedCount.never;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -30,7 +31,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGr
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupsDTO;
 
 @Component
-@Profile("jira")
+@Profile(SPRING_PROFILE_JIRA)
 public class JiraRequestMockProvider {
 
     @Value("${artemis.user-management.external.url}")

@@ -20,7 +20,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Profile("jenkins")
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
+@Profile(SPRING_PROFILE_JENKINS)
 @Component
 public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 

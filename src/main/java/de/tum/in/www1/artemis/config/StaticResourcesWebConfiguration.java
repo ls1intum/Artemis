@@ -9,11 +9,12 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistra
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
+
 @Configuration
-@Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
+@Profile(SPRING_PROFILE_PRODUCTION)
 public class StaticResourcesWebConfiguration implements WebMvcConfigurer {
 
     protected static final String[] RESOURCE_LOCATIONS = new String[] { "classpath:/static/app/", "classpath:/static/content/", "classpath:/static/i18n/" };

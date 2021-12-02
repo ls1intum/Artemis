@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
@@ -17,7 +18,7 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AutomaticTextFeedbackService {
 
     private final FeedbackRepository feedbackRepository;

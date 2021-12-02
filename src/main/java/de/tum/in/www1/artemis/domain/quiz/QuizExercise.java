@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import static de.tum.in.www1.artemis.config.Constants.QUIZ_GRACE_PERIOD_IN_SECONDS;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.QUIZ;
 
 import java.time.ZonedDateTime;
@@ -18,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -190,7 +190,7 @@ public class QuizExercise extends Exercise {
      */
     @JsonIgnore
     public Boolean isSubmissionAllowed() {
-        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
+        return isStarted() && getRemainingTime() + QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
     }
 
     /**
@@ -201,7 +201,7 @@ public class QuizExercise extends Exercise {
     @JsonView(QuizView.Before.class)
     @Override
     public Boolean isEnded() {
-        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
+        return isStarted() && getRemainingTime() + QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
 
     /**

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -29,7 +30,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
 
 @Service
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AtheneService {
 
     private final Logger log = LoggerFactory.getLogger(AtheneService.class);

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
 import static java.util.stream.Collectors.*;
 
 import java.time.ZonedDateTime;
@@ -22,7 +23,7 @@ import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 
 @Service
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AutomaticTextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(AutomaticTextAssessmentConflictService.class);

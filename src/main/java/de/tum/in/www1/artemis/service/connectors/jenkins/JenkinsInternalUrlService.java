@@ -13,7 +13,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
-@Profile("jenkins")
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
+@Profile(SPRING_PROFILE_JENKINS)
 @Service
 public class JenkinsInternalUrlService {
 

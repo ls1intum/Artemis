@@ -16,8 +16,10 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+
 @Service
-@Profile("scheduling")
+@Profile(SPRING_PROFILE_SCHEDULING)
 public class UserScheduleService {
 
     @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")

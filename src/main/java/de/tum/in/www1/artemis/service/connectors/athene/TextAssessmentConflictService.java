@@ -14,8 +14,10 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 @Service
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class TextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentConflictService.class);

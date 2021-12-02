@@ -19,13 +19,15 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 /**
  * Only for local development
  * Simulates the creation of a programming exercise without a connection to the VCS and CI server
  * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
  */
 
-@Profile("dev")
+@Profile(SPRING_PROFILE_DEVELOPMENT)
 @Service
 public class ProgrammingSubmissionResultSimulationService {
 

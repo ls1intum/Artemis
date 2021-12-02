@@ -36,8 +36,10 @@ import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
+
 @Service
-@Profile("bitbucket")
+@Profile(SPRING_PROFILE_BITBUCKET)
 public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.ldap;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_LDAP;
 import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 
 @Service
-@Profile("ldap")
+@Profile(SPRING_PROFILE_LDAP)
 public class LdapUserService {
 
     private final Logger log = LoggerFactory.getLogger(LdapUserService.class);

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
@@ -28,7 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("scheduling")
+@Profile(SPRING_PROFILE_SCHEDULING)
 public class AutomaticProgrammingExerciseCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticProgrammingExerciseCleanupService.class);

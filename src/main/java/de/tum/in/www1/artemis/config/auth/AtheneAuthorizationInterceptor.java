@@ -13,8 +13,10 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 @Component
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AtheneAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.athene.base64-secret}")

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
 import static java.util.stream.Collectors.*;
 
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -235,10 +235,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         if (sourcePath == null || sourcePath.isEmpty()) {
             return DEFAULT_FILEPATH;
         }
-        int workingDirectoryStart = sourcePath.indexOf(Constants.ASSIGNMENT_DIRECTORY);
+        int workingDirectoryStart = sourcePath.indexOf(ASSIGNMENT_DIRECTORY);
         if (workingDirectoryStart == -1) {
             return sourcePath;
         }
-        return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
+        return sourcePath.substring(workingDirectoryStart + ASSIGNMENT_DIRECTORY.length());
     }
 }

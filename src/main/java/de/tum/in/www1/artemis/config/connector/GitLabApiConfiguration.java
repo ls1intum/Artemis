@@ -8,8 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_GITLAB;
+
 @Configuration
-@Profile("gitlab")
+@Profile(SPRING_PROFILE_GITLAB)
 public class GitLabApiConfiguration {
 
     @Value("${artemis.version-control.token}")

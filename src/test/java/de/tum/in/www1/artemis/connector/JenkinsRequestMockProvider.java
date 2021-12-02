@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -48,7 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissi
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 public class JenkinsRequestMockProvider {
 
     @Value("${artemis.continuous-integration.url}")

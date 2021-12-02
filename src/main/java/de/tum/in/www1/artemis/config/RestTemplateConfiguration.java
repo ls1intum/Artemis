@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizatio
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 /**
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
  * to further customize how requests to other REST APIs are handled
@@ -31,46 +33,46 @@ public class RestTemplateConfiguration {
     private static final int SHORT_READ_TIMEOUT = 10 * 1000;
 
     @Bean
-    @Profile("gitlab")
+    @Profile(SPRING_PROFILE_GITLAB)
     @Autowired // ok
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("jenkins")
+    @Profile(SPRING_PROFILE_JENKINS)
     @Autowired // ok
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("jira")
+    @Profile(SPRING_PROFILE_JIRA)
     @Autowired // ok
     public RestTemplate jiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("bitbucket")
+    @Profile(SPRING_PROFILE_BITBUCKET)
     public RestTemplate bitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("bamboo")
+    @Profile(SPRING_PROFILE_BAMBOO)
     public RestTemplate bambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("athene")
+    @Profile(SPRING_PROFILE_ATHENE)
     public RestTemplate atheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("apollon")
+    @Profile(SPRING_PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
     }
@@ -79,46 +81,46 @@ public class RestTemplateConfiguration {
     // it is recommended to keep the timeout settings constant per rest template
 
     @Bean
-    @Profile("gitlab")
+    @Profile(SPRING_PROFILE_GITLAB)
     @Autowired // ok
     public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("jenkins")
+    @Profile(SPRING_PROFILE_JENKINS)
     @Autowired // ok
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("jira")
+    @Profile(SPRING_PROFILE_JIRA)
     @Autowired // ok
     public RestTemplate shortTimeoutJiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("bitbucket")
+    @Profile(SPRING_PROFILE_BITBUCKET)
     public RestTemplate shortTimeoutBitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("bamboo")
+    @Profile(SPRING_PROFILE_BAMBOO)
     public RestTemplate shortTimeoutBambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("athene")
+    @Profile(SPRING_PROFILE_ATHENE)
     public RestTemplate shortTimeoutAtheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("apollon")
+    @Profile(SPRING_PROFILE_APOLLON)
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
     }

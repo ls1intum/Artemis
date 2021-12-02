@@ -14,8 +14,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 @Component
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AtheneHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;

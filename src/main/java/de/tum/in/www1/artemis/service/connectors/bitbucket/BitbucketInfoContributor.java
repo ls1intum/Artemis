@@ -9,10 +9,10 @@ import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.config.Constants;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
 
 @Component
-@Profile("bitbucket")
+@Profile(SPRING_PROFILE_BITBUCKET)
 public class BitbucketInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")

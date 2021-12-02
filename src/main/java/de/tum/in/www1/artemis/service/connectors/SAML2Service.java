@@ -27,20 +27,22 @@ import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SAML2;
+
 /**
  * This class describes a service for SAML2 authentication.
- * 
+ *
  * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
- * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already. 
- * 
+ * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already.
+ *
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
  * via patterns for every field in the SAML2 configuration.
- * 
+ *
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
 @Service
-@Profile("saml2")
+@Profile(SPRING_PROFILE_SAML2)
 public class SAML2Service {
 
     @Value("${info.saml2.enable-password:#{null}}")
@@ -76,7 +78,7 @@ public class SAML2Service {
 
     /**
      * Handles an authentication via SAML2.
-     * 
+     *
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
      * @param principal the principal, containing the user information

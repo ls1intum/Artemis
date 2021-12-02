@@ -14,12 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
+
 /**
  * REST controller for managing ApollonDiagram.
  */
 @RestController
 @RequestMapping("/api")
-@Profile("apollon")
+@Profile(SPRING_PROFILE_APOLLON)
 public class ApollonConversionResource {
 
     private final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);

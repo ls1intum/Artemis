@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jira;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JIRA;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Component
-@Profile("jira")
+@Profile(SPRING_PROFILE_JIRA)
 @Primary
 @ComponentScan("de.tum.in.www1.artemis.*")
 public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {

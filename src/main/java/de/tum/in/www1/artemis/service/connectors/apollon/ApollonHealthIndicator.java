@@ -15,8 +15,10 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_APOLLON;
+
 @Component
-@Profile("apollon")
+@Profile(SPRING_PROFILE_APOLLON)
 public class ApollonHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;

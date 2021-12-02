@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.service.messaging;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+
 /**
  * This service is only present on a node that runs the 'scheduling' profile.
  * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
  */
 @Service
-@Profile("scheduling")
+@Profile(SPRING_PROFILE_SCHEDULING)
 public class MainInstanceMessageSendService implements InstanceMessageSendService {
 
     public InstanceMessageReceiveService instanceMessageReceiveService;

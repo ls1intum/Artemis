@@ -19,8 +19,10 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 @Service
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 public class JenkinsJobService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsJobService.class);

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.*;
 
@@ -12,7 +13,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
 @Service
-@Profile("bamboo")
+@Profile(SPRING_PROFILE_BAMBOO)
 public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public BambooProgrammingLanguageFeatureService() {

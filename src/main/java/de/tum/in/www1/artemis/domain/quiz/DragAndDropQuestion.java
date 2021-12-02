@@ -11,11 +11,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+
+import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
 
 /**
  * A DragAndDropQuestion.
@@ -154,8 +155,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        if (backgroundFilePath != null && backgroundFilePath.contains(FILEPATH_ID_PLACEHOLDER)) {
+            backgroundFilePath = backgroundFilePath.replace(FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
         // save current path as old path (needed to know old path in onUpdate() and onDelete())
         prevBackgroundFilePath = backgroundFilePath;

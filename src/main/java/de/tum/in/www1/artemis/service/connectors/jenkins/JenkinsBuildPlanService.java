@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
 
 import java.io.IOException;
 import java.net.URI;
@@ -46,7 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Service
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 public class JenkinsBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);

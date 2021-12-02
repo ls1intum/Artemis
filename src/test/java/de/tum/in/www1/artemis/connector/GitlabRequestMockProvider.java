@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_GITLAB;
 import static org.gitlab4j.api.models.AccessLevel.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -44,7 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementServ
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
-@Profile("gitlab")
+@Profile(SPRING_PROFILE_GITLAB)
 public class GitlabRequestMockProvider {
 
     @Value("${artemis.version-control.url}")

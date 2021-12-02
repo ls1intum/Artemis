@@ -4,7 +4,9 @@ import java.security.SecureRandom;
 
 import org.springframework.context.annotation.Profile;
 
-@Profile("dev")
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
+@Profile(SPRING_PROFILE_DEVELOPMENT)
 public class VCSSimulationUtils {
 
     /**

@@ -18,6 +18,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE;
+
 /**
  * This component is used to create a jwt token for the tutor-assessment tracking.
  * <p>
@@ -25,7 +27,7 @@ import io.jsonwebtoken.security.Keys;
  * is assessed
  */
 @Component
-@Profile("athene")
+@Profile(SPRING_PROFILE_ATHENE)
 public class AtheneTrackingTokenProvider {
 
     private final Logger log = LoggerFactory.getLogger(AtheneTrackingTokenProvider.class);

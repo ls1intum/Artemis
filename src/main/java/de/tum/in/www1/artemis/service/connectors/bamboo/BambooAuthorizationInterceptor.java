@@ -14,7 +14,9 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
-@Profile("bamboo")
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
+
+@Profile(SPRING_PROFILE_BAMBOO)
 @Component
 public class BambooAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 

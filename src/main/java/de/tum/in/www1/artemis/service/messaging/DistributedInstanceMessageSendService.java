@@ -11,12 +11,14 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_NOT_SCHEDULING;
+
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
  */
 @Service
-@Profile("!scheduling")
+@Profile(SPRING_PROFILE_NOT_SCHEDULING)
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {
 
     private final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);

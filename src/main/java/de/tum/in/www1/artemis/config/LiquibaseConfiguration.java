@@ -14,8 +14,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import liquibase.integration.spring.SpringLiquibase;
-import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
+
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE;
 
 @Configuration
 public class LiquibaseConfiguration {
@@ -54,7 +55,7 @@ public class LiquibaseConfiguration {
         liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         liquibase.setRollbackFile(liquibaseProperties.getRollbackFile());
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
-        if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE))) {
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_NO_LIQUIBASE))) {
             liquibase.setShouldRun(false);
             log.info("Liquibase is disabled");
         }

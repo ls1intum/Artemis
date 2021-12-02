@@ -12,7 +12,9 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
-@Profile("gitlab")
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_GITLAB;
+
+@Profile(SPRING_PROFILE_GITLAB)
 @Component
 public class GitLabAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 

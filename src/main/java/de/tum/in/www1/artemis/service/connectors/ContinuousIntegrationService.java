@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -248,7 +247,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY -> Constants.ASSIGNMENT_CHECKOUT_PATH;
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY -> ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -258,7 +257,7 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY -> "";
-                    case C, VHDL, ASSEMBLER, OCAML -> Constants.TESTS_CHECKOUT_PATH;
+                    case C, VHDL, ASSEMBLER, OCAML -> TESTS_CHECKOUT_PATH;
                 };
             }
         },
@@ -267,7 +266,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case HASKELL, OCAML -> Constants.SOLUTION_CHECKOUT_PATH;
+                    case HASKELL, OCAML -> SOLUTION_CHECKOUT_PATH;
                     default -> throw new IllegalArgumentException("Repository checkout path for solution repo has not yet been defined for " + language);
                 };
             }

@@ -13,8 +13,10 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JIRA;
+
 @Component
-@Profile("jira")
+@Profile(SPRING_PROFILE_JIRA)
 public class JiraAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.user-management.external.user}")

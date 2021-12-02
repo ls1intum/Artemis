@@ -10,8 +10,10 @@ import org.springframework.context.annotation.Profile;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 @Configuration
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 public class JenkinsServerConfiguration {
 
     @Value("${artemis.continuous-integration.user}")

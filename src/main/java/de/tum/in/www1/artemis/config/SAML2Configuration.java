@@ -25,6 +25,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.*;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SAML2;
+
 /**
  * This class describes the security configuration for SAML2.
  *
@@ -34,7 +36,7 @@ import org.springframework.security.saml2.provider.service.registration.*;
 // @formatter:off
 @Configuration
 @Order(1)
-@Profile("saml2")
+@Profile(SPRING_PROFILE_SAML2)
 public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);

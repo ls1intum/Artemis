@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_ATHENE_AND_SCHEDULING;
 import static java.time.Instant.now;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -24,10 +26,9 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("athene & scheduling")
+@Profile(SPRING_PROFILE_ATHENE_AND_SCHEDULING)
 public class AtheneScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(AtheneScheduleService.class);
@@ -56,7 +57,7 @@ public class AtheneScheduleService {
     @PostConstruct
     private void scheduleRunningExercisesOnStartup() {
         final Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT)) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;

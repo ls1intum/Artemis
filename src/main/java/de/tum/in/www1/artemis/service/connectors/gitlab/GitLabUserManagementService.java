@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_GITLAB;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.util.*;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
-@Profile("gitlab")
+@Profile(SPRING_PROFILE_GITLAB)
 public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET;
 import static de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -38,7 +39,7 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
-@Profile("bitbucket")
+@Profile(SPRING_PROFILE_BITBUCKET)
 public class BitbucketRequestMockProvider {
 
     @Value("${artemis.version-control.url}")

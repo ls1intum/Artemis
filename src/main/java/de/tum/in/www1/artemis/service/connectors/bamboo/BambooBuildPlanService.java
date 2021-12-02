@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.io.IOException;
 import java.net.URL;
@@ -57,10 +58,9 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("bamboo")
+@Profile(SPRING_PROFILE_BAMBOO)
 public class BambooBuildPlanService {
 
     @Value("${artemis.continuous-integration.user}")
@@ -168,7 +168,7 @@ public class BambooBuildPlanService {
 
         // Do not run the builds in extra docker containers if the dev-profile is active
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
+        if (!activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
         }
         switch (programmingLanguage) {

@@ -27,17 +27,17 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BITBUCKET_AND_BAMBOO;
+
 @Service
-// Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
-// this if any profile is active (OR). We want both (AND)
-@Profile("bamboo & bitbucket")
+@Profile(SPRING_PROFILE_BITBUCKET_AND_BAMBOO)
 public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdateService {
 
     @Value("${artemis.continuous-integration.url}")
@@ -82,7 +82,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             // previous exercise
             if (optionalTriggeredByRepositories.isPresent() && bambooRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
                 optionalTriggeredByRepositories = Optional.of(optionalTriggeredByRepositories.get().stream()
-                        .map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
+                        .map(trigger -> trigger.replace(ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
             }
             optionalTriggeredByRepositories.ifPresent(triggeredByRepositories -> overwriteTriggers(buildPlanKey, triggeredByRepositories));
 

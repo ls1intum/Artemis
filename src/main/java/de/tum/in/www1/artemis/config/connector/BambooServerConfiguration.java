@@ -11,8 +11,10 @@ import com.atlassian.bamboo.specs.util.BambooServer;
 import com.atlassian.bamboo.specs.util.SimpleTokenCredentials;
 import com.atlassian.bamboo.specs.util.TokenCredentials;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_BAMBOO;
+
 @Configuration
-@Profile("bamboo")
+@Profile(SPRING_PROFILE_BAMBOO)
 public class BambooServerConfiguration {
 
     @Value("${artemis.continuous-integration.token}")

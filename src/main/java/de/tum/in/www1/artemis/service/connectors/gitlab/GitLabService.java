@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_GITLAB;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
@@ -41,7 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
-@Profile("gitlab")
+@Profile(SPRING_PROFILE_GITLAB)
 @Service
 public class GitLabService extends AbstractVersionControlService {
 

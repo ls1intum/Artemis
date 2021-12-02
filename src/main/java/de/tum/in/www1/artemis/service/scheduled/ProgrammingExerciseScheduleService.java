@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_SCHEDULING;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -36,10 +38,9 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("scheduling")
+@Profile(SPRING_PROFILE_SCHEDULING)
 public class ProgrammingExerciseScheduleService implements IExerciseScheduleService<ProgrammingExercise> {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseScheduleService.class);
@@ -92,7 +93,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     public void scheduleRunningExercisesOnStartup() {
         try {
             Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT)) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;

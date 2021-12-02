@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.REGISTER_FOR_COURSE;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 
 import java.nio.file.Files;
@@ -20,7 +21,6 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -277,7 +277,7 @@ public class CourseService {
      */
     public void registerUserForCourse(User user, Course course) {
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
-        final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
+        final var auditEvent = new AuditEvent(user.getLogin(), REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
     }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.ldap;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_LDAP;
 import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 
 import javax.naming.Name;
@@ -10,7 +11,7 @@ import org.springframework.ldap.odm.annotations.Entry;
 import org.springframework.ldap.odm.annotations.Id;
 
 @Entry(base = "ou=users", objectClasses = { "imdPerson" })
-@Profile("ldap")
+@Profile(SPRING_PROFILE_LDAP)
 final public class LdapUserDto {
 
     @Id

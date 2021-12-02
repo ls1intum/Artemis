@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Service
-@Profile("bamboo")
+@Profile(SPRING_PROFILE_BAMBOO)
 public class BambooService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);

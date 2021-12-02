@@ -36,8 +36,10 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissi
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 @Service
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 public class JenkinsUserManagementService implements CIUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(JenkinsUserManagementService.class);

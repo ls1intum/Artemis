@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
@@ -35,7 +36,6 @@ import org.springframework.util.FileSystemUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
@@ -204,7 +204,7 @@ public class FileService implements DisposableBean {
         String filename = Paths.get(actualPath).getFileName().toString();
 
         // generate part for id
-        String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
+        String id = entityId == null ? FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         // check for known path to convert
         if (actualPath.contains(FilePathService.getTempFilePath())) {

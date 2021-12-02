@@ -10,8 +10,10 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
 
+import static de.tum.in.www1.artemis.config.Constants.SPRING_PROFILE_JENKINS;
+
 @Component
-@Profile("jenkins")
+@Profile(SPRING_PROFILE_JENKINS)
 public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")

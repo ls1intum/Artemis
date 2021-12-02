@@ -12,11 +12,12 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+
+import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
 
 /**
  * A Attachment.
@@ -81,11 +82,11 @@ public class Attachment extends DomainObject implements Serializable {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (attachmentType == AttachmentType.FILE && getLecture() != null && link != null && link.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            link = link.replace(Constants.FILEPATH_ID_PLACEHOLDER, getLecture().getId().toString());
+        if (attachmentType == AttachmentType.FILE && getLecture() != null && link != null && link.contains(FILEPATH_ID_PLACEHOLDER)) {
+            link = link.replace(FILEPATH_ID_PLACEHOLDER, getLecture().getId().toString());
         }
-        else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null && link != null && link.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            link = link.replace(Constants.FILEPATH_ID_PLACEHOLDER, getAttachmentUnit().getId().toString());
+        else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null && link != null && link.contains(FILEPATH_ID_PLACEHOLDER)) {
+            link = link.replace(FILEPATH_ID_PLACEHOLDER, getAttachmentUnit().getId().toString());
         }
 
         prevLink = link; // save current path as old path (needed to know old path in onUpdate() and onDelete())
@@ -107,11 +108,11 @@ public class Attachment extends DomainObject implements Serializable {
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACEHOLDER) && getLecture() != null) {
-            link = link.replace(Constants.FILEPATH_ID_PLACEHOLDER, getLecture().getId().toString());
+        if (attachmentType == AttachmentType.FILE && link != null && link.contains(FILEPATH_ID_PLACEHOLDER) && getLecture() != null) {
+            link = link.replace(FILEPATH_ID_PLACEHOLDER, getLecture().getId().toString());
         }
-        else if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACEHOLDER) && getAttachmentUnit() != null) {
-            link = link.replace(Constants.FILEPATH_ID_PLACEHOLDER, getAttachmentUnit().getId().toString());
+        else if (attachmentType == AttachmentType.FILE && link != null && link.contains(FILEPATH_ID_PLACEHOLDER) && getAttachmentUnit() != null) {
+            link = link.replace(FILEPATH_ID_PLACEHOLDER, getAttachmentUnit().getId().toString());
         }
     }
 

@@ -12,11 +12,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+
+import static de.tum.in.www1.artemis.config.Constants.FILEPATH_ID_PLACEHOLDER;
 
 /**
  * A DragItem.
@@ -124,8 +125,8 @@ public class DragItem extends TempIdObject {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (pictureFilePath != null && pictureFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            pictureFilePath = pictureFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        if (pictureFilePath != null && pictureFilePath.contains(FILEPATH_ID_PLACEHOLDER)) {
+            pictureFilePath = pictureFilePath.replace(FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
         // save current path as old path (needed to know old path in onUpdate() and onDelete())
         prevPictureFilePath = pictureFilePath;
@@ -140,8 +141,8 @@ public class DragItem extends TempIdObject {
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (pictureFilePath != null && pictureFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            pictureFilePath = pictureFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        if (pictureFilePath != null && pictureFilePath.contains(FILEPATH_ID_PLACEHOLDER)) {
+            pictureFilePath = pictureFilePath.replace(FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
     }
 
