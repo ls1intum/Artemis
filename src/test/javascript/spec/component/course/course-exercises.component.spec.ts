@@ -309,7 +309,7 @@ describe('CourseExercisesComponent', () => {
         component.toggleFilters([ExerciseFilter.OVERDUE]);
 
         // ToDo: check that exercise is shown
-        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.OVERDUE));
-        expect(component.exerciseCountMap.get('modeling')).to.equal(1);
+        expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.OVERDUE));
+        expect(component.exerciseCountMap.get('modeling')).toBe(1);
     });
 });

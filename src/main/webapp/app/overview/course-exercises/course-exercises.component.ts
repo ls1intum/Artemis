@@ -188,7 +188,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
             const participation = exercise.studentParticipations && exercise.studentParticipations.length > 0 ? exercise.studentParticipations[0] : undefined;
             return (
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
-                (!exercise.dueDate || !overdueFilterActive || hasExerciseDueDatePassed(exercise, participation)) &&
+                (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
                 (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
                 (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING)
