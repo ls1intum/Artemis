@@ -723,11 +723,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Formats the datalabel for every bar in order to satisfy the following pattern:
      * number of submissions (percentage of submissions)
-     * @param value the number of submissions that fall in the grading step
+     * @param submissionCount the number of submissions that fall in the grading step
      * @returns string containing the number of submissions + (percentage of submissions)
      */
-    formatDataLabel(value: number): string {
-        const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((value * 100) / this.noOfExamsFiltered) : 0;
-        return value + ' (' + percentage + '%)';
+    formatDataLabel(submissionCount: number): string {
+        const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((submissionCount * 100) / this.noOfExamsFiltered) : 0;
+        return submissionCount + ' (' + percentage + '%)';
     }
 }
