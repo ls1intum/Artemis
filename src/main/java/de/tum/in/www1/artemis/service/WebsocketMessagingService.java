@@ -69,7 +69,7 @@ public class WebsocketMessagingService {
                 isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
             }
             else {
-                isWorkingPeriodOver = exerciseDateService.isAfterDueDate(participation);
+                isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
             }
             // Don't send students results after the exam ended
             boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise();

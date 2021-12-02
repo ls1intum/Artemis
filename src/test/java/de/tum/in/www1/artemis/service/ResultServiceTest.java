@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,6 +40,9 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Autowired
     private ResultService resultService;
 
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository participationRepository;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -45,7 +51,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     public void reset() {
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(2, 1, 1, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
         this.programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
@@ -182,6 +188,56 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
 
+        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+    }
+
+    @ParameterizedTest
+    @EnumSource(AssessmentType.class)
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testGetFeedbacksForResultAsStudent_shouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(2));
+        participationRepository.save(participation2);
+
+        Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+
+        List<Feedback> expectedFeedbacks;
+        if (AssessmentType.AUTOMATIC == assessmentType) {
+            expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).collect(Collectors.toList());
+            assertThat(expectedFeedbacks).hasSize(2);
+        }
+        else {
+            expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+            assertThat(expectedFeedbacks).hasSize(3);
+        }
+        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
+    }
+
+    @ParameterizedTest
+    @EnumSource(AssessmentType.class)
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testGetFeedbacksForResultAsStudent_shouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        participation2.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
+        participationRepository.save(participation2);
+
+        Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+
+        List<Feedback> expectedFeedbacks;
+        expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+        assertThat(expectedFeedbacks).hasSize(3);
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
 }
