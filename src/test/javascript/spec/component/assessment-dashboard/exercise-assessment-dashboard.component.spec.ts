@@ -60,7 +60,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
@@ -177,7 +177,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: jest.SpyInstance;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [ArtemisTestModule, MockModule(NgxChartsModule)];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)];
 
     const declarations = [
         ExerciseAssessmentDashboardComponent,
@@ -202,8 +202,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockTranslateValuesDirective,
         MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
-        MockRouterLinkDirective,
-        MockQueryParamsDirective,
     ];
 
     const providers = [
