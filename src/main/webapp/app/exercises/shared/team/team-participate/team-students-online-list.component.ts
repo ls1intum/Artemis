@@ -41,7 +41,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * client sometimes and thus the list is explicitly requested once more after a short timeout to cover those cases.
      */
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
+        this.accountService.identity().subscribe((user: User) => {
             this.currentUser = user;
             this.setupOnlineTeamStudentsReceiver();
             this.setupTypingIndicatorSender();

@@ -91,7 +91,7 @@ describe('ExamParticipationCoverComponent', () => {
 
     it('should initialize with ngOnInit', fakeAsync(() => {
         const user = { name: 'admin' } as User;
-        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+        jest.spyOn(accountService, 'identity').mockReturnValue(of(user));
 
         let now = dayjs();
         component.studentExam.workingTime = 1;

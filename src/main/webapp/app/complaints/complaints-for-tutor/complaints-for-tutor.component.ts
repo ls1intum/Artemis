@@ -38,7 +38,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     showRemoveLockButton = false;
     isLockedForLoggedInUser = false;
     userId: number;
-    isAllowedToRespond: boolean;
+    isAllowedToRespond = false;
 
     constructor(
         private alertService: AlertService,
@@ -49,12 +49,21 @@ export class ComplaintsForTutorComponent implements OnInit {
         private accountService: AccountService,
     ) {}
 
-    ngOnInit(): void {
+    ngOnInit() {
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
 
-            this.setIsAllowedToRespond().then(() => {
+            this.accountService.identity().subscribe((user) => {
+                this.isAllowedToRespond = isAllowedToRespondToComplaintAction(
+                    this.isAtLeastInstructor,
+                    this.isTestRun,
+                    this.isAssessor,
+                    this.complaint,
+                    this.exercise,
+                    this.exercise?.teamMode && (this.submission?.participation as StudentParticipation).team?.owner?.id === user!.id!,
+                );
+
                 if (this.handled) {
                     this.complaintResponse = this.complaint.complaintResponse!;
                     this.showRemoveLockButton = false;
@@ -76,25 +85,20 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     private createLock() {
         this.isLoading = true;
-        this.complaintResponseService
-            .createLock(this.complaint.id!)
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe(
-                (response) => {
-                    this.complaintResponse = response.body!;
-                    this.complaint = this.complaintResponse.complaint!;
-                    this.showRemoveLockButton = true;
-                    this.showLockDuration = true;
-                    this.alertService.success('artemisApp.locks.acquired');
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err);
-                },
-            );
+        this.complaintResponseService.createLock(this.complaint.id!).subscribe(
+            (response) => {
+                this.complaintResponse = response.body!;
+                this.complaint = this.complaintResponse.complaint!;
+                this.showRemoveLockButton = true;
+                this.showLockDuration = true;
+                this.alertService.success('artemisApp.locks.acquired');
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err);
+                this.isLoading = false;
+            },
+        );
     }
 
     private refreshLock() {
@@ -105,24 +109,19 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (!this.isLockedForLoggedInUser) {
             // update the lock
             this.isLoading = true;
-            this.complaintResponseService
-                .refreshLock(this.complaint.id!)
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe(
-                    (response) => {
-                        this.complaintResponse = response.body!;
-                        this.complaint = this.complaintResponse.complaint!;
-                        this.showRemoveLockButton = true;
-                        this.alertService.success('artemisApp.locks.acquired');
-                    },
-                    (err: HttpErrorResponse) => {
-                        this.onError(err);
-                    },
-                );
+            this.complaintResponseService.refreshLock(this.complaint.id!).subscribe(
+                (response) => {
+                    this.complaintResponse = response.body!;
+                    this.complaint = this.complaintResponse.complaint!;
+                    this.showRemoveLockButton = true;
+                    this.alertService.success('artemisApp.locks.acquired');
+                    this.isLoading = false;
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err);
+                    this.isLoading = false;
+                },
+            );
         } else {
             this.showRemoveLockButton = false;
         }

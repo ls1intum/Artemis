@@ -98,7 +98,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     ngOnInit() {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.userId = user!.id!;
         });
 

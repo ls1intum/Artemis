@@ -49,7 +49,7 @@ export class CloneRepoButtonComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.user = user!;
 
             // Only load password if current user login starts with 'edx_' or 'u4i_'

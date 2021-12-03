@@ -12,6 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     template: '',
@@ -26,6 +27,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     textBlockRefs: TextBlockRef[];
     unusedTextBlockRefs: TextBlockRef[];
     submission?: TextSubmission;
+    protected userLoaded: Promise<void>;
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -38,8 +40,9 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
     async ngOnInit() {
         // Used to check if the assessor is the current user
-        const identity = await this.accountService.identity();
-        this.userId = identity?.id;
+        this.userLoaded = firstValueFrom(this.accountService.identity()).then((user) => {
+            this.userId = user?.id;
+        });
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {

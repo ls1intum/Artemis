@@ -51,7 +51,7 @@ export class MetisService implements OnDestroy {
         private translateService: TranslateService,
         private jhiWebsocketService: JhiWebsocketService,
     ) {
-        this.accountService.identity().then((user: User) => {
+        this.accountService.identity().subscribe((user: User) => {
             this.user = user!;
         });
     }

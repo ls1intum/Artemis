@@ -28,7 +28,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     websocketTopic: string;
 
     constructor(private accountService: AccountService, private teamSubmissionWebsocketService: JhiWebsocketService, private alertService: AlertService) {
-        this.accountService.identity().then((user: User) => (this.currentUser = user));
+        this.accountService.identity().subscribe((user: User) => (this.currentUser = user));
     }
 
     /**

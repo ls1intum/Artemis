@@ -69,7 +69,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * Initializes current account and system notifications
      */
     ngOnInit() {
-        this.accountService.identity().then((user: User) => {
+        this.accountService.identity().subscribe((user: User) => {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();

@@ -30,7 +30,7 @@ export class LoginService {
         return new Promise<void>((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe(
                 () => {
-                    this.accountService.identity(true).then(() => {
+                    this.accountService.identity(true).subscribe(() => {
                         resolve();
                     });
                 },
@@ -50,7 +50,7 @@ export class LoginService {
         return new Promise<void>((resolve, reject) => {
             this.authServerProvider.loginSAML2(rememberMe).subscribe(
                 () => {
-                    this.accountService.identity(true).then(() => {
+                    this.accountService.identity(true).subscribe(() => {
                         resolve();
                     });
                 },

@@ -150,7 +150,7 @@ export class NotificationService {
     }
 
     private subscribeToSingleUserNotificationUpdates(): void {
-        this.accountService.identity().then((user: User | undefined) => {
+        this.accountService.identity().subscribe((user: User | undefined) => {
             if (user) {
                 const userTopic = `/topic/user/${user.id}/notifications`;
                 if (!this.subscribedTopics.includes(userTopic)) {

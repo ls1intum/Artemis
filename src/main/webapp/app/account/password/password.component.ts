@@ -36,7 +36,7 @@ export class PasswordComponent implements OnInit {
             }
         });
 
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.user = user;
         });
     }

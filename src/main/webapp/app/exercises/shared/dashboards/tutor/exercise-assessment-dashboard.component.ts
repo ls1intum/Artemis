@@ -197,7 +197,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
 
         this.loadAll();
-        this.accountService.identity().then((user: User) => (this.tutor = user));
+        this.accountService.identity().subscribe((user: User) => (this.tutor = user));
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });

@@ -101,7 +101,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.exam = defaultExam;
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
             const numberOfAllowedComplaintsMock = jest.spyOn(complaintService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
-            const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+            const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(of(user));
 
             fixture.detectChanges();
             tick(100);
@@ -119,7 +119,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.exam = defaultExam;
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
             const numberOfAllowedComplaintsMock = jest.spyOn(complaintService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
-            const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+            const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(of(user));
 
             fixture.detectChanges();
             tick(100);
@@ -295,7 +295,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.exercise = courseExercise;
             component.result = result;
             const complaintBySubmissionStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(content);
-            const userStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+            const userStub = jest.spyOn(accountService, 'identity').mockReturnValue(of(user));
 
             fixture.detectChanges();
             tick(100);

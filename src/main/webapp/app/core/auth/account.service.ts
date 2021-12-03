@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, lastValueFrom, Observable, of } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, Observable, of, Subscription } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -18,8 +18,8 @@ export interface IAccountService {
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: string[]) => boolean;
-    hasAuthority: (authority: string) => Promise<boolean>;
-    identity: (force?: boolean) => Promise<User | undefined>;
+    hasAuthority: (authority: string) => Observable<boolean>;
+    identity: (force?: boolean) => Observable<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastEditorInCourse: (course: Course) => boolean;
@@ -97,19 +97,21 @@ export class AccountService implements IAccountService {
         return false;
     }
 
-    hasAuthority(authority: string): Promise<boolean> {
+    hasAuthority(authority: string): Observable<boolean> {
         if (!this.authenticated) {
-            return Promise.resolve(false);
+            return of(false);
         }
 
-        return this.identity().then(
-            (id) => {
-                const authorities = id!.authorities!;
-                return Promise.resolve(authorities && authorities.includes(authority));
-            },
-            () => {
-                return Promise.resolve(false);
-            },
+        return this.identity().pipe(
+            map(
+                (id) => {
+                    const authorities = id!.authorities!;
+                    return authorities && authorities.includes(authority);
+                },
+                () => {
+                    return false;
+                },
+            ),
         );
     }
 
@@ -121,7 +123,7 @@ export class AccountService implements IAccountService {
         return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
     }
 
-    identity(force?: boolean): Promise<User | undefined> {
+    identity(force?: boolean): Observable<User | undefined> {
         if (force === true) {
             this.userIdentity = undefined;
         }
@@ -129,38 +131,36 @@ export class AccountService implements IAccountService {
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
         if (this.userIdentity) {
-            return Promise.resolve(this.userIdentity);
+            return of(this.userIdentity);
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
-        return lastValueFrom(
-            this.fetch().pipe(
-                map((response: HttpResponse<User>) => {
-                    const user = response.body!;
-                    if (user) {
-                        this.websocketService.connect();
-                        this.userIdentity = user;
+        return this.fetch().pipe(
+            map((response: HttpResponse<User>) => {
+                const user = response.body!;
+                if (user) {
+                    this.websocketService.connect();
+                    this.userIdentity = user;
 
-                        // improved error tracking in sentry
-                        setUser({ username: user.login! });
+                    // improved error tracking in sentry
+                    setUser({ username: user.login! });
 
-                        // After retrieve the account info, the language will be changed to
-                        // the user's preferred language configured in the account setting
-                        const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
-                        this.translateService.use(langKey);
-                    } else {
-                        this.userIdentity = undefined;
-                    }
-                    return this.userIdentity;
-                }),
-                catchError(() => {
-                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
-                        this.websocketService.disconnect();
-                    }
+                    // After retrieve the account info, the language will be changed to
+                    // the user's preferred language configured in the account setting
+                    const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
+                    this.translateService.use(langKey);
+                } else {
                     this.userIdentity = undefined;
-                    return of(undefined);
-                }),
-            ),
+                }
+                return this.userIdentity;
+            }),
+            catchError(() => {
+                if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                    this.websocketService.disconnect();
+                }
+                this.userIdentity = undefined;
+                return of(undefined);
+            }),
         );
     }
 

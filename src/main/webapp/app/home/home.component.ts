@@ -96,7 +96,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.currentUserCallback(user!);
 
             // Once this has loaded and the user is not defined, we know we need the user to log in
@@ -112,7 +112,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             // We only need to authenticate once, make sure we don't run this subscription multiple times
             this.eventManager.destroy(subscription);
 
-            this.accountService.identity().then((user) => {
+            this.accountService.identity().subscribe((user) => {
                 this.currentUserCallback(user!);
             });
         });

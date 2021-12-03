@@ -137,7 +137,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
-            this.accountService.identity().then((user: User) => {
+            this.accountService.identity().subscribe((user: User) => {
                 this.currentUser = user;
             });
             if (didExerciseChange || didCourseChange) {

@@ -74,7 +74,7 @@ describe('TeamComponent', () => {
             .compileComponents()
             .then(() => {
                 accountService = TestBed.inject(AccountService);
-                identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+                identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(of(user));
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 alertService = TestBed.inject(AlertService);

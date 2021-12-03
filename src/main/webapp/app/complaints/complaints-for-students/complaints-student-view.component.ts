@@ -74,7 +74,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 });
             }
             this.loadPotentialComplaint();
-            this.accountService.identity().then((user) => {
+            this.accountService.identity().subscribe((user) => {
                 if (user?.id) {
                     if (this.participation?.student) {
                         this.isCorrectUserToFileAction = this.participation.student.id === user.id;

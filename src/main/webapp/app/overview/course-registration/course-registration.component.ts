@@ -28,7 +28,7 @@ export class CourseRegistrationComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadRegistrableCourses();
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (profileInfo) {
                     this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);

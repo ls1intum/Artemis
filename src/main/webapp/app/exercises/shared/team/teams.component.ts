@@ -49,7 +49,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
         private accountService: AccountService,
     ) {
-        this.accountService.identity().then((user: User) => {
+        this.accountService.identity().subscribe((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();
         });

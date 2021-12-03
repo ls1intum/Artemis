@@ -86,7 +86,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.userId = user!.id!;
         });
         this.paramSub = this.route.params.subscribe((params) => {

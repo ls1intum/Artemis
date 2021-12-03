@@ -86,7 +86,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             this.currentAccount = user!;
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();

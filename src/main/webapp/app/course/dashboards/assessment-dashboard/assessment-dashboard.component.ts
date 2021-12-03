@@ -96,7 +96,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
-        this.accountService.identity().then((user) => (this.tutor = user!));
+        this.accountService.identity().subscribe((user) => (this.tutor = user!));
     }
 
     /**

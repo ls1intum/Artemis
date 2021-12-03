@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { MockFeatureToggleService } from '../helpers/mocks/service/mock-feature-toggle.service';
@@ -41,7 +41,7 @@ describe('AccountService', () => {
     it('should fetch the user on identity if the userIdentity is not defined yet', async () => {
         getStub.mockReturnValue(of({ body: user }));
 
-        const userReceived = await accountService.identity(false);
+        const userReceived = await firstValueFrom(accountService.identity(false));
 
         expect(getStub).toHaveBeenCalledTimes(1);
         expect(getStub).toHaveBeenCalledWith(getUserUrl, { observe: 'response' });
@@ -56,7 +56,7 @@ describe('AccountService', () => {
         expect(accountService.isAuthenticated()).toBe(true);
         getStub.mockReturnValue(of({ body: user2 }));
 
-        const userReceived = await accountService.identity(true);
+        const userReceived = await firstValueFrom(accountService.identity(true));
 
         expect(getStub).toHaveBeenCalledTimes(1);
         expect(getStub).toHaveBeenCalledWith(getUserUrl, { observe: 'response' });
@@ -71,7 +71,7 @@ describe('AccountService', () => {
         expect(accountService.isAuthenticated()).toBe(true);
         getStub.mockReturnValue(of({ body: user2 }));
 
-        const userReceived = await accountService.identity(false);
+        const userReceived = await firstValueFrom(accountService.identity(false));
 
         expect(getStub).not.toHaveBeenCalled();
         expect(userReceived).toEqual(user);

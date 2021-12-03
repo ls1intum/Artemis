@@ -55,7 +55,7 @@ describe('SettingsComponent', () => {
         [AccountService],
         fakeAsync((service: AccountService) => {
             // GIVEN
-            jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            jest.spyOn(service, 'identity').mockReturnValue(of(accountValues));
             jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
             jest.spyOn(service, 'authenticate');
 
@@ -84,7 +84,7 @@ describe('SettingsComponent', () => {
         [AccountService],
         fakeAsync((service: AccountService) => {
             // GIVEN
-            jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            jest.spyOn(service, 'identity').mockReturnValue(of(accountValues));
             jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
 
             // WHEN
@@ -102,7 +102,7 @@ describe('SettingsComponent', () => {
         [AccountService],
         fakeAsync((service: AccountService) => {
             // GIVEN
-            jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            jest.spyOn(service, 'identity').mockReturnValue(of(accountValues));
             jest.spyOn(service, 'save').mockReturnValue(throwError('ERROR'));
 
             // WHEN

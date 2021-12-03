@@ -5,14 +5,14 @@ import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 
 export class MockAccountService implements IAccountService {
-    identity = () => Promise.resolve({ id: 99 } as User);
+    identity = () => of({ id: 99 } as User);
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
     hasAnyAuthorityDirect = (authorities: any[]) => authorities.length !== 0;
     getAuthenticationState = () => of({ id: 99 } as User);
     authenticate = (identity: User | undefined) => {};
     fetch = () => of({ body: { id: 99 } as User } as any);
     getImageUrl = () => 'blob';
-    hasAuthority = (authority: string) => Promise.resolve(true);
+    hasAuthority = (authority: string) => of(true);
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastEditorInCourse = (course: Course) => course.isAtLeastEditor!;
     isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor!;

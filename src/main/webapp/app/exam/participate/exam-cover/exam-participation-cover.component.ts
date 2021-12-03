@@ -90,7 +90,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             }
         }
 
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             if (user && user.name) {
                 this.accountName = user.name;
             }

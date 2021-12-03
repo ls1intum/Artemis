@@ -79,7 +79,7 @@ export class UserRouteAccessService implements CanActivate {
     checkLogin(authorities: string[], url: string): Promise<boolean> {
         const accountService = this.accountService;
         return Promise.resolve(
-            accountService.identity().then((account) => {
+            accountService.identity().subscribe((account) => {
                 if (!authorities || authorities.length === 0) {
                     return true;
                 }

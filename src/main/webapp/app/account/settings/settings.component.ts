@@ -31,7 +31,7 @@ export class SettingsComponent implements OnInit {
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().subscribe((user) => {
             if (user) {
                 this.settingsForm.patchValue({
                     firstName: user.firstName,

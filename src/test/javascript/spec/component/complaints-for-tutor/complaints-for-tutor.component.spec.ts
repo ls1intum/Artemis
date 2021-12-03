@@ -27,6 +27,16 @@ describe('ComplaintsForTutorComponent', () => {
         id: 42,
     } as User;
 
+    function getUnhandledComplaint() {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        return unhandledComplaint;
+    }
+
     const lockComplaintResponse = new ComplaintResponse();
     lockComplaintResponse.id = 1;
 
@@ -34,14 +44,10 @@ describe('ComplaintsForTutorComponent', () => {
 
     const rejectedComplaintResponse = { ...lockComplaintResponse, responseText: 'rejected' };
 
-    const unhandledComplaint = new Complaint();
-    unhandledComplaint.id = 1;
-    unhandledComplaint.accepted = undefined;
-    unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
-    unhandledComplaint.complaintText = 'please check again';
-    unhandledComplaint.complaintResponse = undefined;
+    const freshlyCreatedComplaintResponse = { ...lockComplaintResponse, isCurrentlyLocked: true, complaint: getUnhandledComplaint() };
 
     let createLockStub: jest.SpyInstance<Observable<HttpResponse<ComplaintResponse>>, [complaintId: number]>;
+    let refreshLockStub: jest.SpyInstance<Observable<HttpResponse<ComplaintResponse>>, [complaintId: number]>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -56,8 +62,23 @@ describe('ComplaintsForTutorComponent', () => {
                 injectedComplaintResponseService = fixture.debugElement.injector.get(ComplaintResponseService);
                 injectedAccountService = fixture.debugElement.injector.get(AccountService);
 
-                jest.spyOn(injectedAccountService, 'identity').mockReturnValue(Promise.resolve(tutorUser));
-                createLockStub = jest.spyOn(injectedComplaintResponseService, 'createLock');
+                jest.spyOn(injectedAccountService, 'identity').mockReturnValue(of(tutorUser));
+                createLockStub = jest.spyOn(injectedComplaintResponseService, 'createLock').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: freshlyCreatedComplaintResponse,
+                            status: 201,
+                        }),
+                    ),
+                );
+                refreshLockStub = jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: freshlyCreatedComplaintResponse,
+                            status: 201,
+                        }),
+                    ),
+                );
             });
     });
 
@@ -90,21 +111,7 @@ describe('ComplaintsForTutorComponent', () => {
     });
 
     it('should create a new complaint response for a unhandled complaint without a connected complaint response', fakeAsync(() => {
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
-        createLockStub.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        complaintsForTutorComponent.complaint = getUnhandledComplaint();
         complaintsForTutorComponent.isAssessor = false;
 
         expectToBeLocked(freshlyCreatedComplaintResponse);
@@ -113,36 +120,21 @@ describe('ComplaintsForTutorComponent', () => {
     it('should refresh a complaint response for a unhandled complaint with a connected complaint response', fakeAsync(() => {
         jest.spyOn(injectedComplaintResponseService, 'isComplaintResponseLockedForLoggedInUser').mockReturnValue(false);
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = { ...unhandledComplaint, complaintResponse: lockComplaintResponse };
-
-        createLockStub.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
         complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        complaintsForTutorComponent.complaint = getUnhandledComplaint();
 
         expectToBeLocked(freshlyCreatedComplaintResponse);
     }));
 
     function expectToBeLocked(complaintResponse: ComplaintResponse) {
         fixture.detectChanges();
-
         tick();
 
         expect(createLockStub).toHaveBeenCalledTimes(1);
         expect(complaintsForTutorComponent.complaint).toEqual(complaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(complaintResponse);
-        const lockButton = fixture.debugElement.nativeElement.querySelector('#lockButton');
-        const lockDuration = fixture.debugElement.nativeElement.querySelector('#lockDuration');
+        const lockButton = fixture.debugElement.query(By.css('#lockButton'));
+        const lockDuration = fixture.debugElement.query(By.css('#lockDuration'));
 
         expect(lockButton).not.toBe(null);
         expect(lockDuration).not.toBe(null);
@@ -154,15 +146,14 @@ describe('ComplaintsForTutorComponent', () => {
     }
 
     it('should send event when accepting a complaint', fakeAsync(() => {
-        fixture.detectChanges();
         complaintsForTutorComponent.isLockedForLoggedInUser = false;
-
-        complaintsForTutorComponent.complaint = { ...unhandledComplaint, complaintResponse: acceptedComplaintResponse };
+        complaintsForTutorComponent.complaint = { ...getUnhandledComplaint(), complaintResponse: acceptedComplaintResponse };
         complaintsForTutorComponent.complaintResponse = complaintsForTutorComponent.complaint.complaintResponse!;
 
         const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
 
         fixture.detectChanges();
+        complaintsForTutorComponent.complaintResponse.responseText = 'accepted';
 
         tick();
 
@@ -174,20 +165,16 @@ describe('ComplaintsForTutorComponent', () => {
         expect(event).not.toBeNull();
     }));
 
-    it('should directly resolve when rejecting a complaint', () => {
+    it('should directly resolve when rejecting a complaint', fakeAsync(() => {
         complaintsForTutorComponent.isLockedForLoggedInUser = false;
-        complaintsForTutorComponent.complaint = { ...unhandledComplaint, complaintResponse: rejectedComplaintResponse };
+        complaintsForTutorComponent.complaint = { ...getUnhandledComplaint(), complaintResponse: rejectedComplaintResponse };
         complaintsForTutorComponent.complaintResponse = complaintsForTutorComponent.complaint.complaintResponse!;
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
+        const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
         const resolveStub = jest.spyOn(injectedComplaintResponseService, 'resolveComplaint').mockReturnValue(
             of(
                 new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
+                    body: rejectedComplaintResponse,
                     status: 201,
                 }),
             ),
@@ -195,9 +182,12 @@ describe('ComplaintsForTutorComponent', () => {
 
         fixture.detectChanges();
 
+        tick();
+        complaintsForTutorComponent.complaintResponse.responseText = 'rejected';
+
         const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         rejectComplaintButton.click();
-
         expect(resolveStub).toHaveBeenCalledTimes(1);
-    });
+        expect(emitSpy).not.toHaveBeenCalled();
+    }));
 });

@@ -36,7 +36,7 @@ export class TeamComponent implements OnInit {
         private accountService: AccountService,
         private router: Router,
     ) {
-        this.accountService.identity().then((user: User) => {
+        this.accountService.identity().subscribe((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();
             this.setTeamOwnerFlag();
