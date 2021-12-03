@@ -39,7 +39,6 @@ class TokenProviderTest {
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setTokenValidityInSeconds(ONE_MINUTE_MS);
         tokenProvider = new TokenProvider(jHipsterProperties);
         mockTokenProvider = new MockTokenProvider(jHipsterProperties);
-
         key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
     }
 

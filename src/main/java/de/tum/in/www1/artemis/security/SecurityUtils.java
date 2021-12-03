@@ -144,6 +144,17 @@ public final class SecurityUtils {
     }
 
     /**
+     * Get the JWT for the current security context.
+     *
+     * @return the JWT for the current security context.
+     */
+    public static Optional<String> getCurrentSecurityContextJWT() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(securityContext.getAuthentication()).filter(authentication -> authentication.getCredentials() instanceof String)
+                .map(authentication -> (String) authentication.getCredentials());
+    }
+
+    /**
      * Checks if the current user has any of the authorities.
      *
      * @param authorities the authorities to check.

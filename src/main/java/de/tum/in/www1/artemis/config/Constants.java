@@ -205,6 +205,9 @@ public final class Constants {
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
+    // Entity names
+    public static final String TEAM_ENTITY_NAME = "team";
+
     private Constants() {
     }
 }

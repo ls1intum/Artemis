@@ -45,8 +45,6 @@ public class TeamResource {
 
     private final Logger log = LoggerFactory.getLogger(TeamResource.class);
 
-    public static final String ENTITY_NAME = "team";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -105,22 +103,22 @@ public class TeamResource {
     public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
         if (team.getId() != null) {
-            throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new team cannot already have an ID", Constants.TEAM_ENTITY_NAME, "idexists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!exercise.isTeamMode()) {
-            throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
+            throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", Constants.TEAM_ENTITY_NAME, "exerciseNotTeamBased");
         }
         if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), team.getShortName())) {
-            throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
+            throw new BadRequestAlertException("A team with this short name already exists in the course.", Constants.TEAM_ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Remove all special characters and check if the resulting shortname is valid
         var shortName = team.getShortName().replaceAll("[^0-9a-z]", "").toLowerCase();
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(shortName);
         if (!shortNameMatcher.matches()) {
-            throw new BadRequestAlertException("The team name must start with a letter.", ENTITY_NAME, "teamShortNameInvalid");
+            throw new BadRequestAlertException("The team name must start with a letter.", Constants.TEAM_ENTITY_NAME, "teamShortNameInvalid");
         }
         // Also remove illegal characters from the long name
         team.setName(stripIllegalCharacters(team.getName()));
@@ -133,7 +131,7 @@ public class TeamResource {
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, Constants.TEAM_ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -150,20 +148,20 @@ public class TeamResource {
     public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", team);
         if (team.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", Constants.TEAM_ENTITY_NAME, "idnull");
         }
         if (!team.getId().equals(teamId)) {
-            throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
+            throw new BadRequestAlertException("The team has an incorrect id.", Constants.TEAM_ENTITY_NAME, "wrongId");
         }
         Optional<Team> existingTeam = teamRepository.findById(teamId);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         if (!existingTeam.get().getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
+            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", Constants.TEAM_ENTITY_NAME, "wrongExerciseId");
         }
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
-            return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
+            return forbidden(Constants.TEAM_ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
         }
         // Remove illegal characters from the long name
         team.setName(stripIllegalCharacters(team.getName()));
@@ -205,7 +203,7 @@ public class TeamResource {
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, Constants.TEAM_ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -225,7 +223,7 @@ public class TeamResource {
         }
         Team team = optionalTeam.get();
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
+            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", Constants.TEAM_ENTITY_NAME, "wrongExerciseId");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -276,7 +274,7 @@ public class TeamResource {
         }
         Team team = optionalTeam.get();
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
+            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", Constants.TEAM_ENTITY_NAME, "wrongExerciseId");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -294,7 +292,7 @@ public class TeamResource {
         teamRepository.delete(team);
 
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(teamId))).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Constants.TEAM_ENTITY_NAME, Long.toString(teamId))).build();
     }
 
     /**
@@ -363,7 +361,7 @@ public class TeamResource {
         }
 
         if (!exercise.isTeamMode()) {
-            throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
+            throw new BadRequestAlertException("The exercise must be a team-based exercise.", Constants.TEAM_ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
 
         List<Team> filledTeams = teamService.convertTeamsStudentsToUsersInDatabase(exercise.getCourseViaExerciseGroupOrCourseMember(), teams);
@@ -405,14 +403,14 @@ public class TeamResource {
             return forbidden();
         }
         if (destinationExerciseId == sourceExerciseId) {
-            throw new BadRequestAlertException("The source and destination exercise must be different.", ENTITY_NAME, "sourceDestinationExerciseNotDifferent");
+            throw new BadRequestAlertException("The source and destination exercise must be different.", Constants.TEAM_ENTITY_NAME, "sourceDestinationExerciseNotDifferent");
         }
         if (!destinationExercise.isTeamMode()) {
-            throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
+            throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", Constants.TEAM_ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
         Exercise sourceExercise = exerciseRepository.findByIdElseThrow(sourceExerciseId);
         if (!sourceExercise.isTeamMode()) {
-            throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
+            throw new BadRequestAlertException("The source exercise must be a team-based exercise.", Constants.TEAM_ENTITY_NAME, "sourceExerciseNotTeamBased");
         }
 
         // Create audit event for team import action
