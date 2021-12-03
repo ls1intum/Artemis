@@ -20,9 +20,10 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, NgxChartsModule],
     declarations: [
         CircularProgressBarComponent,
         AdditionalFeedbackComponent,
