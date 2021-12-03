@@ -58,18 +58,26 @@ describe('Assessment Service', () => {
     });
 
     describe('isAllowedToRespondToComplaintAction', () => {
-        it('should allow if is assessor in teammode', () => {
-            const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, true, complaint, teamExercise);
-            const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequest, teamExercise);
-            expect(isAllowedComplaint).toBe(true);
-            expect(isAllowedFeedbackRequest).toBe(true);
+        it('should allow if is owner in teammode', () => {
+            const isAllowedComplaintAssessor = isAllowedToRespondToComplaintAction(false, false, true, complaint, teamExercise, true);
+            const isAllowedComplaintNotAssessor = isAllowedToRespondToComplaintAction(false, false, false, complaint, teamExercise, true);
+            const isAllowedFeedbackRequestAssessor = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequest, teamExercise, true);
+            const isAllowedFeedbackRequestNotAssessor = isAllowedToRespondToComplaintAction(false, false, false, feedbackRequest, teamExercise, true);
+            expect(isAllowedComplaintAssessor).toBe(true);
+            expect(isAllowedComplaintNotAssessor).toBe(true);
+            expect(isAllowedFeedbackRequestAssessor).toBe(true);
+            expect(isAllowedFeedbackRequestNotAssessor).toBe(true);
         });
 
-        it('should not allow if is not assessor in teammode', () => {
-            const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, false, complaint, teamExercise);
-            const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, false, feedbackRequest, teamExercise);
-            expect(isAllowedComplaint).toBe(false);
-            expect(isAllowedFeedbackRequest).toBe(false);
+        it('should not allow if is not owner in teammode', () => {
+            const isAllowedComplaintAssessor = isAllowedToRespondToComplaintAction(false, false, true, complaint, teamExercise, false);
+            const isAllowedComplaintNotAssessor = isAllowedToRespondToComplaintAction(false, false, false, complaint, teamExercise, false);
+            const isAllowedFeedbackRequestAssessor = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequest, teamExercise, false);
+            const isAllowedFeedbackRequestNotAssessor = isAllowedToRespondToComplaintAction(false, false, false, feedbackRequest, teamExercise, false);
+            expect(isAllowedComplaintAssessor).toBe(false);
+            expect(isAllowedComplaintNotAssessor).toBe(false);
+            expect(isAllowedFeedbackRequestAssessor).toBe(false);
+            expect(isAllowedFeedbackRequestNotAssessor).toBe(false);
         });
 
         it('should allow for assessor if on a test run', () => {

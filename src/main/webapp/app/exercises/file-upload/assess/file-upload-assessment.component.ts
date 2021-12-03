@@ -489,6 +489,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             this.result,
             this.complaint,
             this.exercise,
+            this.exercise?.teamMode && this.participation.team?.owner?.id === this.userId,
         );
     }
 

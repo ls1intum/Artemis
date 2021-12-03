@@ -4,15 +4,25 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
 
 /**
- * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
+ * For team exercises, the team owner is the assessor and handles both complaints and feedback requests himself
  * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
  * For exam test runs, the original assessor is allowed to respond to complaints.
  */
-export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean, isTestRun: boolean, isAssessor: boolean, complaint: Complaint, exercise?: Exercise): boolean => {
+export const isAllowedToRespondToComplaintAction = (
+    isAtLeastInstructor: boolean,
+    isTestRun: boolean,
+    isAssessor: boolean,
+    complaint: Complaint,
+    exercise?: Exercise,
+    isTeamOwner?: boolean,
+): boolean => {
     if (isAtLeastInstructor) {
         return true;
     }
-    if (exercise?.teamMode || isTestRun) {
+    if (exercise?.teamMode) {
+        return isTeamOwner === true;
+    }
+    if (isTestRun) {
         return isAssessor;
     }
     if (exercise?.assessmentType === AssessmentType.AUTOMATIC && complaint.result && complaint.result.assessor === undefined) {
@@ -35,6 +45,7 @@ export const isAllowedToModifyFeedback = (
     result?: Result,
     complaint?: Complaint,
     exercise?: Exercise,
+    isTeamOwner?: boolean,
 ): boolean => {
     if (isAtLeastInstructor) {
         return true;
@@ -49,7 +60,10 @@ export const isAllowedToModifyFeedback = (
         if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
             return isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
         } else {
-            return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+            return (
+                complaint.complaintType === ComplaintType.COMPLAINT &&
+                isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise, isTeamOwner)
+            );
         }
     }
     return !hasAssessmentDueDatePassed;

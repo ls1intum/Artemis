@@ -460,6 +460,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.result,
             this.complaint,
             this.exercise,
+            this.exercise?.teamMode && this.participation?.team?.owner?.id === this.userId,
         );
     }
 

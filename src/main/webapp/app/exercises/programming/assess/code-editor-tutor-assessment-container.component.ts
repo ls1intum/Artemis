@@ -485,6 +485,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult,
             this.complaint,
             this.exercise,
+            this.exercise?.teamMode && this.participation.team?.owner?.id === this.userId,
         );
     }
 

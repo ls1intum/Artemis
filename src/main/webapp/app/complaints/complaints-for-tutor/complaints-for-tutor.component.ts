@@ -11,6 +11,8 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -35,6 +37,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     showLockDuration = false;
     showRemoveLockButton = false;
     isLockedForLoggedInUser = false;
+    userId: number;
 
     constructor(
         private alertService: AlertService,
@@ -42,9 +45,13 @@ export class ComplaintsForTutorComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
+        this.accountService.identity().then((user) => {
+            this.userId = user!.id!;
+        });
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
@@ -209,6 +216,13 @@ export class ComplaintsForTutorComponent implements OnInit {
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
-        return isAllowedToRespondToComplaintAction(this.exercise?.isAtLeastInstructor ?? false, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
+        return isAllowedToRespondToComplaintAction(
+            this.exercise?.isAtLeastInstructor ?? false,
+            this.isTestRun,
+            this.isAssessor,
+            this.complaint,
+            this.exercise,
+            this.exercise?.teamMode && (this.submission?.participation as StudentParticipation).team?.owner?.id === this.userId,
+        );
     }
 }

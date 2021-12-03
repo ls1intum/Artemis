@@ -280,6 +280,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result,
             this.complaint,
             this.modelingExercise,
+            this.modelingExercise?.teamMode && (this.submission?.participation as StudentParticipation).team?.owner?.id === this.userId,
         );
     }
 
