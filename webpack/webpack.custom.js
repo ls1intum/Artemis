@@ -6,7 +6,6 @@ const MergeJsonWebpackPlugin = require('merge-jsons-webpack-plugin');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const WebpackNotifierPlugin = require('webpack-notifier');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 
 const environment = require('./environment');
@@ -97,14 +96,6 @@ module.exports = async (config, options, targetOptions) => {
                 reportFilename: '../stats.html',
             })
         );
-    }
-
-    const patterns = [
-        // jhipster-needle-add-assets-to-webpack - JHipster will add/remove third-party resources in this array
-    ];
-
-    if (patterns.length > 0) {
-        config.plugins.push(new CopyWebpackPlugin({ patterns }));
     }
 
     config.plugins.push(
