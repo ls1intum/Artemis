@@ -64,7 +64,6 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
             </div>
             <div #containerRefPoints class="points-chart bg-light">
-                <!--<jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>-->
                 <ngx-charts-bar-horizontal-stacked
                     [view]="[containerRefPoints.offsetWidth, containerRefPoints.offsetHeight]"
                     [results]="ngxPointsData"
