@@ -639,6 +639,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
+    /**
+     * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
+     * this method will load it properly from the database and connect it to the participation
+     * @param participation the programming exercise participation for which the programming exercise should be found
+     * @return the programming exercise
+     */
     @Nullable
     default ProgrammingExercise getProgrammingExerciseFromParticipation(ProgrammingExerciseParticipation participation) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
