@@ -149,7 +149,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             return isWithinThreshold;
         }
         if (dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return isWithinThreshold || dayjs().isBefore(dayjs(this.exercise.assessmentDueDate).add(actionThresholdInDays, 'day'));
+            return isWithinThreshold || dayjs().isSameOrBefore(dayjs(this.exercise.assessmentDueDate).add(actionThresholdInDays, 'day'));
         }
         return false;
     }
