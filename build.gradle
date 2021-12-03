@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.3.4"
+    version = "5.3.5"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -137,7 +137,6 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:${thoughtworks_qdox_version}"
 
     implementation "org.springdoc:springdoc-openapi-ui:${springdoc_openapi_ui_version}"
-
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:${hazelcast_hibernate53_version}"
@@ -193,7 +192,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.2"
+        gradleVersion = "7.3"
     }
 }
 

@@ -2,8 +2,7 @@ import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
-import { compose, filter, flatten } from 'lodash/fp';
-import { get, isNumber } from 'lodash-es';
+import { get, isNumber, flatten } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
@@ -257,7 +256,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         const searchPredicate = (entity: BaseEntity) => {
             return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
         };
-        const filteredEntities = compose(filter(searchPredicate), filter(this.customFilter))(this.allEntities);
+        const filteredEntities = this.allEntities.filter((entity) => this.customFilter(entity) && searchPredicate(entity));
         this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
