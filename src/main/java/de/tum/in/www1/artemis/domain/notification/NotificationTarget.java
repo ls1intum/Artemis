@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 public final class NotificationTarget {
 
     @SerializedName(value = "id")
-    private final int notificationId;
+    private final int notificationSubjectId;
 
     private final String entity;
 
@@ -22,7 +22,7 @@ public final class NotificationTarget {
     private final int course;
 
     public NotificationTarget(int notificationId, String entity, int course, String mainPage) {
-        this.notificationId = notificationId;
+        this.notificationSubjectId = notificationId;
         this.entity = entity;
         this.course = course;
         this.mainPage = mainPage;
@@ -57,6 +57,6 @@ public final class NotificationTarget {
      * @return the extracted viable URL
      */
     private String turnToUrl(String baseUrl) {
-        return baseUrl + "/" + mainPage + "/" + course + "/" + entity + "/" + notificationId;
+        return baseUrl + "/" + mainPage + "/" + course + "/" + entity + "/" + notificationSubjectId;
     }
 }
