@@ -29,6 +29,8 @@ import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-use
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -76,6 +78,7 @@ describe('Notification Sidebar Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: NotificationSettingsService, useClass: MockNotificationSettingsService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useClass: MockUserService },
@@ -221,12 +224,13 @@ describe('Notification Sidebar Component', () => {
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
         });
 
-        it('should increase total notification count if a new notification is received via websocket', () => {
+        it('should increase total notification count if a new notification is received via websocket', fakeAsync(() => {
             replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
+            tick();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
-        });
+        }));
 
         it('should not add already existing notification received via websocket', () => {
             notificationSidebarComponent.notifications = [notificationNow];
@@ -295,7 +299,9 @@ describe('Notification Sidebar Component', () => {
             expect(errorMessage).to.be.not.null;
         });
 
-        it('should toggle which notifications are displayed (hide until property) when user clicks on eye button', () => {
+        it('should toggle which notifications are displayed (hide until property) when user clicks on archive button', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponent.notifications = notifications;
             expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).to.be.true;
             sinon.spy(notificationSidebarComponent, 'toggleNotificationDisplay');
             sinon.spy(userService, 'updateNotificationVisibility');

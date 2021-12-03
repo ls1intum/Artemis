@@ -24,7 +24,7 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
 export class NotificationSidebarComponent implements OnInit {
     // HTML template related
     showSidebar = false;
-    showButtonToHideCurrentlyDisplayedNotifications: boolean;
+    showButtonToHideCurrentlyDisplayedNotifications = true;
     loading = false;
 
     // notification logic related
