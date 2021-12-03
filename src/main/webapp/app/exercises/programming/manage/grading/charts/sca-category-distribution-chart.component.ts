@@ -143,7 +143,6 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         this.ngxData.push(deductions);
         this.ngxData = [...this.ngxData];
 
-        // this.chartDatasets.forEach(({ label, backgroundColor }) => (categoryColors[label!] = backgroundColor));
         this.categoryColorsChange.emit(categoryColors);
     }
 
