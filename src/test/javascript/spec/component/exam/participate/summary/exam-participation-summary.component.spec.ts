@@ -145,29 +145,28 @@ describe('ExamParticipationSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
-        const printWindowStub = jest.spyOn(global.window, 'print').mockReturnValue();
+        const printWindowStub = jest.spyOn(global.window, 'print').mockImplementation();
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
         const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-0'));
         const toggleCollapseExerciseButtonTwo = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-1'));
         const toggleCollapseExerciseButtonThree = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-2'));
         const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-3'));
-        expect(exportToPDFButton).not.toBeNull();
-        expect(toggleCollapseExerciseButtonOne).not.toBeNull();
-        expect(toggleCollapseExerciseButtonTwo).not.toBeNull();
-        expect(toggleCollapseExerciseButtonThree).not.toBeNull();
-        expect(toggleCollapseExerciseButtonFour).not.toBeNull();
+        expect(exportToPDFButton).not.toBe(null);
+        expect(toggleCollapseExerciseButtonOne).not.toBe(null);
+        expect(toggleCollapseExerciseButtonTwo).not.toBe(null);
+        expect(toggleCollapseExerciseButtonThree).not.toBe(null);
+        expect(toggleCollapseExerciseButtonFour).not.toBe(null);
 
         toggleCollapseExerciseButtonOne.nativeElement.click();
         toggleCollapseExerciseButtonTwo.nativeElement.click();
         toggleCollapseExerciseButtonThree.nativeElement.click();
         toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds.length).toEqual(4);
+        expect(component.collapsedExerciseIds).toHaveLength(4);
 
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
         tick();
-        expect(printWindowStub).toHaveBeenCalled();
-        printWindowStub.mockRestore();
+        expect(printWindowStub).toHaveBeenCalledTimes(1);
     }));
 });

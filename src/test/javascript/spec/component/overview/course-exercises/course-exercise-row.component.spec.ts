@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -30,13 +30,14 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { RouterTestingModule } from '@angular/router/testing';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-
-@Component({
-    template: '',
-})
-class DummyComponent {}
+import { MockParticipationService } from '../../../helpers/mocks/service/mock-participation.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 
 describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
@@ -47,35 +48,24 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeAll(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                TranslateModule.forRoot(),
-                NgbModule,
-                RouterTestingModule.withRoutes([
-                    { path: 'courses/:courseId/exercises', component: DummyComponent },
-                    { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
-                ]),
-            ],
+            imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [
+                CourseExerciseRowComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(NotReleasedTagComponent),
                 MockComponent(DifficultyBadgeComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
+                MockDirective(NgbTooltip),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(OrionFilterDirective),
-                CourseExerciseRowComponent,
-                DummyComponent,
             ],
             providers: [
-                DeviceDetectorService,
-                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: CourseManagementService, useClass: MockCourseService },
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
         })
             .compileComponents()

@@ -13,6 +13,10 @@ export class MockExerciseService {
         return MockExerciseService.response([{ id: 1 } as Exercise, { id: 2 } as Exercise]);
     }
 
+    isActiveQuiz() {
+        return true;
+    }
+
     // helper method
     private static response<T>(entity: T) {
         return of({ body: entity }) as Observable<HttpResponse<T>>;

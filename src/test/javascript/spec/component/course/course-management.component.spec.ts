@@ -3,8 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
@@ -14,7 +12,6 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
@@ -24,6 +21,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { LectureService } from 'app/lecture/lecture.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
@@ -101,7 +102,14 @@ describe('CourseManagementComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockComponent(CourseManagementCardComponent),
             ],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [
+                MockProvider(ExamManagementService),
+                MockProvider(LectureService),
+                MockProvider(CourseManagementService),
+                MockProvider(AlertService),
+                MockProvider(EventManager),
+                MockProvider(GuidedTourService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -124,11 +132,8 @@ describe('CourseManagementComponent', () => {
         jest.spyOn(guidedTourService, 'enableTourForCourseOverview').mockReturnValue(course187);
 
         fixture.detectChanges();
-        expect(component).not.toBeNull();
-        expect(component.showOnlyActive).toBeTrue();
+        expect(component.showOnlyActive).toBe(true);
         component.toggleShowOnlyActive();
-        expect(component.showOnlyActive).toBeFalse();
-        fixture.detectChanges();
-        expect(component).not.toBeNull();
+        expect(component.showOnlyActive).toBe(false);
     });
 });

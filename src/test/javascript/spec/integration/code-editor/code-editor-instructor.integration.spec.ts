@@ -11,7 +11,7 @@ import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
@@ -91,7 +91,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
     let getHintsForExerciseStub: jest.SpyInstance;
 
-    let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
+    let checkIfRepositoryIsCleanSubject: Subject<{ repositoryStatus: string }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
@@ -107,21 +107,21 @@ describe('CodeEditorInstructorIntegration', () => {
                 CodeEditorContainerComponent,
                 KeysPipe,
                 CodeEditorInstructionsComponent,
+                UpdatingResultComponent,
+                CodeEditorBuildOutputComponent,
+                ProgrammingExerciseInstructorExerciseStatusComponent,
+                ProgrammingExerciseEditableInstructionComponent,
+                ProgrammingExerciseInstructionComponent,
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorActionsComponent),
                 MockComponent(CodeEditorFileBrowserComponent),
                 MockComponent(CodeEditorAceComponent),
-                CodeEditorBuildOutputComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(AlertComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
-                ProgrammingExerciseInstructorExerciseStatusComponent,
-                UpdatingResultComponent,
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
                 MockComponent(ExerciseHintStudentComponent),
-                ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(MarkdownEditorComponent),
-                ProgrammingExerciseInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
@@ -169,7 +169,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 const exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 containerDebugElement.injector.get(Router);
 
-                checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
+                checkIfRepositoryIsCleanSubject = new Subject<{ repositoryStatus: string }>();
                 getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
@@ -220,14 +220,13 @@ describe('CodeEditorInstructorIntegration', () => {
     const initContainer = (exercise: ProgrammingExercise) => {
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1 });
-        expect(container.codeEditorContainer).toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer).toBe(undefined);
         expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(container.loadingState).toBe(container.LOADING_STATE.INITIALIZING);
     };
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
-        jest.resetModules();
         // @ts-ignore
         const exercise = {
             id: 1,
@@ -264,7 +263,7 @@ describe('CodeEditorInstructorIntegration', () => {
         containerFixture.detectChanges();
         expect(container.codeEditorContainer.grid).not.toBe(undefined); // Have to use this as it's a component
 
-        checkIfRepositoryIsCleanSubject.next({ isClean: true });
+        checkIfRepositoryIsCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
         containerFixture.detectChanges();
 
