@@ -3,23 +3,17 @@ import { DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
-import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
@@ -34,10 +28,6 @@ import { MockParticipationService } from '../../../helpers/mocks/service/mock-pa
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 
 describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
