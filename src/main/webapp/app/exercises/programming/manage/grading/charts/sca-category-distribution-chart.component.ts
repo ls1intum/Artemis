@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
             </div>
             <div #containerRef class="chart bg-light">
                 <ngx-charts-bar-horizontal-normalized
-                    [view]="[containerRef.offsetWidth, 150]"
+                    [view]="[containerRef.offsetWidth, containerRef.offsetHeight]"
                     [scheme]="ngxColors"
                     [results]="ngxData"
                     [xAxis]="true"
