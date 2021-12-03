@@ -38,6 +38,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     showRemoveLockButton = false;
     isLockedForLoggedInUser = false;
     userId: number;
+    isAllowedToRespond: boolean;
 
     constructor(
         private alertService: AlertService,
@@ -49,28 +50,27 @@ export class ComplaintsForTutorComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.accountService.identity().then((user) => {
-            this.userId = user!.id!;
-        });
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
 
-            if (this.handled) {
-                this.complaintResponse = this.complaint.complaintResponse!;
-                this.showRemoveLockButton = false;
-                this.showLockDuration = false;
-            } else {
-                if (this.isAllowedToRespond) {
-                    if (this.complaint.complaintResponse) {
-                        this.refreshLock();
-                    } else {
-                        this.createLock();
-                    }
+            this.setIsAllowedToRespond().then(() => {
+                if (this.handled) {
+                    this.complaintResponse = this.complaint.complaintResponse!;
+                    this.showRemoveLockButton = false;
+                    this.showLockDuration = false;
                 } else {
-                    this.alertService.error('artemisApp.locks.notAllowedToRespond');
+                    if (this.isAllowedToRespond) {
+                        if (this.complaint.complaintResponse) {
+                            this.refreshLock();
+                        } else {
+                            this.createLock();
+                        }
+                    } else {
+                        this.alertService.error('artemisApp.locks.notAllowedToRespond');
+                    }
                 }
-            }
+            });
         }
     }
 
@@ -201,7 +201,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     onError(httpErrorResponse: HttpErrorResponse) {
         const error = httpErrorResponse.error;
-        if (error && error.errorKey && error.errorKey === 'complaintLock') {
+        if (error?.errorKey?.errorKey === 'complaintLock') {
             this.alertService.error(error.message, error.params);
         } else {
             this.alertService.error('error.unexpectedError', {

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,9 +14,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 /**
@@ -30,10 +33,13 @@ public class WebsocketMessagingService {
 
     private final ExerciseDateService exerciseDateService;
 
-    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService) {
+    private final TeamRepository teamRepository;
+
+    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService, TeamRepository teamRepository) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -83,7 +89,17 @@ public class WebsocketMessagingService {
                 result.filterSensitiveInformation();
                 result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
 
-                studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+                List<User> students = new ArrayList<>();
+
+                if (exercise.isTeamMode()) {
+                    studentParticipation.getTeam().flatMap(team -> teamRepository.findOneWithEagerStudents(team.getId()))
+                            .ifPresent(teamWithStudents -> students.addAll(teamWithStudents.getStudents()));
+                }
+                else {
+                    students.addAll(studentParticipation.getStudents());
+                }
+
+                students.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }
         }
 

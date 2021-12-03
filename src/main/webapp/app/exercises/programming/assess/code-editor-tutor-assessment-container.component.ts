@@ -417,27 +417,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Boolean which determines whether the user can override a result.
      * If no exercise is loaded, for example during loading between exercises, we return false.
-     * Instructors can always override a result.
-     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
-     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     * Whenever users are allowed to modify feedback they should be allowed to save the changes.
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.exercise.isAtLeastInstructor) {
-                // Instructors can override any assessment at any time.
+            if (this.isAtLeastInstructor) {
                 return true;
             }
-            if (this.complaint && this.isAssessor) {
-                // If there is a complaint, the original assessor cannot override the result anymore.
+            if (this.complaint) {
                 return false;
             }
-            let isBeforeAssessmentDueDate = true;
-            // Add check as the assessmentDueDate must not be set for exercises
-            if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate);
-            }
-            // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate;
+            return isAllowedToModifyFeedback(
+                this.isAtLeastInstructor,
+                this.isTestRun,
+                this.isAssessor,
+                this.hasAssessmentDueDatePassed,
+                this.manualResult,
+                this.complaint,
+                this.exercise,
+                this.exercise?.teamMode && this.participation.team?.owner?.id === this.userId,
+            );
         }
         return false;
     }
