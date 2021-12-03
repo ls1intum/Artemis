@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -15,7 +16,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.service.MailService;
 
@@ -34,6 +34,9 @@ public class SingleUserNotificationServiceTest {
 
     @Mock
     private static Exercise exercise;
+
+    @Mock
+    private static FileUploadExercise fileUploadExercise;
 
     @Mock
     private static SingleUserNotificationRepository singleUserNotificationRepository;
@@ -72,15 +75,18 @@ public class SingleUserNotificationServiceTest {
 
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
-        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
-
         messagingTemplate = mock(SimpMessageSendingOperations.class);
 
         notificationSettingsService = mock(NotificationSettingsService.class);
 
+        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
+
         singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
 
         exercise = mock(Exercise.class);
+
+        fileUploadExercise = mock(FileUploadExercise.class);
+        when(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
 
         user = mock(User.class);
 
@@ -125,12 +131,24 @@ public class SingleUserNotificationServiceTest {
     /// General notify Tests
 
     /**
+     * Tests if no notification (or email) is send if the settings are deactivated
+     * However, the notification has to be saved to the DB
+     */
+    @Test
+    public void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(false);
+        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
+        verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
+        verify(messagingTemplate, times(0)).convertAndSend(any());
+    }
+
+    /**
      * Test for notifyStudentGroupAboutAttachmentChange method
      */
     @Test
     public void testNotifyUserAboutNewAnswerForExercise() {
         singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
     /**
@@ -139,7 +157,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForLecture() {
         singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
     /**
@@ -148,7 +166,16 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForCoursePost() {
         singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutSuccessfulFileUploadSubmission method
+     */
+    @Test
+    public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
+        singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
+        verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
     }
 
     /// Save & Send related Tests
@@ -160,7 +187,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testSaveAndSend_CourseRelatedNotifications() {
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any())).thenReturn(true);
+        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
 
         singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
 
@@ -170,7 +197,7 @@ public class SingleUserNotificationServiceTest {
 
         // inside private prepareSingleUserNotificationEmail method
         verify(notificationSettingsService, times(1)).checkNotificationTypeForEmailSupport(any());
-        verify(notificationSettingsService, times(1)).checkIfNotificationEmailIsAllowedBySettingsForGivenUser(any(), any());
+        verify(notificationSettingsService, times(2)).checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any()); // 2 because we check once for webapp & email
         verify(mailService, times(1)).sendNotificationEmail(any(), any(), any());
     }
 }

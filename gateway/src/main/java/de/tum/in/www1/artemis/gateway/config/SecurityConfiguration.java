@@ -125,6 +125,7 @@ public class SecurityConfiguration {
                 .pathMatchers("/management/prometheus").permitAll()
                 .pathMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
                 .pathMatchers("/public/**").permitAll()
+                .pathMatchers("/logo/**").permitAll()
                 .pathMatchers("/time").permitAll();
         // @formatter:on
         return http.build();

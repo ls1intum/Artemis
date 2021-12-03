@@ -32,6 +32,8 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     withExplanation = false;
     @Input()
     explanation: string;
+    @Input()
+    savedStatus?: { isChanged?: boolean; isSaving?: boolean };
 
     @Output()
     private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();

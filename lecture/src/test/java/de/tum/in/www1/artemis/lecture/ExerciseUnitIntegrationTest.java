@@ -3,19 +3,9 @@ package de.tum.in.www1.artemis.lecture;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,34 +28,9 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringDevelopmentTest {
     @Autowired
     private UserRepository userRepo;
 
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
-
-    @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private FileUploadExerciseRepository fileUploadExerciseRepository;
-
     private Course course1;
 
     private Lecture lecture1;
-
-    private TextExercise textExercise;
-
-    private ModelingExercise modelingExercise;
-
-    private ProgrammingExercise programmingExercise;
-
-    private FileUploadExercise fileUploadExercise;
-
-    private QuizExercise quizExercise;
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -73,12 +38,6 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringDevelopmentTest {
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
-
-        this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
-        this.fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
-        this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().get();
-        this.quizExercise = quizExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
-        this.modelingExercise = modelingExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("student42"));
