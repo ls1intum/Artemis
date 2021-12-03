@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.usermanagement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import de.tum.in.www1.artemis.usermanagement.service.user.UserCreationService;
+import de.tum.in.www1.artemis.usermanagement.web.rest.AccountResource;
+import de.tum.in.www1.artemis.usermanagement.web.rest.vm.KeyAndPasswordVM;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -26,17 +29,14 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.util.ConfigUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.AccountResource;
-import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
+
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
  */
-@Deprecated // Moved to user management microservice. To be removed.
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -404,9 +404,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         String resetKeyBefore = userBefore.get().getResetKey();
 
         // init password reset
-        // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
-        // previous, faulty call:
-        // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
         var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");

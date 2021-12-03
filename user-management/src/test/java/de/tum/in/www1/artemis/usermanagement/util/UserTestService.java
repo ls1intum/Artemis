@@ -1,6 +1,19 @@
-package de.tum.in.www1.artemis.util;
+package de.tum.in.www1.artemis.usermanagement.util;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -9,28 +22,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
  */
-@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserTestService {
 
@@ -412,8 +410,6 @@ public class UserTestService {
     // Test
     public void createUserWithGroups() throws Exception {
         var course = database.addEmptyCourse();
-        database.addProgrammingExerciseToCourse(course, false);
-        course = database.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
 

@@ -1,13 +1,16 @@
-package de.tum.in.www1.artemis.authentication;
+package de.tum.in.www1.artemis.usermanagement.authentication;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.verify;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
+import de.tum.in.www1.artemis.usermanagement.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.usermanagement.util.UserTestService;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,18 +20,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.UserTestService;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 
-@Deprecated // Moved to user management microservice. To be removed.
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.verify;
+
 public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Value("${artemis.continuous-integration.user}")
@@ -317,7 +316,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
         Course course = database.addEmptyCourse();
-        ProgrammingExercise programmingExericse = database.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -325,7 +324,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor2"));
 
-        gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExericse.getProjectKey());
+        gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExercise.getProjectKey());
         request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

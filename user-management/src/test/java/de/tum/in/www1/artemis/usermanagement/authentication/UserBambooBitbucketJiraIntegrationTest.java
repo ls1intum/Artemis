@@ -1,9 +1,8 @@
-package de.tum.in.www1.artemis.authentication;
+package de.tum.in.www1.artemis.usermanagement.authentication;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-
-import java.io.IOException;
-
+import de.tum.in.www1.artemis.usermanagement.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.usermanagement.util.UserTestService;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,11 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.util.UserTestService;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import java.io.IOException;
 
-@Deprecated // Moved to user management microservice. To be removed.
 public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -72,7 +68,6 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void updateUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         userTestService.updateUser_withExternalUserManagement();
-        verifyNoInteractions(versionControlService);
     }
 
     @Test
@@ -109,14 +104,12 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         userTestService.createUser_withExternalUserManagement();
-        verifyNoInteractions(versionControlService);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void deleteUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         request.delete("/api/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
-        verifyNoInteractions(versionControlService);
     }
 
     @Test

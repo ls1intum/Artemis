@@ -1,20 +1,18 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.usermanagement;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.HashSet;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
+import java.util.HashSet;
+import java.util.Set;
 
-@Deprecated // Moved to user management microservice. To be removed.
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @BeforeEach
