@@ -31,14 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/")
 public class PlagiarismResource {
 
-    /**
-     * helper class for plagiarism statement update requests
-     */
-    public static class PlagiarismStatementDTO {
-
-        public String statement;
-    }
-
     private final CourseRepository courseRepository;
 
     private final SingleUserNotificationService singleUserNotificationService;
@@ -52,6 +44,14 @@ public class PlagiarismResource {
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     private final PlagiarismService plagiarismService;
+
+    /**
+     * helper class for plagiarism statement update requests
+     */
+    public static class PlagiarismStatementDTO {
+
+        public String statement;
+    }
 
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
